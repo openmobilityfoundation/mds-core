@@ -1,0 +1,27 @@
+{
+  "name": "mds-logger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobility Data Specification logging interface",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "mds",
+    "logger"
+  ],
+  "author": "City of Los Angeles",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/client": "5.0.1",
+    "dotenv": "8.0.0",
+    "pushover-notifications": "1.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "tsc --build .",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
+  }
+}

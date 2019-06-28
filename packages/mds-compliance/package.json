@@ -1,0 +1,42 @@
+{
+  "name": "mds-compliance",
+  "version": "0.1.1",
+  "description": "MDS Compliance Tool",
+  "main": "dist/api.js",
+  "types": "dist/api.d.ts",
+  "scripts": {
+    "build": "tsc --build .",
+    "start": "nodemon --watch '../../**/*.*' --ext 'ts js' --exec ts-node server.ts",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
+  },
+  "keywords": [
+    "mds",
+    "compliance"
+  ],
+  "author": "City of Los Angeles.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@hapi/joi": "15.1.0",
+    "express": "4.17.1",
+    "fs": "0.0.1-security",
+    "jwt-decode": "2.2.0",
+    "mds-api-server": "0.1.0",
+    "mds-cache": "0.1.0",
+    "mds-db": "0.1.0",
+    "mds-enums": "0.1.0",
+    "mds-logger": "0.1.0",
+    "mds-stream": "0.1.0",
+    "mds-test-data": "0.1.0",
+    "moment-timezone": "0.5.25",
+    "uuid4": "1.1.4",
+    "yargs": "13.2.4"
+  },
+  "devDependencies": {
+    "mds-agency": "0.0.1",
+    "mds-policy": "0.0.1",
+    "mds-provider": "1.0.0"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "mds-agency",
+  "description": "MDS Agency API",
+  "version": "0.0.1",
+  "author": "City of Los Angeles",
+  "private": true,
+  "licence": "Apache-2.0",
+  "dependencies": {
+    "express": "4.17.1",
+    "jsonwebtoken": "8.5.1",
+    "jwt-decode": "2.2.0",
+    "ladot-service-areas": "0.1.0",
+    "mds-api-server": "0.1.0",
+    "mds-cache": "0.1.0",
+    "mds-db": "0.1.0",
+    "mds-enums": "0.1.0",
+    "mds-api-helpers": "0.1.0",
+    "mds-logger": "0.1.0",
+    "mds-providers": "0.1.0",
+    "mds-stream": "0.1.0",
+    "mds-utils": "0.1.0",
+    "uuid": "3.3.2"
+  },
+  "devDependencies": {},
+  "main": "dist/api.js",
+  "types": "dist/api.d.ts",
+  "scripts": {
+    "build": "tsc --build .",
+    "start": "nodemon --watch '../../**/*.*' --ext 'ts js' --exec ts-node server.ts",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
+  }
+}

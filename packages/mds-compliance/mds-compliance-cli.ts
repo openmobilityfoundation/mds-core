@@ -1,0 +1,108 @@
+/*
+    Copyright 2019 City of Los Angeles.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
+import * as fs from 'fs'
+import log from 'mds-logger'
+import * as yargs from 'yargs'
+import { Policy, Geography, ComplianceResponse } from 'mds'
+import { filterPolicies, processPolicy } from './mds-compliance-engine'
+import { validateEvents, validateGeographies, validatePolicies } from './validators'
+
+const args = yargs
+  .options('geographies', {
+    alias: 'g',
+    demand: true,
+    description: 'Path to geographies JSON',
+    type: 'string'
+  })
+  .option('devices', {
+    alias: 'd',
+    demand: true,
+    description: 'Path to devices JSON',
+    type: 'string'
+  })
+  .options('events', {
+    alias: 'e',
+    demand: true,
+    description: 'Path to events JSON',
+    type: 'string'
+  })
+  .option('policies', {
+    alias: 'p',
+    demand: true,
+    description: 'Path to policies JSON',
+    type: 'string'
+  }).argv
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+async function readJson(path: string): Promise<any> {
+  return Promise.resolve(JSON.parse(fs.readFileSync(path).toString()))
+}
+
+async function main(): Promise<(ComplianceResponse | undefined)[]> {
+  const geographies: Geography[] = await readJson(args.geographies)
+  if (!geographies || !validateGeographies(geographies)) {
+    log.error('unable to read geographies')
+    process.exit(1)
+  }
+
+  const policies: Policy[] = await readJson(args.policies)
+  if (!policies || !validatePolicies(policies)) {
+    log.error('unable to read policies')
+    process.exit(1)
+  }
+
+  // read events
+  const events = await readJson(args.events)
+  if (!events || !validateEvents(events)) {
+    log.error('unable to read events')
+    process.exit(1)
+  }
+
+  // read devices
+  const devices = await readJson(args.devices)
+  // TODO Validate Devices
+  if (!devices) {
+    log.error('unable to read devices')
+    process.exit(1)
+  }
+
+  const filtered_policies: Policy[] = filterPolicies(policies)
+  // emit results
+  return Promise.resolve(filtered_policies.map((policy: Policy) => processPolicy(policy, events, geographies, devices)))
+}
+
+main()
+  .then(
+    result => {
+      log.info(JSON.stringify(result, undefined, 2))
+    },
+    failure => {
+      // TODO use payload response type instead of peering into body
+      if (failure.slice && failure.slice(0, 2) === '{"') {
+        failure = JSON.parse(failure)
+      }
+      if (failure.error_description) {
+        log.info(`${failure.error_description} (${failure.error})`)
+      } else if (failure.result) {
+        log.info(failure.result)
+      } else {
+        log.info('failure:', failure)
+      }
+    }
+  )
+  .catch(err => {
+    log.error('exception:', err.stack)
+  })

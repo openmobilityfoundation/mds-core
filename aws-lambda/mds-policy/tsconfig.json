@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [{ "path": "../aws-serverless-express-handler" }],
+  "include": ["index.ts"]
+}

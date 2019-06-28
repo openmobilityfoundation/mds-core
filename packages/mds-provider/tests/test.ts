@@ -1,0 +1,431 @@
+/*
+    Copyright 2019 City of Los Angeles.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
+
+import supertest from 'supertest'
+import { now } from 'mds-utils'
+import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from 'mds-test-data'
+import test from 'unit.js'
+import { Device, Telemetry, VehicleEvent } from 'mds'
+import { server } from 'mds-api-server'
+import { api } from '../api'
+
+process.env.PATH_PREFIX = '/provider'
+
+const APP_JSON = 'application/json; charset=utf-8'
+
+const request = supertest(server(api))
+
+const ORIGINAL_TEST_TIMESTAMP = 1546453100001
+let test_timestamp = ORIGINAL_TEST_TIMESTAMP
+
+const DEVICE_UUID = 'aa551174-f324-4251-bfed-28d9f3f473aa'
+const DEVICE_UUID2 = 'bb551174-f324-4251-bfed-28d9f3f473bb'
+
+const TRIP_UUID = 'aa981864-cc17-40cf-aea3-70fd985e2eaa'
+// const TRIP_UUID2 = 'bb981864-cc17-40cf-aea3-70fd985e2eaa'
+
+const DEVICE_VIN = 'test-vin-1'
+const DEVICE_VIN2 = 'test-vin-2'
+
+const TEST_DEVICE: Device = {
+  device_id: DEVICE_UUID,
+  provider_id: PROVIDER_UUID,
+  vehicle_id: DEVICE_VIN,
+  type: 'bicycle', // FIXME constant
+  propulsion: ['human'], // FIXME constant
+  year: 2018,
+  mfgr: 'Schwinn',
+  model: 'Mantaray',
+  recorded: now()
+}
+
+const TEST_DEVICE2: Device = {
+  device_id: DEVICE_UUID2,
+  provider_id: PROVIDER_UUID,
+  vehicle_id: DEVICE_VIN2,
+  type: 'scooter', // FIXME constant
+  propulsion: ['electric'], // FIXME constant
+  year: 2017,
+  mfgr: 'Xiaomi',
+  model: 'Mi',
+  recorded: now()
+}
+
+const BASE_TELEMETRY: Telemetry = {
+  device_id: DEVICE_UUID,
+  provider_id: PROVIDER_UUID,
+  gps: {
+    lat: 37.3382,
+    lng: -121.8863,
+    speed: 0,
+    accuracy: 1,
+    heading: 180
+  },
+  charge: 0.5,
+  timestamp: ORIGINAL_TEST_TIMESTAMP,
+  recorded: now()
+}
+
+const BASE_TELEMETRY2: Telemetry = {
+  device_id: DEVICE_UUID2,
+  provider_id: PROVIDER_UUID,
+  gps: {
+    lat: 36.3382,
+    lng: -122.8863,
+    speed: 0,
+    accuracy: 1,
+    heading: 180
+  },
+  charge: 0.5,
+  timestamp: test_timestamp,
+  recorded: now()
+}
+
+const trip_telemetry = makeTelemetryStream(BASE_TELEMETRY, 10)
+const test_telemetry = [BASE_TELEMETRY2, ...trip_telemetry]
+
+const start_telemetry = trip_telemetry[0]
+const end_telemetry = trip_telemetry[trip_telemetry.length - 1]
+
+const test_trip_start: VehicleEvent = {
+  device_id: DEVICE_UUID,
+  provider_id: PROVIDER_UUID,
+  event_type: 'trip_start',
+  timestamp: start_telemetry.timestamp + 60 * 60,
+  telemetry: start_telemetry,
+  telemetry_timestamp: start_telemetry.timestamp,
+  trip_id: TRIP_UUID,
+  recorded: now()
+}
+
+const test_trip_end: VehicleEvent = {
+  device_id: DEVICE_UUID,
+  provider_id: PROVIDER_UUID,
+  event_type: 'trip_end',
+  timestamp: end_telemetry.timestamp + 60 * 60,
+  telemetry: end_telemetry,
+  telemetry_timestamp: end_telemetry.timestamp,
+  trip_id: TRIP_UUID,
+  recorded: now()
+}
+
+test_timestamp += 600
+
+const test_deregister: VehicleEvent = {
+  trip_id: null,
+  device_id: DEVICE_UUID,
+  provider_id: PROVIDER_UUID,
+  event_type: 'deregister',
+  timestamp: test_timestamp,
+  recorded: now()
+}
+
+const test_events = [test_trip_start, test_trip_end, test_deregister]
+const log = console.log.bind(console)
+
+// FIXME make trips
+
+const test_devices = [TEST_DEVICE, TEST_DEVICE2, ...makeDevices(98, ORIGINAL_TEST_TIMESTAMP)]
+
+test_telemetry.push(...makeTelemetry(test_devices, ORIGINAL_TEST_TIMESTAMP))
+
+const test_data = {
+  devices: test_devices,
+  events: test_events,
+  telemetry: test_telemetry
+}
+
+describe('Tests app', () => {
+  it('verifies get root', done => {
+    request
+      .get('/')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // console.log('got root')
+        done(err)
+      })
+  })
+
+  it('verifies get /health without jwt', done => {
+    request
+      .get('/health')
+      // .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // console.log('got root')
+        done(err)
+      })
+  })
+
+  it('initializes the db and cache', done => {
+    request
+      .get('/test/initialize')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(201)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // console.log('db and cache initialization complete')
+        done(err)
+      })
+  })
+
+  it('verifies that it can create random seed data', done => {
+    request
+      .get('/test/seed?n=10')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(201)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // console.log('/test/seed?n=10 complete')
+        done(err)
+      })
+  })
+
+  it('initializes the db and cache (2nd pass)', done => {
+    request
+      .get('/test/initialize')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(201)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // console.log('db and cache initialization complete (2nd pass)')
+        done(err)
+      })
+  })
+  it('verifies that it can post specific seed data', done => {
+    request
+      .post('/test/seed')
+      .set('Authorization', PROVIDER_AUTH)
+      .send(test_data)
+      .expect(201)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // console.log('/test/seed w fake data complete')
+        done(err)
+      })
+  })
+
+  it('tries to get trips without authorization', done => {
+    request
+      .get('/trips')
+      // .set('Authorization', PROVIDER_AUTH)
+      .expect(403)
+      .end((err, result) => {
+        // FIXME examine trip results
+        log('error:', result.body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.string(result.body.error).contains('missing_provider_id')
+        done(err)
+      })
+  })
+
+  // FIXME add BAD_PROVIDER_AUTH to test data
+  // it('tries to get trips without authorization', done => {
+  //   request
+  //     .get('/trips')
+  //     .set('Authorization', BAD_PROVIDER_AUTH)
+  //     .expect(403)
+  //     .end((err, result) => {
+  //       // FIXME examine trip results
+  //       log('error:', result.body)
+  //       test.value(result).hasHeader('content-type', APP_JSON)
+  //       test.string(result.body.error).contains('missing_provider_id')
+  //       done(err)
+  //     })
+  // })
+
+  it('verifies get all trips', done => {
+    request
+      .get('/trips')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        // FIXME examine trip results
+        log('trips:', result.body)
+        test.object(result.body).hasProperty('version')
+        // const trips = result.body.data.trips
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('verifies get trips for non-existent vehicle fails', done => {
+    request
+      .get('/trips?device_id=thisisnotadeviceid')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.string(result.body.result).contains('invalid device_id')
+        done(err)
+      })
+  })
+
+  it('verifies get trips for vehicle', done => {
+    request
+      .get(`/trips?device_id=${DEVICE_UUID}`)
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('verifies get trips for date range', done => {
+    request
+      .get(`/trips?start_time=${test_trip_start.timestamp}&end_time=${test_trip_start.timestamp}`)
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  // FIXME trips for ....
+
+  it('verifies get all status changes', done => {
+    request
+      .get('/status_changes')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        // FIXME examine status change results
+        log('------ all changes:', result.body)
+        test.object(result.body).hasProperty('version')
+        // const status_changes = result.body.data.status_changes
+        log('status_changes FIXME examine contents')
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('verifies get status changes for ORIGINAL_TEST_TIMESTAMP', done => {
+    request
+      .get(`/status_changes?start_time=${test_trip_start.timestamp}&end_time=${test_trip_start.timestamp}`)
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        // FIXME examine status change results
+        log('----- one change:', result.body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('version')
+        const status_change = result.body.data.status_changes[0]
+        test
+          .object(status_change)
+          .hasProperty('provider_id', PROVIDER_UUID)
+          .hasProperty('vehicle_id', DEVICE_VIN)
+          .hasProperty('vehicle_type', 'bicycle')
+          .hasProperty('event_type', 'reserved')
+          .hasProperty('event_type_reason', 'user_pick_up')
+        done(err)
+      })
+  })
+
+  it('verifies get status change for invalid device_id', done => {
+    request
+      .get(`/status_changes?device_id=notavalidUUID`)
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('updates one device', done => {
+    request
+      .get(`/test/update_device?device_id=${DEVICE_UUID}`)
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        // log('update', result.body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('imports trips from agency', done => {
+    request
+      .get('/admin/import_trips_from_agency')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        log('/admin/import_trips_from_agency', result.body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('imports status_changes from agency', done => {
+    request
+      .get('/admin/import_status_changes_from_agency')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        log('/admin/import_status_changes_from_agency', result.body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  // FIXME need all the query params exercised
+  it('verifies get all trips from the db, rather than dynamic', done => {
+    request
+      .get('/trips?newSkool=true')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        // FIXME examine trip results
+        log('newSkool trips:', result.body)
+        test.object(result.body).hasProperty('version')
+        // const trips = result.body.data.trips
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  // FIXME need all the query params exercised
+  it('verifies get all status_changes from the db, rather than dynamic', done => {
+    request
+      .get('/status_changes?newSkool=true')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        // FIXME examine trip results
+        log('newSkool status_changes:', result.body)
+        test.object(result.body).hasProperty('version')
+        // const trips = result.body.data.trips
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('shuts down the db', done => {
+    request
+      .get('/test/shutdown')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+})

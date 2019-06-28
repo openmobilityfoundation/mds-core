@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../mds-enums" },
+    { "path": "../mds-logger" },
+    { "path": "../mds-test-data" },
+    { "path": "../mds-utils" }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [{ "path": "../aws-utils" }, { "path": "../api-gateway-authorizer" }]
+}

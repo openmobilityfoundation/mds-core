@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [{ "path": "../mds-api-authorizer" }, { "path": "../mds-utils" }, { "path": "../mds-test-data" }]
+}

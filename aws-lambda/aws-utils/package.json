@@ -1,0 +1,29 @@
+{
+  "name": "@aws-lambda/aws-utils",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MDS AWS utility functions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build .",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
+  },
+  "keywords": [
+    "mds",
+    "aws",
+    "utils"
+  ],
+  "dependencies": {
+    "aws-sdk": "2.483.0"
+  },
+  "devDependencies": {},
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "directories": {
+    "test": "tests"
+  }
+}

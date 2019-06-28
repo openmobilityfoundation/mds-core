@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": ["types/*", "*"]
+    },
+    "target": "es2018",
+    "module": "commonjs",
+    "importHelpers": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "preserveSymlinks": true,
+    "listEmittedFiles": true,
+    "declaration": true,
+    "composite": true
+  }
+}

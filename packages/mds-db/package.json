@@ -1,0 +1,28 @@
+{
+  "name": "mds-db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobility Data Specification database interface",
+  "main": "dist/index.js",
+  "keywords": [
+    "mds",
+    "database"
+  ],
+  "scripts": {
+    "build": "tsc --build .",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 0 ts-mocha --timeout 6000 --require source-map-support/register --recursive tests/**/*.ts && nyc report --reporter=html"
+  },
+  "author": "City of Los Angeles",
+  "license": "ISC",
+  "dependencies": {
+    "mds-enums": "0.1.0",
+    "mds-logger": "0.1.0",
+    "mds-utils": "0.1.0",
+    "mds-test-data": "0.1.0",
+    "pg": "7.11.0"
+  },
+  "devDependencies": {}
+}

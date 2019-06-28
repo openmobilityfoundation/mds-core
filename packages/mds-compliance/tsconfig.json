@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../mds-agency" },
+    { "path": "../mds-api-server" },
+    { "path": "../mds-cache" },
+    { "path": "../mds-db" },
+    { "path": "../mds-enums" },
+    { "path": "../mds-logger" },
+    { "path": "../mds-policy" },
+    { "path": "../mds-provider" },
+    { "path": "../mds-stream" },
+    { "path": "../mds-test-data" },
+    { "path": "../mds-utils" }
+  ]
+}

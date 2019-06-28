@@ -1,0 +1,42 @@
+{
+  "events": [
+    {
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "device_id": "ec551174-f324-4251-bfed-28d9f3f473fc",
+      "event_type": "trip_start",
+      "telemetry": {
+        "device_id": "ec551174-f324-4251-bfed-28d9f3f473fc",
+        "gps": {
+          "lat": 34.1760271936104,
+          "lng": -118.498021017328,
+          "speed": 300,
+          "hdop": 1,
+          "heading": 180
+        },
+        "charge": 0.5,
+        "timestamp": 1555357569000
+      },
+      "timestamp": 1555357579688,
+      "telemetry_timestamp": 1555357569000
+    },
+    {
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "device_id": "ec551174-f324-4251-bfed-28d9f3f473fc",
+      "event_type": "trip_end",
+      "telemetry": {
+        "device_id": "ec551174-f324-4251-bfed-28d9f3f473fc",
+        "gps": {
+          "lat": 34.1760271936104,
+          "lng": -118.498021017328,
+          "speed": 300,
+          "hdop": 1,
+          "heading": 180
+        },
+        "charge": 0.5,
+        "timestamp": 1555359569000
+      },
+      "timestamp": 1555359579688,
+      "telemetry_timestamp": 1555359569000
+    }
+  ]
+}

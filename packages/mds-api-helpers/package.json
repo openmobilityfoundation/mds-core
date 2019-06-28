@@ -1,0 +1,27 @@
+{
+  "name": "mds-api-helpers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobility Data Specification helper functions",
+  "keywords": [
+    "mds",
+    "helpers"
+  ],
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "mds-utils": "0.1.0",
+    "mds-db": "0.1.0",
+    "mds-cache": "0.1.0",
+    "express": "4.17.1"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build .",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "exit 0"
+  }
+}

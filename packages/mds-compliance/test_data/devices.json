@@ -1,0 +1,23 @@
+{
+	"devices": [{
+		"device_id": "ec551174-f324-4251-bfed-28d9f3f473fc",
+		"provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00'",
+		"vehicle_id": "test-vin-1",
+		"type": "bicycle",
+		"propulsion": ["human"],
+		"year": 2018,
+		"mfgr": "Schwinn",
+		"model": "Mantaray",
+		"timestamp": 1546453100001
+	}, {
+		"device_id": "bb551174-f324-4251-bfed-28d9f3f473bb",
+		"provider_id": "c8051767-4b14-4794-abc1-85aad48baff1",
+		"vehicle_id": "test-vin-2",
+		"type": "scooter",
+		"propulsion": ["electric"],
+		"year": 2017,
+		"mfgr": "Xiaomi",
+		"model": "Mi",
+		"timestamp": 1546453100001
+	}]
+}

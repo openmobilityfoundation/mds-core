@@ -1,0 +1,202 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-agency",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-agency",
+      "env": {
+        "npm_package_name": "mds-agency"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-audit",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-audit",
+      "env": {
+        "npm_package_name": "mds-audit"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-daily",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-daily",
+      "env": {
+        "npm_package_name": "mds-daily"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-compliance",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-compliance",
+      "env": {
+        "npm_package_name": "mds-compliance"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-policy",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-policy",
+      "env": {
+        "npm_package_name": "mds-policy"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-provider",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-provider",
+      "env": {
+        "npm_package_name": "mds-provider"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-agency",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-agency"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-api-authorizer",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-api-authorizer"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-audit",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-audit"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-compliance",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-compliance"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-daily",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-daily"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-db",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-db"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-enums",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-enums"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-logger",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-logger"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-policy",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-policy"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-provider",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-provider"
+    }
+  ]
+}

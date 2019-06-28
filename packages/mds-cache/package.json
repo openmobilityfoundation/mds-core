@@ -1,0 +1,29 @@
+{
+  "name": "mds-cache",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobility Data Specification cache interface",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "mds",
+    "cache"
+  ],
+  "author": "City of Los Angeles",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "3.5.5",
+    "flat": "4.1.0",
+    "mds-logger": "0.1.0",
+    "mds-enums": "0.1.0",
+    "mds-utils": "0.1.0",
+    "redis": "2.8.0"
+  },
+  "scripts": {
+    "build": "tsc --build .",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "exit 0"
+  }
+}

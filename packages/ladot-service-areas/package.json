@@ -1,0 +1,20 @@
+{
+  "name": "ladot-service-areas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Service Areas for LADOT",
+  "main": "ladot-service-areas.js",
+  "keywords": [
+    "mds",
+    "enums"
+  ],
+  "author": "City of Los Angeles",
+  "license": "ISC",
+  "dependencies": {},
+  "scripts": {
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:unit": "exit 0"
+  }
+}

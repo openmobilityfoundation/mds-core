@@ -1,0 +1,204 @@
+/*
+    Copyright 2019 City of Los Angeles.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
+
+import logger from 'mds-logger'
+import redis from 'redis'
+import bluebird from 'bluebird'
+import { Device, VehicleEvent, Telemetry } from 'mds'
+
+export type StreamName = string
+export type StreamEntryID = string
+export type StreamEntryData = string
+
+export type ReadStreamOptions = Partial<{
+  count: number
+  block: number
+  noack: boolean
+}>
+
+export type ReadStreamResult<StreamEntryType extends string = string> = [
+  StreamName,
+  [StreamEntryID, [StreamEntryType, StreamEntryData]][]
+]
+
+declare module 'redis' {
+  interface RedisClient {
+    dbsizeAsync: () => Promise<number>
+    flushdbAsync: () => Promise<'OK'>
+    pingAsync: <TPong extends string = 'PONG'>(response?: TPong) => Promise<TPong>
+    xaddAsync: (...args: unknown[]) => Promise<string>
+    xreadAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
+    xgroupAsync: (...args: unknown[]) => Promise<'OK'>
+    xreadgroupAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
+  }
+
+  interface Multi {
+    xadd: (...args: unknown[]) => string
+    execAsync: () => Promise<string[]>
+  }
+}
+
+bluebird.promisifyAll(redis.RedisClient.prototype)
+bluebird.promisifyAll(redis.Multi.prototype)
+
+const { now } = Date
+
+let cachedClient: redis.RedisClient | null = null
+
+const Streams = ['device:index', 'device:raw', 'provider:event'] as const
+const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM] = Streams
+type Stream = typeof Streams[number]
+
+const STREAM_MAXLEN: { [S in Stream]: number } = {
+  // There's now single device:raw that merges all events and telemetries
+  // of all devices that are reporting in to MDS
+  // RAW_MAXLEN of approximately 10,000,000 which corresponds to about
+  // 1000 datapoints per vehicle with 10k vehicles, or approximately
+  // 2GB used with each telemetry event being ~200 bytes
+  'device:index': 10000,
+  'device:raw': 10000000,
+  'provider:event': 100000
+}
+
+async function getClient() {
+  if (!cachedClient) {
+    const { REDIS_HOST: host = 'localhost', REDIS_PORT: port = 6379 } = process.env
+    logger.info(`connecting to redis on ${host}:${port}`)
+    cachedClient = redis.createClient(Number(port), host)
+    cachedClient.on('error', err => {
+      logger.error(`redis error ${err}`)
+    })
+    await cachedClient.dbsizeAsync().then(size => logger.info(`redis has ${size} keys`))
+  }
+  return cachedClient
+}
+
+async function initialize() {
+  await getClient()
+}
+
+async function reset() {
+  const client = await getClient()
+  await client.flushdbAsync().then(() => logger.info('redis flushed'))
+}
+
+async function startup() {
+  await getClient()
+}
+
+async function shutdown() {
+  if (cachedClient) {
+    await cachedClient.quit()
+    cachedClient = null
+  }
+}
+
+async function writeStream(stream: Stream, field: string, value: unknown) {
+  const client = await getClient()
+  return client.xaddAsync(stream, 'MAXLEN', '~', STREAM_MAXLEN[stream], '*', field, JSON.stringify(value))
+}
+
+async function writeStreamBatch(stream: Stream, field: string, values: unknown[]) {
+  const client = await getClient()
+  const batch = client.batch()
+  values.forEach(value => batch.xadd(stream, 'MAXLEN', '~', STREAM_MAXLEN[stream], '*', field, JSON.stringify(value)))
+  await batch.execAsync()
+}
+
+// put basics of vehicle in the cache
+async function writeDevice(device: Device) {
+  return writeStream(DEVICE_INDEX_STREAM, 'data', device)
+}
+
+async function writeEvent(event: VehicleEvent) {
+  return Promise.all([DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM].map(stream => writeStream(stream, 'event', event)))
+}
+
+// put latest locations in the cache
+async function writeTelemetry(telemetry: Telemetry[]) {
+  const start = now()
+  await writeStreamBatch(DEVICE_RAW_STREAM, 'telemetry', telemetry)
+  const delta = now() - start
+  if (delta > 200) {
+    logger.info('stream writeTelemetry', telemetry.length, 'points in', delta, 'ms')
+  }
+}
+
+async function readStream(
+  stream: Stream,
+  id: StreamEntryID,
+  { count, block }: ReadStreamOptions
+): Promise<ReadStreamResult[]> {
+  const client = await getClient()
+
+  return client.xreadAsync([
+    ...(typeof block === 'number' ? ['BLOCK', block] : []),
+    ...(typeof count === 'number' ? ['COUNT', count] : []),
+    'STREAMS',
+    stream,
+    id || '$'
+  ])
+}
+
+async function readStreamGroup(
+  stream: Stream,
+  group: string,
+  consumer: string,
+  id: StreamEntryID,
+  { count, block, noack }: ReadStreamOptions
+) {
+  const client = await getClient()
+  const consumer_group = `${stream}::${group}`
+
+  try {
+    await client.xgroupAsync('CREATE', stream, consumer_group, 0, 'MKSTREAM')
+  } catch (err) {
+    /* consumer group exists */
+  }
+
+  return client.xreadgroupAsync(
+    'GROUP',
+    consumer_group,
+    consumer,
+    ...[
+      ...(typeof block === 'number' ? ['BLOCK', block] : []),
+      ...(typeof count === 'number' ? ['COUNT', count] : []),
+      ...(noack ? ['NOACK'] : []),
+      'STREAMS',
+      stream,
+      id || '>'
+    ]
+  )
+}
+
+async function health() {
+  const client = await getClient()
+  const status = await client.pingAsync('connected')
+  return { using: 'redis', status }
+}
+
+export default {
+  initialize,
+  reset,
+  startup,
+  shutdown,
+  writeDevice,
+  writeEvent,
+  writeTelemetry,
+  health,
+  readStream,
+  readStreamGroup
+}

@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "api-gateway-authorizer" },
+    { "path": "aws-serverless-express-handler" },
+    { "path": "aws-utils" },
+    { "path": "mds-agency" },
+    { "path": "mds-audit" },
+    { "path": "mds-compliance" },
+    { "path": "mds-policy" },
+    { "path": "mds-provider" }
+  ]
+}
