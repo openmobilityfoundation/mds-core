@@ -1223,7 +1223,7 @@ async function readStatusChanges(
   }
 
   const { rows: status_changes } = await exec(
-    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC${
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC, sequence ASC${
       skip ? ` OFFSET ${vals.add(skip)}` : ''
     }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
     vals.values()

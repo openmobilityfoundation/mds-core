@@ -20,6 +20,8 @@ export interface StreamEntry<Data = unknown, Type = string> {
   id: StreamEntryID
   type: Type
   data: Data
+  recorded: number
+  sequence: number
 }
 
 export interface LabeledStreamEntry<Labels = unknown, Data = unknown, Type = string> extends StreamEntry<Data, Type> {

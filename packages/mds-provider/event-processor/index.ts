@@ -26,7 +26,13 @@ import { TripLabeler } from './labelers/trip-labeler'
 import { TripsProcessor } from './processors/trips-processor'
 
 const asStreamEntries = ([name, entries]: ReadStreamResult): { name: string; entries: StreamEntry[] } => {
-  return { name, entries: entries.map(([id, [type, data]]) => ({ id, type, data: JSON.parse(data) })) }
+  return {
+    name,
+    entries: entries.map(([id, [type, data]]) => {
+      const [recorded, sequence] = id.split('-').map(part => Number(part))
+      return { id, type, data: JSON.parse(data), recorded, sequence }
+    })
+  }
 }
 
 async function process(options: ReadStreamOptions): Promise<void> {

@@ -16,7 +16,7 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import { now, isUUID } from 'mds-utils'
+import { isUUID } from 'mds-utils'
 import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
 import { VehicleEvent, UUID } from 'mds'
 import { Trip } from 'mds-db/types'
@@ -30,9 +30,11 @@ type TripsProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & Trip
 function asTrip(entry: TripsProcessorEntry): Trip {
   const {
     data: event,
-    labels: { provider, device }
+    labels: { provider, device },
+    recorded,
+    sequence
   } = entry
-  const { provider_id, device_id, trip_id: provider_trip_id, timestamp, event_type, recorded = now() } = event
+  const { provider_id, device_id, trip_id: provider_trip_id, timestamp, event_type } = event
   const { provider_name } = provider
   const { vehicle_id, type: vehicle_type, propulsion: propulsion_type } = device
 
@@ -48,7 +50,8 @@ function asTrip(entry: TripsProcessorEntry): Trip {
     first_trip_enter: event_type === 'trip_enter' ? timestamp : null,
     last_trip_leave: event_type === 'trip_leave' ? timestamp : null,
     trip_end: event_type === 'trip_end' ? timestamp : null,
-    recorded
+    recorded,
+    sequence
   }
 }
 
@@ -56,20 +59,33 @@ const insertTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
   await db.writeTrips(entries.map(asTrip))
 }
 
+const updateSequence = (trip: Trip, recorded: number, sequence: number) =>
+  recorded > trip.recorded || (recorded === trip.recorded && sequence > (trip.sequence || 0))
+    ? { recorded, sequence }
+    : {}
+
 const updateTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
   await Promise.all(
-    entries.reduce<Promise<number>[]>((updates, { data: { event_type, timestamp }, labels: { trip } }) => {
-      const fields: { [x: string]: keyof Trip } = {
-        trip_start: 'trip_start',
-        trip_enter: 'first_trip_enter',
-        trip_leave: 'last_trip_leave',
-        trip_end: 'trip_end'
-      }
-      const field = fields[event_type]
-      return field && !trip[field]
-        ? updates.concat(db.updateTrip(trip.provider_trip_id, { [field]: timestamp }))
-        : updates
-    }, [])
+    entries.reduce<Promise<number>[]>(
+      (updates, { data: { event_type, timestamp }, recorded, sequence, labels: { trip } }) => {
+        const fields: { [x: string]: keyof Trip } = {
+          trip_start: 'trip_start',
+          trip_enter: 'first_trip_enter',
+          trip_leave: 'last_trip_leave',
+          trip_end: 'trip_end'
+        }
+        const field = fields[event_type]
+        return field && !trip[field]
+          ? updates.concat(
+              db.updateTrip(trip.provider_trip_id, {
+                [field]: timestamp,
+                ...updateSequence(trip, recorded, sequence)
+              })
+            )
+          : updates
+      },
+      []
+    )
   )
 }
 

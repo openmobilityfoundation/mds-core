@@ -36,7 +36,7 @@ import {
   ReadStatusChangesResult,
   StatusChange
 } from 'mds-db/types'
-import { ProviderApiRequest, PageParams } from './types'
+import { ProviderApiRequest } from './types'
 import { asStatusChangeEvent } from './utils'
 
 log.startup()
@@ -50,15 +50,13 @@ function api(app: express.Express): express.Express {
 
   // / ////////// utilities ////////////////
 
-  const page = (req: express.Request, page_params: PageParams): string => {
-    const query = Object.assign({}, req.query, page_params)
-    return urls.format({
+  const page = (req: express.Request, skip: number, take: number): string =>
+    urls.format({
       protocol: req.get('x-forwarded-proto') || req.protocol,
       host: req.get('host'),
       pathname: req.path,
-      query
+      query: { ...req.query, skip, take }
     })
-  }
 
   const links = (
     req: express.Request,
@@ -67,10 +65,10 @@ function api(app: express.Express): express.Express {
     count: number
   ): Partial<{ first: string; prev: string; next: string; last: string }> | undefined => {
     if (take < count) {
-      const first = page(req, { skip: 0, take })
-      const prev = skip >= take ? page(req, { skip: skip - take, take }) : undefined
-      const next = skip + take > count ? undefined : page(req, { skip: skip + take, take })
-      const last = page(req, { skip: count - (count % take || take), take })
+      const first = skip > 0 ? page(req, 0, take) : undefined
+      const prev = skip >= take ? page(req, skip - take, take) : undefined
+      const next = skip + take > count ? undefined : page(req, skip + take, take)
+      const last = page(req, count - (count % take || take), take)
       return { first, prev, next, last }
     }
     return undefined
@@ -556,12 +554,14 @@ function api(app: express.Express): express.Express {
     const MAX_PAGE_SIZE = 1000
 
     // Standard Provider parameters
-    const { start_time, end_time } = req.query
+    const start_time = req.query.start_time && Number(req.query.start_time)
+    const end_time = req.query.end_time && Number(req.query.end_time)
 
-    // Extensions to override paging
+    // Extensions to override paging    // Extensions to override paging
     const skip = Number(req.query.skip || 0)
     const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
 
+    // Provider ID from Authorizer
     const { provider_id } = getAuth(req)
 
     try {
@@ -815,4 +815,3 @@ function api(app: express.Express): express.Express {
 
 // Export your Express configuration so that it can be consumed by the Lambda handler
 export { api }
-export { ProviderApiRequest, Trip, ReadTripIdsBlob, ReadTripsBlob, ReadStatusChangesResult, PageParams }

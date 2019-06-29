@@ -17,7 +17,7 @@
 import db from 'mds-db'
 import logger from 'mds-logger'
 import { Feature, Point } from 'geojson'
-import { now, round } from 'mds-utils'
+import { round } from 'mds-utils'
 import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
 import { Telemetry, VehicleEvent } from 'mds'
 import { StatusChange } from 'mds-db/types'
@@ -46,6 +46,8 @@ type StatusChangesProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabe
 function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
   const {
     data: event,
+    recorded,
+    sequence,
     labels: { provider, device }
   } = entry
   const { telemetry, trip_id, timestamp: event_time } = event
@@ -66,7 +68,8 @@ function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
     event_location: asPointFeature(telemetry),
     battery_pct: (telemetry && telemetry.charge) || null,
     associated_trip: trip_id || null,
-    recorded: now()
+    recorded,
+    sequence
   }
 }
 

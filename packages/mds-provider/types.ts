@@ -21,8 +21,3 @@ export interface AuthContext {
   provider_id: string
   scope: string
 }
-
-export interface PageParams {
-  skip: number
-  take: number
-}
