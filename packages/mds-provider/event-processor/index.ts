@@ -16,7 +16,7 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import stream, { ReadStreamResult, ReadStreamOptions } from 'mds-stream'
+import stream, { ReadStreamResult, ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
@@ -25,15 +25,15 @@ import { StatusChangesProcessor } from './processors/status-changes-processor'
 import { TripLabeler } from './labelers/trip-labeler'
 import { TripsProcessor } from './processors/trips-processor'
 
-const asStreamEntries = ([name, entries]: ReadStreamResult): { name: string; entries: StreamEntry[] } => {
-  return {
-    name,
-    entries: entries.map(([id, [type, data]]) => {
-      const [recorded, sequence] = id.split('-').map(part => Number(part))
-      return { id, type, data: JSON.parse(data), recorded, sequence }
-    })
-  }
+const asStreamEntry = ([id, [type, data]]: StreamItem): StreamEntry => {
+  const [recorded, sequence] = id.split('-').map(Number)
+  return { id, type, data: JSON.parse(data), recorded, sequence }
 }
+
+const asStreamEntries = ([name, entries]: ReadStreamResult): { name: string; entries: StreamEntry[] } => ({
+  name,
+  entries: entries.map(asStreamEntry)
+})
 
 async function process(options: ReadStreamOptions): Promise<void> {
   logger.info('Processing Event Stream', options)

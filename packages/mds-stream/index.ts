@@ -19,20 +19,21 @@ import redis from 'redis'
 import bluebird from 'bluebird'
 import { Device, VehicleEvent, Telemetry } from 'mds'
 
-export type StreamName = string
-export type StreamEntryID = string
-export type StreamEntryData = string
-
 export type ReadStreamOptions = Partial<{
   count: number
   block: number
   noack: boolean
 }>
 
-export type ReadStreamResult<StreamEntryType extends string = string> = [
-  StreamName,
-  [StreamEntryID, [StreamEntryType, StreamEntryData]][]
-]
+const Streams = ['device:index', 'device:raw', 'provider:event'] as const
+const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM] = Streams
+type Stream = typeof Streams[number]
+
+type StreamItemID = string
+type StreamItemType = string
+type StreamItemData = string
+export type StreamItem = [StreamItemID, [StreamItemType, StreamItemData]]
+export type ReadStreamResult = [Stream, StreamItem[]]
 
 declare module 'redis' {
   interface RedisClient {
@@ -57,10 +58,6 @@ bluebird.promisifyAll(redis.Multi.prototype)
 const { now } = Date
 
 let cachedClient: redis.RedisClient | null = null
-
-const Streams = ['device:index', 'device:raw', 'provider:event'] as const
-const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM] = Streams
-type Stream = typeof Streams[number]
 
 const STREAM_MAXLEN: { [S in Stream]: number } = {
   // There's now single device:raw that merges all events and telemetries
@@ -139,7 +136,7 @@ async function writeTelemetry(telemetry: Telemetry[]) {
 
 async function readStream(
   stream: Stream,
-  id: StreamEntryID,
+  id: StreamItemID,
   { count, block }: ReadStreamOptions
 ): Promise<ReadStreamResult[]> {
   const client = await getClient()
@@ -157,7 +154,7 @@ async function readStreamGroup(
   stream: Stream,
   group: string,
   consumer: string,
-  id: StreamEntryID,
+  id: StreamItemID,
   { count, block, noack }: ReadStreamOptions
 ) {
   const client = await getClient()

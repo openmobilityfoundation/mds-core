@@ -1,4 +1,4 @@
-import { StreamEntryID } from 'mds-stream'
+import { Timestamp } from 'mds'
 
 /*
     Copyright 2019 City of Los Angeles.
@@ -17,10 +17,10 @@ import { StreamEntryID } from 'mds-stream'
  */
 
 export interface StreamEntry<Data = unknown, Type = string> {
-  id: StreamEntryID
+  id: string
   type: Type
   data: Data
-  recorded: number
+  recorded: Timestamp
   sequence: number
 }
 
