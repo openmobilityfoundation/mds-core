@@ -511,7 +511,7 @@ function api(app: express.Express): express.Express {
    * @param  {list of Events}
    * @return {list of StatusChanges}
    */
-  async function asStatusChange(event: VehicleEvent): Promise<StatusChange> {
+  async function eventAsStatusChange(event: VehicleEvent): Promise<StatusChange> {
     const telemetry_timestamp = event.telemetry_timestamp || event.timestamp
     const [device, provider, telemetry] = await Promise.all([
       getDevice(event.device_id),
@@ -543,9 +543,23 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  async function asStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
-    const result = await Promise.all(events.map(event => asStatusChange(event)))
+  async function eventsAsStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
+    const result = await Promise.all(events.map(event => eventAsStatusChange(event)))
     return result
+  }
+
+  const asStatusChange = ({
+    recorded,
+    sequence,
+    ...props
+  }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
+
+  const getExtendedProperties = (status_changes: StatusChange[]) => {
+    if (status_changes && status_changes.length > 0) {
+      const { recorded, sequence } = status_changes[status_changes.length - 1]
+      return { last_sequence: `${recorded}-${sequence}` }
+    }
+    return undefined
   }
 
   async function getStatusChanges(req: express.Request, res: express.Response) {
@@ -575,9 +589,10 @@ function api(app: express.Express): express.Express {
       res.status(200).send({
         version: PROVIDER_VERSION,
         data: {
-          status_changes
+          status_changes: status_changes.map(asStatusChange)
         },
-        links: links(req, skip, take, count)
+        links: links(req, skip, take, count),
+        extensions: getExtendedProperties(status_changes)
       })
     } catch (err) {
       // 500 Internal Server Error
@@ -648,7 +663,7 @@ function api(app: express.Express): express.Express {
             log.warn(readEventsMsg)
           }
           // change events into status changes
-          asStatusChanges(events)
+          eventsAsStatusChanges(events)
             .then(status_changes => {
               const asStatusChangesEnd = now()
               const asStatusChangesDuration = asStatusChangesEnd - asStatusChangesStart
@@ -766,7 +781,7 @@ function api(app: express.Express): express.Express {
             log.info('/status_changes read', result)
             const { count, events } = result
             // change events into status changes
-            asStatusChanges(events)
+            eventsAsStatusChanges(events)
               .then(status_changes => {
                 db.writeStatusChanges(status_changes)
                 res.status(200).send({
