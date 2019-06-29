@@ -486,6 +486,59 @@ function api(app: express.Express): express.Express {
 
   // / ////////////////////////////// status_changes /////////////////////////////
 
+  const asStatusChange = ({
+    recorded,
+    sequence,
+    ...props
+  }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
+
+  const getExtendedProperties = (status_changes: StatusChange[]) => {
+    if (status_changes && status_changes.length > 0) {
+      const { recorded, sequence } = status_changes[status_changes.length - 1]
+      return { last_sequence: `${recorded}-${sequence}` }
+    }
+    return undefined
+  }
+
+  async function getStatusChanges(req: express.Request, res: express.Response) {
+    const DEFAULT_PAGE_SIZE = 100
+    const MAX_PAGE_SIZE = 1000
+
+    // Standard Provider parameters
+    const start_time = req.query.start_time && Number(req.query.start_time)
+    const end_time = req.query.end_time && Number(req.query.end_time)
+
+    // Extensions to override paging    // Extensions to override paging
+    const skip = Number(req.query.skip || 0)
+    const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
+
+    // Provider ID from Authorizer
+    const { provider_id } = getAuth(req)
+
+    try {
+      const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
+        provider_id,
+        start_time,
+        end_time,
+        skip,
+        take
+      })
+
+      res.status(200).send({
+        version: PROVIDER_VERSION,
+        data: {
+          status_changes: status_changes.map(asStatusChange)
+        },
+        links: links(req, skip, take, count),
+        extensions: getExtendedProperties(status_changes)
+      })
+    } catch (err) {
+      // 500 Internal Server Error
+      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+      res.status(500).send({ error: new Error(err) })
+    }
+  }
+
   /**
    * Convert a telemetry object to a GeoJSON Point
    * @param  {Telemetry}
@@ -546,59 +599,6 @@ function api(app: express.Express): express.Express {
   async function eventsAsStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
     const result = await Promise.all(events.map(event => eventAsStatusChange(event)))
     return result
-  }
-
-  const asStatusChange = ({
-    recorded,
-    sequence,
-    ...props
-  }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
-
-  const getExtendedProperties = (status_changes: StatusChange[]) => {
-    if (status_changes && status_changes.length > 0) {
-      const { recorded, sequence } = status_changes[status_changes.length - 1]
-      return { last_sequence: `${recorded}-${sequence}` }
-    }
-    return undefined
-  }
-
-  async function getStatusChanges(req: express.Request, res: express.Response) {
-    const DEFAULT_PAGE_SIZE = 100
-    const MAX_PAGE_SIZE = 1000
-
-    // Standard Provider parameters
-    const start_time = req.query.start_time && Number(req.query.start_time)
-    const end_time = req.query.end_time && Number(req.query.end_time)
-
-    // Extensions to override paging    // Extensions to override paging
-    const skip = Number(req.query.skip || 0)
-    const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
-
-    // Provider ID from Authorizer
-    const { provider_id } = getAuth(req)
-
-    try {
-      const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
-        provider_id,
-        start_time,
-        end_time,
-        skip,
-        take
-      })
-
-      res.status(200).send({
-        version: PROVIDER_VERSION,
-        data: {
-          status_changes: status_changes.map(asStatusChange)
-        },
-        links: links(req, skip, take, count),
-        extensions: getExtendedProperties(status_changes)
-      })
-    } catch (err) {
-      // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(err) })
-    }
   }
 
   async function getEventsAsStatusChanges(req: express.Request, res: express.Response) {
@@ -700,7 +700,7 @@ function api(app: express.Express): express.Express {
   // in the mean-time, tooling companies set up shop on Provider.
   //
   // the above implementation of Provider-on-Agency takes Agency data and transforms it to
-  // Provider data structures.  however, this is done on the fly, and not stored.
+  // Provider data structures.
   //
 
   // /////////////// update trips/status_changes database from agency data /////////////
@@ -794,34 +794,6 @@ function api(app: express.Express): express.Express {
           .catch(fail)
       }, fail)
       .catch(fail)
-  })
-
-  // /////////////// scrape trips/status_changes from providers, store in db ///////////
-
-  app.get(pathsFor('/admin/import_trips_from_provider'), (req, res) => {
-    // TODO implement
-    // get provider ID param
-    // look up provider URL
-    // authenticate against provider
-    // fetch trips from provider
-    // write trips to db
-    // return activity report
-    res.status(405).send({
-      result: 'umimplemented'
-    })
-  })
-
-  app.get(pathsFor('/admin/import_status_changes_from_provider'), (req, res) => {
-    // TODO implement
-    // get provider ID param
-    // look up provider URL
-    // authenticate against provider
-    // fetch status_changes from provider
-    // write status_changes to db
-    // return activity report
-    res.status(405).send({
-      result: 'umimplemented'
-    })
   })
 
   return app
