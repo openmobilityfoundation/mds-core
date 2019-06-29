@@ -32,15 +32,15 @@ export interface Trip {
 }
 
 // TODO move to mds-db?
-export interface ReadTripsBlob {
-  trips: Trip[]
+export interface ReadTripsResult {
   count: number
+  trips: Trip[]
 }
 
 // TODO move to mds-db?
-export interface ReadTripIdsBlob {
-  tripIds: UUID[]
+export interface ReadTripIdsResult {
   count: number
+  tripIds: UUID[]
 }
 
 export interface StatusChange {

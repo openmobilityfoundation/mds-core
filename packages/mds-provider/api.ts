@@ -29,8 +29,8 @@ import { isUUID, nonNegInt, now, round, seconds, pathsFor } from 'mds-utils'
 import { Device, UUID, VehicleEvent, Telemetry, Provider } from 'mds'
 import { FeatureCollection, Feature } from 'geojson'
 import {
-  ReadTripsBlob,
-  ReadTripIdsBlob,
+  ReadTripsResult,
+  ReadTripIdsResult,
   Trip,
   ReadEventsResult,
   ReadStatusChangesResult,
@@ -396,9 +396,8 @@ function api(app: express.Express): express.Express {
       // log.info('getting events for trip_id', trip_id)
       db.readEvents({
         trip_id
-      }).then((blob: ReadEventsResult) => {
-        // const { events, count } = blob
-        const { events } = blob
+      }).then((result: ReadEventsResult) => {
+        const { events } = result
         const trip_start = events.find(e => e.event_type === VEHICLE_EVENTS.trip_start)
         const trip_end = events.find(e => e.event_type === VEHICLE_EVENTS.trip_end)
         if (trip_start && trip_end && trip_start.trip_id && trip_end.trip_id) {
@@ -451,9 +450,9 @@ function api(app: express.Express): express.Express {
     }
 
     if (newSkool) {
-      db.readTrips(params).then((blob: ReadTripsBlob) => {
-        const { trips, count } = blob
-        log.info('read', trips.length, 'trips of', count, 'in', blob)
+      db.readTrips(params).then((result: ReadTripsResult) => {
+        const { count, trips } = result
+        log.info('read', trips.length, 'trips of', count, 'in', result)
         res.status(200).send({
           version: PROVIDER_VERSION,
           data: {
@@ -465,10 +464,10 @@ function api(app: express.Express): express.Express {
     } else {
       // retrieve trip events
       db.readTripIds(params)
-        .then((blob: ReadTripIdsBlob) => {
-          const { tripIds, count } = blob
+        .then((result: ReadTripIdsResult) => {
+          const { count, tripIds } = result
 
-          log.info('read', tripIds.length, 'trips of', count, 'in', blob)
+          log.info('read', tripIds.length, 'trips of', count, 'in', result)
           asTrips(tripIds)
             .then(trips => {
               res.status(200).send({
@@ -637,8 +636,8 @@ function api(app: express.Express): express.Express {
       // FIXME be mindful about params
       const readEventsStart = now()
       db.readEvents(params)
-        .then((blob: ReadEventsResult) => {
-          const { events, count } = blob
+        .then((result: ReadEventsResult) => {
+          const { count, events } = result
           const readEventsEnd = now()
           const asStatusChangesStart = now()
           const readEventsDuration = readEventsEnd - readEventsStart
@@ -719,8 +718,8 @@ function api(app: express.Express): express.Express {
           // igmore start_time
         }
         db.readTripIds(tripParams)
-          .then((blob: ReadTripIdsBlob) => {
-            const { tripIds, count } = blob
+          .then((result: ReadTripIdsResult) => {
+            const { count, tripIds } = result
             asTrips(tripIds)
               .then(trips => {
                 // write trips
@@ -763,9 +762,9 @@ function api(app: express.Express): express.Express {
           // igmore start_time
         }
         db.readEvents(statusChangeParams)
-          .then((blob: ReadEventsResult) => {
-            log.info('/status_changes read', blob)
-            const { events, count } = blob
+          .then((result: ReadEventsResult) => {
+            log.info('/status_changes read', result)
+            const { count, events } = result
             // change events into status changes
             asStatusChanges(events)
               .then(status_changes => {

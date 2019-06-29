@@ -17,8 +17,8 @@ import log from 'mds-logger'
 import { dropTables, updateSchema, configureClient, MDSPostgresClient } from './migration'
 import {
   ReadEventsResult,
-  ReadTripIdsBlob,
-  ReadTripsBlob,
+  ReadTripIdsResult,
+  ReadTripsResult,
   ReadStatusChangesResult,
   StatusChange,
   Trip,
@@ -537,7 +537,7 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   })
 }
 
-async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsBlob> {
+async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsResult> {
   const { skip, take, device_id, min_end_time, max_end_time } = params
 
   const client = await getReadOnlyClient()
@@ -593,7 +593,7 @@ async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsBl
             resolve({
               tripIds: res2.rows.map(row => row.trip_id),
               count
-            } as ReadTripIdsBlob)
+            })
           }, fail)
           .catch(fail)
       }, fail)
@@ -1024,7 +1024,7 @@ async function writeTrips(trips: Trip[]) {
   })
 }
 
-async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsBlob> {
+async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsResult> {
   const client = await getReadOnlyClient()
   // validate params
   const { device_id, vehicle_id, provider_id, min_end_time, max_end_time } = params
