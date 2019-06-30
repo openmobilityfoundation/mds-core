@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { verify } from 'jsonwebtoken'
-import { Handler } from 'aws-lambda'
+import { Handler, CustomAuthorizerResult } from 'aws-lambda'
 import { ApiAuthorizerClaims } from 'mds-api-authorizer'
 
 const {
@@ -16,7 +16,7 @@ const generatePolicy = (
   context: Required<Omit<ApiAuthorizerClaims, 'principalId'>>,
   effect = 'Allow',
   resource = '*'
-) => ({
+): CustomAuthorizerResult => ({
   principalId,
   policyDocument: {
     Version: '2012-10-17',
@@ -32,11 +32,7 @@ const generatePolicy = (
 })
 
 // Reusable Authorizer function
-export const handler: Handler<{ authorizationToken: string }, ReturnType<typeof generatePolicy>> = (
-  event,
-  context,
-  callback
-) => {
+export const handler: Handler<{ authorizationToken: string }, CustomAuthorizerResult> = (event, context, callback) => {
   console.log('event', event)
   if (!event.authorizationToken) {
     return callback('Unauthorized')
