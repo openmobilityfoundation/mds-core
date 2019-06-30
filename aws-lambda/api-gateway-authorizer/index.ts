@@ -10,10 +10,12 @@ const {
   TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id'
 } = process.env
 
+type AuthResponseContext = Required<Omit<ApiAuthorizerClaims, 'principalId'>>
+
 // Policy helper function
 const generatePolicy = (
   principalId: string,
-  context: Required<Omit<ApiAuthorizerClaims, 'principalId'>>,
+  context: AuthResponseContext,
   effect = 'Allow',
   resource = '*'
 ): CustomAuthorizerResult => ({
