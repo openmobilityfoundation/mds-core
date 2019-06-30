@@ -32,7 +32,11 @@ const generatePolicy = (
 })
 
 // Reusable Authorizer function
-export const handler: Handler = (event, context, callback) => {
+export const handler: Handler<{ authorizationToken: string }, ReturnType<typeof generatePolicy>> = (
+  event,
+  context,
+  callback
+) => {
   console.log('event', event)
   if (!event.authorizationToken) {
     return callback('Unauthorized')
