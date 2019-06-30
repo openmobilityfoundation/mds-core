@@ -17,20 +17,38 @@
 import express from 'express'
 import awsServerlessExpress from 'aws-serverless-express'
 import awsServerlessExpressMiddleware from 'aws-serverless-express/middleware'
-import { ApiGatewayAuthorizer } from '@aws-lambda/api-gateway-authorizer'
 import { decrypt } from '@aws-lambda/aws-utils'
-import lambda from 'aws-lambda'
+import { Handler } from 'aws-lambda'
 import { server } from 'mds-api-server'
+import { ApiAuthorizerClaims, ApiAuthorizer } from 'mds-api-authorizer'
 
 // These global variables will be set by webpack
 declare const NPM_PACKAGE_NAME: string
 declare const NPM_PACKAGE_VERSION: string
 
+export interface ApiGatewayRequest extends express.Request {
+  apiGateway?: {
+    event?: {
+      requestContext?: {
+        authorizer?: ApiAuthorizerClaims
+      }
+    }
+  }
+}
+
+export const ApiGatewayAuthorizer: ApiAuthorizer = (req: ApiGatewayRequest) =>
+  (req.apiGateway &&
+    req.apiGateway.event &&
+    req.apiGateway.event.requestContext &&
+    req.apiGateway.event.requestContext.authorizer) ||
+  {}
+
+/* istanbul ignore next */
 export const AwsServerlessExpressHandler = (
   api: (app: express.Express) => express.Express
-): ((event: {}, context: lambda.Context) => Promise<awsServerlessExpress.Response>) => {
+): Handler<{}, awsServerlessExpress.Response> => {
   Object.assign(process.env, { npm_package_name: NPM_PACKAGE_NAME, npm_package_version: NPM_PACKAGE_VERSION })
-  return async (event: {}, context: lambda.Context) => {
+  return async (event, context) => {
     if (process.env.PG_PASS_ENCRYPTED) {
       Object.assign(process.env, { PG_PASS: await decrypt(process.env.PG_PASS_ENCRYPTED) })
     }

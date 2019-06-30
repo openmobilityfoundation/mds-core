@@ -10,7 +10,7 @@
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
-    "test:unit": "exit 0"
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
   },
   "keywords": [
     "mds"
