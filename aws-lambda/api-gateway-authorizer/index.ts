@@ -31,7 +31,7 @@ const generatePolicy = (
   context
 })
 
-// Reusable Authorizer function, set on `authorizer` field in serverless.yml
+// Reusable Authorizer function
 export const handler: Handler = (event, context, callback) => {
   console.log('event', event)
   if (!event.authorizationToken) {
