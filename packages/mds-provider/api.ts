@@ -16,7 +16,6 @@
 
 import express from 'express'
 import urls from 'url'
-import jwtDecode from 'jwt-decode'
 
 import log from 'mds-logger'
 import db from 'mds-db'
@@ -36,7 +35,7 @@ import {
   ReadStatusChangesResult,
   StatusChange
 } from 'mds-db/types'
-import { ProviderApiRequest } from './types'
+import { ProviderApiRequest, ProviderApiResponse } from './types'
 import { asStatusChangeEvent } from './utils'
 
 log.startup()
@@ -64,52 +63,14 @@ function api(app: express.Express): express.Express {
     take: number,
     count: number
   ): Partial<{ first: string; prev: string; next: string; last: string }> | undefined => {
-    if (take < count) {
+    if (skip > 0 || take < count) {
       const first = skip > 0 ? page(req, 0, take) : undefined
-      const prev = skip >= take ? page(req, skip - take, take) : undefined
-      const next = skip + take > count ? undefined : page(req, skip + take, take)
-      const last = page(req, count - (count % take || take), take)
+      const prev = skip - take >= 0 && skip - take < count ? page(req, skip - take, take) : undefined
+      const next = skip + take < count ? page(req, skip + take, take) : undefined
+      const last = skip + take < count ? page(req, count - (count % take || take), take) : undefined
       return { first, prev, next, last }
     }
     return undefined
-  }
-
-  function getAuth(req: ProviderApiRequest): Partial<{ provider_id: string; scope: string }> {
-    // Handle Auth from API Gateway
-    const authorizer =
-      req.apiGateway &&
-      req.apiGateway.event &&
-      req.apiGateway.event.requestContext &&
-      req.apiGateway.event.requestContext.authorizer
-
-    /* istanbul ignore next */
-    if (authorizer) {
-      const { provider_id, scope } = authorizer
-      return { provider_id, scope }
-    }
-
-    // Handle Authorization Header when running standalone
-    const decode = ([scheme, token]: string[]): Partial<{ provider_id: string; scope: string }> => {
-      const decoders: { [scheme: string]: () => Partial<{ provider_id: string; scope: string }> } = {
-        bearer: () => {
-          const decoded: { [key: string]: string } = jwtDecode(token)
-          return {
-            provider_id: decoded['https://ladot.io/provider_id'],
-            scope: decoded.scope
-          }
-        },
-        basic: () => {
-          const [provider_id, scope] = Buffer.from(token, 'base64')
-            .toString()
-            .split('|')
-          return { provider_id, scope }
-        }
-      }
-      const decoder = decoders[scheme.toLowerCase()]
-      return decoder ? decoder() : {}
-    }
-
-    return req.headers.authorization ? decode(req.headers.authorization.split(' ')) : {}
   }
 
   /**
@@ -128,13 +89,13 @@ function api(app: express.Express): express.Express {
   /**
    * Provider-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req, res, next) => {
+  app.use((req: ProviderApiRequest, res: ProviderApiResponse, next) => {
     try {
       if (req.path.includes('/health')) {
         // all auth provided by API Gateway
       } else if (req.path !== '/') {
         // verify presence of provider_id
-        const { provider_id, scope } = getAuth(req)
+        const { provider_id, scope } = res.locals.claims
 
         // no test access without auth
         if (req.path.includes('/test/') && !(scope || '').includes('test:all')) {
@@ -146,21 +107,19 @@ function api(app: express.Express): express.Express {
 
         /* istanbul ignore else getAuth will never return an invalid provider_id */
         if (!provider_id) {
-          log.warn('Missing provider_id in', req.originalUrl)
+          log.warn('missing_provider_id', req.originalUrl)
           return res.status(403).send({
             error: 'missing_provider_id'
           })
         }
         /* istanbul ignore next */
         if (!isUUID(provider_id)) {
-          log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+          log.warn('invalid_provider_id', provider_id, req.originalUrl)
           return res.status(403).send({
             error: 'invalid_provider_id',
             error_description: `invalid provider_id ${provider_id} is not a UUID`
           })
         }
-        // stash provider_id
-        res.locals.provider_id = provider_id
 
         // helpy logging
         log.info(providerName(provider_id), req.method, req.originalUrl)
@@ -173,7 +132,7 @@ function api(app: express.Express): express.Express {
 
   // / //////////////////////// basic gets /////////////////////////////////
 
-  app.get(pathsFor('/test/initialize'), (req, res) => {
+  app.get(pathsFor('/test/initialize'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     log.info('get /test/initialize')
 
     // nuke it all
@@ -186,7 +145,7 @@ function api(app: express.Express): express.Express {
   })
 
   // get => random data
-  app.get(pathsFor('/test/seed'), (req, res) => {
+  app.get(pathsFor('/test/seed'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
       log.info('/test/seed', JSON.stringify(req.query))
@@ -229,7 +188,7 @@ function api(app: express.Express): express.Express {
   })
 
   // post => populate from body
-  app.post(pathsFor('/test/seed'), (req, res) => {
+  app.post(pathsFor('/test/seed'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
       Promise.all([cache.seed(req.body), db.seed(req.body)]).then(
@@ -254,7 +213,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/test/shutdown'), (req, res) => {
+  app.get(pathsFor('/test/shutdown'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     Promise.all([db.shutdown(), cache.shutdown()]).then(() => {
       res.send({
         result: 'shutdown done'
@@ -262,7 +221,7 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/test/update_device'), (req, res) => {
+  app.get(pathsFor('/test/update_device'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     cache.updateVehicleList(req.query.device_id, req.query.timestamp).then((total: number) => {
       res.send({
         result: 'Done',
@@ -271,7 +230,7 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/health'), (req, res) => {
+  app.get(pathsFor('/health'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // FIXME add real health checks
     // verify access to known resources e.g. redis, postgres
     res.status(200).send({
@@ -410,8 +369,8 @@ function api(app: express.Express): express.Express {
   }
 
   // FIXME add pagination?
-  app.get(pathsFor('/trips'), (req, res) => {
-    const { provider_id } = getAuth(req)
+  app.get(pathsFor('/trips'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    const { provider_id } = res.locals.claims
     log.warn(providerName(provider_id), '/trips', JSON.stringify(req.params))
 
     let { skip, take } = req.query
@@ -500,7 +459,7 @@ function api(app: express.Express): express.Express {
     return undefined
   }
 
-  async function getStatusChanges(req: express.Request, res: express.Response) {
+  async function getStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
     const DEFAULT_PAGE_SIZE = 100
     const MAX_PAGE_SIZE = 1000
 
@@ -512,12 +471,8 @@ function api(app: express.Express): express.Express {
     const skip = Number(req.query.skip || 0)
     const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
 
-    // Provider ID from Authorizer
-    const { provider_id } = getAuth(req)
-
     try {
       const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
-        provider_id,
         start_time,
         end_time,
         skip,
@@ -601,11 +556,11 @@ function api(app: express.Express): express.Express {
     return result
   }
 
-  async function getEventsAsStatusChanges(req: express.Request, res: express.Response) {
+  async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
     const DEFAULT_PAGE_SIZE = 100
     const MAX_PAGE_SIZE = 1000
 
-    const { provider_id } = getAuth(req)
+    const { provider_id } = res.locals.claims
 
     const { start_time, end_time, start_recorded, end_recorded, device_id } = req.query
     let { skip, take = DEFAULT_PAGE_SIZE } = req.query
@@ -687,7 +642,7 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  app.get(pathsFor('/status_changes'), async (req, res) => {
+  app.get(pathsFor('/status_changes'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     await (req.query.newSkool ? getStatusChanges(req, res) : getEventsAsStatusChanges(req, res))
   })
 
@@ -705,7 +660,7 @@ function api(app: express.Express): express.Express {
 
   // /////////////// update trips/status_changes database from agency data /////////////
 
-  app.get(pathsFor('/admin/import_trips_from_agency'), (req, res) => {
+  app.get(pathsFor('/admin/import_trips_from_agency'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // TODO implement
     // determine last known timestamp of trips
 
@@ -753,7 +708,7 @@ function api(app: express.Express): express.Express {
       .catch(fail)
   })
 
-  app.get(pathsFor('/admin/import_status_changes_from_agency'), (req, res) => {
+  app.get(pathsFor('/admin/import_status_changes_from_agency'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     /* istanbul ignore next spoofing db failure is not implemented, can't test. */
     function fail(err: Error): void {
       const desc = err.message || err

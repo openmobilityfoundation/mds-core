@@ -24,7 +24,6 @@ import { pathsFor, seconds, getBoundingBox } from 'mds-utils'
 import providers from 'mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES } from 'mds-enums'
 import { UUID, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
-import { ReadEventsResult } from 'mds-db/dist/types'
 import { getVehicles } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
