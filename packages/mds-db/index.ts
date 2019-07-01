@@ -1175,13 +1175,14 @@ async function readStatusChanges(
     skip: number
     take: number
     provider_id: UUID
-    start_time: number
-    end_time: number
+    start_time: Timestamp
+    end_time: Timestamp
+    last_sequence: [Timestamp, number]
   }>
 ): Promise<ReadStatusChangesResult> {
   const client = await getReadOnlyClient()
 
-  const { provider_id, start_time, end_time, skip, take } = params
+  const { provider_id, start_time, end_time, skip, take, last_sequence } = params
 
   const vals = new SqlVals()
   const conditions = []
@@ -1208,6 +1209,11 @@ async function readStatusChanges(
     } else {
       conditions.push(`event_time <= ${vals.add(end_time)}`) // FIXME confirm <=
     }
+  }
+
+  if (last_sequence !== undefined && last_sequence.every(Number.isInteger)) {
+    const [recorded, sequence] = last_sequence.map(value => vals.add(value))
+    conditions.push(`(recorded > ${recorded} OR (recorded = ${recorded} AND sequence > ${sequence}))`)
   }
 
   const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`

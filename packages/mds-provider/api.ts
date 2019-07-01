@@ -24,7 +24,7 @@ import providers from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
-import { isUUID, nonNegInt, now, round, seconds, pathsFor } from 'mds-utils'
+import { isUUID, nonNegInt, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
 import { Device, UUID, VehicleEvent, Telemetry, Provider } from 'mds'
 import { FeatureCollection, Feature } from 'geojson'
 import {
@@ -451,10 +451,21 @@ function api(app: express.Express): express.Express {
     ...props
   }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
 
-  const getExtendedProperties = (status_changes: StatusChange[]) => {
+  const getStage0Properties = (status_changes: StatusChange[]) => {
     if (status_changes && status_changes.length > 0) {
       const { recorded, sequence } = status_changes[status_changes.length - 1]
       return { last_sequence: `${recorded}-${sequence}` }
+    }
+    return undefined
+  }
+
+  const asSequence = (value: unknown): [number, number] | undefined | Error => {
+    if (typeof value === 'string' && value.length > 0) {
+      const [recorded, sequence, ...extra] = value.split('-').map(Number)
+      if (extra.length === 0 && isTimestamp(recorded) && Number.isInteger(sequence)) {
+        return [recorded, sequence]
+      }
+      return Error(`Invalid sequence: ${value}`)
     }
     return undefined
   }
@@ -467,16 +478,23 @@ function api(app: express.Express): express.Express {
     const start_time = req.query.start_time && Number(req.query.start_time)
     const end_time = req.query.end_time && Number(req.query.end_time)
 
-    // Extensions to override paging    // Extensions to override paging
+    // Extensions to override paging
     const skip = Number(req.query.skip || 0)
     const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
+    const last_sequence = asSequence(req.query.last_sequence)
+
+    if (last_sequence instanceof Error) {
+      res.status(400).send({ error: last_sequence.message })
+      return
+    }
 
     try {
       const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
         start_time,
         end_time,
         skip,
-        take
+        take,
+        last_sequence
       })
 
       res.status(200).send({
@@ -485,7 +503,7 @@ function api(app: express.Express): express.Express {
           status_changes: status_changes.map(asStatusChange)
         },
         links: links(req, skip, take, count),
-        extensions: getExtendedProperties(status_changes)
+        ...getStage0Properties(status_changes)
       })
     } catch (err) {
       // 500 Internal Server Error
