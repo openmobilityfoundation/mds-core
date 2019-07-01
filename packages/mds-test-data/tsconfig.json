@@ -3,5 +3,9 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../mds-enums" }, { "path": "../mds-logger" }, { "path": "../mds-utils" }]
+  "references": [
+    { "path": "../../packages/mds-enums" },
+    { "path": "../../packages/mds-logger" },
+    { "path": "../../packages/mds-utils" }
+  ]
 }

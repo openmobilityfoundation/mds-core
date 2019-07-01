@@ -10,18 +10,20 @@
     "jsonwebtoken": "8.5.1",
     "jwt-decode": "2.2.0",
     "ladot-service-areas": "0.1.0",
+    "mds-api-helpers": "0.1.0",
     "mds-api-server": "0.1.0",
     "mds-cache": "0.1.0",
     "mds-db": "0.1.0",
     "mds-enums": "0.1.0",
-    "mds-api-helpers": "0.1.0",
     "mds-logger": "0.1.0",
     "mds-providers": "0.1.0",
     "mds-stream": "0.1.0",
     "mds-utils": "0.1.0",
     "uuid": "3.3.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mds-test-data": "0.1.0"
+  },
   "main": "dist/api.js",
   "types": "dist/api.d.ts",
   "scripts": {

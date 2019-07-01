@@ -29,10 +29,11 @@
     "mds-logger": "0.1.0",
     "mds-providers": "0.1.0",
     "mds-stream": "0.1.0",
-    "mds-test-data": "0.1.0",
     "mds-utils": "0.1.0",
     "url": "0.11.0",
     "uuid": "3.3.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "mds-test-data": "0.1.0"
+  }
 }

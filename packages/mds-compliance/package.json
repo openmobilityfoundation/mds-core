@@ -31,7 +31,7 @@
     "mds-enums": "0.1.0",
     "mds-logger": "0.1.0",
     "mds-stream": "0.1.0",
-    "mds-test-data": "0.1.0",
+    "mds-utils": "0.1.0",
     "moment-timezone": "0.5.25",
     "uuid4": "1.1.4",
     "yargs": "13.2.4"
@@ -39,6 +39,7 @@
   "devDependencies": {
     "mds-agency": "0.0.1",
     "mds-policy": "0.0.1",
-    "mds-provider": "1.0.0"
+    "mds-provider": "1.0.0",
+    "mds-test-data": "0.1.0"
   }
 }
