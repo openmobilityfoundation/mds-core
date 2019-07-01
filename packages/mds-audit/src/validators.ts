@@ -18,7 +18,7 @@ import { providers } from 'mds-providers' // map of uuids -> obb
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS, AUDIT_EVENT_TYPE, VEHICLE_EVENT } from 'mds-enums'
 import { UUID, Timestamp, Telemetry } from 'mds'
 import * as Joi from '@hapi/joi'
-import { ValidationError } from './exceptions'
+import { ValidationError } from 'mds-api-helpers'
 
 interface ValidatorOptions {
   assert: boolean

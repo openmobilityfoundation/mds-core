@@ -3,8 +3,6 @@ const restrictedAreas = require('./restricted-areas')
 const laDacs = require('./la-dacs')
 const veniceSpecOps = require('./venice-special-ops-zone')
 
-// FIXME move into DB eventually
-
 const serviceAreaMap = {
   // LA city boundary
   '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49': {
@@ -77,17 +75,14 @@ function readServiceAreas(provider_id, service_area_id) {
   // ignore provider_id for now
   return new Promise(resolve => {
     // see if service_area_id is non-null
-    // log.info('readServiceAreas', provider_id, '"' + service_area_id + '"')
 
     if (typeof service_area_id === 'string') {
       const service_area_record = serviceAreaMap[service_area_id]
       if (service_area_record) {
         service_area_record.service_area_id = service_area_id
-        // log.info('found one')
         resolve([service_area_record])
       } else {
-        // log.info('did not find one')
-        resolve(null) // womp womp
+        resolve(null)
       }
     } else {
       const areas = Object.keys(serviceAreaMap).map(key => {
@@ -95,7 +90,6 @@ function readServiceAreas(provider_id, service_area_id) {
         service_area_record.service_area_id = key
         return service_area_record
       })
-      // log.info('returning all ' + areas.length + ' areas for ' + Object.keys(serviceAreaMap))
       resolve(areas)
     }
   })

@@ -18,7 +18,7 @@ import urls from 'url'
 import express from 'express'
 import { isInsideBoundingBox } from 'mds-utils'
 import { VehicleEvent, Device, Telemetry, BoundingBox } from 'mds'
-import { EVENT_STATUS_MAP, VEHICLE_STATUSES } from 'mds-enums'
+import { EVENT_STATUS_MAP, VEHICLE_STATUSES, VEHICLE_STATUS } from 'mds-enums'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -71,7 +71,7 @@ export async function getVehicles(
     }
     const event = eventMap[device.device_id]
     /* eslint-disable no-param-reassign */
-    device.status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+    device.status = event ? EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS : VEHICLE_STATUSES.removed
     device.telemetry = event ? event.telemetry : null
     device.updated = event ? event.timestamp : null
     /* eslint-enable no-param-reassign */
@@ -142,4 +142,59 @@ export const asJsonApiLinks = (req: express.Request, skip: number, take: number,
     return { first, prev, next, last }
   }
   return undefined
+}
+
+export class ServerError extends Error {
+  public constructor(message: string = 'server_error', public info = {}) {
+    super(message)
+    this.name = 'ServerError'
+    this.info = info
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ServerError)
+    }
+  }
+}
+
+export class ValidationError extends Error {
+  public constructor(message: string = 'validation_error', public info = {}) {
+    super(message)
+    this.name = 'ValidationError'
+    this.info = info
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ValidationError)
+    }
+  }
+}
+
+export class NotFoundError extends Error {
+  public constructor(message: string = 'not_found_error', public info = {}) {
+    super(message)
+    this.name = 'NotFoundError'
+    this.info = info
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, NotFoundError)
+    }
+  }
+}
+
+export class ConflictError extends Error {
+  public constructor(message: string = 'conflict_error', public info = {}) {
+    super(message)
+    this.name = 'ConflictError'
+    this.info = info
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ConflictError)
+    }
+  }
+}
+
+export class AuthorizationError extends Error {
+  public constructor(message: string = 'authorization_error', public info = {}) {
+    super(message)
+    this.name = 'AuthorizationError'
+    this.info = info
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, AuthorizationError)
+    }
+  }
 }

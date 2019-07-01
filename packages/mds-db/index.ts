@@ -258,7 +258,6 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
   return new Promise((resolve, reject) => {
     // read from pg
     getReadOnlyClient().then(client => {
-      // FIXME order
       let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
       const vals = new SqlVals()
       if (isUUID(provider_id)) {
@@ -309,16 +308,6 @@ async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
           res => {
             // verify one row
             if (res.rows.length === 1) {
-              // FIXME stinky! remove!
-              if (!res.rows[0].vehicle_id) {
-                const vehicle_id = `test-${rangeRandomInt(10000000, 99999999)}`
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                updateDevice(device_id, {
-                  vehicle_id
-                }).then(() => {
-                  log.warn('updated', device_id, 'bogus blank vehicle_id to', vehicle_id)
-                })
-              }
               resolve(res.rows[0])
             } else {
               log.warn(`readDevice db failed for ${device_id}: rows=${res.rows.length}`, callStacker.stack)
@@ -656,7 +645,6 @@ async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsRe
     conditions.push(`device_id = ${vals.add(device_id)}`)
   }
 
-  // FIXME left join to pick up vehicle_id?
   const condSql = conditions.join(' AND ')
 
   const countSql = `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE ${condSql}`
@@ -1145,14 +1133,14 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
     if (!isTimestamp(min_end_time)) {
       throw new Error(`invalid min_end_time ${min_end_time}`)
     } else {
-      conditions.push(`min_end_time >= ${vals.add(min_end_time)}`) // FIXME confirm >=
+      conditions.push(`timestamp >= ${vals.add(min_end_time)}`) 
     }
   }
   if (max_end_time !== undefined) {
     if (!isTimestamp(max_end_time)) {
       throw new Error(`invalid max_end_time ${max_end_time}`)
     } else {
-      conditions.push(`max_end_time <= ${vals.add(max_end_time)}`) // FIXME confirm <=
+      conditions.push(`timestamp <= ${vals.add(max_end_time)}`)
     }
   }
 
@@ -1289,7 +1277,7 @@ async function readStatusChanges(
     if (!isTimestamp(start_time)) {
       throw new Error(`invalid start_time ${start_time}`)
     } else {
-      conditions.push(`event_time >= ${vals.add(start_time)}`) // FIXME confirm >=
+      conditions.push(`event_time >= ${vals.add(start_time)}`)
     }
   }
 
@@ -1297,7 +1285,7 @@ async function readStatusChanges(
     if (!isTimestamp(end_time)) {
       throw new Error(`invalid end_time ${end_time}`)
     } else {
-      conditions.push(`event_time <= ${vals.add(end_time)}`) // FIXME confirm <=
+      conditions.push(`event_time <= ${vals.add(end_time)}`)
     }
   }
 
@@ -1368,8 +1356,8 @@ async function readGeographies(params?: { geography_id?: UUID }): Promise<Geogra
       sql += ` where geography_id = $1`
       values.push(params.geography_id)
     }
-    // FIXME insufficiently general
-    // FIXME add 'count'
+    // TODO insufficiently general
+    // TODO add 'count'
     client
       .query(sql, values)
       .then(

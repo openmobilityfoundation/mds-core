@@ -24,7 +24,7 @@ import stream from 'mds-stream'
 import { providers, providerName } from 'mds-providers'
 import areas from 'ladot-service-areas'
 import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID, TripsStats } from 'mds'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums' // FIXME replace eventually
+import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
 import { isUUID, isTimestamp, now, days, inc, pathsFor, head, tail, isStateTransitionValid } from 'mds-utils'
 import { AgencyApiRequest } from 'mds-agency/types'
 
@@ -126,8 +126,6 @@ function api(app: express.Express): express.Express {
         // stash provider_id
         res.locals.provider_id = provider_id
 
-        // helpy logging
-        // log.info(providerName(provider_id), req.method, req.originalUrl)
       }
     } catch (err) {
       /* istanbul ignore next */
@@ -276,7 +274,7 @@ function api(app: express.Express): express.Express {
                   inc(stat.event_type, event_type)
                   const status = EVENT_STATUS_MAP[event_type]
                   inc(stat.status, status)
-                  // FIXME latest-state should remove service_area_id if it's null
+                  // TODO latest-state should remove service_area_id if it's null
                   if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
                     const serviceArea = areas.serviceAreaMap[event.service_area_id]
                     if (serviceArea) {
