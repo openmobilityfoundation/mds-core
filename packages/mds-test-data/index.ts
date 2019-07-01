@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { VEHICLE_EVENTS, PROPULSION_TYPE, VEHICLE_EVENT } from 'mds-enums'
+import { VEHICLE_EVENTS, PROPULSION_TYPE, VEHICLE_EVENT, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
 import { UUID, Device, Timestamp, Telemetry, VehicleEvent } from 'mds'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from 'mds-db/types'
@@ -46,8 +46,8 @@ const JUMP_TEST_DEVICE_1: Device = {
   provider_id: JUMP_UUID,
   device_id: 'e9edbe74-f7be-48e0-a63a-92f4bc1af5ed',
   vehicle_id: '1230987',
-  type: 'scooter',
-  propulsion: ['electric'],
+  type: VEHICLE_TYPES.scooter,
+  propulsion: [PROPULSION_TYPES.electric],
   year: 2018,
   mfgr: 'Schwinn',
   model: 'whoknows',
@@ -134,31 +134,31 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
     switch (provider_id) {
       case LIME_UUID:
       case JUMP_UUID:
-        type = ['bicycle', 'scooter'][coin]
-        if (type === 'bicycle') {
-          propulsion = [['human', 'electric'], ['human']][coin] as PROPULSION_TYPE[]
+        type = [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter][coin]
+        if (type === VEHICLE_TYPES.bicycle) {
+          propulsion = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][coin] as PROPULSION_TYPE[]
         } else {
-          propulsion = ['electric']
+          propulsion = [PROPULSION_TYPES.electric]
         }
         break
       case BIRD_UUID:
-        type = 'scooter'
-        propulsion = ['electric']
+        type = VEHICLE_TYPES.scooter
+        propulsion = [PROPULSION_TYPES.electric]
         break
       default:
-        type = 'bicycle'
-        propulsion = ['human']
+        type = VEHICLE_TYPES.bicycle
+        propulsion = [PROPULSION_TYPES.human]
         break
     }
     let mfgr
     let model
     const year = rangeRandomInt(2016, 2020)
     switch (type) {
-      case 'scooter':
+      case VEHICLE_TYPES.scooter:
         mfgr = 'Xiaomi'
         model = 'M365'
         break
-      case 'bicycle':
+      case VEHICLE_TYPES.bicycle:
         mfgr = 'Schwinn'
         model = 'Mantaray'
         break

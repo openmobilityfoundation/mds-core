@@ -21,6 +21,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
+import { VEHICLE_TYPES } from 'mds-enums'
 import { now, days } from 'mds-utils'
 import { Policy } from 'mds'
 import { server } from 'mds-api-server'
@@ -62,7 +63,7 @@ const policy_json: Policy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: [], unavailable: [], reserved: [], trip: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 3000,
       minimum: 500
     }
@@ -89,7 +90,7 @@ const policy2_json: Policy = {
       rule_units: 'minutes',
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: [], reserved: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 7200
     },
     {
@@ -99,7 +100,7 @@ const policy2_json: Policy = {
       rule_units: 'minutes',
       geographies: [GEOGRAPHY_UUID],
       statuses: { unavailable: [], trip: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 720
     }
   ]
@@ -124,7 +125,7 @@ const policy3_json: Policy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       statuses: { trip: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 15
     },
     {
@@ -134,7 +135,7 @@ const policy3_json: Policy = {
       rule_type: 'speed',
       rule_units: 'mph',
       statuses: { trip: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       days: ['sat', 'sun'],
       start_time: '12:00',
       end_time: '23:59',

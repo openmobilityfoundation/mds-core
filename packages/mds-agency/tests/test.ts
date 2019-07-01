@@ -21,11 +21,11 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES } from 'mds-enums'
-import { Timestamp, Device, VehicleEvent, Telemetry } from 'mds'
+import { VEHICLE_EVENTS, VEHICLE_STATUSES, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
+import { Timestamp, Device, VehicleEvent } from 'mds'
 import db from 'mds-db'
 import cache from 'mds-cache'
-import { makeDevices, makeEvents, makeEventsWithTelemetry, COMPLIANCE_AUTH } from 'mds-test-data'
+import { makeDevices, makeEvents } from 'mds-test-data'
 import { server } from 'mds-api-server'
 import { api } from '../api'
 
@@ -80,8 +80,8 @@ const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
   provider_id: PROVIDER_UUID,
   vehicle_id: 'test-id-1',
-  type: 'bicycle', // FIXME constant
-  propulsion: ['human'], // FIXME constant
+  type: VEHICLE_TYPES.bicycle,
+  propulsion: [PROPULSION_TYPES.human],
   year: 2018,
   mfgr: 'Schwinn',
   model: 'Mantaray'
@@ -296,6 +296,7 @@ describe('Tests API', () => {
 
   it('verifies post device bad propulsion', done => {
     const badVehicle = deepCopy(TEST_VEHICLE)
+    // @ts-ignore: Spoofing garbage data
     badVehicle.propulsion = ['hamster']
     request
       .post('/vehicles')
@@ -373,6 +374,7 @@ describe('Tests API', () => {
   })
   it('verifies post device bad type', done => {
     const badVehicle = deepCopy(TEST_VEHICLE)
+    // @ts-ignore: Spoofing garbage data
     badVehicle.type = 'hamster'
     request
       .post('/vehicles')

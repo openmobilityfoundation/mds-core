@@ -9,7 +9,7 @@ import db from 'mds-db'
 import supertest from 'supertest'
 import { now } from 'mds-utils'
 import { Telemetry, Device, Policy, Geography, VehicleEvent, UUID } from 'mds'
-import { RULE_TYPES } from 'mds-enums'
+import { RULE_TYPES, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
 import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'
@@ -58,8 +58,8 @@ const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
   provider_id: PROVIDER_UUID,
   vehicle_id: 'test-id-1',
-  type: 'bicycle', // FIXME constant
-  propulsion: ['human'], // FIXME constant
+  type: VEHICLE_TYPES.bicycle,
+  propulsion: [PROPULSION_TYPES.human],
   year: 2018,
   mfgr: 'Schwinn',
   model: 'Mantaray'
@@ -85,7 +85,7 @@ const COUNT_POLICY_JSON: Policy = {
       rule_type: RULE_TYPES.count,
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: [], unavailable: [], reserved: [], trip: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 10,
       minimum: 5
     }
@@ -127,7 +127,7 @@ const COUNT_POLICY_JSON_3: Policy = {
       rule_type: RULE_TYPES.count,
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: ['service_start'], unavailable: [], reserved: [], trip: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 10
     }
   ]
@@ -150,7 +150,7 @@ const TIME_POLICY_JSON: Policy = {
       rule_units: 'minutes',
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: [] },
-      vehicle_types: ['bicycle', 'scooter'],
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 7200
     }
   ]
@@ -864,7 +864,7 @@ describe('Tests Compliance API:', () => {
             rule_type: RULE_TYPES.count,
             geographies: veniceSpecOpsPointIds,
             statuses: { available: ['provider_drop_off'] },
-            vehicle_types: ['bicycle', 'scooter'],
+            vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
             maximum: 0
           },
           {
@@ -873,7 +873,7 @@ describe('Tests Compliance API:', () => {
             rule_type: RULE_TYPES.count,
             geographies: ['e0e4a085-7a50-43e0-afa4-6792ca897c5a'],
             statuses: { available: ['provider_drop_off'] },
-            vehicle_types: ['bicycle', 'scooter'],
+            vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
             maximum: 0
           }
         ]
