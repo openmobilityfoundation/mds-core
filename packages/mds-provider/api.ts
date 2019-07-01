@@ -91,9 +91,7 @@ function api(app: express.Express): express.Express {
    */
   app.use((req: ProviderApiRequest, res: ProviderApiResponse, next) => {
     try {
-      if (req.path.includes('/health')) {
-        // all auth provided by API Gateway
-      } else if (req.path !== '/') {
+      if (!req.path.includes('/health')) {
         // verify presence of provider_id
         const { provider_id, scope } = res.locals.claims
 

@@ -91,9 +91,9 @@ const updateTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
 
 type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
 
-const isTripEventEntry = <Label>(
-  entry: LabeledStreamEntry<Label>
-): entry is LabeledStreamEntry<Label, TripEvent, 'event'> =>
+const isTripEventEntry = (
+  entry: LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel>
+): entry is LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent, 'event'> =>
   entry &&
   typeof entry === 'object' &&
   entry.type === 'event' &&

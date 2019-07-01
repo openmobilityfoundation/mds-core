@@ -73,14 +73,12 @@ function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
   }
 }
 
-const isVehicleEventEntry = <Label>(
-  entry: LabeledStreamEntry<Label>
-): entry is LabeledStreamEntry<Label, VehicleEvent, 'event'> =>
+const isVehicleEventEntry = (
+  entry: LabeledStreamEntry<ProviderLabel & DeviceLabel>
+): entry is LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent, 'event'> =>
   entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
 
-const StatusChangeEventProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent, 'event'>[]
-): Promise<void> => {
+const StatusChangeEventProcessor = async (entries: StatusChangesProcessorEntry[]): Promise<void> => {
   if (entries.length > 1) {
     await db.writeStatusChanges(entries.map(asStatusChange))
     logger.info(`Status Changes Processor: Created ${entries.length} status changes`)
