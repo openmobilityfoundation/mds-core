@@ -14,7 +14,7 @@
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
     "test:unit": "exit 0",
-    "watch": "nodemon --watch '../..' --ignore '*.d.ts' --ext 'ts' --exec yarn watch:exec",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' ==ignore '*.d.ts' --ext 'ts' --exec yarn watch:exec",
     "watch:exec": "yarn build && ts-node"
   },
   "keywords": [
