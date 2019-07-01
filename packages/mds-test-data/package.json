@@ -12,8 +12,8 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "mds-enums": "0.1.0",
     "ladot-service-areas": "0.1.0",
+    "mds-enums": "0.1.0",
     "mds-logger": "0.1.0",
     "mds-utils": "0.1.0",
     "uuid4": "1.1.4"

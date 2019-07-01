@@ -3,6 +3,10 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../aws-serverless-express-handler" }],
+  "references": [
+    { "path": "../../aws-lambda/aws-serverless-express-handler" },
+    { "path": "../../packages/mds-agency" },
+    { "path": "../../packages/mds-api-server" }
+  ],
   "include": ["index.ts"]
 }

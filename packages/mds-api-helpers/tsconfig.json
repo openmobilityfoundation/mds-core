@@ -3,5 +3,9 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../mds-utils" }, { "path": "../mds-cache" }]
+  "references": [
+    { "path": "../../packages/mds-cache" },
+    { "path": "../../packages/mds-db" },
+    { "path": "../../packages/mds-utils" }
+  ]
 }

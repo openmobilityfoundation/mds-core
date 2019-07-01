@@ -9,11 +9,13 @@
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
     "deploy:us-east-2": "aws lambda update-function-code --region us-east-2 --zip-file fileb://dist/${npm_package_name}.zip --function-name",
     "deploy:us-west-2": "aws lambda update-function-code --region us-west-2 --zip-file fileb://dist/${npm_package_name}.zip --function-name",
-    "start": "nodemon --watch '../../**/*.*' --ext 'ts js' --exec ts-node server.ts",
+    "start": "yarn watch server",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
-    "test:unit": "exit 0"
+    "test:unit": "exit 0",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec",
+    "watch:exec": "yarn build && ts-node"
   },
   "keywords": [
     "mds"
@@ -21,10 +23,9 @@
   "author": "City of Los Angeles",
   "dependencies": {
     "@aws-lambda/aws-serverless-express-handler": "0.1.0",
+    "mds-api-server": "0.1.0",
     "mds-policy": "0.0.1"
   },
-  "devDependencies": {
-    "mds-api-server": "0.1.0"
-  },
+  "devDependencies": {},
   "license": "Apache-2.0"
 }

@@ -26,10 +26,12 @@
   "types": "dist/api.d.ts",
   "scripts": {
     "build": "tsc --build .",
-    "start": "nodemon --watch '../../**/*.*' --ext 'ts js' --exec ts-node server.ts",
+    "start": "yarn watch server",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
-    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec",
+    "watch:exec": "yarn build && ts-node"
   }
 }

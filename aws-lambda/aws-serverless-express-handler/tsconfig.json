@@ -3,5 +3,9 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../aws-utils" }, { "path": "../api-gateway-authorizer" }]
+  "references": [
+    { "path": "../../aws-lambda/aws-utils" },
+    { "path": "../../aws-lambda/api-gateway-authorizer" },
+    { "path": "../../packages/mds-api-server" }
+  ]
 }

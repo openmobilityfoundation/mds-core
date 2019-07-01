@@ -4,14 +4,14 @@
     "outDir": "dist"
   },
   "references": [
-    { "path": "../mds-api-server" },
-    { "path": "../mds-cache" },
-    { "path": "../mds-db" },
-    { "path": "../mds-enums" },
-    { "path": "../mds-logger" },
-    { "path": "../mds-providers" },
-    { "path": "../mds-stream" },
-    { "path": "../mds-test-data" },
-    { "path": "../mds-utils" }
+    { "path": "../../packages/mds-api-server" },
+    { "path": "../../packages/mds-cache" },
+    { "path": "../../packages/mds-db" },
+    { "path": "../../packages/mds-enums" },
+    { "path": "../../packages/mds-logger" },
+    { "path": "../../packages/mds-providers" },
+    { "path": "../../packages/mds-stream" },
+    { "path": "../../packages/mds-test-data" },
+    { "path": "../../packages/mds-utils" }
   ]
 }
