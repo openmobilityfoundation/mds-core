@@ -23,7 +23,7 @@ import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import stream from 'mds-stream'
-import providers from 'mds-providers'
+import { providers, providerName } from 'mds-providers'
 import areas from 'ladot-service-areas'
 import { UUID, Recorded, Device, VehicleEvent, Telemetry, ErrorObject, Timestamp, CountMap, DeviceID } from 'mds'
 import {
@@ -194,16 +194,6 @@ function api(app: express.Express): express.Express {
   }
 
   // / ////////// gets ////////////////
-
-  /**
-   * TODO move into providers source, or utils?
-   * convert provider_id to provider name (if available)
-   * @param  {UUID} provider_id
-   * @return {String} name or provider_id
-   */
-  function providerName(provider_id: UUID): string {
-    return providers[provider_id] ? providers[provider_id].provider_name : provider_id
-  }
 
   /**
    * Get all service areas

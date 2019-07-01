@@ -21,7 +21,7 @@ import db from 'mds-db'
 import cache from 'mds-cache'
 import urls from 'url'
 import { pathsFor, seconds, getBoundingBox } from 'mds-utils'
-import providers from 'mds-providers' // map of uuids -> obj
+import { providers, providerName } from 'mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES } from 'mds-enums'
 import { UUID, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
 import { getVehicles, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
@@ -69,16 +69,6 @@ import {
 } from './validators'
 
 // const AUDIT_PROVIDER_ID = 'dc3dfcf1-ed9f-4606-9c3b-ef19027846ec'
-
-/**
- * convert provider_id to provider name (if available)
- * @param  {UUID} provider_id
- * @return {String} name or provider_id
- */
-// TODO lib
-function providerName(provider_id: UUID): string {
-  return providers[provider_id] ? providers[provider_id].provider_name : provider_id.split('-')[0]
-}
 
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {

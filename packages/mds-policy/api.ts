@@ -15,7 +15,7 @@
  */
 
 import express from 'express'
-import providers from 'mds-providers'
+import { providers } from 'mds-providers'
 import Joi from '@hapi/joi'
 import jwtDecode from 'jwt-decode'
 import joiToJsonSchema from 'joi-to-json-schema'

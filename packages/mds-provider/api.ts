@@ -20,7 +20,7 @@ import jwtDecode from 'jwt-decode'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
-import providers from 'mds-providers' // map of uuids -> obj
+import { providers, providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
@@ -84,19 +84,6 @@ function api(app: express.Express): express.Express {
     }
 
     return req.headers.authorization ? decode(req.headers.authorization.split(' ')) : {}
-  }
-
-  /**
-   * convert provider_id to provider name (if available)
-   * @param  {UUID} provider_id
-   * @return {String} name or provider_id
-   */
-  // FIXME de-dup
-  function providerName(provider_id: string | undefined): string {
-    if (provider_id) {
-      return providers[provider_id] ? providers[provider_id].provider_name : provider_id
-    }
-    return 'none'
   }
 
   /**
@@ -387,7 +374,7 @@ function api(app: express.Express): express.Express {
   // FIXME add pagination?
   app.get(pathsFor('/trips'), (req, res) => {
     const { provider_id } = getAuth(req)
-    log.warn(providerName(provider_id), '/trips', JSON.stringify(req.params))
+    log.warn(provider_id ? providerName(provider_id) : 'none', '/trips', JSON.stringify(req.params))
 
     const { skip, take } = asPagingParams(req.query)
     const { start_time, end_time, device_id, newSkool } = req.query
@@ -555,7 +542,7 @@ function api(app: express.Express): express.Express {
 
     const { start_time, end_time, start_recorded, end_recorded, device_id } = req.query
     const { skip, take } = asPagingParams(req.query)
-    const providerAlias = providerName(provider_id)
+    const providerAlias = provider_id ? providerName(provider_id) : 'none'
     const stringifiedQuery = JSON.stringify(req.query)
 
     // FIXME also validate start_time, end_time

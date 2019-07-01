@@ -21,7 +21,7 @@ import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import stream from 'mds-stream'
-import providers from 'mds-providers'
+import { providers, providerName } from 'mds-providers'
 import areas from 'ladot-service-areas'
 import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID } from 'mds'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums' // FIXME replace eventually
@@ -40,6 +40,7 @@ log.startup()
 /**
  * Extract auth info from JWT or auth headers
  */
+
 function getAuth(req: AgencyApiRequest): Partial<{ provider_id: string; scope: string }> {
   // Handle Auth from API Gateway
   const authorizer =
@@ -162,16 +163,6 @@ function api(app: express.Express): express.Express {
   }
 
   // / ////////// gets ////////////////
-
-  /**
-   * TODO move into providers source, or utils?
-   * convert provider_id to provider name (if available)
-   * @param  {UUID} provider_id
-   * @return {String} name or provider_id
-   */
-  function providerName(provider_id: UUID): string {
-    return providers[provider_id] ? providers[provider_id].provider_name : provider_id
-  }
 
   // ///////////////////// begin daily endpoints ///////////////////////
 
