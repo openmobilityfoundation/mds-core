@@ -70,6 +70,7 @@ const VENICE_POLICY_UUID = 'dd9ace3e-14c8-461b-b5e7-1326505ff176'
 const COUNT_POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
 const COUNT_POLICY_UUID_2 = '37637f96-2580-475a-89e7-cfc5d2e70f84'
 const COUNT_POLICY_UUID_3 = 'e8f9a720-6c12-41c8-a31c-715e76d65ea1'
+const COUNT_POLICY_UUID_4 = 'b3b8529e-46e0-4d44-877b-2fb4e0ba3515'
 const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
 const COUNT_POLICY_JSON: Policy = {
   name: 'LADOT Mobility Caps',
@@ -128,6 +129,26 @@ const COUNT_POLICY_JSON_3: Policy = {
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: ['service_start'], unavailable: [], reserved: [], trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 10
+    }
+  ]
+}
+
+const COUNT_POLICY_JSON_4: Policy = {
+  name: 'LADOT Mobility Caps',
+  description: 'Mobility caps as described in the One-Year Permit',
+  policy_id: COUNT_POLICY_UUID_4,
+  start_date: 1558389669540,
+  end_date: null,
+  prev_policies: null,
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: '04dc545b-41d8-401d-89bd-bfac9247b555',
+      rule_type: RULE_TYPES.count,
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 10
     }
   ]
@@ -945,6 +966,75 @@ describe('Tests Compliance API:', () => {
           for (const issue of result.body[0].compliance[1].matches) {
             test.assert(issue.matched_vehicles.length === 10)
           }
+          done(err)
+        })
+    })
+  })
+
+  describe('Tests reading historical compliance', () => {
+    const yesterday = now() - 86400000
+    before(done => {
+      // Generate old events
+      const devices: Device[] = makeDevices(15, yesterday)
+      const events_a = makeEventsWithTelemetry(devices, yesterday, CITY_OF_LA, 'trip_start')
+      const telemetry_a: Telemetry[] = []
+      devices.forEach(device => {
+        telemetry_a.push(makeTelemetryInArea(device, yesterday, CITY_OF_LA, 10))
+      })
+
+      // Generate new events
+      const events_b = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'provider_drop_off')
+      const telemetry_b: Telemetry[] = []
+      devices.forEach(device => {
+        telemetry_a.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
+      })
+
+      request
+        .get('/test/initialize')
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end(() => {
+          // Seed
+          const seedData = {
+            devices: [...devices],
+            events: [...events_a, ...events_b],
+            telemetry: [...telemetry_a, ...telemetry_b]
+          }
+          Promise.all([db.initialize(), cache.initialize()]).then(() => {
+            Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
+              db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(() => {
+                db.writePolicy(COUNT_POLICY_JSON_4).then(() => {
+                  done()
+                })
+              })
+            })
+          })
+        })
+    })
+
+    it('Historical check reports 15 violations', done => {
+      request
+        .get(`/snapshot/${COUNT_POLICY_UUID_4}?end_date=${yesterday + 200}`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.length === 1)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
+          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('Current check reports 0 violations', done => {
+      request
+        .get(`/snapshot/${COUNT_POLICY_UUID_4}`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.length === 1)
+          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })

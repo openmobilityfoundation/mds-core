@@ -1,4 +1,16 @@
-import { Audit, AuditEvent, VehicleEvent, Geography, UUID, Policy, Timestamp, Device, Telemetry, Recorded } from 'mds'
+import {
+  Audit,
+  AuditEvent,
+  VehicleEvent,
+  Geography,
+  UUID,
+  Policy,
+  Timestamp,
+  Device,
+  Telemetry,
+  Recorded,
+  DeviceID
+} from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
   convertTelemetryRecordToTelemetry,
@@ -23,7 +35,8 @@ import {
   StatusChange,
   Trip,
   TelemetryRecord,
-  ReadEventsQueryParams
+  ReadEventsQueryParams,
+  ReadHistoricalEventsQueryParams
 } from './types'
 
 import schema from './schema'
@@ -256,7 +269,7 @@ async function readDeviceByVehicleId(
   throw Error(error)
 }
 
-async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): Promise<Device[]> {
+async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): Promise<DeviceID[]> {
   return new Promise((resolve, reject) => {
     // read from pg
     getReadOnlyClient().then(client => {
@@ -535,6 +548,101 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
       }, fail)
       .catch(fail)
   })
+}
+
+async function readHistoricalEvents(params: ReadHistoricalEventsQueryParams) {
+  const { provider_id: query_provider_id, end_date } = params
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const values = vals.values()
+  let sql = `SELECT      e2.provider_id,
+  e2.device_id,
+  e2.event_type,
+  e2.timestamp,
+  lat,
+  lng,
+  speed,
+  heading,
+  accuracy,
+  altitude,
+  recorded
+FROM
+(
+SELECT      provider_id,
+      device_id,
+      event_type,
+      timestamp
+FROM
+(
+SELECT      provider_id,
+          device_id,
+          event_type,
+          timestamp,
+          recorded,
+          RANK() OVER (PARTITION BY device_id ORDER BY timestamp DESC) AS rownum
+FROM        events
+WHERE         timestamp < '${end_date}'`
+  if (query_provider_id) {
+    sql += `\nAND         provider_id = '${query_provider_id}'`
+  }
+  sql += `) e1
+  WHERE       rownum = 1
+  AND         event_type IN ('trip_enter',
+                       'trip_start',
+                       'trip_end',
+                       'reserve',
+                       'cancel_reservation',
+                       'provider_drop_off',
+                       'service_end',
+                       'service_start')
+  ) e2
+  INNER JOIN  telemetry
+  ON          e2.device_id = telemetry.device_id
+  AND         e2.timestamp = telemetry.timestamp
+  ORDER BY    provider_id,
+    device_id,
+    event_type`
+
+  const { rows } = await client.query(sql, values)
+  const events = rows.reduce((acc: VehicleEvent[], row) => {
+    const {
+      provider_id,
+      device_id,
+      event_type,
+      timestamp,
+      recorded,
+      lat,
+      lng,
+      speed,
+      heading,
+      accuracy,
+      altitude
+    } = row
+    return [
+      ...acc,
+      {
+        provider_id,
+        device_id,
+        event_type,
+        timestamp,
+        recorded,
+        telemetry: {
+          provider_id,
+          device_id,
+          timestamp,
+          gps: {
+            lat,
+            lng,
+            speed,
+            heading,
+            accuracy,
+            altitude
+          }
+        }
+      }
+    ]
+  }, [])
+  return events
 }
 
 async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsBlob> {
@@ -1399,6 +1507,7 @@ export = {
   updateDevice,
   readEvent,
   readEvents,
+  readHistoricalEvents,
   readTripIds,
   writeEvent,
   readTelemetry,

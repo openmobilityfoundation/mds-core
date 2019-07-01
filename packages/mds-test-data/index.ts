@@ -117,7 +117,7 @@ function makeEventsWithTelemetry(
       event_type: event_type as VEHICLE_EVENT,
       telemetry: makeTelemetryInArea(device, timestamp, area, speed),
       timestamp,
-      recorded: now()
+      recorded: timestamp
     }
   })
 }
@@ -270,7 +270,7 @@ function makeTelemetryInShape(device: Device, timestamp: number, shape: Geometry
     },
     charge: rangeRandom(0.1, 0.9),
     timestamp,
-    recorded: now()
+    recorded: timestamp
   }
 }
 
