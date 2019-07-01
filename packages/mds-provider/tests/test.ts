@@ -16,6 +16,7 @@
 
 import supertest from 'supertest'
 import { now } from 'mds-utils'
+import { VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
 import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from 'mds-test-data'
 import test from 'unit.js'
 import { Device, Telemetry, VehicleEvent } from 'mds'
@@ -44,8 +45,8 @@ const TEST_DEVICE: Device = {
   device_id: DEVICE_UUID,
   provider_id: PROVIDER_UUID,
   vehicle_id: DEVICE_VIN,
-  type: 'bicycle', // FIXME constant
-  propulsion: ['human'], // FIXME constant
+  type: VEHICLE_TYPES.bicycle,
+  propulsion: [PROPULSION_TYPES.human],
   year: 2018,
   mfgr: 'Schwinn',
   model: 'Mantaray',
@@ -56,8 +57,8 @@ const TEST_DEVICE2: Device = {
   device_id: DEVICE_UUID2,
   provider_id: PROVIDER_UUID,
   vehicle_id: DEVICE_VIN2,
-  type: 'scooter', // FIXME constant
-  propulsion: ['electric'], // FIXME constant
+  type: VEHICLE_TYPES.scooter,
+  propulsion: [PROPULSION_TYPES.electric],
   year: 2017,
   mfgr: 'Xiaomi',
   model: 'Mi',
@@ -332,7 +333,7 @@ describe('Tests app', () => {
           .object(status_change)
           .hasProperty('provider_id', PROVIDER_UUID)
           .hasProperty('vehicle_id', DEVICE_VIN)
-          .hasProperty('vehicle_type', 'bicycle')
+          .hasProperty('vehicle_type', VEHICLE_TYPES.bicycle)
           .hasProperty('event_type', 'reserved')
           .hasProperty('event_type_reason', 'user_pick_up')
         done(err)

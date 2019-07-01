@@ -21,7 +21,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_EVENTS } from 'mds-enums'
+import { VEHICLE_EVENTS, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
 import { Timestamp, Device, VehicleEvent, Telemetry } from 'mds'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -79,8 +79,8 @@ const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
   provider_id: PROVIDER_UUID,
   vehicle_id: 'test-id-1',
-  type: 'bicycle', // FIXME constant
-  propulsion: ['human'], // FIXME constant
+  type: VEHICLE_TYPES.bicycle,
+  propulsion: [PROPULSION_TYPES.human],
   year: 2018,
   mfgr: 'Schwinn',
   model: 'Mantaray'

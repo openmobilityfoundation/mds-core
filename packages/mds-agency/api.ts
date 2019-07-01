@@ -22,7 +22,6 @@ import { getVehicles } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
-import { CacheReadDeviceResult } from 'mds-cache/types'
 import stream from 'mds-stream'
 import providers from 'mds-providers'
 import areas from 'ladot-service-areas'
@@ -37,7 +36,7 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   VEHICLE_EVENT
-} from 'mds-enums' // FIXME replace eventually
+} from 'mds-enums'
 import {
   isUUID,
   isPct,
@@ -50,8 +49,6 @@ import {
   pathsFor,
   head,
   tail,
-  getBoundingBox,
-  isInsideBoundingBox,
   isStateTransitionValid
 } from 'mds-utils'
 import { ServiceArea, TripsStats, AgencyApiRequest } from 'mds-agency/types'
@@ -529,7 +526,6 @@ function api(app: express.Express): express.Express {
 
   /**
    * Read back all the vehicles for this provider_id, with pagination
-   * FIXME I think this should share more code with reading a single device
    */
   app.get(pathsFor('/vehicles'), async (req, res) => {
     let { skip, take } = req.query
@@ -1147,8 +1143,6 @@ function api(app: express.Express): express.Express {
   }
 
   app.get(pathsFor('/admin/vehicle_counts'), (req, res) => {
-    const { start_time, end_time } = startAndEnd(req.params)
-
     function fail(err: Error | string): void {
       log.error('/admin/vehicle_counts fail', err).then(() => {
         res.status(500).send({
@@ -1205,7 +1199,6 @@ function api(app: express.Express): express.Express {
 
       getMaps()
         .then((maps: { eventMap: { [s: string]: VehicleEvent }; telemetryMap: { [s: string]: Telemetry } }) => {
-          // TODO reimplement to be more efficient
           const { eventMap } = maps
           Promise.all(
             stats.map(stat => {
@@ -1222,7 +1215,7 @@ function api(app: express.Express): express.Express {
                   inc(stat.event_type, event_type)
                   const status = EVENT_STATUS_MAP[event_type]
                   inc(stat.status, status)
-                  // FIXME latest-state should remove service_area_id if it's null
+                  // TODO latest-state should remove service_area_id if it's null
                   if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
                     const serviceArea = areas.serviceAreaMap[event.service_area_id]
                     if (serviceArea) {
@@ -1569,7 +1562,6 @@ function api(app: express.Express): express.Express {
   // ///////////////////// begin test-only endpoints ///////////////////////
 
   app.get(pathsFor('/test/initialize'), (req, res) => {
-    // FIXME janky
     Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
       .then(
         kind => {
@@ -1693,7 +1685,7 @@ function api(app: express.Express): express.Express {
   })
 
   async function refresh(device_id: UUID): Promise<string> {
-    // FIXME all of this back and forth between cache and db is slow
+    // TODO all of this back and forth between cache and db is slow
     const device = await db.readDevice(device_id)
     // log.info('refresh device', JSON.stringify(device))
     await cache.writeDevice(device)

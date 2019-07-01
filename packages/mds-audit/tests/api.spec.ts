@@ -15,7 +15,7 @@
  */
 
 import supertest from 'supertest'
-import { VEHICLE_EVENTS, AUDIT_EVENT_TYPES } from 'mds-enums'
+import { VEHICLE_EVENTS, AUDIT_EVENT_TYPES, PROPULSION_TYPES, VEHICLE_TYPES } from 'mds-enums'
 import { PROVIDER_UUID, PROVIDER_AUTH, makeEventsWithTelemetry, makeDevices, COMPLIANCE_AUTH } from 'mds-test-data'
 import { now } from 'mds-utils'
 import { Device, Timestamp, Telemetry } from 'mds'
@@ -72,8 +72,8 @@ describe('Testing API', () => {
       device_id: provider_device_id,
       provider_id,
       vehicle_id: provider_vehicle_id,
-      propulsion: ['electric'],
-      type: 'scooter',
+      propulsion: [PROPULSION_TYPES.electric],
+      type: VEHICLE_TYPES.scooter,
       recorded: timestamp
     }).then(() => {
       db.writeEvent({
