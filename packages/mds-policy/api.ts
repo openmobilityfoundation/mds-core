@@ -23,16 +23,11 @@ import { Policy, UUID, Geography } from 'mds'
 import db from 'mds-db'
 import { VEHICLE_TYPES } from 'mds-enums'
 import { isUUID, now, pathsFor } from 'mds-utils'
+import { ServerError } from 'mds-api-helpers'
 import log from 'mds-logger'
 import { PolicyApiRequest } from './types'
 
 log.startup()
-
-// FIXME library
-const SERVER_ERROR = {
-  error: 'server_error',
-  error_description: 'an internal server error has occurred and been logged'
-}
 
 /**
  * Extract auth info from JWT or auth headers
@@ -174,7 +169,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -196,7 +191,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -220,7 +215,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -270,7 +265,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -346,7 +341,7 @@ function api(app: express.Express): express.Express {
     const details = validation.error ? validation.error.details : null
 
     if (details) {
-      log.info('questionable policy json', details)
+      log.error('questionable policy json', details)
       res.status(422).send(details)
       return
     }
@@ -362,7 +357,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -376,10 +371,10 @@ function api(app: express.Express): express.Express {
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
-    // FIXME is basically identical to POST policy
+    // TODO is basically identical to POST policy
 
     if (details) {
-      log.info('questionable policy json', details)
+      log.info('policy JSON', details)
       res.status(422).send(details)
       return
     }
@@ -395,7 +390,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -405,7 +400,6 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/test/initialize'), (req, res) => {
-    // FIXME janky
     Promise.all([db.initialize()])
       .then(
         kind => {
@@ -416,13 +410,13 @@ function api(app: express.Express): express.Express {
         err => {
           /* istanbul ignore next */
           log.error('initialize failed', err).then(() => {
-            res.status(500).send(SERVER_ERROR)
+            res.status(500).send(new ServerError())
           })
         }
       )
       .catch(ex => /* istanbul ignore next */ {
         log.error('initialize exception', ex).then(() => {
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         })
       })
   })

@@ -14,7 +14,15 @@
     limitations under the License.
  */
 
-import { VEHICLE_EVENTS, PROPULSION_TYPE, VEHICLE_EVENT, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
+import {
+  VEHICLE_EVENTS,
+  PROPULSION_TYPE,
+  VEHICLE_EVENT,
+  VEHICLE_TYPES,
+  PROPULSION_TYPES,
+  VEHICLE_STATUSES,
+  VEHICLE_STATUS
+} from 'mds-enums'
 import { UUID, Device, Timestamp, Telemetry, VehicleEvent } from 'mds'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from 'mds-db/types'
@@ -205,8 +213,6 @@ function makeEventsWithTelemetry(
   speed = rangeRandomInt(10)
 ): VehicleEvent[] {
   return devices.map(device => {
-    // no trips yet, FIXME
-    // use constants FIXME
     const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
     return {
       device_id: device.device_id,
@@ -285,14 +291,17 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
 
 function makeStatusChange(device: Device, timestamp: Timestamp, provider_name = 'test_provider'): StatusChange {
   const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
-  const event_type = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
+  const vehicleStatusKeys = Object.keys(VEHICLE_STATUSES)
+  const event_reason = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
+  const event_type = vehicleStatusKeys[rangeRandomInt(vehicleStatusKeys.length)]
+
   return {
     provider_id: device.provider_id,
     provider_name,
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
-    event_type,
-    event_type_reason: 'a rando reason',
+    event_type: event_type as VEHICLE_STATUS,
+    event_type_reason: event_reason as VEHICLE_EVENT,
     event_location: null,
     battery_pct: rangeRandomInt(1, 100),
     associated_trip: uuid4(),

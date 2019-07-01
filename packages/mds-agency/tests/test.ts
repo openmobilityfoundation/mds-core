@@ -1217,7 +1217,7 @@ describe('Tests API', () => {
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
-        // test for trip_enter FIXME
+        // test for trip_enter TODO
         log(result.body)
         test.string(result.body.event_type).contains('cancel_reservation')
         done(err)
@@ -1504,7 +1504,6 @@ describe('Tests API', () => {
   })
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  //  FIXME DEFINE SERVICE_AREA TYPE
   it('verifies reading a single service_area', done => {
     request
       .get(`/service_areas/${LA_CITY_BOUNDARY}`)
@@ -1552,7 +1551,6 @@ describe('Tests API', () => {
   })
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  //  FIXME DEFINE SERVICE_AREA TYPE
   it('verifies reading all service_areas', done => {
     request
       .get('/service_areas')

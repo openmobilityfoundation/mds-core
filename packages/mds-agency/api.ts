@@ -18,7 +18,7 @@ import express from 'express'
 import jwtDecode from 'jwt-decode'
 import urls from 'url'
 
-import { getVehicles } from 'mds-api-helpers'
+import { getVehicles , ServerError } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -64,10 +64,7 @@ import {
 } from 'mds-utils'
 import { ServiceArea, AgencyApiRequest } from 'mds-agency/types'
 
-const SERVER_ERROR = {
-  error: 'server_error',
-  error_description: 'an internal server error has occurred and been logged'
-}
+
 
 log.startup()
 
@@ -387,7 +384,7 @@ function api(app: express.Express): express.Express {
           })
         } else {
           log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err).then(() => {
-            res.status(500).send(SERVER_ERROR)
+            res.status(500).send(new ServerError())
           })
         }
       }
@@ -502,7 +499,7 @@ function api(app: express.Express): express.Express {
               )
               .catch((ex: Error) => /* istanbul ignore next */ {
                 log.error('fail db looking for event', ex.stack)
-                res.status(500).send(SERVER_ERROR)
+                res.status(500).send(new ServerError())
               })
           },
           (err: Error) => {
@@ -517,7 +514,7 @@ function api(app: express.Express): express.Express {
         )
         .catch((ex: Error) => /* istanbul ignore next */ {
           log.error('fail db looking for device', ex.stack).then(() => {
-            res.status(500).send(SERVER_ERROR)
+            res.status(500).send(new ServerError())
           })
         })
     }
@@ -543,7 +540,7 @@ function api(app: express.Express): express.Express {
 
     function fail(err: Error | string): void {
       log.error('readDeviceIds fail', err).then(() => {
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
     }
 
@@ -582,7 +579,7 @@ function api(app: express.Express): express.Express {
         log
           .error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, JSON.stringify(req.body), err)
           .then(() => {
-            res.status(500).send(SERVER_ERROR)
+            res.status(500).send(new ServerError())
           })
       }
     }
@@ -881,7 +878,7 @@ function api(app: express.Express): express.Express {
         })
       } else {
         log.error('post event fail:', JSON.stringify(event), message).then(() => {
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         })
       }
     }
@@ -1025,7 +1022,7 @@ function api(app: express.Express): express.Express {
           )
           .catch(err => {
             log.error(providerName(provider_id), 'writeTelemetry exception', err.stack).then(() => {
-              res.status(500).send(SERVER_ERROR)
+              res.status(500).send(new ServerError())
             })
           })
       } else {
@@ -1340,12 +1337,12 @@ function api(app: express.Express): express.Express {
         },
         (err: Error) => /* istanbul ignore next */ {
           log.error(`raw_trip_data: ${err}`)
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         }
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(`raw_trip_data: ${ex.stack}`)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 
@@ -1507,7 +1504,7 @@ function api(app: express.Express): express.Express {
       }, fail)
       .catch(err => {
         log.error('unable to fetch data from last 24 hours', err).then(() => {
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         })
       })
   })
@@ -1556,14 +1553,14 @@ function api(app: express.Express): express.Express {
         err => {
           /* istanbul ignore next */
           log.error('initialize failed', err).then(() => {
-            res.status(500).send(SERVER_ERROR)
+            res.status(500).send(new ServerError())
           })
         }
       )
       .catch(err => {
         /* istanbul ignore next */
         log.error('initialize exception', err).then(() => {
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         })
       })
   })
@@ -1623,7 +1620,7 @@ function api(app: express.Express): express.Express {
         )
         .catch((ex: Error) => /* istanbul ignore next */ {
           log.error('test read event fail', ex.stack)
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         })
     }
   })
@@ -1752,12 +1749,12 @@ function api(app: express.Express): express.Express {
         },
         /* istanbul ignore next */ (err: string) => {
           log.info('test read telemetry error', err)
-          res.status(500).send(SERVER_ERROR)
+          res.status(500).send(new ServerError())
         }
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.info('test read teelemetry exception', ex.stack)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
 

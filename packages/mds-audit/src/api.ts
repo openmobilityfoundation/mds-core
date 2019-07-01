@@ -52,7 +52,7 @@ import {
   writeAuditEvent
 } from './service'
 
-import { AuthorizationError, ConflictError, NotFoundError, ServerError, ValidationError } from './exceptions'
+import { AuthorizationError, ConflictError, NotFoundError, ServerError, ValidationError } from 'mds-api-helpers'
 
 import {
   isValidAuditDeviceId,

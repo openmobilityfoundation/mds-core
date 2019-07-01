@@ -37,6 +37,7 @@ import {
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { ProviderApiRequest, ProviderApiResponse } from './types'
 import { asStatusChangeEvent } from './utils'
+const { env } = process
 
 log.startup()
 
@@ -80,7 +81,6 @@ function api(app: express.Express): express.Express {
           })
         }
 
-        // helpy logging
         log.info(providerName(provider_id), req.method, req.originalUrl)
       }
     } catch (err) {
@@ -115,8 +115,6 @@ function api(app: express.Express): express.Express {
       const devices = makeDevices(count, timestamp)
       const events = makeEvents(devices, timestamp)
       const telemetry = makeTelemetry(devices, timestamp)
-
-      // FIXME events
 
       const data = {
         devices,
@@ -190,10 +188,10 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/health'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // FIXME add real health checks
+    // TODO add real health checks
     // verify access to known resources e.g. redis, postgres
     res.status(200).send({
-      result: 'we good'
+      result: 'up'
     })
   })
 
@@ -205,12 +203,8 @@ function api(app: express.Express): express.Express {
    * @return {Device}
    */
   async function getDevice(device_id: UUID): Promise<Device> {
-    // FIXME get device from cache, and if not cache, db
-    // let device = await cache.readDevice(device_id)
-    // if (!device) {
-    const device = await db.readDevice(device_id)
-    // }
-    return device
+    // TODO get device from cache, and if not cache, db
+    return await db.readDevice(device_id)
   }
 
   async function getProvider(provider_id: UUID): Promise<Provider> {
@@ -268,6 +262,7 @@ function api(app: express.Express): express.Express {
     return Promise.resolve(asFeatureCollection(telemetry))
   }
 
+  // TODO: fix so that it accurately populates the fields marked by a TODO
   /**
    * Generate a Trip from a trip_start and trip_end Event
    * @param  {trip_start VehicleEvent}
@@ -290,14 +285,14 @@ function api(app: express.Express): express.Express {
       propulsion_type: device.propulsion as PROPULSION_TYPE[],
       provider_trip_id: trip_start.trip_id,
       trip_duration: trip_end.timestamp - trip_start.timestamp,
-      trip_distance: 0, // FIXME
+      trip_distance: 0, // TODO
       route,
-      accuracy: 1, // FIXME
+      accuracy: 1, // TODO
       trip_start: trip_start.timestamp,
       trip_end: trip_end.timestamp,
-      parking_verification_url: 'unknown', // FIXME
-      standard_cost: 0, // FIXME
-      actual_cost: 0, // FIXME
+      parking_verification_url: 'unknown', // TODO
+      standard_cost: 0, // TODO
+      actual_cost: 0, // TODO
       recorded: now()
     })
   }
@@ -310,8 +305,6 @@ function api(app: express.Express): express.Express {
   async function asTrips(trip_ids: UUID[]): Promise<Trip[]> {
     log.info('asTrips', trip_ids.length, 'trip_ids', trip_ids)
     const promises = trip_ids.reduce((acc: Promise<Trip>[], trip_id): Promise<Trip>[] => {
-      // get all trip events
-      // log.info('getting events for trip_id', trip_id)
       db.readEvents({
         trip_id
       }).then((result: ReadEventsResult) => {
@@ -327,7 +320,6 @@ function api(app: express.Express): express.Express {
     return Promise.all(promises)
   }
 
-  // FIXME add pagination?
   app.get(pathsFor('/trips'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     const { provider_id } = res.locals.claims
     log.warn(provider_id ? providerName(provider_id) : 'none', '/trips', JSON.stringify(req.params))
@@ -335,7 +327,7 @@ function api(app: express.Express): express.Express {
     const { skip, take } = asPagingParams(req.query)
     const { start_time, end_time, device_id, newSkool } = req.query
 
-    // FIXME validate start_time, end_time, etc.
+    const PAGE_SIZE = 10 // set low because this is an expensive query.
 
     if (device_id && !isUUID(device_id)) {
       return res.status(400).send({
@@ -345,7 +337,7 @@ function api(app: express.Express): express.Express {
 
     const params = {
       skip,
-      take,
+      take: Math.min(take, PAGE_SIZE),
       start_time,
       end_time,
       device_id,
@@ -507,7 +499,7 @@ function api(app: express.Express): express.Express {
     }
     const hasTelemetry: boolean = telemetry.length > 0
     return {
-      provider_id: device.provider_id, // FIXME
+      provider_id: device.provider_id,
       provider_name: provider.provider_name,
       device_id: event.device_id,
       vehicle_id: device.vehicle_id,
@@ -535,8 +527,6 @@ function api(app: express.Express): express.Express {
     const { skip, take } = asPagingParams(req.query)
     const providerAlias = provider_id ? providerName(provider_id) : 'none'
     const stringifiedQuery = JSON.stringify(req.query)
-
-    // FIXME also validate start_time, end_time
 
     function fail(err: Error | string): void {
       const msg = err instanceof Error ? err.stack : err
@@ -570,7 +560,6 @@ function api(app: express.Express): express.Express {
       }
 
       // read events
-      // FIXME be mindful about params
       const readEventsStart = now()
       db.readEvents(params)
         .then((result: ReadEventsResult) => {
@@ -648,7 +637,7 @@ function api(app: express.Express): express.Express {
         // do db queries as needed to read trips
         const tripParams = {
           skip: 0,
-          take: 100, // FIXME constant
+          take: 100, // TODO constant
           end_time: timestamp,
           event_types: [VEHICLE_EVENTS.trip_start, VEHICLE_EVENTS.trip_end]
           // ignore device_id
@@ -693,7 +682,7 @@ function api(app: express.Express): express.Express {
         // do db queries as needed to read trips
         const statusChangeParams = {
           skip: 0,
-          take: 100, // FIXME constant
+          take: 100, // TODO constant
           end_time: timestamp
           // ignore device_id
           // igmore start_time
