@@ -38,8 +38,11 @@ interface JWT {
 }
 
 // Reusable Authorizer function
-export const handler: Handler<{ authorizationToken: string }, CustomAuthorizerResult> = (event, context, callback) => {
-  if (event.authorizationToken) {
+export const handler: Handler<
+  { type: 'TOKEN'; methodArn: string; authorizationToken: string },
+  CustomAuthorizerResult
+> = (event, context, callback) => {
+  if (event.type === 'TOKEN' && event.authorizationToken) {
     const [scheme, token] = event.authorizationToken.split(' ')
     if (scheme.toLowerCase() === 'bearer' && token) {
       try {
@@ -49,14 +52,15 @@ export const handler: Handler<{ authorizationToken: string }, CustomAuthorizerRe
         })
         if (typeof decoded === 'object') {
           const { sub: principalId, scope, [TOKEN_PROVIDER_ID_CLAIM]: provider_id, email } = decoded as JWT
+          console.log('Authorization Succeeded:', event.methodArn, principalId)
           callback(null, generatePolicy(principalId, { provider_id, scope, email }))
           return
         }
       } catch (err) {
-        console.log(`Token Verification Failure. ${err}`, err)
+        console.log('Token Verification Failed:', err.message)
       }
     }
   }
-  console.log('Authorization Failure', event)
+  console.log('Authorization Failed', event)
   callback('Unauthorized')
 }
