@@ -145,23 +145,54 @@ function api(app: express.Express): express.Express {
     }
     /* istanbul ignore next */
     function fail(err: Error): void {
-      log.error('readDeviceIds fail', err.stack || err).then(() => {
+      log.error(err.stack || err).then(() => {
         res.status(500).send('server error')
       })
     }
 
-    const start_date = now() - days(365)
-    const end_date = now() + days(365)
+    let start_date = now() - days(365)
     const { policy_uuid } = req.params
+    const { provider_id } = req.query
+    let { end_date } = req.query
 
     if (!isUUID(policy_uuid)) {
       res.status(400).send({ err: 'bad_param' })
+    } else if (end_date) {
+      end_date = parseInt(end_date)
+      start_date = end_date - days(365)
+      try {
+        const policies = await db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
+        const geographies = await db.readGeographies()
+        const deviceIdsWithProvider = await db.readDeviceIds(provider_id)
+        const deviceIds = deviceIdsWithProvider.reduce((acc: UUID[], deviceId) => {
+          return [...acc, deviceId.device_id]
+        }, [])
+        const devices = await cache.readDevices(deviceIds)
+        const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
+          /* eslint-disable-next-line no-param-reassign */
+          map[device.device_id] = device
+          return map
+        }, {})
+        const events = await db.readHistoricalEvents({ provider_id, end_date })
+        const filtered_policies: Policy[] = compliance_engine.filterPolicies(policies)
+        const results: (ComplianceResponse | undefined)[] = filtered_policies.map((policy: Policy) =>
+          compliance_engine.processPolicy(policy, events, geographies, deviceMap)
+        )
+        if (!results[0]) {
+          res.status(400).send({ err: 'bad_param' })
+        } else {
+          res.status(200).send(results)
+        }
+      } catch (err) {
+        fail(err)
+      }
     } else {
+      end_date = now() + days(365)
       db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
         .then((policies: Policy[]) => {
           db.readGeographies()
             .then((geographies: Geography[]) => {
-              db.readDeviceIds(req.query.provider_id)
+              db.readDeviceIds(provider_id)
                 .then((deviceRecords: { device_id: UUID; provider_id: UUID }[]) => {
                   const total = deviceRecords.length
                   log.info(`read ${total} deviceIds in /vehicles`)
@@ -191,7 +222,7 @@ function api(app: express.Express): express.Express {
                           const results: (ComplianceResponse | undefined)[] = filtered_policies.map((policy: Policy) =>
                             compliance_engine.processPolicy(policy, events, geographies, deviceMap)
                           )
-                          if (results.length === 0) {
+                          if (results[0] === undefined) {
                             res.status(400).send({ err: 'bad_param' })
                           } else {
                             res.status(200).send(results)
