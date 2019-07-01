@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../../packages/mds-api-authorizer" }, { "path": "../../packages/mds-test-data" }]
+  "references": [{ "path": "../../packages/mds-api-authorizer" }]
 }

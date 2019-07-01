@@ -9,6 +9,8 @@ export type ApiAuthorizerClaims = Partial<{
   email: string
 }>
 
+const { TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id' } = process.env
+
 export type ApiAuthorizer = (req: express.Request) => ApiAuthorizerClaims
 
 export const AuthorizationHeaderApiAuthorizer: ApiAuthorizer = req => {
@@ -16,14 +18,14 @@ export const AuthorizationHeaderApiAuthorizer: ApiAuthorizer = req => {
     const decode = ([scheme, token]: string[]): ApiAuthorizerClaims => {
       const decoders: { [scheme: string]: () => ApiAuthorizerClaims } = {
         bearer: () => {
-          const { sub, ...claims } = jwtDecode(token)
-          return { principalId: sub, ...claims }
+          const { sub: principalId, [TOKEN_PROVIDER_ID_CLAIM]: provider_id, ...claims } = jwtDecode(token)
+          return { principalId, provider_id, ...claims }
         },
         basic: () => {
           const [principalId, scope] = Buffer.from(token, 'base64')
             .toString()
             .split('|')
-          return { principalId, scope }
+          return { principalId, provider_id: principalId, scope }
         }
       }
       const decoder = decoders[scheme.toLowerCase()]
