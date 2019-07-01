@@ -20,11 +20,11 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@types/aws-lambda": "8.10.27",
     "jsonwebtoken": "8.5.1",
     "mds-api-authorizer": "0.1.0"
   },
   "devDependencies": {
+    "@types/aws-lambda": "8.10.27",
     "@types/jsonwebtoken": "8.3.2"
   },
   "license": "Apache-2.0"
