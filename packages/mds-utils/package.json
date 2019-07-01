@@ -22,7 +22,5 @@
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
     "test:unit": "exit 0"
   },
-  "devDependencies": {
-    "@types/point-in-polygon": "1.0.0"
-  }
+  "devDependencies": {}
 }

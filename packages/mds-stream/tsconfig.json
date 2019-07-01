@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../mds-logger" }]
+  "references": [{ "path": "../../packages/mds-logger" }]
 }

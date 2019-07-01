@@ -21,8 +21,9 @@
     "mds-enums": "0.1.0",
     "mds-logger": "0.1.0",
     "mds-utils": "0.1.0",
-    "mds-test-data": "0.1.0",
     "pg": "7.11.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "mds-test-data": "0.1.0"
+  }
 }

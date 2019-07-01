@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../mds-test-data" }]
+  "references": [{ "path": "../../packages/mds-test-data" }]
 }
