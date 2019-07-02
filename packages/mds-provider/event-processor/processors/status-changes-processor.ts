@@ -79,7 +79,7 @@ const isVehicleEventEntry = (
   entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
 
 const StatusChangeEventProcessor = async (entries: StatusChangesProcessorEntry[]): Promise<void> => {
-  if (entries.length > 1) {
+  if (entries.length > 0) {
     await db.writeStatusChanges(entries.map(asStatusChange))
     logger.info(`Status Changes Processor: Created ${entries.length} status changes`)
   }
