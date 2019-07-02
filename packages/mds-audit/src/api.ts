@@ -24,8 +24,7 @@ import { pathsFor, seconds, getBoundingBox } from 'mds-utils'
 import providers from 'mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES } from 'mds-enums'
 import { UUID, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
-import { ReadEventsResult } from 'mds-db/dist/types'
-import { getVehicles } from 'mds-api-helpers'
+import { getVehicles, pagingParams, jsonApiLinks } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -630,22 +629,23 @@ function api(app: express.Express): express.Express {
    */
   app.get(pathsFor('/trips'), async (req: AuditApiGetTripsRequest, res: AuditApiResponse) => {
     try {
-      const { skip, take, start_time, end_time } = req.query
+      const { start_time, end_time } = req.query
+      const { skip, take } = pagingParams(req.query)
 
       // Construct the query params
       const query = {
         ...req.query,
-        skip: skip ? Number(skip) : undefined,
-        take: take ? Number(take) : undefined,
+        skip,
+        take,
         start_time: start_time ? Number(start_time) : undefined,
         end_time: end_time ? Number(end_time) : undefined
       }
 
       // Query the audits
-      const audits = await readAudits(query)
+      const { count, audits } = await readAudits(query)
 
       // 200 OK
-      res.status(200).send(audits)
+      res.status(200).send({ count, audits, links: jsonApiLinks(req, skip, take, count) })
     } catch (err) /* istanbul ignore next */ {
       // 500 Internal Server Error
       await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
@@ -654,13 +654,8 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/vehicles'), async (req, res) => {
-    let { skip, take } = req.query
+    const { skip, take } = pagingParams(req.query)
     const bbox = req.query.bbox ? getBoundingBox(JSON.parse(req.query.bbox)) : undefined
-
-    const PAGE_SIZE = 1000
-
-    skip = parseInt(skip) || 0
-    take = parseInt(take) || PAGE_SIZE
 
     const url = urls.format({
       protocol: req.get('x-forwarded-proto') || req.protocol,
