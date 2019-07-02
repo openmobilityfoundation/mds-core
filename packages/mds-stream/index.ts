@@ -196,6 +196,8 @@ export default {
   writeEvent,
   writeTelemetry,
   health,
+  writeStream,
+  writeStreamBatch,
   readStream,
   readStreamGroup
 }
