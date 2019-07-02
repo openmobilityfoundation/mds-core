@@ -92,6 +92,11 @@ export interface ReadEventsQueryParams {
   provider_id?: UUID
 }
 
+export interface ReadHistoricalEventsQueryParams {
+  provider_id: UUID
+  end_date: number
+}
+
 export interface VehicleEventCountResult {
   count: number
   events: Recorded<VehicleEvent>[]

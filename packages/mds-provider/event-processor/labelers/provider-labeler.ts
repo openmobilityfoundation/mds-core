@@ -15,7 +15,7 @@
  */
 
 import logger from 'mds-logger'
-import providers from 'mds-providers'
+import { providers } from 'mds-providers'
 import { Provider, UUID } from 'mds'
 import { isUUID } from 'mds-utils'
 import { StreamEntry, StreamEntryLabels } from '../types'
