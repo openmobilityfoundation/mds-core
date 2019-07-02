@@ -14,7 +14,6 @@
     limitations under the License.
  */
 
-import { FeatureCollection, Geometry } from 'geojson'
 import {
   Compliance,
   ComplianceResponse,
@@ -30,7 +29,7 @@ import {
   MatchedVehicle
 } from 'mds'
 import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS } from 'mds-enums'
-import { pointInShape } from 'mds-utils'
+import { pointInShape, getPolygon } from 'mds-utils'
 import moment from 'moment-timezone'
 import { RuntimeError } from './exceptions'
 
@@ -70,19 +69,6 @@ function isRuleActive(rule: Rule): boolean {
     }
   }
   return false
-}
-
-function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection | null {
-  const res = geographies.find((location: Geography) => {
-    return location.geography_id === geography
-  })
-  if (res === undefined) {
-    return null
-  }
-  if (res.geography_json.type !== 'FeatureCollection') {
-    return res.geography_json.geometry
-  }
-  return res.geography_json
 }
 
 function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {

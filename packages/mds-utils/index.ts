@@ -18,7 +18,7 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox } from 'mds'
+import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography } from 'mds'
 import { TelemetryRecord } from 'mds-db/types'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
 import log from 'mds-logger'
@@ -606,6 +606,19 @@ function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
   }
 }
 
+function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {
+  const res = geographies.find((location: Geography) => {
+    return location.geography_id === geography
+  })
+  if (res === undefined) {
+    throw new Error(`Geography ${geography} not found in ${geographies}!`)
+  }
+  if (res.geography_json.type !== 'FeatureCollection') {
+    return res.geography_json.geometry
+  }
+  return res.geography_json
+}
+
 export = {
   isUUID,
   isPct,
@@ -641,5 +654,6 @@ export = {
   isStateTransitionValid,
   pointInGeometry,
   convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry
+  convertTelemetryRecordToTelemetry,
+  getPolygon
 }

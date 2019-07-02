@@ -20,8 +20,10 @@ import stream from 'mds-stream'
 import db from 'mds-db'
 import jwtDecode from 'jwt-decode'
 import log from 'mds-logger'
-import { isUUID, now, days, pathsFor } from 'mds-utils'
+import { EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
+import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape } from 'mds-utils'
 import { Policy, Geography, VehicleEvent, ComplianceResponse, Device, UUID } from 'mds'
+import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest } from './types'
 
@@ -234,6 +236,70 @@ function api(app: express.Express): express.Express {
             .catch(fail)
         }, fail)
         .catch(fail)
+    }
+  })
+
+  app.get(pathsFor('/count/:policy_id/:rule_id'), async (req: express.Request, res: express.Response) => {
+    if (
+      !['5f7114d1-4091-46ee-b492-e55875f7de00', '45f37d69-73ca-4ca6-a461-e7283cffa01a'].includes(res.locals.provider_id)
+    ) {
+      res.status(401).send({ result: 'unauthorized access' })
+    }
+
+    /* istanbul ignore next */
+    function fail(err: Error): void {
+      log.error(err.stack || err).then(() => {
+        res.status(500).send('server error')
+      })
+    }
+
+    const { policy_id, rule_id } = req.params
+    let { statuses } = req.query
+    statuses = statuses ? (JSON.parse(statuses) as VEHICLE_STATUS[]) : undefined
+    try {
+      const [policy] = await db.readPolicies({ policy_id })
+      const rule = policy.rules.find(r => {
+        return r.rule_id === rule_id
+      })
+      if (!rule) {
+        throw new Error('Rule not found in specified Policy')
+      }
+      const geography_ids = rule.geographies.reduce((acc: UUID[], geo: UUID) => {
+        return [...acc, geo]
+      }, [])
+      const geographies = (await Promise.all(
+        geography_ids.reduce((acc: Promise<Geography[]>[], geography_id) => {
+          const geography = db.readGeographies({ geography_id })
+          return [...acc, geography]
+        }, [])
+      )).reduce((acc: Geography[], geos) => {
+        return [...acc, head(geos)]
+      }, [])
+
+      const polys = geographies.reduce((acc: (Geometry | FeatureCollection)[], geography) => {
+        return [...acc, getPolygon(geographies, geography.geography_id)]
+      }, [])
+
+      // const devices = (await db.readDeviceIds()).map((record: { device_id: UUID; provider_id: UUID }) => record.device_id)
+      const events = statuses
+        ? (await cache.readAllEvents()).filter(event => statuses.includes(EVENT_STATUS_MAP[event.event_type]))
+        : await cache.readAllEvents()
+
+      const count = events.reduce((count_acc, event) => {
+        return (
+          count_acc +
+          polys.reduce((poly_acc, poly) => {
+            if (event.telemetry && pointInShape(event.telemetry.gps, poly)) {
+              return poly_acc + 1
+            }
+            return poly_acc
+          }, 0)
+        )
+      }, 0)
+
+      res.status(200).send({ count })
+    } catch (err) {
+      fail(err)
     }
   })
   return app
