@@ -26,7 +26,7 @@ import { DeviceLabel } from '../labelers/device-labeler'
 import { ProviderLabel } from '../labelers/provider-labeler'
 import { asStatusChangeEvent } from '../../utils'
 
-export type StatusChangesProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent>
+export type StatusChangesProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent>
 
 const asPointFeature = (telemetry?: Telemetry | null): Feature<Point> | null => {
   return telemetry && telemetry.gps
@@ -43,7 +43,7 @@ const asPointFeature = (telemetry?: Telemetry | null): Feature<Point> | null => 
     : null
 }
 
-function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
+function asStatusChange(entry: StatusChangesProcessorStreamEntry): StatusChange {
   const {
     data: event,
     recorded,
@@ -73,7 +73,7 @@ function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
   }
 }
 
-export const StatusChangesProcessor = async (entries: StatusChangesProcessorEntry[]): Promise<void> => {
+export const StatusChangesProcessor = async (entries: StatusChangesProcessorStreamEntry[]): Promise<void> => {
   if (entries.length > 0) {
     await db.writeStatusChanges(entries.map(asStatusChange))
     logger.info(`Status Changes Processor: Created ${entries.length} status changes`)

@@ -25,9 +25,9 @@ import { ProviderLabel } from '../labelers/provider-labeler'
 import { TripLabel } from '../labelers/trip-labeler'
 
 export type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
-export type TripsProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
+export type TripsProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
 
-function asTrip(entry: TripsProcessorEntry): Trip {
+function asTrip(entry: TripsProcessorStreamEntry): Trip {
   const {
     data: event,
     labels: { provider, device },
@@ -55,7 +55,7 @@ function asTrip(entry: TripsProcessorEntry): Trip {
   }
 }
 
-const insertTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
+const insertTrips = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
   await db.writeTrips(entries.map(asTrip))
 }
 
@@ -64,7 +64,7 @@ const updateSequence = (trip: Trip, recorded: number, sequence: number) =>
     ? { recorded, sequence }
     : {}
 
-const updateTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
+const updateTrips = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
   await Promise.all(
     entries.reduce<Promise<number>[]>(
       (updates, { data: { event_type, timestamp }, recorded, sequence, labels: { trip } }) => {
@@ -89,10 +89,10 @@ const updateTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
   )
 }
 
-export const TripsProcessor = async (entries: TripsProcessorEntry[]): Promise<void> => {
+export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
   const { inserts, updates } = entries.reduce<{
-    inserts: TripsProcessorEntry[]
-    updates: TripsProcessorEntry[]
+    inserts: TripsProcessorStreamEntry[]
+    updates: TripsProcessorStreamEntry[]
   }>(
     (commands, entry) => ({
       inserts: entry.labels.trip ? commands.inserts : commands.inserts.concat(entry),
