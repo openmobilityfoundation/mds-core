@@ -16,15 +16,15 @@ import { Timestamp } from 'mds'
     limitations under the License.
  */
 
-export interface StreamEntry<Data = unknown, Type = string> {
+export interface StreamEntry<Data = unknown> {
   id: string
-  type: Type
+  type: string
   data: Data
   recorded: Timestamp
   sequence: number
 }
 
-export interface LabeledStreamEntry<Labels = unknown, Data = unknown, Type = string> extends StreamEntry<Data, Type> {
+export interface LabeledStreamEntry<Labels = unknown, Data = unknown> extends StreamEntry<Data> {
   labels: Labels
 }
 

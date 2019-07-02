@@ -16,7 +16,6 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import { isUUID } from 'mds-utils'
 import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
 import { VehicleEvent, UUID } from 'mds'
 import { Trip } from 'mds-db/types'
@@ -25,7 +24,8 @@ import { LabeledStreamEntry } from '../types'
 import { ProviderLabel } from '../labelers/provider-labeler'
 import { TripLabel } from '../labelers/trip-labeler'
 
-type TripsProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent, 'event'>
+export type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
+export type TripsProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
 
 function asTrip(entry: TripsProcessorEntry): Trip {
   const {
@@ -89,20 +89,7 @@ const updateTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
   )
 }
 
-type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
-
-const isTripEventEntry = (
-  entry: LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel>
-): entry is LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent, 'event'> =>
-  entry &&
-  typeof entry === 'object' &&
-  entry.type === 'event' &&
-  typeof entry.data === 'object' &&
-  isUUID((entry.data as TripEvent).trip_id)
-
-const TripEventProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent, 'event'>[]
-): Promise<void> => {
+export const TripsProcessor = async (entries: TripsProcessorEntry[]): Promise<void> => {
   const { inserts, updates } = entries.reduce<{
     inserts: TripsProcessorEntry[]
     updates: TripsProcessorEntry[]
@@ -118,14 +105,4 @@ const TripEventProcessor = async (
     await Promise.all((inserts.length === 0 ? [] : [insertTrips(inserts)]).concat(updateTrips(updates)))
     logger.info(`Trips Processor: Created ${inserts.length} trips; Updated ${updates.length} trips`)
   }
-}
-
-export const TripsProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel>[]
-): Promise<void> => {
-  await TripEventProcessor(
-    entries
-      .filter(isTripEventEntry)
-      .filter(entry => ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type))
-  )
 }

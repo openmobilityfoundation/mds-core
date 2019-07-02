@@ -18,21 +18,30 @@ import db from 'mds-db'
 import logger from 'mds-logger'
 import stream, { ReadStreamResult, ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
+import { isUUID } from 'mds-utils'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
-import { StatusChangesProcessor } from './processors/status-changes-processor'
+import { StatusChangesProcessor, StatusChangesProcessorEntry } from './processors/status-changes-processor'
 import { TripLabeler } from './labelers/trip-labeler'
-import { TripsProcessor } from './processors/trips-processor'
+import { TripsProcessor, TripsProcessorEntry, TripEvent } from './processors/trips-processor'
+
+const isStatusChangesProcessorEntry = (entry: StreamEntry): entry is StatusChangesProcessorEntry =>
+  entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
+
+const isTripsProcessorEntry = (entry: StreamEntry): entry is TripsProcessorEntry =>
+  isStatusChangesProcessorEntry(entry) &&
+  isUUID((entry.data as TripEvent).trip_id) &&
+  ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type)
 
 const asStreamEntry = ([id, [type, data]]: StreamItem): StreamEntry => {
   const [recorded, sequence] = id.split('-').map(Number)
   return { id, type, data: JSON.parse(data), recorded, sequence }
 }
 
-const asStreamEntries = ([name, entries]: ReadStreamResult): { name: string; entries: StreamEntry[] } => ({
+const asStreamEntries = ([name, entries]: ReadStreamResult) => ({
   name,
-  entries: entries.map(asStreamEntry)
+  entries: entries.map(asStreamEntry).filter(isStatusChangesProcessorEntry)
 })
 
 async function process(options: ReadStreamOptions): Promise<void> {
@@ -67,7 +76,7 @@ async function process(options: ReadStreamOptions): Promise<void> {
     }))
 
     // Run stream processors
-    await Promise.all([StatusChangesProcessor(labeled), TripsProcessor(labeled)])
+    await Promise.all([StatusChangesProcessor(labeled), TripsProcessor(labeled.filter(isTripsProcessorEntry))])
   } else {
     logger.info('No entries to process.')
   }
