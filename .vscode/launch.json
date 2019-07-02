@@ -91,6 +91,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Stream: mds-provider",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["stream.ts", "-i", "0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-provider",
+      "env": {
+        "npm_package_name": "mds-provider"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Tests: mds-agency",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
