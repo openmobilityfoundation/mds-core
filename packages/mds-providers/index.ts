@@ -1,4 +1,4 @@
-import { Provider } from 'mds'
+import { Provider, UUID } from 'mds'
 
 const providers: Readonly<{ [id: string]: Readonly<Provider> }> = Object.freeze({
   'c20e08cf-8488-46a6-a66c-5d8fb827f7e0': Object.freeze({
@@ -93,4 +93,13 @@ const providers: Readonly<{ [id: string]: Readonly<Provider> }> = Object.freeze(
   })
 })
 
-export = providers
+/**
+ * convert provider_id to provider name (if available), or a subset of the UUID for humans
+ * @param  provider_id
+ * @return name or provider_id substring
+ */
+function providerName(provider_id: UUID): string {
+  return providers[provider_id] ? providers[provider_id].provider_name : provider_id.split('-')[0]
+}
+
+export = { providers, providerName }
