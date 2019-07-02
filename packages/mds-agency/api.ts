@@ -1053,7 +1053,7 @@ function api(app: express.Express): express.Express {
       })
     }
 
-    log.info(providerName(query_provider_id), 'get /vehicles')
+    log.info(query_provider_id ? providerName(query_provider_id) : null, 'get /vehicles')
 
     db.readDeviceIds(query_provider_id).then((items: DeviceID[]) => {
       const data: { [s: string]: string[] } = {}
