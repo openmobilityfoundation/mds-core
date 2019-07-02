@@ -24,7 +24,7 @@ import { pathsFor, seconds, getBoundingBox } from 'mds-utils'
 import providers from 'mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES } from 'mds-enums'
 import { UUID, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
-import { getVehicles, pagingParams, jsonApiLinks } from 'mds-api-helpers'
+import { getVehicles, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -630,7 +630,7 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/trips'), async (req: AuditApiGetTripsRequest, res: AuditApiResponse) => {
     try {
       const { start_time, end_time } = req.query
-      const { skip, take } = pagingParams(req.query)
+      const { skip, take } = asPagingParams(req.query)
 
       // Construct the query params
       const query = {
@@ -645,7 +645,7 @@ function api(app: express.Express): express.Express {
       const { count, audits } = await readAudits(query)
 
       // 200 OK
-      res.status(200).send({ count, audits, links: jsonApiLinks(req, skip, take, count) })
+      res.status(200).send({ count, audits, links: asJsonApiLinks(req, skip, take, count) })
     } catch (err) /* istanbul ignore next */ {
       // 500 Internal Server Error
       await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
@@ -654,7 +654,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/vehicles'), async (req, res) => {
-    const { skip, take } = pagingParams(req.query)
+    const { skip, take } = asPagingParams(req.query)
     const bbox = req.query.bbox ? getBoundingBox(JSON.parse(req.query.bbox)) : undefined
 
     const url = urls.format({

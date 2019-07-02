@@ -35,7 +35,7 @@ import {
   ReadStatusChangesResult,
   StatusChange
 } from 'mds-db/types'
-import { jsonApiLinks, pagingParams } from 'mds-api-helpers'
+import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { ProviderApiRequest, PageParams } from './types'
 import { asStatusChangeEvent } from './utils'
 
@@ -389,7 +389,7 @@ function api(app: express.Express): express.Express {
     const { provider_id } = getAuth(req)
     log.warn(providerName(provider_id), '/trips', JSON.stringify(req.params))
 
-    const { skip, take } = pagingParams(req.query)
+    const { skip, take } = asPagingParams(req.query)
     const { start_time, end_time, device_id, newSkool } = req.query
 
     // FIXME validate start_time, end_time, etc.
@@ -428,7 +428,7 @@ function api(app: express.Express): express.Express {
           data: {
             trips
           },
-          links: jsonApiLinks(req, skip, take, count)
+          links: asJsonApiLinks(req, skip, take, count)
         })
       })
     } else {
@@ -445,7 +445,7 @@ function api(app: express.Express): express.Express {
                 data: {
                   trips
                 },
-                links: jsonApiLinks(req, skip, take, count)
+                links: asJsonApiLinks(req, skip, take, count)
               })
             }, fail)
             .catch(fail)
@@ -523,7 +523,7 @@ function api(app: express.Express): express.Express {
     const { start_time, end_time } = req.query
 
     // Extensions to override paging
-    const { skip, take } = pagingParams(req.query)
+    const { skip, take } = asPagingParams(req.query)
 
     const { provider_id } = getAuth(req)
 
@@ -541,7 +541,7 @@ function api(app: express.Express): express.Express {
         data: {
           status_changes
         },
-        links: jsonApiLinks(req, skip, take, count)
+        links: asJsonApiLinks(req, skip, take, count)
       })
     } catch (err) {
       // 500 Internal Server Error
@@ -554,7 +554,7 @@ function api(app: express.Express): express.Express {
     const { provider_id } = getAuth(req)
 
     const { start_time, end_time, start_recorded, end_recorded, device_id } = req.query
-    const { skip, take } = pagingParams(req.query)
+    const { skip, take } = asPagingParams(req.query)
     const providerAlias = providerName(provider_id)
     const stringifiedQuery = JSON.stringify(req.query)
 
@@ -622,7 +622,7 @@ function api(app: express.Express): express.Express {
                 data: {
                   status_changes
                 },
-                links: jsonApiLinks(req, skip, take, count)
+                links: asJsonApiLinks(req, skip, take, count)
               })
             }, fail)
             .catch(fail)

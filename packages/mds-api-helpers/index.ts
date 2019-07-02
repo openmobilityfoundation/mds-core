@@ -114,7 +114,7 @@ interface PagingParams {
   take: number
 }
 
-export const pagingParams: (params: Partial<{ [P in keyof PagingParams]: unknown }>) => PagingParams = params => {
+export const asPagingParams: (params: Partial<{ [P in keyof PagingParams]: unknown }>) => PagingParams = params => {
   const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
   const [skip, take] = [params.skip, params.take].map(Number)
   return {
@@ -131,9 +131,9 @@ const jsonApiLink = (req: express.Request, skip: number, take: number): string =
     query: { ...req.query, skip, take }
   })
 
-type JSONAPILinks = Partial<{ first: string; prev: string; next: string; last: string }> | undefined
+type JsonApiLinks = Partial<{ first: string; prev: string; next: string; last: string }> | undefined
 
-export const jsonApiLinks = (req: express.Request, skip: number, take: number, count: number): JSONAPILinks => {
+export const asJsonApiLinks = (req: express.Request, skip: number, take: number, count: number): JsonApiLinks => {
   if (skip > 0 || take < count) {
     const first = skip > 0 ? jsonApiLink(req, 0, take) : undefined
     const prev = skip - take >= 0 && skip - take < count ? jsonApiLink(req, skip - take, take) : undefined
