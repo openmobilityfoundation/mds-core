@@ -4,6 +4,7 @@
     "outDir": "dist"
   },
   "references": [
+    { "path": "../../packages/mds-api-helpers" },
     { "path": "../../packages/mds-api-server" },
     { "path": "../../packages/mds-cache" },
     { "path": "../../packages/mds-db" },

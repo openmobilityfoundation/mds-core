@@ -21,6 +21,7 @@
   "dependencies": {
     "express": "4.17.1",
     "ladot-service-areas": "0.1.0",
+    "mds-api-helpers": "0.1.0",
     "mds-api-server": "0.1.0",
     "mds-cache": "0.1.0",
     "mds-db": "0.1.0",

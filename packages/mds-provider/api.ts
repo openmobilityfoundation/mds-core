@@ -15,7 +15,6 @@
  */
 
 import express from 'express'
-import urls from 'url'
 
 import log from 'mds-logger'
 import db from 'mds-db'
@@ -24,7 +23,7 @@ import providers from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
-import { isUUID, nonNegInt, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
+import { isUUID, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
 import { Device, UUID, VehicleEvent, Telemetry, Provider } from 'mds'
 import { FeatureCollection, Feature } from 'geojson'
 import {
@@ -35,43 +34,18 @@ import {
   ReadStatusChangesResult,
   StatusChange
 } from 'mds-db/types'
+import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { ProviderApiRequest, ProviderApiResponse } from './types'
 import { asStatusChangeEvent } from './utils'
 
 log.startup()
 
 function api(app: express.Express): express.Express {
-  const { env } = process
-
   // /////////// enums ////////////////
 
   const PROVIDER_VERSION = '0.3.1'
 
   // / ////////// utilities ////////////////
-
-  const page = (req: express.Request, skip: number, take: number): string =>
-    urls.format({
-      protocol: req.get('x-forwarded-proto') || req.protocol,
-      host: req.get('host'),
-      pathname: req.path,
-      query: { ...req.query, skip, take }
-    })
-
-  const links = (
-    req: express.Request,
-    skip: number,
-    take: number,
-    count: number
-  ): Partial<{ first: string; prev: string; next: string; last: string }> | undefined => {
-    if (skip > 0 || take < count) {
-      const first = skip > 0 ? page(req, 0, take) : undefined
-      const prev = skip - take >= 0 && skip - take < count ? page(req, skip - take, take) : undefined
-      const next = skip + take < count ? page(req, skip + take, take) : undefined
-      const last = skip + take < count ? page(req, count - (count % take || take), take) : undefined
-      return { first, prev, next, last }
-    }
-    return undefined
-  }
 
   /**
    * convert provider_id to provider name (if available)
@@ -371,15 +345,10 @@ function api(app: express.Express): express.Express {
     const { provider_id } = res.locals.claims
     log.warn(providerName(provider_id), '/trips', JSON.stringify(req.params))
 
-    let { skip, take } = req.query
+    const { skip, take } = asPagingParams(req.query)
     const { start_time, end_time, device_id, newSkool } = req.query
 
     // FIXME validate start_time, end_time, etc.
-
-    const PAGE_SIZE = 10 // FIXME too small
-
-    skip = parseInt(skip) || 0
-    take = parseInt(take) || env.PAGE_SIZE || PAGE_SIZE
 
     if (device_id && !isUUID(device_id)) {
       return res.status(400).send({
@@ -415,7 +384,7 @@ function api(app: express.Express): express.Express {
           data: {
             trips
           },
-          links: links(req, skip, take, count)
+          links: asJsonApiLinks(req, skip, take, count)
         })
       })
     } else {
@@ -432,7 +401,7 @@ function api(app: express.Express): express.Express {
                 data: {
                   trips
                 },
-                links: links(req, skip, take, count)
+                links: asJsonApiLinks(req, skip, take, count)
               })
             }, fail)
             .catch(fail)
@@ -500,7 +469,7 @@ function api(app: express.Express): express.Express {
         data: {
           status_changes: status_changes.map(asStatusChange)
         },
-        links: links(req, skip, take, count),
+        links: asJsonApiLinks(req, skip, take, count),
         ...getStage0Properties(status_changes)
       })
     } catch (err) {
@@ -573,19 +542,14 @@ function api(app: express.Express): express.Express {
   }
 
   async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
-    const DEFAULT_PAGE_SIZE = 100
-    const MAX_PAGE_SIZE = 1000
-
     const { provider_id } = res.locals.claims
 
     const { start_time, end_time, start_recorded, end_recorded, device_id } = req.query
-    let { skip, take = DEFAULT_PAGE_SIZE } = req.query
+    const { skip, take } = asPagingParams(req.query)
     const providerAlias = providerName(provider_id)
     const stringifiedQuery = JSON.stringify(req.query)
 
     // FIXME also validate start_time, end_time
-    skip = nonNegInt(skip, 0)
-    take = Math.min(MAX_PAGE_SIZE, nonNegInt(take, DEFAULT_PAGE_SIZE))
 
     function fail(err: Error | string): void {
       const msg = err instanceof Error ? err.stack : err
@@ -649,7 +613,7 @@ function api(app: express.Express): express.Express {
                 data: {
                   status_changes
                 },
-                links: links(req, skip, take, count)
+                links: asJsonApiLinks(req, skip, take, count)
               })
             }, fail)
             .catch(fail)
