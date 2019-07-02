@@ -1391,6 +1391,35 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+async function getPastEventsForStatusChanges(
+  device_id: UUID,
+  timestamp: Timestamp,
+  take: number
+): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const exec = SqlExecuter(client)
+  const {
+    rows: [{ count }]
+  } = await exec(
+    `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
+      timestamp
+    )} AND NOT EXISTS (SELECT FROM ${
+      schema.STATUS_CHANGES_TABLE
+    } WHERE device_id = events.device_id AND event_time = events.timestamp)`,
+    vals.values()
+  )
+  const { rows: events } = await exec(
+    `SELECT * FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
+      timestamp
+    )} AND NOT EXISTS (SELECT FROM ${
+      schema.STATUS_CHANGES_TABLE
+    } WHERE device_id = events.device_id AND event_time = events.timestamp) ORDER BY timestamp LIMIT ${vals.add(take)}`,
+    vals.values()
+  )
+  return { count, events }
+}
+
 export = {
   initialize,
   health,
@@ -1438,5 +1467,6 @@ export = {
   getNumEventsLast24HoursByProvider,
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
-  getEventsLast24HoursPerProvider
+  getEventsLast24HoursPerProvider,
+  getPastEventsForStatusChanges
 }
