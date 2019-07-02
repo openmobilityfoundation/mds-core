@@ -16,7 +16,6 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import { now, isUUID } from 'mds-utils'
 import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
 import { VehicleEvent, UUID } from 'mds'
 import { Trip } from 'mds-db/types'
@@ -25,14 +24,17 @@ import { LabeledStreamEntry } from '../types'
 import { ProviderLabel } from '../labelers/provider-labeler'
 import { TripLabel } from '../labelers/trip-labeler'
 
-type TripsProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent, 'event'>
+export type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
+export type TripsProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
 
-function asTrip(entry: TripsProcessorEntry): Trip {
+function asTrip(entry: TripsProcessorStreamEntry): Trip {
   const {
     data: event,
-    labels: { provider, device }
+    labels: { provider, device },
+    recorded,
+    sequence
   } = entry
-  const { provider_id, device_id, trip_id: provider_trip_id, timestamp, event_type, recorded = now() } = event
+  const { provider_id, device_id, trip_id: provider_trip_id, timestamp, event_type } = event
   const { provider_name } = provider
   const { vehicle_id, type: vehicle_type, propulsion: propulsion_type } = device
 
@@ -48,48 +50,49 @@ function asTrip(entry: TripsProcessorEntry): Trip {
     first_trip_enter: event_type === 'trip_enter' ? timestamp : null,
     last_trip_leave: event_type === 'trip_leave' ? timestamp : null,
     trip_end: event_type === 'trip_end' ? timestamp : null,
-    recorded
+    recorded,
+    sequence
   }
 }
 
-const insertTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
+const insertTrips = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
   await db.writeTrips(entries.map(asTrip))
 }
 
-const updateTrips = async (entries: TripsProcessorEntry[]): Promise<void> => {
+const updateSequence = (trip: Trip, recorded: number, sequence: number) =>
+  recorded > trip.recorded || (recorded === trip.recorded && sequence > (trip.sequence || 0))
+    ? { recorded, sequence }
+    : {}
+
+const updateTrips = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
   await Promise.all(
-    entries.reduce<Promise<number>[]>((updates, { data: { event_type, timestamp }, labels: { trip } }) => {
-      const fields: { [x: string]: keyof Trip } = {
-        trip_start: 'trip_start',
-        trip_enter: 'first_trip_enter',
-        trip_leave: 'last_trip_leave',
-        trip_end: 'trip_end'
-      }
-      const field = fields[event_type]
-      return field && !trip[field]
-        ? updates.concat(db.updateTrip(trip.provider_trip_id, { [field]: timestamp }))
-        : updates
-    }, [])
+    entries.reduce<Promise<number>[]>(
+      (updates, { data: { event_type, timestamp }, recorded, sequence, labels: { trip } }) => {
+        const fields: { [x: string]: keyof Trip } = {
+          trip_start: 'trip_start',
+          trip_enter: 'first_trip_enter',
+          trip_leave: 'last_trip_leave',
+          trip_end: 'trip_end'
+        }
+        const field = fields[event_type]
+        return field && !trip[field]
+          ? updates.concat(
+              db.updateTrip(trip.provider_trip_id, {
+                [field]: timestamp,
+                ...updateSequence(trip, recorded, sequence)
+              })
+            )
+          : updates
+      },
+      []
+    )
   )
 }
 
-type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
-
-const isTripEventEntry = <Label>(
-  entry: LabeledStreamEntry<Label>
-): entry is LabeledStreamEntry<Label, TripEvent, 'event'> =>
-  entry &&
-  typeof entry === 'object' &&
-  entry.type === 'event' &&
-  typeof entry.data === 'object' &&
-  isUUID((entry.data as TripEvent).trip_id)
-
-const TripEventProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent, 'event'>[]
-): Promise<void> => {
+export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
   const { inserts, updates } = entries.reduce<{
-    inserts: TripsProcessorEntry[]
-    updates: TripsProcessorEntry[]
+    inserts: TripsProcessorStreamEntry[]
+    updates: TripsProcessorStreamEntry[]
   }>(
     (commands, entry) => ({
       inserts: entry.labels.trip ? commands.inserts : commands.inserts.concat(entry),
@@ -102,14 +105,4 @@ const TripEventProcessor = async (
     await Promise.all((inserts.length === 0 ? [] : [insertTrips(inserts)]).concat(updateTrips(updates)))
     logger.info(`Trips Processor: Created ${inserts.length} trips; Updated ${updates.length} trips`)
   }
-}
-
-export const TripsProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel>[]
-): Promise<void> => {
-  await TripEventProcessor(
-    entries
-      .filter(isTripEventEntry)
-      .filter(entry => ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type))
-  )
 }

@@ -16,18 +16,33 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import stream, { ReadStreamResult, ReadStreamOptions } from 'mds-stream'
+import stream, { ReadStreamResult, ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
+import { isUUID } from 'mds-utils'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
-import { StatusChangesProcessor } from './processors/status-changes-processor'
+import { StatusChangesProcessor, StatusChangesProcessorStreamEntry } from './processors/status-changes-processor'
 import { TripLabeler } from './labelers/trip-labeler'
-import { TripsProcessor } from './processors/trips-processor'
+import { TripsProcessor, TripsProcessorStreamEntry, TripEvent } from './processors/trips-processor'
 
-const asStreamEntries = ([name, entries]: ReadStreamResult): { name: string; entries: StreamEntry[] } => {
-  return { name, entries: entries.map(([id, [type, data]]) => ({ id, type, data: JSON.parse(data) })) }
+const isStatusChangesProcessorStreamEntry = (entry: StreamEntry): entry is StatusChangesProcessorStreamEntry =>
+  entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
+
+const isTripsProcessorStreamEntry = (entry: StreamEntry): entry is TripsProcessorStreamEntry =>
+  isStatusChangesProcessorStreamEntry(entry) &&
+  isUUID((entry.data as TripEvent).trip_id) &&
+  ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type)
+
+const asStreamEntry = ([id, [type, data]]: StreamItem): StreamEntry => {
+  const [recorded, sequence] = id.split('-').map(Number)
+  return { id, type, data: JSON.parse(data), recorded, sequence }
 }
+
+const asStreamEntries = ([name, entries]: ReadStreamResult) => ({
+  name,
+  entries: entries.map(asStreamEntry).filter(isStatusChangesProcessorStreamEntry)
+})
 
 async function process(options: ReadStreamOptions): Promise<void> {
   logger.info('Processing Event Stream', options)
@@ -61,7 +76,7 @@ async function process(options: ReadStreamOptions): Promise<void> {
     }))
 
     // Run stream processors
-    await Promise.all([StatusChangesProcessor(labeled), TripsProcessor(labeled)])
+    await Promise.all([StatusChangesProcessor(labeled), TripsProcessor(labeled.filter(isTripsProcessorStreamEntry))])
   } else {
     logger.info('No entries to process.')
   }

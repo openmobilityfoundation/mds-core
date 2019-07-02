@@ -1,28 +1,7 @@
-import express from 'express'
-import { UUID } from 'mds'
+import { ApiRequest, ApiResponse } from 'mds-api-server'
 
-export interface ProviderApiRequest extends express.Request {
-  apiGateway?: {
-    event?: {
-      requestContext?: {
-        authorizer?: Partial<{
-          principalId: string
-          provider_id: UUID
-          scope: string
-          email: string
-        }>
-      }
-    }
-  }
-}
+// Allow adding type definitions for Express Request objects
+export type ProviderApiRequest = ApiRequest
 
-// TODO use this instead of weird Partial<> blah blah
-export interface AuthContext {
-  provider_id: string
-  scope: string
-}
-
-export interface PageParams {
-  skip: number
-  take: number
-}
+// Allow adding type definitions for Express Response objects
+export type ProviderApiResponse = ApiResponse

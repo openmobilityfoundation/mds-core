@@ -17,7 +17,7 @@
 import db from 'mds-db'
 import logger from 'mds-logger'
 import { Feature, Point } from 'geojson'
-import { now, round } from 'mds-utils'
+import { round } from 'mds-utils'
 import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
 import { Telemetry, VehicleEvent } from 'mds'
 import { StatusChange } from 'mds-db/types'
@@ -25,6 +25,8 @@ import { LabeledStreamEntry } from '../types'
 import { DeviceLabel } from '../labelers/device-labeler'
 import { ProviderLabel } from '../labelers/provider-labeler'
 import { asStatusChangeEvent } from '../../utils'
+
+export type StatusChangesProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent>
 
 const asPointFeature = (telemetry?: Telemetry | null): Feature<Point> | null => {
   return telemetry && telemetry.gps
@@ -41,11 +43,11 @@ const asPointFeature = (telemetry?: Telemetry | null): Feature<Point> | null => 
     : null
 }
 
-type StatusChangesProcessorEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent, 'event'>
-
-function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
+function asStatusChange(entry: StatusChangesProcessorStreamEntry): StatusChange {
   const {
     data: event,
+    recorded,
+    sequence,
     labels: { provider, device }
   } = entry
   const { telemetry, trip_id, timestamp: event_time } = event
@@ -66,26 +68,14 @@ function asStatusChange(entry: StatusChangesProcessorEntry): StatusChange {
     event_location: asPointFeature(telemetry),
     battery_pct: (telemetry && telemetry.charge) || null,
     associated_trip: trip_id || null,
-    recorded: now()
+    recorded,
+    sequence
   }
 }
 
-const isVehicleEventEntry = <Label>(
-  entry: LabeledStreamEntry<Label>
-): entry is LabeledStreamEntry<Label, VehicleEvent, 'event'> =>
-  entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
-
-const StatusChangeEventProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent, 'event'>[]
-): Promise<void> => {
-  if (entries.length > 1) {
+export const StatusChangesProcessor = async (entries: StatusChangesProcessorStreamEntry[]): Promise<void> => {
+  if (entries.length > 0) {
     await db.writeStatusChanges(entries.map(asStatusChange))
     logger.info(`Status Changes Processor: Created ${entries.length} status changes`)
   }
-}
-
-export const StatusChangesProcessor = async (
-  entries: LabeledStreamEntry<ProviderLabel & DeviceLabel>[]
-): Promise<void> => {
-  await StatusChangeEventProcessor(entries.filter(isVehicleEventEntry))
 }

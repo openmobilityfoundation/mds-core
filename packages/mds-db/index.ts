@@ -29,8 +29,8 @@ import log from 'mds-logger'
 import { dropTables, updateSchema, configureClient, MDSPostgresClient } from './migration'
 import {
   ReadEventsResult,
-  ReadTripIdsBlob,
-  ReadTripsBlob,
+  ReadTripIdsResult,
+  ReadTripsResult,
   ReadStatusChangesResult,
   StatusChange,
   Trip,
@@ -645,7 +645,7 @@ WHERE         timestamp < '${end_date}'`
   return events
 }
 
-async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsBlob> {
+async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsResult> {
   const { skip, take, device_id, min_end_time, max_end_time } = params
 
   const client = await getReadOnlyClient()
@@ -701,7 +701,7 @@ async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsBl
             resolve({
               tripIds: res2.rows.map(row => row.trip_id),
               count
-            } as ReadTripIdsBlob)
+            })
           }, fail)
           .catch(fail)
       }, fail)
@@ -1132,7 +1132,7 @@ async function writeTrips(trips: Trip[]) {
   })
 }
 
-async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsBlob> {
+async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsResult> {
   const client = await getReadOnlyClient()
   // validate params
   const { device_id, vehicle_id, provider_id, min_end_time, max_end_time } = params
@@ -1283,13 +1283,14 @@ async function readStatusChanges(
     skip: number
     take: number
     provider_id: UUID
-    start_time: number
-    end_time: number
+    start_time: Timestamp
+    end_time: Timestamp
+    last_sequence: [Timestamp, number]
   }>
 ): Promise<ReadStatusChangesResult> {
   const client = await getReadOnlyClient()
 
-  const { provider_id, start_time, end_time, skip, take } = params
+  const { provider_id, start_time, end_time, skip, take, last_sequence } = params
 
   const vals = new SqlVals()
   const conditions = []
@@ -1318,6 +1319,11 @@ async function readStatusChanges(
     }
   }
 
+  if (last_sequence !== undefined && last_sequence.every(Number.isInteger)) {
+    const [recorded, sequence] = last_sequence.map(value => vals.add(value))
+    conditions.push(`(recorded > ${recorded} OR (recorded = ${recorded} AND sequence > ${sequence}))`)
+  }
+
   const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`
 
   const exec = SqlExecuter(client)
@@ -1331,7 +1337,7 @@ async function readStatusChanges(
   }
 
   const { rows: status_changes } = await exec(
-    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC${
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC, sequence ASC${
       skip ? ` OFFSET ${vals.add(skip)}` : ''
     }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
     vals.values()
@@ -1493,6 +1499,35 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+async function getPastEventsForStatusChanges(
+  device_id: UUID,
+  timestamp: Timestamp,
+  take: number
+): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const exec = SqlExecuter(client)
+  const {
+    rows: [{ count }]
+  } = await exec(
+    `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
+      timestamp
+    )} AND NOT EXISTS (SELECT FROM ${
+      schema.STATUS_CHANGES_TABLE
+    } WHERE device_id = events.device_id AND event_time = events.timestamp)`,
+    vals.values()
+  )
+  const { rows: events } = await exec(
+    `SELECT * FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
+      timestamp
+    )} AND NOT EXISTS (SELECT FROM ${
+      schema.STATUS_CHANGES_TABLE
+    } WHERE device_id = events.device_id AND event_time = events.timestamp) ORDER BY timestamp LIMIT ${vals.add(take)}`,
+    vals.values()
+  )
+  return { count, events }
+}
+
 export = {
   initialize,
   health,
@@ -1541,5 +1576,6 @@ export = {
   getNumEventsLast24HoursByProvider,
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
-  getEventsLast24HoursPerProvider
+  getEventsLast24HoursPerProvider,
+  getPastEventsForStatusChanges
 }

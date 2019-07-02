@@ -48,13 +48,21 @@ export const DeviceLabeler = async (entries: StreamEntry[]): Promise<StreamEntry
       {}
     )
 
-    logger.info(`Device Labeler: Labeled ${Object.keys(device_map).length}/${device_ids.length} devices`)
-
     // Create the device labels
-    return device_entries.reduce(
-      (labels, entry) => ({ ...labels, [entry.id]: { device: device_map[entry.data.device_id] } }),
-      {}
+    const { labels, labeled } = device_entries.reduce(
+      (result, entry) => {
+        const device = device_map[entry.data.device_id]
+        return {
+          labels: { ...result.labels, [entry.id]: { device } },
+          labeled: device ? result.labeled + 1 : result.labeled
+        }
+      },
+      { labels: {}, labeled: 0 }
     )
+
+    logger.info(`Device Labeler: ${labeled} ${labeled === 1 ? 'entry' : 'entries'} labeled`)
+
+    return labels
   }
 
   return {}

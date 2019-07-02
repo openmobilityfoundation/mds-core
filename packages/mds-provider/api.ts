@@ -15,7 +15,6 @@
  */
 
 import express from 'express'
-import jwtDecode from 'jwt-decode'
 
 import log from 'mds-logger'
 import db from 'mds-db'
@@ -24,19 +23,19 @@ import { providers, providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
-import { isUUID, now, round, seconds, pathsFor } from 'mds-utils'
+import { isUUID, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
 import { Device, UUID, VehicleEvent, Telemetry, Provider } from 'mds'
 import { FeatureCollection, Feature } from 'geojson'
 import {
-  ReadTripsBlob,
-  ReadTripIdsBlob,
+  ReadTripsResult,
+  ReadTripIdsResult,
   Trip,
   ReadEventsResult,
   ReadStatusChangesResult,
   StatusChange
 } from 'mds-db/types'
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
-import { ProviderApiRequest, PageParams } from './types'
+import { ProviderApiRequest, ProviderApiResponse } from './types'
 import { asStatusChangeEvent } from './utils'
 
 log.startup()
@@ -48,54 +47,14 @@ function api(app: express.Express): express.Express {
 
   // / ////////// utilities ////////////////
 
-  function getAuth(req: ProviderApiRequest): Partial<{ provider_id: string; scope: string }> {
-    // Handle Auth from API Gateway
-    const authorizer =
-      req.apiGateway &&
-      req.apiGateway.event &&
-      req.apiGateway.event.requestContext &&
-      req.apiGateway.event.requestContext.authorizer
-
-    /* istanbul ignore next */
-    if (authorizer) {
-      const { provider_id, scope } = authorizer
-      return { provider_id, scope }
-    }
-
-    // Handle Authorization Header when running standalone
-    const decode = ([scheme, token]: string[]): Partial<{ provider_id: string; scope: string }> => {
-      const decoders: { [scheme: string]: () => Partial<{ provider_id: string; scope: string }> } = {
-        bearer: () => {
-          const decoded: { [key: string]: string } = jwtDecode(token)
-          return {
-            provider_id: decoded['https://ladot.io/provider_id'],
-            scope: decoded.scope
-          }
-        },
-        basic: () => {
-          const [provider_id, scope] = Buffer.from(token, 'base64')
-            .toString()
-            .split('|')
-          return { provider_id, scope }
-        }
-      }
-      const decoder = decoders[scheme.toLowerCase()]
-      return decoder ? decoder() : {}
-    }
-
-    return req.headers.authorization ? decode(req.headers.authorization.split(' ')) : {}
-  }
-
   /**
    * Provider-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req, res, next) => {
+  app.use((req: ProviderApiRequest, res: ProviderApiResponse, next) => {
     try {
-      if (req.path.includes('/health')) {
-        // all auth provided by API Gateway
-      } else if (req.path !== '/') {
+      if (!req.path.includes('/health')) {
         // verify presence of provider_id
-        const { provider_id, scope } = getAuth(req)
+        const { provider_id, scope } = res.locals.claims
 
         // no test access without auth
         if (req.path.includes('/test/') && !(scope || '').includes('test:all')) {
@@ -107,21 +66,19 @@ function api(app: express.Express): express.Express {
 
         /* istanbul ignore else getAuth will never return an invalid provider_id */
         if (!provider_id) {
-          log.warn('Missing provider_id in', req.originalUrl)
+          log.warn('missing_provider_id', req.originalUrl)
           return res.status(403).send({
             error: 'missing_provider_id'
           })
         }
         /* istanbul ignore next */
         if (!isUUID(provider_id)) {
-          log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+          log.warn('invalid_provider_id', provider_id, req.originalUrl)
           return res.status(403).send({
             error: 'invalid_provider_id',
             error_description: `invalid provider_id ${provider_id} is not a UUID`
           })
         }
-        // stash provider_id
-        res.locals.provider_id = provider_id
 
         // helpy logging
         log.info(providerName(provider_id), req.method, req.originalUrl)
@@ -134,7 +91,7 @@ function api(app: express.Express): express.Express {
 
   // / //////////////////////// basic gets /////////////////////////////////
 
-  app.get(pathsFor('/test/initialize'), (req, res) => {
+  app.get(pathsFor('/test/initialize'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     log.info('get /test/initialize')
 
     // nuke it all
@@ -147,7 +104,7 @@ function api(app: express.Express): express.Express {
   })
 
   // get => random data
-  app.get(pathsFor('/test/seed'), (req, res) => {
+  app.get(pathsFor('/test/seed'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
       log.info('/test/seed', JSON.stringify(req.query))
@@ -190,7 +147,7 @@ function api(app: express.Express): express.Express {
   })
 
   // post => populate from body
-  app.post(pathsFor('/test/seed'), (req, res) => {
+  app.post(pathsFor('/test/seed'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
       Promise.all([cache.seed(req.body), db.seed(req.body)]).then(
@@ -215,7 +172,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/test/shutdown'), (req, res) => {
+  app.get(pathsFor('/test/shutdown'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     Promise.all([db.shutdown(), cache.shutdown()]).then(() => {
       res.send({
         result: 'shutdown done'
@@ -223,7 +180,7 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/test/update_device'), (req, res) => {
+  app.get(pathsFor('/test/update_device'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     cache.updateVehicleList(req.query.device_id, req.query.timestamp).then((total: number) => {
       res.send({
         result: 'Done',
@@ -232,7 +189,7 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/health'), (req, res) => {
+  app.get(pathsFor('/health'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // FIXME add real health checks
     // verify access to known resources e.g. redis, postgres
     res.status(200).send({
@@ -357,9 +314,8 @@ function api(app: express.Express): express.Express {
       // log.info('getting events for trip_id', trip_id)
       db.readEvents({
         trip_id
-      }).then((blob: ReadEventsResult) => {
-        // const { events, count } = blob
-        const { events } = blob
+      }).then((result: ReadEventsResult) => {
+        const { events } = result
         const trip_start = events.find(e => e.event_type === VEHICLE_EVENTS.trip_start)
         const trip_end = events.find(e => e.event_type === VEHICLE_EVENTS.trip_end)
         if (trip_start && trip_end && trip_start.trip_id && trip_end.trip_id) {
@@ -372,8 +328,8 @@ function api(app: express.Express): express.Express {
   }
 
   // FIXME add pagination?
-  app.get(pathsFor('/trips'), (req, res) => {
-    const { provider_id } = getAuth(req)
+  app.get(pathsFor('/trips'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    const { provider_id } = res.locals.claims
     log.warn(provider_id ? providerName(provider_id) : 'none', '/trips', JSON.stringify(req.params))
 
     const { skip, take } = asPagingParams(req.query)
@@ -407,9 +363,9 @@ function api(app: express.Express): express.Express {
     }
 
     if (newSkool) {
-      db.readTrips(params).then((blob: ReadTripsBlob) => {
-        const { trips, count } = blob
-        log.info('read', trips.length, 'trips of', count, 'in', blob)
+      db.readTrips(params).then((result: ReadTripsResult) => {
+        const { count, trips } = result
+        log.info('read', trips.length, 'trips of', count, 'in', result)
         res.status(200).send({
           version: PROVIDER_VERSION,
           data: {
@@ -421,10 +377,10 @@ function api(app: express.Express): express.Express {
     } else {
       // retrieve trip events
       db.readTripIds(params)
-        .then((blob: ReadTripIdsBlob) => {
-          const { tripIds, count } = blob
+        .then((result: ReadTripIdsResult) => {
+          const { count, tripIds } = result
 
-          log.info('read', tripIds.length, 'trips of', count, 'in', blob)
+          log.info('read', tripIds.length, 'trips of', count, 'in', result)
           asTrips(tripIds)
             .then(trips => {
               res.status(200).send({
@@ -442,6 +398,73 @@ function api(app: express.Express): express.Express {
   })
 
   // / ////////////////////////////// status_changes /////////////////////////////
+
+  const asStatusChange = ({
+    recorded,
+    sequence,
+    ...props
+  }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
+
+  const getStage0Properties = (status_changes: StatusChange[]) => {
+    if (status_changes && status_changes.length > 0) {
+      const { recorded, sequence } = status_changes[status_changes.length - 1]
+      return { last_sequence: `${recorded}-${sequence}` }
+    }
+    return undefined
+  }
+
+  const asSequence = (value: unknown): [number, number] | undefined | Error => {
+    if (typeof value === 'string' && value.length > 0) {
+      const [recorded, sequence, ...extra] = value.split('-').map(Number)
+      if (extra.length === 0 && isTimestamp(recorded) && Number.isInteger(sequence)) {
+        return [recorded, sequence]
+      }
+      return Error(`Invalid sequence: ${value}`)
+    }
+    return undefined
+  }
+
+  async function getStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
+    const DEFAULT_PAGE_SIZE = 100
+    const MAX_PAGE_SIZE = 1000
+
+    // Standard Provider parameters
+    const start_time = req.query.start_time && Number(req.query.start_time)
+    const end_time = req.query.end_time && Number(req.query.end_time)
+
+    // Extensions to override paging
+    const skip = Number(req.query.skip || 0)
+    const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
+    const last_sequence = asSequence(req.query.last_sequence)
+
+    if (last_sequence instanceof Error) {
+      res.status(400).send({ error: last_sequence.message })
+      return
+    }
+
+    try {
+      const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
+        start_time,
+        end_time,
+        skip,
+        take,
+        last_sequence
+      })
+
+      res.status(200).send({
+        version: PROVIDER_VERSION,
+        data: {
+          status_changes: status_changes.map(asStatusChange)
+        },
+        links: asJsonApiLinks(req, skip, take, count),
+        ...getStage0Properties(status_changes)
+      })
+    } catch (err) {
+      // 500 Internal Server Error
+      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+      res.status(500).send({ error: new Error(err) })
+    }
+  }
 
   /**
    * Convert a telemetry object to a GeoJSON Point
@@ -468,7 +491,7 @@ function api(app: express.Express): express.Express {
    * @param  {list of Events}
    * @return {list of StatusChanges}
    */
-  async function asStatusChange(event: VehicleEvent): Promise<StatusChange> {
+  async function eventAsStatusChange(event: VehicleEvent): Promise<StatusChange> {
     const telemetry_timestamp = event.telemetry_timestamp || event.timestamp
     const [device, provider, telemetry] = await Promise.all([
       getDevice(event.device_id),
@@ -500,45 +523,13 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  async function asStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
-    const result = await Promise.all(events.map(event => asStatusChange(event)))
+  async function eventsAsStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
+    const result = await Promise.all(events.map(event => eventAsStatusChange(event)))
     return result
   }
 
-  async function getStatusChanges(req: express.Request, res: express.Response) {
-    // Standard Provider parameters
-    const { start_time, end_time } = req.query
-
-    // Extensions to override paging
-    const { skip, take } = asPagingParams(req.query)
-
-    const { provider_id } = getAuth(req)
-
-    try {
-      const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
-        provider_id,
-        start_time,
-        end_time,
-        skip,
-        take
-      })
-
-      res.status(200).send({
-        version: PROVIDER_VERSION,
-        data: {
-          status_changes
-        },
-        links: asJsonApiLinks(req, skip, take, count)
-      })
-    } catch (err) {
-      // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(err) })
-    }
-  }
-
-  async function getEventsAsStatusChanges(req: express.Request, res: express.Response) {
-    const { provider_id } = getAuth(req)
+  async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
+    const { provider_id } = res.locals.claims
 
     const { start_time, end_time, start_recorded, end_recorded, device_id } = req.query
     const { skip, take } = asPagingParams(req.query)
@@ -582,8 +573,8 @@ function api(app: express.Express): express.Express {
       // FIXME be mindful about params
       const readEventsStart = now()
       db.readEvents(params)
-        .then((blob: ReadEventsResult) => {
-          const { events, count } = blob
+        .then((result: ReadEventsResult) => {
+          const { count, events } = result
           const readEventsEnd = now()
           const asStatusChangesStart = now()
           const readEventsDuration = readEventsEnd - readEventsStart
@@ -594,7 +585,7 @@ function api(app: express.Express): express.Express {
             log.warn(readEventsMsg)
           }
           // change events into status changes
-          asStatusChanges(events)
+          eventsAsStatusChanges(events)
             .then(status_changes => {
               const asStatusChangesEnd = now()
               const asStatusChangesDuration = asStatusChangesEnd - asStatusChangesStart
@@ -618,7 +609,7 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  app.get(pathsFor('/status_changes'), async (req, res) => {
+  app.get(pathsFor('/status_changes'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     await (req.query.newSkool ? getStatusChanges(req, res) : getEventsAsStatusChanges(req, res))
   })
 
@@ -631,12 +622,12 @@ function api(app: express.Express): express.Express {
   // in the mean-time, tooling companies set up shop on Provider.
   //
   // the above implementation of Provider-on-Agency takes Agency data and transforms it to
-  // Provider data structures.  however, this is done on the fly, and not stored.
+  // Provider data structures.
   //
 
   // /////////////// update trips/status_changes database from agency data /////////////
 
-  app.get(pathsFor('/admin/import_trips_from_agency'), (req, res) => {
+  app.get(pathsFor('/admin/import_trips_from_agency'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // TODO implement
     // determine last known timestamp of trips
 
@@ -664,8 +655,8 @@ function api(app: express.Express): express.Express {
           // igmore start_time
         }
         db.readTripIds(tripParams)
-          .then((blob: ReadTripIdsBlob) => {
-            const { tripIds, count } = blob
+          .then((result: ReadTripIdsResult) => {
+            const { count, tripIds } = result
             asTrips(tripIds)
               .then(trips => {
                 // write trips
@@ -684,7 +675,7 @@ function api(app: express.Express): express.Express {
       .catch(fail)
   })
 
-  app.get(pathsFor('/admin/import_status_changes_from_agency'), (req, res) => {
+  app.get(pathsFor('/admin/import_status_changes_from_agency'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     /* istanbul ignore next spoofing db failure is not implemented, can't test. */
     function fail(err: Error): void {
       const desc = err.message || err
@@ -708,11 +699,11 @@ function api(app: express.Express): express.Express {
           // igmore start_time
         }
         db.readEvents(statusChangeParams)
-          .then((blob: ReadEventsResult) => {
-            log.info('/status_changes read', blob)
-            const { events, count } = blob
+          .then((result: ReadEventsResult) => {
+            log.info('/status_changes read', result)
+            const { count, events } = result
             // change events into status changes
-            asStatusChanges(events)
+            eventsAsStatusChanges(events)
               .then(status_changes => {
                 db.writeStatusChanges(status_changes)
                 res.status(200).send({
@@ -727,37 +718,8 @@ function api(app: express.Express): express.Express {
       .catch(fail)
   })
 
-  // /////////////// scrape trips/status_changes from providers, store in db ///////////
-
-  app.get(pathsFor('/admin/import_trips_from_provider'), (req, res) => {
-    // TODO implement
-    // get provider ID param
-    // look up provider URL
-    // authenticate against provider
-    // fetch trips from provider
-    // write trips to db
-    // return activity report
-    res.status(405).send({
-      result: 'umimplemented'
-    })
-  })
-
-  app.get(pathsFor('/admin/import_status_changes_from_provider'), (req, res) => {
-    // TODO implement
-    // get provider ID param
-    // look up provider URL
-    // authenticate against provider
-    // fetch status_changes from provider
-    // write status_changes to db
-    // return activity report
-    res.status(405).send({
-      result: 'umimplemented'
-    })
-  })
-
   return app
 }
 
 // Export your Express configuration so that it can be consumed by the Lambda handler
 export { api }
-export { ProviderApiRequest, Trip, ReadTripIdsBlob, ReadTripsBlob, ReadStatusChangesResult, PageParams }
