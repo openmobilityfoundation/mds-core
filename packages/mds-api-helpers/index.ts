@@ -14,6 +14,8 @@
     limitations under the License.
  */
 
+import urls from 'url'
+import express from 'express'
 import { isInsideBoundingBox } from 'mds-utils'
 import { VehicleEvent, Device, Telemetry, BoundingBox } from 'mds'
 import { EVENT_STATUS_MAP, VEHICLE_STATUSES } from 'mds-enums'
@@ -22,12 +24,12 @@ import db from 'mds-db'
 import cache from 'mds-cache'
 import { CacheReadDeviceResult } from 'mds-cache/types'
 
-async function getVehicles(
+export async function getVehicles(
   skip: number,
   take: number,
   url: string,
   provider_id: string,
-  reqQuery: any,
+  reqQuery: { [x: string]: string },
   bbox?: BoundingBox
 ): Promise<{
   total: number
@@ -107,6 +109,37 @@ async function getVehicles(
   }
 }
 
-export = {
-  getVehicles
+interface PagingParams {
+  skip: number
+  take: number
+}
+
+export const pagingParams: (params: Partial<{ [P in keyof PagingParams]: unknown }>) => PagingParams = params => {
+  const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
+  const [skip, take] = [params.skip, params.take].map(Number)
+  return {
+    skip: Number.isNaN(skip) || skip <= 0 ? 0 : skip,
+    take: Number.isNaN(take) || take <= 0 ? DEFAULT_PAGE_SIZE : Math.min(take, MAX_PAGE_SIZE)
+  }
+}
+
+const jsonApiLink = (req: express.Request, skip: number, take: number): string =>
+  urls.format({
+    protocol: req.get('x-forwarded-proto') || req.protocol,
+    host: req.get('host'),
+    pathname: req.path,
+    query: { ...req.query, skip, take }
+  })
+
+type JSONAPILinks = Partial<{ first: string; prev: string; next: string; last: string }> | undefined
+
+export const jsonApiLinks = (req: express.Request, skip: number, take: number, count: number): JSONAPILinks => {
+  if (skip > 0 || take < count) {
+    const first = skip > 0 ? jsonApiLink(req, 0, take) : undefined
+    const prev = skip - take >= 0 && skip - take < count ? jsonApiLink(req, skip - take, take) : undefined
+    const next = skip + take < count ? jsonApiLink(req, skip + take, take) : undefined
+    const last = skip + take < count ? jsonApiLink(req, count - (count % take || take), take) : undefined
+    return { first, prev, next, last }
+  }
+  return undefined
 }
