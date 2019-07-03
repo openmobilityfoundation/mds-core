@@ -28,5 +28,3 @@ export interface ServiceArea {
   description: string
   area: MultiPolygon
 }
-
-// interface TelemetryMap = { [s: string]: Telemetry[] }

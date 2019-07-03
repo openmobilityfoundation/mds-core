@@ -1166,8 +1166,7 @@ function api(app: express.Express): express.Express {
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
       const telemetryMap = telemetry.reduce((map, t) => {
-        map[t.device_id] = t
-        return map
+        return Object.assign(map, { [t.device_id]: t })
       }, telemetrySeed)
       /* eslint-enable no-param-reassign */
       return Promise.resolve({
@@ -1211,7 +1210,6 @@ function api(app: express.Express): express.Express {
               return db.readDeviceIds(stat.provider_id).then((items: DeviceID[]) => {
                 items.map(item => {
                   const event = eventMap[item.device_id]
-                  // const tel = telemetryMap[item.device_id]
                   const event_type = event ? event.event_type : 'default'
                   inc(stat.event_type, event_type)
                   const status = EVENT_STATUS_MAP[event_type]
