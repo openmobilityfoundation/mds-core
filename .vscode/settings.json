@@ -3,10 +3,7 @@
   "editor.tabSize": 2,
   "eslint.autoFixOnSave": true,
   "eslint.enable": true,
-  "eslint.validate": [
-    "javascript",
-    { "language": "typescript", "autoFix": true }
-  ],
+  "eslint.validate": [{ "language": "typescript", "autoFix": true }],
   "eslint.workingDirectories": [
     { "directory": "./packages/mds-agency", "changeProcessCWD": true },
     { "directory": "./packages/mds-audit", "changeProcessCWD": true },

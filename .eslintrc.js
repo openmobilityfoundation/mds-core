@@ -1,5 +1,3 @@
-// https://github.com/eslint/eslint/issues/8813#issuecomment-456034732const typescriptEslintRecommended = require('@typescript-eslint/eslint-plugin/dist/configs/recommended.json')
-
 module.exports = {
   env: {
     node: true,
