@@ -202,7 +202,16 @@ export interface ErrorObject {
   error_description: string
 }
 
-export type CountMap<T extends {}> = { [P in keyof T]: number }
+export interface CountMap {
+  [P: string]: number
+}
+
+export interface TripsStats {
+  single: number
+  singles: CountMap
+  mysteries: CountMap
+  mystery_examples: { [key: string]: UUID[] }
+}
 
 // The above types represent objects that can be created and passed into functions that write to the database. The
 // following type alias allows wrapping the above types with Recorded<> in order to represent what is read from the

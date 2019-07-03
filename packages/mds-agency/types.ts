@@ -1,5 +1,5 @@
 import express from 'express'
-import { UUID, CountMap } from 'mds'
+import { UUID } from 'mds'
 import { MultiPolygon } from 'geojson'
 
 // TODO this is same as ProviderApiRequest
@@ -16,13 +16,6 @@ export interface AgencyApiRequest extends express.Request {
       }
     }
   }
-}
-
-export interface TripsStats {
-  single: number
-  singles?: CountMap<{}>
-  mysteries?: CountMap<{}>
-  mystery_examples?: CountMap<{}>
 }
 
 export interface ServiceArea {

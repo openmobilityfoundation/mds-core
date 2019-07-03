@@ -23,10 +23,10 @@ import cache from 'mds-cache'
 import stream from 'mds-stream'
 import { providers, providerName } from 'mds-providers'
 import areas from 'ladot-service-areas'
-import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID } from 'mds'
+import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID, TripsStats } from 'mds'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums' // FIXME replace eventually
 import { isUUID, isTimestamp, now, days, inc, pathsFor, head, tail, isStateTransitionValid } from 'mds-utils'
-import { TripsStats, AgencyApiRequest } from 'mds-agency/types'
+import { AgencyApiRequest } from 'mds-agency/types'
 
 const SERVER_ERROR = {
   error: 'server_error',
@@ -316,7 +316,7 @@ function api(app: express.Express): express.Express {
       const trip = perTripId[trip_id]
       const pid: UUID = trip.provider_id
       perProvider[pid] = perProvider[pid] || {}
-      const counts: CountMap<{}> = {}
+      const counts: CountMap = {}
       const events: string[] = Object.keys(trip.eventTypes)
         .sort()
         .map((key: string) => trip.eventTypes[parseInt(key)])
