@@ -4,21 +4,6 @@
   "eslint.autoFixOnSave": true,
   "eslint.enable": true,
   "eslint.validate": [{ "language": "typescript", "autoFix": true }],
-  "eslint.workingDirectories": [
-    { "directory": "./packages/mds-agency", "changeProcessCWD": true },
-    { "directory": "./packages/mds-audit", "changeProcessCWD": true },
-    { "directory": "./packages/mds-cache", "changeProcessCWD": true },
-    { "directory": "./packages/mds-compliance", "changeProcessCWD": true },
-    { "directory": "./packages/mds-db", "changeProcessCWD": true },
-    { "directory": "./packages/mds-enums", "changeProcessCWD": true },
-    { "directory": "./packages/mds-logger", "changeProcessCWD": true },
-    { "directory": "./packages/mds-policy", "changeProcessCWD": true },
-    { "directory": "./packages/mds-provider", "changeProcessCWD": true },
-    { "directory": "./packages/mds-providers", "changeProcessCWD": true },
-    { "directory": "./packages/mds-stream", "changeProcessCWD": true },
-    { "directory": "./packages/mds-test-data", "changeProcessCWD": true },
-    { "directory": "./packages/mds-utils", "changeProcessCWD": true }
-  ],
   "prettier.disableLanguages": ["markdown"],
   "prettier.eslintIntegration": true,
   "[javascript]": {
