@@ -18,7 +18,7 @@
     "utils"
   ],
   "dependencies": {
-    "aws-sdk": "2.483.0"
+    "aws-sdk": "2.487.0"
   },
   "devDependencies": {},
   "author": "City of Los Angeles",
