@@ -28,6 +28,7 @@ const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const LA_BEACH = 'ff822e26-a70c-4721-ac32-2f6734beff9b'
 
+/* eslint-reason can't import untyped JS modules without require */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const restrictedAreas = require('../../ladot-service-areas/restricted-areas')
 const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')

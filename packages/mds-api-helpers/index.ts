@@ -64,18 +64,16 @@ export async function getVehicles(
     : rows
 
   const deviceIdSubset = deviceIdSuperset.slice(skip, skip + take).map(record => record.device_id)
-  const devices = await cache.readDevices(deviceIdSubset)
-  devices.map((device: CacheReadDeviceResult) => {
+  const devices = (await cache.readDevices(deviceIdSubset)).reduce((acc: Device[], device: CacheReadDeviceResult) => {
     if (!device) {
       throw new Error('device in DB but not in cache')
     }
     const event = eventMap[device.device_id]
-    /* eslint-disable no-param-reassign */
-    device.status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
-    device.telemetry = event ? event.telemetry : null
-    device.updated = event ? event.timestamp : null
-    /* eslint-enable no-param-reassign */
-  })
+    const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+    const telemetry = event ? event.telemetry : null
+    const updated = event ? event.timestamp : null
+    return [...acc, { ...device, status, telemetry, updated }]
+  }, [])
 
   const noNext = skip + take >= deviceIdSuperset.length
   const noPrev = skip === 0 || skip > deviceIdSuperset.length

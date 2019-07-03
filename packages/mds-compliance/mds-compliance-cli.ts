@@ -16,7 +16,7 @@
 import * as fs from 'fs'
 import log from 'mds-logger'
 import * as yargs from 'yargs'
-import { Policy, Geography, ComplianceResponse } from 'mds'
+import { Policy, Geography, ComplianceResponse, VehicleEvent, Device } from 'mds'
 import { filterPolicies, processPolicy } from './mds-compliance-engine'
 import { validateEvents, validateGeographies, validatePolicies } from './validators'
 
@@ -46,33 +46,34 @@ const args = yargs
     type: 'string'
   }).argv
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-async function readJson(path: string): Promise<any> {
+async function readJson(path: string): Promise<object> {
   return Promise.resolve(JSON.parse(fs.readFileSync(path).toString()))
 }
 
 async function main(): Promise<(ComplianceResponse | undefined)[]> {
-  const geographies: Geography[] = await readJson(args.geographies)
+  const geographies = (await readJson(args.geographies)) as Geography[]
   if (!geographies || !validateGeographies(geographies)) {
     log.error('unable to read geographies')
     process.exit(1)
   }
 
-  const policies: Policy[] = await readJson(args.policies)
+  const policies = (await readJson(args.policies)) as Policy[]
   if (!policies || !validatePolicies(policies)) {
     log.error('unable to read policies')
     process.exit(1)
   }
 
   // read events
-  const events = await readJson(args.events)
+  const events = (await readJson(args.events)) as VehicleEvent[]
   if (!events || !validateEvents(events)) {
     log.error('unable to read events')
     process.exit(1)
   }
 
   // read devices
-  const devices = await readJson(args.devices)
+  const devices = ((await readJson(args.devices)) as Device[]).reduce((map: { [d: string]: Device }, device) => {
+    return Object.assign(map, { [device.device_id]: device })
+  }, {})
   // TODO Validate Devices
   if (!devices) {
     log.error('unable to read devices')

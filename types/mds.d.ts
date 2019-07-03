@@ -127,6 +127,7 @@ interface BaseRule {
   start_time?: string | null
   end_time?: string | null
   days?: DAY_OF_WEEK[] | null
+  /* eslint-reason TODO: message types haven't been defined well yet */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   messages?: any
   value_url?: URL | null
