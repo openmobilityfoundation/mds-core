@@ -18,7 +18,6 @@ import {
   isUUID,
   rangeRandomInt,
   isTimestamp,
-  nonNegInt,
   seconds,
   days,
   yesterday,
@@ -1114,16 +1113,24 @@ async function writeTrips(trips: Trip[]) {
   })
 }
 
-async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsResult> {
+async function readTrips(
+  params: Partial<{
+    skip: number
+    take: number
+    provider_id: UUID
+    device_id: UUID
+    vehicle_id: string
+    min_end_time: Timestamp
+    max_end_time: Timestamp
+    last_sequence: [Timestamp, number]
+  }>
+): Promise<ReadTripsResult> {
   const client = await getReadOnlyClient()
-  // validate params
-  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time } = params
-  const { skip, take } = params
+  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time, skip, take, last_sequence } = params
 
-  let sql = `SELECT * FROM ${schema.TRIPS_TABLE}`
   const vals = new SqlVals()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const conditions: (string | number)[] = []
+  const conditions: string[] = ['trip_start IS NOT NULL', 'trip_end IS NOT NULL']
+
   if (device_id) {
     if (!isUUID(device_id)) {
       throw new Error(`invalid device_id ${device_id}`)
@@ -1131,6 +1138,7 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
       conditions.push(`device_id = ${vals.add(device_id)}`)
     }
   }
+
   if (provider_id) {
     if (!isUUID(provider_id)) {
       throw new Error(`invalid provider_id ${provider_id}`)
@@ -1138,71 +1146,52 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
       conditions.push(`provider_id = ${vals.add(provider_id)}`)
     }
   }
+
   if (vehicle_id) {
     conditions.push(`vehicle_id = ${vals.add(vehicle_id)}`)
   }
+
   if (min_end_time !== undefined) {
     if (!isTimestamp(min_end_time)) {
       throw new Error(`invalid min_end_time ${min_end_time}`)
     } else {
-      conditions.push(`min_end_time >= ${vals.add(min_end_time)}`) // FIXME confirm >=
+      conditions.push(`trip_end >= ${vals.add(min_end_time)}`) // FIXME confirm >=
     }
   }
+
   if (max_end_time !== undefined) {
     if (!isTimestamp(max_end_time)) {
       throw new Error(`invalid max_end_time ${max_end_time}`)
     } else {
-      conditions.push(`max_end_time <= ${vals.add(max_end_time)}`) // FIXME confirm <=
+      conditions.push(`trip_end <= ${vals.add(max_end_time)}`) // FIXME confirm <=
     }
   }
 
-  if (conditions.length) {
-    sql += ` WHERE ${conditions.join(' AND ')}`
+  if (last_sequence !== undefined && last_sequence.every(Number.isInteger)) {
+    const [recorded, sequence] = last_sequence.map(value => vals.add(value))
+    conditions.push(`(recorded > ${recorded} OR (recorded = ${recorded} AND sequence > ${sequence}))`)
   }
 
-  return new Promise((resolve, reject) => {
-    const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-    const countSql = `SELECT COUNT(*) FROM ${schema.TRIPS_TABLE} ${filter}`
-    const countVals = vals.values()
+  const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`
 
-    logSql(countSql, countVals)
+  const exec = SqlExecuter(client)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
-      log.error('readTrips error', err.stack || err).then(() => {
-        reject(err)
-      })
-    }
+  const {
+    rows: [{ count }]
+  } = await exec(`SELECT COUNT(*) FROM ${schema.TRIPS_TABLE} ${where}`, vals.values())
 
-    client
-      .query(countSql, countVals)
-      .then(res => {
-        const count = parseInt(res.rows[0].count)
-        if (count === 0) {
-          resolve({
-            trips: [],
-            count: 0
-          })
-        } else {
-          sql += ' ORDER BY end_time ASC'
-          sql += ` OFFSET ${vals.add(nonNegInt(String(skip), 0))}`
-          sql += ` LIMIT ${vals.add(nonNegInt(String(take), 1000))}`
-          const values = vals.values()
+  if (count === 0) {
+    return { count, trips: [] }
+  }
 
-          logSql(sql, values)
-          client
-            .query(sql, values)
-            .then(res2 => {
-              resolve({
-                trips: res2.rows,
-                count
-              })
-            }, fail)
-            .catch(fail)
-        }
-      }, fail)
-      .catch(fail)
-  })
+  const { rows: trips } = await exec(
+    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded ASC, sequence ASC${
+      skip ? ` OFFSET ${vals.add(skip)}` : ''
+    }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
+    vals.values()
+  )
+
+  return { count, trips }
 }
 
 async function writeStatusChanges(status_changes: StatusChange[]) {
