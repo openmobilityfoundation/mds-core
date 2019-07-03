@@ -246,11 +246,10 @@ describe('Tests Compliance API:', () => {
                     .send(geography)
                     .expect(200)
                     .end(() => {
-                      const policy = COUNT_POLICY_JSON
                       policy_request
                         .post(`/admin/policies/${COUNT_POLICY_UUID}`)
                         .set('Authorization', ADMIN_AUTH)
-                        .send(policy)
+                        .send(COUNT_POLICY_JSON)
                         .expect(200)
                         .end(() => {
                           done()

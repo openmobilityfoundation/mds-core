@@ -29,7 +29,7 @@ import {
   VehicleEvent,
   MatchedVehicle
 } from 'mds'
-import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS, VEHICLE_EVENT } from 'mds-enums'
+import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS } from 'mds-enums'
 import { pointInShape } from 'mds-utils'
 import moment from 'moment-timezone'
 import { RuntimeError } from './exceptions'
@@ -243,6 +243,7 @@ function processPolicy(
     const vehiclesToFilter: MatchedVehicle[] = []
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
+        // eslint-disable-next-line no-param-reassign
         delete devices[vehicle.device_id]
       })
       switch (rule.rule_type) {

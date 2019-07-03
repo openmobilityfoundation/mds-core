@@ -135,7 +135,6 @@ const test_deregister: VehicleEvent = {
 }
 
 const test_events = [test_trip_start, test_trip_end, test_deregister]
-const log = console.log.bind(console)
 
 // FIXME make trips
 
@@ -229,7 +228,6 @@ describe('Tests app', () => {
       .expect(403)
       .end((err, result) => {
         // FIXME examine trip results
-        log('error:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.string(result.body.error).contains('missing_provider_id')
         done(err)
@@ -258,7 +256,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         // FIXME examine trip results
-        log('trips:', result.body)
         test.object(result.body).hasProperty('version')
         // const trips = result.body.data.trips
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -309,10 +306,8 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         // FIXME examine status change results
-        log('------ all changes:', result.body)
         test.object(result.body).hasProperty('version')
         // const status_changes = result.body.data.status_changes
-        log('status_changes FIXME examine contents')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -325,7 +320,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         // FIXME examine status change results
-        log('----- one change:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
         const status_change = result.body.data.status_changes[0]
@@ -369,7 +363,6 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        log('/admin/import_trips_from_agency', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -381,7 +374,6 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        log('/admin/import_status_changes_from_agency', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -395,7 +387,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         // FIXME examine trip results
-        log('newSkool trips:', result.body)
         test.object(result.body).hasProperty('version')
         // const trips = result.body.data.trips
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -411,7 +402,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         // FIXME examine trip results
-        log('newSkool status_changes:', result.body)
         test.object(result.body).hasProperty('version')
         // const trips = result.body.data.trips
         test.value(result).hasHeader('content-type', APP_JSON)

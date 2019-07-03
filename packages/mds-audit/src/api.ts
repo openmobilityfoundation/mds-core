@@ -21,9 +21,9 @@ import db from 'mds-db'
 import cache from 'mds-cache'
 import urls from 'url'
 import { pathsFor, seconds, getBoundingBox } from 'mds-utils'
-import { providers, providerName } from 'mds-providers' // map of uuids -> obj
+import { providerName } from 'mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES } from 'mds-enums'
-import { UUID, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
+import { AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
 import { getVehicles, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,

@@ -1,4 +1,5 @@
 import { FeatureCollection } from 'geojson'
+
 const la_city_boundary: FeatureCollection = {
   type: 'FeatureCollection',
   features: [

@@ -21,8 +21,8 @@
   "devDependencies": {},
   "scripts": {
     "build": "tsc --build .",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.{js,ts}'",
-    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.{js,ts}'",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
   }
 }

@@ -56,8 +56,7 @@ describe('Tests Compliance Engine', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
@@ -84,8 +83,7 @@ describe('Tests Compliance Engine', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
@@ -117,8 +115,7 @@ describe('Tests Compliance Engine', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
@@ -149,8 +146,7 @@ describe('Tests Compliance Engine', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
@@ -181,8 +177,7 @@ describe('Tests Compliance Engine', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
@@ -213,8 +208,7 @@ describe('Tests Compliance Engine', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
@@ -254,8 +248,7 @@ describe('Verifies errors are being properly thrown', () => {
     const filtered_policies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-        deviceMapAcc[device.device_id] = device
-        return deviceMapAcc
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )

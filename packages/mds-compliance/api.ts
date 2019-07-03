@@ -169,9 +169,7 @@ function api(app: express.Express): express.Express {
         }, [])
         const devices = await cache.readDevices(deviceIds)
         const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
-          /* eslint-disable-next-line no-param-reassign */
-          map[device.device_id] = device
-          return map
+          return Object.assign(map, { [device.device_id]: device })
         }, {})
         const events = await db.readHistoricalEvents({ provider_id, end_date })
         const filtered_policies: Policy[] = compliance_engine.filterPolicies(policies)
@@ -212,8 +210,7 @@ function api(app: express.Express): express.Express {
                               if (!device) {
                                 throw new Error('device in DB but not in cache')
                               }
-                              deviceMapAcc[device.device_id] = device
-                              return deviceMapAcc
+                              return Object.assign(deviceMapAcc, { [device.device_id]: device })
                             },
                             {}
                           )

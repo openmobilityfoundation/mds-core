@@ -26,7 +26,8 @@ import {
 } from 'mds-utils'
 import log from 'mds-logger'
 
-import { dropTables, updateSchema, configureClient, MDSPostgresClient } from './migration'
+import { QueryResult } from 'pg'
+import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
   ReadTripIdsResult,
@@ -36,12 +37,23 @@ import {
   Trip,
   TelemetryRecord,
   ReadEventsQueryParams,
-  ReadHistoricalEventsQueryParams
+  ReadHistoricalEventsQueryParams,
+  ReadAuditsQueryParams
 } from './types'
 
 import schema from './schema'
 
-import { vals_sql, cols_sql, vals_list, to_sql, logSql, SqlVals, SqlExecuter } from './sql-utils'
+import {
+  vals_sql,
+  cols_sql,
+  vals_list,
+  to_sql,
+  logSql,
+  SqlVals,
+  SqlExecuter,
+  configureClient,
+  MDSPostgresClient
+} from './sql-utils'
 
 const { env } = process
 
@@ -167,9 +179,7 @@ async function makeReadOnlyQuery(sql: string): Promise<any[]> {
           resolve(result.rows)
         }, fail)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .catch((fail: any) => {
-          log.error(fail)
-        })
+        .catch(fail)
     })
   })
 }
@@ -190,7 +200,7 @@ async function health(): Promise<{
   stats: { current_running_queries: object[]; cache_hit_result: { heap_read: string; heap_hit: string; ratio: string } }
 }> {
   log.info('postgres health check')
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const currentQueriesSQL = `SELECT query
     FROM pg_stat_activity
     WHERE query != '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%'
@@ -215,31 +225,6 @@ async function health(): Promise<{
       })
     })
   })
-}
-
-async function seed(data: {
-  devices?: Device[]
-  events?: VehicleEvent[]
-  // Making this parameter optional is necessary because if you map over an array of events to get an array of
-  // telemetry objects, not every event has a corresponding telemetry object.
-  // And sometimes it is necessary to seed some telemetry objects without corresponding events.
-  telemetry?: Telemetry[]
-}) {
-  if (data) {
-    log.info('postgres seed start')
-    if (data.devices) {
-      await Promise.all(data.devices.map(async (device: Device) => writeDevice(device)))
-    }
-    log.info('postgres devices seeded')
-    if (data.events) await Promise.all(data.events.map(async (event: VehicleEvent) => writeEvent(event)))
-    log.info('postgres events seeded')
-    if (data.telemetry) {
-      await writeTelemetry(data.telemetry)
-    }
-    log.info('postgres seed done')
-    return Promise.resolve()
-  }
-  return Promise.resolve('no data')
 }
 
 async function readDeviceByVehicleId(
@@ -309,6 +294,7 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
   })
 }
 
+// TODO: FIX updateDevice/readDevice circular reference
 async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
   const callStacker = new Error()
   return new Promise((resolve, reject) => {
@@ -326,6 +312,7 @@ async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
               // FIXME stinky! remove!
               if (!res.rows[0].vehicle_id) {
                 const vehicle_id = `test-${rangeRandomInt(10000000, 99999999)}`
+                // eslint-disable-next-line @typescript-eslint/no-use-before-define
                 updateDevice(device_id, {
                   vehicle_id
                 }).then(() => {
@@ -430,7 +417,7 @@ async function writeEvent(event: VehicleEvent): Promise<Recorded<VehicleEvent>> 
         logSql(sql, values)
         client
           .query(sql, values)
-          .then(res => {
+          .then(() => {
             resolve(event as Recorded<VehicleEvent>)
           }, reject)
           .catch(reject)
@@ -766,7 +753,7 @@ async function writeTelemetry(data: Telemetry[]): Promise<void> {
         client
           .query(sql)
           .then(
-            res => {
+            () => {
               const delta = now() - start
               if (delta > 200) {
                 log.info('pg db writeTelemetry', data.length, 'rows, success in', delta, 'ms')
@@ -837,7 +824,7 @@ async function readTelemetry(
   })
 }
 
-async function wipeDevice(device_id: UUID): Promise<any> {
+async function wipeDevice(device_id: UUID): Promise<QueryResult> {
   return new Promise((resolve, reject) => {
     // read from pg
     getWriteableClient().then(client => {
@@ -959,7 +946,7 @@ async function readAudit(audit_trip_id: UUID) {
   throw Error(error)
 }
 
-async function readAudits(query: any) {
+async function readAudits(query: ReadAuditsQueryParams) {
   const client = await getReadOnlyClient()
 
   const { skip, take, provider_id, provider_vehicle_id, audit_subject_id, start_time, end_time } = query
@@ -1015,7 +1002,7 @@ async function writeAudit(audit: Audit & { audit_vehicle_id: UUID }): Promise<Re
       logSql(sql, values)
       client
         .query(sql, values)
-        .then(res => {
+        .then(() => {
           resolve(audit)
         }, reject)
         .catch(reject)
@@ -1030,10 +1017,6 @@ async function deleteAudit(audit_trip_id: UUID) {
   logSql(sql, values)
   const result = await client.query(sql, values)
   return result.rowCount
-}
-
-async function readAuditEvent(audit_id: UUID) {
-  throw new Error('readAuditEvent unimplemented')
 }
 
 async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<AuditEvent>[]> {
@@ -1057,15 +1040,14 @@ async function writeAuditEvent(event: AuditEvent): Promise<Recorded<AuditEvent>>
   return new Promise((resolve, reject) => {
     // write pg
     getWriteableClient().then(client => {
-      event.recorded = now()
       const sql = `INSERT INTO ${cols_sql(schema.AUDIT_EVENTS_TABLE, schema.AUDIT_EVENTS_COLS)} ${vals_sql(
         schema.AUDIT_EVENTS_COLS
       )}`
-      const values = vals_list(schema.AUDIT_EVENTS_COLS, event)
+      const values = vals_list(schema.AUDIT_EVENTS_COLS, { ...event, recorded: now() })
       logSql(sql, values)
       client
         .query(sql, values)
-        .then(res => {
+        .then(() => {
           resolve(event as Recorded<AuditEvent>)
         }, reject)
         .catch(reject)
@@ -1113,7 +1095,7 @@ async function writeTrips(trips: Trip[]) {
     client
       .query(sql)
       .then(
-        res => {
+        () => {
           resolve({
             count: trips.length
           })
@@ -1258,7 +1240,7 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
       .query(sql)
       .then(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (res: any) => {
+        () => {
           log.info('pg db writeStatusChanges', status_changes.length, 'rows, success')
           resolve({
             count: status_changes.length
@@ -1418,7 +1400,7 @@ async function writeGeography(geography: Geography) {
     client
       .query(sql, values)
       .then(
-        res => {
+        () => {
           resolve(geography)
         },
         err => {
@@ -1484,7 +1466,7 @@ async function writePolicy(policy: Policy) {
     client
       .query(sql, values)
       .then(
-        res => {
+        () => {
           resolve(policy)
         },
         err => {
@@ -1528,6 +1510,31 @@ async function getPastEventsForStatusChanges(
   return { count, events }
 }
 
+async function seed(data: {
+  devices?: Device[]
+  events?: VehicleEvent[]
+  // Making this parameter optional is necessary because if you map over an array of events to get an array of
+  // telemetry objects, not every event has a corresponding telemetry object.
+  // And sometimes it is necessary to seed some telemetry objects without corresponding events.
+  telemetry?: Telemetry[]
+}) {
+  if (data) {
+    log.info('postgres seed start')
+    if (data.devices) {
+      await Promise.all(data.devices.map(async (device: Device) => writeDevice(device)))
+    }
+    log.info('postgres devices seeded')
+    if (data.events) await Promise.all(data.events.map(async (event: VehicleEvent) => writeEvent(event)))
+    log.info('postgres events seeded')
+    if (data.telemetry) {
+      await writeTelemetry(data.telemetry)
+    }
+    log.info('postgres seed done')
+    return Promise.resolve()
+  }
+  return Promise.resolve('no data')
+}
+
 export = {
   initialize,
   health,
@@ -1552,7 +1559,6 @@ export = {
   readAudits,
   writeAudit,
   deleteAudit,
-  readAuditEvent,
   readAuditEvents,
   writeAuditEvent,
   writeTrips,

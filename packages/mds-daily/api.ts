@@ -23,10 +23,10 @@ import cache from 'mds-cache'
 import stream from 'mds-stream'
 import { providers, providerName } from 'mds-providers'
 import areas from 'ladot-service-areas'
-import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID } from 'mds'
+import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID, TripsStats } from 'mds'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums' // FIXME replace eventually
 import { isUUID, isTimestamp, now, days, inc, pathsFor, head, tail, isStateTransitionValid } from 'mds-utils'
-import { TripsStats, AgencyApiRequest } from 'mds-agency/types'
+import { AgencyApiRequest } from 'mds-agency/types'
 
 const SERVER_ERROR = {
   error: 'server_error',
@@ -136,32 +136,6 @@ function api(app: express.Express): express.Express {
     next()
   })
 
-  /**
-   * for some functions we will want to validate the :device_id param
-   */
-  function validateDeviceId(req: express.Request, res: express.Response, next: Function): void {
-    const { device_id } = req.params
-
-    /* istanbul ignore if This is never called with no device_id parameter */
-    if (!device_id) {
-      log.warn('agency: missing device_id', req.originalUrl)
-      res.status(400).send({
-        error: 'missing_param',
-        error_description: 'missing device_id'
-      })
-      return
-    }
-    if (device_id && !isUUID(device_id)) {
-      log.warn('agency: bogus device_id', device_id, req.originalUrl)
-      res.status(400).send({
-        error: 'bad_param',
-        error_description: `invalid device_id ${device_id} is not a UUID`
-      })
-      return
-    }
-    next()
-  }
-
   // / ////////// gets ////////////////
 
   // ///////////////////// begin daily endpoints ///////////////////////
@@ -231,8 +205,6 @@ function api(app: express.Express): express.Express {
   }
 
   app.get(pathsFor('/admin/vehicle_counts'), (req, res) => {
-    const { start_time, end_time } = startAndEnd(req.params)
-
     function fail(err: Error | string): void {
       log.error('/admin/vehicle_counts fail', err).then(() => {
         res.status(500).send({
@@ -254,9 +226,8 @@ function api(app: express.Express): express.Express {
         return map
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
-      const telemetryMap = telemetry.reduce((map, telemetry) => {
-        map[telemetry.device_id] = telemetry
-        return map
+      const telemetryMap = telemetry.reduce((map, t) => {
+        return Object.assign(map, { [t.device_id]: t })
       }, telemetrySeed)
       /* eslint-enable no-param-reassign */
       return Promise.resolve({
@@ -301,7 +272,6 @@ function api(app: express.Express): express.Express {
               return db.readDeviceIds(stat.provider_id).then((items: DeviceID[]) => {
                 items.map(item => {
                   const event = eventMap[item.device_id]
-                  // const tel = telemetryMap[item.device_id]
                   const event_type = event ? event.event_type : 'default'
                   inc(stat.event_type, event_type)
                   const status = EVENT_STATUS_MAP[event_type]
@@ -344,7 +314,7 @@ function api(app: express.Express): express.Express {
       const trip = perTripId[trip_id]
       const pid: UUID = trip.provider_id
       perProvider[pid] = perProvider[pid] || {}
-      const counts: CountMap<{}> = {}
+      const counts: CountMap = {}
       const events: string[] = Object.keys(trip.eventTypes)
         .sort()
         .map((key: string) => trip.eventTypes[parseInt(key)])

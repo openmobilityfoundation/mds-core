@@ -25,7 +25,18 @@ import cache from 'mds-cache'
 import stream from 'mds-stream'
 import { providers, providerName } from 'mds-providers'
 import areas from 'ladot-service-areas'
-import { UUID, Recorded, Device, VehicleEvent, Telemetry, ErrorObject, Timestamp, CountMap, DeviceID } from 'mds'
+import {
+  UUID,
+  Recorded,
+  Device,
+  VehicleEvent,
+  Telemetry,
+  ErrorObject,
+  Timestamp,
+  CountMap,
+  DeviceID,
+  TripsStats
+} from 'mds'
 import {
   isEnum,
   VEHICLE_EVENTS,
@@ -51,7 +62,7 @@ import {
   tail,
   isStateTransitionValid
 } from 'mds-utils'
-import { ServiceArea, TripsStats, AgencyApiRequest } from 'mds-agency/types'
+import { ServiceArea, AgencyApiRequest } from 'mds-agency/types'
 
 const SERVER_ERROR = {
   error: 'server_error',
@@ -1154,9 +1165,8 @@ function api(app: express.Express): express.Express {
         return map
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
-      const telemetryMap = telemetry.reduce((map, telemetry) => {
-        map[telemetry.device_id] = telemetry
-        return map
+      const telemetryMap = telemetry.reduce((map, t) => {
+        return Object.assign(map, { [t.device_id]: t })
       }, telemetrySeed)
       /* eslint-enable no-param-reassign */
       return Promise.resolve({
@@ -1200,7 +1210,6 @@ function api(app: express.Express): express.Express {
               return db.readDeviceIds(stat.provider_id).then((items: DeviceID[]) => {
                 items.map(item => {
                   const event = eventMap[item.device_id]
-                  // const tel = telemetryMap[item.device_id]
                   const event_type = event ? event.event_type : 'default'
                   inc(stat.event_type, event_type)
                   const status = EVENT_STATUS_MAP[event_type]
@@ -1243,7 +1252,7 @@ function api(app: express.Express): express.Express {
       const trip = perTripId[trip_id]
       const pid: UUID = trip.provider_id
       perProvider[pid] = perProvider[pid] || {}
-      const counts: CountMap<{}> = {}
+      const counts: CountMap = {}
       const events: string[] = Object.keys(trip.eventTypes)
         .sort()
         .map((key: string) => trip.eventTypes[parseInt(key)])

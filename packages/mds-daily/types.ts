@@ -18,13 +18,6 @@ export interface AgencyApiRequest extends express.Request {
   }
 }
 
-export interface TripsStats {
-  single: number
-  singles?: any // FIXME
-  mysteries?: any // FIXME
-  mystery_examples?: any // FIXME
-}
-
 export interface ServiceArea {
   service_area_id: UUID
   start_date: number
@@ -35,5 +28,3 @@ export interface ServiceArea {
   description: string
   area: MultiPolygon
 }
-
-// interface TelemetryMap = { [s: string]: Telemetry[] }
