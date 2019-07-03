@@ -55,9 +55,8 @@
   "types": "types/mds.d.ts",
   "dependencies": {},
   "scripts": {
-    "build": "lerna run build --stream --ignore=@aws-lambda/*",
-    "build:all": "yarn build && lerna run build --stream --scope=@aws-lambda/* ",
-    "bundle": "yarn build:all && lerna run bundle --stream",
+    "build": "lerna run build --stream",
+    "bundle": "yarn build && lerna run bundle --stream",
     "clean": "git clean -fdX && yarn",
     "test": "lerna run test --stream --concurrency 1",
     "test:eslint": "lerna run test:eslint --stream --concurrency 1",
