@@ -54,6 +54,107 @@ const JUMP_TEST_DEVICE_1: Device = {
   recorded: now()
 }
 
+function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
+  let i = 0
+  const serviceAreaKeys = Object.keys(serviceAreaMap)
+
+  const num_areas = 1
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cluster_info: { [key: string]: any } = {}
+
+  log.info('clustering')
+  serviceAreaKeys.slice(0, 1).map(key => {
+    const serviceArea = serviceAreaMap[key]
+    const serviceAreaMultipoly = serviceArea.area
+    cluster_info[key] = {
+      num_clusters: rangeRandomInt(5, 15), // number of clusters
+      cluster_radii: [], // meters
+      cluster_centers: [] // to be filled in
+    }
+    for (let j = 0; j < cluster_info[key].num_clusters; j++) {
+      // make centers-of-gravity
+      cluster_info[key].cluster_radii.push(rangeRandom(100, 1000))
+      const center = makePointInShape(serviceAreaMultipoly)
+      if (!pointInShape(center, serviceAreaMultipoly)) {
+        throw new Error('bad center is not in multipoly (1)')
+      }
+      cluster_info[key].cluster_centers.push(center)
+    }
+  })
+
+  const telemetries = devices.map(device => {
+    // make a rando telemetry for that vehicle, in one of the areas
+    const key = serviceAreaKeys[i++ % num_areas]
+    const serviceArea = serviceAreaMap[key]
+    const service_area_multipoly = serviceArea.area
+
+    // pick a cluster
+    const { num_clusters } = cluster_info[key]
+    const cluster_num = rangeRandomInt(num_clusters)
+    // get the center and radius of the cluster, then put a vehicle in there
+    let point
+    let tries = 0
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const center = cluster_info[key].cluster_centers[cluster_num]
+      if (!pointInShape(center, service_area_multipoly)) {
+        throw new Error('bad center is not in multipoly (2)')
+      }
+      const radius = cluster_info[key].cluster_radii[cluster_num]
+      const angle = rangeRandomInt(360)
+      point = addDistanceBearing(center, rangeRandom(0, radius), angle)
+      if (pointInShape(point, service_area_multipoly)) {
+        break
+      }
+      if (tries++ > 100) {
+        throw new Error('unable to create point in polygon after 100 tries')
+      }
+    }
+    return {
+      device_id: device.device_id,
+      provider_id: device.provider_id,
+      gps: {
+        lat: point.lat,
+        lng: point.lng,
+        speed: rangeRandomInt(0, 10),
+        hdop: rangeRandomInt(0, 5),
+        heading: rangeRandomInt(0, 360)
+      },
+      charge: rangeRandom(0.1, 0.9),
+      timestamp,
+      recorded: now()
+    }
+  })
+
+  return telemetries
+}
+
+function makeTelemetryInShape(device: Device, timestamp: number, shape: Geometry, speed: number) {
+  const point = makePointInShape(shape)
+  return {
+    device_id: device.device_id,
+    provider_id: device.provider_id,
+    gps: {
+      lat: point.lat,
+      lng: point.lng,
+      speed,
+      hdop: rangeRandomInt(0, 5),
+      heading: rangeRandomInt(0, 360)
+    },
+    charge: rangeRandom(0.1, 0.9),
+    timestamp,
+    recorded: timestamp
+  }
+}
+
+function makeTelemetryInArea(device: Device, timestamp: Timestamp, area: UUID | Geometry, speed: number) {
+  if (typeof area === 'string') {
+    const serviceArea = serviceAreaMap[area]
+    return makeTelemetryInShape(device, timestamp, serviceArea.area, speed)
+  }
+  return makeTelemetryInShape(device, timestamp, area, speed)
+}
+
 function makeTelemetryStream(origin: Telemetry, steps: number) {
   if (!origin.provider_id) {
     throw new Error('makeTelemetryStream requires non-null provider_id')
@@ -68,7 +169,7 @@ function makeTelemetryStream(origin: Telemetry, steps: number) {
   const stream: Telemetry[] = []
   let t = Object.assign({}, origin) as Telemetry & { gps: { heading: number } }
   Object.assign(t.gps, origin.gps)
-  range(steps).map(i => {
+  range(steps).map(() => {
     t = Object.assign({}, t)
     // move 50m in whatever the bearing is
     t.gps = addDistanceBearing(t.gps, 50, t.gps.heading)
@@ -136,7 +237,9 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
       case JUMP_UUID:
         type = [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter][coin]
         if (type === VEHICLE_TYPES.bicycle) {
-          propulsion = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][coin] as PROPULSION_TYPE[]
+          propulsion = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][
+            coin
+          ] as PROPULSION_TYPE[]
         } else {
           propulsion = [PROPULSION_TYPES.electric]
         }
@@ -180,106 +283,6 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
     devices.push(device)
   }
   return devices
-}
-
-function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
-  let i = 0
-  const serviceAreaKeys = Object.keys(serviceAreaMap)
-
-  const num_areas = 1
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cluster_info: { [key: string]: any } = {}
-
-  log.info('clustering')
-  serviceAreaKeys.slice(0, 1).map(key => {
-    const serviceArea = serviceAreaMap[key]
-    const serviceAreaMultipoly = serviceArea.area
-    cluster_info[key] = {
-      num_clusters: rangeRandomInt(5, 15), // number of clusters
-      cluster_radii: [], // meters
-      cluster_centers: [] // to be filled in
-    }
-    for (let j = 0; j < cluster_info[key].num_clusters; j++) {
-      // make centers-of-gravity
-      cluster_info[key].cluster_radii.push(rangeRandom(100, 1000))
-      const center = makePointInShape(serviceAreaMultipoly)
-      if (!pointInShape(center, serviceAreaMultipoly)) {
-        throw new Error('bad center is not in multipoly (1)')
-      }
-      cluster_info[key].cluster_centers.push(center)
-    }
-  })
-
-  const telemetries = devices.map(device => {
-    // make a rando telemetry for that vehicle, in one of the areas
-    const key = serviceAreaKeys[i++ % num_areas]
-    const serviceArea = serviceAreaMap[key]
-    const service_area_multipoly = serviceArea.area
-
-    // pick a cluster
-    const { num_clusters } = cluster_info[key]
-    const cluster_num = rangeRandomInt(num_clusters)
-    // get the center and radius of the cluster, then put a vehicle in there
-    let point
-    let tries = 0
-    while (true) {
-      const center = cluster_info[key].cluster_centers[cluster_num]
-      if (!pointInShape(center, service_area_multipoly)) {
-        throw new Error('bad center is not in multipoly (2)')
-      }
-      const radius = cluster_info[key].cluster_radii[cluster_num]
-      const angle = rangeRandomInt(360)
-      point = addDistanceBearing(center, rangeRandom(0, radius), angle)
-      if (pointInShape(point, service_area_multipoly)) {
-        break
-      }
-      if (tries++ > 100) {
-        throw new Error('unable to create point in polygon after 100 tries')
-      }
-    }
-    return {
-      device_id: device.device_id,
-      provider_id: device.provider_id,
-      gps: {
-        lat: point.lat,
-        lng: point.lng,
-        speed: rangeRandomInt(0, 10),
-        hdop: rangeRandomInt(0, 5),
-        heading: rangeRandomInt(0, 360)
-      },
-      charge: rangeRandom(0.1, 0.9),
-      timestamp,
-      recorded: now()
-    }
-  })
-
-  return telemetries
-}
-
-function makeTelemetryInShape(device: Device, timestamp: number, shape: Geometry, speed: number) {
-  const point = makePointInShape(shape)
-  return {
-    device_id: device.device_id,
-    provider_id: device.provider_id,
-    gps: {
-      lat: point.lat,
-      lng: point.lng,
-      speed,
-      hdop: rangeRandomInt(0, 5),
-      heading: rangeRandomInt(0, 360)
-    },
-    charge: rangeRandom(0.1, 0.9),
-    timestamp,
-    recorded: timestamp
-  }
-}
-
-function makeTelemetryInArea(device: Device, timestamp: Timestamp, area: UUID | Geometry, speed: number) {
-  if (typeof area === 'string') {
-    const serviceArea = serviceAreaMap[area]
-    return makeTelemetryInShape(device, timestamp, serviceArea.area, speed)
-  }
-  return makeTelemetryInShape(device, timestamp, area, speed)
 }
 
 function makeStatusChange(device: Device, timestamp: Timestamp, provider_name = 'test_provider'): StatusChange {

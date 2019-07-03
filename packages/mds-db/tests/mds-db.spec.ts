@@ -14,8 +14,9 @@ import { now } from 'mds-utils'
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
 
-import { configureClient, dropTables, PGInfo, MDSPostgresClient, createTables, updateSchema } from '../migration'
+import { dropTables, createTables, updateSchema } from '../migration'
 import { Trip, StatusChange, ReadStatusChangesResult } from '../types'
+import { configureClient, MDSPostgresClient, PGInfo } from '../sql-utils'
 
 const { env } = process
 
@@ -118,7 +119,7 @@ if (pg_info.database) {
       it('can wipe a device', async () => {
         await seedDB()
         const result = await MDSDBPostgres.wipeDevice(JUMP_UUID)
-        assert(result != undefined)
+        assert(result !== undefined)
       })
 
       it('can read and write StatusChanges', async () => {
@@ -129,11 +130,11 @@ if (pg_info.database) {
 
         const change: StatusChange = makeStatusChange(JUMP_TEST_DEVICE_1, startTime + 10)
         await MDSDBPostgres.writeStatusChanges([change])
-        const ReadStatusChangesResult: ReadStatusChangesResult = await MDSDBPostgres.readStatusChanges({
+        const result: ReadStatusChangesResult = await MDSDBPostgres.readStatusChanges({
           skip: 0,
           take: 1
         })
-        assert.deepEqual(ReadStatusChangesResult.status_changes[0].device_id, JUMP_TEST_DEVICE_1.device_id)
+        assert.deepEqual(result.status_changes[0].device_id, JUMP_TEST_DEVICE_1.device_id)
       })
     })
 

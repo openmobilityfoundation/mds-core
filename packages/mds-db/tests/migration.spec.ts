@@ -3,8 +3,9 @@ import test from 'unit.js'
 import assert from 'assert'
 
 import log from 'mds-logger'
-import { PGInfo, configureClient, updateSchema, createTables, dropTables } from '../migration'
+import { updateSchema, createTables, dropTables } from '../migration'
 import schema from '../schema'
+import { PGInfo, configureClient } from '../sql-utils'
 
 const { env } = process
 

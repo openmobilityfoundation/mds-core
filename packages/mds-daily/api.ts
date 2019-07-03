@@ -136,32 +136,6 @@ function api(app: express.Express): express.Express {
     next()
   })
 
-  /**
-   * for some functions we will want to validate the :device_id param
-   */
-  function validateDeviceId(req: express.Request, res: express.Response, next: Function): void {
-    const { device_id } = req.params
-
-    /* istanbul ignore if This is never called with no device_id parameter */
-    if (!device_id) {
-      log.warn('agency: missing device_id', req.originalUrl)
-      res.status(400).send({
-        error: 'missing_param',
-        error_description: 'missing device_id'
-      })
-      return
-    }
-    if (device_id && !isUUID(device_id)) {
-      log.warn('agency: bogus device_id', device_id, req.originalUrl)
-      res.status(400).send({
-        error: 'bad_param',
-        error_description: `invalid device_id ${device_id} is not a UUID`
-      })
-      return
-    }
-    next()
-  }
-
   // / ////////// gets ////////////////
 
   // ///////////////////// begin daily endpoints ///////////////////////
@@ -231,8 +205,6 @@ function api(app: express.Express): express.Express {
   }
 
   app.get(pathsFor('/admin/vehicle_counts'), (req, res) => {
-    const { start_time, end_time } = startAndEnd(req.params)
-
     function fail(err: Error | string): void {
       log.error('/admin/vehicle_counts fail', err).then(() => {
         res.status(500).send({
@@ -254,8 +226,8 @@ function api(app: express.Express): express.Express {
         return map
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
-      const telemetryMap = telemetry.reduce((map, telemetry) => {
-        map[telemetry.device_id] = telemetry
+      const telemetryMap = telemetry.reduce((map, t) => {
+        map[t.device_id] = t
         return map
       }, telemetrySeed)
       /* eslint-enable no-param-reassign */

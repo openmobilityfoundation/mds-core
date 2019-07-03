@@ -1,9 +1,82 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
+import { Client as PostgresClient, types as PostgresTypes } from 'pg'
 import { range, csv } from 'mds-utils'
 import log from 'mds-logger'
-import { MDSPostgresClient } from './migration'
 
 const pgDebug = process.env.PG_DEBUG === 'true'
+
+export interface PGInfo {
+  user?: string
+  database?: string
+  host?: string
+  password?: string
+  port?: number
+  client_type?: string
+}
+
+export class MDSPostgresClient extends PostgresClient {
+  // There are no public methods in the node pg client to indicate when
+  // the DB connection is ended, so we're going to subclass it.
+  // As for why .connected is necessary, simply nulling out the cached
+  // client variable in mds-db-postgres.js when calling `.end()` on a
+  // client doesn't suffice for indicating a client object is no longer
+  // useable. There is probably some weirdness with js scoping going on
+  // but who cares, because this works well enough and is readable.
+  // This won't connect to the DB until you call `.connect()`.
+  public client_type: string
+
+  public connected: boolean
+
+  public constructor(params: PGInfo) {
+    const client_type = params.client_type || 'readonly'
+    // eslint-disable-next-line no-param-reassign
+    delete params.client_type
+    super(params)
+
+    this.client_type = client_type
+    this.connected = false
+  }
+
+  public setConnected(connected: boolean) {
+    this.connected = connected
+  }
+}
+
+export function configureClient(pg_info: PGInfo) {
+  // Use parseInt for bigint columns so the values get returned as numbers instead of strings
+  PostgresTypes.setTypeParser(20, parseInt)
+  log.info('configured new client')
+
+  const client = new MDSPostgresClient({
+    user: pg_info.user,
+    database: pg_info.database,
+    host: pg_info.host || 'localhost',
+    password: pg_info.password,
+    port: pg_info.port || 5432,
+    client_type: pg_info.client_type
+  })
+
+  client.on('end', () => {
+    client.setConnected(false)
+    log.info('disconnected', client.client_type, 'client from postgres')
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client.on('error', (err: any) => {
+    // log.info('pg client error event', err.stack)
+    log.error('pg client error event', err.stack)
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client.on('notice', (msg: any) => {
+    log.warn('notice:', msg)
+  })
+
+  if (!client) {
+    throw Error('no way to connect to PG')
+  }
+  return client
+}
 
 // convert a list of column names to an SQL string of the form (e.g.) "VALUES($1, $2, $3)"
 export function vals_sql(cols: Readonly<string[]>) {

@@ -22,7 +22,7 @@ import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox } from 'mds'
 import { TelemetryRecord } from 'mds-db/types'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
 import log from 'mds-logger'
-import { MultiPolygon, Polygon, FeatureCollection, Geometry, Point, Feature } from 'geojson'
+import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles

@@ -27,8 +27,7 @@ import {
   CachedItem,
   StringifiedCacheReadDeviceResult,
   StringifiedEventWithTelemetry,
-  StringifiedTelemetry,
-  StringifiedEvent
+  StringifiedTelemetry
 } from './types'
 
 const { env } = process
@@ -115,17 +114,122 @@ async function info() {
     })
 }
 
-// get the provider for a device
-async function getProviderId(device_id: UUID) {
-  return readDevice(device_id).then(device => device.provider_id, err => undefined)
-}
-
 // update the ordered list of (device_id, timestamp) tuples
 // so that we can trivially get a list of "updated since ___" device_ids
 async function updateVehicleList(device_id: UUID, timestamp?: Timestamp) {
   const when = timestamp || now()
   // log.info('redis zadd', device_id, when)
   return getClient().zaddAsync('device-ids', when, device_id)
+}
+async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
+  if (!device_id) {
+    throw new Error(`hread: tried to read ${suffix} for device_id ${device_id}`)
+  }
+  const key = `device:${device_id}:${suffix}`
+  return new Promise((resolve, reject) => {
+    return getClient()
+      .hgetallAsync(key)
+      .then(flat => {
+        if (flat) {
+          resolve(unflatten({ ...flat, device_id }))
+        } else {
+          // log.info(`hread: ${suffix} for ${device_id} not found`)
+          reject(new Error(`${suffix} for ${device_id} not found`))
+        }
+      })
+  })
+}
+
+async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {
+  if (suffixes === undefined) {
+    throw new Error('hreads: no suffixes')
+  }
+  if (device_ids === undefined) {
+    throw new Error('hreads: no device_ids')
+  }
+  // bleah
+  const multi = getClient().multi()
+
+  suffixes.map(suffix => device_ids.map(device_id => multi.hgetall(`device:${device_id}:${suffix}`)))
+
+  return new Promise((resolve, reject) => {
+    multi.exec((err, replies) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(
+          replies.map((flat, index) => {
+            if (flat) {
+              const flattened = { ...flat, device_id: device_ids[index % device_ids.length] }
+              return unflatten(flattened)
+            }
+            return unflatten(null)
+          })
+        )
+      }
+    })
+  })
+}
+
+async function readDevice(device_id: UUID) {
+  if (!device_id) {
+    throw new Error('null device not legal to read')
+  }
+  // log.info('redis read device', device_id)
+  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
+}
+
+async function readDevices(device_ids: UUID[]) {
+  // log.info('redis read device', device_id)
+  return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
+    return parseDevice(device)
+  })
+}
+
+async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
+  log.info('readDevicesStatus', JSON.stringify(query), 'start')
+  return new Promise(resolve => {
+    const start = query.since || 0
+    const stop = now()
+    // read all device ids
+    log.info('redis zrangebyscore device-ids', start, stop)
+    getClient()
+      .zrangebyscoreAsync('device-ids', start, stop)
+      .then(async (device_ids: string[]) => {
+        log.info('readDevicesStatus', device_ids.length, 'entries')
+
+        const skip = query.skip || 0
+        const take = query.take || 100000000000
+        // eslint-disable-next-line no-param-reassign
+        device_ids = device_ids.slice(skip, skip + take)
+
+        // read all devices
+        const device_status_map: { [device_id: string]: CachedItem | {} } = {}
+
+        // big batch redis nightmare!
+        let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
+        all = all.filter((item: CachedItem) => Boolean(item))
+        all.map(item => {
+          device_status_map[item.device_id] = device_status_map[item.device_id] || {}
+          Object.assign(device_status_map[item.device_id], item)
+        })
+        log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
+
+        // log.info('device_status_map', JSON.stringify(device_status_map))
+        let values = Object.values(device_status_map)
+        if (query.bbox) {
+          values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
+        }
+
+        log.info('readDevicesStatus done')
+        resolve(values)
+      })
+  })
+}
+
+// get the provider for a device
+async function getProviderId(device_id: UUID) {
+  return readDevice(device_id).then(device => device.provider_id)
 }
 
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
@@ -182,119 +286,12 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   ])
 }
 
-async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
-  if (!device_id) {
-    throw new Error(`hread: tried to read ${suffix} for device_id ${device_id}`)
-  }
-  const key = `device:${device_id}:${suffix}`
-  return new Promise((resolve, reject) => {
-    return getClient()
-      .hgetallAsync(key)
-      .then(flat => {
-        if (flat) {
-          flat.device_id = device_id
-          resolve(unflatten(flat))
-        } else {
-          // log.info(`hread: ${suffix} for ${device_id} not found`)
-          reject(new Error(`${suffix} for ${device_id} not found`))
-        }
-      })
-  })
-}
-
-async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {
-  if (suffixes === undefined) {
-    throw new Error('hreads: no suffixes')
-  }
-  if (device_ids === undefined) {
-    throw new Error('hreads: no device_ids')
-  }
-  // bleah
-  const multi = getClient().multi()
-
-  suffixes.map(suffix => device_ids.map(device_id => multi.hgetall(`device:${device_id}:${suffix}`)))
-
-  return new Promise((resolve, reject) => {
-    multi.exec((err, replies) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(
-          replies.map((flat, index) => {
-            if (flat) {
-              const flattened = { ...flat, device_id: device_ids[index % device_ids.length] }
-              return unflatten(flattened)
-            }
-            return unflatten(null)
-          })
-        )
-      }
-    })
-  })
-}
-
 // put basics of device in the cache
 async function writeDevice(device: Device) {
   if (!device) {
     throw new Error('null device not legal to write')
   }
   return hwrite('device', device)
-}
-
-async function readDevice(device_id: UUID) {
-  if (!device_id) {
-    throw new Error('null device not legal to read')
-  }
-  // log.info('redis read device', device_id)
-  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
-}
-
-async function readDevices(device_ids: UUID[]) {
-  // log.info('redis read device', device_id)
-  return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
-    return parseDevice(device)
-  })
-}
-
-async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
-  log.info('readDevicesStatus', JSON.stringify(query), 'start')
-  return new Promise((resolve, reject) => {
-    const start = query.since || 0
-    const stop = now()
-    // read all device ids
-    log.info('redis zrangebyscore device-ids', start, stop)
-    getClient()
-      .zrangebyscoreAsync('device-ids', start, stop)
-      .then(async (device_ids: string[]) => {
-        log.info('readDevicesStatus', device_ids.length, 'entries')
-
-        const skip = query.skip || 0
-        const take = query.take || 100000000000
-        // eslint-disable-next-line no-param-reassign
-        device_ids = device_ids.slice(skip, skip + take)
-
-        // read all devices
-        const device_status_map: { [device_id: string]: CachedItem | {} } = {}
-
-        // big batch redis nightmare!
-        let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
-        all = all.filter((item: CachedItem) => Boolean(item))
-        all.map(item => {
-          device_status_map[item.device_id] = device_status_map[item.device_id] || {}
-          Object.assign(device_status_map[item.device_id], item)
-        })
-        log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
-
-        // log.info('device_status_map', JSON.stringify(device_status_map))
-        let values = Object.values(device_status_map)
-        if (query.bbox) {
-          values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
-        }
-
-        log.info('readDevicesStatus done')
-        resolve(values)
-      })
-  })
 }
 
 async function writeEvent(event: VehicleEvent) {
@@ -356,7 +353,7 @@ async function readAllEvents() {
   // FIXME wildcard searching is slow
   const keys = await readKeys('device:*:event')
   const device_ids = keys.map(key => {
-    const [_1, device_id, _3] = key.split(':')
+    const [, device_id] = key.split(':')
     return device_id
   })
   return (await hreads(['event'], device_ids)).map(event => {
@@ -390,9 +387,9 @@ async function writeOneTelemetry(telemetry: Telemetry) {
     log.info('writeOneTelemetry: no prior telemetry found:', err.message)
     try {
       return hwrite('telemetry', telemetry)
-    } catch (err) {
+    } catch (err2) {
       log.error('writeOneTelemetry hwrite2', err.stack)
-      return Promise.reject(err)
+      return Promise.reject(err2)
     }
   }
 }
@@ -405,7 +402,7 @@ async function readAllTelemetry() {
   // FIXME wildcard searching is slow
   const keys = await readKeys('device:*:telemetry')
   const device_ids = keys.map(key => {
-    const [_1, device_id, _3] = key.split(':')
+    const [, device_id] = key.split(':')
     return device_id
   })
   return (await hreads(['telemetry'], device_ids)).map(telemetry => {
@@ -487,7 +484,7 @@ async function health() {
 
 // remove stale keys, if any
 // this was needed to clean up from failing to verify that a device was legit
-async function cleanup(deviceIdMap: { [device_id: string]: boolean }, options: any) {
+async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
   try {
     const keys = await readKeys('device:*')
     await log.warn('cleanup: read', keys.length)
@@ -501,7 +498,7 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }, options: a
         // look for bogus keys
         let badKeys: string[] = []
         keys.map(key => {
-          const [_, device_id, suffix] = key.split(':')
+          const [, device_id, suffix] = key.split(':')
           if (deviceIdMap[device_id]) {
             // woot
           } else if (suffix) {

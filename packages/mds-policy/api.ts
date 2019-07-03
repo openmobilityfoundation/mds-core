@@ -274,17 +274,15 @@ function api(app: express.Express): express.Express {
       })
   })
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   app.put(pathsFor('/admin/geographies/:geography_id'), (req: express.Request, res: express.Response) => {
     // TODO implement updating a non-published geography
+    res.status(501)
   })
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   app.delete(pathsFor('/admin/geographies/:geography_id'), (req: express.Request, res: express.Response) => {
     // TODO implement deleting a non-published geography
+    res.status(501)
   })
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
@@ -401,11 +399,10 @@ function api(app: express.Express): express.Express {
       })
   })
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   app.delete(pathsFor('/admin/policies/:policy_id'), (req, res) => {
     // TODO implement deletion of a non-published policy
+    res.status(501)
   })
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   app.get(pathsFor('/test/initialize'), (req, res) => {
     // FIXME janky

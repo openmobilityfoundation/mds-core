@@ -21,7 +21,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_EVENTS, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
+import { VEHICLE_EVENTS } from 'mds-enums'
 import { Timestamp, Device, VehicleEvent, Telemetry } from 'mds'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -60,50 +60,9 @@ const TEST_TELEMETRY: Telemetry = {
   charge: 0.5,
   timestamp: now()
 }
-const TEST_TELEMETRY2: Telemetry = {
-  provider_id: PROVIDER_UUID,
-  device_id: DEVICE_UUID,
-  gps: {
-    lat: 37.3382,
-    lng: -121.8863,
-    speed: 0,
-    hdop: 1,
-    heading: 180,
-    satellites: 10
-  },
-  charge: 0.5,
-  timestamp: now() + 1000
-}
-
-const TEST_VEHICLE = {
-  device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
-  vehicle_id: 'test-id-1',
-  type: VEHICLE_TYPES.bicycle,
-  propulsion: [PROPULSION_TYPES.human],
-  year: 2018,
-  mfgr: 'Schwinn',
-  model: 'Mantaray'
-}
-
-let testTimestamp = now()
-
-const test_event = {
-  device_id: DEVICE_UUID,
-  event_type: 'deregister',
-  timestamp: testTimestamp
-}
-
-testTimestamp += 1
-
-function deepCopy<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj))
-}
 
 // TODO Inherit all of these from mds-test-data
 const AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|admin:all`).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|test:all`).toString('base64')}`
 
 before(done => {
   const testTimestampNow = now() // Hacky fix

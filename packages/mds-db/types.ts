@@ -97,6 +97,16 @@ export interface ReadHistoricalEventsQueryParams {
   end_date: number
 }
 
+export type ReadAuditsQueryParams = Partial<{
+  skip: number
+  take: number
+  provider_id: UUID
+  provider_vehicle_id: string
+  audit_subject_id: string
+  start_time: Timestamp
+  end_time: Timestamp
+}>
+
 export interface VehicleEventCountResult {
   count: number
   events: Recorded<VehicleEvent>[]

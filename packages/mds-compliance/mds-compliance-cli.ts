@@ -91,15 +91,13 @@ main()
     },
     failure => {
       // TODO use payload response type instead of peering into body
-      if (failure.slice && failure.slice(0, 2) === '{"') {
-        failure = JSON.parse(failure)
-      }
-      if (failure.error_description) {
-        log.info(`${failure.error_description} (${failure.error})`)
-      } else if (failure.result) {
-        log.info(failure.result)
+      const reason = failure.slice && failure.slice(0, 2) === '{"' ? JSON.parse(failure) : failure
+      if (reason.error_description) {
+        log.info(`${reason.error_description} (${reason.error})`)
+      } else if (reason.result) {
+        log.info(reason.result)
       } else {
-        log.info('failure:', failure)
+        log.info('failure:', reason)
       }
     }
   )

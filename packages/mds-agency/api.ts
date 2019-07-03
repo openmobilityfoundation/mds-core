@@ -1154,8 +1154,8 @@ function api(app: express.Express): express.Express {
         return map
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
-      const telemetryMap = telemetry.reduce((map, telemetry) => {
-        map[telemetry.device_id] = telemetry
+      const telemetryMap = telemetry.reduce((map, t) => {
+        map[t.device_id] = t
         return map
       }, telemetrySeed)
       /* eslint-enable no-param-reassign */
