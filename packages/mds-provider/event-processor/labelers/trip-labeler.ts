@@ -61,7 +61,7 @@ export const TripLabeler = async (entries: StreamEntry[]): Promise<StreamEntryLa
       { labels: {}, labeled: 0 }
     )
 
-    logger.info(`Trip Labeler: ${labeled} ${labeled === 1 ? 'entry' : 'entries'} labeled`)
+    logger.info(`Trip Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'}`)
 
     return labels
   }
