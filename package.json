@@ -33,7 +33,6 @@
     "eslint-config-prettier": "6.0.0",
     "eslint-config-recommended": "4.0.0",
     "eslint-plugin-import": "2.18.0",
-    "eslint-plugin-only-warn": "1.0.1",
     "eslint-plugin-prettier": "3.1.0",
     "mocha": "6.1.4",
     "mockdate": "2.0.3",
