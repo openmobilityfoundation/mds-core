@@ -16,7 +16,7 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import stream, { ReadStreamResult, ReadStreamOptions, StreamItem } from 'mds-stream'
+import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
 import { DeviceLabeler } from './labelers/device-labeler'
@@ -39,22 +39,20 @@ const asStreamEntry = ([id, [type, data]]: StreamItem): StreamEntry => {
   return { id, type, data: JSON.parse(data), recorded, sequence }
 }
 
-const asStreamEntries = ([name, entries]: ReadStreamResult) => ({
-  name,
-  entries: entries.map(asStreamEntry).filter(isStatusChangesProcessorStreamEntry)
-})
+const readStreamEntries = async (options: ReadStreamOptions) => {
+  const [name, entries] = await stream.readStreamGroup('provider:event', 'event-processor', uuid(), '>', options)
+  return {
+    name,
+    entries: entries.map(asStreamEntry).filter(isStatusChangesProcessorStreamEntry)
+  }
+}
 
 async function process(options: ReadStreamOptions): Promise<void> {
   logger.info('Processing Event Stream', options)
-  const results: ReadStreamResult[] | null = await stream.readStreamGroup(
-    'provider:event',
-    'event-processor',
-    uuid(),
-    '>',
-    options
-  )
-  if (results) {
-    const [{ name, entries }] = results.map(asStreamEntries)
+
+  const { name, entries } = await readStreamEntries(options)
+
+  if (entries.length > 0) {
     const totals = entries.reduce<{ [t: string]: number }>((grouped, { type }) => {
       return {
         ...grouped,

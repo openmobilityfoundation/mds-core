@@ -138,16 +138,23 @@ async function readStream(
   stream: Stream,
   id: StreamItemID,
   { count, block }: ReadStreamOptions
-): Promise<ReadStreamResult[]> {
+): Promise<ReadStreamResult> {
   const client = await getClient()
 
-  return client.xreadAsync([
+  const results = await client.xreadAsync([
     ...(typeof block === 'number' ? ['BLOCK', block] : []),
     ...(typeof count === 'number' ? ['COUNT', count] : []),
     'STREAMS',
     stream,
     id || '$'
   ])
+
+  if (results) {
+    const [result] = results
+    return result
+  }
+
+  return [stream, []]
 }
 
 async function readStreamGroup(
@@ -156,7 +163,7 @@ async function readStreamGroup(
   consumer: string,
   id: StreamItemID,
   { count, block, noack }: ReadStreamOptions
-) {
+): Promise<ReadStreamResult> {
   const client = await getClient()
   const consumer_group = `${stream}::${group}`
 
@@ -166,7 +173,7 @@ async function readStreamGroup(
     /* consumer group exists */
   }
 
-  return client.xreadgroupAsync(
+  const results = await client.xreadgroupAsync(
     'GROUP',
     consumer_group,
     consumer,
@@ -179,6 +186,13 @@ async function readStreamGroup(
       id || '>'
     ]
   )
+
+  if (results) {
+    const [result] = results
+    return result
+  }
+
+  return [stream, []]
 }
 
 async function health() {
