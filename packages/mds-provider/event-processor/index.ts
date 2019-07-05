@@ -47,36 +47,73 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
+const getStreamInfo = async () => {
+  try {
+    const [
+      ,
+      length,
+      ,
+      radixTreeKeys,
+      ,
+      radixTreeNodes,
+      ,
+      groups,
+      ,
+      lastGeneratedId,
+      ,
+      firstEntry,
+      ,
+      lastEntry
+    ] = await stream.getStreamInfo('provider:event')
+    const info = { length, radixTreeKeys, radixTreeNodes, groups, lastGeneratedId, firstEntry, lastEntry }
+    logger.info('Stream Info', info)
+    return info
+  } catch (err) {
+    logger.info('Stream Unavailable')
+    return null
+  }
+}
+
 async function process(options: ReadStreamOptions): Promise<void> {
   logger.info('Processing Event Stream', options)
 
-  const { name, entries } = await readStreamEntries(options)
+  const info = await getStreamInfo()
 
-  if (entries.length > 0) {
-    const totals = entries.reduce<{ [t: string]: number }>((grouped, { type }) => {
-      return {
-        ...grouped,
-        [type]: (grouped[type] || 0) + 1
-      }
-    }, {})
-    logger.info(`Processing ${entries.length} entries from ${name}`, totals)
+  if (info) {
+    // Create the consumer group if it doesn't exist
+    if (info.groups === 0) {
+      await stream.createStreamGroup('provider:event', 'event-processor')
+      logger.info('Created Consumer Group')
+    }
 
-    // Run stream labelers
-    const [providers, devices, trips] = await Promise.all([
-      ProviderLabeler(entries),
-      DeviceLabeler(entries),
-      TripLabeler(entries)
-    ])
+    const { name, entries } = await readStreamEntries(options)
 
-    const labeled = entries.map(entry => ({
-      ...entry,
-      labels: { ...providers[entry.id], ...devices[entry.id], ...trips[entry.id] }
-    }))
+    if (entries.length > 0) {
+      const totals = entries.reduce<{ [t: string]: number }>((grouped, { type }) => {
+        return {
+          ...grouped,
+          [type]: (grouped[type] || 0) + 1
+        }
+      }, {})
+      logger.info(`Processing ${entries.length} entries from ${name}`, totals)
 
-    // Run stream processors
-    await Promise.all([StatusChangesProcessor(labeled), TripsProcessor(labeled.filter(isTripsProcessorStreamEntry))])
-  } else {
-    logger.info('No entries to process.')
+      // Run stream labelers
+      const [providers, devices, trips] = await Promise.all([
+        ProviderLabeler(entries),
+        DeviceLabeler(entries),
+        TripLabeler(entries)
+      ])
+
+      const labeled = entries.map(entry => ({
+        ...entry,
+        labels: { ...providers[entry.id], ...devices[entry.id], ...trips[entry.id] }
+      }))
+
+      // Run stream processors
+      await Promise.all([StatusChangesProcessor(labeled), TripsProcessor(labeled.filter(isTripsProcessorStreamEntry))])
+    } else {
+      logger.info('No entries to process.')
+    }
   }
 }
 

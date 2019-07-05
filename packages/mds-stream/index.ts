@@ -40,7 +40,28 @@ declare module 'redis' {
     dbsizeAsync: () => Promise<number>
     flushdbAsync: () => Promise<'OK'>
     pingAsync: <TPong extends string = 'PONG'>(response?: TPong) => Promise<TPong>
+    xackAsync: (...args: unknown[]) => Promise<number>
     xaddAsync: (...args: unknown[]) => Promise<string>
+    xinfoAsync: (
+      ...args: unknown[]
+    ) => Promise<
+      [
+        'length',
+        number,
+        'radix-tree-keys',
+        number,
+        'radix-tree-nodes',
+        number,
+        'groups',
+        number,
+        'last-generated-id',
+        string,
+        'first-entry',
+        unknown,
+        'last-entry',
+        unknown
+      ]
+    >
     xreadAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
     xgroupAsync: (...args: unknown[]) => Promise<'OK'>
     xreadgroupAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
@@ -157,6 +178,11 @@ async function readStream(
   return [stream, []]
 }
 
+async function createStreamGroup(stream: Stream, group: string) {
+  const client = await getClient()
+  return client.xgroupAsync('CREATE', stream, `${stream}::${group}`, 0)
+}
+
 async function readStreamGroup(
   stream: Stream,
   group: string,
@@ -165,17 +191,10 @@ async function readStreamGroup(
   { count, block, noack }: ReadStreamOptions
 ): Promise<ReadStreamResult> {
   const client = await getClient()
-  const consumer_group = `${stream}::${group}`
-
-  try {
-    await client.xgroupAsync('CREATE', stream, consumer_group, 0, 'MKSTREAM')
-  } catch (err) {
-    /* consumer group exists */
-  }
 
   const results = await client.xreadgroupAsync(
     'GROUP',
-    consumer_group,
+    `${stream}::${group}`,
     consumer,
     ...[
       ...(typeof block === 'number' ? ['BLOCK', block] : []),
@@ -195,6 +214,11 @@ async function readStreamGroup(
   return [stream, []]
 }
 
+async function getStreamInfo(stream: Stream) {
+  const client = await getClient()
+  return client.xinfoAsync('STREAM', stream)
+}
+
 async function health() {
   const client = await getClient()
   const status = await client.pingAsync('connected')
@@ -202,16 +226,18 @@ async function health() {
 }
 
 export default {
+  createStreamGroup,
+  getStreamInfo,
+  health,
   initialize,
+  readStream,
+  readStreamGroup,
   reset,
-  startup,
   shutdown,
+  startup,
   writeDevice,
   writeEvent,
-  writeTelemetry,
-  health,
   writeStream,
   writeStreamBatch,
-  readStream,
-  readStreamGroup
+  writeTelemetry
 }
