@@ -47,39 +47,14 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
-const getStreamInfo = async () => {
-  try {
-    const [
-      ,
-      length,
-      ,
-      radixTreeKeys,
-      ,
-      radixTreeNodes,
-      ,
-      groups,
-      ,
-      lastGeneratedId,
-      ,
-      firstEntry,
-      ,
-      lastEntry
-    ] = await stream.getStreamInfo('provider:event')
-    const info = { length, radixTreeKeys, radixTreeNodes, groups, lastGeneratedId, firstEntry, lastEntry }
-    logger.info('Stream Info', info)
-    return info
-  } catch (err) {
-    logger.info('Stream Unavailable')
-    return null
-  }
-}
-
 async function process(options: ReadStreamOptions): Promise<void> {
   logger.info('Processing Event Stream', options)
 
-  const info = await getStreamInfo()
+  const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
+    logger.info('Stream Info', info)
+
     // Create the consumer group if it doesn't exist
     if (info.groups === 0) {
       await stream.createStreamGroup('provider:event', 'event-processor')
@@ -114,6 +89,8 @@ async function process(options: ReadStreamOptions): Promise<void> {
     } else {
       logger.info('No entries to process.')
     }
+  } else {
+    logger.info('Stream Unavailable')
   }
 }
 
