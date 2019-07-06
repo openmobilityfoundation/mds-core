@@ -1470,6 +1470,22 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+async function getMostRecentStatusChange(): Promise<Recorded<StatusChange> | null> {
+  // SELECT * FROM status_changes ORDER BY event_time DESC, device_id DESC LIMIT 1
+  const client = await getReadOnlyClient()
+  const exec = SqlExecuter(client)
+  const results = await exec(
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ORDER BY event_time DESC, device_id DESC LIMIT 1`
+  )
+  if (results.rowCount === 1) {
+    const {
+      rows: [result]
+    } = results
+    return result
+  }
+  return null
+}
+
 async function getPastEventsForStatusChanges(
   device_id: UUID,
   timestamp: Timestamp,
@@ -1572,5 +1588,6 @@ export = {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
+  getMostRecentStatusChange,
   getPastEventsForStatusChanges
 }

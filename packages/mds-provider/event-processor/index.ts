@@ -19,6 +19,7 @@ import logger from 'mds-logger'
 import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
+import { VehicleEvent } from 'mds'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -34,7 +35,7 @@ const isTripsProcessorStreamEntry = (entry: StreamEntry): entry is TripsProcesso
   isUUID((entry.data as TripEvent).trip_id) &&
   ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type)
 
-const asStreamEntry = ([id, [type, data]]: StreamItem): StreamEntry => {
+const asStreamEntry = <T>([id, [type, data]]: StreamItem): StreamEntry<T> => {
   const [recorded, sequence] = id.split('-').map(Number)
   return { id, type, data: JSON.parse(data), recorded, sequence }
 }
@@ -53,12 +54,21 @@ async function process(options: ReadStreamOptions): Promise<void> {
   const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
-    logger.info('Stream Info', info)
-
     // Create the consumer group if it doesn't exist
     if (info.groups === 0) {
       await stream.createStreamGroup('provider:event', 'event-processor')
       logger.info('Created Consumer Group')
+    }
+
+    if (info.firstEntry) {
+      const {
+        id,
+        data: { timestamp, device_id }
+      } = asStreamEntry<VehicleEvent>(info.firstEntry)
+      logger.info('Synchronizing to', id, 'at', timestamp, 'from', device_id)
+      console.log('MRSC', await db.getMostRecentStatusChange())
+      // get events > max timestamp, device from status_changes < first stream entry
+      return
     }
 
     const { name, entries } = await readStreamEntries(options)

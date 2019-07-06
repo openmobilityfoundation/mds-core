@@ -57,9 +57,9 @@ declare module 'redis' {
         'last-generated-id',
         string,
         'first-entry',
-        unknown,
+        StreamItem | null,
         'last-entry',
-        unknown
+        StreamItem | null
       ]
     >
     xreadAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
