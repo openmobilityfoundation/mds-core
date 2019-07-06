@@ -42,25 +42,28 @@ declare module 'redis' {
     pingAsync: <TPong extends string = 'PONG'>(response?: TPong) => Promise<TPong>
     xackAsync: (...args: unknown[]) => Promise<number>
     xaddAsync: (...args: unknown[]) => Promise<string>
-    xinfoAsync: (
-      ...args: unknown[]
+    xinfoAsync: <T extends 'STREAM' | 'GROUPS'>(
+      arg: T,
+      stream: Stream
     ) => Promise<
-      [
-        'length',
-        number,
-        'radix-tree-keys',
-        number,
-        'radix-tree-nodes',
-        number,
-        'groups',
-        number,
-        'last-generated-id',
-        string,
-        'first-entry',
-        StreamItem | null,
-        'last-entry',
-        StreamItem | null
-      ]
+      T extends 'STREAM'
+        ? [
+            'length',
+            number,
+            'radix-tree-keys',
+            number,
+            'radix-tree-nodes',
+            number,
+            'groups',
+            number,
+            'last-generated-id',
+            string,
+            'first-entry',
+            StreamItem | null,
+            'last-entry',
+            StreamItem | null
+          ]
+        : ['name', string, 'consumers', number, 'pending', number, 'last-delivered-id', string][]
     >
     xreadAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
     xgroupAsync: (...args: unknown[]) => Promise<'OK'>
