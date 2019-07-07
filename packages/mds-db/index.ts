@@ -9,7 +9,8 @@ import {
   Device,
   Telemetry,
   Recorded,
-  DeviceID
+  DeviceID,
+  VehicleEventPrimaryKey
 } from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
@@ -1486,33 +1487,36 @@ async function getMostRecentStatusChange(): Promise<Recorded<StatusChange> | nul
   return null
 }
 
-async function getPastEventsForStatusChanges(
-  device_id: UUID,
-  timestamp: Timestamp,
+async function readEventsRangeExclusive(
+  after: VehicleEventPrimaryKey,
+  before: VehicleEventPrimaryKey,
   take: number
-): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
+): Promise<Recorded<VehicleEvent>[]> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
-  const {
-    rows: [{ count }]
-  } = await exec(
-    `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
-      timestamp
-    )} AND NOT EXISTS (SELECT FROM ${
-      schema.STATUS_CHANGES_TABLE
-    } WHERE device_id = events.device_id AND event_time = events.timestamp)`,
+  const conditions = []
+  if (after) {
+    const [timestamp, device_id] = [after.timestamp, after.device_id].map(value => vals.add(value))
+    conditions.push(`(E.timestamp > ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id > ${device_id}))`)
+  }
+  if (before) {
+    const [timestamp, device_id] = [before.timestamp, before.device_id].map(value => vals.add(value))
+    conditions.push(`(E.timestamp < ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id < ${device_id}))`)
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  const { rows } = await exec(
+    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${take}`,
     vals.values()
   )
-  const { rows: events } = await exec(
-    `SELECT * FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
-      timestamp
-    )} AND NOT EXISTS (SELECT FROM ${
-      schema.STATUS_CHANGES_TABLE
-    } WHERE device_id = events.device_id AND event_time = events.timestamp) ORDER BY timestamp LIMIT ${vals.add(take)}`,
-    vals.values()
-  )
-  return { count, events }
+  return rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
+    ...event,
+    telemetry_timestamp,
+    telemetry: {
+      timestamp: telemetry_timestamp,
+      gps: { lat, lng }
+    }
+  }))
 }
 
 async function seed(data: {
@@ -1589,5 +1593,5 @@ export = {
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
   getMostRecentStatusChange,
-  getPastEventsForStatusChanges
+  readEventsRangeExclusive
 }

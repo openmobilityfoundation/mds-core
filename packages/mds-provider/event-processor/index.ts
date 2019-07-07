@@ -19,7 +19,8 @@ import logger from 'mds-logger'
 import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
-import { VehicleEvent } from 'mds'
+import { VehicleEvent, VehicleEventPrimaryKey } from 'mds'
+import { StatusChange } from 'mds-db/dist/types'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -48,6 +49,24 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
+const streamItemPrimaryKey = (item: StreamItem | null): VehicleEventPrimaryKey => {
+  if (item) {
+    const {
+      data: { timestamp, device_id }
+    } = asStreamEntry<VehicleEvent>(item)
+    return { timestamp, device_id }
+  }
+  return null
+}
+
+const statusChangePrimaryKey = (item: StatusChange | null): VehicleEventPrimaryKey => {
+  if (item) {
+    const { event_time: timestamp, device_id } = item
+    return { timestamp, device_id }
+  }
+  return null
+}
+
 async function process(options: ReadStreamOptions): Promise<void> {
   logger.info('Processing Event Stream', options)
 
@@ -60,15 +79,14 @@ async function process(options: ReadStreamOptions): Promise<void> {
       logger.info('Created Consumer Group')
     }
 
-    if (info.firstEntry) {
-      const {
-        id,
-        data: { timestamp, device_id }
-      } = asStreamEntry<VehicleEvent>(info.firstEntry)
-      logger.info('Synchronizing to', id, 'at', timestamp, 'from', device_id)
-      console.log('MRSC', await db.getMostRecentStatusChange())
-      // get events > max timestamp, device from status_changes < first stream entry
-      return
+    const events = await db.readEventsRangeExclusive(
+      statusChangePrimaryKey(await db.getMostRecentStatusChange()),
+      streamItemPrimaryKey(info.firstEntry),
+      options.count || 100000
+    )
+
+    if (events.length > 0) {
+      logger.info('Syncing', events.length, 'events from db', events[0])
     }
 
     const { name, entries } = await readStreamEntries(options)
