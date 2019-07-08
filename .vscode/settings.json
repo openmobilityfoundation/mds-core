@@ -10,7 +10,7 @@
     "editor.formatOnSave": false
   },
   "editor.formatOnSave": true,
-  "[typescript]": {	
+  "[typescript]": {
     "editor.formatOnSave": false
   },
   "typescript.tsdk": "node_modules/typescript/lib"
