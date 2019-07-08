@@ -81,7 +81,7 @@ async function process(options: ReadStreamOptions): Promise<void> {
     const events = await db.readEventsRangeExclusive(
       statusChangePrimaryKey(await db.getMostRecentStatusChange()),
       streamItemPrimaryKey(info.firstEntry),
-      options.count || 100000
+      options.count || 1000
     )
 
     const { name, entries }: { name: string; entries: StreamEntry[] } =
