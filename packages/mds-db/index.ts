@@ -68,8 +68,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     const { PG_NAME, PG_USER, PG_PASS, PG_PORT } = env
     let PG_HOST: string | undefined
     if (useWriteable) {
-      // eslint-disable-next-line prefer-destructuring
-      PG_HOST = env.PG_HOST
+      ;({ PG_HOST } = env)
     } else {
       PG_HOST = env.PG_HOST_READER || env.PG_HOST
     }
@@ -103,8 +102,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
         client.setConnected(true)
         resolve(client)
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
+      .catch((err: Error) => {
         log.error('postgres connection error', err.stack).then(() => {
           reject(err)
           client.setConnected(false)
@@ -124,8 +122,7 @@ async function getWriteableClient(): Promise<MDSPostgresClient> {
         writeableCachedClient = result
         resolve(result)
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
+      .catch((err: Error) => {
         log.error('postgres connection error')
         reject(err)
         writeableCachedClient = null
@@ -144,8 +141,7 @@ async function getReadOnlyClient(): Promise<MDSPostgresClient> {
         readOnlyCachedClient = result
         resolve(result)
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
+      .catch((err: Error) => {
         log.error('postgres connection error')
         reject(err)
         readOnlyCachedClient = null
@@ -163,11 +159,12 @@ async function initialize() {
 
 // This should never be exported, to prevent risk of SQL injection.
 // Only functions in this module should ever call it.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+/* eslint-reason ambigous helper function that wraps a query as Readonly */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 async function makeReadOnlyQuery(sql: string): Promise<any[]> {
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
+    function fail(err: Error) {
       log.error(`error with SQL query ${sql}`, err.stack || err).then(() => reject(err))
     }
 
@@ -178,7 +175,6 @@ async function makeReadOnlyQuery(sql: string): Promise<any[]> {
         .then(result => {
           resolve(result.rows)
         }, fail)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .catch(fail)
     })
   })
@@ -213,7 +209,8 @@ async function health(): Promise<{
       as heap_hit, (sum(heap_blks_hit) - sum(heap_blks_read)) / sum(heap_blks_hit + 1)
       as ratio
       FROM pg_statio_user_tables;`
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-reason TODO build out type */
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       makeReadOnlyQuery(cacheHitQuery).then((cacheHitResult: any) => {
         resolve({
           using: 'postgres',
@@ -312,7 +309,9 @@ async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
               // FIXME stinky! remove!
               if (!res.rows[0].vehicle_id) {
                 const vehicle_id = `test-${rangeRandomInt(10000000, 99999999)}`
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
+
+                /* eslint-reason TODO: FIX updateDevice/readDevice circular reference */
+                /* eslint-disable @typescript-eslint/no-use-before-define */
                 updateDevice(device_id, {
                   vehicle_id
                 }).then(() => {
@@ -352,11 +351,10 @@ async function readDeviceList(device_ids: UUID[]) {
   return result.rows
 }
 
-async function writeDevice(device: Device): Promise<Recorded<Device>> {
+async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
   try {
     const client = await getWriteableClient()
-    // eslint-disable-next-line no-param-reassign
-    device.recorded = now()
+    const device = { ...device_param, recorded: now() }
     const sql = `INSERT INTO ${cols_sql(schema.DEVICES_TABLE, schema.DEVICES_COLS)} ${vals_sql(schema.DEVICES_COLS)}`
     const values = vals_list(schema.DEVICES_COLS, device)
     logSql(sql, values)
@@ -401,17 +399,16 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
   })
 }
 
-async function writeEvent(event: VehicleEvent): Promise<Recorded<VehicleEvent>> {
-  const device = await readDevice(event.device_id)
+async function writeEvent(event_param: VehicleEvent): Promise<Recorded<VehicleEvent>> {
+  const device = await readDevice(event_param.device_id)
   return new Promise((resolve, reject) => {
     if (!device) {
       reject(new Error('device unregistered'))
     } else {
       // write pg
       getWriteableClient().then(client => {
-        /* eslint-disable no-param-reassign */
-        event.telemetry_timestamp = event.telemetry ? event.telemetry.timestamp : null
-        /* eslint-enable no-param-reassign */
+        const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
+        const event = { ...event_param, telemetry_timestamp }
         const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
         const values = vals_list(schema.EVENTS_COLS, event)
         logSql(sql, values)
@@ -500,8 +497,7 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
 
   logSql(countSql, countVals)
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
+    function fail(err: Error) {
       log.error('readEvents error', err.stack || err).then(() => {
         reject(err)
       })
@@ -664,8 +660,7 @@ async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsRe
   logSql(countSql, countVals)
 
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
+    function fail(err: Error) {
       log.error('readTripIds error', err.stack || err).then(() => {
         reject(err)
       })
@@ -871,7 +866,10 @@ async function getEventsLast24HoursPerProvider(start = yesterday(), stop = now()
   return makeReadOnlyQuery(sql)
 }
 
-async function getTelemetryCountsPerProviderSince(start = yesterday(), stop = now()) {
+async function getTelemetryCountsPerProviderSince(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number; slacount: number }[]> {
   const one_day = days(1)
   const sql = `select provider_id, count(*), count(case when ((recorded-timestamp) > ${one_day}) then 1 else null end) as slacount from telemetry where recorded > ${start} and recorded < ${stop} group by provider_id`
   return makeReadOnlyQuery(sql)
@@ -885,28 +883,37 @@ async function getTripCountsPerProviderSince(
   return makeReadOnlyQuery(sql)
 }
 
-async function getVehicleCountsPerProvider() {
+async function getVehicleCountsPerProvider(): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(provider_id) from ${schema.DEVICES_TABLE} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
 
-async function getNumVehiclesRegisteredLast24HoursByProvider(start = yesterday(), stop = now()) {
+async function getNumVehiclesRegisteredLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(device_id) from ${schema.DEVICES_TABLE} where recorded > ${start} and recorded < ${stop} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
 
-async function getNumEventsLast24HoursByProvider(start = yesterday(), stop = now()) {
+async function getNumEventsLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(*) from ${schema.EVENTS_TABLE} where recorded > ${start} and recorded < ${stop} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
 
-async function getTripEventsLast24HoursByProvider(start = yesterday(), stop = now()) {
+async function getTripEventsLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VehicleEvent; recorded: number; timestamp: number }[]> {
   const sql = `select provider_id, trip_id, event_type, recorded, timestamp from ${schema.EVENTS_TABLE} where trip_id is not null and recorded > ${start} and recorded < ${stop} order by "timestamp"`
   return makeReadOnlyQuery(sql)
 }
 
 // TODO way too slow to be useful -- move into mds-cache
-async function getMostRecentTelemetryByProvider() {
+async function getMostRecentTelemetryByProvider(): Promise<{ provider_id: UUID; max: number }[]> {
   const sql = `select provider_id, max(recorded) from ${schema.TELEMETRY_TABLE} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
@@ -991,12 +998,11 @@ async function readAudits(query: ReadAuditsQueryParams) {
   }
 }
 
-async function writeAudit(audit: Audit & { audit_vehicle_id: UUID }): Promise<Recorded<Audit>> {
+async function writeAudit(audit_param: Audit & { audit_vehicle_id: UUID }): Promise<Recorded<Audit>> {
   return new Promise((resolve, reject) => {
     // write pg
     getWriteableClient().then(client => {
-      // eslint-disable-next-line no-param-reassign
-      audit.recorded = now()
+      const audit = { ...audit_param, recorded: now() }
       const sql = `INSERT INTO ${cols_sql(schema.AUDITS_TABLE, schema.AUDITS_COLS)} ${vals_sql(schema.AUDITS_COLS)}`
       const values = vals_list(schema.AUDITS_COLS, audit)
       logSql(sql, values)
@@ -1229,7 +1235,6 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
     client
       .query(sql)
       .then(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         () => {
           log.info('pg db writeStatusChanges', status_changes.length, 'rows, success')
           resolve({
@@ -1323,7 +1328,6 @@ async function getLatestTime(table: string, field: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const sql = `SELECT ${field} FROM ${table} ORDER BY ${field} DESC LIMIT 1`
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     logSql(sql)
     client
       .query(sql)

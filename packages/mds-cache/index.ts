@@ -195,13 +195,12 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
     log.info('redis zrangebyscore device-ids', start, stop)
     getClient()
       .zrangebyscoreAsync('device-ids', start, stop)
-      .then(async (device_ids: string[]) => {
-        log.info('readDevicesStatus', device_ids.length, 'entries')
+      .then(async (device_ids_res: string[]) => {
+        log.info('readDevicesStatus', device_ids_res.length, 'entries')
 
         const skip = query.skip || 0
         const take = query.take || 100000000000
-        // eslint-disable-next-line no-param-reassign
-        device_ids = device_ids.slice(skip, skip + take)
+        const device_ids = device_ids_res.slice(skip, skip + take)
 
         // read all devices
         const device_status_map: { [device_id: string]: CachedItem | {} } = {}

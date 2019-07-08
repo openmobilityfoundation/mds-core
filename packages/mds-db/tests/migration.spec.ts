@@ -18,7 +18,8 @@ const pg_info: PGInfo = {
 }
 
 interface DBRow {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-reason ambiguous db function */
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   [propName: string]: any
   table_name: string
 }
@@ -29,7 +30,6 @@ interface DBRow {
 
 if (pg_info.database) {
   describe('exercise migration methods', () => {
-    // eslint-disable-next-line func-names
     before(async () => {
       const client = configureClient(pg_info)
       await client.connect()

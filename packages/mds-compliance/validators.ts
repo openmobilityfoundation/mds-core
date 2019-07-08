@@ -117,8 +117,7 @@ const Format = (property: string, error: Joi.ValidationError): string => {
   return `${[property, ...path].join('.')} ${details.join(' ')}`
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function validatePolicies(policies: any): policies is Policy[] {
+export function validatePolicies(policies: unknown): policies is Policy[] {
   const { error } = Joi.validate(policies, policiesSchema)
   if (error) {
     throw new ValidationError('invalid_policies', {
@@ -129,8 +128,7 @@ export function validatePolicies(policies: any): policies is Policy[] {
   return true
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function validateGeographies(geographies: any): geographies is Geography[] {
+export function validateGeographies(geographies: unknown): geographies is Geography[] {
   const { error } = Joi.validate(geographies, geographiesSchema)
   if (error) {
     throw new ValidationError('invalid_geographies', {
@@ -141,8 +139,7 @@ export function validateGeographies(geographies: any): geographies is Geography[
   return true
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function validateEvents(events: any): events is VehicleEvent[] {
+export function validateEvents(events: unknown): events is VehicleEvent[] {
   const { error } = Joi.validate(events, eventsSchema)
   if (error) {
     throw new ValidationError('invalid events', {
