@@ -84,7 +84,9 @@ function api(app: express.Express): express.Express {
         log.info(providerName(provider_id), req.method, req.originalUrl)
       }
     } catch (err) {
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
     }
     next()
   })
@@ -139,9 +141,11 @@ function api(app: express.Express): express.Express {
         }
       )
     } catch (err) /* istanbul ignore next */ {
-      log.error('/test/seed failure:', err.stack)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
-        result: `Failed to seed: ${err.stack}`
+        result: `Failed to seed: ${desc}`
       })
     }
   })
@@ -165,9 +169,11 @@ function api(app: express.Express): express.Express {
         }
       )
     } catch (err) /* istanbul ignore next */ {
-      log.error('/test/seed failure:', err.stack)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
-        result: `Failed to seed: ${err.stack}`
+        result: `Failed to seed: ${desc}`
       })
     }
   })
@@ -326,8 +332,10 @@ function api(app: express.Express): express.Express {
       })
     } catch (err) {
       // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(err) })
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
+      res.status(500).send({ error: new Error(desc) })
     }
   }
 
@@ -416,9 +424,10 @@ function api(app: express.Express): express.Express {
         links: asJsonApiLinks(req, skip, take, trips.length)
       })
     } catch (err) {
+      const desc = err instanceof Error ? err.message : err
       res.status(500).send({
         error: 'internal_failure',
-        error_description: `trips error: ${err.stack}`
+        error_description: `trips error: ${desc}`
       })
     }
   }
@@ -468,8 +477,10 @@ function api(app: express.Express): express.Express {
       })
     } catch (err) {
       // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(err) })
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
+      res.status(500).send({ error: new Error(desc) })
     }
   }
 
@@ -546,8 +557,9 @@ function api(app: express.Express): express.Express {
     // FIXME also validate start_time, end_time
 
     function fail(err: Error | string): void {
-      const msg = err instanceof Error ? err.stack : err
-      log.error(providerAlias, '/status_changes', stringifiedQuery, 'failed', msg)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error(providerAlias, '/status_changes', stringifiedQuery, 'failed', desc, stack || JSON.stringify(err))
 
       if (err instanceof Error && err.message.includes('invalid device_id')) {
         res.status(400).send({
@@ -558,7 +570,7 @@ function api(app: express.Express): express.Express {
         /* istanbul ignore next no good way to fake server failure right now */
         res.status(500).send({
           error: 'server_failure',
-          error_description: `status_changes internal error: ${msg}`
+          error_description: `status_changes internal error: ${desc}`
         })
       }
     }
@@ -642,7 +654,7 @@ function api(app: express.Express): express.Express {
     function fail(err: Error | string): void {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      log.error(req.path, 'failure', stack).then(() => {
+      log.error(req.path, 'failure', desc, stack || JSON.stringify(err)).then(() => {
         res.status(500).send({
           error: 'internal_failure',
           error_description: `trips error: ${desc}`
@@ -687,7 +699,7 @@ function api(app: express.Express): express.Express {
     function fail(err: Error): void {
       const desc = err.message || err
       const stack = err.stack || desc
-      log.error(req.path, 'failure', stack).then(() => {
+      log.error(req.path, 'failure', desc, stack || JSON.stringify(err)).then(() => {
         res.status(500).send({
           error: 'internal_failure',
           error_description: `trips error: ${desc}`
