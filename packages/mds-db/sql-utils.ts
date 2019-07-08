@@ -133,7 +133,7 @@ export function logSql(sql: string, ...values: unknown[]): void {
   if (!pgDebug) {
     return
   }
-  let out: unknown
+  let out: unknown[]
   if (typeof values === 'undefined') {
     out = []
   } else if (typeof values !== 'string') {
