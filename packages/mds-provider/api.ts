@@ -19,24 +19,14 @@ import express from 'express'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
-import { providers, providerName } from 'mds-providers' // map of uuids -> obj
+import { providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
-import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
-import { isUUID, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
-import { Device, UUID, VehicleEvent, Telemetry, Provider, Timestamp } from 'mds'
-import { FeatureCollection, Feature } from 'geojson'
-import {
-  ReadTripsResult,
-  ReadTripIdsResult,
-  Trip,
-  ReadEventsResult,
-  ReadStatusChangesResult,
-  StatusChange
-} from 'mds-db/types'
+import { isUUID, now, pathsFor, isTimestamp } from 'mds-utils'
+import { Timestamp } from 'mds'
+import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from 'mds-db/types'
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { ProviderApiRequest, ProviderApiResponse } from './types'
-import { asStatusChangeEvent } from './utils'
 
 log.startup()
 
@@ -186,15 +176,6 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/test/update_device'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    cache.updateVehicleList(req.query.device_id, req.query.timestamp).then((total: number) => {
-      res.send({
-        result: 'Done',
-        total
-      })
-    })
-  })
-
   app.get(pathsFor('/health'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // FIXME add real health checks
     // verify access to known resources e.g. redis, postgres
@@ -225,56 +206,34 @@ function api(app: express.Express): express.Express {
   }
 
   /**
-   * Read Device from cache if possible, else fall through to db
-   * @param  {device_id}
-   * @return {Device}
-   */
-  async function getDevice(device_id: UUID): Promise<Device> {
-    // FIXME get device from cache, and if not cache, db
-    // let device = await cache.readDevice(device_id)
-    // if (!device) {
-    const device = await db.readDevice(device_id)
-    // }
-    return device
-  }
-
-  async function getProvider(provider_id: UUID): Promise<Provider> {
-    return Promise.resolve(
-      providers[provider_id] || {
-        provider_name: 'unknown'
-      }
-    )
-  }
-
-  /**
    * Convert a Telemetry object into a GeoJSON Feature
    * @param item a Telemetry object
    * @returns a GeoJSON feature
    */
-  function asFeature(item: Telemetry): Feature {
-    return {
-      type: 'Feature',
-      properties: {
-        timestamp: item.timestamp
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [round(item.gps.lng, 6), round(item.gps.lat, 6)]
-      }
-    }
-  }
+  // function asFeature(item: Telemetry): Feature {
+  //   return {
+  //     type: 'Feature',
+  //     properties: {
+  //       timestamp: item.timestamp
+  //     },
+  //     geometry: {
+  //       type: 'Point',
+  //       coordinates: [round(item.gps.lng, 6), round(item.gps.lat, 6)]
+  //     }
+  //   }
+  // }
 
   /**
    * Convert a list of Telemetry points into a FeatureCollection
    * @param  {items list of Telemetry elements}
    * @return {GeoJSON FeatureCollection}
    */
-  function asFeatureCollection(items: Telemetry[]): FeatureCollection {
-    return {
-      type: 'FeatureCollection',
-      features: items.map((item: Telemetry) => asFeature(item))
-    }
-  }
+  // function asFeatureCollection(items: Telemetry[]): FeatureCollection {
+  //   return {
+  //     type: 'FeatureCollection',
+  //     features: items.map((item: Telemetry) => asFeature(item))
+  //   }
+  // }
 
   /**
    * Generate a GeoJSON Route from a trip_start and trip_end Event
@@ -282,20 +241,20 @@ function api(app: express.Express): express.Express {
    * @param  {trip_end Event}
    * @return {Trip object}
    */
-  async function asRoute(trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<FeatureCollection> {
-    log.info('asRoute', JSON.stringify(trip_start), JSON.stringify(trip_end))
-    const telemetry: Telemetry[] = await db.readTelemetry(
-      trip_start.device_id,
-      trip_start.timestamp,
-      trip_end.timestamp
-    )
-    log.info('asRoute telemetry', JSON.stringify(telemetry))
-    return Promise.resolve(asFeatureCollection(telemetry))
-  }
+  // async function asRoute(trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<FeatureCollection> {
+  //   log.info('asRoute', JSON.stringify(trip_start), JSON.stringify(trip_end))
+  //   const telemetry: Telemetry[] = await db.readTelemetry(
+  //     trip_start.device_id,
+  //     trip_start.timestamp,
+  //     trip_end.timestamp
+  //   )
+  //   log.info('asRoute telemetry', JSON.stringify(telemetry))
+  //   return Promise.resolve(asFeatureCollection(telemetry))
+  // }
 
   const asTrip = ({ recorded, sequence, ...props }: Trip): Omit<Trip, 'recorded' | 'sequence'> => props
 
-  async function getTrips(req: ProviderApiRequest, res: ProviderApiResponse) {
+  app.get(pathsFor('/trips'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // Standard Provider parameters
     const { provider_id, device_id, vehicle_id } = req.query
     const min_end_time = req.query.min_end_time && Number(req.query.min_end_time)
@@ -308,6 +267,18 @@ function api(app: express.Express): express.Express {
     if (last_sequence instanceof Error) {
       res.status(400).send({ error: last_sequence.message })
       return
+    }
+
+    if (provider_id && !isUUID(provider_id)) {
+      return res.status(400).send({
+        result: `invalid provider_id ${provider_id} is not a UUID`
+      })
+    }
+
+    if (device_id && !isUUID(device_id)) {
+      return res.status(400).send({
+        result: `invalid device_id ${device_id} is not a UUID`
+      })
     }
 
     try {
@@ -337,103 +308,6 @@ function api(app: express.Express): express.Express {
       await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
       res.status(500).send({ error: new Error(desc) })
     }
-  }
-
-  /**
-   * Generate a Trip from a trip_start and trip_end Event
-   * @param  {trip_start VehicleEvent}
-   * @param  {trip_end VehicleEvent}
-   * @return {Trip object}
-   */
-  async function asEventTrip(trip_id: UUID, trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<Trip> {
-    const device = await getDevice(trip_start.device_id || trip_end.device_id)
-    const provider = await getProvider(device.provider_id)
-    const route = await asRoute(trip_start, trip_end)
-    return {
-      provider_id: device.provider_id,
-      provider_name: provider.provider_name,
-      device_id: device.device_id,
-      vehicle_id: device.vehicle_id,
-      vehicle_type: device.type as VEHICLE_TYPE,
-      propulsion_type: device.propulsion as PROPULSION_TYPE[],
-      provider_trip_id: trip_id,
-      trip_duration: trip_end.timestamp - trip_start.timestamp,
-      trip_distance: 0, // FIXME
-      route,
-      accuracy: 1, // FIXME
-      trip_start: trip_start.timestamp,
-      trip_end: trip_end.timestamp,
-      parking_verification_url: 'unknown', // FIXME
-      standard_cost: 0, // FIXME
-      actual_cost: 0, // FIXME
-      recorded: now()
-    }
-  }
-
-  async function buildEventTrip(trip_id: UUID): Promise<Trip | null> {
-    const { events } = await db.readEvents({ trip_id })
-    const trip_start = events.find(e => e.event_type === VEHICLE_EVENTS.trip_start)
-    const trip_end = events.find(e => e.event_type === VEHICLE_EVENTS.trip_end)
-    if (trip_start && trip_end && trip_start.trip_id && trip_end.trip_id) {
-      const trip = await asEventTrip(trip_id, trip_start, trip_end)
-      return trip
-    }
-    return null
-  }
-
-  /**
-   * Convert trip Events into
-   * @param  {list of Events that have a non-null trip_id}
-   * @return {list of Trips}
-   */
-  async function asEventTrips(trip_ids: UUID[]): Promise<Trip[]> {
-    log.info('asTrips', trip_ids.length, 'trip_ids', trip_ids)
-    const trips = await Promise.all(trip_ids.map(buildEventTrip))
-    return trips.filter(trip => trip !== null) as Trip[]
-  }
-
-  async function getEventsAsTrips(req: ProviderApiRequest, res: ProviderApiResponse) {
-    const { skip, take } = asPagingParams(req.query)
-    const { start_time, end_time, device_id } = req.query
-
-    // FIXME validate start_time, end_time, etc.
-
-    if (device_id && !isUUID(device_id)) {
-      return res.status(400).send({
-        result: `invalid device_id ${device_id} is not a UUID`
-      })
-    }
-
-    const params = {
-      skip,
-      take,
-      start_time,
-      end_time,
-      device_id,
-      event_types: [VEHICLE_EVENTS.trip_start, VEHICLE_EVENTS.trip_end]
-    }
-
-    try {
-      const { tripIds } = await db.readTripIds(params)
-      const trips = await asEventTrips(tripIds)
-      res.status(200).send({
-        version: PROVIDER_VERSION,
-        data: {
-          trips
-        },
-        links: asJsonApiLinks(req, skip, take, trips.length)
-      })
-    } catch (err) {
-      const desc = err instanceof Error ? err.message : err
-      res.status(500).send({
-        error: 'internal_failure',
-        error_description: `trips error: ${desc}`
-      })
-    }
-  }
-
-  app.get(pathsFor('/trips'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    await (req.query.newSkool ? getTrips(req, res) : getEventsAsTrips(req, res))
   })
 
   // / ////////////////////////////// status_changes /////////////////////////////
@@ -444,10 +318,11 @@ function api(app: express.Express): express.Express {
     ...props
   }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
 
-  async function getStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
+  app.get(pathsFor('/status_changes'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // Standard Provider parameters
     const start_time = req.query.start_time && Number(req.query.start_time)
     const end_time = req.query.end_time && Number(req.query.end_time)
+    const { device_id, provider_id } = req.query
 
     // Extensions to override paging
     const { skip, take } = asPagingParams(req.query)
@@ -456,6 +331,18 @@ function api(app: express.Express): express.Express {
     if (last_sequence instanceof Error) {
       res.status(400).send({ error: last_sequence.message })
       return
+    }
+
+    if (provider_id && !isUUID(provider_id)) {
+      return res.status(400).send({
+        result: `invalid provider_id ${provider_id} is not a UUID`
+      })
+    }
+
+    if (device_id && !isUUID(device_id)) {
+      return res.status(400).send({
+        result: `invalid device_id ${device_id} is not a UUID`
+      })
     }
 
     try {
@@ -482,260 +369,28 @@ function api(app: express.Express): express.Express {
       await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
       res.status(500).send({ error: new Error(desc) })
     }
-  }
+  })
 
   /**
    * Convert a telemetry object to a GeoJSON Point
    * @param  {Telemetry}
    * @return {GeoJSON Point feature}
    */
-  function asPoint(telemetry: Telemetry): Feature | null {
-    if (!telemetry) {
-      return null
-    }
-    return {
-      type: 'Feature',
-      properties: {
-        timestamp: telemetry.timestamp
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [round(telemetry.gps.lng, 6), round(telemetry.gps.lat, 6)]
-      }
-    }
-  }
-
-  /**
-   * @param  {list of Events}
-   * @return {list of StatusChanges}
-   */
-  async function eventAsStatusChange(event: VehicleEvent): Promise<StatusChange> {
-    const telemetry_timestamp = event.telemetry_timestamp || event.timestamp
-    const [device, provider, telemetry] = await Promise.all([
-      getDevice(event.device_id),
-      getProvider(event.provider_id),
-      db.readTelemetry(event.device_id, telemetry_timestamp, telemetry_timestamp)
-    ])
-    const event2 = asStatusChangeEvent(event)
-    if (!event2.event_type_reason) {
-      throw new Error(
-        `invalid empty provider event_type_reason for agency event ${event.event_type}/${event.event_type_reason}` +
-          `and provider event_type ${event2.event_type}`
-      )
-    }
-    const hasTelemetry: boolean = telemetry.length > 0
-    return {
-      provider_id: device.provider_id, // FIXME
-      provider_name: provider.provider_name,
-      device_id: event.device_id,
-      vehicle_id: device.vehicle_id,
-      vehicle_type: device.type as VEHICLE_TYPE,
-      propulsion_type: device.propulsion as PROPULSION_TYPE[],
-      event_type: event2.event_type,
-      event_type_reason: event2.event_type_reason,
-      event_time: event.timestamp,
-      event_location: hasTelemetry ? asPoint(telemetry[0]) : null,
-      battery_pct: hasTelemetry ? telemetry[0].charge || null : null,
-      associated_trip: event.trip_id || null,
-      recorded: event.recorded
-    }
-  }
-
-  async function eventsAsStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
-    const result = await Promise.all(events.map(event => eventAsStatusChange(event)))
-    return result
-  }
-
-  async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
-    const { provider_id } = res.locals.claims
-
-    const { start_time, end_time, start_recorded, end_recorded, device_id } = req.query
-    const { skip, take } = asPagingParams(req.query)
-    const providerAlias = provider_id ? providerName(provider_id) : 'none'
-    const stringifiedQuery = JSON.stringify(req.query)
-
-    // FIXME also validate start_time, end_time
-
-    function fail(err: Error | string): void {
-      const desc = err instanceof Error ? err.message : err
-      const stack = err instanceof Error ? err.stack : desc
-      log.error(providerAlias, '/status_changes', stringifiedQuery, 'failed', desc, stack || JSON.stringify(err))
-
-      if (err instanceof Error && err.message.includes('invalid device_id')) {
-        res.status(400).send({
-          error: 'invalid',
-          error_description: 'invalid device_id'
-        })
-      } else {
-        /* istanbul ignore next no good way to fake server failure right now */
-        res.status(500).send({
-          error: 'server_failure',
-          error_description: `status_changes internal error: ${desc}`
-        })
-      }
-    }
-
-    if (device_id !== undefined && !isUUID(device_id)) {
-      fail(new Error(`invalid device_id ${device_id}`))
-    } else {
-      const params = {
-        skip,
-        take,
-        start_time,
-        end_time,
-        start_recorded,
-        end_recorded,
-        device_id
-      }
-
-      // read events
-      // FIXME be mindful about params
-      const readEventsStart = now()
-      db.readEvents(params)
-        .then((result: ReadEventsResult) => {
-          const { count, events } = result
-          const readEventsEnd = now()
-          const asStatusChangesStart = now()
-          const readEventsDuration = readEventsEnd - readEventsStart
-          const readEventsMsg = `${providerAlias} /status_changes ${stringifiedQuery} read ${events.length} of ${count} in ${readEventsDuration} ms`
-          if (readEventsDuration < seconds(10)) {
-            log.info(readEventsMsg)
-          } else {
-            log.warn(readEventsMsg)
-          }
-          // change events into status changes
-          eventsAsStatusChanges(events)
-            .then(status_changes => {
-              const asStatusChangesEnd = now()
-              const asStatusChangesDuration = asStatusChangesEnd - asStatusChangesStart
-              const asStatusChangesMsg = `${providerAlias} /status_changes ${stringifiedQuery} returned ${status_changes.length} in ${asStatusChangesDuration} ms`
-              if (asStatusChangesDuration < seconds(10)) {
-                log.info(asStatusChangesMsg)
-              } else {
-                log.warn(asStatusChangesMsg)
-              }
-              res.status(200).send({
-                version: PROVIDER_VERSION,
-                data: {
-                  status_changes
-                },
-                links: asJsonApiLinks(req, skip, take, count)
-              })
-            }, fail)
-            .catch(fail)
-        }, fail)
-        .catch(fail)
-    }
-  }
-
-  app.get(pathsFor('/status_changes'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    await (req.query.newSkool ? getStatusChanges(req, res) : getEventsAsStatusChanges(req, res))
-  })
-
-  // / //////////////////////// devices_status //////////////////////////////////////
-
-  // aggregation background:
-  //
-  // to get trip/status data from a scooter company, one makes requests from the Provider
-  // interface.  this was something of a stop-gap until Agency and other APIs could get built.
-  // in the mean-time, tooling companies set up shop on Provider.
-  //
-  // the above implementation of Provider-on-Agency takes Agency data and transforms it to
-  // Provider data structures.
-  //
-
-  // /////////////// update trips/status_changes database from agency data /////////////
-
-  app.get(pathsFor('/admin/import_trips_from_agency'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // TODO implement
-    // determine last known timestamp of trips
-
-    /* istanbul ignore next spoofing db failure is not implemented, can't test. */
-    function fail(err: Error | string): void {
-      const desc = err instanceof Error ? err.message : err
-      const stack = err instanceof Error ? err.stack : desc
-      log.error(req.path, 'failure', desc, stack || JSON.stringify(err)).then(() => {
-        res.status(500).send({
-          error: 'internal_failure',
-          error_description: `trips error: ${desc}`
-        })
-      })
-    }
-
-    db.getLatestTripTime()
-      .then((timestamp: number) => {
-        // do db queries as needed to read trips
-        const tripParams = {
-          skip: 0,
-          take: 100, // FIXME constant
-          end_time: timestamp,
-          event_types: [VEHICLE_EVENTS.trip_start, VEHICLE_EVENTS.trip_end]
-          // ignore device_id
-          // igmore start_time
-        }
-        db.readTripIds(tripParams)
-          .then((result: ReadTripIdsResult) => {
-            const { count, tripIds } = result
-            asEventTrips(tripIds)
-              .then(trips => {
-                // write trips
-                db.writeTrips(trips)
-                // return activity report
-                // TODO more trip report?
-                res.status(200).send({
-                  num_trips: trips.length,
-                  remaining: count - trips.length
-                })
-              }, fail)
-              .catch(fail)
-          }, fail)
-          .catch(fail)
-      }, fail)
-      .catch(fail)
-  })
-
-  app.get(pathsFor('/admin/import_status_changes_from_agency'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    /* istanbul ignore next spoofing db failure is not implemented, can't test. */
-    function fail(err: Error): void {
-      const desc = err.message || err
-      const stack = err.stack || desc
-      log.error(req.path, 'failure', desc, stack || JSON.stringify(err)).then(() => {
-        res.status(500).send({
-          error: 'internal_failure',
-          error_description: `trips error: ${desc}`
-        })
-      })
-    }
-
-    db.getLatestStatusChangeTime()
-      .then((timestamp: number) => {
-        // do db queries as needed to read trips
-        const statusChangeParams = {
-          skip: 0,
-          take: 100, // FIXME constant
-          end_time: timestamp
-          // ignore device_id
-          // igmore start_time
-        }
-        db.readEvents(statusChangeParams)
-          .then((result: ReadEventsResult) => {
-            log.info('/status_changes read', result)
-            const { count, events } = result
-            // change events into status changes
-            eventsAsStatusChanges(events)
-              .then(status_changes => {
-                db.writeStatusChanges(status_changes)
-                res.status(200).send({
-                  num_trips: status_changes.length,
-                  remaining: count - status_changes.length
-                })
-              }, fail)
-              .catch(fail)
-          }, fail)
-          .catch(fail)
-      }, fail)
-      .catch(fail)
-  })
+  // function asPoint(telemetry: Telemetry): Feature | null {
+  //   if (!telemetry) {
+  //     return null
+  //   }
+  //   return {
+  //     type: 'Feature',
+  //     properties: {
+  //       timestamp: telemetry.timestamp
+  //     },
+  //     geometry: {
+  //       type: 'Point',
+  //       coordinates: [round(telemetry.gps.lng, 6), round(telemetry.gps.lat, 6)]
+  //     }
+  //   }
+  // }
 
   return app
 }

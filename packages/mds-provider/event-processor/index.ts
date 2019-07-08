@@ -66,18 +66,12 @@ const statusChangePrimaryKey = (item: StatusChange | null): VehicleEventPrimaryK
   return null
 }
 
-async function process(options: ReadStreamOptions): Promise<void> {
+async function process(options: ReadStreamOptions): Promise<number> {
   logger.info('Processing Event Stream', options)
 
   const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
-    // Create the consumer group if it doesn't exist
-    if (info.groups === 0) {
-      await stream.createStreamGroup('provider:event', 'event-processor')
-      logger.info('Created Consumer Group')
-    }
-
     const events = await db.readEventsRangeExclusive(
       statusChangePrimaryKey(await db.getMostRecentStatusChange()),
       streamItemPrimaryKey(info.firstEntry),
@@ -123,17 +117,24 @@ async function process(options: ReadStreamOptions): Promise<void> {
           }))
         )
       ])
-    } else {
-      logger.info('No entries to process.')
+      return entries.length
     }
+    logger.info('No entries to process.')
   } else {
     logger.info('Stream Unavailable')
   }
+  return 0
 }
 
 async function start(): Promise<void> {
   logger.info('Starting Event Processor')
   await Promise.all([db.startup(), stream.startup()])
+  const info = await stream.getStreamInfo('provider:event')
+  // Create the stream and consumer group if they don't exist
+  if (!info || info.groups === 0) {
+    await stream.createStreamGroup('provider:event', 'event-processor')
+    logger.info('Created Consumer Group')
+  }
 }
 
 async function stop(): Promise<void> {
@@ -143,8 +144,9 @@ async function stop(): Promise<void> {
 
 export type ProviderEventProcessorOptions = ReadStreamOptions
 
-export async function ProviderEventProcessor(options: ReadStreamOptions = {}): Promise<void> {
+export async function ProviderEventProcessor(options: ReadStreamOptions = {}): Promise<number> {
   await start()
-  await process({ noack: true, ...options })
+  const processed = await process({ noack: true, ...options })
   await stop()
+  return processed
 }

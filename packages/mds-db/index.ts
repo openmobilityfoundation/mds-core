@@ -1259,6 +1259,7 @@ async function readStatusChanges(
   params: Partial<{
     skip: number
     take: number
+    device_id: UUID
     provider_id: UUID
     start_time: Timestamp
     end_time: Timestamp
@@ -1267,7 +1268,7 @@ async function readStatusChanges(
 ): Promise<ReadStatusChangesResult> {
   const client = await getReadOnlyClient()
 
-  const { provider_id, start_time, end_time, skip, take, last_sequence } = params
+  const { provider_id, device_id, start_time, end_time, skip, take, last_sequence } = params
 
   const vals = new SqlVals()
   const conditions = []
@@ -1277,6 +1278,14 @@ async function readStatusChanges(
       throw new Error(`invalid provider_id ${provider_id}`)
     } else {
       conditions.push(`provider_id = ${vals.add(provider_id)}`)
+    }
+  }
+
+  if (device_id) {
+    if (!isUUID(device_id)) {
+      throw new Error(`invalid device_id ${device_id}`)
+    } else {
+      conditions.push(`device_id = ${vals.add(device_id)}`)
     }
   }
 
@@ -1510,16 +1519,18 @@ async function readEventsRangeExclusive(
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${take}`,
+    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E LEFT JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${take}`,
     vals.values()
   )
   return rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
     ...event,
     telemetry_timestamp,
-    telemetry: {
-      timestamp: telemetry_timestamp,
-      gps: { lat, lng }
-    }
+    telemetry: telemetry_timestamp
+      ? {
+          timestamp: telemetry_timestamp,
+          gps: { lat, lng }
+        }
+      : null
   }))
 }
 
