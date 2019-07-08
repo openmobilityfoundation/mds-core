@@ -138,8 +138,6 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies'), (req, res) => {
-    // TODO extract start/end applicability
-    // TODO filter by start/end applicability
     const { start_date = now(), end_date = now() } = req.query
     log.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
@@ -342,6 +340,7 @@ function api(app: express.Express): express.Express {
 
   app.post(pathsFor('/admin/policies/:policy_id'), (req, res) => {
     const policy = req.body
+    log.info('policy body', policy)
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
