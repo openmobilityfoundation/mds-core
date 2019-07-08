@@ -37,8 +37,7 @@ const isTripsProcessorStreamEntry = (entry: StreamEntry): entry is StreamEntry<T
   ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type)
 
 const asStreamEntry = <T>([id, [type, data]]: StreamItem): StreamEntry<T> => {
-  const [recorded, sequence] = id.split('-').map(Number)
-  return { id, type, data: JSON.parse(data), recorded, sequence }
+  return { id, type, data: JSON.parse(data) }
 }
 
 const readStreamEntries = async (options: ReadStreamOptions) => {
@@ -85,11 +84,19 @@ async function process(options: ReadStreamOptions): Promise<void> {
       options.count || 100000
     )
 
-    if (events.length > 0) {
-      logger.info('Syncing', events.length, 'events from db', events[0])
-    }
-
-    const { name, entries } = await readStreamEntries(options)
+    const { name, entries }: { name: string; entries: StreamEntry[] } =
+      events.length > 0
+        ? {
+            name: 'db:events',
+            entries: events.map(event => {
+              return {
+                id: uuid(),
+                type: 'event',
+                data: event
+              }
+            })
+          }
+        : await readStreamEntries(options)
 
     if (entries.length > 0) {
       logger.info(`Processing ${entries.length} entries from ${name}`)
