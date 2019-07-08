@@ -40,7 +40,6 @@ declare module 'redis' {
     dbsizeAsync: () => Promise<number>
     flushdbAsync: () => Promise<'OK'>
     pingAsync: <TPong extends string = 'PONG'>(response?: TPong) => Promise<TPong>
-    xackAsync: (...args: unknown[]) => Promise<number>
     xaddAsync: (...args: unknown[]) => Promise<string>
     xinfoAsync: <T extends 'STREAM' | 'GROUPS'>(
       arg: T,
