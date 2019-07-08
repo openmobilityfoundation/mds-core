@@ -1,3 +1,4 @@
+/* eslint-reason avoids import of logger */
 /* eslint-disable no-console */
 import { verify } from 'jsonwebtoken'
 import { Handler, CustomAuthorizerResult } from 'aws-lambda'

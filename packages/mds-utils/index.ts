@@ -274,17 +274,13 @@ function makePointInShape(shape: Geometry): { lat: number; lng: number } {
     throw new Error('no shape')
   }
 
-  /* eslint-disable no-param-reassign */
-  if (shape.type === 'Point') {
-    shape = circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES)
-  }
-  /* eslint-enable no-param-reassign */
+  const shapeToCreate = shape.type === 'Point' ? circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES) : shape
 
-  const bbox = calcBBox(shape)
+  const bbox = calcBBox(shapeToCreate)
   let tries = 0
   while (tries < 1000) {
     const pt: [number, number] = [rangeRandom(bbox.lngMin, bbox.lngMax), rangeRandom(bbox.latMin, bbox.latMax)]
-    if (pointInShape(pt, shape)) {
+    if (pointInShape(pt, shapeToCreate)) {
       return {
         lng: pt[0],
         lat: pt[1]
@@ -443,13 +439,7 @@ function csv<T>(list: T[] | Readonly<T[]>): string {
 
 // utility for adding counts to maps
 function inc(map: { [key: string]: number }, key: string) {
-  /* eslint-disable no-param-reassign */
-  if (map[key]) {
-    map[key] += 1
-  } else {
-    map[key] = 1
-  }
-  /* eslint-enable no-param-reassign */
+  return Object.assign(map, { [key]: map[key] ? map[key] + 1 : 1 })
 }
 function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
   const {
@@ -498,8 +488,6 @@ function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Te
     recorded
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 function pathsFor(path: string): string[] {
   const { PATH_PREFIX } = process.env

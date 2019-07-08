@@ -59,8 +59,9 @@ function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
   const serviceAreaKeys = Object.keys(serviceAreaMap)
 
   const num_areas = 1
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cluster_info: { [key: string]: any } = {}
+  const cluster_info: {
+    [key: string]: { num_clusters: number; cluster_radii: number[]; cluster_centers: { lat: number; lng: number }[] }
+  } = {}
 
   log.info('clustering')
   serviceAreaKeys.slice(0, 1).map(key => {
@@ -94,8 +95,7 @@ function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
     // get the center and radius of the cluster, then put a vehicle in there
     let point
     let tries = 0
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    for (;;) {
       const center = cluster_info[key].cluster_centers[cluster_num]
       if (!pointInShape(center, service_area_multipoly)) {
         throw new Error('bad center is not in multipoly (2)')
@@ -207,15 +207,13 @@ function makeEventsWithTelemetry(
   return devices.map(device => {
     // no trips yet, FIXME
     // use constants FIXME
-    if (event_type === null) {
-      const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
-      // eslint-disable-next-line no-param-reassign
-      event_type = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
-    }
+    const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
     return {
       device_id: device.device_id,
       provider_id: device.provider_id,
-      event_type: event_type as VEHICLE_EVENT,
+      event_type: event_type
+        ? (event_type as VEHICLE_EVENT)
+        : (vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)] as VEHICLE_EVENT),
       telemetry: makeTelemetryInArea(device, timestamp, area, speed),
       timestamp,
       recorded: timestamp
