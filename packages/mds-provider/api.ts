@@ -202,7 +202,7 @@ function api(app: express.Express): express.Express {
   const getStage0Properties = (items: { recorded: Timestamp; sequence?: number | null }[]) => {
     if (items && items.length > 0) {
       const { recorded, sequence } = items[items.length - 1]
-      return { last_sequence: `${recorded}-${sequence || 0}` }
+      return { last_sequence: `${recorded}-${(sequence || 0).toString().padStart(4, '0')}` }
     }
     return undefined
   }
