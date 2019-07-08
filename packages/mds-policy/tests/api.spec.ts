@@ -175,6 +175,7 @@ describe('Tests app', () => {
       })
   })
   it('resets the db', done => {
+    log('AUTHing', AUTH)
     request
       .get('/test/initialize')
       .set('Authorization', AUTH)
