@@ -9,7 +9,8 @@ import {
   Device,
   Telemetry,
   Recorded,
-  DeviceID
+  DeviceID,
+  VehicleEventPrimaryKey
 } from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
@@ -18,7 +19,6 @@ import {
   isUUID,
   rangeRandomInt,
   isTimestamp,
-  nonNegInt,
   seconds,
   days,
   yesterday,
@@ -1120,15 +1120,24 @@ async function writeTrips(trips: Trip[]) {
   })
 }
 
-async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsResult> {
+async function readTrips(
+  params: Partial<{
+    skip: number
+    take: number
+    provider_id: UUID
+    device_id: UUID
+    vehicle_id: string
+    min_end_time: Timestamp
+    max_end_time: Timestamp
+    last_sequence: [Timestamp, number]
+  }>
+): Promise<ReadTripsResult> {
   const client = await getReadOnlyClient()
-  // validate params
-  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time } = params
-  const { skip, take } = params
+  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time, skip, take, last_sequence } = params
 
-  let sql = `SELECT * FROM ${schema.TRIPS_TABLE}`
   const vals = new SqlVals()
-  const conditions: (string | number)[] = []
+  const conditions: string[] = ['trip_start IS NOT NULL', 'trip_end IS NOT NULL']
+
   if (device_id) {
     if (!isUUID(device_id)) {
       throw new Error(`invalid device_id ${device_id}`)
@@ -1136,6 +1145,7 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
       conditions.push(`device_id = ${vals.add(device_id)}`)
     }
   }
+
   if (provider_id) {
     if (!isUUID(provider_id)) {
       throw new Error(`invalid provider_id ${provider_id}`)
@@ -1143,70 +1153,52 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
       conditions.push(`provider_id = ${vals.add(provider_id)}`)
     }
   }
+
   if (vehicle_id) {
     conditions.push(`vehicle_id = ${vals.add(vehicle_id)}`)
   }
+
   if (min_end_time !== undefined) {
     if (!isTimestamp(min_end_time)) {
       throw new Error(`invalid min_end_time ${min_end_time}`)
     } else {
-      conditions.push(`min_end_time >= ${vals.add(min_end_time)}`) // FIXME confirm >=
+      conditions.push(`trip_end >= ${vals.add(min_end_time)}`) // FIXME confirm >=
     }
   }
+
   if (max_end_time !== undefined) {
     if (!isTimestamp(max_end_time)) {
       throw new Error(`invalid max_end_time ${max_end_time}`)
     } else {
-      conditions.push(`max_end_time <= ${vals.add(max_end_time)}`) // FIXME confirm <=
+      conditions.push(`trip_end <= ${vals.add(max_end_time)}`) // FIXME confirm <=
     }
   }
 
-  if (conditions.length) {
-    sql += ` WHERE ${conditions.join(' AND ')}`
+  if (last_sequence !== undefined && last_sequence.every(Number.isInteger)) {
+    const [recorded, sequence] = last_sequence.map(value => vals.add(value))
+    conditions.push(`(recorded > ${recorded} OR (recorded = ${recorded} AND sequence > ${sequence}))`)
   }
 
-  return new Promise((resolve, reject) => {
-    const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-    const countSql = `SELECT COUNT(*) FROM ${schema.TRIPS_TABLE} ${filter}`
-    const countVals = vals.values()
+  const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`
 
-    logSql(countSql, countVals)
+  const exec = SqlExecuter(client)
 
-    function fail(err: Error) {
-      log.error('readTrips error', err.stack || err).then(() => {
-        reject(err)
-      })
-    }
+  const {
+    rows: [{ count }]
+  } = await exec(`SELECT COUNT(*) FROM ${schema.TRIPS_TABLE} ${where}`, vals.values())
 
-    client
-      .query(countSql, countVals)
-      .then(res => {
-        const count = parseInt(res.rows[0].count)
-        if (count === 0) {
-          resolve({
-            trips: [],
-            count: 0
-          })
-        } else {
-          sql += ' ORDER BY end_time ASC'
-          sql += ` OFFSET ${vals.add(nonNegInt(String(skip), 0))}`
-          sql += ` LIMIT ${vals.add(nonNegInt(String(take), 1000))}`
-          const values = vals.values()
+  if (count === 0) {
+    return { count, trips: [] }
+  }
 
-          logSql(sql, values)
-          client
-            .query(sql, values)
-            .then(res2 => {
-              resolve({
-                trips: res2.rows,
-                count
-              })
-            }, fail)
-            .catch(fail)
-        }
-      }, fail)
-      .catch(fail)
-  })
+  const { rows: trips } = await exec(
+    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded ASC, sequence ASC${
+      skip ? ` OFFSET ${vals.add(skip)}` : ''
+    }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
+    vals.values()
+  )
+
+  return { count, trips }
 }
 
 async function writeStatusChanges(status_changes: StatusChange[]) {
@@ -1483,33 +1475,52 @@ async function writePolicy(policy: Policy) {
   })
 }
 
-async function getPastEventsForStatusChanges(
-  device_id: UUID,
-  timestamp: Timestamp,
+async function getMostRecentStatusChange(): Promise<Recorded<StatusChange> | null> {
+  // SELECT * FROM status_changes ORDER BY event_time DESC, device_id DESC LIMIT 1
+  const client = await getReadOnlyClient()
+  const exec = SqlExecuter(client)
+  const results = await exec(
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ORDER BY event_time DESC, device_id DESC LIMIT 1`
+  )
+  if (results.rowCount === 1) {
+    const {
+      rows: [result]
+    } = results
+    return result
+  }
+  return null
+}
+
+async function readEventsRangeExclusive(
+  after: VehicleEventPrimaryKey,
+  before: VehicleEventPrimaryKey,
   take: number
-): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
+): Promise<Recorded<VehicleEvent>[]> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
-  const {
-    rows: [{ count }]
-  } = await exec(
-    `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
-      timestamp
-    )} AND NOT EXISTS (SELECT FROM ${
-      schema.STATUS_CHANGES_TABLE
-    } WHERE device_id = events.device_id AND event_time = events.timestamp)`,
+  const conditions = []
+  if (after) {
+    const [timestamp, device_id] = [after.timestamp, after.device_id].map(value => vals.add(value))
+    conditions.push(`(E.timestamp > ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id > ${device_id}))`)
+  }
+  if (before) {
+    const [timestamp, device_id] = [before.timestamp, before.device_id].map(value => vals.add(value))
+    conditions.push(`(E.timestamp < ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id < ${device_id}))`)
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  const { rows } = await exec(
+    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${take}`,
     vals.values()
   )
-  const { rows: events } = await exec(
-    `SELECT * FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
-      timestamp
-    )} AND NOT EXISTS (SELECT FROM ${
-      schema.STATUS_CHANGES_TABLE
-    } WHERE device_id = events.device_id AND event_time = events.timestamp) ORDER BY timestamp LIMIT ${vals.add(take)}`,
-    vals.values()
-  )
-  return { count, events }
+  return rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
+    ...event,
+    telemetry_timestamp,
+    telemetry: {
+      timestamp: telemetry_timestamp,
+      gps: { lat, lng }
+    }
+  }))
 }
 
 async function seed(data: {
@@ -1585,5 +1596,6 @@ export = {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
-  getPastEventsForStatusChanges
+  getMostRecentStatusChange,
+  readEventsRangeExclusive
 }
