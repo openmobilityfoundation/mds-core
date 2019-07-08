@@ -1525,12 +1525,13 @@ async function readEventsRangeExclusive(
   return rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
     ...event,
     telemetry_timestamp,
-    telemetry: telemetry_timestamp
-      ? {
-          timestamp: telemetry_timestamp,
-          gps: { lat, lng }
-        }
-      : null
+    telemetry:
+      telemetry_timestamp && lat && lng
+        ? {
+            timestamp: telemetry_timestamp,
+            gps: { lat, lng }
+          }
+        : null
   }))
 }
 
