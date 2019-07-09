@@ -276,6 +276,7 @@ function filterPolicies(policies: Policy[]): Policy[] {
 
 function filterEvents(events: VehicleEvent[], end_time = now()): VehicleEvent[] {
   return events.filter((event: VehicleEvent) => {
+    /* Keep events that are less than two days old */
     return event.timestamp > end_time - TWO_DAYS_IN_MS
   })
 }
