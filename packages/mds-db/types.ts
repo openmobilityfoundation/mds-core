@@ -1,5 +1,5 @@
 import { Recorded, UUID, Timestamp, VehicleEvent, TelemetryData } from 'mds'
-import { VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
+import { VEHICLE_TYPE, PROPULSION_TYPE, VEHICLE_STATUS, VEHICLE_EVENT, VEHICLE_REASON } from 'mds-enums'
 import { Feature, FeatureCollection } from 'geojson'
 import schema from './schema'
 
@@ -50,8 +50,8 @@ export interface StatusChange {
   vehicle_id: string
   vehicle_type: VEHICLE_TYPE
   propulsion_type: PROPULSION_TYPE[]
-  event_type: string // FIXME enum
-  event_type_reason: string // FIXME enum
+  event_type: VEHICLE_STATUS
+  event_type_reason: VEHICLE_EVENT | VEHICLE_REASON
   event_time: Timestamp
   event_location: Feature | null
   battery_pct: number | null

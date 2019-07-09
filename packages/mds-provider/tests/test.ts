@@ -21,6 +21,7 @@ import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeD
 import test from 'unit.js'
 import { Device, Telemetry, VehicleEvent } from 'mds'
 import { server } from 'mds-api-server'
+import log from 'mds-logger'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/provider'
@@ -136,7 +137,7 @@ const test_deregister: VehicleEvent = {
 
 const test_events = [test_trip_start, test_trip_end, test_deregister]
 
-// FIXME make trips
+// TODO make trips
 
 const test_devices = [TEST_DEVICE, TEST_DEVICE2, ...makeDevices(98, ORIGINAL_TEST_TIMESTAMP)]
 
@@ -156,7 +157,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('got root')
         done(err)
       })
   })
@@ -164,11 +164,9 @@ describe('Tests app', () => {
   it('verifies get /health without jwt', done => {
     request
       .get('/health')
-      // .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('got root')
         done(err)
       })
   })
@@ -180,7 +178,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('db and cache initialization complete')
         done(err)
       })
   })
@@ -192,7 +189,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('/test/seed?n=10 complete')
         done(err)
       })
   })
@@ -204,7 +200,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('db and cache initialization complete (2nd pass)')
         done(err)
       })
   })
@@ -216,7 +211,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('/test/seed w fake data complete')
         done(err)
       })
   })
@@ -224,24 +218,24 @@ describe('Tests app', () => {
   it('tries to get trips without authorization', done => {
     request
       .get('/trips')
-      // .set('Authorization', PROVIDER_AUTH)
       .expect(403)
       .end((err, result) => {
-        // FIXME examine trip results
+        // TODO examine trip results
+        log.info('error:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.string(result.body.error).contains('missing_provider_id')
         done(err)
       })
   })
 
-  // FIXME add BAD_PROVIDER_AUTH to test data
+  // TODO add BAD_PROVIDER_AUTH to test data
   // it('tries to get trips without authorization', done => {
   //   request
   //     .get('/trips')
   //     .set('Authorization', BAD_PROVIDER_AUTH)
   //     .expect(403)
   //     .end((err, result) => {
-  //       // FIXME examine trip results
+  //       // TODO examine trip results
   //       log('error:', result.body)
   //       test.value(result).hasHeader('content-type', APP_JSON)
   //       test.string(result.body.error).contains('missing_provider_id')
@@ -255,9 +249,9 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine trip results
+        // TODO examine trip results
+        log.info('trips:', result.body)
         test.object(result.body).hasProperty('version')
-        // const trips = result.body.data.trips
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -297,7 +291,7 @@ describe('Tests app', () => {
       })
   })
 
-  // FIXME trips for ....
+  // TODO trips for ....
 
   it('verifies get all status changes', done => {
     request
@@ -305,9 +299,9 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine status change results
+        // TODO examine status change results
+        log.info('------ all changes:', result.body)
         test.object(result.body).hasProperty('version')
-        // const status_changes = result.body.data.status_changes
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -319,7 +313,8 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine status change results
+        // TODO examine status change results
+        log.info('----- one change:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
         const status_change = result.body.data.status_changes[0]
@@ -329,7 +324,7 @@ describe('Tests app', () => {
           .hasProperty('vehicle_id', DEVICE_VIN)
           .hasProperty('vehicle_type', VEHICLE_TYPES.bicycle)
           .hasProperty('event_type', 'reserved')
-          .hasProperty('event_type_reason', 'user_pick_up')
+          .hasProperty('event_type_reason', 'trip_start')
         done(err)
       })
   })
@@ -379,31 +374,31 @@ describe('Tests app', () => {
       })
   })
 
-  // FIXME need all the query params exercised
+  // TODO need all the query params exercised
   it('verifies get all trips from the db, rather than dynamic', done => {
     request
       .get('/trips?newSkool=true')
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine trip results
+        // TODO examine trip results
+        log.info('newSkool trips:', result.body)
         test.object(result.body).hasProperty('version')
-        // const trips = result.body.data.trips
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
   })
 
-  // FIXME need all the query params exercised
+  // TODO need all the query params exercised
   it('verifies get all status_changes from the db, rather than dynamic', done => {
     request
       .get('/status_changes?newSkool=true')
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine trip results
+        // TODO examine trip results
+        log.info('newSkool status_changes:', result.body)
         test.object(result.body).hasProperty('version')
-        // const trips = result.body.data.trips
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })

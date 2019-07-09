@@ -114,7 +114,6 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/test/initialize'), (req, res) => {
-    // FIXME janky
     Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
       .then(
         kind => {
