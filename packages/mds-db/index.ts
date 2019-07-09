@@ -9,7 +9,9 @@ import {
   Device,
   Telemetry,
   Recorded,
-  DeviceID
+  DeviceID,
+  VehicleEventPrimaryKey,
+  Rule
 } from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
@@ -18,7 +20,6 @@ import {
   isUUID,
   rangeRandomInt,
   isTimestamp,
-  nonNegInt,
   seconds,
   days,
   yesterday,
@@ -68,8 +69,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     const { PG_NAME, PG_USER, PG_PASS, PG_PORT } = env
     let PG_HOST: string | undefined
     if (useWriteable) {
-      // eslint-disable-next-line prefer-destructuring
-      PG_HOST = env.PG_HOST
+      ;({ PG_HOST } = env)
     } else {
       PG_HOST = env.PG_HOST_READER || env.PG_HOST
     }
@@ -103,8 +103,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
         client.setConnected(true)
         resolve(client)
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
+      .catch((err: Error) => {
         log.error('postgres connection error', err.stack).then(() => {
           reject(err)
           client.setConnected(false)
@@ -124,8 +123,7 @@ async function getWriteableClient(): Promise<MDSPostgresClient> {
         writeableCachedClient = result
         resolve(result)
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
+      .catch((err: Error) => {
         log.error('postgres connection error')
         reject(err)
         writeableCachedClient = null
@@ -144,8 +142,7 @@ async function getReadOnlyClient(): Promise<MDSPostgresClient> {
         readOnlyCachedClient = result
         resolve(result)
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((err: any) => {
+      .catch((err: Error) => {
         log.error('postgres connection error')
         reject(err)
         readOnlyCachedClient = null
@@ -163,11 +160,12 @@ async function initialize() {
 
 // This should never be exported, to prevent risk of SQL injection.
 // Only functions in this module should ever call it.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+/* eslint-reason ambigous helper function that wraps a query as Readonly */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 async function makeReadOnlyQuery(sql: string): Promise<any[]> {
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
+    function fail(err: Error) {
       log.error(`error with SQL query ${sql}`, err.stack || err).then(() => reject(err))
     }
 
@@ -178,7 +176,6 @@ async function makeReadOnlyQuery(sql: string): Promise<any[]> {
         .then(result => {
           resolve(result.rows)
         }, fail)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .catch(fail)
     })
   })
@@ -213,7 +210,8 @@ async function health(): Promise<{
       as heap_hit, (sum(heap_blks_hit) - sum(heap_blks_read)) / sum(heap_blks_hit + 1)
       as ratio
       FROM pg_statio_user_tables;`
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      /* eslint-reason TODO build out type */
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       makeReadOnlyQuery(cacheHitQuery).then((cacheHitResult: any) => {
         resolve({
           using: 'postgres',
@@ -312,7 +310,9 @@ async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
               // FIXME stinky! remove!
               if (!res.rows[0].vehicle_id) {
                 const vehicle_id = `test-${rangeRandomInt(10000000, 99999999)}`
-                // eslint-disable-next-line @typescript-eslint/no-use-before-define
+
+                /* eslint-reason TODO: FIX updateDevice/readDevice circular reference */
+                /* eslint-disable @typescript-eslint/no-use-before-define */
                 updateDevice(device_id, {
                   vehicle_id
                 }).then(() => {
@@ -352,11 +352,10 @@ async function readDeviceList(device_ids: UUID[]) {
   return result.rows
 }
 
-async function writeDevice(device: Device): Promise<Recorded<Device>> {
+async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
   try {
     const client = await getWriteableClient()
-    // eslint-disable-next-line no-param-reassign
-    device.recorded = now()
+    const device = { ...device_param, recorded: now() }
     const sql = `INSERT INTO ${cols_sql(schema.DEVICES_TABLE, schema.DEVICES_COLS)} ${vals_sql(schema.DEVICES_COLS)}`
     const values = vals_list(schema.DEVICES_COLS, device)
     logSql(sql, values)
@@ -401,17 +400,16 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
   })
 }
 
-async function writeEvent(event: VehicleEvent): Promise<Recorded<VehicleEvent>> {
-  const device = await readDevice(event.device_id)
+async function writeEvent(event_param: VehicleEvent): Promise<Recorded<VehicleEvent>> {
+  const device = await readDevice(event_param.device_id)
   return new Promise((resolve, reject) => {
     if (!device) {
       reject(new Error('device unregistered'))
     } else {
       // write pg
       getWriteableClient().then(client => {
-        /* eslint-disable no-param-reassign */
-        event.telemetry_timestamp = event.telemetry ? event.telemetry.timestamp : null
-        /* eslint-enable no-param-reassign */
+        const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
+        const event = { ...event_param, telemetry_timestamp }
         const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
         const values = vals_list(schema.EVENTS_COLS, event)
         logSql(sql, values)
@@ -500,8 +498,7 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
 
   logSql(countSql, countVals)
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
+    function fail(err: Error) {
       log.error('readEvents error', err.stack || err).then(() => {
         reject(err)
       })
@@ -664,8 +661,7 @@ async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsRe
   logSql(countSql, countVals)
 
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
+    function fail(err: Error) {
       log.error('readTripIds error', err.stack || err).then(() => {
         reject(err)
       })
@@ -871,7 +867,10 @@ async function getEventsLast24HoursPerProvider(start = yesterday(), stop = now()
   return makeReadOnlyQuery(sql)
 }
 
-async function getTelemetryCountsPerProviderSince(start = yesterday(), stop = now()) {
+async function getTelemetryCountsPerProviderSince(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number; slacount: number }[]> {
   const one_day = days(1)
   const sql = `select provider_id, count(*), count(case when ((recorded-timestamp) > ${one_day}) then 1 else null end) as slacount from telemetry where recorded > ${start} and recorded < ${stop} group by provider_id`
   return makeReadOnlyQuery(sql)
@@ -885,28 +884,37 @@ async function getTripCountsPerProviderSince(
   return makeReadOnlyQuery(sql)
 }
 
-async function getVehicleCountsPerProvider() {
+async function getVehicleCountsPerProvider(): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(provider_id) from ${schema.DEVICES_TABLE} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
 
-async function getNumVehiclesRegisteredLast24HoursByProvider(start = yesterday(), stop = now()) {
+async function getNumVehiclesRegisteredLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(device_id) from ${schema.DEVICES_TABLE} where recorded > ${start} and recorded < ${stop} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
 
-async function getNumEventsLast24HoursByProvider(start = yesterday(), stop = now()) {
+async function getNumEventsLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(*) from ${schema.EVENTS_TABLE} where recorded > ${start} and recorded < ${stop} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
 
-async function getTripEventsLast24HoursByProvider(start = yesterday(), stop = now()) {
+async function getTripEventsLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VehicleEvent; recorded: number; timestamp: number }[]> {
   const sql = `select provider_id, trip_id, event_type, recorded, timestamp from ${schema.EVENTS_TABLE} where trip_id is not null and recorded > ${start} and recorded < ${stop} order by "timestamp"`
   return makeReadOnlyQuery(sql)
 }
 
 // TODO way too slow to be useful -- move into mds-cache
-async function getMostRecentTelemetryByProvider() {
+async function getMostRecentTelemetryByProvider(): Promise<{ provider_id: UUID; max: number }[]> {
   const sql = `select provider_id, max(recorded) from ${schema.TELEMETRY_TABLE} group by provider_id`
   return makeReadOnlyQuery(sql)
 }
@@ -991,12 +999,11 @@ async function readAudits(query: ReadAuditsQueryParams) {
   }
 }
 
-async function writeAudit(audit: Audit & { audit_vehicle_id: UUID }): Promise<Recorded<Audit>> {
+async function writeAudit(audit_param: Audit & { audit_vehicle_id: UUID }): Promise<Recorded<Audit>> {
   return new Promise((resolve, reject) => {
     // write pg
     getWriteableClient().then(client => {
-      // eslint-disable-next-line no-param-reassign
-      audit.recorded = now()
+      const audit = { ...audit_param, recorded: now() }
       const sql = `INSERT INTO ${cols_sql(schema.AUDITS_TABLE, schema.AUDITS_COLS)} ${vals_sql(schema.AUDITS_COLS)}`
       const values = vals_list(schema.AUDITS_COLS, audit)
       logSql(sql, values)
@@ -1114,16 +1121,24 @@ async function writeTrips(trips: Trip[]) {
   })
 }
 
-async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DBVal }): Promise<ReadTripsResult> {
+async function readTrips(
+  params: Partial<{
+    skip: number
+    take: number
+    provider_id: UUID
+    device_id: UUID
+    vehicle_id: string
+    min_end_time: Timestamp
+    max_end_time: Timestamp
+    last_sequence: [Timestamp, number]
+  }>
+): Promise<ReadTripsResult> {
   const client = await getReadOnlyClient()
-  // validate params
-  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time } = params
-  const { skip, take } = params
+  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time, skip, take, last_sequence } = params
 
-  let sql = `SELECT * FROM ${schema.TRIPS_TABLE}`
   const vals = new SqlVals()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const conditions: (string | number)[] = []
+  const conditions: string[] = ['trip_start IS NOT NULL', 'trip_end IS NOT NULL']
+
   if (device_id) {
     if (!isUUID(device_id)) {
       throw new Error(`invalid device_id ${device_id}`)
@@ -1131,6 +1146,7 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
       conditions.push(`device_id = ${vals.add(device_id)}`)
     }
   }
+
   if (provider_id) {
     if (!isUUID(provider_id)) {
       throw new Error(`invalid provider_id ${provider_id}`)
@@ -1138,71 +1154,52 @@ async function readTrips(params: ReadEventsQueryParams & { skip: DBVal; take: DB
       conditions.push(`provider_id = ${vals.add(provider_id)}`)
     }
   }
+
   if (vehicle_id) {
     conditions.push(`vehicle_id = ${vals.add(vehicle_id)}`)
   }
+
   if (min_end_time !== undefined) {
     if (!isTimestamp(min_end_time)) {
       throw new Error(`invalid min_end_time ${min_end_time}`)
     } else {
-      conditions.push(`min_end_time >= ${vals.add(min_end_time)}`) // FIXME confirm >=
+      conditions.push(`trip_end >= ${vals.add(min_end_time)}`) // FIXME confirm >=
     }
   }
+
   if (max_end_time !== undefined) {
     if (!isTimestamp(max_end_time)) {
       throw new Error(`invalid max_end_time ${max_end_time}`)
     } else {
-      conditions.push(`max_end_time <= ${vals.add(max_end_time)}`) // FIXME confirm <=
+      conditions.push(`trip_end <= ${vals.add(max_end_time)}`) // FIXME confirm <=
     }
   }
 
-  if (conditions.length) {
-    sql += ` WHERE ${conditions.join(' AND ')}`
+  if (last_sequence !== undefined && last_sequence.every(Number.isInteger)) {
+    const [recorded, sequence] = last_sequence.map(value => vals.add(value))
+    conditions.push(`(recorded > ${recorded} OR (recorded = ${recorded} AND sequence > ${sequence}))`)
   }
 
-  return new Promise((resolve, reject) => {
-    const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-    const countSql = `SELECT COUNT(*) FROM ${schema.TRIPS_TABLE} ${filter}`
-    const countVals = vals.values()
+  const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`
 
-    logSql(countSql, countVals)
+  const exec = SqlExecuter(client)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function fail(err: any) {
-      log.error('readTrips error', err.stack || err).then(() => {
-        reject(err)
-      })
-    }
+  const {
+    rows: [{ count }]
+  } = await exec(`SELECT COUNT(*) FROM ${schema.TRIPS_TABLE} ${where}`, vals.values())
 
-    client
-      .query(countSql, countVals)
-      .then(res => {
-        const count = parseInt(res.rows[0].count)
-        if (count === 0) {
-          resolve({
-            trips: [],
-            count: 0
-          })
-        } else {
-          sql += ' ORDER BY end_time ASC'
-          sql += ` OFFSET ${vals.add(nonNegInt(String(skip), 0))}`
-          sql += ` LIMIT ${vals.add(nonNegInt(String(take), 1000))}`
-          const values = vals.values()
+  if (count === 0) {
+    return { count, trips: [] }
+  }
 
-          logSql(sql, values)
-          client
-            .query(sql, values)
-            .then(res2 => {
-              resolve({
-                trips: res2.rows,
-                count
-              })
-            }, fail)
-            .catch(fail)
-        }
-      }, fail)
-      .catch(fail)
-  })
+  const { rows: trips } = await exec(
+    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded ASC, sequence ASC${
+      skip ? ` OFFSET ${vals.add(skip)}` : ''
+    }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
+    vals.values()
+  )
+
+  return { count, trips }
 }
 
 async function writeStatusChanges(status_changes: StatusChange[]) {
@@ -1239,7 +1236,6 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
     client
       .query(sql)
       .then(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         () => {
           log.info('pg db writeStatusChanges', status_changes.length, 'rows, success')
           resolve({
@@ -1333,7 +1329,6 @@ async function getLatestTime(table: string, field: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const sql = `SELECT ${field} FROM ${table} ORDER BY ${field} DESC LIMIT 1`
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     logSql(sql)
     client
       .query(sql)
@@ -1481,33 +1476,69 @@ async function writePolicy(policy: Policy) {
   })
 }
 
-async function getPastEventsForStatusChanges(
-  device_id: UUID,
-  timestamp: Timestamp,
+async function readRule(rule_id: UUID): Promise<Rule> {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * from ${schema.POLICIES_TABLE} where EXISTS(SELECT FROM json_array_elements(${schema.POLICIES_COLS[1]}->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`
+  const res = await client.query(sql).catch(err => {
+    throw err
+  })
+  if (res.rowCount !== 1) {
+    throw new Error(`invalid rule_id ${rule_id}`)
+  } else {
+    const [{ policy_json }]: { policy_json: Policy }[] = res.rows
+    const [rule] = policy_json.rules.filter(r => {
+      return r.rule_id === rule_id
+    })
+    return rule
+  }
+}
+
+async function getMostRecentStatusChange(): Promise<Recorded<StatusChange> | null> {
+  // SELECT * FROM status_changes ORDER BY event_time DESC, device_id DESC LIMIT 1
+  const client = await getReadOnlyClient()
+  const exec = SqlExecuter(client)
+  const results = await exec(
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ORDER BY event_time DESC, device_id DESC LIMIT 1`
+  )
+  if (results.rowCount === 1) {
+    const {
+      rows: [result]
+    } = results
+    return result
+  }
+  return null
+}
+
+async function readEventsRangeExclusive(
+  after: VehicleEventPrimaryKey,
+  before: VehicleEventPrimaryKey,
   take: number
-): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
+): Promise<Recorded<VehicleEvent>[]> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
-  const {
-    rows: [{ count }]
-  } = await exec(
-    `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
-      timestamp
-    )} AND NOT EXISTS (SELECT FROM ${
-      schema.STATUS_CHANGES_TABLE
-    } WHERE device_id = events.device_id AND event_time = events.timestamp)`,
+  const conditions = []
+  if (after) {
+    const [timestamp, device_id] = [after.timestamp, after.device_id].map(value => vals.add(value))
+    conditions.push(`(E.timestamp > ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id > ${device_id}))`)
+  }
+  if (before) {
+    const [timestamp, device_id] = [before.timestamp, before.device_id].map(value => vals.add(value))
+    conditions.push(`(E.timestamp < ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id < ${device_id}))`)
+  }
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  const { rows } = await exec(
+    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${take}`,
     vals.values()
   )
-  const { rows: events } = await exec(
-    `SELECT * FROM ${schema.EVENTS_TABLE} WHERE device_id=${vals.add(device_id)} AND timestamp < ${vals.add(
-      timestamp
-    )} AND NOT EXISTS (SELECT FROM ${
-      schema.STATUS_CHANGES_TABLE
-    } WHERE device_id = events.device_id AND event_time = events.timestamp) ORDER BY timestamp LIMIT ${vals.add(take)}`,
-    vals.values()
-  )
-  return { count, events }
+  return rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
+    ...event,
+    telemetry_timestamp,
+    telemetry: {
+      timestamp: telemetry_timestamp,
+      gps: { lat, lng }
+    }
+  }))
 }
 
 async function seed(data: {
@@ -1569,6 +1600,7 @@ export = {
   writeGeography,
   readPolicies,
   writePolicy,
+  readRule,
   writeStatusChanges,
   readStatusChanges,
   getEventCountsPerProviderSince,
@@ -1583,5 +1615,6 @@ export = {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
-  getPastEventsForStatusChanges
+  getMostRecentStatusChange,
+  readEventsRangeExclusive
 }

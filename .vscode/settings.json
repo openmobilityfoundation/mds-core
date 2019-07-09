@@ -6,12 +6,10 @@
   "eslint.validate": [{ "language": "typescript", "autoFix": true }],
   "prettier.disableLanguages": ["markdown"],
   "prettier.eslintIntegration": true,
-  "[javascript]": {
-    "editor.formatOnSave": false
-  },
   "[typescript]": {
     "editor.formatOnSave": false
   },
   "editor.formatOnSave": true,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

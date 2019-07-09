@@ -19,5 +19,6 @@ const {
   env: { npm_package_name, PORT = 4003 }
 } = process
 
-// eslint-disable-next-line no-console
+/* eslint-reason avoids import of logger */
+/* eslint-disable-next-line no-console */
 server(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))

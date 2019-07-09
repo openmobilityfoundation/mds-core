@@ -14,7 +14,6 @@
     limitations under the License.
  */
 
-import { FeatureCollection, Geometry } from 'geojson'
 import {
   Compliance,
   ComplianceResponse,
@@ -30,7 +29,7 @@ import {
   MatchedVehicle
 } from 'mds'
 import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS } from 'mds-enums'
-import { pointInShape } from 'mds-utils'
+import { pointInShape, getPolygon, isInStatesOrEvents } from 'mds-utils'
 import moment from 'moment-timezone'
 import { RuntimeError } from './exceptions'
 
@@ -70,28 +69,6 @@ function isRuleActive(rule: Rule): boolean {
     }
   }
   return false
-}
-
-function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection | null {
-  const res = geographies.find((location: Geography) => {
-    return location.geography_id === geography
-  })
-  if (res === undefined) {
-    return null
-  }
-  if (res.geography_json.type !== 'FeatureCollection') {
-    return res.geography_json.geometry
-  }
-  return res.geography_json
-}
-
-function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
-  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
-  return (
-    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
-    status !== undefined &&
-    (status.length === 0 || (status as string[]).includes(event.event_type))
-  )
 }
 
 function isInVehicleTypes(rule: Rule, device: Device): boolean {
@@ -197,7 +174,6 @@ function processTimeRule(
 }
 
 // FIXME Add types for speed policies
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // function processSpeedPolicy(policy: Policy, events: VehicleEvent[], geographies: Geography[], devices: Device[]): any {
 //   const compliance: any[] = policy.rules.reduce((compliance_acc: any[], rule: Rule) => {
 //     if (isRuleActive(rule)) {
@@ -243,7 +219,8 @@ function processPolicy(
     const vehiclesToFilter: MatchedVehicle[] = []
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
-        // eslint-disable-next-line no-param-reassign
+        /* eslint-reason need to remove matched vehicles */
+        /* eslint-disable-next-line no-param-reassign */
         delete devices[vehicle.device_id]
       })
       switch (rule.rule_type) {

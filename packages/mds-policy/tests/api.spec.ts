@@ -25,6 +25,7 @@ import { VEHICLE_TYPES } from 'mds-enums'
 import { now, days } from 'mds-utils'
 import { Policy } from 'mds'
 import { server } from 'mds-api-server'
+import { TEST1_PROVIDER_ID } from 'mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -32,8 +33,6 @@ process.env.PATH_PREFIX = '/policy'
 
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
-
-const PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de00' // Test 1
 
 const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
 const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
@@ -154,7 +153,7 @@ function clone<T>(obj: T): T {
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Tests app', () => {
   it('gets the root', done => {

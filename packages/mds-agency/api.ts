@@ -23,7 +23,7 @@ import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import stream from 'mds-stream'
-import { providers, providerName } from 'mds-providers'
+import { providerName, isProviderId } from 'mds-providers'
 import areas from 'ladot-service-areas'
 import {
   UUID,
@@ -151,7 +151,7 @@ function api(app: express.Express): express.Express {
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
           }
-          if (!providers[provider_id]) {
+          if (!isProviderId(provider_id)) {
             res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a known provider`
             })
@@ -415,9 +415,8 @@ function api(app: express.Express): express.Express {
         Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }
       > = {
         ...device
-      } // device with extra goo for current status
+      }
 
-      /* eslint-disable no-param-reassign */
       if (event) {
         composite.prev_event = event.event_type
         composite.updated = event.timestamp
@@ -430,7 +429,6 @@ function api(app: express.Express): express.Express {
           composite.gps = telemetry.gps
         }
       }
-      /* eslint-enable no-param-reassign */
       res.send(composite)
     }
 
@@ -733,12 +731,12 @@ function api(app: express.Express): express.Express {
       }
     }
 
-    // TODO remove eventually -- Lime is spraying empty-string values
     if (event.trip_id === '') {
-      /* eslint-disable no-param-reassign */
+      /* eslint-reason TODO remove eventually -- Lime is spraying empty-string values */
+      /* eslint-disable-next-line no-param-reassign */
       event.trip_id = null
-      /* eslint-enable no-param-reassign */
     }
+
     const { trip_id } = event
     if (trip_id !== null && trip_id !== undefined && !isUUID(event.trip_id)) {
       return {
@@ -818,17 +816,14 @@ function api(app: express.Express): express.Express {
     return null
   }
 
-  /**
-   * write telemetry to cache, stream, and db
-   * @param  {telemetry or list of telemetry} telemetry
-   * @return {Promise} batched promise for the three writes
-   */
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  async function writeTelemetry(telemetry: Telemetry | Telemetry[]): Promise<any[]> {
+  async function writeTelemetry(telemetry: Telemetry | Telemetry[]): Promise<void[]> {
     if (!Array.isArray(telemetry)) {
-      /* eslint-disable no-param-reassign */
-      telemetry = [telemetry]
-      /* eslint-enable no-param-reassign */
+      const promises = [
+        db.writeTelemetry([telemetry]),
+        cache.writeTelemetry([telemetry]),
+        stream.writeTelemetry([telemetry])
+      ]
+      return Promise.all(promises)
     }
     const promises = [db.writeTelemetry(telemetry), cache.writeTelemetry(telemetry), stream.writeTelemetry(telemetry)]
     return Promise.all(promises)
@@ -1156,26 +1151,23 @@ function api(app: express.Express): express.Express {
       eventMap: { [s: string]: VehicleEvent }
       telemetryMap: { [s: string]: Telemetry }
     }> {
-      /* eslint-disable no-param-reassign */
       const telemetry: Telemetry[] = await cache.readAllTelemetry()
       const events: VehicleEvent[] = await cache.readAllEvents()
       const eventSeed: { [s: string]: VehicleEvent } = {}
       const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
-        map[event.device_id] = event
-        return map
+        return Object.assign(map, { [event.device_id]: event })
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
       const telemetryMap = telemetry.reduce((map, t) => {
         return Object.assign(map, { [t.device_id]: t })
       }, telemetrySeed)
-      /* eslint-enable no-param-reassign */
       return Promise.resolve({
         telemetryMap,
         eventMap
       })
     }
 
-    db.getVehicleCountsPerProvider().then((rows: { provider_id: UUID; count: string }[]) => {
+    db.getVehicleCountsPerProvider().then((rows: { provider_id: UUID; count: number }[]) => {
       const stats: {
         provider_id: UUID
         provider: string
@@ -1184,8 +1176,7 @@ function api(app: express.Express): express.Express {
         event_type: { [s: string]: number }
         areas: { [s: string]: number }
       }[] = rows.map(row => {
-        const { provider_id } = row
-        const count = parseInt(row.count)
+        const { provider_id, count } = row
         return {
           provider_id,
           provider: providerName(provider_id),
@@ -1202,11 +1193,6 @@ function api(app: express.Express): express.Express {
           const { eventMap } = maps
           Promise.all(
             stats.map(stat => {
-              /* eslint-disable no-param-reassign */
-              stat.event_type = {}
-              stat.status = {}
-              stat.areas = {}
-              /* eslint-enable no-param-reassign */
               return db.readDeviceIds(stat.provider_id).then((items: DeviceID[]) => {
                 items.map(item => {
                   const event = eventMap[item.device_id]
@@ -1293,46 +1279,45 @@ function api(app: express.Express): express.Express {
     return perProvider
   }
 
-  app.get(pathsFor('/admin/last_day_trips_by_provider'), (req, res) => {
+  app.get(pathsFor('/admin/last_day_trips_by_provider'), async (req, res) => {
     function fail(err: Error | string): void {
       log.error('last_day_trips_by_provider err:', err)
     }
 
     const { start_time, end_time } = startAndEnd(req.params)
+    try {
+      const rows = await db.getTripEventsLast24HoursByProvider(start_time, end_time)
+      const perTripId = categorizeTrips(
+        rows.reduce(
+          (
+            acc: {
+              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VehicleEvent } }
+            },
+            row
+          ) => {
+            const tid = row.trip_id
+            acc[tid] = acc[tid] || {
+              provider_id: row.provider_id,
+              trip_id: tid,
+              eventTypes: {}
+            }
+            acc[tid].eventTypes[row.timestamp] = row.event_type
+            return acc
+          },
+          {}
+        )
+      )
 
-    const getTripEventsLast24HoursByProvider = new Promise(resolve => {
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      db.getTripEventsLast24HoursByProvider(start_time, end_time).then((rows: any) => {
-        const perTripId: { [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: string } } } = {}
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        rows.map((row: any) => {
-          const tid = row.trip_id
-          perTripId[tid] = perTripId[tid] || {
-            provider_id: row.provider_id,
-            trip_id: tid,
-            eventTypes: {}
-          }
-          perTripId[tid].eventTypes[parseInt(row.timestamp)] = row.event_type
-        })
-        // log.warn(JSON.stringify(perTripId))
-        resolve(categorizeTrips(perTripId))
-      })
-    })
-
-    Promise.all([getTripEventsLast24HoursByProvider])
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      .then((rowsOfValues: any[]) => {
-        const provider_info: { [s: string]: { name: string } } = rowsOfValues[0]
-        Object.keys(provider_info).map(provider_id => {
-          provider_info[provider_id].name = providerName(provider_id)
-        })
-        res.status(200).send(provider_info)
-      }, fail)
-      .catch((err: Error) => {
-        log.error('unable to fetch data from last 24 hours', err).then(() => {
-          res.status(500).send(SERVER_ERROR)
-        })
-      })
+      const provider_info = Object.keys(perTripId).reduce(
+        (map: { [s: string]: TripsStats & { name: string } }, provider_id) => {
+          return Object.assign(map, { [provider_id]: { ...perTripId[provider_id], name: providerName(provider_id) } })
+        },
+        {}
+      )
+      res.status(200).send(provider_info)
+    } catch (err) {
+      fail(err)
+    }
   })
 
   // get raw trip data for analysis
@@ -1660,8 +1645,7 @@ function api(app: express.Express): express.Express {
       .then(
         (result: number) => {
           log.info('cache wiped', result)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          db.wipeDevice(device_id).then((result2: any) => {
+          db.wipeDevice(device_id).then(result2 => {
             log.info('db wiped', result2)
             if (result >= 1) {
               res.send({

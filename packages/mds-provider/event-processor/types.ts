@@ -1,5 +1,3 @@
-import { Timestamp } from 'mds'
-
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -20,8 +18,6 @@ export interface StreamEntry<Data = unknown> {
   id: string
   type: string
   data: Data
-  recorded: Timestamp
-  sequence: number
 }
 
 export interface LabeledStreamEntry<Labels = unknown, Data = unknown> extends StreamEntry<Data> {

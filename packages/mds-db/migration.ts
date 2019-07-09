@@ -20,13 +20,15 @@ async function dropTables(client: MDSPostgresClient) {
  * create tables from a list of table names
  */
 async function createTables(client: MDSPostgresClient) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /* eslint-reason ambiguous DB function */
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const existing: { rows: any[]; [propName: string]: any } = await client.query(
     'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA'
   )
 
   const missing: string[] = Object.keys(schema.tables).filter(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* eslint-reason ambiguous DB function */
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     (table: string) => !existing.rows.find((row: any) => row.table_name === table)
   )
   if (missing.length > 0) {

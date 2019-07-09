@@ -36,6 +36,8 @@ export interface Device {
 
 export type DeviceID = Pick<Device, 'provider_id' | 'device_id'>
 
+export type VehicleEventPrimaryKey = { timestamp: Timestamp; device_id: UUID } | null
+
 // Represents a row in the "events" table
 // Named "VehicleEvent" to avoid confusion with the DOM's Event interface
 export interface VehicleEvent {
@@ -127,6 +129,7 @@ interface BaseRule {
   start_time?: string | null
   end_time?: string | null
   days?: DAY_OF_WEEK[] | null
+  /* eslint-reason TODO: message types haven't been defined well yet */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   messages?: any
   value_url?: URL | null
@@ -230,4 +233,5 @@ export interface Provider {
   provider_name: string
   url?: string
   mds_api_url?: string
+  gbfs_api_url?: string
 }

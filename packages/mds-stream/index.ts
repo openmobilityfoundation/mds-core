@@ -41,6 +41,29 @@ declare module 'redis' {
     flushdbAsync: () => Promise<'OK'>
     pingAsync: <TPong extends string = 'PONG'>(response?: TPong) => Promise<TPong>
     xaddAsync: (...args: unknown[]) => Promise<string>
+    xinfoAsync: <T extends 'STREAM' | 'GROUPS'>(
+      arg: T,
+      stream: Stream
+    ) => Promise<
+      T extends 'STREAM'
+        ? [
+            'length',
+            number,
+            'radix-tree-keys',
+            number,
+            'radix-tree-nodes',
+            number,
+            'groups',
+            number,
+            'last-generated-id',
+            string,
+            'first-entry',
+            StreamItem | null,
+            'last-entry',
+            StreamItem | null
+          ]
+        : ['name', string, 'consumers', number, 'pending', number, 'last-delivered-id', string][]
+    >
     xreadAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
     xgroupAsync: (...args: unknown[]) => Promise<'OK'>
     xreadgroupAsync: (...args: unknown[]) => Promise<ReadStreamResult[]>
@@ -138,16 +161,28 @@ async function readStream(
   stream: Stream,
   id: StreamItemID,
   { count, block }: ReadStreamOptions
-): Promise<ReadStreamResult[]> {
+): Promise<ReadStreamResult> {
   const client = await getClient()
 
-  return client.xreadAsync([
+  const results = await client.xreadAsync([
     ...(typeof block === 'number' ? ['BLOCK', block] : []),
     ...(typeof count === 'number' ? ['COUNT', count] : []),
     'STREAMS',
     stream,
     id || '$'
   ])
+
+  if (results) {
+    const [result] = results
+    return result
+  }
+
+  return [stream, []]
+}
+
+async function createStreamGroup(stream: Stream, group: string) {
+  const client = await getClient()
+  return client.xgroupAsync('CREATE', stream, `${stream}::${group}`, 0)
 }
 
 async function readStreamGroup(
@@ -156,19 +191,12 @@ async function readStreamGroup(
   consumer: string,
   id: StreamItemID,
   { count, block, noack }: ReadStreamOptions
-) {
+): Promise<ReadStreamResult> {
   const client = await getClient()
-  const consumer_group = `${stream}::${group}`
 
-  try {
-    await client.xgroupAsync('CREATE', stream, consumer_group, 0, 'MKSTREAM')
-  } catch (err) {
-    /* consumer group exists */
-  }
-
-  return client.xreadgroupAsync(
+  const results = await client.xreadgroupAsync(
     'GROUP',
-    consumer_group,
+    `${stream}::${group}`,
     consumer,
     ...[
       ...(typeof block === 'number' ? ['BLOCK', block] : []),
@@ -179,6 +207,38 @@ async function readStreamGroup(
       id || '>'
     ]
   )
+
+  if (results) {
+    const [result] = results
+    return result
+  }
+
+  return [stream, []]
+}
+
+async function getStreamInfo(stream: Stream) {
+  const client = await getClient()
+  try {
+    const [
+      ,
+      length,
+      ,
+      radixTreeKeys,
+      ,
+      radixTreeNodes,
+      ,
+      groups,
+      ,
+      lastGeneratedId,
+      ,
+      firstEntry,
+      ,
+      lastEntry
+    ] = await client.xinfoAsync('STREAM', stream)
+    return { length, radixTreeKeys, radixTreeNodes, groups, lastGeneratedId, firstEntry, lastEntry }
+  } catch (err) {
+    return null
+  }
 }
 
 async function health() {
@@ -188,16 +248,18 @@ async function health() {
 }
 
 export default {
+  createStreamGroup,
+  getStreamInfo,
+  health,
   initialize,
+  readStream,
+  readStreamGroup,
   reset,
-  startup,
   shutdown,
+  startup,
   writeDevice,
   writeEvent,
-  writeTelemetry,
-  health,
   writeStream,
   writeStreamBatch,
-  readStream,
-  readStreamGroup
+  writeTelemetry
 }

@@ -21,7 +21,7 @@ import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import stream from 'mds-stream'
-import { providers, providerName } from 'mds-providers'
+import { providerName, isProviderId } from 'mds-providers'
 import areas from 'ladot-service-areas'
 import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID, TripsStats } from 'mds'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums' // FIXME replace eventually
@@ -116,7 +116,7 @@ function api(app: express.Express): express.Express {
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
           }
-          if (!providers[provider_id]) {
+          if (!isProviderId(provider_id)) {
             res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a known provider`
             })
@@ -217,26 +217,23 @@ function api(app: express.Express): express.Express {
       eventMap: { [s: string]: VehicleEvent }
       telemetryMap: { [s: string]: Telemetry }
     }> {
-      /* eslint-disable no-param-reassign */
       const telemetry: Telemetry[] = await cache.readAllTelemetry()
       const events: VehicleEvent[] = await cache.readAllEvents()
       const eventSeed: { [s: string]: VehicleEvent } = {}
       const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
-        map[event.device_id] = event
-        return map
+        return Object.assign(map, { [event.device_id]: event })
       }, eventSeed)
       const telemetrySeed: { [s: string]: Telemetry } = {}
       const telemetryMap = telemetry.reduce((map, t) => {
         return Object.assign(map, { [t.device_id]: t })
       }, telemetrySeed)
-      /* eslint-enable no-param-reassign */
       return Promise.resolve({
         telemetryMap,
         eventMap
       })
     }
 
-    db.getVehicleCountsPerProvider().then((rows: { provider_id: UUID; count: string }[]) => {
+    db.getVehicleCountsPerProvider().then((rows: { provider_id: UUID; count: number }[]) => {
       const stats: {
         provider_id: UUID
         provider: string
@@ -245,8 +242,7 @@ function api(app: express.Express): express.Express {
         event_type: { [s: string]: number }
         areas: { [s: string]: number }
       }[] = rows.map(row => {
-        const { provider_id } = row
-        const count = parseInt(row.count)
+        const { provider_id, count } = row
         return {
           provider_id,
           provider: providerName(provider_id),
@@ -264,11 +260,6 @@ function api(app: express.Express): express.Express {
           const { eventMap } = maps
           Promise.all(
             stats.map(stat => {
-              /* eslint-disable no-param-reassign */
-              stat.event_type = {}
-              stat.status = {}
-              stat.areas = {}
-              /* eslint-enable no-param-reassign */
               return db.readDeviceIds(stat.provider_id).then((items: DeviceID[]) => {
                 items.map(item => {
                   const event = eventMap[item.device_id]
@@ -355,46 +346,45 @@ function api(app: express.Express): express.Express {
     return perProvider
   }
 
-  app.get(pathsFor('/admin/last_day_trips_by_provider'), (req, res) => {
+  app.get(pathsFor('/admin/last_day_trips_by_provider'), async (req, res) => {
     function fail(err: Error | string): void {
       log.error('last_day_trips_by_provider err:', err)
     }
 
     const { start_time, end_time } = startAndEnd(req.params)
+    try {
+      const rows = await db.getTripEventsLast24HoursByProvider(start_time, end_time)
+      const perTripId = categorizeTrips(
+        rows.reduce(
+          (
+            acc: {
+              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VehicleEvent } }
+            },
+            row
+          ) => {
+            const tid = row.trip_id
+            acc[tid] = acc[tid] || {
+              provider_id: row.provider_id,
+              trip_id: tid,
+              eventTypes: {}
+            }
+            acc[tid].eventTypes[row.timestamp] = row.event_type
+            return acc
+          },
+          {}
+        )
+      )
 
-    const getTripEventsLast24HoursByProvider = new Promise(resolve => {
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      db.getTripEventsLast24HoursByProvider(start_time, end_time).then((rows: any) => {
-        const perTripId: { [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: string } } } = {}
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        rows.map((row: any) => {
-          const tid = row.trip_id
-          perTripId[tid] = perTripId[tid] || {
-            provider_id: row.provider_id,
-            trip_id: tid,
-            eventTypes: {}
-          }
-          perTripId[tid].eventTypes[parseInt(row.timestamp)] = row.event_type
-        })
-        // log.warn(JSON.stringify(perTripId))
-        resolve(categorizeTrips(perTripId))
-      })
-    })
-
-    Promise.all([getTripEventsLast24HoursByProvider])
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      .then((rowsOfValues: any[]) => {
-        const provider_info: { [s: string]: { name: string } } = rowsOfValues[0]
-        Object.keys(provider_info).map(provider_id => {
-          provider_info[provider_id].name = providerName(provider_id)
-        })
-        res.status(200).send(provider_info)
-      }, fail)
-      .catch((err: Error) => {
-        log.error('unable to fetch data from last 24 hours', err).then(() => {
-          res.status(500).send(SERVER_ERROR)
-        })
-      })
+      const provider_info = Object.keys(perTripId).reduce(
+        (map: { [s: string]: TripsStats & { name: string } }, provider_id) => {
+          return Object.assign(map, { [provider_id]: { ...perTripId[provider_id], name: providerName(provider_id) } })
+        },
+        {}
+      )
+      res.status(200).send(provider_info)
+    } catch (err) {
+      fail(err)
+    }
   })
 
   // get raw trip data for analysis
@@ -505,13 +495,13 @@ function api(app: express.Express): express.Express {
 
     const getTelemetryCountsPerProviderSince = new Promise(resolve => {
       db.getTelemetryCountsPerProviderSince(start_time, end_time)
-        .then((rows: { provider_id: UUID; count: string; slacount: string }[]) => {
+        .then((rows: { provider_id: UUID; count: number; slacount: number }[]) => {
           log.info('time since last event', rows)
           rows.map(row => {
             const pid = row.provider_id
             provider_info[pid] = provider_info[pid] || {}
-            provider_info[pid].telemetry_counts_last_24h = parseInt(row.count)
-            provider_info[pid].late_telemetry_counts_last_24h = parseInt(row.slacount)
+            provider_info[pid].telemetry_counts_last_24h = row.count
+            provider_info[pid].late_telemetry_counts_last_24h = row.slacount
           })
           resolve()
         })
@@ -520,12 +510,12 @@ function api(app: express.Express): express.Express {
 
     const getNumVehiclesRegisteredLast24Hours = new Promise(resolve => {
       db.getNumVehiclesRegisteredLast24HoursByProvider(start_time, end_time)
-        .then((rows: { provider_id: UUID; count: string }[]) => {
+        .then((rows: { provider_id: UUID; count: number }[]) => {
           log.info('num vehicles since last 24', rows)
           rows.map(row => {
             const pid = row.provider_id
             provider_info[pid] = provider_info[pid] || {}
-            provider_info[pid].registered_last_24h = parseInt(row.count)
+            provider_info[pid].registered_last_24h = row.count
           })
           resolve()
         }, fail)
@@ -534,11 +524,11 @@ function api(app: express.Express): express.Express {
 
     const getNumEventsLast24Hours = new Promise<void>(resolve => {
       db.getNumEventsLast24HoursByProvider(start_time, end_time)
-        .then((rows: { provider_id: UUID; count: string }[]) => {
+        .then((rows: { provider_id: UUID; count: number }[]) => {
           rows.map(row => {
             const pid = row.provider_id
             provider_info[pid] = provider_info[pid] || {}
-            provider_info[pid].events_last_24h = parseInt(row.count)
+            provider_info[pid].events_last_24h = row.count
           })
           resolve()
         }, fail)

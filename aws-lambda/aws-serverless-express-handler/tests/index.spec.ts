@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-object-literal-type-assertion */
 import test from 'unit.js'
 import { ApiGatewayRequest, ApiGatewayAuthorizer } from '../index'
 

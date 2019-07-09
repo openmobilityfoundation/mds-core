@@ -27,6 +27,7 @@ import db from 'mds-db'
 import cache from 'mds-cache'
 import { makeDevices, makeEvents } from 'mds-test-data'
 import { server } from 'mds-api-server'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from 'mds-providers'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/agency'
@@ -42,16 +43,13 @@ function now(): Timestamp {
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de00' // Test 1
-const PROVIDER_UUID2 = '45f37d69-73ca-4ca6-a461-e7283cffa01a' // Test 2
-
 const LA_CITY_BOUNDARY = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const PROVIDER_SCOPES = 'admin:all test:all'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const TEST_TELEMETRY = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: TEST1_PROVIDER_ID,
   gps: {
     lat: 37.3382,
     lng: -121.8863,
@@ -78,7 +76,7 @@ const TEST_TELEMETRY2 = {
 
 const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
   type: VEHICLE_TYPES.bicycle,
   propulsion: [PROPULSION_TYPES.human],
@@ -102,14 +100,14 @@ function deepCopy<T>(obj: T): T {
 }
 
 // TODO Inherit all of these from mds-test-data
-const AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH2 = `basic ${Buffer.from(`${PROVIDER_UUID2}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const AUTH_GARBAGE_PROVIDER = `basic ${Buffer.from(`tinylittleinvalidteapot|${PROVIDER_SCOPES}`).toString('base64')}`
 const AUTH_UNKNOWN_UUID_PROVIDER = `basic ${Buffer.from(
   `c8f984c5-62a5-4453-b1f7-3b7704a95cfe|${PROVIDER_SCOPES}`
 ).toString('base64')}`
-const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|admin:all`).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|test:all`).toString('base64')}`
+const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|admin:all`).toString('base64')}`
+const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
 
 after(done => {
   request
@@ -426,7 +424,7 @@ describe('Tests API', () => {
       .end((err, result) => {
         // log('----------', result.body)
         test.object(result.body).match((obj: Device) => obj.device_id === DEVICE_UUID)
-        test.object(result.body).match((obj: Device) => obj.provider_id === PROVIDER_UUID)
+        test.object(result.body).match((obj: Device) => obj.provider_id === TEST1_PROVIDER_ID)
         test.object(result.body).match((obj: Device) => obj.status === VEHICLE_STATUSES.removed)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -440,7 +438,7 @@ describe('Tests API', () => {
       .end((err, result) => {
         // log('----------', result.body)
         test.object(result.body).match((obj: Device) => obj.device_id === DEVICE_UUID)
-        test.object(result.body).match((obj: Device) => obj.provider_id === PROVIDER_UUID)
+        test.object(result.body).match((obj: Device) => obj.provider_id === TEST1_PROVIDER_ID)
         test.object(result.body).match((obj: Device) => obj.status === VEHICLE_STATUSES.removed)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -1476,7 +1474,7 @@ describe('Tests API', () => {
         log('----------', result.body)
         const deviceA = result.body
         test.value(deviceA.device_id).is(DEVICE_UUID)
-        test.value(deviceA.provider_id).is(PROVIDER_UUID)
+        test.value(deviceA.provider_id).is(TEST1_PROVIDER_ID)
         test.value(deviceA.gps.lat).is(TEST_TELEMETRY.gps.lat)
         test.value(deviceA.status).is(VEHICLE_STATUSES.available)
         test.value(deviceA.prev_event).is(VEHICLE_EVENTS.cancel_reservation)
@@ -1494,7 +1492,7 @@ describe('Tests API', () => {
         log('----------readback telemetry success', result.body)
         const deviceB = result.body
         test.value(deviceB.device_id).is(DEVICE_UUID)
-        test.value(deviceB.provider_id).is(PROVIDER_UUID)
+        test.value(deviceB.provider_id).is(TEST1_PROVIDER_ID)
         test.value(deviceB.gps.lat).is(TEST_TELEMETRY.gps.lat)
         test.value(deviceB.status).is(VEHICLE_STATUSES.available)
         test.value(deviceB.prev_event).is(VEHICLE_EVENTS.cancel_reservation)
@@ -1622,8 +1620,8 @@ describe('Tests API', () => {
         // log('result----->', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         const testObject = test.object(result.body)
-        testObject.hasProperty(PROVIDER_UUID)
-        const providerTestObject1 = test.object(result.body[PROVIDER_UUID])
+        testObject.hasProperty(TEST1_PROVIDER_ID)
+        const providerTestObject1 = test.object(result.body[TEST1_PROVIDER_ID])
         providerTestObject1.hasProperty('ms_since_last_event')
         // providerTestObject1.hasProperty('time_since_last_telemetry')
         providerTestObject1.hasProperty('registered_last_24h')
@@ -1631,7 +1629,7 @@ describe('Tests API', () => {
         // providerTestObject1.hasProperty('num_telemetry')
 
         // Fewer fixtures exist for this one right now
-        // const providerTestObject2 = test.object(result.body[PROVIDER_UUID2])
+        // const providerTestObject2 = test.object(result.body[TEST2_PROVIDER_ID])
         // providerTestObject1.hasProperty('time_since_last_telemetry')
         // providerTestObject1.hasProperty('events_last_24h')
         // providerTestObject1.hasProperty('num_telemetry')
@@ -1747,7 +1745,7 @@ describe('Tests state conformance endpoint', () => {
     const events: VehicleEvent[] = [
       // BEGIN GOOD TRANSITIONS
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.provider_pick_up,
         recorded: testTimestampNow - 90,
@@ -1755,7 +1753,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       },
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.trip_enter,
         trip_id: TRIP_UUID,
@@ -1764,7 +1762,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       },
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.trip_leave,
         trip_id: TRIP_UUID,
@@ -1773,7 +1771,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       },
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.provider_pick_up,
         recorded: testTimestampNow - 60,
@@ -1781,7 +1779,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       }, // BEGIN BAD TRANSITIONS
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.service_start,
         recorded: testTimestampNow - 50,
@@ -1789,7 +1787,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       },
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.trip_leave,
         trip_id: TRIP_UUID,
@@ -1798,7 +1796,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       },
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.trip_start,
         trip_id: TRIP_UUID,
@@ -1807,7 +1805,7 @@ describe('Tests state conformance endpoint', () => {
         telemetry: TEST_TELEMETRY
       },
       {
-        provider_id: PROVIDER_UUID,
+        provider_id: TEST1_PROVIDER_ID,
         device_id: devices[0].device_id,
         event_type: VEHICLE_EVENTS.provider_pick_up,
         recorded: testTimestampNow - 20,
@@ -1829,8 +1827,8 @@ describe('Tests state conformance endpoint', () => {
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
-        test.assert(result.body[PROVIDER_UUID].events_not_in_conformance === 4)
-        test.assert(result.body[PROVIDER_UUID].events_last_24h === 8)
+        test.assert(result.body[TEST1_PROVIDER_ID].events_not_in_conformance === 4)
+        test.assert(result.body[TEST1_PROVIDER_ID].events_last_24h === 8)
         done(err)
       })
   })

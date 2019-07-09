@@ -18,9 +18,9 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox } from 'mds'
+import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography, Rule } from 'mds'
 import { TelemetryRecord } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
+import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
 import log from 'mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
@@ -274,17 +274,13 @@ function makePointInShape(shape: Geometry): { lat: number; lng: number } {
     throw new Error('no shape')
   }
 
-  /* eslint-disable no-param-reassign */
-  if (shape.type === 'Point') {
-    shape = circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES)
-  }
-  /* eslint-enable no-param-reassign */
+  const shapeToCreate = shape.type === 'Point' ? circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES) : shape
 
-  const bbox = calcBBox(shape)
+  const bbox = calcBBox(shapeToCreate)
   let tries = 0
   while (tries < 1000) {
     const pt: [number, number] = [rangeRandom(bbox.lngMin, bbox.lngMax), rangeRandom(bbox.latMin, bbox.latMax)]
-    if (pointInShape(pt, shape)) {
+    if (pointInShape(pt, shapeToCreate)) {
       return {
         lng: pt[0],
         lat: pt[1]
@@ -443,13 +439,7 @@ function csv<T>(list: T[] | Readonly<T[]>): string {
 
 // utility for adding counts to maps
 function inc(map: { [key: string]: number }, key: string) {
-  /* eslint-disable no-param-reassign */
-  if (map[key]) {
-    map[key] += 1
-  } else {
-    map[key] = 1
-  }
-  /* eslint-enable no-param-reassign */
+  return Object.assign(map, { [key]: map[key] ? map[key] + 1 : 1 })
 }
 function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
   const {
@@ -498,8 +488,6 @@ function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Te
     recorded
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 function pathsFor(path: string): string[] {
   const { PATH_PREFIX } = process.env
@@ -606,6 +594,28 @@ function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
   }
 }
 
+function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {
+  const res = geographies.find((location: Geography) => {
+    return location.geography_id === geography
+  })
+  if (res === undefined) {
+    throw new Error(`Geography ${geography} not found in ${geographies}!`)
+  }
+  if (res.geography_json.type !== 'FeatureCollection') {
+    return res.geography_json.geometry
+  }
+  return res.geography_json
+}
+
+function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
+  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
+  return (
+    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+    status !== undefined &&
+    (status.length === 0 || (status as string[]).includes(event.event_type))
+  )
+}
+
 export = {
   isUUID,
   isPct,
@@ -641,5 +651,7 @@ export = {
   isStateTransitionValid,
   pointInGeometry,
   convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry
+  convertTelemetryRecordToTelemetry,
+  getPolygon,
+  isInStatesOrEvents
 }
