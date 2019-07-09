@@ -245,19 +245,21 @@ function api(app: express.Express): express.Express {
       res.status(401).send({ result: 'unauthorized access' })
     }
 
-    /* istanbul ignore next */
-    function fail(err: Error): void {
-      log.error(err.stack || err).then(() => {
-        res.status(500).send('server error')
-      })
+    async function fail(err: Error): Promise<void> {
+      await log.error(err.stack || err)
+      if (err.message.includes('invalid rule_id')) {
+        res.status(404).send(err.message)
+      } else {
+        /* istanbul ignore next */
+        res
+          .status(500)
+          .send({ error: 'server_error', error_description: 'an internal server error has occurred and been logged' })
+      }
     }
 
     const { rule_id } = req.params
     try {
       const rule = await db.readRule(rule_id)
-      if (!rule) {
-        throw new Error('Rule not found in specified Policy')
-      }
       const geography_ids = rule.geographies.reduce((acc: UUID[], geo: UUID) => {
         return [...acc, geo]
       }, [])
