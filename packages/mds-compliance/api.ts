@@ -22,6 +22,7 @@ import jwtDecode from 'jwt-decode'
 import log from 'mds-logger'
 import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape, isInStatesOrEvents } from 'mds-utils'
 import { Policy, Geography, VehicleEvent, ComplianceResponse, Device, UUID } from 'mds'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from 'mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest } from './types'
@@ -139,9 +140,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: express.Request, res: express.Response) => {
-    if (
-      !['5f7114d1-4091-46ee-b492-e55875f7de00', '45f37d69-73ca-4ca6-a461-e7283cffa01a'].includes(res.locals.provider_id)
-    ) {
+    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
     /* istanbul ignore next */

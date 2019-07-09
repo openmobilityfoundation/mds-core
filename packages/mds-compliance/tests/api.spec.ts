@@ -14,6 +14,7 @@ import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'
 import { server } from 'mds-api-server'
+import { TEST1_PROVIDER_ID } from 'mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -23,7 +24,6 @@ const policy_request = supertest(server(policy))
 const provider_request = supertest(server(provider))
 
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
-const PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const LA_BEACH = 'ff822e26-a70c-4721-ac32-2f6734beff9b'
@@ -51,12 +51,12 @@ const TEST_TELEMETRY = {
 process.env.TIMEZONE = 'America/Los_Angeles'
 process.env.PATH_PREFIX = '/compliance'
 const PROVIDER_SCOPES = 'admin:all test:all'
-const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|admin:all`).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|test:all`).toString('base64')}`
+const ADMIN_AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|admin:all`).toString('base64')}`
+const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
 const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
   type: VEHICLE_TYPES.bicycle,
   propulsion: [PROPULSION_TYPES.human],
