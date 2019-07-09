@@ -1,4 +1,4 @@
-import { Provider, UUID } from 'mds'
+import { Provider } from 'mds'
 
 export const JUMP_PROVIDER_ID = 'c20e08cf-8488-46a6-a66c-5d8fb827f7e0'
 export const LIME_PROVIDER_ID = '63f13c48-34ff-49d2-aca7-cf6a5b6171c3'
@@ -24,7 +24,34 @@ export const TEST3_PROVIDER_ID = 'c8051767-4b14-4794-abc1-85aad48baff1'
 export const TEST_PROVIDER_ID = 'dc3dfcf1-ed9f-4606-9c3b-ef19027846ec'
 export const BLUE_TEST_PROVIDER_ID = '11111111-2222-4444-8888-999999999999'
 
-export const providers: Readonly<{ [id: string]: Readonly<Provider> }> = Object.freeze({
+const PROVIDER_IDS = [
+  JUMP_PROVIDER_ID,
+  LIME_PROVIDER_ID,
+  BIRD_PROVIDER_ID,
+  RAZOR_PROVIDER_ID,
+  LYFT_PROVIDER_ID,
+  SKIP_PROVIDER_ID,
+  HOPR_PROVIDER_ID,
+  WHEELS_PROVIDER_ID,
+  SPIN_PROVIDER_ID,
+  WIND_PROVIDER_ID,
+  TIER_PROVIDER_ID,
+  CLOUD_PROVIDER_ID,
+  BLUE_PROVIDER_ID,
+  BOLT_PROVIDER_ID,
+  CLEVR_PROVIDER_ID,
+  SHERPA_PROVIDER_ID,
+  OJO_PROVIDER_ID,
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  TEST3_PROVIDER_ID,
+  TEST_PROVIDER_ID,
+  BLUE_TEST_PROVIDER_ID
+] as const
+
+type PROVIDER_ID = typeof PROVIDER_IDS[number]
+
+export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = Object.freeze({
   [JUMP_PROVIDER_ID]: Object.freeze({
     provider_name: 'JUMP',
     url: 'https://jump.com',
@@ -132,11 +159,15 @@ export const providers: Readonly<{ [id: string]: Readonly<Provider> }> = Object.
   })
 })
 
+export function isProviderId(provider_id: unknown): provider_id is PROVIDER_ID {
+  return typeof provider_id === 'string' && providers[provider_id as PROVIDER_ID] !== undefined
+}
+
 /**
  * convert provider_id to provider name (if available), or a subset of the UUID for humans
  * @param  provider_id
  * @return name or provider_id substring
  */
-export function providerName(provider_id: UUID): string {
-  return providers[provider_id] ? providers[provider_id].provider_name : provider_id.split('-')[0]
+export function providerName(provider_id: string): string {
+  return isProviderId(provider_id) ? providers[provider_id].provider_name : provider_id.split('-')[0]
 }
