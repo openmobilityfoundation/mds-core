@@ -173,7 +173,7 @@ function api(app: express.Express): express.Express {
         }, {})
         const events = await db.readHistoricalEvents({ provider_id, end_date })
         const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
-        const filteredEvents = compliance_engine.filterEvents(events)
+        const filteredEvents = compliance_engine.filterEvents(events, end_date)
         const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
           compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
         )
@@ -216,7 +216,7 @@ function api(app: express.Express): express.Express {
                             {}
                           )
                           log.info(`Policies: ${JSON.stringify(policies)}`)
-                          const filteredEvents = compliance_engine.filterEvents(events, end_date)
+                          const filteredEvents = compliance_engine.filterEvents(events)
                           const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
                           const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
                             compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
