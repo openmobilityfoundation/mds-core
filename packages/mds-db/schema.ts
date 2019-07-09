@@ -1,4 +1,4 @@
-// FIXME providers are in CSV
+// TODO providers are in CSV
 const DEVICES_TABLE = 'devices'
 const TELEMETRY_TABLE = 'telemetry'
 const EVENTS_TABLE = 'events'
@@ -161,11 +161,11 @@ const PG_TYPES: { [propName: string]: string } = {
 
   vehicle_id: 'varchar(255) NOT NULL',
   year: 'smallint',
-  type: 'varchar(31) NOT NULL', // FIXME
+  type: 'varchar(31) NOT NULL',
   vehicle_type: 'varchar(31) NOT NULL',
   mfgr: 'varchar(31)',
   model: 'varchar(31)',
-  propulsion: 'varchar(31)[] NOT NULL', // FIXME
+  propulsion: 'varchar(31)[] NOT NULL',
   propulsion_type: 'varchar(31)[] NOT NULL',
   event_type: 'varchar(31) NOT NULL',
   event_type_reason: 'varchar(31)',
