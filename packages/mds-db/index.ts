@@ -1526,7 +1526,7 @@ async function readEventsRangeExclusive(
     ...event,
     telemetry_timestamp,
     telemetry:
-      telemetry_timestamp && lat && lng
+      lat !== null && lng !== null
         ? {
             timestamp: telemetry_timestamp,
             gps: { lat, lng }
