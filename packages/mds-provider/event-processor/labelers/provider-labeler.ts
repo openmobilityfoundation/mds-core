@@ -57,7 +57,7 @@ export const ProviderLabeler = async (entries: StreamEntry[]): Promise<StreamEnt
       { labels: {}, labeled: 0 }
     )
 
-    logger.info(`Provider Labeler: ${labeled} ${labeled === 1 ? 'entry' : 'entries'} labeled`)
+    logger.info(`Provider Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'}`)
 
     return labels
   }

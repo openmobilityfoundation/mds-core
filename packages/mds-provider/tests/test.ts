@@ -21,8 +21,8 @@ import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeD
 import test from 'unit.js'
 import { Device, Telemetry, VehicleEvent } from 'mds'
 import { server } from 'mds-api-server'
-import { api } from '../api'
 import log from 'mds-logger'
+import { api } from '../api'
 
 process.env.PATH_PREFIX = '/provider'
 

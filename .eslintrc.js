@@ -4,7 +4,7 @@ module.exports = {
     es6: true,
     mocha: true,
   },
-  plugins: ['@typescript-eslint', 'prettier'],
+  plugins: ["import", "prettier", "@typescript-eslint"],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2018,
@@ -37,7 +37,6 @@ module.exports = {
     'no-console': 'warn',
     'no-plusplus': 'off',
     'no-restricted-syntax': 'off',
-    'no-unused-vars': 'warn',
     'no-var': 'error',
     'prettier/prettier': 'warn',
     'radix': 'off'

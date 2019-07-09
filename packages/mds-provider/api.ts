@@ -24,7 +24,7 @@ import { providers, providerName } from 'mds-providers' // map of uuids -> obj
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
 import { isUUID, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
-import { Device, UUID, VehicleEvent, Telemetry, Provider } from 'mds'
+import { Device, UUID, VehicleEvent, Telemetry, Provider, Timestamp } from 'mds'
 import { FeatureCollection, Feature } from 'geojson'
 import {
   ReadTripsResult,
@@ -37,7 +37,6 @@ import {
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { ProviderApiRequest, ProviderApiResponse } from './types'
 import { asStatusChangeEvent } from './utils'
-const { env } = process
 
 log.startup()
 
@@ -84,7 +83,9 @@ function api(app: express.Express): express.Express {
         log.info(providerName(provider_id), req.method, req.originalUrl)
       }
     } catch (err) {
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
     }
     next()
   })
@@ -137,9 +138,11 @@ function api(app: express.Express): express.Express {
         }
       )
     } catch (err) /* istanbul ignore next */ {
-      log.error('/test/seed failure:', err.stack)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
-        result: `Failed to seed: ${err.stack}`
+        result: `Failed to seed: ${desc}`
       })
     }
   })
@@ -163,9 +166,11 @@ function api(app: express.Express): express.Express {
         }
       )
     } catch (err) /* istanbul ignore next */ {
-      log.error('/test/seed failure:', err.stack)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
-        result: `Failed to seed: ${err.stack}`
+        result: `Failed to seed: ${desc}`
       })
     }
   })
@@ -197,6 +202,25 @@ function api(app: express.Express): express.Express {
 
   // / /////////////////////// trips /////////////////////////////////
 
+  const getStage0Properties = (items: { recorded: Timestamp; sequence?: number | null }[]) => {
+    if (items && items.length > 0) {
+      const { recorded, sequence } = items[items.length - 1]
+      return { last_sequence: `${recorded}-${(sequence || 0).toString().padStart(4, '0')}` }
+    }
+    return undefined
+  }
+
+  const asSequence = (value: unknown): [number, number] | undefined | Error => {
+    if (typeof value === 'string' && value.length > 0) {
+      const [recorded, sequence, ...extra] = value.split('-').map(Number)
+      if (extra.length === 0 && isTimestamp(recorded) && Number.isInteger(sequence)) {
+        return [recorded, sequence]
+      }
+      return Error(`Invalid sequence: ${value}`)
+    }
+    return undefined
+  }
+
   /**
    * Read Device from cache if possible, else fall through to db
    * @param  {device_id}
@@ -204,7 +228,7 @@ function api(app: express.Express): express.Express {
    */
   async function getDevice(device_id: UUID): Promise<Device> {
     // TODO get device from cache, and if not cache, db
-    return await db.readDevice(device_id)
+    return db.readDevice(device_id)
   }
 
   async function getProvider(provider_id: UUID): Promise<Provider> {
@@ -262,28 +286,70 @@ function api(app: express.Express): express.Express {
     return Promise.resolve(asFeatureCollection(telemetry))
   }
 
-  // TODO: fix so that it accurately populates the fields marked by a TODO
+  const asTrip = ({ recorded, sequence, ...props }: Trip): Omit<Trip, 'recorded' | 'sequence'> => props
+
+  async function getTrips(req: ProviderApiRequest, res: ProviderApiResponse) {
+    // Standard Provider parameters
+    const { provider_id, device_id, vehicle_id } = req.query
+    const min_end_time = req.query.min_end_time && Number(req.query.min_end_time)
+    const max_end_time = req.query.max_end_time && Number(req.query.max_end_time)
+
+    // Extensions to override paging
+    const { skip, take } = asPagingParams(req.query)
+    const last_sequence = asSequence(req.query.last_sequence)
+
+    if (last_sequence instanceof Error) {
+      res.status(400).send({ error: last_sequence.message })
+      return
+    }
+
+    try {
+      const { count, trips }: ReadTripsResult = await db.readTrips({
+        provider_id,
+        device_id,
+        vehicle_id,
+        min_end_time,
+        max_end_time,
+        skip,
+        take,
+        last_sequence
+      })
+
+      res.status(200).send({
+        version: PROVIDER_VERSION,
+        data: {
+          trips: trips.map(asTrip)
+        },
+        links: asJsonApiLinks(req, skip, take, count),
+        ...getStage0Properties(trips)
+      })
+    } catch (err) {
+      // 500 Internal Server Error
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
+      res.status(500).send({ error: new Error(desc) })
+    }
+  }
+
   /**
    * Generate a Trip from a trip_start and trip_end Event
    * @param  {trip_start VehicleEvent}
    * @param  {trip_end VehicleEvent}
    * @return {Trip object}
    */
-  async function asTrip(
-    trip_start: VehicleEvent & { trip_id: UUID },
-    trip_end: VehicleEvent & { trip_id: UUID }
-  ): Promise<Trip> {
+  async function asEventTrip(trip_id: UUID, trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<Trip> {
     const device = await getDevice(trip_start.device_id || trip_end.device_id)
     const provider = await getProvider(device.provider_id)
     const route = await asRoute(trip_start, trip_end)
-    return Promise.resolve({
+    return {
       provider_id: device.provider_id,
       provider_name: provider.provider_name,
       device_id: device.device_id,
       vehicle_id: device.vehicle_id,
       vehicle_type: device.type as VEHICLE_TYPE,
       propulsion_type: device.propulsion as PROPULSION_TYPE[],
-      provider_trip_id: trip_start.trip_id,
+      provider_trip_id: trip_id,
       trip_duration: trip_end.timestamp - trip_start.timestamp,
       trip_distance: 0, // TODO
       route,
@@ -294,7 +360,18 @@ function api(app: express.Express): express.Express {
       standard_cost: 0, // TODO
       actual_cost: 0, // TODO
       recorded: now()
-    })
+    }
+  }
+
+  async function buildEventTrip(trip_id: UUID): Promise<Trip | null> {
+    const { events } = await db.readEvents({ trip_id })
+    const trip_start = events.find(e => e.event_type === VEHICLE_EVENTS.trip_start)
+    const trip_end = events.find(e => e.event_type === VEHICLE_EVENTS.trip_end)
+    if (trip_start && trip_end && trip_start.trip_id && trip_end.trip_id) {
+      const trip = await asEventTrip(trip_id, trip_start, trip_end)
+      return trip
+    }
+    return null
   }
 
   /**
@@ -302,30 +379,15 @@ function api(app: express.Express): express.Express {
    * @param  {list of Events that have a non-null trip_id}
    * @return {list of Trips}
    */
-  async function asTrips(trip_ids: UUID[]): Promise<Trip[]> {
+  async function asEventTrips(trip_ids: UUID[]): Promise<Trip[]> {
     log.info('asTrips', trip_ids.length, 'trip_ids', trip_ids)
-    const promises = trip_ids.reduce((acc: Promise<Trip>[], trip_id): Promise<Trip>[] => {
-      db.readEvents({
-        trip_id
-      }).then((result: ReadEventsResult) => {
-        const { events } = result
-        const trip_start = events.find(e => e.event_type === VEHICLE_EVENTS.trip_start)
-        const trip_end = events.find(e => e.event_type === VEHICLE_EVENTS.trip_end)
-        if (trip_start && trip_end && trip_start.trip_id && trip_end.trip_id) {
-          acc.push(asTrip(trip_start as VehicleEvent & { trip_id: UUID }, trip_end as VehicleEvent & { trip_id: UUID }))
-        }
-      })
-      return acc
-    }, [])
-    return Promise.all(promises)
+    const trips = await Promise.all(trip_ids.map(buildEventTrip))
+    return trips.filter(trip => trip !== null) as Trip[]
   }
 
-  app.get(pathsFor('/trips'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    const { provider_id } = res.locals.claims
-    log.warn(provider_id ? providerName(provider_id) : 'none', '/trips', JSON.stringify(req.params))
-
+  async function getEventsAsTrips(req: ProviderApiRequest, res: ProviderApiResponse) {
     const { skip, take } = asPagingParams(req.query)
-    const { start_time, end_time, device_id, newSkool } = req.query
+    const { start_time, end_time, device_id } = req.query
 
     const PAGE_SIZE = 10 // set low because this is an expensive query.
 
@@ -344,49 +406,27 @@ function api(app: express.Express): express.Express {
       event_types: [VEHICLE_EVENTS.trip_start, VEHICLE_EVENTS.trip_end]
     }
 
-    /* istanbul ignore next */
-    function fail(err: Error): void {
-      log.error('/trips failure', err.stack || err).then(() => {
-        res.status(500).send({
-          error: 'internal_failure',
-          error_description: `trips error: ${err.stack}`
-        })
+    try {
+      const { tripIds } = await db.readTripIds(params)
+      const trips = await asEventTrips(tripIds)
+      res.status(200).send({
+        version: PROVIDER_VERSION,
+        data: {
+          trips
+        },
+        links: asJsonApiLinks(req, skip, take, trips.length)
+      })
+    } catch (err) {
+      const desc = err instanceof Error ? err.message : err
+      res.status(500).send({
+        error: 'internal_failure',
+        error_description: `trips error: ${desc}`
       })
     }
+  }
 
-    if (newSkool) {
-      db.readTrips(params).then((result: ReadTripsResult) => {
-        const { count, trips } = result
-        log.info('read', trips.length, 'trips of', count, 'in', result)
-        res.status(200).send({
-          version: PROVIDER_VERSION,
-          data: {
-            trips
-          },
-          links: asJsonApiLinks(req, skip, take, count)
-        })
-      })
-    } else {
-      // retrieve trip events
-      db.readTripIds(params)
-        .then((result: ReadTripIdsResult) => {
-          const { count, tripIds } = result
-
-          log.info('read', tripIds.length, 'trips of', count, 'in', result)
-          asTrips(tripIds)
-            .then(trips => {
-              res.status(200).send({
-                version: PROVIDER_VERSION,
-                data: {
-                  trips
-                },
-                links: asJsonApiLinks(req, skip, take, count)
-              })
-            }, fail)
-            .catch(fail)
-        }, fail)
-        .catch(fail)
-    }
+  app.get(pathsFor('/trips'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    await (req.query.newSkool ? getTrips(req, res) : getEventsAsTrips(req, res))
   })
 
   // / ////////////////////////////// status_changes /////////////////////////////
@@ -397,36 +437,13 @@ function api(app: express.Express): express.Express {
     ...props
   }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
 
-  const getStage0Properties = (status_changes: StatusChange[]) => {
-    if (status_changes && status_changes.length > 0) {
-      const { recorded, sequence } = status_changes[status_changes.length - 1]
-      return { last_sequence: `${recorded}-${sequence}` }
-    }
-    return undefined
-  }
-
-  const asSequence = (value: unknown): [number, number] | undefined | Error => {
-    if (typeof value === 'string' && value.length > 0) {
-      const [recorded, sequence, ...extra] = value.split('-').map(Number)
-      if (extra.length === 0 && isTimestamp(recorded) && Number.isInteger(sequence)) {
-        return [recorded, sequence]
-      }
-      return Error(`Invalid sequence: ${value}`)
-    }
-    return undefined
-  }
-
   async function getStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
-    const DEFAULT_PAGE_SIZE = 100
-    const MAX_PAGE_SIZE = 1000
-
     // Standard Provider parameters
     const start_time = req.query.start_time && Number(req.query.start_time)
     const end_time = req.query.end_time && Number(req.query.end_time)
 
     // Extensions to override paging
-    const skip = Number(req.query.skip || 0)
-    const take = Math.min(MAX_PAGE_SIZE, Number(req.query.take || DEFAULT_PAGE_SIZE))
+    const { skip, take } = asPagingParams(req.query)
     const last_sequence = asSequence(req.query.last_sequence)
 
     if (last_sequence instanceof Error) {
@@ -453,8 +470,10 @@ function api(app: express.Express): express.Express {
       })
     } catch (err) {
       // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(err) })
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
+      res.status(500).send({ error: new Error(desc) })
     }
   }
 
@@ -529,8 +548,9 @@ function api(app: express.Express): express.Express {
     const stringifiedQuery = JSON.stringify(req.query)
 
     function fail(err: Error | string): void {
-      const msg = err instanceof Error ? err.stack : err
-      log.error(providerAlias, '/status_changes', stringifiedQuery, 'failed', msg)
+      const desc = err instanceof Error ? err.message : err
+      const stack = err instanceof Error ? err.stack : desc
+      log.error(providerAlias, '/status_changes', stringifiedQuery, 'failed', desc, stack || JSON.stringify(err))
 
       if (err instanceof Error && err.message.includes('invalid device_id')) {
         res.status(400).send({
@@ -541,7 +561,7 @@ function api(app: express.Express): express.Express {
         /* istanbul ignore next no good way to fake server failure right now */
         res.status(500).send({
           error: 'server_failure',
-          error_description: `status_changes internal error: ${msg}`
+          error_description: `status_changes internal error: ${desc}`
         })
       }
     }
@@ -624,7 +644,7 @@ function api(app: express.Express): express.Express {
     function fail(err: Error | string): void {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      log.error(req.path, 'failure', stack).then(() => {
+      log.error(req.path, 'failure', desc, stack || JSON.stringify(err)).then(() => {
         res.status(500).send({
           error: 'internal_failure',
           error_description: `trips error: ${desc}`
@@ -646,7 +666,7 @@ function api(app: express.Express): express.Express {
         db.readTripIds(tripParams)
           .then((result: ReadTripIdsResult) => {
             const { count, tripIds } = result
-            asTrips(tripIds)
+            asEventTrips(tripIds)
               .then(trips => {
                 // write trips
                 db.writeTrips(trips)
@@ -669,7 +689,7 @@ function api(app: express.Express): express.Express {
     function fail(err: Error): void {
       const desc = err.message || err
       const stack = err.stack || desc
-      log.error(req.path, 'failure', stack).then(() => {
+      log.error(req.path, 'failure', desc, stack || JSON.stringify(err)).then(() => {
         res.status(500).send({
           error: 'internal_failure',
           error_description: `trips error: ${desc}`
