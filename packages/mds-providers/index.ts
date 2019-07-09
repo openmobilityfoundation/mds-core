@@ -1,5 +1,7 @@
 import { Provider } from 'mds'
 
+// Officially recognized providers, from:
+// https://github.com/CityOfLosAngeles/mobility-data-specification/blob/dev/providers.csv
 export const JUMP_PROVIDER_ID = 'c20e08cf-8488-46a6-a66c-5d8fb827f7e0'
 export const LIME_PROVIDER_ID = '63f13c48-34ff-49d2-aca7-cf6a5b6171c3'
 export const BIRD_PROVIDER_ID = '2411d395-04f2-47c9-ab66-d09e9e3c3251'
@@ -18,6 +20,7 @@ export const CLEVR_PROVIDER_ID = 'daecbe87-a9f2-4a5a-b5df-8e3e14180513'
 export const SHERPA_PROVIDER_ID = '3c95765d-4da6-41c6-b61e-1954472ec6c9'
 export const OJO_PROVIDER_ID = '8d293326-8464-4256-8312-617ebcd0efad'
 
+// PROVIDER_ID values for testing
 export const TEST1_PROVIDER_ID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 export const TEST2_PROVIDER_ID = '45f37d69-73ca-4ca6-a461-e7283cffa01a'
 export const TEST3_PROVIDER_ID = 'c8051767-4b14-4794-abc1-85aad48baff1'
