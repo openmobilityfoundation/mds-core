@@ -9,5 +9,8 @@ SPREADSHEET_ID=<google spreadsheet id to update>
 GOOGLE_CLIENT_EMAIL=<google service account email>
 GOOGLE_PRIVATE_KEY=<service account private key>
 ```
-Spreadsheet must have these headers:
-`Date	Name	Registered	Deployed	Valid Trips	Trips	service_start	provider_dropoff	trip_start	trip_end	trip_enter	trip_leave	Telemetry	Telemetry SLA	Trip Start SLA	Trip End SLA`		
+One sheet must be named `Metrics Log` and must have these headers:
+`Date	Name	Registered	Deployed	Valid Trips	Trips	service_start	provider_dropoff	trip_start	trip_end	trip_enter	trip_leave	Telemetry	Telemetry SLA	Trip Start SLA	Trip End SLA`
+
+One sheet must be named `Vehicle Counts` and must have these headers:
+`Date	Name	Los Angeles	The Beach	The Canals	Venice Beach Special Operations Zone	Non San Fernando Valley DAC	San Fernando Valley DAC`

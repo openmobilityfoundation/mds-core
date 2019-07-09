@@ -19,7 +19,7 @@ const GoogleSpreadsheet = require('google-spreadsheet')
 const { promisify } = require('util')
 const rp = require('request-promise')
 
-// The list of providers ids on which to report
+// The list of providers ids on which to report. TODO: get from config store at some point
 const reportProviders = [
   'c20e08cf-8488-46a6-a66c-5d8fb827f7e0', // JUMP
   '63f13c48-34ff-49d2-aca7-cf6a5b6171c3', // Lime
@@ -33,15 +33,6 @@ const reportProviders = [
 const creds = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
   private_key: process.env.GOOGLE_PRIVATE_KEY.split('\\n').join('\n')
-}
-
-function sum(arr) {
-  return arr.reduce((total, amount) => total + (amount || 0))
-}
-
-// Round percent to two decimals
-function percent(a, total) {
-  return Math.round(((total - a) / total) * 10000) / 10000
 }
 
 async function appendSheet(sheetName, rows) {
@@ -82,55 +73,18 @@ async function getProviderMetrics() {
     headers: { authorization: `Bearer ${token.access_token}` },
     json: true
   }
-  const last_options = {
-    uri: 'https://api.ladot.io/agency/admin/last_day_stats_by_provider',
-    headers: { authorization: `Bearer ${token.access_token}` },
-    json: true
-  }
 
   const counts = await rp(counts_options)
-  const last = await rp(last_options)
-
   const rows = counts
     .filter(p => reportProviders.includes(p.provider_id))
     .map(provider => {
       const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
       const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
       const d = new Date()
-      let [starts, ends, start_sla, end_sla] = [0, 0, 0, 0]
-      let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
-      if (last[provider.provider_id].event_counts_last_24h) {
-        event_counts = last[provider.provider_id].event_counts_last_24h
-        starts = last[provider.provider_id].event_counts_last_24h.trip_start || 0
-        ends = last[provider.provider_id].event_counts_last_24h.trip_end || 0
-        telems = last[provider.provider_id].telemetry_counts_last_24h || 0
-        telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
-        start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
-        end_sla = ends ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_end, ends) : 0
-      }
       return {
         date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
         name: provider.provider,
-        registered: provider.count || 0,
-        deployed:
-          sum([
-            provider.status.available,
-            provider.status.unavailable,
-            provider.status.trip,
-            provider.status.reserved
-          ]) || 0,
-        validtrips: 'tbd', // Placeholder for next day valid trip analysis
-        trips: last[provider.provider_id].trips_last_24h || 0,
-        servicestart: event_counts.service_start || 0,
-        providerdropoff: event_counts.provider_drop_off || 0,
-        tripstart: starts,
-        tripend: ends,
-        tripenter: last[provider.provider_id].event_counts_last_24h.trip_enter || 0,
-        tripleave: last[provider.provider_id].event_counts_last_24h.trip_leave || 0,
-        telemetry: telems,
-        telemetrysla: telem_sla,
-        tripstartsla: start_sla,
-        tripendsla: end_sla
+        ...provider.areas
       }
     })
   return rows
@@ -138,5 +92,5 @@ async function getProviderMetrics() {
 
 exports.handler = (event, context) =>
   getProviderMetrics()
-    .then(rows => appendSheet('Metrics Log', rows))
+    .then(rows => appendSheet('Vehicle Counts', rows))
     .catch(err => console.error(err))
