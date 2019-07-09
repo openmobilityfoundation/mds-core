@@ -172,9 +172,10 @@ function api(app: express.Express): express.Express {
           return Object.assign(map, { [device.device_id]: device })
         }, {})
         const events = await db.readHistoricalEvents({ provider_id, end_date })
-        const filtered_policies: Policy[] = compliance_engine.filterPolicies(policies)
-        const results: (ComplianceResponse | undefined)[] = filtered_policies.map((policy: Policy) =>
-          compliance_engine.processPolicy(policy, events, geographies, deviceMap)
+        const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
+        const filteredEvents = compliance_engine.filterEvents(events)
+        const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
+          compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
         )
         if (!results[0]) {
           res.status(400).send({ err: 'bad_param' })
@@ -215,9 +216,10 @@ function api(app: express.Express): express.Express {
                             {}
                           )
                           log.info(`Policies: ${JSON.stringify(policies)}`)
-                          const filtered_policies: Policy[] = compliance_engine.filterPolicies(policies)
-                          const results: (ComplianceResponse | undefined)[] = filtered_policies.map((policy: Policy) =>
-                            compliance_engine.processPolicy(policy, events, geographies, deviceMap)
+                          const filteredEvents = compliance_engine.filterEvents(events, end_date)
+                          const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
+                          const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
+                            compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
                           )
                           if (results[0] === undefined) {
                             res.status(400).send({ err: 'bad_param' })
@@ -276,8 +278,9 @@ function api(app: express.Express): express.Express {
       }, [])
 
       const events = (await cache.readAllEvents()).filter(event => isInStatesOrEvents(rule, event))
+      const filteredEvents = compliance_engine.filterEvents(events)
 
-      const count = events.reduce((count_acc, event) => {
+      const count = filteredEvents.reduce((count_acc, event) => {
         return (
           count_acc +
           polys.reduce((poly_acc, poly) => {

@@ -8,7 +8,7 @@ import { la_city_boundary } from 'mds-policy/tests/la-city-boundary'
 import { Geography, Policy, Device } from 'mds'
 import { FeatureCollection } from 'geojson'
 import { ValidationError, RuntimeError } from 'mds-compliance/exceptions'
-import { processPolicy, filterPolicies } from 'mds-compliance/mds-compliance-engine'
+import { processPolicy, filterPolicies, filterEvents } from 'mds-compliance/mds-compliance-engine'
 import { validateEvents, validateGeographies, validatePolicies } from '../validators'
 
 let policies: Policy[] = []
@@ -53,14 +53,15 @@ describe('Tests Compliance Engine', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
-    const results = filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap))
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
     results.forEach(result => {
       if (result) {
         result.compliance.forEach(compliance => {
@@ -80,14 +81,15 @@ describe('Tests Compliance Engine', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
-    const results = filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap))
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
 
     results.forEach(result => {
       if (result) {
@@ -112,14 +114,15 @@ describe('Tests Compliance Engine', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
-    const results = filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap))
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
     results.forEach(result => {
       if (result) {
         result.compliance.forEach(compliance => {
@@ -143,14 +146,15 @@ describe('Tests Compliance Engine', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
-    const results = filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap))
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
     results.forEach(result => {
       if (result) {
         result.compliance.forEach(compliance => {
@@ -174,14 +178,15 @@ describe('Tests Compliance Engine', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
-    const results = filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap))
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
     results.forEach(result => {
       if (result) {
         result.compliance.forEach(compliance => {
@@ -205,14 +210,15 @@ describe('Tests Compliance Engine', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
       },
       {}
     )
-    const results = filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap))
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
     results.forEach(result => {
       if (result) {
         result.compliance.forEach(compliance => {
@@ -222,6 +228,42 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.rule_type === RULE_TYPES.time
           ) {
             test.assert(compliance.matches.length !== 0)
+          }
+        })
+      }
+    })
+    done()
+  })
+
+  it('Verifies not considering events older than 48 hours', done => {
+    const TWO_DAYS_IN_MS = 172800000
+    const devices = makeDevices(400, now())
+    const events = makeEventsWithTelemetry(devices, now() - TWO_DAYS_IN_MS, CITY_OF_LA, 'trip_end')
+    test.assert.doesNotThrow(() => validatePolicies(policies))
+    test.assert.doesNotThrow(() => validateGeographies(geographies))
+    test.assert.doesNotThrow(() => validateEvents(events))
+
+    const filteredEvents = filterEvents(events)
+
+    test.assert(filteredEvents.length === 0)
+
+    const filteredPolicies = filterPolicies(policies)
+    const deviceMap: { [d: string]: Device } = devices.reduce(
+      (deviceMapAcc: { [d: string]: Device }, device: Device) => {
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
+      },
+      {}
+    )
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
+    results.forEach(result => {
+      if (result) {
+        result.compliance.forEach(compliance => {
+          if (
+            compliance.rule.geographies.includes(CITY_OF_LA) &&
+            compliance.matches &&
+            compliance.rule.rule_type === RULE_TYPES.time
+          ) {
+            test.assert(compliance.matches.length === 0)
           }
         })
       }
@@ -245,7 +287,8 @@ describe('Verifies errors are being properly thrown', () => {
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
 
-    const filtered_policies = filterPolicies(policies)
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
       (deviceMapAcc: { [d: string]: Device }, device: Device) => {
         return Object.assign(deviceMapAcc, { [device.device_id]: device })
@@ -253,7 +296,7 @@ describe('Verifies errors are being properly thrown', () => {
       {}
     )
     test.assert.throws(
-      () => filtered_policies.map(policy => processPolicy(policy, events, geographies, deviceMap)),
+      () => filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap)),
       RuntimeError
     )
     done()
