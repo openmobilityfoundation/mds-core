@@ -28,7 +28,7 @@ import { TripLabel } from '../labelers/trip-labeler'
 export type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
 export type TripsProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
 
-const asTrip = (recorded: Timestamp) => (entry: TripsProcessorStreamEntry, sequence: number): Trip => {
+const createTrip = (recorded: Timestamp) => (entry: TripsProcessorStreamEntry, sequence: number): Trip => {
   const {
     data: event,
     labels: { provider, device }
@@ -54,9 +54,11 @@ const asTrip = (recorded: Timestamp) => (entry: TripsProcessorStreamEntry, seque
   }
 }
 
-const insertTrips = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
-  const recorded = now()
-  await db.writeTrips(entries.map(asTrip(recorded)))
+const insertTrips = async (trips: Trip[]): Promise<void> => {
+  if (trips.length > 0) {
+    await db.writeTrips(trips)
+    logger.info(`Trips Processor: Created ${trips.length} trips`)
+  }
 }
 
 const updateSequence = (trip: Trip, recorded: number, sequence: number) =>
@@ -64,43 +66,72 @@ const updateSequence = (trip: Trip, recorded: number, sequence: number) =>
     ? { recorded, sequence }
     : {}
 
-const updateTrips = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
-  const recorded = now()
-  await Promise.all(
-    entries.reduce<Promise<number>[]>((updates, { data: { event_type, timestamp }, labels: { trip } }, sequence) => {
-      const fields: { [x: string]: keyof Trip } = {
-        trip_start: 'trip_start',
-        trip_enter: 'first_trip_enter',
-        trip_leave: 'last_trip_leave',
-        trip_end: 'trip_end'
+const updateTrips = async (trips: Trip[]): Promise<void> => {
+  if (trips.length > 0) {
+    await Promise.all(trips.map(trip => db.updateTrip(trip.provider_trip_id, trip)))
+    logger.info(`Trips Processor: Updated ${trips.length} trips`)
+  }
+}
+
+const updateTrip = (recorded: Timestamp) => (
+  trip: Trip,
+  { event_type, timestamp }: TripEvent,
+  sequence: number
+): Trip => {
+  const fields: { [x: string]: keyof Trip } = {
+    trip_start: 'trip_start',
+    trip_enter: 'first_trip_enter',
+    trip_leave: 'last_trip_leave',
+    trip_end: 'trip_end'
+  }
+  const field = fields[event_type]
+  return field && !trip[field]
+    ? {
+        ...trip,
+        [field]: timestamp,
+        ...updateSequence(trip, recorded, sequence)
       }
-      const field = fields[event_type]
-      return field && !trip[field]
-        ? updates.concat(
-            db.updateTrip(trip.provider_trip_id, {
-              [field]: timestamp,
-              ...updateSequence(trip, recorded, sequence)
-            })
-          )
-        : updates
-    }, [])
-  )
+    : trip
 }
 
 export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
-  const { inserts, updates } = entries.reduce<{
-    inserts: TripsProcessorStreamEntry[]
-    updates: TripsProcessorStreamEntry[]
+  const recorded = now()
+  const { insert, update } = entries.reduce<{
+    insert: { [trip_id: string]: Trip }
+    update: { [trip_id: string]: Trip }
   }>(
-    (commands, entry) => ({
-      inserts: entry.labels.trip ? commands.inserts : commands.inserts.concat(entry),
-      updates: entry.labels.trip ? commands.updates.concat(entry) : commands.updates
-    }),
-    { inserts: [], updates: [] }
+    (trips, entry, sequence) => {
+      const {
+        data: event,
+        labels: { trip }
+      } = entry
+      const { trip_id } = event
+      return trip
+        ? {
+            // Update existing trip
+            ...trips,
+            update: {
+              ...trips.update,
+              [trip_id]: trips.update[trip_id]
+                ? updateTrip(recorded)(trips.update[trip_id], event, sequence)
+                : createTrip(recorded)(entry, sequence)
+            }
+          }
+        : {
+            // Insert new trip
+            ...trips,
+            insert: {
+              ...trips.insert,
+              [trip_id]: trips.insert[trip_id]
+                ? updateTrip(recorded)(trips.insert[trip_id], event, sequence)
+                : createTrip(recorded)(entry, sequence)
+            }
+          }
+    },
+    { insert: {}, update: {} }
   )
 
-  if (inserts.length + updates.length > 0) {
-    await Promise.all((inserts.length === 0 ? [] : [insertTrips(inserts)]).concat(updateTrips(updates)))
-    logger.info(`Trips Processor: Created ${inserts.length} trips; Updated ${updates.length} trips`)
-  }
+  const [inserts, updates] = [insert, update].map(trips => Object.keys(trips).map(trip_id => trips[trip_id]))
+
+  await Promise.all([insertTrips(inserts), updateTrips(updates)])
 }
