@@ -15,7 +15,7 @@
  */
 
 import express from 'express'
-import { providers } from 'mds-providers'
+import { isProviderId } from 'mds-providers'
 import Joi from '@hapi/joi'
 import jwtDecode from 'jwt-decode'
 import joiToJsonSchema from 'joi-to-json-schema'
@@ -111,7 +111,7 @@ function api(app: express.Express): express.Express {
           log.warn(req.originalUrl, 'bogus provider_id', provider_id)
           return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
         }
-        if (!providers[provider_id]) {
+        if (!isProviderId(provider_id)) {
           res.status(400).send({
             result: `invalid provider_id ${provider_id} is not a known provider`
           })

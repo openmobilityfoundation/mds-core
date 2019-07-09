@@ -27,8 +27,16 @@ import uuid4 from 'uuid'
 
 import log from 'mds-logger'
 
+import {
+  JUMP_PROVIDER_ID,
+  LIME_PROVIDER_ID,
+  BIRD_PROVIDER_ID,
+  TEST1_PROVIDER_ID,
+  TEST3_PROVIDER_ID,
+  providerName
+} from 'mds-providers'
+
 // for test purposes
-const PROVIDER_UUID = 'c8051767-4b14-4794-abc1-85aad48baff1'
 const PROVIDER_AUTH =
   'bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlFVWkJRVFUwT0RJNE9EbERRakl3TWpJeE0wVkZNamhHTmtaRFFUa3lSRGRGTmtSRFF6RkZOUSJ9.eyJodHRwczovL2xhZG90LmlvL3Byb3ZpZGVyX2lkIjoiNWY3MTE0ZDEtNDA5MS00NmVlLWI0OTItZTU1ODc1ZjdkZTAwIiwiaXNzIjoiaHR0cHM6Ly9hdXRoLmxhZG90LmlvLyIsInN1YiI6IjE4UmN1QVJLQzVSUHQ5ZmFON0VRNXdjRTVvUmNlbzB0QGNsaWVudHMiLCJhdWQiOiJodHRwczovL3NhbmRib3gubGFkb3QuaW8iLCJpYXQiOjE1NTMzMTAyNDYsImV4cCI6MTU1NDM5MDI0NiwiYXpwIjoiMThSY3VBUktDNVJQdDlmYU43RVE1d2NFNW9SY2VvMHQiLCJzY29wZSI6ImFkbWluOmFsbCB0ZXN0OmFsbCIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyJ9.NNTJpeVAvbyslzK0PLrDkPs6_rGQ7tZwVl00QlNiDPUPuMzlCcMWTCOei0Jwm9_21KXAsGo6iko1oYgutrMPjvnePCDFbs3h2iGX8Wiw4rx0FrOijNJV6GWXSW33okagoABo0b63mLnGpfZYRNVjAbMEcJ5GrAWbEvZZeSIL6Mjl6YYn527mU4eWyqRMwTDtJ0s8iYaT2fj3VyOYZcUy0wCeQ3otK2ikkW4jyFgL60-Bb0U6IVh1rHPlS4pZa-wDzg1Pjk9I0RaBWDJQzpTd7OsEMwq-4qMqi9xrzQ6f52Sdl3JbKcQ0EzKK4GHGdILRiUfIpfZLEnNBOH9iAsOswQ'
 
@@ -37,13 +45,8 @@ const COMPLIANCE_AUTH =
 
 const BAD_PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de99'
 
-const JUMP_UUID = 'c20e08cf-8488-46a6-a66c-5d8fb827f7e0'
-const LIME_UUID = '63f13c48-34ff-49d2-aca7-cf6a5b6171c3'
-const BIRD_UUID = '2411d395-04f2-47c9-ab66-d09e9e3c3251'
-const TEST_UUID = '5f7114d1-4091-46ee-b492-e55875f7de00'
-
 const JUMP_TEST_DEVICE_1: Device = {
-  provider_id: JUMP_UUID,
+  provider_id: JUMP_PROVIDER_ID,
   device_id: 'e9edbe74-f7be-48e0-a63a-92f4bc1af5ed',
   vehicle_id: '1230987',
   type: VEHICLE_TYPES.scooter,
@@ -221,7 +224,7 @@ function makeEventsWithTelemetry(
   })
 }
 
-function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUID): Device[] {
+function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PROVIDER_ID): Device[] {
   // make N devices, distributed across the regions
   const devices = []
   for (let i = 0; i < count; i += 1) {
@@ -231,8 +234,8 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
     let type
     let propulsion: PROPULSION_TYPE[]
     switch (provider_id) {
-      case LIME_UUID:
-      case JUMP_UUID:
+      case LIME_PROVIDER_ID:
+      case JUMP_PROVIDER_ID:
         type = [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter][coin]
         if (type === VEHICLE_TYPES.bicycle) {
           propulsion = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][
@@ -242,7 +245,7 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
           propulsion = [PROPULSION_TYPES.electric]
         }
         break
-      case BIRD_UUID:
+      case BIRD_PROVIDER_ID:
         type = VEHICLE_TYPES.scooter
         propulsion = [PROPULSION_TYPES.electric]
         break
@@ -283,12 +286,12 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST_UUI
   return devices
 }
 
-function makeStatusChange(device: Device, timestamp: Timestamp, provider_name = 'test_provider'): StatusChange {
+function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
   const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
   const event_type = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
   return {
     provider_id: device.provider_id,
-    provider_name,
+    provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
     event_type,
@@ -303,10 +306,10 @@ function makeStatusChange(device: Device, timestamp: Timestamp, provider_name = 
   }
 }
 
-function makeTrip(device: Device, provider_id = TEST_UUID, provider_name = 'test_provider'): Trip {
+function makeTrip(device: Device): Trip {
   return {
-    provider_id,
-    provider_name,
+    provider_id: device.provider_id,
+    provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
     vehicle_type: device.type,
@@ -341,11 +344,11 @@ function makeTrip(device: Device, provider_id = TEST_UUID, provider_name = 'test
 
 export {
   BAD_PROVIDER_UUID,
-  PROVIDER_UUID,
+  TEST3_PROVIDER_ID as PROVIDER_UUID,
   PROVIDER_AUTH,
   COMPLIANCE_AUTH,
   JUMP_TEST_DEVICE_1,
-  JUMP_UUID,
+  JUMP_PROVIDER_ID,
   makeDevices,
   makeEvents,
   makeEventsWithTelemetry,

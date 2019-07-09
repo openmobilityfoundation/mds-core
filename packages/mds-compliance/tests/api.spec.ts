@@ -14,6 +14,7 @@ import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'
 import { server } from 'mds-api-server'
+import { TEST1_PROVIDER_ID } from 'mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -23,12 +24,10 @@ const policy_request = supertest(server(policy))
 const provider_request = supertest(server(provider))
 
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
-const PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const LA_BEACH = 'ff822e26-a70c-4721-ac32-2f6734beff9b'
 
-/* eslint-reason can't import untyped JS modules without require */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const restrictedAreas = require('../../ladot-service-areas/restricted-areas')
 const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')
@@ -52,12 +51,12 @@ const TEST_TELEMETRY = {
 process.env.TIMEZONE = 'America/Los_Angeles'
 process.env.PATH_PREFIX = '/compliance'
 const PROVIDER_SCOPES = 'admin:all test:all'
-const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|admin:all`).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${PROVIDER_UUID}|test:all`).toString('base64')}`
+const ADMIN_AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|admin:all`).toString('base64')}`
+const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
 const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
   type: VEHICLE_TYPES.bicycle,
   propulsion: [PROPULSION_TYPES.human],
@@ -1035,6 +1034,66 @@ describe('Tests Compliance API:', () => {
           test.assert(result.body.length === 1)
           test.assert(result.body[0].compliance[0].matches.length === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+  })
+
+  describe('Tests count endpoint', () => {
+    before(done => {
+      const devices_a: Device[] = makeDevices(15, now())
+      const events_a = makeEventsWithTelemetry(devices_a, now(), CITY_OF_LA, 'trip_start')
+      const telemetry_a: Telemetry[] = devices_a.reduce((acc: Telemetry[], device) => {
+        return [...acc, makeTelemetryInArea(device, now(), CITY_OF_LA, 10)]
+      }, [])
+
+      const devices_b: Device[] = makeDevices(15, now())
+      const events_b = makeEventsWithTelemetry(devices_b, now(), CITY_OF_LA, 'provider_drop_off')
+      const telemetry_b: Telemetry[] = devices_b.reduce((acc: Telemetry[], device) => {
+        return [...acc, makeTelemetryInArea(device, now(), CITY_OF_LA, 10)]
+      }, [])
+
+      request
+        .get('/test/initialize')
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end(() => {
+          // Seed
+          const seedData = {
+            devices: [...devices_a, ...devices_b],
+            events: [...events_a, ...events_b],
+            telemetry: [...telemetry_a, ...telemetry_b]
+          }
+          Promise.all([db.initialize(), cache.initialize()]).then(() => {
+            Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
+              db.writePolicy(COUNT_POLICY_JSON).then(() => {
+                db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(() => {
+                  done()
+                })
+              })
+            })
+          })
+        })
+    })
+
+    it('Test count endpoint success', done => {
+      request
+        .get(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.count === 30)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('Test count endpoint failure with bad rule_id', done => {
+      request
+        .get(`/count/33ca0ee8-e74b-419d-88d3-aaaf05ac0509`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(404)
+        .end(err => {
           done(err)
         })
     })

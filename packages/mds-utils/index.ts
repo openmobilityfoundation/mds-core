@@ -18,9 +18,9 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox } from 'mds'
+import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography, Rule } from 'mds'
 import { TelemetryRecord } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
+import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
 import log from 'mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
@@ -594,6 +594,28 @@ function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
   }
 }
 
+function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {
+  const res = geographies.find((location: Geography) => {
+    return location.geography_id === geography
+  })
+  if (res === undefined) {
+    throw new Error(`Geography ${geography} not found in ${geographies}!`)
+  }
+  if (res.geography_json.type !== 'FeatureCollection') {
+    return res.geography_json.geometry
+  }
+  return res.geography_json
+}
+
+function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
+  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
+  return (
+    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+    status !== undefined &&
+    (status.length === 0 || (status as string[]).includes(event.event_type))
+  )
+}
+
 export = {
   isUUID,
   isPct,
@@ -629,5 +651,7 @@ export = {
   isStateTransitionValid,
   pointInGeometry,
   convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry
+  convertTelemetryRecordToTelemetry,
+  getPolygon,
+  isInStatesOrEvents
 }

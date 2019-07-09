@@ -20,8 +20,10 @@ import stream from 'mds-stream'
 import db from 'mds-db'
 import jwtDecode from 'jwt-decode'
 import log from 'mds-logger'
-import { isUUID, now, days, pathsFor } from 'mds-utils'
+import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape, isInStatesOrEvents } from 'mds-utils'
 import { Policy, Geography, VehicleEvent, ComplianceResponse, Device, UUID } from 'mds'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from 'mds-providers'
+import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest } from './types'
 
@@ -138,9 +140,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: express.Request, res: express.Response) => {
-    if (
-      !['5f7114d1-4091-46ee-b492-e55875f7de00', '45f37d69-73ca-4ca6-a461-e7283cffa01a'].includes(res.locals.provider_id)
-    ) {
+    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
     /* istanbul ignore next */
@@ -234,6 +234,64 @@ function api(app: express.Express): express.Express {
             .catch(fail)
         }, fail)
         .catch(fail)
+    }
+  })
+
+  app.get(pathsFor('/count/:rule_id'), async (req: express.Request, res: express.Response) => {
+    if (
+      !['5f7114d1-4091-46ee-b492-e55875f7de00', '45f37d69-73ca-4ca6-a461-e7283cffa01a'].includes(res.locals.provider_id)
+    ) {
+      res.status(401).send({ result: 'unauthorized access' })
+    }
+
+    async function fail(err: Error): Promise<void> {
+      await log.error(err.stack || err)
+      if (err.message.includes('invalid rule_id')) {
+        res.status(404).send(err.message)
+      } else {
+        /* istanbul ignore next */
+        res
+          .status(500)
+          .send({ error: 'server_error', error_description: 'an internal server error has occurred and been logged' })
+      }
+    }
+
+    const { rule_id } = req.params
+    try {
+      const rule = await db.readRule(rule_id)
+      const geography_ids = rule.geographies.reduce((acc: UUID[], geo: UUID) => {
+        return [...acc, geo]
+      }, [])
+      const geographies = (await Promise.all(
+        geography_ids.reduce((acc: Promise<Geography[]>[], geography_id) => {
+          const geography = db.readGeographies({ geography_id })
+          return [...acc, geography]
+        }, [])
+      )).reduce((acc: Geography[], geos) => {
+        return [...acc, head(geos)]
+      }, [])
+
+      const polys = geographies.reduce((acc: (Geometry | FeatureCollection)[], geography) => {
+        return [...acc, getPolygon(geographies, geography.geography_id)]
+      }, [])
+
+      const events = (await cache.readAllEvents()).filter(event => isInStatesOrEvents(rule, event))
+
+      const count = events.reduce((count_acc, event) => {
+        return (
+          count_acc +
+          polys.reduce((poly_acc, poly) => {
+            if (event.telemetry && pointInShape(event.telemetry.gps, poly)) {
+              return poly_acc + 1
+            }
+            return poly_acc
+          }, 0)
+        )
+      }, 0)
+
+      res.status(200).send({ count })
+    } catch (err) {
+      fail(err)
     }
   })
   return app
