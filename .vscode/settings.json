@@ -1,6 +1,5 @@
 {
   "editor.insertSpaces": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 2,
   "eslint.autoFixOnSave": true,
   "eslint.enable": true,
@@ -8,6 +7,9 @@
   "prettier.disableLanguages": ["markdown"],
   "prettier.eslintIntegration": true,
   "[javascript]": {
+    "editor.formatOnSave": false
+  },
+  "[typescript]": {
     "editor.formatOnSave": false
   },
   "editor.formatOnSave": true,
