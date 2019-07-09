@@ -18,9 +18,9 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography } from 'mds'
+import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography, Rule } from 'mds'
 import { TelemetryRecord } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
+import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
 import log from 'mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
@@ -619,6 +619,15 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
   return res.geography_json
 }
 
+function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
+  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
+  return (
+    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+    status !== undefined &&
+    (status.length === 0 || (status as string[]).includes(event.event_type))
+  )
+}
+
 export = {
   isUUID,
   isPct,
@@ -655,5 +664,6 @@ export = {
   pointInGeometry,
   convertTelemetryToTelemetryRecord,
   convertTelemetryRecordToTelemetry,
-  getPolygon
+  getPolygon,
+  isInStatesOrEvents
 }

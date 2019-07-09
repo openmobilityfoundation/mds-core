@@ -1078,23 +1078,11 @@ describe('Tests Compliance API:', () => {
 
     it('Test count endpoint with no status specification', done => {
       request
-        .get(`/count/${COUNT_POLICY_UUID}/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6`)
+        .get(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6`)
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.count === 30)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('Test count endpoint with status specification', done => {
-      request
-        .get(`/count/${COUNT_POLICY_UUID}/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6?statuses=["available"]`)
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end((err, result) => {
-          test.assert(result.body.count === 15)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

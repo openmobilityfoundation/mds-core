@@ -9,7 +9,8 @@ import {
   Device,
   Telemetry,
   Recorded,
-  DeviceID
+  DeviceID,
+  Rule
 } from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
@@ -1481,6 +1482,15 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+async function readRule(rule_id: UUID): Promise<Rule> {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * from ${schema.POLICIES_TABLE} where EXISTS(SELECT 1 FROM json_array_elements(${schema.POLICIES_COLS[1]}->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`
+  const res = (await client.query(sql)).rows[0].policy_json as Policy
+  return res.rules.filter(rule => {
+    return rule.rule_id === rule_id
+  })[0]
+}
+
 async function getPastEventsForStatusChanges(
   device_id: UUID,
   timestamp: Timestamp,
@@ -1569,6 +1579,7 @@ export = {
   writeGeography,
   readPolicies,
   writePolicy,
+  readRule,
   writeStatusChanges,
   readStatusChanges,
   getEventCountsPerProviderSince,

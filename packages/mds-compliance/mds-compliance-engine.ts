@@ -29,7 +29,7 @@ import {
   MatchedVehicle
 } from 'mds'
 import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS } from 'mds-enums'
-import { pointInShape, getPolygon } from 'mds-utils'
+import { pointInShape, getPolygon, isInStatesOrEvents } from 'mds-utils'
 import moment from 'moment-timezone'
 import { RuntimeError } from './exceptions'
 
@@ -69,15 +69,6 @@ function isRuleActive(rule: Rule): boolean {
     }
   }
   return false
-}
-
-function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
-  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
-  return (
-    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
-    status !== undefined &&
-    (status.length === 0 || (status as string[]).includes(event.event_type))
-  )
 }
 
 function isInVehicleTypes(rule: Rule, device: Device): boolean {
