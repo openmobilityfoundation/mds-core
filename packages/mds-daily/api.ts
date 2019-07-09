@@ -21,7 +21,7 @@ import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import stream from 'mds-stream'
-import { providers, providerName } from 'mds-providers'
+import { providerName, isProviderId } from 'mds-providers'
 import areas from 'ladot-service-areas'
 import { UUID, VehicleEvent, Telemetry, CountMap, DeviceID, TripsStats } from 'mds'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
@@ -116,7 +116,7 @@ function api(app: express.Express): express.Express {
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
           }
-          if (!providers[provider_id]) {
+          if (!isProviderId(provider_id)) {
             res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a known provider`
             })

@@ -19,12 +19,12 @@ import express from 'express'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
-import { providers, providerName } from 'mds-providers' // map of uuids -> obj
+import { providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { VEHICLE_EVENTS, VEHICLE_TYPE, PROPULSION_TYPE } from 'mds-enums'
 import { isUUID, now, round, seconds, pathsFor, isTimestamp } from 'mds-utils'
-import { Device, UUID, VehicleEvent, Telemetry, Provider, Timestamp } from 'mds'
+import { Device, UUID, VehicleEvent, Telemetry, Timestamp } from 'mds'
 import { FeatureCollection, Feature } from 'geojson'
 import {
   ReadTripsResult,
@@ -231,14 +231,6 @@ function api(app: express.Express): express.Express {
     return db.readDevice(device_id)
   }
 
-  async function getProvider(provider_id: UUID): Promise<Provider> {
-    return Promise.resolve(
-      providers[provider_id] || {
-        provider_name: 'unknown'
-      }
-    )
-  }
-
   /**
    * Convert a Telemetry object into a GeoJSON Feature
    * @param item a Telemetry object
@@ -340,11 +332,10 @@ function api(app: express.Express): express.Express {
    */
   async function asEventTrip(trip_id: UUID, trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<Trip> {
     const device = await getDevice(trip_start.device_id || trip_end.device_id)
-    const provider = await getProvider(device.provider_id)
     const route = await asRoute(trip_start, trip_end)
     return {
       provider_id: device.provider_id,
-      provider_name: provider.provider_name,
+      provider_name: providerName(device.provider_id),
       device_id: device.device_id,
       vehicle_id: device.vehicle_id,
       vehicle_type: device.type as VEHICLE_TYPE,
@@ -504,9 +495,8 @@ function api(app: express.Express): express.Express {
    */
   async function eventAsStatusChange(event: VehicleEvent): Promise<StatusChange> {
     const telemetry_timestamp = event.telemetry_timestamp || event.timestamp
-    const [device, provider, telemetry] = await Promise.all([
+    const [device, telemetry] = await Promise.all([
       getDevice(event.device_id),
-      getProvider(event.provider_id),
       db.readTelemetry(event.device_id, telemetry_timestamp, telemetry_timestamp)
     ])
     const event2 = asStatusChangeEvent(event)
@@ -519,7 +509,7 @@ function api(app: express.Express): express.Express {
     const hasTelemetry: boolean = telemetry.length > 0
     return {
       provider_id: device.provider_id,
-      provider_name: provider.provider_name,
+      provider_name: providerName(device.provider_id),
       device_id: event.device_id,
       vehicle_id: device.vehicle_id,
       vehicle_type: device.type as VEHICLE_TYPE,

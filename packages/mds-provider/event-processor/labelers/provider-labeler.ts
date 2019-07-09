@@ -15,7 +15,7 @@
  */
 
 import logger from 'mds-logger'
-import { providers } from 'mds-providers'
+import { providers, isProviderId } from 'mds-providers'
 import { Provider, UUID } from 'mds'
 import { isUUID } from 'mds-utils'
 import { StreamEntry, StreamEntryLabels } from '../types'
@@ -37,7 +37,7 @@ export const ProviderLabeler = async (entries: StreamEntry[]): Promise<StreamEnt
 
   if (provider_entries.length > 0) {
     // Get unique provider ids from all entries
-    const provider_ids = [...new Set(provider_entries.map(entry => entry.data.provider_id))]
+    const provider_ids = [...new Set(provider_entries.map(entry => entry.data.provider_id).filter(isProviderId))]
 
     // Create a provider map
     const provider_map = provider_ids.reduce<{ [provider_id: string]: Provider }>(

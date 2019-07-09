@@ -10,7 +10,8 @@ import {
   Telemetry,
   Recorded,
   DeviceID,
-  VehicleEventPrimaryKey
+  VehicleEventPrimaryKey,
+  Rule
 } from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
@@ -1460,6 +1461,23 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+async function readRule(rule_id: UUID): Promise<Rule> {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * from ${schema.POLICIES_TABLE} where EXISTS(SELECT FROM json_array_elements(${schema.POLICIES_COLS[1]}->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`
+  const res = await client.query(sql).catch(err => {
+    throw err
+  })
+  if (res.rowCount !== 1) {
+    throw new Error(`invalid rule_id ${rule_id}`)
+  } else {
+    const [{ policy_json }]: { policy_json: Policy }[] = res.rows
+    const [rule] = policy_json.rules.filter(r => {
+      return r.rule_id === rule_id
+    })
+    return rule
+  }
+}
+
 async function getMostRecentStatusChange(): Promise<Recorded<StatusChange> | null> {
   // SELECT * FROM status_changes ORDER BY event_time DESC, device_id DESC LIMIT 1
   const client = await getReadOnlyClient()
@@ -1567,6 +1585,7 @@ export = {
   writeGeography,
   readPolicies,
   writePolicy,
+  readRule,
   writeStatusChanges,
   readStatusChanges,
   getEventCountsPerProviderSince,

@@ -233,4 +233,5 @@ export interface Provider {
   provider_name: string
   url?: string
   mds_api_url?: string
+  gbfs_api_url?: string
 }
