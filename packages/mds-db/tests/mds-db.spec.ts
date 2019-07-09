@@ -101,8 +101,7 @@ if (pg_info.database) {
 
         const devicesResult: Device[] = (await MDSDBPostgres.readDeviceIds(JUMP_UUID, 0, 20)) as Device[]
         assert.deepEqual(devicesResult.length, 10)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const vehicleEventsResult: any = await MDSDBPostgres.readEvents({
+        const vehicleEventsResult = await MDSDBPostgres.readEvents({
           start_time: String(startTime)
         })
         assert.deepEqual(vehicleEventsResult.count, 10)

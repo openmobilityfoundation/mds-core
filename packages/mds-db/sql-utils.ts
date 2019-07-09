@@ -28,13 +28,18 @@ export class MDSPostgresClient extends PostgresClient {
   public connected: boolean
 
   public constructor(params: PGInfo) {
-    const client_type = params.client_type || 'readonly'
-    // eslint-disable-next-line no-param-reassign
-    delete params.client_type
-    super(params)
+    const { client_type, ...rest_params } = params
+    if (client_type) {
+      super(rest_params)
 
-    this.client_type = client_type
-    this.connected = false
+      this.client_type = client_type
+      this.connected = false
+    } else {
+      super(params)
+
+      this.client_type = 'read_only'
+      this.connected = false
+    }
   }
 
   public setConnected(connected: boolean) {
@@ -61,14 +66,11 @@ export function configureClient(pg_info: PGInfo) {
     log.info('disconnected', client.client_type, 'client from postgres')
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  client.on('error', (err: any) => {
-    // log.info('pg client error event', err.stack)
+  client.on('error', err => {
     log.error('pg client error event', err.stack)
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  client.on('notice', (msg: any) => {
+  client.on('notice', msg => {
     log.warn('notice:', msg)
   })
 
@@ -90,20 +92,13 @@ export function cols_sql(table: string, cols: Readonly<string[]>) {
 }
 
 // take a list of column names and extract the values into a list for SQL insertion
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function vals_list(cols: Readonly<string[]>, obj: any) {
+export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: unknown }) {
   return cols.map(col_name => (obj[col_name] === undefined ? null : obj[col_name]))
 }
 
 // take a list of column names and a list of column values and reconstitue an object with those name/value pairs
-export function vals_obj(cols: Readonly<string[]>, list: (string | number)[]) {
-  const obj: { [propName: string]: string | number } = {}
-
-  /* eslint-disable no-return-assign */
-  range(cols.length).map((i: number) => (obj[cols[i]] = list[i]))
-  /* eslint-enable no-return-assign */
-
-  return obj
+export function vals_obj(cols: Readonly<string[]>, list: (string | number)[]): { [propName: string]: string | number } {
+  return range(cols.length).reduce((map, i: number) => Object.assign(map, { [i]: list[i] }), {})
 }
 
 // convert an object to sql string representation
@@ -138,18 +133,18 @@ export function logSql(sql: string, ...values: unknown[]): void {
   if (!pgDebug) {
     return
   }
-  /* eslint-disable no-param-reassign */
+  let out: unknown[]
   if (typeof values === 'undefined') {
-    values = []
-  }
-  if (typeof values !== 'string') {
-    values = values.map(val => {
+    out = []
+  } else if (typeof values !== 'string') {
+    out = values.map(val => {
       return String(val)
     })
+  } else {
+    out = values
   }
 
-  /* eslint-enable no-param-reassign */
-  log.info('sql>', sql, values)
+  log.info('sql>', sql, out)
 }
 
 export class SqlVals {
@@ -162,7 +157,6 @@ export class SqlVals {
     this.index = 1
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility
   public add(value: string | number): string | number {
     this.vals.push(value)
     const literal = `$${this.index}`
