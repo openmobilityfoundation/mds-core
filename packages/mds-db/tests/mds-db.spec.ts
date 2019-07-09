@@ -7,7 +7,7 @@ import {
   makeEvents,
   makeStatusChange,
   makeTrip,
-  JUMP_UUID
+  JUMP_PROVIDER_ID
 } from 'mds-test-data'
 import { now } from 'mds-utils'
 
@@ -38,7 +38,7 @@ const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
 
 async function seedDB() {
   await MDSDBPostgres.initialize()
-  const devices: Device[] = makeDevices(9, startTime, JUMP_UUID) as Device[]
+  const devices: Device[] = makeDevices(9, startTime, JUMP_PROVIDER_ID) as Device[]
   devices.push(JUMP_TEST_DEVICE_1 as Device)
   const deregisterEvents: VehicleEvent[] = makeEventsWithTelemetry(
     devices.slice(0, 9),
@@ -99,7 +99,7 @@ if (pg_info.database) {
       it('can read and write Devices, VehicleEvents, and Telemetry', async () => {
         await seedDB()
 
-        const devicesResult: Device[] = (await MDSDBPostgres.readDeviceIds(JUMP_UUID, 0, 20)) as Device[]
+        const devicesResult: Device[] = (await MDSDBPostgres.readDeviceIds(JUMP_PROVIDER_ID, 0, 20)) as Device[]
         assert.deepEqual(devicesResult.length, 10)
         const vehicleEventsResult = await MDSDBPostgres.readEvents({
           start_time: String(startTime)
@@ -117,7 +117,7 @@ if (pg_info.database) {
 
       it('can wipe a device', async () => {
         await seedDB()
-        const result = await MDSDBPostgres.wipeDevice(JUMP_UUID)
+        const result = await MDSDBPostgres.wipeDevice(JUMP_PROVIDER_ID)
         assert(result !== undefined)
       })
 
@@ -159,10 +159,10 @@ if (pg_info.database) {
 
       it('.getEventCountsPerProviderSince', async () => {
         const result = await MDSDBPostgres.getEventCountsPerProviderSince()
-        assert.deepEqual(result[0].provider_id, JUMP_UUID)
+        assert.deepEqual(result[0].provider_id, JUMP_PROVIDER_ID)
         assert.deepEqual(result[0].event_type, 'deregister')
         assert.deepEqual(result[0].count, 9)
-        assert.deepEqual(result[1].provider_id, JUMP_UUID)
+        assert.deepEqual(result[1].provider_id, JUMP_PROVIDER_ID)
         assert.deepEqual(result[1].event_type, 'trip_end')
         assert.deepEqual(result[1].count, 1)
       })

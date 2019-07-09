@@ -18,17 +18,27 @@ require('dotenv').config()
 const GoogleSpreadsheet = require('google-spreadsheet')
 const { promisify } = require('util')
 const rp = require('request-promise')
+const {
+  JUMP_PROVIDER_ID,
+  LIME_PROVIDER_ID,
+  BIRD_PROVIDER_ID,
+  LYFT_PROVIDER_ID,
+  WHEELS_PROVIDER_ID,
+  SPIN_PROVIDER_ID,
+  SHERPA_PROVIDER_ID
+} = require('mds-providers')
 
 // The list of providers ids on which to report
 const reportProviders = [
-  'c20e08cf-8488-46a6-a66c-5d8fb827f7e0', // JUMP
-  '63f13c48-34ff-49d2-aca7-cf6a5b6171c3', // Lime
-  '2411d395-04f2-47c9-ab66-d09e9e3c3251', // Bird
-  'e714f168-ce56-4b41-81b7-0b6a4bd26128', // Lyft
-  'b79f8687-526d-4ae6-80bf-89b4c44dc071', // Wheels
-  '70aa475d-1fcd-4504-b69c-2eeb2107f7be', // Spin
-  '3c95765d-4da6-41c6-b61e-1954472ec6c9' // Sherpa
+  JUMP_PROVIDER_ID,
+  LIME_PROVIDER_ID,
+  BIRD_PROVIDER_ID,
+  LYFT_PROVIDER_ID,
+  WHEELS_PROVIDER_ID,
+  SPIN_PROVIDER_ID,
+  SHERPA_PROVIDER_ID
 ]
+
 const creds = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
   private_key: process.env.GOOGLE_PRIVATE_KEY.split('\\n').join('\n')

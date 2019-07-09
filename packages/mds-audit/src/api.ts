@@ -68,8 +68,6 @@ import {
   isValidAuditNote
 } from './validators'
 
-// const AUDIT_PROVIDER_ID = 'dc3dfcf1-ed9f-4606-9c3b-ef19027846ec'
-
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {
   return telemetry

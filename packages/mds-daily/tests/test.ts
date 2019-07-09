@@ -27,6 +27,7 @@ import db from 'mds-db'
 import cache from 'mds-cache'
 import { makeDevices } from 'mds-test-data'
 import { server } from 'mds-api-server'
+import { TEST1_PROVIDER_ID } from 'mds-providers'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/agency'
@@ -42,13 +43,11 @@ function now(): Timestamp {
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de00' // Test 1
-
 const PROVIDER_SCOPES = 'admin:all test:all'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const TEST_TELEMETRY: Telemetry = {
-  provider_id: PROVIDER_UUID,
+  provider_id: TEST1_PROVIDER_ID,
   device_id: DEVICE_UUID,
   gps: {
     lat: 37.3382,
@@ -62,7 +61,7 @@ const TEST_TELEMETRY: Telemetry = {
 }
 
 // TODO Inherit all of these from mds-test-data
-const AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 before(done => {
   const testTimestampNow = now() // Hacky fix
@@ -70,7 +69,7 @@ before(done => {
   const events: VehicleEvent[] = [
     // BEGIN GOOD TRANSITIONS
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.provider_pick_up,
       recorded: testTimestampNow - 90,
@@ -78,7 +77,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     },
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.trip_enter,
       trip_id: TRIP_UUID,
@@ -87,7 +86,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     },
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.trip_leave,
       trip_id: TRIP_UUID,
@@ -96,7 +95,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     },
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.provider_pick_up,
       recorded: testTimestampNow - 60,
@@ -104,7 +103,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     }, // BEGIN BAD TRANSITIONS
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.service_start,
       recorded: testTimestampNow - 50,
@@ -112,7 +111,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     },
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.trip_leave,
       trip_id: TRIP_UUID,
@@ -121,7 +120,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     },
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.trip_start,
       trip_id: TRIP_UUID,
@@ -130,7 +129,7 @@ before(done => {
       telemetry: TEST_TELEMETRY
     },
     {
-      provider_id: PROVIDER_UUID,
+      provider_id: TEST1_PROVIDER_ID,
       device_id: devices[0].device_id,
       event_type: VEHICLE_EVENTS.provider_pick_up,
       recorded: testTimestampNow - 20,
@@ -187,8 +186,8 @@ describe('Tests API', () => {
       .expect(200)
       .end((err, result) => {
         log('----', JSON.stringify(result.body))
-        test.assert(result.body[PROVIDER_UUID].events_not_in_conformance === 4)
-        test.assert(result.body[PROVIDER_UUID].events_last_24h === 8)
+        test.assert(result.body[TEST1_PROVIDER_ID].events_not_in_conformance === 4)
+        test.assert(result.body[TEST1_PROVIDER_ID].events_last_24h === 8)
         done(err)
       })
   })
@@ -208,8 +207,8 @@ describe('Tests API', () => {
         // log('result----->', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         const testObject = test.object(result.body)
-        testObject.hasProperty(PROVIDER_UUID)
-        const providerTestObject1 = test.object(result.body[PROVIDER_UUID])
+        testObject.hasProperty(TEST1_PROVIDER_ID)
+        const providerTestObject1 = test.object(result.body[TEST1_PROVIDER_ID])
         providerTestObject1.hasProperty('ms_since_last_event')
         // providerTestObject1.hasProperty('time_since_last_telemetry')
         providerTestObject1.hasProperty('registered_last_24h')
@@ -217,7 +216,7 @@ describe('Tests API', () => {
         // providerTestObject1.hasProperty('num_telemetry')
 
         // Fewer fixtures exist for this one right now
-        // const providerTestObject2 = test.object(result.body[PROVIDER_UUID2])
+        // const providerTestObject2 = test.object(result.body[TEST1_PROVIDER_ID2])
         // providerTestObject1.hasProperty('time_since_last_telemetry')
         // providerTestObject1.hasProperty('events_last_24h')
         // providerTestObject1.hasProperty('num_telemetry')
