@@ -125,7 +125,6 @@ function api(app: express.Express): express.Express {
 
         // stash provider_id
         res.locals.provider_id = provider_id
-
       }
     } catch (err) {
       /* istanbul ignore next */

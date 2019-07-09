@@ -18,7 +18,7 @@ import express from 'express'
 import jwtDecode from 'jwt-decode'
 import urls from 'url'
 
-import { getVehicles , ServerError } from 'mds-api-helpers'
+import { getVehicles, ServerError } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -63,8 +63,6 @@ import {
   isStateTransitionValid
 } from 'mds-utils'
 import { ServiceArea, AgencyApiRequest } from 'mds-agency/types'
-
-
 
 log.startup()
 

@@ -1,5 +1,6 @@
 {
   "editor.insertSpaces": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 2,
   "eslint.autoFixOnSave": true,
   "eslint.enable": true,
@@ -10,8 +11,5 @@
     "editor.formatOnSave": false
   },
   "editor.formatOnSave": true,
-  "[typescript]": {
-    "editor.formatOnSave": false
-  },
   "typescript.tsdk": "node_modules/typescript/lib"
 }
