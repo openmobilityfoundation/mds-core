@@ -32,7 +32,8 @@ import {
   LIME_PROVIDER_ID,
   BIRD_PROVIDER_ID,
   TEST1_PROVIDER_ID,
-  TEST3_PROVIDER_ID
+  TEST3_PROVIDER_ID,
+  providerName
 } from 'mds-providers'
 
 // for test purposes
@@ -285,12 +286,12 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
   return devices
 }
 
-function makeStatusChange(device: Device, timestamp: Timestamp, provider_name = 'test_provider'): StatusChange {
+function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
   const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
   const event_type = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
   return {
     provider_id: device.provider_id,
-    provider_name,
+    provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
     event_type,
@@ -305,10 +306,10 @@ function makeStatusChange(device: Device, timestamp: Timestamp, provider_name = 
   }
 }
 
-function makeTrip(device: Device, provider_id = TEST1_PROVIDER_ID, provider_name = 'test_provider'): Trip {
+function makeTrip(device: Device): Trip {
   return {
-    provider_id,
-    provider_name,
+    provider_id: device.provider_id,
+    provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
     vehicle_type: device.type,
