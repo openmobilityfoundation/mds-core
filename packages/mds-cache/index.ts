@@ -413,6 +413,7 @@ async function readAllTelemetry() {
       return acc
     }
   }, [])
+}
 
 async function wipeDevice(device_id: UUID) {
   return readKeys(`*:${device_id}:*`).then(keys => {
