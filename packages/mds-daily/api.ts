@@ -238,6 +238,7 @@ function api(app: express.Express): express.Express {
         status: { [s: string]: number }
         event_type: { [s: string]: number }
         areas: { [s: string]: number }
+        areas_48h: { [s: string]: number }
       }[] = rows.map(row => {
         const { provider_id, count } = row
         return {
@@ -246,10 +247,12 @@ function api(app: express.Express): express.Express {
           count,
           status: {},
           event_type: {},
-          areas: {}
+          areas: {},
+          areas_48h: {}
         }
       })
       log.warn('/admin/vehicle_counts', JSON.stringify(stats))
+      const HRS_48_AGO = now() - 172800000
 
       getMaps()
         .then((maps: { eventMap: { [s: string]: VehicleEvent }; telemetryMap: { [s: string]: Telemetry } }) => {
@@ -269,6 +272,9 @@ function api(app: express.Express): express.Express {
                     const serviceArea = areas.serviceAreaMap[event.service_area_id]
                     if (serviceArea) {
                       inc(stat.areas, serviceArea.description)
+                      if (event.timestamp >= HRS_48_AGO) {   
+                        inc(stat.areas_48h, serviceArea.description)
+                      }
                     }
                   }
                 })
