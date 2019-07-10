@@ -67,8 +67,7 @@ const TRIPS_COLS = [
   'parking_verification_url',
   'standard_cost',
   'actual_cost',
-  'recorded',
-  'sequence'
+  'recorded'
 ] as const
 
 const STATUS_CHANGES_COLS = [
@@ -84,8 +83,7 @@ const STATUS_CHANGES_COLS = [
   'event_location',
   'battery_pct',
   'associated_trip',
-  'recorded',
-  'sequence'
+  'recorded'
 ] as const
 
 // audit
@@ -182,7 +180,6 @@ const PG_TYPES: { [propName: string]: string } = {
   parking_verification_url: 'varchar(255)',
   standard_cost: 'int',
   actual_cost: 'int',
-  sequence: 'bigint',
 
   event_time: 'bigint NOT NULL',
   event_location: 'jsonb',

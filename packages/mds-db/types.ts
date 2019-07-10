@@ -28,7 +28,6 @@ export interface Trip {
   standard_cost?: number | null
   actual_cost?: number | null
   recorded: Timestamp
-  sequence?: number | null
 }
 
 // TODO move to mds-db?
@@ -57,7 +56,6 @@ export interface StatusChange {
   battery_pct: number | null
   associated_trip: UUID | null
   recorded: Timestamp
-  sequence?: number | null
 }
 
 export type StatusChangeEvent = Pick<StatusChange, 'event_type' | 'event_type_reason'>

@@ -49,7 +49,7 @@ export const TripLabeler = async (entries: StreamEntry[]): Promise<StreamEntryLa
       {}
     )
 
-    // Create the device labels
+    // Create the trip labels
     const { labels, labeled } = trip_entries.reduce(
       (result, entry) => {
         const trip = trip_map[entry.data.trip_id]
@@ -61,7 +61,11 @@ export const TripLabeler = async (entries: StreamEntry[]): Promise<StreamEntryLa
       { labels: {}, labeled: 0 }
     )
 
-    logger.info(`|- Trip Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'}`)
+    logger.info(
+      `|- Trip Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'} (${trip_ids.length} ${
+        trip_ids.length === 1 ? 'trip' : 'trips'
+      })`
+    )
 
     return labels
   }

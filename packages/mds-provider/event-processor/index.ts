@@ -119,7 +119,6 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
       ])
       return entries.length
     }
-    logger.info('No entries to process.')
   } else {
     logger.info('Stream Unavailable')
   }
