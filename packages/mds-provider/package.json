@@ -14,7 +14,7 @@
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 75 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts",
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 85 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && ts-node"
   },
