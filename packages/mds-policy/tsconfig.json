@@ -5,6 +5,7 @@
   },
   "references": [
     { "path": "../../packages/mds-api-server" },
+    { "path": "../../packages/mds-api-helpers" },
     { "path": "../../packages/mds-db" },
     { "path": "../../packages/mds-enums" },
     { "path": "../../packages/mds-logger" },

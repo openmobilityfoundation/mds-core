@@ -70,7 +70,6 @@ function api(app: express.Express): express.Express {
           })
         }
 
-        // helpy logging
         log.info(providerName(provider_id), req.method, req.originalUrl)
       }
     } catch (err) {
@@ -107,8 +106,6 @@ function api(app: express.Express): express.Express {
       const devices = makeDevices(count, timestamp)
       const events = makeEvents(devices, timestamp)
       const telemetry = makeTelemetry(devices, timestamp)
-
-      // FIXME events
 
       const data = {
         devices,
@@ -176,11 +173,13 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/health'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // FIXME add real health checks
-    // verify access to known resources e.g. redis, postgres
+  app.get(pathsFor('/health'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    // 200 OK
     res.status(200).send({
-      result: 'we good'
+      runtime: process.versions.node,
+      process: process.pid,
+      memory: process.memoryUsage(),
+      uptime: process.uptime()
     })
   })
 

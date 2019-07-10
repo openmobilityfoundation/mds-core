@@ -21,6 +21,7 @@ import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeD
 import test from 'unit.js'
 import { Device, Telemetry, VehicleEvent } from 'mds'
 import { server } from 'mds-api-server'
+import log from 'mds-logger'
 import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
 
@@ -137,8 +138,6 @@ const test_deregister: VehicleEvent = {
 
 const test_events = [test_trip_start, test_trip_end, test_deregister]
 
-// FIXME make trips
-
 const test_devices = [TEST_DEVICE, TEST_DEVICE2, ...makeDevices(98, ORIGINAL_TEST_TIMESTAMP)]
 
 test_telemetry.push(...makeTelemetry(test_devices, ORIGINAL_TEST_TIMESTAMP))
@@ -157,7 +156,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('got root')
         done(err)
       })
   })
@@ -165,11 +163,9 @@ describe('Tests app', () => {
   it('verifies get /health without jwt', done => {
     request
       .get('/health')
-      // .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('got root')
         done(err)
       })
   })
@@ -181,7 +177,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('db and cache initialization complete')
         done(err)
       })
   })
@@ -193,7 +188,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('/test/seed?n=10 complete')
         done(err)
       })
   })
@@ -205,7 +199,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('db and cache initialization complete (2nd pass)')
         done(err)
       })
   })
@@ -218,7 +211,6 @@ describe('Tests app', () => {
       .expect(201)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        // console.log('/test/seed w fake data complete')
         done(err)
       })
   })
@@ -226,7 +218,7 @@ describe('Tests app', () => {
   it('verifies event processing', done => {
     ProviderEventProcessor().then(
       processed => {
-        test.value(processed).is(test_events.length)
+        test.value(processed).is(3)
         done()
       },
       err => done(err)
@@ -236,10 +228,9 @@ describe('Tests app', () => {
   it('tries to get trips without authorization', done => {
     request
       .get('/trips')
-      // .set('Authorization', PROVIDER_AUTH)
       .expect(403)
       .end((err, result) => {
-        // FIXME examine trip results
+        log.info('error:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.string(result.body.error).contains('missing_provider_id')
         done(err)
@@ -252,11 +243,11 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine trip results
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('data')
         test.object(result.body.data).hasProperty('trips')
+        test.value(result.body.data.trips.length).is(1)
         done(err)
       })
   })
@@ -301,19 +292,17 @@ describe('Tests app', () => {
       })
   })
 
-  // FIXME trips for ....
-
   it('verifies get all status changes', done => {
     request
       .get('/status_changes')
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine status change results
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('data')
         test.object(result.body.data).hasProperty('status_changes')
+        test.value(result.body.data.status_changes.length).is(3)
         done(err)
       })
   })
@@ -324,11 +313,12 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // FIXME examine status change results
+        log.info('----- one change:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('data')
         test.object(result.body.data).hasProperty('status_changes')
+        test.value(result.body.data.status_changes.length).is(2)
         done(err)
       })
   })

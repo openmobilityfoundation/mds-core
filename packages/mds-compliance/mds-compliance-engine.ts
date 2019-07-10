@@ -28,16 +28,12 @@ import {
   VehicleEvent,
   MatchedVehicle
 } from 'mds'
-import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS } from 'mds-enums'
+import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS, TIME_FORMAT, DAYS_OF_WEEK } from 'mds-enums'
 import { pointInShape, getPolygon, isInStatesOrEvents } from 'mds-utils'
 import moment from 'moment-timezone'
 import { RuntimeError } from './exceptions'
 
 const { env } = process
-
-const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] // FIXME move to mds-enums
-
-const TIME_FORMAT = 'HH:mm:ss' // FIXME move to mds-enums
 
 function now(): number {
   return Date.now()
@@ -61,7 +57,7 @@ function isRuleActive(rule: Rule): boolean {
 
   const local_time = moment().tz(env.TIMEZONE)
 
-  if (!rule.days || rule.days.includes(DAYS_OF_WEEK[local_time.day()] as DAY_OF_WEEK)) {
+  if (!rule.days || rule.days.includes(Object.values(DAYS_OF_WEEK)[local_time.day()] as DAY_OF_WEEK)) {
     if (!rule.start_time || local_time.isAfter(moment(rule.start_time, TIME_FORMAT))) {
       if (!rule.end_time || local_time.isBefore(moment(rule.end_time, TIME_FORMAT))) {
         return true
@@ -173,7 +169,8 @@ function processTimeRule(
   return { rule, matches: null }
 }
 
-// FIXME Add types for speed policies
+// TODO Add types for speed policies
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // function processSpeedPolicy(policy: Policy, events: VehicleEvent[], geographies: Geography[], devices: Device[]): any {
 //   const compliance: any[] = policy.rules.reduce((compliance_acc: any[], rule: Rule) => {
 //     if (isRuleActive(rule)) {

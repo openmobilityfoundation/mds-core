@@ -2,8 +2,8 @@ const laCityBoundary = require('./la-city-boundary')
 const restrictedAreas = require('./restricted-areas')
 const laDacs = require('./la-dacs')
 const veniceSpecOps = require('./venice-special-ops-zone')
-
-// FIXME move into DB eventually
+const venice = require('./venice')
+const councilDistrict11 = require('./council-district-11')
 
 const serviceAreaMap = {
   // LA city boundary
@@ -17,7 +17,29 @@ const serviceAreaMap = {
     area: laCityBoundary.features[0].geometry
   },
 
-  // "Special Ops Zone"
+  // Council District 11
+  '8cfe393c-4dc8-4a1d-922e-034f8577c507': {
+    start_date: 0,
+    end_date: null,
+    prev_area: null,
+    replacement_area: null,
+    type: 'restricted',
+    description: 'Council District 11',
+    area: councilDistrict11.features[0].geometry
+  },
+
+  // Venice
+  '3abf8e10-a380-45bb-bfd4-ec5b21b1b0b6': {
+    start_date: 0,
+    end_date: null,
+    prev_area: null,
+    replacement_area: null,
+    type: 'restricted',
+    description: 'Venice',
+    area: venice.features[0].geometry
+  },
+
+  // Venice Beach "Special Ops Zone"
   'e0e4a085-7a50-43e0-afa4-6792ca897c5a': {
     start_date: 0,
     end_date: null,
@@ -28,25 +50,25 @@ const serviceAreaMap = {
     area: veniceSpecOps.features[0].geometry
   },
 
-  // beach
+  // Venice Beach
   'ff822e26-a70c-4721-ac32-2f6734beff9b': {
     start_date: 0,
     end_date: null,
     prev_area: null,
     replacement_area: null,
     type: 'restricted',
-    description: 'The Beach',
+    description: 'Venice Beach',
     area: restrictedAreas.features[0].geometry
   },
 
-  // canals
+  // Venice canals
   '43f329fc-335a-4495-b542-6b516def9269': {
     start_date: 0,
     end_date: null,
     prev_area: null,
     replacement_area: null,
     type: 'restricted',
-    description: 'The Canals',
+    description: 'Venice Canals',
     area: restrictedAreas.features[1].geometry
   },
 
@@ -77,17 +99,14 @@ function readServiceAreas(provider_id, service_area_id) {
   // ignore provider_id for now
   return new Promise(resolve => {
     // see if service_area_id is non-null
-    // log.info('readServiceAreas', provider_id, '"' + service_area_id + '"')
 
     if (typeof service_area_id === 'string') {
       const service_area_record = serviceAreaMap[service_area_id]
       if (service_area_record) {
         service_area_record.service_area_id = service_area_id
-        // log.info('found one')
         resolve([service_area_record])
       } else {
-        // log.info('did not find one')
-        resolve(null) // womp womp
+        resolve(null)
       }
     } else {
       const areas = Object.keys(serviceAreaMap).map(key => {
@@ -95,7 +114,6 @@ function readServiceAreas(provider_id, service_area_id) {
         service_area_record.service_area_id = key
         return service_area_record
       })
-      // log.info('returning all ' + areas.length + ' areas for ' + Object.keys(serviceAreaMap))
       resolve(areas)
     }
   })

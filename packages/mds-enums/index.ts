@@ -140,3 +140,4 @@ export const STATUS_EVENT_MAP = {
 
 export const DAYS_OF_WEEK = Enum('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
 export type DAY_OF_WEEK = keyof typeof DAYS_OF_WEEK
+export const TIME_FORMAT = 'HH:mm:ss'
