@@ -190,7 +190,7 @@ function api(app: express.Express): express.Express {
       const { recorded, sequence } = items[items.length - 1]
       return { last_sequence: `${recorded}-${(sequence || 0).toString().padStart(4, '0')}` }
     }
-    return undefined
+    return {}
   }
 
   const asSequence = (value: unknown): [number, number] | undefined | Error => {

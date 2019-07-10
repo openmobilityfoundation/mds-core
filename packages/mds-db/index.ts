@@ -1222,7 +1222,6 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
       .query(sql)
       .then(
         () => {
-          log.info('pg db writeStatusChanges', status_changes.length, 'rows, success')
           resolve({
             count: status_changes.length
           })
@@ -1529,7 +1528,7 @@ async function readEventsRangeExclusive(
     ...event,
     telemetry_timestamp,
     telemetry:
-      lat !== null && lng !== null
+      lat && lng
         ? {
             timestamp: telemetry_timestamp,
             gps: { lat, lng }
