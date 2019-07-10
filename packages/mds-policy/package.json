@@ -22,6 +22,9 @@
     "mds-utils": "0.1.0",
     "uuid": "3.3.2"
   },
+  "devDependencies": {
+    "mds-test-data": "0.1.0"
+  },
   "main": "dist/api.js",
   "types": "dist/api.d.ts",
   "scripts": {

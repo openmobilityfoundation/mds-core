@@ -228,5 +228,24 @@ if (pg_info.database) {
         assert(!isNullOrUndefined(result.stats.current_running_queries))
       })
     })
+
+
+    describe('unit test policy functions', () => {
+      beforeEach(async () => {
+        const client: MDSPostgresClient = configureClient(pg_info)
+        await client.connect()
+        await dropTables(client)
+        await createTables(client)
+        await updateSchema(client)
+        await client.end()
+      })
+
+      afterEach(async () => {
+        await MDSDBPostgres.shutdown()
+      })
+      it('does this', () => {
+
+      })
+    })
   })
 }
