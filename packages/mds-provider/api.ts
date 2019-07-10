@@ -235,7 +235,13 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  const asTrip = async ({ recorded, sequence, ...trip }: Trip): Promise<Omit<Trip, 'recorded' | 'sequence'>> => {
+  const asTrip = async ({
+    recorded,
+    sequence,
+    first_trip_enter,
+    last_trip_leave,
+    ...trip
+  }: Trip): Promise<Omit<Trip, 'recorded' | 'sequence'>> => {
     const { trip_start, trip_end } = trip
     if (trip_start && trip_end && trip_end > trip_start) {
       const telemetry = await db.readTelemetry(trip.device_id, trip_start, trip_end)
