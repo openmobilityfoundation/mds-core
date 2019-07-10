@@ -61,11 +61,6 @@ const insertTrips = async (trips: Trip[]): Promise<void> => {
   }
 }
 
-const updateSequence = (trip: Trip, recorded: number, sequence: number) =>
-  recorded > trip.recorded || (recorded === trip.recorded && sequence > (trip.sequence || 0))
-    ? { recorded, sequence }
-    : {}
-
 const updateTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
     await Promise.all(trips.map(trip => db.updateTrip(trip.provider_trip_id, trip)))
@@ -78,20 +73,17 @@ const updateTrip = (recorded: Timestamp) => (
   { event_type, timestamp }: TripEvent,
   sequence: number
 ): Trip => {
-  const fields: { [x: string]: keyof Trip } = {
-    trip_start: 'trip_start',
-    trip_enter: 'first_trip_enter',
-    trip_leave: 'last_trip_leave',
-    trip_end: 'trip_end'
+  return {
+    ...trip,
+    trip_start: event_type === 'trip_start' ? Math.min(trip.trip_start || timestamp, timestamp) : trip.trip_start,
+    first_trip_enter:
+      event_type === 'trip_enter' ? Math.min(trip.first_trip_enter || timestamp, timestamp) : trip.first_trip_enter,
+    last_trip_leave:
+      event_type === 'trip_leave' ? Math.max(trip.last_trip_leave || timestamp, timestamp) : trip.last_trip_leave,
+    trip_end: event_type === 'trip_end' ? Math.max(trip.trip_end || timestamp, timestamp) : trip.trip_end,
+    recorded,
+    sequence
   }
-  const field = fields[event_type]
-  return field && !trip[field]
-    ? {
-        ...trip,
-        [field]: timestamp,
-        ...updateSequence(trip, recorded, sequence)
-      }
-    : trip
 }
 
 export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
@@ -112,9 +104,7 @@ export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Prom
             ...trips,
             update: {
               ...trips.update,
-              [trip_id]: trips.update[trip_id]
-                ? updateTrip(recorded)(trips.update[trip_id], event, sequence)
-                : createTrip(recorded)(entry, sequence)
+              [trip_id]: updateTrip(recorded)(trips.update[trip_id] || trip, event, sequence)
             }
           }
         : {
