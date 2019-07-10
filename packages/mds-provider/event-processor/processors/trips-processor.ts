@@ -57,14 +57,14 @@ const createTrip = (recorded: Timestamp) => (entry: TripsProcessorStreamEntry, s
 const insertTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
     await db.writeTrips(trips)
-    logger.info(`Trips Processor: Created ${trips.length} trips`)
+    logger.info(`|- Trips Processor: Created ${trips.length} trips`)
   }
 }
 
 const updateTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
     await Promise.all(trips.map(trip => db.updateTrip(trip.provider_trip_id, trip)))
-    logger.info(`Trips Processor: Updated ${trips.length} trips`)
+    logger.info(`|- Trips Processor: Updated ${trips.length} trips`)
   }
 }
 
