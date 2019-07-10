@@ -212,22 +212,28 @@ function api(app: express.Express): express.Express {
 
     async function getMaps(): Promise<{
       eventMap: { [s: string]: VehicleEvent }
-      telemetryMap: { [s: string]: Telemetry }
+      // telemetryMap: { [s: string]: Telemetry }
     }> {
-      const telemetry: Telemetry[] = await cache.readAllTelemetry()
-      const events: VehicleEvent[] = await cache.readAllEvents()
-      const eventSeed: { [s: string]: VehicleEvent } = {}
-      const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
-        return Object.assign(map, { [event.device_id]: event })
-      }, eventSeed)
-      const telemetrySeed: { [s: string]: Telemetry } = {}
-      const telemetryMap = telemetry.reduce((map, t) => {
-        return Object.assign(map, { [t.device_id]: t })
-      }, telemetrySeed)
-      return Promise.resolve({
-        telemetryMap,
-        eventMap
-      })
+      try {
+        // const telemetry: Telemetry[] = await cache.readAllTelemetry()
+        // log.info('read telemetry')
+        const events: VehicleEvent[] = await cache.readAllEvents()
+        log.info('read events')
+        const eventSeed: { [s: string]: VehicleEvent } = {}
+        const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
+          return Object.assign(map, { [event.device_id]: event })
+        }, eventSeed)
+        // const telemetrySeed: { [s: string]: Telemetry } = {}
+        // const telemetryMap = telemetry.reduce((map, t) => {
+        //   return Object.assign(map, { [t.device_id]: t })
+        // }, telemetrySeed)
+        return Promise.resolve({
+          // telemetryMap,
+          eventMap
+        })
+      } catch (err) {
+        return Promise.reject(err)
+      }
     }
 
     db.getVehicleCountsPerProvider().then((rows: { provider_id: UUID; count: number }[]) => {
@@ -252,30 +258,34 @@ function api(app: express.Express): express.Express {
       log.warn('/admin/vehicle_counts', JSON.stringify(stats))
 
       getMaps()
-        .then((maps: { eventMap: { [s: string]: VehicleEvent }; telemetryMap: { [s: string]: Telemetry } }) => {
+        .then((maps: { eventMap: { [s: string]: VehicleEvent } /* telemetryMap: { [s: string]: Telemetry } */ }) => {
           // TODO reimplement to be more efficient
           const { eventMap } = maps
           Promise.all(
             stats.map(stat => {
-              return db.readDeviceIds(stat.provider_id).then((items: DeviceID[]) => {
-                items.map(item => {
-                  const event = eventMap[item.device_id]
-                  const event_type = event ? event.event_type : 'default'
-                  inc(stat.event_type, event_type)
-                  const status = EVENT_STATUS_MAP[event_type]
-                  inc(stat.status, status)
-                  // TODO latest-state should remove service_area_id if it's null
-                  if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
-                    const serviceArea = areas.serviceAreaMap[event.service_area_id]
-                    if (serviceArea) {
-                      inc(stat.areas, serviceArea.description)
+              return db
+                .readDeviceIds(stat.provider_id)
+                .then((items: DeviceID[]) => {
+                  items.map(item => {
+                    const event = eventMap[item.device_id]
+                    const event_type = event ? event.event_type : 'default'
+                    inc(stat.event_type, event_type)
+                    const status = EVENT_STATUS_MAP[event_type]
+                    inc(stat.status, status)
+                    // TODO latest-state should remove service_area_id if it's null
+                    if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
+                      const serviceArea = areas.serviceAreaMap[event.service_area_id]
+                      if (serviceArea) {
+                        inc(stat.areas, serviceArea.description)
+                      }
                     }
-                  }
+                  })
                 })
-              })
+                .catch(fail)
             })
           )
             .then(() => {
+              log.warn(JSON.stringify(stats))
               res.status(200).send(stats)
             }, fail)
             .catch(fail)
