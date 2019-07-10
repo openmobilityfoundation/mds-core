@@ -22,10 +22,11 @@ import cache from 'mds-cache'
 import { providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
-import { isUUID, now, pathsFor, isTimestamp } from 'mds-utils'
-import { Timestamp } from 'mds'
+import { isUUID, now, pathsFor, isTimestamp, round, routeDistance } from 'mds-utils'
+import { Timestamp, Telemetry } from 'mds'
 import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from 'mds-db/types'
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
+import { Feature, FeatureCollection } from 'geojson'
 import { ProviderApiRequest, ProviderApiResponse } from './types'
 
 log.startup()
@@ -209,49 +210,44 @@ function api(app: express.Express): express.Express {
    * @param item a Telemetry object
    * @returns a GeoJSON feature
    */
-  // function asFeature(item: Telemetry): Feature {
-  //   return {
-  //     type: 'Feature',
-  //     properties: {
-  //       timestamp: item.timestamp
-  //     },
-  //     geometry: {
-  //       type: 'Point',
-  //       coordinates: [round(item.gps.lng, 6), round(item.gps.lat, 6)]
-  //     }
-  //   }
-  // }
+  function asFeature(item: Telemetry): Feature {
+    return {
+      type: 'Feature',
+      properties: {
+        timestamp: item.timestamp
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [round(item.gps.lng, 6), round(item.gps.lat, 6)]
+      }
+    }
+  }
 
   /**
    * Convert a list of Telemetry points into a FeatureCollection
    * @param  {items list of Telemetry elements}
    * @return {GeoJSON FeatureCollection}
    */
-  // function asFeatureCollection(items: Telemetry[]): FeatureCollection {
-  //   return {
-  //     type: 'FeatureCollection',
-  //     features: items.map((item: Telemetry) => asFeature(item))
-  //   }
-  // }
+  function asFeatureCollection(items: Telemetry[]): FeatureCollection {
+    return {
+      type: 'FeatureCollection',
+      features: items.map((item: Telemetry) => asFeature(item))
+    }
+  }
 
-  /**
-   * Generate a GeoJSON Route from a trip_start and trip_end Event
-   * @param  {trip_start Event}
-   * @param  {trip_end Event}
-   * @return {Trip object}
-   */
-  // async function asRoute(trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<FeatureCollection> {
-  //   log.info('asRoute', JSON.stringify(trip_start), JSON.stringify(trip_end))
-  //   const telemetry: Telemetry[] = await db.readTelemetry(
-  //     trip_start.device_id,
-  //     trip_start.timestamp,
-  //     trip_end.timestamp
-  //   )
-  //   log.info('asRoute telemetry', JSON.stringify(telemetry))
-  //   return Promise.resolve(asFeatureCollection(telemetry))
-  // }
-
-  const asTrip = ({ recorded, sequence, ...props }: Trip): Omit<Trip, 'recorded' | 'sequence'> => props
+  const asTrip = async ({ recorded, sequence, ...trip }: Trip): Promise<Omit<Trip, 'recorded' | 'sequence'>> => {
+    const { trip_start, trip_end } = trip
+    if (trip_start && trip_end && trip_end > trip_start) {
+      const telemetry = await db.readTelemetry(trip.device_id, trip_start, trip_end)
+      return {
+        ...trip,
+        route: asFeatureCollection(telemetry),
+        trip_distance: round(routeDistance(telemetry.map(t => t.gps)), 6),
+        trip_duration: trip_end - trip_start
+      }
+    }
+    return trip
+  }
 
   app.get(pathsFor('/trips'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // Standard Provider parameters
@@ -295,7 +291,7 @@ function api(app: express.Express): express.Express {
       res.status(200).send({
         version: PROVIDER_VERSION,
         data: {
-          trips: trips.map(asTrip)
+          trips: await Promise.all(trips.map(asTrip))
         },
         links: asJsonApiLinks(req, skip, take, count),
         ...getStage0Properties(trips)
@@ -369,27 +365,6 @@ function api(app: express.Express): express.Express {
       res.status(500).send({ error: new Error(desc) })
     }
   })
-
-  /**
-   * Convert a telemetry object to a GeoJSON Point
-   * @param  {Telemetry}
-   * @return {GeoJSON Point feature}
-   */
-  // function asPoint(telemetry: Telemetry): Feature | null {
-  //   if (!telemetry) {
-  //     return null
-  //   }
-  //   return {
-  //     type: 'Feature',
-  //     properties: {
-  //       timestamp: telemetry.timestamp
-  //     },
-  //     geometry: {
-  //       type: 'Point',
-  //       coordinates: [round(telemetry.gps.lng, 6), round(telemetry.gps.lat, 6)]
-  //     }
-  //   }
-  // }
 
   return app
 }
