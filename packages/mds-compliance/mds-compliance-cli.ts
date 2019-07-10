@@ -17,7 +17,7 @@ import * as fs from 'fs'
 import log from 'mds-logger'
 import * as yargs from 'yargs'
 import { Policy, Geography, ComplianceResponse, VehicleEvent, Device } from 'mds'
-import { filterPolicies, processPolicy } from './mds-compliance-engine'
+import { filterPolicies, processPolicy, filterEvents } from './mds-compliance-engine'
 import { validateEvents, validateGeographies, validatePolicies } from './validators'
 
 const args = yargs
@@ -69,6 +69,7 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
     log.error('unable to read events')
     process.exit(1)
   }
+  const filteredEvents = filterEvents(events)
 
   // read devices
   const devices = ((await readJson(args.devices)) as Device[]).reduce((map: { [d: string]: Device }, device) => {
@@ -80,9 +81,11 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
     process.exit(1)
   }
 
-  const filtered_policies: Policy[] = filterPolicies(policies)
+  const filteredPolicies = filterPolicies(policies)
   // emit results
-  return Promise.resolve(filtered_policies.map((policy: Policy) => processPolicy(policy, events, geographies, devices)))
+  return Promise.resolve(
+    filteredPolicies.map((policy: Policy) => processPolicy(policy, filteredEvents, geographies, devices))
+  )
 }
 
 main()
