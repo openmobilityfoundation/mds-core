@@ -14,6 +14,7 @@
     limitations under the License.
  */
 import { Device, VehicleEvent, Timestamp, Telemetry, Stringify, TelemetryData } from 'mds'
+import { PROPULSION_TYPE } from 'mds-enums'
 
 export type StringifiedEvent = Stringify<Omit<VehicleEvent, 'telemetry'>>
 export type StringifiedTelemetry = Stringify<Omit<Telemetry, 'gps'>> & {
@@ -21,6 +22,8 @@ export type StringifiedTelemetry = Stringify<Omit<Telemetry, 'gps'>> & {
 }
 export type StringifiedEventWithTelemetry = StringifiedEvent & { telemetry?: StringifiedTelemetry }
 
-export type StringifiedCacheReadDeviceResult = Stringify<CacheReadDeviceResult & { timestamp?: Timestamp }>
+export type StringifiedCacheReadDeviceResult = Stringify<CacheReadDeviceResult & { timestamp?: Timestamp }> & {
+  propulsion: PROPULSION_TYPE[]
+}
 export type CacheReadDeviceResult = Device & { updated?: Timestamp | null; telemetry?: Telemetry | null }
 export type CachedItem = StringifiedCacheReadDeviceResult | StringifiedTelemetry | StringifiedEvent
