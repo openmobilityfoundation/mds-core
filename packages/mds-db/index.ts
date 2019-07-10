@@ -1469,6 +1469,13 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+async function publishPolicy(policy_id: UUID) {
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${schema.POLICIES_TABLE} SET published='t' where policy_id=${policy_id}`
+  const res = await client.query(sql).catch(err => { throw err })
+  return res
+}
+
 async function readRule(rule_id: UUID): Promise<Rule> {
   const client = await getReadOnlyClient()
   const sql = `SELECT * from ${schema.POLICIES_TABLE} where EXISTS(SELECT FROM json_array_elements(${schema.POLICIES_COLS[1]}->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`

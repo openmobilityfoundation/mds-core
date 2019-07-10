@@ -360,6 +360,32 @@ function api(app: express.Express): express.Express {
       })
   })
 
+  app.post(pathsFor('/admin/policies/:policy_id/publish'), (req, res) => {
+    const policy = req.body
+    log.info('policy body', policy)
+    const validation = Joi.validate(policy, policySchema)
+    const details = validation.error ? validation.error.details : null
+
+    if (details) {
+      log.info('questionable policy json', details)
+      res.status(422).send(details)
+      return
+    }
+    db.writePolicy(policy)
+      .then(
+        () => {
+          res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+        },
+        (err: Error) => /* istanbul ignore next */ {
+          log.error('failed to write geography', err.stack)
+          res.status(404).send({ result: 'not found' })
+        }
+      )
+      .catch((ex: Error) => /* istanbul ignore next */ {
+        log.error(ex)
+        res.status(500).send(SERVER_ERROR)
+      })
+  })
   // TODO publish geography
 
   // TODO publish policy
