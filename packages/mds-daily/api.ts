@@ -272,7 +272,7 @@ function api(app: express.Express): express.Express {
                     const serviceArea = areas.serviceAreaMap[event.service_area_id]
                     if (serviceArea) {
                       inc(stat.areas, serviceArea.description)
-                      if (event.timestamp >= HRS_48_AGO) {   
+                      if (event.timestamp >= HRS_48_AGO) {
                         inc(stat.areas_48h, serviceArea.description)
                       }
                     }
