@@ -60,7 +60,7 @@ export const DeviceLabeler = async (entries: StreamEntry[]): Promise<StreamEntry
       { labels: {}, labeled: 0 }
     )
 
-    logger.info(`Device Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'}`)
+    logger.info(`|- Device Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'}`)
 
     return labels
   }

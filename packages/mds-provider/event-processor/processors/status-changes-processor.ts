@@ -78,6 +78,6 @@ export const StatusChangesProcessor = async (entries: StatusChangesProcessorStre
   if (entries.length > 0) {
     const recorded = now()
     await db.writeStatusChanges(entries.map(asStatusChange(recorded)))
-    logger.info(`Status Changes Processor: Created ${entries.length} status changes`)
+    logger.info(`|- Status Changes Processor: Created ${entries.length} status changes`)
   }
 }

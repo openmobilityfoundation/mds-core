@@ -28,6 +28,8 @@ import { StatusChangesProcessor } from './processors/status-changes-processor'
 import { TripLabeler } from './labelers/trip-labeler'
 import { TripsProcessor, TripEvent } from './processors/trips-processor'
 
+export type ProviderEventProcessorOptions = ReadStreamOptions & Partial<{ interval: number }>
+
 const isStatusChangesProcessorStreamEntry = (entry: StreamEntry): entry is StreamEntry<VehicleEvent> =>
   entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
 
@@ -66,18 +68,10 @@ const statusChangePrimaryKey = (item: StatusChange | null): VehicleEventPrimaryK
   return null
 }
 
-async function process(options: ReadStreamOptions): Promise<void> {
-  logger.info('Processing Event Stream', options)
-
+const processor = async (options: ReadStreamOptions): Promise<number> => {
   const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
-    // Create the consumer group if it doesn't exist
-    if (info.groups === 0) {
-      await stream.createStreamGroup('provider:event', 'event-processor')
-      logger.info('Created Consumer Group')
-    }
-
     const events = await db.readEventsRangeExclusive(
       statusChangePrimaryKey(await db.getMostRecentStatusChange()),
       streamItemPrimaryKey(info.firstEntry),
@@ -123,28 +117,54 @@ async function process(options: ReadStreamOptions): Promise<void> {
           }))
         )
       ])
-    } else {
-      logger.info('No entries to process.')
+      return entries.length
     }
+    logger.info('No entries to process.')
   } else {
     logger.info('Stream Unavailable')
   }
+  return 0
 }
 
-async function start(): Promise<void> {
+const start = async (): Promise<void> => {
   logger.info('Starting Event Processor')
   await Promise.all([db.startup(), stream.startup()])
+  const info = await stream.getStreamInfo('provider:event')
+  // Create the stream and consumer group if they don't exist
+  if (!info || info.groups === 0) {
+    await stream.createStreamGroup('provider:event', 'event-processor')
+    logger.info('Created Consumer Group')
+  }
 }
 
-async function stop(): Promise<void> {
+const stop = async (): Promise<void> => {
   logger.info('Stopping Event Processor')
   await Promise.all([stream.shutdown(), db.shutdown()])
 }
 
-export type ProviderEventProcessorOptions = ReadStreamOptions
+const wait = async (interval: number): Promise<number> =>
+  interval > 0 ? new Promise(resolve => setTimeout(() => resolve(interval), interval)) : Promise.resolve(interval)
 
-export async function ProviderEventProcessor(options: ReadStreamOptions = {}): Promise<void> {
+/* eslint-reason this is the event processor's event loop */
+/* eslint-disable no-await-in-loop */
+const process = async ({
+  interval = 0,
+  noack = true,
+  count = 1000,
+  block
+}: ProviderEventProcessorOptions = {}): Promise<number> => {
+  logger.info('Processing Event Stream', { interval, noack, count, block })
+  let processed = 0
+  do {
+    processed += await processor({ noack, count, block })
+  } while ((await wait(interval)) > 0)
+  return processed
+}
+/* eslint-enable no-await-in-loop */
+
+export const ProviderEventProcessor = async (options: ProviderEventProcessorOptions = {}): Promise<number> => {
   await start()
-  await process({ noack: true, ...options })
+  const processed = await process(options)
   await stop()
+  return processed
 }

@@ -23,6 +23,7 @@ import { Device, Telemetry, VehicleEvent } from 'mds'
 import { server } from 'mds-api-server'
 import log from 'mds-logger'
 import { api } from '../api'
+import { ProviderEventProcessor } from '../event-processor'
 
 process.env.PATH_PREFIX = '/provider'
 
@@ -137,8 +138,6 @@ const test_deregister: VehicleEvent = {
 
 const test_events = [test_trip_start, test_trip_end, test_deregister]
 
-// TODO make trips
-
 const test_devices = [TEST_DEVICE, TEST_DEVICE2, ...makeDevices(98, ORIGINAL_TEST_TIMESTAMP)]
 
 test_telemetry.push(...makeTelemetry(test_devices, ORIGINAL_TEST_TIMESTAMP))
@@ -203,6 +202,7 @@ describe('Tests app', () => {
         done(err)
       })
   })
+
   it('verifies that it can post specific seed data', done => {
     request
       .post('/test/seed')
@@ -215,12 +215,21 @@ describe('Tests app', () => {
       })
   })
 
+  it('verifies event processing', done => {
+    ProviderEventProcessor().then(
+      processed => {
+        test.value(processed).is(3)
+        done()
+      },
+      err => done(err)
+    )
+  })
+
   it('tries to get trips without authorization', done => {
     request
       .get('/trips')
       .expect(403)
       .end((err, result) => {
-        // TODO examine trip results
         log.info('error:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.string(result.body.error).contains('missing_provider_id')
@@ -228,31 +237,17 @@ describe('Tests app', () => {
       })
   })
 
-  // TODO add BAD_PROVIDER_AUTH to test data
-  // it('tries to get trips without authorization', done => {
-  //   request
-  //     .get('/trips')
-  //     .set('Authorization', BAD_PROVIDER_AUTH)
-  //     .expect(403)
-  //     .end((err, result) => {
-  //       // TODO examine trip results
-  //       log('error:', result.body)
-  //       test.value(result).hasHeader('content-type', APP_JSON)
-  //       test.string(result.body.error).contains('missing_provider_id')
-  //       done(err)
-  //     })
-  // })
-
   it('verifies get all trips', done => {
     request
       .get('/trips')
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // TODO examine trip results
-        log.info('trips:', result.body)
-        test.object(result.body).hasProperty('version')
         test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('data')
+        test.object(result.body.data).hasProperty('trips')
+        test.value(result.body.data.trips.length).is(1)
         done(err)
       })
   })
@@ -276,22 +271,26 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('data')
+        test.object(result.body.data).hasProperty('trips')
         done(err)
       })
   })
 
   it('verifies get trips for date range', done => {
     request
-      .get(`/trips?start_time=${test_trip_start.timestamp}&end_time=${test_trip_start.timestamp}`)
+      .get(`/trips?start_time=${test_trip_start.timestamp}&end_time=${test_trip_end.timestamp}`)
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('data')
+        test.object(result.body.data).hasProperty('trips')
         done(err)
       })
   })
-
-  // TODO trips for ....
 
   it('verifies get all status changes', done => {
     request
@@ -299,32 +298,27 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // TODO examine status change results
-        log.info('------ all changes:', result.body)
-        test.object(result.body).hasProperty('version')
         test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('data')
+        test.object(result.body.data).hasProperty('status_changes')
+        test.value(result.body.data.status_changes.length).is(3)
         done(err)
       })
   })
 
   it('verifies get status changes for ORIGINAL_TEST_TIMESTAMP', done => {
     request
-      .get(`/status_changes?start_time=${test_trip_start.timestamp}&end_time=${test_trip_start.timestamp}`)
+      .get(`/status_changes?start_time=${test_trip_start.timestamp}&end_time=${test_trip_end.timestamp}`)
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
-        // TODO examine status change results
         log.info('----- one change:', result.body)
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
-        const status_change = result.body.data.status_changes[0]
-        test
-          .object(status_change)
-          .hasProperty('provider_id', PROVIDER_UUID)
-          .hasProperty('vehicle_id', DEVICE_VIN)
-          .hasProperty('vehicle_type', VEHICLE_TYPES.bicycle)
-          .hasProperty('event_type', 'reserved')
-          .hasProperty('event_type_reason', 'trip_start')
+        test.object(result.body).hasProperty('data')
+        test.object(result.body.data).hasProperty('status_changes')
+        test.value(result.body.data.status_changes.length).is(2)
         done(err)
       })
   })
@@ -335,70 +329,6 @@ describe('Tests app', () => {
       .set('Authorization', PROVIDER_AUTH)
       .expect(400)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('updates one device', done => {
-    request
-      .get(`/test/update_device?device_id=${DEVICE_UUID}`)
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // log('update', result.body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('imports trips from agency', done => {
-    request
-      .get('/admin/import_trips_from_agency')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('imports status_changes from agency', done => {
-    request
-      .get('/admin/import_status_changes_from_agency')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  // TODO need all the query params exercised
-  it('verifies get all trips from the db, rather than dynamic', done => {
-    request
-      .get('/trips?newSkool=true')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // TODO examine trip results
-        log.info('newSkool trips:', result.body)
-        test.object(result.body).hasProperty('version')
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  // TODO need all the query params exercised
-  it('verifies get all status_changes from the db, rather than dynamic', done => {
-    request
-      .get('/status_changes?newSkool=true')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // TODO examine trip results
-        log.info('newSkool status_changes:', result.body)
-        test.object(result.body).hasProperty('version')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
