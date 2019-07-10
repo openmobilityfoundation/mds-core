@@ -29,15 +29,13 @@ import {
   MatchedVehicle
 } from 'mds'
 import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS, TIME_FORMAT, DAYS_OF_WEEK } from 'mds-enums'
-import { pointInShape, getPolygon, isInStatesOrEvents } from 'mds-utils'
+import { pointInShape, getPolygon, isInStatesOrEvents, now } from 'mds-utils'
 import moment from 'moment-timezone'
 import { RuntimeError } from './exceptions'
 
 const { env } = process
 
-function now(): number {
-  return Date.now()
-}
+const TWO_DAYS_IN_MS = 172800000
 
 function isPolicyActive(policy: Policy, end_time: number = now()): boolean {
   if (policy.end_date === null) {
@@ -276,4 +274,11 @@ function filterPolicies(policies: Policy[]): Policy[] {
   })
 }
 
-export { processPolicy, filterPolicies }
+function filterEvents(events: VehicleEvent[], end_time = now()): VehicleEvent[] {
+  return events.filter((event: VehicleEvent) => {
+    /* Keep events that are less than two days old */
+    return event.timestamp > end_time - TWO_DAYS_IN_MS
+  })
+}
+
+export { processPolicy, filterPolicies, filterEvents }
