@@ -1,4 +1,4 @@
-import { VEHICLE_TYPE, PROPULSION_TYPE, VEHICLE_EVENT, VEHICLE_STATUS } from 'mds-enums'
+import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS } from 'mds-enums'
 import { Device, Telemetry, VehicleEvent } from 'mds'
 import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult } from './types'
 
@@ -55,7 +55,7 @@ function parseDevice(device: StringifiedCacheReadDeviceResult): Device {
       provider_id: device.provider_id,
       vehicle_id: device.vehicle_id,
       type: device.type as VEHICLE_TYPE,
-      propulsion: Array(device.propulsion) as PROPULSION_TYPE[],
+      propulsion: device.propulsion,
       year: device.year ? Number(device.year) : null,
       mfgr: device.mfgr ? device.mfgr : null,
       model: device.model ? device.model : null,
