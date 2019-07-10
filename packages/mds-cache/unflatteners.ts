@@ -3,7 +3,7 @@ import { Device, Telemetry, VehicleEvent } from 'mds'
 import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult } from './types'
 
 function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {
-  if (telemetry) {
+  try {
     return {
       charge: telemetry.charge ? Number(telemetry.charge) : null,
       device_id: telemetry.device_id,
@@ -20,8 +20,9 @@ function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {
       recorded: Number(telemetry.recorded),
       timestamp: Number(telemetry.timestamp)
     }
+  } catch (err) {
+    throw new Error(`unable to parse telemetry: ${telemetry}`)
   }
-  return telemetry
 }
 
 function parseEvent(

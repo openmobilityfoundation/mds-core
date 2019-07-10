@@ -155,6 +155,7 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
   return new Promise((resolve, reject) => {
     multi.exec((err, replies) => {
       if (err) {
+        log.error(err)
         reject(err)
       } else {
         resolve(
@@ -404,10 +405,14 @@ async function readAllTelemetry() {
     const [, device_id] = key.split(':')
     return device_id
   })
-  return (await hreads(['telemetry'], device_ids)).map(telemetry => {
-    return parseTelemetry(telemetry as StringifiedTelemetry)
-  })
-}
+  return ((await hreads(['telemetry'], device_ids)) as StringifiedTelemetry[]).reduce((acc: Telemetry[], telemetry) => {
+    try {
+      return [...acc, parseTelemetry(telemetry)]
+    } catch (err) {
+      log.warn(JSON.parse(err))
+      return acc
+    }
+  }, [])
 
 async function wipeDevice(device_id: UUID) {
   return readKeys(`*:${device_id}:*`).then(keys => {
