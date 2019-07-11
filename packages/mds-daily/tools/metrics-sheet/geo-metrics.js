@@ -80,15 +80,18 @@ async function getProviderMetrics() {
   }
   const token = await rp(token_options)
   const counts_options = {
-    uri: 'https://api.ladot.io/agency/admin/vehicle_counts',
+    uri: 'https://api.ladot.io/daily/admin/vehicle_counts',
     headers: { authorization: `Bearer ${token.access_token}` },
     json: true
   }
 
-  const counts = await rp(counts_options)
-  const rows = counts
-    .filter(p => reportProviders.includes(p.provider_id))
-    .map(provider => {
+  let i = 0
+  do {
+    try {
+      const counts = await rp(counts_options)
+      const rows = counts
+        .filter(p => reportProviders.includes(p.provider_id))
+        .map(provider => {
       const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
       const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
       const d = new Date()
@@ -98,10 +101,15 @@ async function getProviderMetrics() {
         ...provider.areas
       }
     })
-  return rows
+      return rows
+    } catch (err) {
+      console.log(err)
+      i += 1
+    }
+  } while (i < 10)
 }
 
-exports.handler = (event, context) =>
+//exports.handler = (event, context) =>
   getProviderMetrics()
     .then(rows => appendSheet('Vehicle Counts', rows))
     .catch(err => console.error(err))
