@@ -832,6 +832,7 @@ function api(app: express.Express): express.Express {
     const { device_id } = req.params
 
     const { provider_id } = getAuth(req)
+    const name = providerName(provider_id || 'unknown')
 
     const recorded = now()
 
@@ -853,26 +854,39 @@ function api(app: express.Express): express.Express {
     }
 
     function success(): void {
-      res.status(201).send({
-        result: 'success',
-        recorded,
-        device_id,
-        status: EVENT_STATUS_MAP[event.event_type]
-      })
+      function fin() {
+        res.status(201).send({
+          result: 'success',
+          recorded,
+          device_id,
+          status: EVENT_STATUS_MAP[event.event_type]
+        })
+      }
+      const delta = now() - recorded
+
+      if (delta > 100) {
+        log.info(name, 'post event took', delta, 'ms').then(fin)
+      } else {
+        fin()
+      }
     }
 
     /* istanbul ignore next */
     function fail(err: Error | Partial<{ message: string }>): void {
       const message = err.message || String(err)
       if (message.includes('duplicate')) {
-        res.status(409).send({
-          error: 'duplicate_event',
-          error_description: 'an event with this device_id and timestamp has already been received'
+        log.info(name, 'duplicate event', event.event_type).then(() => {
+          res.status(409).send({
+            error: 'duplicate_event',
+            error_description: 'an event with this device_id and timestamp has already been received'
+          })
         })
       } else if (message.includes('not found') || message.includes('unregistered')) {
-        res.status(400).send({
-          error: 'unregistered',
-          error_description: 'the specified device_id has not been registered'
+        log.info(name, 'event for unregistered', event.device_id, event.event_type).then(() => {
+          res.status(400).send({
+            error: 'unregistered',
+            error_description: 'the specified device_id has not been registered'
+          })
         })
       } else {
         log.error('post event fail:', JSON.stringify(event), message).then(() => {
@@ -891,9 +905,9 @@ function api(app: express.Express): express.Express {
     }
 
     // TODO switch to cache for speed?
-    db.readDeviceIds(provider_id)
-      .then((items: DeviceID[]) => {
-        if (!items.some(item => item.device_id === device_id)) {
+    db.readDevice(event.device_id)
+      .then((device: Device) => {
+        if (device.provider_id !== provider_id) {
           fail({
             message: 'not found'
           })
@@ -992,7 +1006,7 @@ function api(app: express.Express): express.Express {
           .then(
             () => {
               const delta = Date.now() - start
-              if (delta > 200) {
+              if (delta > 300) {
                 log.info(
                   'writeTelemetry',
                   valid.length,
