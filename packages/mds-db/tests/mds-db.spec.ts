@@ -11,7 +11,6 @@ import {
   POLICY_JSON,
   POLICY2_JSON
 } from 'mds-test-data'
-import logger from 'mds-logger'
 import { now, clone } from 'mds-utils'
 
 import { isNullOrUndefined } from 'util'
@@ -231,7 +230,6 @@ if (pg_info.database) {
         assert(!isNullOrUndefined(result.stats.current_running_queries))
       })
     })
-
 
     describe('unit test policy functions', () => {
       before(async () => {

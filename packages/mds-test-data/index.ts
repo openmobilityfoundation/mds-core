@@ -27,7 +27,16 @@ import { UUID, Device, Timestamp, Telemetry, VehicleEvent, Policy } from 'mds'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from 'mds-db/types'
 
-import { addDistanceBearing, pointInShape, makePointInShape, rangeRandom, rangeRandomInt, range, now, days } from 'mds-utils'
+import {
+  addDistanceBearing,
+  pointInShape,
+  makePointInShape,
+  rangeRandom,
+  rangeRandomInt,
+  range,
+  now,
+  days
+} from 'mds-utils'
 
 import { serviceAreaMap } from 'ladot-service-areas'
 

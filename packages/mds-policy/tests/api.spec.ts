@@ -25,8 +25,6 @@ import { now, days, clone } from 'mds-utils'
 import { Policy } from 'mds'
 import { server } from 'mds-api-server'
 import { TEST1_PROVIDER_ID } from 'mds-providers'
-import { la_city_boundary } from './la-city-boundary'
-import { api } from '../api'
 import {
   POLICY_JSON,
   POLICY2_JSON,
@@ -35,8 +33,10 @@ import {
   POLICY2_UUID,
   GEOGRAPHY_UUID,
   START_ONE_MONTH_AGO,
-  START_ONE_WEEK_AGO,
+  START_ONE_WEEK_AGO
 } from 'mds-test-data'
+import { api } from '../api'
+import { la_city_boundary } from './la-city-boundary'
 
 process.env.PATH_PREFIX = '/policy'
 
@@ -376,7 +376,6 @@ describe('Tests app', () => {
         done(err)
       })
   })
-
 
   // PUBLISHING (TODO)
   // a published policy or geography should be read-only,

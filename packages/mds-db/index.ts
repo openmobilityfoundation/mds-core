@@ -1408,7 +1408,7 @@ async function readPolicies(params?: {
   name?: string
   description?: string
   start_date?: Timestamp
-  end_date?: Timestamp,
+  end_date?: Timestamp
   get_unpublished?: boolean
 }): Promise<Policy[]> {
   // use params to filter
@@ -1476,7 +1476,6 @@ async function writePolicy(policy: Policy) {
   })
 }
 
-
 async function editPolicy(policy: Policy) {
   // validate TODO
   // write
@@ -1504,7 +1503,9 @@ async function editPolicy(policy: Policy) {
 async function publishPolicy(policy_id: UUID) {
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.POLICIES_TABLE} SET published='t' where policy_id='${policy_id}'`
-  await client.query(sql).catch(err => { throw err })
+  await client.query(sql).catch(err => {
+    throw err
+  })
   return policy_id
 }
 

@@ -141,7 +141,7 @@ function api(app: express.Express): express.Express {
     }
 
     let get_unpublished = false
-    if (unpublished != undefined || unpublished != null) {
+    if (unpublished !== undefined || unpublished !== null) {
       get_unpublished = true
     }
 
@@ -250,11 +250,10 @@ function api(app: express.Express): express.Express {
   app.post(pathsFor('/policies/:policy_id'), (req, res) => {
     const { policy_id } = req.params
     db.publishPolicy(policy_id)
-      .then(
-        () => {
-          res.status(200).send({ result: `Successfully published policy of id ${policy_id}`})
-        }
-    ).catch(error => {
+      .then(() => {
+        res.status(200).send({ result: `Successfully published policy of id ${policy_id}` })
+      })
+      .catch(error => {
         log.error(error)
         res.status(500).send(new ServerError())
       })
@@ -354,7 +353,6 @@ function api(app: express.Express): express.Express {
 
   app.post(pathsFor('/admin/policies/:policy_id'), (req, res) => {
     const policy = req.body
-    log.info('policy body', policy)
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
@@ -381,7 +379,6 @@ function api(app: express.Express): express.Express {
 
   app.post(pathsFor('/admin/policies/:policy_id/publish'), (req, res) => {
     const policy = req.body
-    log.info('policy body', policy)
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
