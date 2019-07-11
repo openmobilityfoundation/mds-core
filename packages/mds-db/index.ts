@@ -292,7 +292,6 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 
 // TODO: FIX updateDevice/readDevice circular reference
 async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  const callStacker = new Error()
   return new Promise((resolve, reject) => {
     // read from pg
     getReadOnlyClient().then(client => {
@@ -302,12 +301,12 @@ async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
       client
         .query(sql, values)
         .then(
-          res => {
+          async res => {
             // verify one row
             if (res.rows.length === 1) {
               resolve(res.rows[0])
             } else {
-              log.warn(`readDevice db failed for ${device_id}: rows=${res.rows.length}`, callStacker.stack)
+              await log.warn(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
               reject(new Error(`device_id ${device_id} not found`))
             }
           },
