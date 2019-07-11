@@ -524,6 +524,8 @@ function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
           return true
         case VEHICLE_EVENTS.service_end:
           return true
+        case VEHICLE_EVENTS.trip_start:
+          return true
         default:
           return false
       }
