@@ -98,7 +98,7 @@ async function getProviderMetrics() {
       return {
         date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
         name: provider.provider,
-        ...provider.areas
+        ...provider.areas_48
       }
     })
       return rows
