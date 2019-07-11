@@ -6,10 +6,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "start": "node ./dist/geo-metrics.js",
-    "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
     "build": "tsc --build .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
