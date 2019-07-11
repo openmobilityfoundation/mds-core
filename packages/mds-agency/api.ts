@@ -61,7 +61,7 @@ import {
   tail,
   isStateTransitionValid
 } from 'mds-utils'
-import { ServiceArea, AgencyApiRequest, AgencyApiResponse } from './types'
+import { ServiceArea, AgencyApiRequest, AgencyApiResponse } from 'mds-agency/types'
 
 log.startup()
 
@@ -127,7 +127,7 @@ function api(app: express.Express): express.Express {
   /**
    * for some functions we will want to validate the :device_id param
    */
-  function validateDeviceId(req: AgencyApiRequest, res: AgencyApiResponse, next: Function): void {
+  function validateDeviceId(req: express.Request, res: express.Response, next: Function): void {
     const { device_id } = req.params
 
     /* istanbul ignore if This is never called with no device_id parameter */
@@ -793,12 +793,13 @@ function api(app: express.Express): express.Express {
       const { device_id } = req.params
 
       const { provider_id } = res.locals
+      const name = providerName(provider_id || 'unknown')
 
       const recorded = now()
 
       const event: VehicleEvent = {
         device_id: req.params.device_id,
-        provider_id,
+        provider_id: res.locals.provider_id,
         event_type: lower(req.body.event_type) as VEHICLE_EVENT,
         event_type_reason: lower(req.body.event_type_reason),
         telemetry: req.body.telemetry ? { ...req.body.telemetry, provider_id: res.locals.provider_id } : null,
@@ -814,26 +815,39 @@ function api(app: express.Express): express.Express {
       }
 
       function success(): void {
-        res.status(201).send({
-          result: 'success',
-          recorded,
-          device_id,
-          status: EVENT_STATUS_MAP[event.event_type]
-        })
+        function fin() {
+          res.status(201).send({
+            result: 'success',
+            recorded,
+            device_id,
+            status: EVENT_STATUS_MAP[event.event_type]
+          })
+        }
+        const delta = now() - recorded
+
+        if (delta > 100) {
+          log.info(name, 'post event took', delta, 'ms').then(fin)
+        } else {
+          fin()
+        }
       }
 
       /* istanbul ignore next */
       function fail(err: Error | Partial<{ message: string }>): void {
         const message = err.message || String(err)
         if (message.includes('duplicate')) {
-          res.status(409).send({
-            error: 'duplicate_event',
-            error_description: 'an event with this device_id and timestamp has already been received'
+          log.info(name, 'duplicate event', event.event_type).then(() => {
+            res.status(409).send({
+              error: 'duplicate_event',
+              error_description: 'an event with this device_id and timestamp has already been received'
+            })
           })
         } else if (message.includes('not found') || message.includes('unregistered')) {
-          res.status(400).send({
-            error: 'unregistered',
-            error_description: 'the specified device_id has not been registered'
+          log.info(name, 'event for unregistered', event.device_id, event.event_type).then(() => {
+            res.status(400).send({
+              error: 'unregistered',
+              error_description: 'the specified device_id has not been registered'
+            })
           })
         } else {
           log.error('post event fail:', JSON.stringify(event), message).then(() => {
@@ -852,9 +866,9 @@ function api(app: express.Express): express.Express {
       }
 
       // TODO switch to cache for speed?
-      db.readDeviceIds(provider_id)
-        .then((items: DeviceID[]) => {
-          if (!items.some(item => item.device_id === device_id)) {
+      db.readDevice(event.device_id)
+        .then((device: Device) => {
+          if (device.provider_id !== provider_id) {
             fail({
               message: 'not found'
             })
@@ -954,7 +968,7 @@ function api(app: express.Express): express.Express {
           .then(
             () => {
               const delta = Date.now() - start
-              if (delta > 200) {
+              if (delta > 300) {
                 log.info(
                   'writeTelemetry',
                   valid.length,
