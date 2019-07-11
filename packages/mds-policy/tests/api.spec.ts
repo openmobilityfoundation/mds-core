@@ -238,6 +238,43 @@ describe('Tests app', () => {
       })
   })
 
+  it('reads back all unpublished policies', done => {
+    request
+      .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.policies.length).is(3)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('can publish a policy', done => {
+    request
+      .post(`/policies/${POLICY_JSON.policy_id}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('reads back the correct number of unpublished policies after a policy has been published', done => {
+    request
+      .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.policies.length).is(2)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('read back an old policy', done => {
     request
       .get(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`)

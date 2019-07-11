@@ -133,13 +133,21 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies'), (req, res) => {
-    const { start_date = now(), end_date = now() } = req.query
+    const { start_date = now(), end_date = now(), unpublished } = req.query
     log.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
       res.status(400).send({ result: 'start_date after end_date' })
       return
     }
-    db.readPolicies({ start_date, end_date })
+
+    let get_unpublished = false
+    if (unpublished != undefined || unpublished != null) {
+      get_unpublished = true
+    }
+
+    log.info('unpublished', unpublished)
+
+    db.readPolicies({ start_date, end_date, get_unpublished })
       .then(
         (policies: Policy[]) => {
           log.info('read policies (all)', policies.length)
@@ -240,6 +248,16 @@ function api(app: express.Express): express.Express {
         .required()
     })
     .unknown(true) // TODO
+
+  app.post(pathsFor('/policies/:policy_id'), (req, res) => {
+    const { policy_id } = req.params
+    db.publishPolicy(policy_id)
+      .then(
+        () => {
+          res.status(200).send({ result: `Successfully published policy of id ${policy_id}`})
+        }
+      )
+  })
 
   app.post(pathsFor('/admin/geographies/:geography_id'), (req, res) => {
     const geography = req.body

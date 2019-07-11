@@ -1408,7 +1408,8 @@ async function readPolicies(params?: {
   name?: string
   description?: string
   start_date?: Timestamp
-  end_date?: Timestamp
+  end_date?: Timestamp,
+  get_unpublished?: boolean
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -1422,6 +1423,11 @@ async function readPolicies(params?: {
     if (params && params.policy_id) {
       conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
     }
+
+    if (params && params.get_unpublished) {
+      conditions.push(`published = ${vals.add('f')}`)
+    }
+
     if (conditions.length) {
       sql += ` WHERE ${conditions.join(' AND ')}`
     }
@@ -1471,9 +1477,9 @@ async function writePolicy(policy: Policy) {
 
 async function publishPolicy(policy_id: UUID) {
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.POLICIES_TABLE} SET published='t' where policy_id=${policy_id}`
-  const res = await client.query(sql).catch(err => { throw err })
-  return res
+  const sql = `UPDATE ${schema.POLICIES_TABLE} SET published='t' where policy_id='${policy_id}'`
+  await client.query(sql).catch(err => { throw err })
+  return policy_id
 }
 
 async function readRule(rule_id: UUID): Promise<Rule> {
@@ -1603,6 +1609,7 @@ export = {
   writeGeography,
   readPolicies,
   writePolicy,
+  publishPolicy,
   readRule,
   writeStatusChanges,
   readStatusChanges,

@@ -7,7 +7,9 @@ import {
   makeEvents,
   makeStatusChange,
   makeTrip,
-  JUMP_PROVIDER_ID
+  JUMP_PROVIDER_ID,
+  POLICY_JSON,
+  POLICY2_JSON
 } from 'mds-test-data'
 import { now } from 'mds-utils'
 
@@ -243,8 +245,19 @@ if (pg_info.database) {
       afterEach(async () => {
         await MDSDBPostgres.shutdown()
       })
-      it('does this', () => {
 
+      it('can write, read, and publish a Policy', async () => {
+        await MDSDBPostgres.initialize()
+        await MDSDBPostgres.writePolicy(POLICY_JSON)
+        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY_JSON.policy_id })
+        assert.deepEqual(result[0], POLICY_JSON)
+
+        await MDSDBPostgres.writePolicy(POLICY2_JSON)
+        await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
+        const allPolicies = await MDSDBPostgres.readPolicies()
+        assert.deepEqual(allPolicies.length, 2)
+        const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true })
+        assert.deepEqual(unpublishedPolicies.length, 1)
       })
     })
   })
