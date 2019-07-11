@@ -20,7 +20,6 @@ import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
 import { VehicleEvent, VehicleEventPrimaryKey } from 'mds'
-import { StatusChange } from 'mds-db/dist/types'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -60,20 +59,11 @@ const streamItemPrimaryKey = (item: StreamItem | null): VehicleEventPrimaryKey =
   return null
 }
 
-const statusChangePrimaryKey = (item: StatusChange | null): VehicleEventPrimaryKey => {
-  if (item) {
-    const { event_time: timestamp, device_id } = item
-    return { timestamp, device_id }
-  }
-  return null
-}
-
 const processor = async (options: ReadStreamOptions): Promise<number> => {
   const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
-    const { count, events } = await db.readEventsRangeExclusive(
-      statusChangePrimaryKey(await db.getMostRecentStatusChange()),
+    const { count, events } = await db.readUnprocessedStatusChangeEvents(
       streamItemPrimaryKey(info.firstEntry),
       options.count || 1000
     )

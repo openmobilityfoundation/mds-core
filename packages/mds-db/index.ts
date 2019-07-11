@@ -1472,41 +1472,23 @@ async function readRule(rule_id: UUID): Promise<Rule> {
   }
 }
 
-async function getMostRecentStatusChange(): Promise<Recorded<StatusChange> | null> {
-  // SELECT * FROM status_changes ORDER BY event_time DESC, device_id DESC LIMIT 1
-  const client = await getReadOnlyClient()
-  const exec = SqlExecuter(client)
-  const results = await exec(
-    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ORDER BY event_time DESC, device_id DESC LIMIT 1`
-  )
-  if (results.rowCount === 1) {
-    const {
-      rows: [result]
-    } = results
-    return result
-  }
-  return null
-}
-
-async function readEventsRangeExclusive(
-  after: VehicleEventPrimaryKey,
+async function readUnprocessedStatusChangeEvents(
   before: VehicleEventPrimaryKey,
   take: number
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
-  const conditions = []
 
-  if (after) {
-    const [timestamp, device_id] = [after.timestamp, after.device_id].map(value => vals.add(value))
-    conditions.push(`(E.timestamp > ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id > ${device_id}))`)
-  }
+  const conditions = [
+    `NOT EXISTS (SELECT FROM ${schema.STATUS_CHANGES_TABLE} WHERE device_id = E.device_id AND event_time = E.timestamp)`
+  ]
+
   if (before) {
     const [timestamp, device_id] = [before.timestamp, before.device_id].map(value => vals.add(value))
     conditions.push(`(E.timestamp < ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id < ${device_id}))`)
   }
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+  const where = `WHERE ${conditions.join(' AND ')}`
 
   const {
     rows: [{ count }]
@@ -1615,6 +1597,5 @@ export = {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
-  getMostRecentStatusChange,
-  readEventsRangeExclusive
+  readUnprocessedStatusChangeEvents
 }
