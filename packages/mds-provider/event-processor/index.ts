@@ -19,7 +19,7 @@ import logger from 'mds-logger'
 import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
-import { VehicleEvent, VehicleEventPrimaryKey } from 'mds'
+import { VehicleEvent, Timestamp, UUID } from 'mds'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -49,7 +49,7 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
-const streamItemPrimaryKey = (item: StreamItem | null): VehicleEventPrimaryKey => {
+const streamItemVehicleEventKey = (item: StreamItem | null): { timestamp: Timestamp; device_id: UUID } | null => {
   if (item) {
     const {
       data: { timestamp, device_id }
@@ -64,8 +64,8 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
 
   if (info) {
     const { count, events } = await db.readUnprocessedStatusChangeEvents(
-      streamItemPrimaryKey(info.firstEntry),
-      options.count || 1000
+      streamItemVehicleEventKey(info.firstEntry),
+      options.count
     )
 
     const { name, entries }: { name: string; entries: StreamEntry[] } =

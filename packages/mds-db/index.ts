@@ -10,7 +10,6 @@ import {
   Telemetry,
   Recorded,
   DeviceID,
-  VehicleEventPrimaryKey,
   Rule
 } from 'mds'
 import {
@@ -1473,8 +1472,8 @@ async function readRule(rule_id: UUID): Promise<Rule> {
 }
 
 async function readUnprocessedStatusChangeEvents(
-  before: VehicleEventPrimaryKey,
-  take: number
+  before: { timestamp: Timestamp; device_id: UUID } | null,
+  take: number = 1000
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
