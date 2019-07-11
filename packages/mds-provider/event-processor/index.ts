@@ -72,7 +72,7 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
   const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
-    const events = await db.readEventsRangeExclusive(
+    const { count, events } = await db.readEventsRangeExclusive(
       statusChangePrimaryKey(await db.getMostRecentStatusChange()),
       streamItemPrimaryKey(info.firstEntry),
       options.count || 1000
@@ -93,7 +93,9 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
         : await readStreamEntries(options)
 
     if (entries.length > 0) {
-      logger.info(`Processing ${entries.length} entries from ${name}`)
+      logger.info(
+        `Processing ${entries.length} entries from ${name} ${count > 0 ? `backlog (${count} events)` : 'stream'}`
+      )
 
       // Run stream labelers
       const [providers, devices, trips] = await Promise.all([

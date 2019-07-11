@@ -1171,9 +1171,9 @@ async function readTrips(
   }
 
   const { rows: trips } = await exec(
-    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded ASC${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
-      take ? ` LIMIT ${vals.add(take)}` : ''
-    }`,
+    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded ASC, provider_trip_id ASC${
+      skip ? ` OFFSET ${vals.add(skip)}` : ''
+    }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
     vals.values()
   )
 
@@ -1294,7 +1294,7 @@ async function readStatusChanges(
   }
 
   const { rows: status_changes } = await exec(
-    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC${
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC, device_id ASC, event_time ASC${
       skip ? ` OFFSET ${vals.add(skip)}` : ''
     }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
     vals.values()
@@ -1492,11 +1492,12 @@ async function readEventsRangeExclusive(
   after: VehicleEventPrimaryKey,
   before: VehicleEventPrimaryKey,
   take: number
-): Promise<Recorded<VehicleEvent>[]> {
+): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
   const conditions = []
+
   if (after) {
     const [timestamp, device_id] = [after.timestamp, after.device_id].map(value => vals.add(value))
     conditions.push(`(E.timestamp > ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id > ${device_id}))`)
@@ -1506,21 +1507,38 @@ async function readEventsRangeExclusive(
     conditions.push(`(E.timestamp < ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id < ${device_id}))`)
   }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const {
+    rows: [{ count }]
+  } = await exec(`SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} E ${where}`, vals.values())
+
+  if (count === 0) {
+    return { count, events: [] }
+  }
+
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E LEFT JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${take}`,
+    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E LEFT JOIN ${
+      schema.TELEMETRY_TABLE
+    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${vals.add(
+      take
+    )}`,
     vals.values()
   )
-  return rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
-    ...event,
-    telemetry_timestamp,
-    telemetry:
-      lat && lng
-        ? {
-            timestamp: telemetry_timestamp,
-            gps: { lat, lng }
-          }
-        : null
-  }))
+
+  return {
+    count,
+    events: rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
+      ...event,
+      telemetry_timestamp,
+      telemetry:
+        lat && lng
+          ? {
+              timestamp: telemetry_timestamp,
+              gps: { lat, lng }
+            }
+          : null
+    }))
+  }
 }
 
 async function seed(data: {
