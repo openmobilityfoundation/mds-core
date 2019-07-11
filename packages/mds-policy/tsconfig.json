@@ -11,6 +11,7 @@
     { "path": "../../packages/mds-logger" },
     { "path": "../../packages/mds-providers" },
     { "path": "../../packages/mds-utils" },
+    { "path": "../../packages/mds-api-helpers" },
     { "path": "../../packages/mds-test-data" }
   ]
 }

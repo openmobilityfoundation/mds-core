@@ -33,7 +33,6 @@ import {
   POLICY3_JSON,
   POLICY_UUID,
   POLICY2_UUID,
-  POLICY3_UUID,
   GEOGRAPHY_UUID,
   START_ONE_MONTH_AGO,
   START_ONE_WEEK_AGO,
@@ -238,13 +237,15 @@ describe('Tests app', () => {
       })
   })
 
-  it('reads back all unpublished policies', done => {
+  it('reads back all unpublished policies before any publishing happens', done => {
     request
       .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
         const body = result.body
+        log('unpublishing')
+        log(body)
         test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -269,6 +270,8 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         const body = result.body
+        log('unpublishing')
+        log(body)
         test.value(body.policies.length).is(2)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)

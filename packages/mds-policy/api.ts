@@ -145,8 +145,6 @@ function api(app: express.Express): express.Express {
       get_unpublished = true
     }
 
-    log.info('unpublished', unpublished)
-
     db.readPolicies({ start_date, end_date, get_unpublished })
       .then(
         (policies: Policy[]) => {
@@ -401,7 +399,7 @@ function api(app: express.Express): express.Express {
       )
       .catch((ex: Error) => /* istanbul ignore next */ {
         log.error(ex)
-        res.status(500).send(SERVER_ERROR)
+        res.status(500).send(new ServerError())
       })
   })
   // TODO publish geography

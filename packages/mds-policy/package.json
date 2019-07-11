@@ -20,6 +20,7 @@
     "mds-logger": "0.1.0",
     "mds-providers": "0.1.0",
     "mds-utils": "0.1.0",
+    "mds-api-helpers": "0.1.0",
     "uuid": "3.3.2"
   },
   "devDependencies": {
