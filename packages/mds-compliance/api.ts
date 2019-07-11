@@ -209,7 +209,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
-    if (!(res.locals.provider_id && [TEST1_PROVIDER_ID, TEST2_PROVIDER_ID].includes(res.locals.provider_id))) {
+    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
 
