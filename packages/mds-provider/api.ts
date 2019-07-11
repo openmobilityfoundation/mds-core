@@ -43,35 +43,39 @@ function api(app: express.Express): express.Express {
    */
   app.use((req: ProviderApiRequest, res: ProviderApiResponse, next) => {
     try {
-      if (!req.path.includes('/health')) {
-        // verify presence of provider_id
-        const { provider_id, scope } = res.locals.claims
+      if (!(req.path.includes('/health') || req.path === '/')) {
+        if (res.locals.claims) {
+          const { provider_id, scope } = res.locals.claims
 
-        // no test access without auth
-        if (req.path.includes('/test/') && !(scope || '').includes('test:all')) {
+          // no test access without auth
+          if (req.path.includes('/test/') && !(scope || '').includes('test:all')) {
+            /* istanbul ignore next */
+            return res.status(403).send({
+              result: 'no test access'
+            })
+          }
+
           /* istanbul ignore next */
-          return res.status(403).send({
-            result: 'no test access'
-          })
-        }
+          if (!provider_id) {
+            log.warn('missing_provider_id', req.originalUrl)
+            return res.status(403).send({
+              error: 'missing_provider_id'
+            })
+          }
 
-        /* istanbul ignore else getAuth will never return an invalid provider_id */
-        if (!provider_id) {
-          log.warn('missing_provider_id', req.originalUrl)
-          return res.status(403).send({
-            error: 'missing_provider_id'
-          })
-        }
-        /* istanbul ignore next */
-        if (!isUUID(provider_id)) {
-          log.warn('invalid_provider_id', provider_id, req.originalUrl)
-          return res.status(403).send({
-            error: 'invalid_provider_id',
-            error_description: `invalid provider_id ${provider_id} is not a UUID`
-          })
-        }
+          /* istanbul ignore next */
+          if (!isUUID(provider_id)) {
+            log.warn('invalid_provider_id', provider_id, req.originalUrl)
+            return res.status(403).send({
+              error: 'invalid_provider_id',
+              error_description: `invalid provider_id ${provider_id} is not a UUID`
+            })
+          }
 
-        log.info(providerName(provider_id), req.method, req.originalUrl)
+          log.info(providerName(provider_id), req.method, req.originalUrl)
+        } else {
+          return res.status(401).send('Unauthorized')
+        }
       }
     } catch (err) {
       const desc = err instanceof Error ? err.message : err

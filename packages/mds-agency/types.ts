@@ -1,20 +1,13 @@
-import express from 'express'
 import { UUID } from 'mds'
 import { MultiPolygon } from 'geojson'
+import { ApiRequest, ApiResponse } from 'mds-api-server'
+import { ApiAuthorizerClaims } from 'mds-api-authorizer'
 
-// TODO this is same as ProviderApiRequest
-export interface AgencyApiRequest extends express.Request {
-  apiGateway?: {
-    event?: {
-      requestContext?: {
-        authorizer?: Partial<{
-          principalId: string
-          provider_id: UUID
-          scope: string
-          email: string
-        }>
-      }
-    }
+export type AgencyApiRequest = ApiRequest
+export interface AgencyApiResponse extends ApiResponse {
+  locals: {
+    claims: ApiAuthorizerClaims
+    provider_id: UUID
   }
 }
 

@@ -7,8 +7,6 @@
   "licence": "Apache-2.0",
   "dependencies": {
     "express": "4.17.1",
-    "jsonwebtoken": "8.5.1",
-    "jwt-decode": "2.2.0",
     "ladot-service-areas": "0.1.0",
     "mds-api-helpers": "0.1.0",
     "mds-api-server": "0.1.0",

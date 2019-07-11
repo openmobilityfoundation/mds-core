@@ -228,11 +228,9 @@ describe('Tests app', () => {
   it('tries to get trips without authorization', done => {
     request
       .get('/trips')
-      .expect(403)
+      .expect(401)
       .end((err, result) => {
-        log.info('error:', result.body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.error).contains('missing_provider_id')
+        test.value(result.text).is('Unauthorized')
         done(err)
       })
   })
