@@ -89,65 +89,73 @@ async function getProviderMetrics() {
   }
   const token = await rp(token_options)
   const counts_options = {
-    uri: 'https://api.ladot.io/agency/admin/vehicle_counts',
+    uri: 'https://api.ladot.io/daily/admin/vehicle_counts',
     headers: { authorization: `Bearer ${token.access_token}` },
     json: true
   }
   const last_options = {
-    uri: 'https://api.ladot.io/agency/admin/last_day_stats_by_provider',
+    uri: 'https://api.ladot.io/daily/admin/last_day_stats_by_provider',
     headers: { authorization: `Bearer ${token.access_token}` },
     json: true
   }
 
-  const counts = await rp(counts_options)
-  const last = await rp(last_options)
+  let i = 0
+  do {
+    try {
+      const counts = await rp(counts_options)
+      const last = await rp(last_options)
 
-  const rows = counts
-    .filter(p => reportProviders.includes(p.provider_id))
-    .map(provider => {
-      const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
-      const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
-      const d = new Date()
-      let [starts, ends, start_sla, end_sla] = [0, 0, 0, 0]
-      let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
-      if (last[provider.provider_id].event_counts_last_24h) {
-        event_counts = last[provider.provider_id].event_counts_last_24h
-        starts = last[provider.provider_id].event_counts_last_24h.trip_start || 0
-        ends = last[provider.provider_id].event_counts_last_24h.trip_end || 0
-        telems = last[provider.provider_id].telemetry_counts_last_24h || 0
-        telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
-        start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
-        end_sla = ends ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_end, ends) : 0
-      }
-      return {
-        date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
-        name: provider.provider,
-        registered: provider.count || 0,
-        deployed:
-          sum([
-            provider.status.available,
-            provider.status.unavailable,
-            provider.status.trip,
-            provider.status.reserved
-          ]) || 0,
-        validtrips: 'tbd', // Placeholder for next day valid trip analysis
-        trips: last[provider.provider_id].trips_last_24h || 0,
-        servicestart: event_counts.service_start || 0,
-        providerdropoff: event_counts.provider_drop_off || 0,
-        tripstart: starts,
-        tripend: ends,
-        tripenter: last[provider.provider_id].event_counts_last_24h.trip_enter || 0,
-        tripleave: last[provider.provider_id].event_counts_last_24h.trip_leave || 0,
-        telemetry: telems,
-        telemetrysla: telem_sla,
-        tripstartsla: start_sla,
-        tripendsla: end_sla
-      }
-    })
-  return rows
+      const rows = counts
+        .filter(p => reportProviders.includes(p.provider_id))
+        .map(provider => {
+          const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
+          const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
+          const d = new Date()
+          let [starts, ends, start_sla, end_sla] = [0, 0, 0, 0]
+          let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
+          if (last[provider.provider_id].event_counts_last_24h) {
+            event_counts = last[provider.provider_id].event_counts_last_24h
+            starts = last[provider.provider_id].event_counts_last_24h.trip_start || 0
+            ends = last[provider.provider_id].event_counts_last_24h.trip_end || 0
+            telems = last[provider.provider_id].telemetry_counts_last_24h || 0
+            telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
+            start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
+            end_sla = ends ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_end, ends) : 0
+          }
+          return {
+            date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
+            name: provider.provider,
+            registered: provider.count || 0,
+            deployed:
+              sum([
+                provider.status.available,
+                provider.status.unavailable,
+                provider.status.trip,
+                provider.status.reserved
+              ]) || 0,
+            validtrips: 'tbd', // Placeholder for next day valid trip analysis
+            trips: last[provider.provider_id].trips_last_24h || 0,
+            servicestart: event_counts.service_start || 0,
+            providerdropoff: event_counts.provider_drop_off || 0,
+            tripstart: starts,
+            tripend: ends,
+            tripenter: last[provider.provider_id].event_counts_last_24h.trip_enter || 0,
+            tripleave: last[provider.provider_id].event_counts_last_24h.trip_leave || 0,
+            telemetry: telems,
+            telemetrysla: telem_sla,
+            tripstartsla: start_sla,
+            tripendsla: end_sla
+          }
+        })
+      return rows
+    } catch (err) {
+      console.log(err)
+      i += 1
+    }
+  } while (i < 10)
 }
 
-exports.handler = (event, context) =>
+//exports.handler = (event, context) =>
   getProviderMetrics()
     .then(rows => appendSheet('Metrics Log', rows))
     .catch(err => console.error(err))
