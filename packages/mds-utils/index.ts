@@ -524,6 +524,8 @@ function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
           return true
         case VEHICLE_EVENTS.service_end:
           return true
+        case VEHICLE_EVENTS.trip_start:
+          return true
         default:
           return false
       }
@@ -616,6 +618,24 @@ function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
   )
 }
 
+function routeDistance(coordinates: { lat: number; lng: number }[]): number {
+  const R = 6371000 // Earth's mean radius in meters
+  return (coordinates || [])
+    .map(coordinate => [rad(coordinate.lat), rad(coordinate.lng)])
+    .reduce((distance, point, index, points) => {
+      if (index > 0) {
+        const [lat1, lng1] = points[index - 1]
+        const [lat2, lng2] = point
+        const [dlat, dlng] = [lat2 - lat1, lng2 - lng1]
+        const a = Math.sin(dlat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlng / 2) ** 2
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        const d = R * c
+        return distance + d
+      }
+      return distance
+    }, 0)
+}
+
 export = {
   isUUID,
   isPct,
@@ -653,5 +673,6 @@ export = {
   convertTelemetryToTelemetryRecord,
   convertTelemetryRecordToTelemetry,
   getPolygon,
-  isInStatesOrEvents
+  isInStatesOrEvents,
+  routeDistance
 }

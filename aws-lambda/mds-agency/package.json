@@ -14,7 +14,7 @@
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0",
-    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && ts-node"
   },
   "keywords": [
@@ -23,7 +23,7 @@
   "author": "City of Los Angeles",
   "dependencies": {
     "@aws-lambda/aws-serverless-express-handler": "0.1.0",
-    "mds-agency": "0.0.1",
+    "mds-agency": "0.0.2",
     "mds-api-server": "0.1.0"
   },
   "devDependencies": {},

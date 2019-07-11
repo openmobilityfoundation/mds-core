@@ -182,7 +182,7 @@ async function readStream(
 
 async function createStreamGroup(stream: Stream, group: string) {
   const client = await getClient()
-  return client.xgroupAsync('CREATE', stream, `${stream}::${group}`, 0)
+  return client.xgroupAsync('CREATE', stream, `${stream}::${group}`, 0, 'MKSTREAM')
 }
 
 async function readStreamGroup(
