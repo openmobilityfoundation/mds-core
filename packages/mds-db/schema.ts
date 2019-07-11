@@ -214,7 +214,7 @@ const PG_TYPES: { [propName: string]: string } = {
   geography_id: 'uuid NOT NULL',
   geography_json: 'json NOT NULL',
 
-  published: 'bool',
+  published: 'bool DEFAULT \'f\'',
 
   deleted: 'bigint'
 }

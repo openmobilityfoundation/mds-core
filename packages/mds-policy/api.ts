@@ -254,7 +254,10 @@ function api(app: express.Express): express.Express {
         () => {
           res.status(200).send({ result: `Successfully published policy of id ${policy_id}`})
         }
-      )
+    ).catch(error => {
+        log.error(error)
+        res.status(500).send(new ServerError())
+      })
   })
 
   app.post(pathsFor('/admin/geographies/:geography_id'), (req, res) => {
@@ -412,17 +415,18 @@ function api(app: express.Express): express.Express {
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
-    // TODO is basically identical to POST policy
-
     if (details) {
       log.info('policy JSON', details)
       res.status(422).send(details)
       return
     }
-    db.writePolicy(policy)
+    db.editPolicy(policy)
       .then(
         () => {
-          res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+          res.status(200).send({
+            result: `successfully edited policy of id ${policy.policy_id}`,
+            policy
+          })
         },
         (err: Error) => /* istanbul ignore next */ {
           log.error('failed to write geography', err.stack)

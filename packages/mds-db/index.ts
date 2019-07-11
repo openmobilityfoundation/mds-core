@@ -1456,6 +1456,7 @@ async function writePolicy(policy: Policy) {
   const client = await getWriteableClient()
   return new Promise((resolve, reject) => {
     const sql = `INSERT INTO ${cols_sql(schema.POLICIES_TABLE, schema.POLICIES_COLS)} ${vals_sql(schema.POLICIES_COLS)}`
+    log.info(sql)
     const values = [policy.policy_id, policy, false]
     client
       .query(sql, values)
@@ -1475,6 +1476,31 @@ async function writePolicy(policy: Policy) {
   })
 }
 
+
+async function editPolicy(policy: Policy) {
+  // validate TODO
+  // write
+  const client = await getWriteableClient()
+  return new Promise((resolve, reject) => {
+    const sql = `UPDATE ${schema.POLICIES_TABLE} SET policy_json=$1 WHERE policy_id='${policy.policy_id}' AND published='f'`
+    log.info(sql)
+    client
+      .query(sql, [policy])
+      .then(
+        () => {
+          resolve(policy)
+        },
+        err => {
+          log.error(err)
+          reject(err)
+        }
+      )
+      .catch(ex => {
+        log.error(ex)
+        reject(ex.message)
+      })
+  })
+}
 async function publishPolicy(policy_id: UUID) {
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.POLICIES_TABLE} SET published='t' where policy_id='${policy_id}'`
@@ -1610,6 +1636,7 @@ export = {
   readPolicies,
   writePolicy,
   publishPolicy,
+  editPolicy,
   readRule,
   writeStatusChanges,
   readStatusChanges,

@@ -21,7 +21,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { now, days } from 'mds-utils'
+import { now, days, clone } from 'mds-utils'
 import { Policy } from 'mds'
 import { server } from 'mds-api-server'
 import { TEST1_PROVIDER_ID } from 'mds-providers'
@@ -46,11 +46,6 @@ const log = console.log.bind(console)
 const PROVIDER_SCOPES = 'admin:all test:all'
 
 const request = supertest(server(api))
-
-function clone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj))
-}
-
 const APP_JSON = 'application/json; charset=utf-8'
 
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
@@ -155,7 +150,24 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('create one currrent policy response:', body)
+        log('create one current policy response:', body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('edits one current policy', done => {
+    const policy = clone(POLICY_JSON)
+    policy.name = 'a shiny new name'
+    request
+      .put(`/admin/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .send(policy)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        log('edit one edited policy response:', body)
+        test.value(body.policy.name).is('a shiny new name')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -222,7 +234,7 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all policies', done => {
+  it('read back all policies, before any publishing happens, without the unpublished parameter', done => {
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
@@ -237,15 +249,13 @@ describe('Tests app', () => {
       })
   })
 
-  it('reads back all unpublished policies before any publishing happens', done => {
+  it('reads back all unpublished policies before any publishing happens, with the unpublished parameter', done => {
     request
       .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('unpublishing')
-        log(body)
         test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -263,16 +273,49 @@ describe('Tests app', () => {
       })
   })
 
-  it('reads back the correct number of unpublished policies after a policy has been published', done => {
+  it('cannot edit a published policy', done => {
+    const policy = clone(POLICY_JSON)
+    policy.name = 'an even shinier new name'
+    request
+      .put(`/admin/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .send(policy)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+      })
+    request
+      .get(`/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.name).is('a shiny new name')
+        done(err)
+      })
+  })
+
+  it('reads back the correct number of policies after a policy has been published, with the parameter', done => {
     request
       .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('unpublishing')
-        log(body)
         test.value(body.policies.length).is(2)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('reads back the correct number of policies after a policy has been published, without the parameter', done => {
+    request
+      .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -333,6 +376,7 @@ describe('Tests app', () => {
         done(err)
       })
   })
+
 
   // PUBLISHING (TODO)
   // a published policy or geography should be read-only,

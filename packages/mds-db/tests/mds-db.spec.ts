@@ -11,7 +11,8 @@ import {
   POLICY_JSON,
   POLICY2_JSON
 } from 'mds-test-data'
-import { now } from 'mds-utils'
+import logger from 'mds-logger'
+import { now, clone } from 'mds-utils'
 
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
@@ -233,7 +234,7 @@ if (pg_info.database) {
 
 
     describe('unit test policy functions', () => {
-      beforeEach(async () => {
+      before(async () => {
         const client: MDSPostgresClient = configureClient(pg_info)
         await client.connect()
         await dropTables(client)
@@ -242,7 +243,7 @@ if (pg_info.database) {
         await client.end()
       })
 
-      afterEach(async () => {
+      after(async () => {
         await MDSDBPostgres.shutdown()
       })
 
@@ -258,6 +259,22 @@ if (pg_info.database) {
         assert.deepEqual(allPolicies.length, 2)
         const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true })
         assert.deepEqual(unpublishedPolicies.length, 1)
+      })
+
+      it('can edit a Policy', async () => {
+        const policy = clone(POLICY2_JSON)
+        policy.name = 'a shiny new name'
+        await MDSDBPostgres.editPolicy(policy)
+        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY2_JSON.policy_id })
+        assert.deepEqual(result[0].name, 'a shiny new name')
+      })
+
+      it('will not edit a published Policy', async () => {
+        const publishedPolicy = clone(POLICY_JSON)
+        publishedPolicy.name = 'a shiny new name'
+        await MDSDBPostgres.editPolicy(publishedPolicy)
+        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY_JSON.policy_id })
+        assert.notDeepEqual(result[0].name, 'a shiny new name')
       })
     })
   })
