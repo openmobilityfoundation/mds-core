@@ -34,7 +34,7 @@ module.exports = ({ npm_package_name, npm_package_version }) => {
         NPM_PACKAGE_VERSION: JSON.stringify(npm_package_version)
       }),
       // Zip the dist folder
-      new ZipPlugin({ path, filename })
+      new ZipPlugin({ path, filename, include: [/\.js$/] })
     ],
     resolve: {
       extensions: ['.ts', '.js']
