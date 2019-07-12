@@ -94,26 +94,6 @@ describe('Testing API', () => {
     })
   })
 
-  it('verifies get root', done => {
-    request
-      .get('/')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('verifies get /health without jwt', done => {
-    request
-      .get('/audit/health')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
   it('verify audit start (matching vehicle)', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/start`)

@@ -120,15 +120,6 @@ after(done => {
 })
 
 describe('Tests API', () => {
-  it('gets the root', done => {
-    request
-      .get('/')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
   it('resets the db and cache', done => {
     request
       .get('/test/initialize')
@@ -160,30 +151,6 @@ describe('Tests API', () => {
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.string(result.body.result).contains('invalid provider_id', 'is not a known provider')
-        done(err)
-      })
-  })
-
-  it('verifies get /health without jwt', done => {
-    request
-      .get('/health')
-      // .set('Authorization', PROVIDER_AUTH2)
-      .expect(200)
-      .end((err, result) => {
-        log('result for health')
-        log(result.body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.value(result.body).hasProperty('db')
-        if (result.body.db.using === 'postgres') {
-          test.value(result.body.db.stats).hasProperty('current_running_queries')
-          test.value(result.body.db.stats).hasProperty('current_running_queries')
-        } else {
-          test.value(result.body.db).hasProperty('using', 'in-memory-cache')
-        }
-
-        test.value(result.body).hasProperty('stream')
-        test.value(result.body.stream).hasProperty('using', 'redis')
-        test.value(result.body.stream).hasProperty('status', 'connected')
         done(err)
       })
   })

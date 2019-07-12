@@ -156,24 +156,6 @@ const APP_JSON = 'application/json; charset=utf-8'
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Tests app', () => {
-  it('gets the root', done => {
-    request
-      .get('/')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-  it('health without provider', done => {
-    request
-      .get('/health')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
   it('resets the db', done => {
     request
       .get('/test/initialize')

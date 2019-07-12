@@ -157,15 +157,6 @@ after(done => {
 })
 
 describe('Tests API', () => {
-  it('gets the root', done => {
-    request
-      .get('/')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
 
   it('gets vehicle counts per provider', done => {
     request
