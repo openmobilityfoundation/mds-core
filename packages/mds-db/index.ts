@@ -213,8 +213,10 @@ async function health(): Promise<{
       makeReadOnlyQuery(cacheHitQuery).then(([cacheHitResult]: any) => {
         resolve({
           using: 'postgres',
+          stats: {
             current_running_queries: currentQueriesResult.length,
-            ...cacheHitResult
+            cache_hit_result: cacheHitResult
+          }
         })
       })
     })

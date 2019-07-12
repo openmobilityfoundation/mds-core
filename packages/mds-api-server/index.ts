@@ -1,7 +1,5 @@
 import bodyParser from 'body-parser'
 import express from 'express'
-import db from 'mds-db'
-import stream from 'mds-stream'
 import { pathsFor } from 'mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from 'mds-api-authorizer'
 
@@ -44,17 +42,12 @@ export const server = (
   })
 
   app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
-
-    const [dbHealth, streamHealth] = await Promise.all([db.health(), stream.health()])
-
     // 200 OK
     res.status(200).send({
       runtime: process.versions.node,
       process: process.pid,
-      memory: process.memoryUsage(),
       uptime: process.uptime(),
-      db: dbHealth,
-      stream: streamHealth
+      memory: process.memoryUsage()
     })
   })
 

@@ -3,11 +3,5 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [
-    { "path": "../../packages/mds-api-authorizer" },
-    { "path": "../../packages/mds-db" },
-    { "path": "../../packages/mds-stream" },
-    { "path": "../../packages/mds-test-data" },
-    { "path": "../../packages/mds-utils" }
-  ]
+  "references": [{ "path": "../../packages/mds-api-authorizer" }, { "path": "../../packages/mds-utils" }]
 }

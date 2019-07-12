@@ -15,7 +15,6 @@
  */
 
 import supertest from 'supertest'
-import { PROVIDER_AUTH } from 'mds-test-data'
 import test from 'unit.js'
 import { server } from 'mds-api-server'
 
@@ -47,8 +46,6 @@ describe('Testing API Server', () => {
         test.object(result.body).hasProperty('process')
         test.object(result.body).hasProperty('memory')
         test.object(result.body).hasProperty('uptime')
-        test.object(result.body).hasProperty('db')
-        test.object(result.body).hasProperty('stream')
         done(err)
       })
   })

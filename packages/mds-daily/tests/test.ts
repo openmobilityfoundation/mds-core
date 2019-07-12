@@ -157,7 +157,6 @@ after(done => {
 })
 
 describe('Tests API', () => {
-
   it('gets vehicle counts per provider', done => {
     request
       .get('/admin/vehicle_counts')

@@ -149,7 +149,6 @@ const test_data = {
 }
 
 describe('Tests app', () => {
-
   it('initializes the db and cache', done => {
     request
       .get('/test/initialize')
