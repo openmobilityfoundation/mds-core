@@ -19,7 +19,7 @@ import { server } from 'mds-api-server'
 import { api } from './api'
 
 const {
-  env: { npm_package_name, PORT = 4001 }
+  env: { npm_package_name, PORT = 4005 }
 } = process
 
 /* eslint-reason avoids import of logger */

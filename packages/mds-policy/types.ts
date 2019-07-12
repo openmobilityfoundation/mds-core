@@ -1,17 +1,4 @@
-import express from 'express'
-import { UUID } from 'mds'
+import { ApiRequest, ApiResponse } from 'mds-api-server'
 
-export interface PolicyApiRequest extends express.Request {
-  apiGateway?: {
-    event?: {
-      requestContext?: {
-        authorizer?: Partial<{
-          principalId: string
-          provider_id: UUID
-          scope: string
-          email: string
-        }>
-      }
-    }
-  }
-}
+export type PolicyApiRequest = ApiRequest
+export type PolicyApiResponse = ApiResponse

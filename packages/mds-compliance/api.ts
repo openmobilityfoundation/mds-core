@@ -18,93 +18,63 @@ import express from 'express'
 import cache from 'mds-cache'
 import stream from 'mds-stream'
 import db from 'mds-db'
-import jwtDecode from 'jwt-decode'
 import log from 'mds-logger'
 import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape, isInStatesOrEvents } from 'mds-utils'
 import { Policy, Geography, VehicleEvent, ComplianceResponse, Device, UUID } from 'mds'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from 'mds-providers'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName } from 'mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
-import { ComplianceApiRequest } from './types'
-
-function getAuth(req: ComplianceApiRequest): Partial<{ provider_id: string; scope: string }> {
-  // Handle Auth from API Gateway
-  const authorizer =
-    req.apiGateway &&
-    req.apiGateway.event &&
-    req.apiGateway.event.requestContext &&
-    req.apiGateway.event.requestContext.authorizer
-
-  /* istanbul ignore next */
-  if (authorizer) {
-    const { provider_id, scope } = authorizer
-    return { provider_id, scope }
-  }
-
-  // Handle Authorization Header when running standalone
-  const decode = ([scheme, token]: string[]): Partial<{ provider_id: string; scope: string }> => {
-    const decoders: { [scheme: string]: () => Partial<{ provider_id: string; scope: string }> } = {
-      bearer: () => {
-        const { provider_id, scope } = jwtDecode(token)
-        return { provider_id, scope }
-      },
-      basic: () => {
-        const [provider_id, scope] = Buffer.from(token, 'base64')
-          .toString()
-          .split('|')
-        return { provider_id, scope }
-      }
-    }
-    const decoder = decoders[scheme.toLowerCase()]
-    return decoder ? decoder() : {}
-  }
-
-  return req.headers.authorization ? decode(req.headers.authorization.split(' ')) : {}
-}
+import { ComplianceApiRequest, ComplianceApiResponse } from './types'
 
 function api(app: express.Express): express.Express {
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  app.use((req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
-      if (req.path.includes('/health')) {
-        // all auth provided by API Gateway
-      } else if (req.path !== '/') {
-        const { provider_id, scope } = getAuth(req)
+      if (!(req.path.includes('/health') || req.path === '/')) {
+        if (res.locals.claims) {
+          const { provider_id, scope } = res.locals.claims
 
-        // no test access without auth
-        if (req.path.includes('/test/')) {
-          if (!scope || !scope.includes('test:all')) {
-            return res.status(403).send({
-              result: `no test access without test:all scope (${scope})`
+          // no test access without auth
+          if (req.path.includes('/test/')) {
+            if (!scope || !scope.includes('test:all')) {
+              return res.status(403).send({
+                result: `no test access without test:all scope (${scope})`
+              })
+            }
+          }
+
+          // no admin access without auth
+          if (req.path.includes('/admin/')) {
+            if (!scope || !scope.includes('admin:all')) {
+              return res.status(403).send({
+                result: `no admin access without admin:all scope (${scope})`
+              })
+            }
+          }
+
+          /* istanbul ignore next */
+          if (!provider_id) {
+            log.warn('Missing provider_id in', req.originalUrl)
+            return res.status(400).send({
+              result: 'missing provider_id'
             })
           }
-        }
 
-        // no admin access without auth
-        if (req.path.includes('/admin/')) {
-          if (!scope || !scope.includes('admin:all')) {
-            return res.status(403).send({
-              result: `no admin access without admin:all scope (${scope})`
+          /* istanbul ignore next */
+          if (!isUUID(provider_id)) {
+            log.warn(req.originalUrl, 'invalid provider_id', provider_id)
+            return res.status(400).send({
+              result: `invalid provider_id ${provider_id} is not a UUID`
             })
           }
-        }
 
-        /* istanbul ignore next */
-        if (!provider_id) {
-          log.warn('Missing provider_id in', req.originalUrl)
-          return res.status(400).send({
-            result: 'missing provider_id'
-          })
-        }
+          // stash provider_id
+          res.locals.provider_id = provider_id
 
-        /* istanbul ignore next */
-        if (!isUUID(provider_id)) {
-          log.warn(req.originalUrl, 'invalid provider_id', provider_id)
-          return res.status(400).send({
-            result: `invalid provider_id ${provider_id} is not a UUID`
-          })
+          log.info(providerName(provider_id), req.method, req.originalUrl)
+        } else {
+          return res.status(401).send('Unauthorized')
         }
-        res.locals.provider_id = provider_id
       }
     } catch (err) {
       /* istanbul ignore next */
@@ -138,7 +108,7 @@ function api(app: express.Express): express.Express {
       )
   })
 
-  app.get(pathsFor('/snapshot/:policy_uuid'), async (req: express.Request, res: express.Response) => {
+  app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
     if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
@@ -238,10 +208,8 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/count/:rule_id'), async (req: express.Request, res: express.Response) => {
-    if (
-      !['5f7114d1-4091-46ee-b492-e55875f7de00', '45f37d69-73ca-4ca6-a461-e7283cffa01a'].includes(res.locals.provider_id)
-    ) {
+  app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
+    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
 

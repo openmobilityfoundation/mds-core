@@ -9,13 +9,13 @@ const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).t
 describe('Test API Authorizer', () => {
   it('No Authorizaton', done => {
     const authorizer = AuthorizationHeaderApiAuthorizer({} as express.Request)
-    test.value(authorizer).is({})
+    test.value(authorizer).is(null)
     done()
   })
 
   it('Invalid Authorizaton Scheme', done => {
     const authorizer = AuthorizationHeaderApiAuthorizer({ headers: { authorization: 'invalid' } } as express.Request)
-    test.value(authorizer).is({})
+    test.value(authorizer).is(null)
     done()
   })
 

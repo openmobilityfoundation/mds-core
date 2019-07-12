@@ -1,17 +1,11 @@
-import express from 'express'
+import { ApiRequest, ApiResponse } from 'mds-api-server'
+import { ApiAuthorizerClaims } from 'mds-api-authorizer'
 import { UUID } from 'mds'
 
-export interface ComplianceApiRequest extends express.Request {
-  apiGateway?: {
-    event?: {
-      requestContext?: {
-        authorizer?: Partial<{
-          principalId: string
-          provider_id: UUID
-          scope: string
-          email: string
-        }>
-      }
-    }
+export type ComplianceApiRequest = ApiRequest
+export interface ComplianceApiResponse extends ApiResponse {
+  locals: {
+    claims: ApiAuthorizerClaims
+    provider_id: UUID
   }
 }

@@ -41,7 +41,7 @@ export const ApiGatewayAuthorizer: ApiAuthorizer = (req: ApiGatewayRequest) =>
     req.apiGateway.event &&
     req.apiGateway.event.requestContext &&
     req.apiGateway.event.requestContext.authorizer) ||
-  {}
+  null
 
 /* istanbul ignore next */
 export const AwsServerlessExpressHandler = (
