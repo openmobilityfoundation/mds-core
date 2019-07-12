@@ -169,16 +169,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/health'), async (req: AuditApiRequest, res: AuditApiResponse) => {
-    // 200 OK
-    res.status(200).send({
-      runtime: process.versions.node,
-      process: process.pid,
-      memory: process.memoryUsage(),
-      uptime: process.uptime()
-    })
-  })
-
   // ///////////////////// begin test-only endpoints ///////////////////////
 
   app.get(pathsFor('/test/initialize'), async (req: AuditApiRequest, res: AuditApiResponse) => {

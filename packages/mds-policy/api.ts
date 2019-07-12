@@ -84,13 +84,6 @@ function api(app: express.Express): express.Express {
     next()
   })
 
-  app.get(pathsFor('/health'), (req, res) => {
-    res.status(200).send({
-      // TODO use db health too ... others?
-      result: 'we good bruh'
-    })
-  })
-
   app.get(pathsFor('/policies'), (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability

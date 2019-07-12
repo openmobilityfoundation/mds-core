@@ -55,6 +55,7 @@
   "types": "types/mds.d.ts",
   "dependencies": {},
   "scripts": {
+    "prepare": "yarn build",
     "build": "lerna run build --stream",
     "bundle": "yarn build && lerna run bundle --stream",
     "clean": "git clean -fdX && yarn",
