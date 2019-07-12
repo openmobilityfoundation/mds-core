@@ -1,6 +1,6 @@
 {
   "name": "ladot-service-areas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Service Areas for LADOT",
   "main": "ladot-service-areas.js",
@@ -10,6 +10,5 @@
   ],
   "author": "City of Los Angeles",
   "license": "ISC",
-  "dependencies": {},
   "scripts": {}
 }

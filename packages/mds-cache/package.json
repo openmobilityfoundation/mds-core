@@ -1,6 +1,6 @@
 {
   "name": "mds-cache",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Mobility Data Specification cache interface",
   "main": "dist/index.js",
@@ -14,9 +14,9 @@
   "dependencies": {
     "bluebird": "3.5.5",
     "flat": "4.1.0",
-    "mds-enums": "0.1.0",
-    "mds-logger": "0.1.0",
-    "mds-utils": "0.1.0",
+    "mds-enums": "^0.1.1",
+    "mds-logger": "^0.1.1",
+    "mds-utils": "^0.1.1",
     "redis": "2.8.0"
   },
   "scripts": {

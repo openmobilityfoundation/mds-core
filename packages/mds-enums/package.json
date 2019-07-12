@@ -1,6 +1,6 @@
 {
   "name": "mds-enums",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Mobility Data Specification enums and symbols",
   "main": "dist/index.js",
@@ -11,7 +11,6 @@
   ],
   "author": "City of Los Angeles",
   "license": "ISC",
-  "dependencies": {},
   "scripts": {
     "build": "tsc --build .",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",

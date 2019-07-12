@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-agency",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "AWS Lambda for MDS Agency API",
   "main": "dist/index.js",
@@ -25,10 +25,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "0.1.0",
-    "mds-agency": "0.0.2",
-    "mds-api-server": "0.1.0"
+    "@aws-lambda/aws-serverless-express-handler": "^0.1.1",
+    "mds-agency": "^0.0.3",
+    "mds-api-server": "^0.1.1"
   },
-  "devDependencies": {},
   "license": "Apache-2.0"
 }
