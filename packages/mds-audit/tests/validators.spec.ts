@@ -31,7 +31,7 @@ import {
   isValidAuditEventType,
   isValidAuditIssueCode,
   isValidAuditNote
-} from 'mds-audit/src/validators'
+} from '../src/validators'
 
 describe('Tests validators', () => {
   it('verifies Audit Trip ID validator', done => {

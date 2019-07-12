@@ -23,8 +23,8 @@ import cache from 'mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
 import { server } from 'mds-api-server'
-import { api } from 'mds-audit/src/api'
 import db from 'mds-db'
+import { api } from '../src/api'
 
 process.env.PATH_PREFIX = '/audit'
 
@@ -96,8 +96,7 @@ describe('Testing API', () => {
 
   it('verifies get root', done => {
     request
-      .get('/audit')
-      .set('Authorization', PROVIDER_AUTH)
+      .get('/')
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -108,7 +107,6 @@ describe('Testing API', () => {
   it('verifies get /health without jwt', done => {
     request
       .get('/audit/health')
-      // .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)

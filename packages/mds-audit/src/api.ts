@@ -110,7 +110,7 @@ function api(app: express.Express): express.Express {
       res.sendStatus(200)
     } else {
       try {
-        if (!req.path.includes('/health')) {
+        if (!req.path.includes('/health' || req.path === '/')) {
           // verify presence of subject_id
           const { principalId, email, scope } = res.locals.claims
           const subject_id = email || principalId
@@ -120,10 +120,9 @@ function api(app: express.Express): express.Express {
             /* istanbul ignore if */
             if (!scope || !scope.includes('test:all')) {
               // 403 Forbidden
-              res
+              return res
                 .status(403)
                 .send({ error: new AuthorizationError('no test access without test:all scope', { scope }) })
-              return
             }
           }
 
@@ -131,15 +130,13 @@ function api(app: express.Express): express.Express {
           if (!subject_id) {
             log.warn('Missing subject_id in', req.originalUrl)
             // 403 Forbidden
-            res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
-            return
+            return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
           }
 
           // stash audit_subject_id and timestamp (for recording db writes)
           res.locals.audit_subject_id = subject_id
           res.locals.recorded = Date.now()
 
-          // helpy logging
           log.info(subject_id, req.method, req.originalUrl)
         }
       } catch (err) /* istanbul ignore next */ {

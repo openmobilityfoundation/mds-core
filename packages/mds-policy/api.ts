@@ -15,9 +15,8 @@
  */
 
 import express from 'express'
-import { isProviderId } from 'mds-providers'
+import { isProviderId, providerName } from 'mds-providers'
 import Joi from '@hapi/joi'
-import jwtDecode from 'jwt-decode'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, Geography } from 'mds'
 import db from 'mds-db'
@@ -25,98 +24,58 @@ import { VEHICLE_TYPES } from 'mds-enums'
 import { isUUID, now, pathsFor } from 'mds-utils'
 import { ServerError } from 'mds-api-helpers'
 import log from 'mds-logger'
-import { PolicyApiRequest } from './types'
+import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 log.startup()
 
-/**
- * Extract auth info from JWT or auth headers
- */
-function getAuth(req: PolicyApiRequest): Partial<{ provider_id: string; scope: string }> {
-  // Handle Auth from API Gateway
-  const authorizer =
-    req.apiGateway &&
-    req.apiGateway.event &&
-    req.apiGateway.event.requestContext &&
-    req.apiGateway.event.requestContext.authorizer
-
-  /* istanbul ignore next */
-  if (authorizer) {
-    const { provider_id, scope } = authorizer
-    return { provider_id, scope }
-  }
-
-  // Handle Authorization Header when running standalone
-  const decode = ([scheme, token]: string[]): Partial<{ provider_id: string; scope: string }> => {
-    const decoders: { [scheme: string]: () => Partial<{ provider_id: string; scope: string }> } = {
-      bearer: () => {
-        const decoded: { [key: string]: string } = jwtDecode(token)
-        return {
-          provider_id: decoded['https://ladot.io/provider_id'],
-          scope: decoded.scope
-        }
-      },
-      basic: () => {
-        const [provider_id, scope] = Buffer.from(token, 'base64')
-          .toString()
-          .split('|')
-        return { provider_id, scope }
-      }
-    }
-    const decoder = decoders[scheme.toLowerCase()]
-    return decoder ? decoder() : {}
-  }
-
-  return req.headers.authorization ? decode(req.headers.authorization.split(' ')) : {}
-}
 function api(app: express.Express): express.Express {
   /**
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  app.use((req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
-      if (req.path.includes('/health')) {
-        // all auth provided by API Gateway
-      } else if (req.path !== '/' && req.path !== '/schema/policy') {
-        const { provider_id, scope } = getAuth(req)
+      if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
+        if (res.locals.claims) {
+          const { provider_id, scope } = res.locals.claims
 
-        // no test access without auth
-        if (req.path.includes('/test/')) {
-          if (!scope || !scope.includes('test:all')) {
-            return res.status(403).send({ result: `no test access without test:all scope (${scope})` })
+          // no test access without auth
+          if (req.path.includes('/test/')) {
+            if (!scope || !scope.includes('test:all')) {
+              return res.status(403).send({ result: `no test access without test:all scope (${scope})` })
+            }
           }
-        }
 
-        // no admin access without auth
-        if (req.path.includes('/admin/')) {
-          if (!scope || !scope.includes('admin:all')) {
-            /* istanbul ignore next */
-            return res.status(403).send({ result: `no admin access without admin:all scope (${scope})` })
+          // no admin access without auth
+          if (req.path.includes('/admin/')) {
+            if (!scope || !scope.includes('admin:all')) {
+              /* istanbul ignore next */
+              return res.status(403).send({ result: `no admin access without admin:all scope (${scope})` })
+            }
           }
-        }
 
-        /* istanbul ignore next */
-        if (!provider_id) {
-          log.warn('Missing provider_id in', req.originalUrl)
-          return res.status(400).send({ result: 'missing provider_id' })
-        }
-        /* istanbul ignore next */
-        if (!isUUID(provider_id)) {
-          log.warn(req.originalUrl, 'bogus provider_id', provider_id)
-          return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
-        }
-        if (!isProviderId(provider_id)) {
-          res.status(400).send({
-            result: `invalid provider_id ${provider_id} is not a known provider`
-          })
-        }
+          /* istanbul ignore next */
+          if (!provider_id) {
+            log.warn('Missing provider_id in', req.originalUrl)
+            return res.status(400).send({ result: 'missing provider_id' })
+          }
 
-        // stash provider_id
-        res.locals.provider_id = provider_id
+          /* istanbul ignore next */
+          if (!isUUID(provider_id)) {
+            log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+            return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
+          }
 
-        // helpy logging
-        // log.info(providerName(provider_id), req.method, req.originalUrl)
+          if (!isProviderId(provider_id)) {
+            return res.status(400).send({
+              result: `invalid provider_id ${provider_id} is not a known provider`
+            })
+          }
+
+          log.info(providerName(provider_id), req.method, req.originalUrl)
+        } else {
+          return res.status(401).send('Unauthorized')
+        }
       }
     } catch (err) {
       /* istanbul ignore next */
@@ -269,12 +228,12 @@ function api(app: express.Express): express.Express {
       })
   })
 
-  app.put(pathsFor('/admin/geographies/:geography_id'), (req: express.Request, res: express.Response) => {
+  app.put(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
     // TODO implement updating a non-published geography
     res.status(501)
   })
 
-  app.delete(pathsFor('/admin/geographies/:geography_id'), (req: express.Request, res: express.Response) => {
+  app.delete(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
     // TODO implement deleting a non-published geography
     res.status(501)
   })

@@ -4,19 +4,19 @@ import { ApiGatewayRequest, ApiGatewayAuthorizer } from '../index'
 describe('Test API Gateway Authorizer', () => {
   it('No Authorizaton', done => {
     const authorizer = ApiGatewayAuthorizer({} as ApiGatewayRequest)
-    test.value(authorizer).is({})
+    test.value(authorizer).is(null)
     done()
   })
 
   it('No Event', done => {
     const authorizer = ApiGatewayAuthorizer({ apiGateway: {} } as ApiGatewayRequest)
-    test.value(authorizer).is({})
+    test.value(authorizer).is(null)
     done()
   })
 
   it('No Request Context', done => {
     const authorizer = ApiGatewayAuthorizer({ apiGateway: { event: {} } } as ApiGatewayRequest)
-    test.value(authorizer).is({})
+    test.value(authorizer).is(null)
     done()
   })
 
@@ -24,7 +24,7 @@ describe('Test API Gateway Authorizer', () => {
     const authorizer = ApiGatewayAuthorizer({
       apiGateway: { event: { requestContext: {} } }
     } as ApiGatewayRequest)
-    test.value(authorizer).is({})
+    test.value(authorizer).is(null)
     done()
   })
 
