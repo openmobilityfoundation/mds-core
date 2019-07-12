@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-audit",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "AWS Lambda for MDS Audit API",
   "main": "dist/index.js",
@@ -25,9 +25,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "0.1.2",
-    "mds-api-server": "0.1.2",
-    "mds-audit": "0.1.14"
+    "@aws-lambda/aws-serverless-express-handler": "0.1.3",
+    "mds-api-server": "0.1.3",
+    "mds-audit": "0.1.15"
   },
   "license": "Apache-2.0"
 }

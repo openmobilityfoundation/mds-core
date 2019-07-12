@@ -1,6 +1,6 @@
 {
   "name": "mds-providers",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Mobility Data Specification provider details",
   "main": "dist/index.js",
