@@ -178,7 +178,7 @@ function api(app: express.Express): express.Express {
                             (deviceMapAcc: { [d: string]: Device }, device: Device) => {
                               /* istanbul ignore next */
                               if (!device) {
-                                throw new Error('device in DB but not in cache')
+                                return deviceMapAcc
                               }
                               return Object.assign(deviceMapAcc, { [device.device_id]: device })
                             },
