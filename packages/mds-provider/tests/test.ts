@@ -216,7 +216,7 @@ describe('Tests app', () => {
   })
 
   it('verifies event processing', done => {
-    ProviderEventProcessor().then(
+    ProviderEventProcessor({ interval: 0 }).then(
       processed => {
         test.value(processed).is(3)
         done()
