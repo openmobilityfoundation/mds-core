@@ -120,7 +120,7 @@ async function removeAuditVehicleIdColumnFromAuditsTable(client: MDSPostgresClie
   const AUDIT_VEHICLE_ID_COL = 'audit_vehicle_id'
   const AUDIT_DEVICE_ID_COL = 'audit_device_id'
   // Only run if the audit_vehicle_id column has been removed from the schema
-  if (!schema.AUDITS_COLS.some(column => column === AUDIT_VEHICLE_ID_COL)) {
+  if (!schema.AUDITS_COLS.some(column => (column as string) === AUDIT_VEHICLE_ID_COL)) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
@@ -143,15 +143,15 @@ async function removeAuditVehicleIdColumnFromAuditsTable(client: MDSPostgresClie
 }
 
 async function recreateProviderTables(client: MDSPostgresClient) {
-  const SEQUENCE_COL = 'sequence'
+  const PROVIDER_TRIP_ID = 'provider_trip_id'
   const RECREATE_TABLES = csv([schema.TRIPS_TABLE, schema.STATUS_CHANGES_TABLE])
 
   // Make sure this migration is still required
-  if (schema.TRIPS_COLS.some(column => column === SEQUENCE_COL)) {
+  if (schema.TRIPS_COLS.some(column => (column as string) === PROVIDER_TRIP_ID)) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.TRIPS_TABLE}' AND column_name = '${SEQUENCE_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.TRIPS_TABLE}' AND column_name = '${PROVIDER_TRIP_ID}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
     )
     if (result.rowCount === 0) {
       // Do the migration

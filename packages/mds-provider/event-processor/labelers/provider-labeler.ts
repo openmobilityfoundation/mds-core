@@ -45,7 +45,7 @@ export const ProviderLabeler = async (entries: StreamEntry[]): Promise<StreamEnt
       {}
     )
 
-    // Create the device labels
+    // Create the provider labels
     const { labels, labeled } = provider_entries.reduce(
       (result, entry) => {
         const provider = provider_map[entry.data.provider_id]
@@ -57,7 +57,11 @@ export const ProviderLabeler = async (entries: StreamEntry[]): Promise<StreamEnt
       { labels: {}, labeled: 0 }
     )
 
-    logger.info(`|- Provider Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'}`)
+    logger.info(
+      `|- Provider Labeler: Labeled ${labeled} ${labeled === 1 ? 'entry' : 'entries'} (${provider_ids.length} ${
+        provider_ids.length === 1 ? 'provider' : 'providers'
+      })`
+    )
 
     return labels
   }

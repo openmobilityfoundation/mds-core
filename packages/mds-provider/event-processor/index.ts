@@ -19,8 +19,7 @@ import logger from 'mds-logger'
 import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
-import { VehicleEvent, VehicleEventPrimaryKey } from 'mds'
-import { StatusChange } from 'mds-db/dist/types'
+import { VehicleEvent, Timestamp, UUID } from 'mds'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -50,7 +49,7 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
-const streamItemPrimaryKey = (item: StreamItem | null): VehicleEventPrimaryKey => {
+const streamItemVehicleEventKey = (item: StreamItem | null): { timestamp: Timestamp; device_id: UUID } | null => {
   if (item) {
     const {
       data: { timestamp, device_id }
@@ -60,22 +59,13 @@ const streamItemPrimaryKey = (item: StreamItem | null): VehicleEventPrimaryKey =
   return null
 }
 
-const statusChangePrimaryKey = (item: StatusChange | null): VehicleEventPrimaryKey => {
-  if (item) {
-    const { event_time: timestamp, device_id } = item
-    return { timestamp, device_id }
-  }
-  return null
-}
-
 const processor = async (options: ReadStreamOptions): Promise<number> => {
   const info = await stream.getStreamInfo('provider:event')
 
   if (info) {
-    const events = await db.readEventsRangeExclusive(
-      statusChangePrimaryKey(await db.getMostRecentStatusChange()),
-      streamItemPrimaryKey(info.firstEntry),
-      options.count || 1000
+    const { count, events } = await db.readUnprocessedStatusChangeEvents(
+      streamItemVehicleEventKey(info.firstEntry),
+      options.count
     )
 
     const { name, entries }: { name: string; entries: StreamEntry[] } =
@@ -93,7 +83,9 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
         : await readStreamEntries(options)
 
     if (entries.length > 0) {
-      logger.info(`Processing ${entries.length} entries from ${name}`)
+      logger.info(
+        `Processing ${entries.length} entries from ${name} ${count > 0 ? `backlog (${count} events)` : 'stream'}`
+      )
 
       // Run stream labelers
       const [providers, devices, trips] = await Promise.all([
@@ -119,7 +111,6 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
       ])
       return entries.length
     }
-    logger.info('No entries to process.')
   } else {
     logger.info('Stream Unavailable')
   }

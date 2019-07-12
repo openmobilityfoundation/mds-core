@@ -22,8 +22,8 @@ import cache from 'mds-cache'
 import { providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
-import { isUUID, now, pathsFor, isTimestamp, round, routeDistance } from 'mds-utils'
-import { Timestamp, Telemetry } from 'mds'
+import { isUUID, now, pathsFor, round, routeDistance } from 'mds-utils'
+import { Telemetry } from 'mds'
 import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from 'mds-db/types'
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { Feature, FeatureCollection } from 'geojson'
@@ -190,25 +190,6 @@ function api(app: express.Express): express.Express {
 
   // / /////////////////////// trips /////////////////////////////////
 
-  const getStage0Properties = (items: { recorded: Timestamp; sequence?: number | null }[]) => {
-    if (items && items.length > 0) {
-      const { recorded, sequence } = items[items.length - 1]
-      return { last_sequence: `${recorded}-${(sequence || 0).toString().padStart(4, '0')}` }
-    }
-    return {}
-  }
-
-  const asSequence = (value: unknown): [number, number] | undefined | Error => {
-    if (typeof value === 'string' && value.length > 0) {
-      const [recorded, sequence, ...extra] = value.split('-').map(Number)
-      if (extra.length === 0 && isTimestamp(recorded) && Number.isInteger(sequence)) {
-        return [recorded, sequence]
-      }
-      return Error(`Invalid sequence: ${value}`)
-    }
-    return undefined
-  }
-
   /**
    * Convert a Telemetry object into a GeoJSON Feature
    * @param item a Telemetry object
@@ -241,11 +222,10 @@ function api(app: express.Express): express.Express {
 
   const asTrip = async ({
     recorded,
-    sequence,
     first_trip_enter,
     last_trip_leave,
     ...trip
-  }: Trip): Promise<Omit<Trip, 'recorded' | 'sequence'>> => {
+  }: Trip): Promise<Omit<Trip, 'recorded'>> => {
     const { trip_start, trip_end } = trip
     if (trip_start && trip_end && trip_end > trip_start) {
       const telemetry = await db.readTelemetry(trip.device_id, trip_start, trip_end)
@@ -267,12 +247,6 @@ function api(app: express.Express): express.Express {
 
     // Extensions to override paging
     const { skip, take } = asPagingParams(req.query)
-    const last_sequence = asSequence(req.query.last_sequence)
-
-    if (last_sequence instanceof Error) {
-      res.status(400).send({ error: last_sequence.message })
-      return
-    }
 
     if (provider_id && !isUUID(provider_id)) {
       return res.status(400).send({
@@ -294,8 +268,7 @@ function api(app: express.Express): express.Express {
         min_end_time,
         max_end_time,
         skip,
-        take,
-        last_sequence
+        take
       })
 
       res.status(200).send({
@@ -303,8 +276,7 @@ function api(app: express.Express): express.Express {
         data: {
           trips: await Promise.all(trips.map(asTrip))
         },
-        links: asJsonApiLinks(req, skip, take, count),
-        ...getStage0Properties(trips)
+        links: asJsonApiLinks(req, skip, take, count)
       })
     } catch (err) {
       // 500 Internal Server Error
@@ -317,11 +289,7 @@ function api(app: express.Express): express.Express {
 
   // / ////////////////////////////// status_changes /////////////////////////////
 
-  const asStatusChange = ({
-    recorded,
-    sequence,
-    ...props
-  }: StatusChange): Omit<StatusChange, 'recorded' | 'sequence'> => props
+  const asStatusChange = ({ recorded, ...props }: StatusChange): Omit<StatusChange, 'recorded'> => props
 
   app.get(pathsFor('/status_changes'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // Standard Provider parameters
@@ -331,12 +299,6 @@ function api(app: express.Express): express.Express {
 
     // Extensions to override paging
     const { skip, take } = asPagingParams(req.query)
-    const last_sequence = asSequence(req.query.last_sequence)
-
-    if (last_sequence instanceof Error) {
-      res.status(400).send({ error: last_sequence.message })
-      return
-    }
 
     if (provider_id && !isUUID(provider_id)) {
       return res.status(400).send({
@@ -355,8 +317,7 @@ function api(app: express.Express): express.Express {
         start_time,
         end_time,
         skip,
-        take,
-        last_sequence
+        take
       })
 
       res.status(200).send({
@@ -364,8 +325,7 @@ function api(app: express.Express): express.Express {
         data: {
           status_changes: status_changes.map(asStatusChange)
         },
-        links: asJsonApiLinks(req, skip, take, count),
-        ...getStage0Properties(status_changes)
+        links: asJsonApiLinks(req, skip, take, count)
       })
     } catch (err) {
       // 500 Internal Server Error

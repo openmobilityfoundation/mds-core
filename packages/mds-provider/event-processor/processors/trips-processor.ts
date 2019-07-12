@@ -17,7 +17,7 @@
 import db from 'mds-db'
 import logger from 'mds-logger'
 import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
-import { VehicleEvent, UUID, Timestamp } from 'mds'
+import { VehicleEvent, UUID } from 'mds'
 import { Trip } from 'mds-db/types'
 import { now } from 'mds-utils'
 import { DeviceLabel } from '../labelers/device-labeler'
@@ -28,7 +28,7 @@ import { TripLabel } from '../labelers/trip-labeler'
 export type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
 export type TripsProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
 
-const createTrip = (recorded: Timestamp) => (entry: TripsProcessorStreamEntry, sequence: number): Trip => {
+const createTrip = (entry: TripsProcessorStreamEntry): Trip => {
   const {
     data: event,
     labels: { provider, device }
@@ -49,30 +49,25 @@ const createTrip = (recorded: Timestamp) => (entry: TripsProcessorStreamEntry, s
     first_trip_enter: event_type === 'trip_enter' ? timestamp : null,
     last_trip_leave: event_type === 'trip_leave' ? timestamp : null,
     trip_end: event_type === 'trip_end' ? timestamp : null,
-    recorded,
-    sequence
+    recorded: now()
   }
 }
 
 const insertTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
     await db.writeTrips(trips)
-    logger.info(`|- Trips Processor: Created ${trips.length} trips`)
+    logger.info(`|- Trips Processor: Created ${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}`)
   }
 }
 
 const updateTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
     await Promise.all(trips.map(trip => db.updateTrip(trip.provider_trip_id, trip)))
-    logger.info(`|- Trips Processor: Updated ${trips.length} trips`)
+    logger.info(`|- Trips Processor: Updated ${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}`)
   }
 }
 
-const updateTrip = (recorded: Timestamp) => (
-  trip: Trip,
-  { event_type, timestamp }: TripEvent,
-  sequence: number
-): Trip => {
+const updateTrip = (trip: Trip, { event_type, timestamp }: TripEvent): Trip => {
   return {
     ...trip,
     trip_start: event_type === 'trip_start' ? Math.min(trip.trip_start || timestamp, timestamp) : trip.trip_start,
@@ -81,18 +76,16 @@ const updateTrip = (recorded: Timestamp) => (
     last_trip_leave:
       event_type === 'trip_leave' ? Math.max(trip.last_trip_leave || timestamp, timestamp) : trip.last_trip_leave,
     trip_end: event_type === 'trip_end' ? Math.max(trip.trip_end || timestamp, timestamp) : trip.trip_end,
-    recorded,
-    sequence
+    recorded: now()
   }
 }
 
 export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Promise<void> => {
-  const recorded = now()
   const { insert, update } = entries.reduce<{
     insert: { [trip_id: string]: Trip }
     update: { [trip_id: string]: Trip }
   }>(
-    (trips, entry, sequence) => {
+    (trips, entry) => {
       const {
         data: event,
         labels: { trip }
@@ -104,7 +97,7 @@ export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Prom
             ...trips,
             update: {
               ...trips.update,
-              [trip_id]: updateTrip(recorded)(trips.update[trip_id] || trip, event, sequence)
+              [trip_id]: updateTrip(trips.update[trip_id] || trip, event)
             }
           }
         : {
@@ -112,9 +105,7 @@ export const TripsProcessor = async (entries: TripsProcessorStreamEntry[]): Prom
             ...trips,
             insert: {
               ...trips.insert,
-              [trip_id]: trips.insert[trip_id]
-                ? updateTrip(recorded)(trips.insert[trip_id], event, sequence)
-                : createTrip(recorded)(entry, sequence)
+              [trip_id]: trips.insert[trip_id] ? updateTrip(trips.insert[trip_id], event) : createTrip(entry)
             }
           }
     },

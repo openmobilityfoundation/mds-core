@@ -36,8 +36,6 @@ export interface Device {
 
 export type DeviceID = Pick<Device, 'provider_id' | 'device_id'>
 
-export type VehicleEventPrimaryKey = { timestamp: Timestamp; device_id: UUID } | null
-
 // Represents a row in the "events" table
 // Named "VehicleEvent" to avoid confusion with the DOM's Event interface
 export interface VehicleEvent {
