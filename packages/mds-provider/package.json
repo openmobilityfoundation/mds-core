@@ -1,12 +1,12 @@
 {
   "name": "mds-provider",
   "description": "MDS Provider implementation to pair with MDS Agency",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "City of Los Angeles",
   "private": true,
   "license": "Apache-2.0",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build .",
     "start": "yarn watch server",
@@ -20,20 +20,20 @@
   },
   "dependencies": {
     "express": "4.17.1",
-    "ladot-service-areas": "0.1.0",
-    "mds-api-helpers": "0.1.0",
-    "mds-api-server": "0.1.0",
-    "mds-cache": "0.1.0",
-    "mds-db": "0.1.0",
-    "mds-enums": "0.1.0",
-    "mds-logger": "0.1.0",
-    "mds-providers": "0.1.0",
-    "mds-stream": "0.1.0",
-    "mds-utils": "0.1.0",
+    "ladot-service-areas": "0.1.1",
+    "mds-api-helpers": "0.1.1",
+    "mds-api-server": "0.1.1",
+    "mds-cache": "0.1.1",
+    "mds-db": "0.1.1",
+    "mds-enums": "0.1.1",
+    "mds-logger": "0.1.1",
+    "mds-providers": "0.1.1",
+    "mds-stream": "0.1.1",
+    "mds-utils": "0.1.1",
     "url": "0.11.0",
     "uuid": "3.3.2"
   },
   "devDependencies": {
-    "mds-test-data": "0.1.0"
+    "mds-test-data": "0.1.1"
   }
 }

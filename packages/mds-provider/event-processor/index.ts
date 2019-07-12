@@ -136,18 +136,14 @@ const stop = async (): Promise<void> => {
 const wait = async (interval: number): Promise<number> =>
   interval > 0 ? new Promise(resolve => setTimeout(() => resolve(interval), interval)) : Promise.resolve(interval)
 
-/* eslint-reason this is the event processor's event loop */
 /* eslint-disable no-await-in-loop */
-const process = async ({
-  interval = 0,
-  noack = true,
-  count = 1000,
-  block
-}: ProviderEventProcessorOptions = {}): Promise<number> => {
-  logger.info('Processing Event Stream', { interval, noack, count, block })
+/* eslint-reason this is the event processor's event loop */
+const process = async (options: ProviderEventProcessorOptions = {}): Promise<number> => {
+  const { interval = 5000, noack = true, count = 1000 } = options
+  logger.info('Processing Event Stream', { interval, noack, count })
   let processed = 0
   do {
-    processed += await processor({ noack, count, block })
+    processed += await processor({ noack, count })
   } while ((await wait(interval)) > 0)
   return processed
 }

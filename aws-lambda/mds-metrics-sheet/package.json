@@ -1,14 +1,16 @@
 {
   "name": "@aws-lambda/mds-metrics-sheet",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "AWS Lambda for MDS Metrics Sheet",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --build .",
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "deploy:us-east-2": "aws lambda update-function-code --region us-east-2 --zip-file fileb://dist/${npm_package_name}.zip --function-name",
-    "deploy:us-west-2": "aws lambda update-function-code --region us-west-2 --zip-file fileb://dist/${npm_package_name}.zip --function-name",
+    "deploy:dev3-metrics-sheet": "yarn lambda:us-east-2 dev3-metrics-sheet --zip-file fileb://dist/bundles/metrics-log.zip",
+    "deploy:dev3-metrics-sheet-geo": "yarn lambda:us-east-2 dev3-metrics-sheet-geo --zip-file fileb://dist/bundles/vehicle-counts.zip",
+    "lambda:us-east-2": "aws lambda update-function-code --region us-east-2 --function-name",
+    "lambda:us-west-2": "aws lambda update-function-code --region us-west-2 --function-name",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
@@ -19,8 +21,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "mds-metrics-sheet": "0.0.1"
+    "mds-metrics-sheet": "0.0.2"
   },
-  "devDependencies": {},
   "license": "Apache-2.0"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/aws-serverless-express-handler",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Handler for AWS Serverless Express (AWS Lambda)",
   "main": "dist/index.js",
@@ -17,10 +17,10 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/api-gateway-authorizer": "0.1.0",
-    "@aws-lambda/aws-utils": "0.1.0",
+    "@aws-lambda/api-gateway-authorizer": "0.1.1",
+    "@aws-lambda/aws-utils": "0.1.1",
     "aws-serverless-express": "3.3.6",
-    "mds-api-server": "0.1.0"
+    "mds-api-server": "0.1.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.27",

@@ -1,6 +1,6 @@
 {
   "name": "mds-logger",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Mobility Data Specification logging interface",
   "main": "dist/index.js",
@@ -16,7 +16,6 @@
     "dotenv": "8.0.0",
     "pushover-notifications": "1.2.0"
   },
-  "devDependencies": {},
   "scripts": {
     "build": "tsc --build .",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",

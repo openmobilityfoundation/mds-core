@@ -1,9 +1,13 @@
-const ZipPlugin = require('zip-webpack-plugin')
 const webpack = require('webpack')
+const ZipPlugin = require('zip-webpack-plugin')
 
-module.exports = ({ npm_package_name, npm_package_version }) => {
-  const [path, filename] = npm_package_name.split('/')
-  return {
+module.exports = ({ env, argv, dirname, bundles }) => {
+  const { npm_package_name, npm_package_version } = env
+  const [,package] = npm_package_name.split('/')
+  const dist = `${dirname}/dist`
+  return bundles.map(bundle => ({
+    entry: { [bundle]: `${dirname}/${bundle}.ts` },
+    output: { path: dist, filename: `${bundle}.js` },
     module: {
       rules: [
         {
@@ -24,7 +28,7 @@ module.exports = ({ npm_package_name, npm_package_version }) => {
       new webpack.IgnorePlugin(/^utf-8-validate$/),
       // Ignore Critical Dependency Warnings
       // https://medium.com/tomincode/hiding-critical-dependency-warnings-from-webpack-c76ccdb1f6c1
-      new webpack.ContextReplacementPlugin(/node_modules\/express\/lib|node_modules\/optional/, data => {
+      new webpack.ContextReplacementPlugin(/node_modules\/express\/lib|node_modules\/optional|node_modules\/google-spreadsheet/, data => {
         delete data.dependencies[0].critical
         return data
       }),
@@ -34,7 +38,7 @@ module.exports = ({ npm_package_name, npm_package_version }) => {
         NPM_PACKAGE_VERSION: JSON.stringify(npm_package_version)
       }),
       // Zip the dist folder
-      new ZipPlugin({ path, filename, include: [/\.js$/] })
+      new ZipPlugin({ path: `${dist}/bundles`, filename: bundle === 'index' ? package : bundle, include: [`${bundle}.js`] })
     ],
     resolve: {
       extensions: ['.ts', '.js']
@@ -49,5 +53,5 @@ module.exports = ({ npm_package_name, npm_package_version }) => {
       errors: true,
       warnings: true
     }
-  }
+  }))
 }

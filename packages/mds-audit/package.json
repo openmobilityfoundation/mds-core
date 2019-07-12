@@ -1,10 +1,10 @@
 {
   "name": "mds-audit",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "private": true,
   "description": "Endpoint for auditing compliance with MDS",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build .",
     "start": "yarn watch server",
@@ -23,19 +23,19 @@
   "dependencies": {
     "@hapi/joi": "15.1.0",
     "express": "4.17.1",
-    "mds-api-authorizer": "0.1.0",
-    "mds-api-helpers": "0.1.0",
-    "mds-api-server": "0.1.0",
-    "mds-cache": "0.1.0",
-    "mds-db": "0.1.0",
-    "mds-enums": "0.1.0",
-    "mds-logger": "0.1.0",
-    "mds-providers": "0.1.0",
-    "mds-utils": "0.1.0",
+    "mds-api-authorizer": "0.1.1",
+    "mds-api-helpers": "0.1.1",
+    "mds-api-server": "0.1.1",
+    "mds-cache": "0.1.1",
+    "mds-db": "0.1.1",
+    "mds-enums": "0.1.1",
+    "mds-logger": "0.1.1",
+    "mds-providers": "0.1.1",
+    "mds-utils": "0.1.1",
     "uuid": "3.3.2"
   },
   "devDependencies": {
-    "mds-test-data": "0.1.0"
+    "mds-test-data": "0.1.1"
   },
   "license": "Apache-2.0"
 }

@@ -1,6 +1,6 @@
 {
   "name": "mds-utils",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Mobility Data Specification utility functions",
   "keywords": [
@@ -10,8 +10,8 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "point-in-polygon": "1.0.1",
-    "circle-to-polygon": "1.0.2"
+    "circle-to-polygon": "1.0.2",
+    "point-in-polygon": "1.0.1"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,6 +21,5 @@
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 5 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
-  },
-  "devDependencies": {}
+  }
 }
