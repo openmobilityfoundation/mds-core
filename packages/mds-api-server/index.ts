@@ -7,7 +7,7 @@ export type ApiRequest = express.Request
 
 export interface ApiResponse extends express.Response {
   locals: {
-    claims: ApiAuthorizerClaims
+    claims: ApiAuthorizerClaims | null
   }
 }
 

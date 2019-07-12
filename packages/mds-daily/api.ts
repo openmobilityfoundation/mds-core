@@ -15,7 +15,6 @@
  */
 
 import express from 'express'
-import jwtDecode from 'jwt-decode'
 
 import log from 'mds-logger'
 import db from 'mds-db'
@@ -26,7 +25,7 @@ import areas from 'ladot-service-areas'
 import { UUID, VehicleEvent, CountMap, DeviceID, TripsStats } from 'mds'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
 import { isUUID, isTimestamp, now, days, inc, pathsFor, head, tail, isStateTransitionValid } from 'mds-utils'
-import { AgencyApiRequest } from 'mds-agency/types'
+import { DailyApiRequest, DailyApiResponse } from './types'
 
 const SERVER_ERROR = {
   error: 'server_error',
@@ -35,96 +34,54 @@ const SERVER_ERROR = {
 
 log.startup()
 
-// / ////////// utilities ////////////////
-
-/**
- * Extract auth info from JWT or auth headers
- */
-
-function getAuth(req: AgencyApiRequest): Partial<{ provider_id: string; scope: string }> {
-  // Handle Auth from API Gateway
-  const authorizer =
-    req.apiGateway &&
-    req.apiGateway.event &&
-    req.apiGateway.event.requestContext &&
-    req.apiGateway.event.requestContext.authorizer
-
-  /* istanbul ignore next */
-  if (authorizer) {
-    const { provider_id, scope } = authorizer
-    return { provider_id, scope }
-  }
-
-  // Handle Authorization Header when running standalone
-  const decode = ([scheme, token]: string[]): Partial<{ provider_id: string; scope: string }> => {
-    const decoders: { [scheme: string]: () => Partial<{ provider_id: string; scope: string }> } = {
-      bearer: () => {
-        const decoded: { [key: string]: string } = jwtDecode(token)
-        return {
-          provider_id: decoded['https://ladot.io/provider_id'],
-          scope: decoded.scope
-        }
-      },
-      basic: () => {
-        const [provider_id, scope] = Buffer.from(token, 'base64')
-          .toString()
-          .split('|')
-        return { provider_id, scope }
-      }
-    }
-    const decoder = decoders[scheme.toLowerCase()]
-    return decoder ? decoder() : {}
-  }
-
-  return req.headers.authorization ? decode(req.headers.authorization.split(' ')) : {}
-}
-
 function api(app: express.Express): express.Express {
   /**
    * Agency-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req, res, next) => {
+  app.use((req: DailyApiRequest, res: DailyApiResponse, next) => {
     try {
       // verify presence of provider_id
-      if (req.path.includes('/health')) {
-        // all auth provided by API Gateway
-      } else if (req.path !== '/') {
-        const { provider_id, scope } = getAuth(req)
+      if (!(req.path.includes('/health') || req.path === '/')) {
+        if (res.locals.claims) {
+          const { provider_id, scope } = res.locals.claims
 
-        // no test access without auth
-        if (req.path.includes('/test/')) {
-          if (!scope || !scope.includes('test:all')) {
-            return res.status(403).send({
-              result: `no test access without test:all scope (${scope})`
-            })
+          // no test access without auth
+          if (req.path.includes('/test/')) {
+            if (!scope || !scope.includes('test:all')) {
+              return res.status(403).send({
+                result: `no test access without test:all scope (${scope})`
+              })
+            }
           }
+
+          // no admin access without auth
+          if (req.path.includes('/admin/')) {
+            if (!scope || !scope.includes('admin:all')) {
+              return res.status(403).send({
+                result: `no admin access without admin:all scope (${scope})`
+              })
+            }
+          }
+
+          if (provider_id) {
+            if (!isUUID(provider_id)) {
+              log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+              return res.status(400).send({
+                result: `invalid provider_id ${provider_id} is not a UUID`
+              })
+            }
+
+            if (!isProviderId(provider_id)) {
+              return res.status(400).send({
+                result: `invalid provider_id ${provider_id} is not a known provider`
+              })
+            }
+
+            log.info(providerName(provider_id), req.method, req.originalUrl)
+          }
+        } else {
+          return res.status(401).send('Unauthorized')
         }
-
-        // no admin access without auth
-        if (req.path.includes('/admin/')) {
-          if (!scope || !scope.includes('admin:all')) {
-            return res.status(403).send({
-              result: `no admin access without admin:all scope (${scope})`
-            })
-          }
-        }
-
-        if (provider_id) {
-          if (!isUUID(provider_id)) {
-            log.warn(req.originalUrl, 'bogus provider_id', provider_id)
-            return res.status(400).send({
-              result: `invalid provider_id ${provider_id} is not a UUID`
-            })
-          }
-          if (!isProviderId(provider_id)) {
-            res.status(400).send({
-              result: `invalid provider_id ${provider_id} is not a known provider`
-            })
-          }
-        }
-
-        // stash provider_id
-        res.locals.provider_id = provider_id
       }
     } catch (err) {
       /* istanbul ignore next */
@@ -137,7 +94,7 @@ function api(app: express.Express): express.Express {
 
   // ///////////////////// begin daily endpoints ///////////////////////
 
-  app.get(pathsFor('/test/shutdown'), (req, res) => {
+  app.get(pathsFor('/test/shutdown'), (req: DailyApiRequest, res: DailyApiResponse) => {
     Promise.all([cache.shutdown(), stream.shutdown(), db.shutdown()]).then(() => {
       log.info('shutdown complete (in theory)')
       res.send({
@@ -201,7 +158,7 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  app.get(pathsFor('/admin/vehicle_counts'), (req, res) => {
+  app.get(pathsFor('/admin/vehicle_counts'), (req: DailyApiRequest, res: DailyApiResponse) => {
     function fail(err: Error | string): void {
       log.error('/admin/vehicle_counts fail', err).then(() => {
         res.status(500).send({
@@ -301,7 +258,7 @@ function api(app: express.Express): express.Express {
   })
 
   // read all the latest events out of the cache
-  app.get(pathsFor('/admin/events'), (req, res) => {
+  app.get(pathsFor('/admin/events'), (req: DailyApiRequest, res: DailyApiResponse) => {
     cache.readAllEvents().then((events: VehicleEvent[]) => {
       res.status(200).send({
         events
@@ -359,7 +316,7 @@ function api(app: express.Express): express.Express {
     return perProvider
   }
 
-  app.get(pathsFor('/admin/last_day_trips_by_provider'), async (req, res) => {
+  app.get(pathsFor('/admin/last_day_trips_by_provider'), async (req: DailyApiRequest, res: DailyApiResponse) => {
     function fail(err: Error | string): void {
       log.error('last_day_trips_by_provider err:', err)
     }
@@ -401,7 +358,7 @@ function api(app: express.Express): express.Express {
   })
 
   // get raw trip data for analysis
-  app.get(pathsFor('/admin/raw_trip_data/:trip_id'), (req, res) => {
+  app.get(pathsFor('/admin/raw_trip_data/:trip_id'), (req: DailyApiRequest, res: DailyApiResponse) => {
     const { trip_id } = req.params
     db.readEvents({ trip_id })
       .then(
@@ -435,7 +392,7 @@ function api(app: express.Express): express.Express {
   // I didn't want to have to wrap everything in another Promise.then callback
   // by asking the DB for that information.
   // This function is ludicrously long as it is.
-  app.get(pathsFor('/admin/last_day_stats_by_provider'), (req, res) => {
+  app.get(pathsFor('/admin/last_day_stats_by_provider'), (req: DailyApiRequest, res: DailyApiResponse) => {
     const provider_info: {
       [p: string]: {
         name: string
@@ -592,7 +549,7 @@ function api(app: express.Express): express.Express {
       })
   })
 
-  app.get(pathsFor('/health'), (req, res) => {
+  app.get(pathsFor('/health'), (req: DailyApiRequest, res: DailyApiResponse) => {
     const health_info: { db?: object; stream?: object } = {}
     db.health()
       .then((result: object) => {
