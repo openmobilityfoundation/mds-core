@@ -20,20 +20,20 @@
   },
   "dependencies": {
     "express": "4.17.1",
-    "ladot-service-areas": "^0.1.1",
-    "mds-api-helpers": "^0.1.1",
-    "mds-api-server": "^0.1.1",
-    "mds-cache": "^0.1.1",
-    "mds-db": "^0.1.1",
-    "mds-enums": "^0.1.1",
-    "mds-logger": "^0.1.1",
-    "mds-providers": "^0.1.1",
-    "mds-stream": "^0.1.1",
-    "mds-utils": "^0.1.1",
+    "ladot-service-areas": "0.1.1",
+    "mds-api-helpers": "0.1.1",
+    "mds-api-server": "0.1.1",
+    "mds-cache": "0.1.1",
+    "mds-db": "0.1.1",
+    "mds-enums": "0.1.1",
+    "mds-logger": "0.1.1",
+    "mds-providers": "0.1.1",
+    "mds-stream": "0.1.1",
+    "mds-utils": "0.1.1",
     "url": "0.11.0",
     "uuid": "3.3.2"
   },
   "devDependencies": {
-    "mds-test-data": "^0.1.1"
+    "mds-test-data": "0.1.1"
   }
 }

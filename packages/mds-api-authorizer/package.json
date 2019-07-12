@@ -20,7 +20,7 @@
     "jwt-decode": "2.2.0"
   },
   "devDependencies": {
-    "mds-test-data": "^0.1.1"
+    "mds-test-data": "0.1.1"
   },
   "license": "Apache-2.0"
 }

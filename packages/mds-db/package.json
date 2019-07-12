@@ -18,12 +18,12 @@
   "author": "City of Los Angeles",
   "license": "ISC",
   "dependencies": {
-    "mds-enums": "^0.1.1",
-    "mds-logger": "^0.1.1",
-    "mds-utils": "^0.1.1",
+    "mds-enums": "0.1.1",
+    "mds-logger": "0.1.1",
+    "mds-utils": "0.1.1",
     "pg": "7.11.0"
   },
   "devDependencies": {
-    "mds-test-data": "^0.1.1"
+    "mds-test-data": "0.1.1"
   }
 }

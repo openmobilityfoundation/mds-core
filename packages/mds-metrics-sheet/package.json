@@ -17,8 +17,8 @@
   "dependencies": {
     "dotenv": "8.0.0",
     "google-spreadsheet": "2.0.7",
-    "mds-logger": "^0.1.1",
-    "mds-providers": "^0.1.1",
+    "mds-logger": "0.1.1",
+    "mds-providers": "0.1.1",
     "request": "2.88.0",
     "request-promise": "4.2.4"
   }

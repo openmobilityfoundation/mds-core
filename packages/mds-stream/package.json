@@ -14,7 +14,7 @@
   "dependencies": {
     "bluebird": "3.5.5",
     "flat": "4.1.0",
-    "mds-logger": "^0.1.1",
+    "mds-logger": "0.1.1",
     "node-gzip": "1.1.2",
     "redis": "2.8.0"
   },
