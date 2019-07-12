@@ -7,8 +7,11 @@
   "scripts": {
     "build": "tsc --build .",
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "deploy:us-east-2": "aws lambda update-function-code --region us-east-2 --zip-file fileb://dist/${npm_package_name}.zip --function-name",
-    "deploy:us-west-2": "aws lambda update-function-code --region us-west-2 --zip-file fileb://dist/${npm_package_name}.zip --function-name",
+    "deploy:dev3-mds-compliance": "yarn lambda:us-east-2 dev3-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
+    "deploy:ladot-prod-mds-compliance": "yarn lambda:us-west-2 ladot-prod-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
+    "deploy:ladot-sandbox-mds-compliance": "yarn lambda:us-west-2 ladot-sandbox-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
+    "lambda:us-east-2": "aws lambda update-function-code --region us-east-2 --function-name",
+    "lambda:us-west-2": "aws lambda update-function-code --region us-west-2 --function-name",
     "start": "yarn watch server",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
