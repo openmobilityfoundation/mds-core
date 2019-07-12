@@ -176,10 +176,6 @@ function api(app: express.Express): express.Express {
                           /* istanbul ignore next */
                           const deviceMap: { [d: string]: Device } = devices.reduce(
                             (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-                              /* istanbul ignore next */
-                              if (!device) {
-                                throw new Error('device in DB but not in cache')
-                              }
                               return Object.assign(deviceMapAcc, { [device.device_id]: device })
                             },
                             {}
