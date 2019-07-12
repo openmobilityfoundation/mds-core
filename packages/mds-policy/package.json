@@ -21,8 +21,8 @@
     "mds-utils": "0.1.0",
     "uuid": "3.3.2"
   },
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build .",
     "start": "yarn watch server",

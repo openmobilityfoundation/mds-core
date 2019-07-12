@@ -3,8 +3,8 @@
   "version": "0.1.12",
   "private": true,
   "description": "Endpoint for auditing compliance with MDS",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build .",
     "start": "yarn watch server",

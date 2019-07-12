@@ -2,8 +2,8 @@
   "name": "mds-compliance",
   "version": "0.1.1",
   "description": "MDS Compliance Tool",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build .",
     "start": "yarn watch server",

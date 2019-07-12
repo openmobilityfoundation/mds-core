@@ -5,8 +5,8 @@
   "author": "City of Los Angeles",
   "private": true,
   "license": "Apache-2.0",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build .",
     "start": "yarn watch server",
