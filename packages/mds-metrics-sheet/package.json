@@ -1,6 +1,6 @@
 {
   "name": "mds-metrics-sheet",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Automate reporting api insert into LADOT compliance spreadsheet",
   "private": true,
   "main": "dist/index.js",
@@ -17,8 +17,8 @@
   "dependencies": {
     "dotenv": "8.0.0",
     "google-spreadsheet": "2.0.7",
-    "mds-logger": "0.1.1",
-    "mds-providers": "0.1.1",
+    "mds-logger": "0.1.2",
+    "mds-providers": "0.1.2",
     "request": "2.88.0",
     "request-promise": "4.2.4"
   }

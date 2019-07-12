@@ -1,6 +1,6 @@
 {
   "name": "mds-enums",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Mobility Data Specification enums and symbols",
   "main": "dist/index.js",

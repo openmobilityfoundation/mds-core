@@ -1,6 +1,6 @@
 {
   "name": "mds-api-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "MDS API Server",
   "main": "dist/index.js",
@@ -19,11 +19,11 @@
   "dependencies": {
     "body-parser": "1.19.0",
     "express": "4.17.1",
-    "mds-api-authorizer": "0.1.1",
-    "mds-utils": "0.1.1"
+    "mds-api-authorizer": "0.1.2",
+    "mds-utils": "0.1.2"
   },
   "devDependencies": {
-    "mds-test-data": "0.1.1"
+    "mds-test-data": "0.1.2"
   },
   "license": "Apache-2.0"
 }
