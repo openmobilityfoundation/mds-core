@@ -3,10 +3,6 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [
-    { "path": "../../aws-lambda/aws-serverless-express-handler" },
-    { "path": "../../packages/mds-api-server" },
-    { "path": "../../packages/mds-audit" }
-  ],
+  "references": [{ "path": "../../packages/mds-metrics-sheet" }],
   "include": ["metrics-log.ts", "vehicle-counts.ts"]
 }
