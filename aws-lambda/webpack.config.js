@@ -28,7 +28,7 @@ module.exports = ({ env, argv, dirname, bundles }) => {
       new webpack.IgnorePlugin(/^utf-8-validate$/),
       // Ignore Critical Dependency Warnings
       // https://medium.com/tomincode/hiding-critical-dependency-warnings-from-webpack-c76ccdb1f6c1
-      new webpack.ContextReplacementPlugin(/node_modules\/express\/lib|node_modules\/optional/, data => {
+      new webpack.ContextReplacementPlugin(/node_modules\/express\/lib|node_modules\/optional|node_modules\/google-spreadsheet/, data => {
         delete data.dependencies[0].critical
         return data
       }),
