@@ -149,27 +149,6 @@ const test_data = {
 }
 
 describe('Tests app', () => {
-  it('verifies get root', done => {
-    request
-      .get('/')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('verifies get /health without jwt', done => {
-    request
-      .get('/health')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
   it('initializes the db and cache', done => {
     request
       .get('/test/initialize')

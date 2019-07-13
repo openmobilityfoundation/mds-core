@@ -192,13 +192,13 @@ async function makeReadOnlyQuery(sql: string): Promise<any[]> {
  */
 async function health(): Promise<{
   using: string
-  stats: { current_running_queries: object[]; cache_hit_result: { heap_read: string; heap_hit: string; ratio: string } }
+  stats: { current_running_queries: number; cache_hit_result: { heap_read: string; heap_hit: string; ratio: string } }
 }> {
   log.info('postgres health check')
   return new Promise(resolve => {
     const currentQueriesSQL = `SELECT query
     FROM pg_stat_activity
-    WHERE query != '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%'
+    WHERE query <> '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%' AND query <> ''
     ORDER BY query_start desc`
     makeReadOnlyQuery(currentQueriesSQL).then(currentQueriesResult => {
       // Add 1 to the denominator so as to avoid divide by zero errors,
@@ -210,12 +210,12 @@ async function health(): Promise<{
       FROM pg_statio_user_tables;`
       /* eslint-reason TODO build out type */
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      makeReadOnlyQuery(cacheHitQuery).then((cacheHitResult: any) => {
+      makeReadOnlyQuery(cacheHitQuery).then(([cacheHitResult]: any) => {
         resolve({
           using: 'postgres',
           stats: {
-            current_running_queries: currentQueriesResult,
-            cache_hit_result: cacheHitResult[0]
+            current_running_queries: currentQueriesResult.length,
+            cache_hit_result: cacheHitResult
           }
         })
       })

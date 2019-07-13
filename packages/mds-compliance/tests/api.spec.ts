@@ -270,16 +270,6 @@ describe('Tests Compliance API:', () => {
         })
     })
 
-    it('gets the root', done => {
-      request
-        .get('/')
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
     it('Verifies initial policy hit OK', done => {
       request
         .get(`/snapshot/${COUNT_POLICY_UUID}`)

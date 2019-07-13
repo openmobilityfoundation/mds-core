@@ -549,35 +549,6 @@ function api(app: express.Express): express.Express {
       })
   })
 
-  app.get(pathsFor('/health'), (req: DailyApiRequest, res: DailyApiResponse) => {
-    const health_info: { db?: object; stream?: object } = {}
-    db.health()
-      .then((result: object) => {
-        health_info.db = result
-
-        stream
-          .health()
-          .then((result2: object) => {
-            health_info.stream = result2
-            res.status(200).send(health_info)
-          })
-          .catch((ex: Error /* istanbul ignore next */) => {
-            log.info('stream unreachable')
-            log.info(ex)
-            res.status(200).send({
-              result: 'app is up, stream is unreachable'
-            })
-          })
-      })
-      .catch((ex: Error /* istanbul ignore next */) => {
-        log.info('db unreachable')
-        log.info(ex)
-        res.status(500).send({
-          result: 'app is up, db is unreachable'
-        })
-      })
-  })
-
   return app
 
   // /////////////////// end Agency candidate endpoints ////////////////////
@@ -585,5 +556,4 @@ function api(app: express.Express): express.Express {
 
 // ///////////////////// end test-only endpoints ///////////////////////
 
-// Export your Express configuration so that it can be consumed by the Lambda handler
 export { api }

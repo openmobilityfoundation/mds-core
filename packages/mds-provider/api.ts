@@ -178,16 +178,6 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  app.get(pathsFor('/health'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // 200 OK
-    res.status(200).send({
-      runtime: process.versions.node,
-      process: process.pid,
-      memory: process.memoryUsage(),
-      uptime: process.uptime()
-    })
-  })
-
   // / /////////////////////// trips /////////////////////////////////
 
   /**
@@ -339,5 +329,4 @@ function api(app: express.Express): express.Express {
   return app
 }
 
-// Export your Express configuration so that it can be consumed by the Lambda handler
 export { api }

@@ -41,5 +41,15 @@ export const server = (
     res.status(200).send({ name, version, runtime })
   })
 
+  app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
+    // 200 OK
+    res.status(200).send({
+      runtime: process.versions.node,
+      process: process.pid,
+      uptime: process.uptime(),
+      memory: process.memoryUsage()
+    })
+  })
+
   return api(app)
 }
