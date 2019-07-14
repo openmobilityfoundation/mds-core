@@ -55,13 +55,15 @@
   "types": "types/mds.d.ts",
   "dependencies": {},
   "scripts": {
-    "prepare": "yarn build",
-    "build": "lerna run build --stream",
-    "bundle": "yarn build && lerna run bundle --stream",
+    "build": "yarn run:concurrent build",
+    "bundle": "yarn run:concurrent bundle",
     "clean": "git clean -fdX && yarn",
-    "test": "lerna run test --stream --concurrency 1",
-    "test:eslint": "lerna run test:eslint --stream --concurrency 1",
-    "test:prettier": "lerna run test:prettier --stream --concurrency 1",
-    "test:unit": "lerna run test:unit --stream --concurrency 1"
+    "deploy": "yarn run:sequential",
+    "run:concurrent": "lerna run --stream",
+    "run:sequential": "lerna run --stream --concurrency 1",
+    "test": "yarn run:sequential test",
+    "test:eslint": "yarn run:concurrent test:eslint",
+    "test:prettier": "yarn run:concurrent test:prettier",
+    "test:unit": "yarn run:sequential test:unit"
   }
 }
