@@ -152,6 +152,7 @@ export type Rule = CountRule | TimeRule | SpeedRule
 export interface Policy {
   name: string
   description: string
+  provider_ids: UUID[]
   policy_id: UUID
   start_date: Timestamp
   end_date: Timestamp | null

@@ -89,7 +89,7 @@ let testTimestamp = now()
 
 const test_event = {
   device_id: DEVICE_UUID,
-  event_type: 'deregister',
+  event_type: VEHICLE_EVENTS.deregister,
   timestamp: testTimestamp
 }
 
@@ -668,7 +668,7 @@ describe('Tests API', () => {
           log('deregister readback event error', err)
         } else {
           // log('--- deregister readback event success', result.body)
-          test.object(result.body).match((obj: VehicleEvent) => obj.event_type === 'deregister')
+          test.object(result.body).match((obj: VehicleEvent) => obj.event_type === VEHICLE_EVENTS.deregister)
           test.object(result.body).match((obj: VehicleEvent) => obj.device_id === DEVICE_UUID)
         }
         done(err)

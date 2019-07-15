@@ -55,6 +55,7 @@ const policy_json: Policy = {
   start_date: start_yesterday,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       rule_type: 'count',
@@ -81,6 +82,7 @@ const policy2_json: Policy = {
   start_date: start_one_month_ago,
   end_date: start_one_week_ago,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA (rentable)',
@@ -116,6 +118,7 @@ const policy3_json: Policy = {
   start_date: start_one_month_from_now,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA',
