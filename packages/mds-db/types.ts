@@ -36,12 +36,6 @@ export interface ReadTripsResult {
   trips: Trip[]
 }
 
-// TODO move to mds-db?
-export interface ReadTripIdsResult {
-  count: number
-  tripIds: UUID[]
-}
-
 export interface StatusChange {
   provider_id: UUID
   provider_name: string
@@ -79,15 +73,10 @@ export interface ReadEventsQueryParams {
   take?: number | string
   start_time?: number | string
   end_time?: number | string
-  min_end_time?: number | string
-  max_end_time?: number | string
   start_recorded?: string
   end_recorded?: string
-  event_types?: string[]
   device_id?: UUID
   trip_id?: UUID
-  vehicle_id?: string
-  provider_id?: UUID
 }
 
 export interface ReadHistoricalEventsQueryParams {
