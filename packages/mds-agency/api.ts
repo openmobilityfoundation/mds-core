@@ -474,7 +474,7 @@ function api(app: express.Express): express.Express {
         }
       )
     } else {
-      db.readDevice(device_id)
+      db.readDevice(device_id, provider_id)
         .then(
           (device: Device) => {
             db.readEvent(device_id)
@@ -579,28 +579,24 @@ function api(app: express.Express): express.Express {
     }
 
     // verify that it's my device
-    db.readDevice(device_id)
-      .then((device2: Device) => {
-        if (device2.provider_id !== provider_id) {
-          fail('not found')
-        } else {
-          db.updateDevice(device_id, update)
-            .then((device: Device) => {
-              // update in cache
-              // post event to stream
-              Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
-                .then(() => {
-                  res.status(201).send({
-                    result: 'success',
-                    vehicle: device
-                  })
-                }, fail)
-                .catch(fail)
-            }, fail)
-            .catch(fail)
-        }
+    db.readDevice(device_id, provider_id)
+      .then(() => {
+        db.updateDevice(device_id, update)
+          .then((device: Device) => {
+            // update in cache
+            // post event to stream
+            Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+              .then(() => {
+                res.status(201).send({
+                  result: 'success',
+                  vehicle: device
+                })
+              }, fail)
+              .catch(fail)
+          }, fail)
+          .catch(fail)
       }, fail)
-      .catch(fail)
+      .catch(() => fail('not found'))
   })
 
   /**
@@ -904,45 +900,43 @@ function api(app: express.Express): express.Express {
       }
 
       // TODO switch to cache for speed?
-      db.readDevice(event.device_id)
-        .then((device: Device) => {
-          if (device.provider_id !== provider_id) {
-            fail({
-              message: 'not found'
-            })
-          } else {
-            if (event.telemetry) {
-              event.telemetry.device_id = event.device_id
-            }
-            const failure = badEvent(event) || (event.telemetry ? badTelemetry(event.telemetry) : null)
-            // TODO unify with fail() above
-            if (failure) {
-              log.error(
-                providerName(res.locals.provider_id),
-                'event failure',
-                JSON.stringify(failure),
-                JSON.stringify(event)
-              )
-              return res.status(400).send(failure)
-            }
-
-            // make a note of the service area
-            event.service_area_id = getServiceArea(event)
-
-            // database write is crucial; failures of cache/stream should be noted and repaired
-            db.writeEvent(event)
-              .then(() => {
-                Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
-                  .then(finish)
-                  .catch(err => /* istanbul ignore next */ {
-                    log.warn('/event exception cache/stream', err)
-                    finish()
-                  })
-              }, fail)
-              .catch(fail)
+      db.readDevice(event.device_id, provider_id)
+        .then(() => {
+          if (event.telemetry) {
+            event.telemetry.device_id = event.device_id
           }
+          const failure = badEvent(event) || (event.telemetry ? badTelemetry(event.telemetry) : null)
+          // TODO unify with fail() above
+          if (failure) {
+            log.error(
+              providerName(res.locals.provider_id),
+              'event failure',
+              JSON.stringify(failure),
+              JSON.stringify(event)
+            )
+            return res.status(400).send(failure)
+          }
+
+          // make a note of the service area
+          event.service_area_id = getServiceArea(event)
+
+          // database write is crucial; failures of cache/stream should be noted and repaired
+          db.writeEvent(event)
+            .then(() => {
+              Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+                .then(finish)
+                .catch(err => /* istanbul ignore next */ {
+                  log.warn('/event exception cache/stream', err)
+                  finish()
+                })
+            }, fail)
+            .catch(fail)
         }, fail)
-        .catch(fail)
+        .catch(() =>
+          fail({
+            message: 'not found'
+          })
+        )
     }
   )
 
@@ -1664,9 +1658,9 @@ function api(app: express.Express): express.Express {
       })
   })
 
-  async function refresh(device_id: UUID): Promise<string> {
+  async function refresh(device_id: UUID, provider_id: UUID): Promise<string> {
     // TODO all of this back and forth between cache and db is slow
-    const device = await db.readDevice(device_id)
+    const device = await db.readDevice(device_id, provider_id)
     // log.info('refresh device', JSON.stringify(device))
     await cache.writeDevice(device)
     await db.readEvent(device_id).then(
@@ -1701,17 +1695,16 @@ function api(app: express.Express): express.Express {
     db.readDeviceIds()
       .then(
         (rows: DeviceID[]) => {
-          let device_ids = rows.map(row => row.device_id)
-          log.info('read', device_ids.length, 'device_ids. skip', skip, 'take', take)
-          device_ids = device_ids.slice(skip, take + skip)
-          log.info('device_ids', JSON.stringify(device_ids))
+          log.info('read', rows.length, 'device_ids. skip', skip, 'take', take)
+          const deviceIds = rows.slice(skip, take + skip)
+          log.info('device_ids', JSON.stringify(rows))
 
-          const promises = device_ids.map((device_id: UUID) => refresh(device_id))
+          const promises = deviceIds.map(device => refresh(device.device_id, device.provider_id))
           Promise.all(promises).then(
             () => {
               // success
               res.send({
-                result: `success for ${device_ids.length} devices`
+                result: `success for ${deviceIds.length} devices`
               })
             },
             /* istanbul ignore next */ err => {
