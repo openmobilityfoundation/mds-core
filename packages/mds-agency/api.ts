@@ -164,18 +164,19 @@ function api(app: express.Express): express.Express {
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#service_areas Service Areas}
    */
   app.get(pathsFor('/service_areas'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    const serviceAreas = await areas.readServiceAreas().catch((err: Error) => {
+    try {
+      const serviceAreas = await areas.readServiceAreas()
+      log.info('readServiceAreas (all)', serviceAreas.length)
+      return res.status(200).send({
+        service_areas: serviceAreas
+      })
+    } catch (err) {
       /* istanbul ignore next */
       log.error('failed to read service areas', err)
       return res.status(404).send({
         result: 'not found'
       })
-    })
-
-    log.info('readServiceAreas (all)', serviceAreas.length)
-    return res.status(200).send({
-      service_areas: serviceAreas
-    })
+    }
   })
 
   /**
@@ -191,21 +192,21 @@ function api(app: express.Express): express.Express {
       })
     }
 
-    const serviceAreas = await areas
-      .readServiceAreas(undefined, service_area_id)
-      .catch((err: Error | string) => /* istanbul ignore next */ {
-        log.error('failed to read service area', err instanceof Error ? err.stack : err)
-        return res.status(404).send({
-          result: 'not found'
-        })
-      })
+    try {
+      const serviceAreas = await areas.readServiceAreas(undefined, service_area_id)
 
-    if (serviceAreas && serviceAreas.length > 0) {
-      log.info('readServiceAreas (one)')
-      return res.status(200).send({
-        service_areas: serviceAreas
+      if (serviceAreas && serviceAreas.length > 0) {
+        log.info('readServiceAreas (one)')
+        return res.status(200).send({
+          service_areas: serviceAreas
+        })
+      }
+    } catch {
+      return res.status(404).send({
+        result: `${service_area_id} not found`
       })
     }
+
     return res.status(404).send({
       result: `${service_area_id} not found`
     })
