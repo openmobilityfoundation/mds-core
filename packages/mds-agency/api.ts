@@ -315,14 +315,52 @@ function api(app: express.Express): express.Express {
       return res.status(400).send(failure)
     }
 
+    async function writeRegisterEvent() {
+      return new Promise((resolve, reject) => {
+        const event: VehicleEvent = {
+          device_id: device.device_id,
+          provider_id: device.provider_id,
+          event_type: VEHICLE_EVENTS.register,
+          event_type_reason: null,
+          telemetry: null,
+          timestamp: recorded,
+          trip_id: null,
+          recorded,
+          telemetry_timestamp: undefined,
+          service_area_id: null
+        }
+        db.writeEvent(event)
+          .then(() => {
+            Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+              .then(resolve)
+              .catch(err => /* istanbul ignore next */ {
+                log.warn('/event exception cache/stream', err)
+                reject()
+              })
+          }, reject)
+          .catch(reject)
+      })
+    }
+
     function success(): void {
       device.status = VEHICLE_STATUSES.removed
       log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device)).then(() => {
-        res.status(201).send({
-          result: 'register device success',
-          recorded,
-          device
-        })
+        writeRegisterEvent().then(
+          () => {
+            res.status(201).send({
+              result: 'register device success',
+              recorded,
+              device
+            })
+          },
+          err => /* istanbul ignore next */ {
+            log.error('register device failed to write register event', err).then(() => {
+              res.status(500).send({
+                result: 'register device internal error'
+              })
+            })
+          }
+        )
       })
     }
 

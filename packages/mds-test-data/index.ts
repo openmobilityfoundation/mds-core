@@ -192,7 +192,7 @@ function makeTelemetryStream(origin: Telemetry, steps: number) {
   return stream
 }
 
-function makeEvents(devices: Device[], timestamp: Timestamp, event_type = 'deregister'): VehicleEvent[] {
+function makeEvents(devices: Device[], timestamp: Timestamp, event_type = VEHICLE_EVENTS.deregister): VehicleEvent[] {
   if (!event_type) {
     throw new Error('empty event_type')
   }
