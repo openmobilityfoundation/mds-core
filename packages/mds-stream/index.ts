@@ -83,9 +83,9 @@ const { now } = Date
 let cachedClient: redis.RedisClient | null = null
 
 const STREAM_MAXLEN: { [S in Stream]: number } = {
-  'device:index': 10000,
-  'device:raw': 1000000,
-  'provider:event': 100000
+  'device:index': 10_000,
+  'device:raw': 1_000_000,
+  'provider:event': 100_000
 }
 
 async function getClient() {
