@@ -1024,7 +1024,7 @@ function api(app: express.Express): express.Express {
             },
             err => {
               /* istanbul ignore next */
-              log.error(providerName(provider_id), 'writeTelemetry failure', err).then(() => {
+              log.error(providerName(provider_id), 'writeTelemetry failure', JSON.stringify(err)).then(() => {
                 res.status(400).send({
                   error: 'bad_param',
                   error_description: 'one or more items already exist in the db'
