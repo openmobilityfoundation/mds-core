@@ -83,13 +83,8 @@ const { now } = Date
 let cachedClient: redis.RedisClient | null = null
 
 const STREAM_MAXLEN: { [S in Stream]: number } = {
-  // There's now single device:raw that merges all events and telemetries
-  // of all devices that are reporting in to MDS
-  // RAW_MAXLEN of approximately 10,000,000 which corresponds to about
-  // 1000 datapoints per vehicle with 10k vehicles, or approximately
-  // 2GB used with each telemetry event being ~200 bytes
   'device:index': 10000,
-  'device:raw': 10000000,
+  'device:raw': 1000000,
   'provider:event': 100000
 }
 
