@@ -79,6 +79,7 @@ const COUNT_POLICY_JSON: Policy = {
   start_date: 1558389669540,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA',
@@ -100,6 +101,7 @@ const COUNT_POLICY_JSON_2: Policy = {
   start_date: 1558389669540,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'No vehicles permitted on Venice Beach on weekends',
@@ -121,6 +123,7 @@ const COUNT_POLICY_JSON_3: Policy = {
   start_date: 1558389669540,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA',
@@ -141,6 +144,7 @@ const COUNT_POLICY_JSON_4: Policy = {
   start_date: 1558389669540,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA',
@@ -163,6 +167,7 @@ const TIME_POLICY_JSON: Policy = {
   start_date: 1558389669540,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA (rentable)',
@@ -867,6 +872,7 @@ describe('Tests Compliance API:', () => {
         start_date: 1558389669540,
         end_date: null,
         prev_policies: null,
+        provider_ids: [],
         rules: [
           {
             name: 'Valid Provider Drop Offs',

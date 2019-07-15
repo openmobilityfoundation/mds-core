@@ -277,6 +277,9 @@ function api(app: express.Express): express.Express {
     prev_policies: Joi.array()
       .items(Joi.string().guid())
       .allow(null),
+    provider_ids: Joi.array()
+      .items(Joi.string().guid())
+      .allow(null),
     rules: Joi.array()
       .min(1)
       .items(ruleSchema)
