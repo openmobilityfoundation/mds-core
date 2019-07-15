@@ -16,7 +16,7 @@
 
 import supertest from 'supertest'
 import { now } from 'mds-utils'
-import { VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
+import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from 'mds-enums'
 import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from 'mds-test-data'
 import test from 'unit.js'
 import { Device, Telemetry, VehicleEvent } from 'mds'
@@ -131,7 +131,7 @@ const test_deregister: VehicleEvent = {
   trip_id: null,
   device_id: DEVICE_UUID,
   provider_id: PROVIDER_UUID,
-  event_type: 'deregister',
+  event_type: VEHICLE_EVENTS.deregister,
   timestamp: test_timestamp,
   recorded: now()
 }
