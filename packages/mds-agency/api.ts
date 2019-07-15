@@ -581,7 +581,7 @@ function api(app: express.Express): express.Express {
     // verify that it's my device
     db.readDevice(device_id, provider_id)
       .then(() => {
-        db.updateDevice(device_id, update)
+        db.updateDevice(device_id, provider_id, update)
           .then((device: Device) => {
             // update in cache
             // post event to stream

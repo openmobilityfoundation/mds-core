@@ -351,7 +351,7 @@ async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
   }
 }
 
-async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<Device> {
+async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial<Device>): Promise<Device> {
   return new Promise((resolve, reject) => {
     getWriteableClient().then(client => {
       const sql = `UPDATE ${schema.DEVICES_TABLE} SET vehicle_id = $1 WHERE device_id = $2`
@@ -364,7 +364,7 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
             if (res.rowCount === 0) {
               reject(new Error('not found'))
             } else {
-              readDevice(device_id)
+              readDevice(device_id, provider_id)
                 .then(resolve, reject)
                 .catch(reject)
             }
@@ -385,7 +385,7 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
 }
 
 async function writeEvent(event_param: VehicleEvent): Promise<Recorded<VehicleEvent>> {
-  const device = await readDevice(event_param.device_id)
+  const device = await readDevice(event_param.device_id, event_param.provider_id)
   return new Promise((resolve, reject) => {
     if (!device) {
       reject(new Error('device unregistered'))
