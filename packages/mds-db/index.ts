@@ -290,12 +290,16 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
-async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
+async function readDevice(device_id: UUID, provider_id?: UUID): Promise<Recorded<Device>> {
   return new Promise((resolve, reject) => {
     // read from pg
     getReadOnlyClient().then(client => {
-      const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+      let sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
       const values = [device_id]
+      if (provider_id) {
+        sql += ` AND provider_id=$2`
+        values.push(provider_id)
+      }
       logSql(sql, values)
       client
         .query(sql, values)

@@ -966,8 +966,14 @@ function api(app: express.Express): express.Express {
     const valid: Telemetry[] = []
 
     const recorded = now()
-
-    db.readDeviceIds(provider_id).then((device_ids: DeviceID[]) => {
+    let p: Promise<Device | DeviceID[]>
+    if (data.length === 1) {
+      p = db.readDevice(data[0].device_id, provider_id)
+    } else {
+      p = db.readDeviceIds(provider_id)
+    }
+    p.then((deviceOrDeviceIds: Device | DeviceID[]) => {
+      const deviceIds = Array.isArray(deviceOrDeviceIds) ? deviceOrDeviceIds : [deviceOrDeviceIds]
       for (const item of data) {
         // make sure the device exists
         const { gps } = item
@@ -993,7 +999,7 @@ function api(app: express.Express): express.Express {
           const msg = `bad telemetry for device_id ${telemetry.device_id}: ${bad_telemetry.error_description}`
           // append to failure
           failures.push(msg)
-        } else if (!device_ids.some(item2 => item2.device_id === telemetry.device_id)) {
+        } else if (!deviceIds.some(item2 => item2.device_id === telemetry.device_id)) {
           const msg = `device_id ${telemetry.device_id}: not found`
           failures.push(msg)
         } else {
