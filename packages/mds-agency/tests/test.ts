@@ -1287,6 +1287,7 @@ describe('Tests API', () => {
 
   it('verifies post telemetry with bad device_id', done => {
     const badTelemetry = deepCopy(TEST_TELEMETRY)
+    // @ts-ignore: Spoofing garbage data
     badTelemetry.device_id = 'bogus'
     request
       .post('/vehicles/telemetry')

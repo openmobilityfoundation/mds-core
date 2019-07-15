@@ -958,7 +958,7 @@ function api(app: express.Express): express.Express {
     if (!provider_id) {
       res.status(400).send({
         error: 'bad_param',
-        error_description: 'missing provider_id'
+        error_description: 'bad or missing provider_id'
       })
       return
     }
@@ -967,7 +967,7 @@ function api(app: express.Express): express.Express {
 
     const recorded = now()
     let p: Promise<Device | DeviceID[]>
-    if (data.length === 1) {
+    if (data.length === 1 && isUUID(data[0].device_id)) {
       p = db.readDevice(data[0].device_id, provider_id)
     } else {
       p = db.readDeviceIds(provider_id)
@@ -1055,6 +1055,13 @@ function api(app: express.Express): express.Express {
           })
         })
       }
+    }).catch(() => {
+      res.status(400).send({
+        error: 'invalid_data',
+        error_description: 'none of the provided data was valid',
+        result: 'no valid telemetry submitted',
+        failures: [`device_id ${data[0].device_id}: not found`]
+      })
     })
   })
 
