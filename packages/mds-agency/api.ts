@@ -533,7 +533,7 @@ function api(app: express.Express): express.Express {
     const { provider_id } = res.locals
 
     function fail(err: Error | string): void {
-      log.error('readDeviceIds fail', err).then(() => {
+      log.error('readDeviceIds fail', JSON.stringify(err)).then(() => {
         res.status(500).send(new ServerError())
       })
     }
