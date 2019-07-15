@@ -5,10 +5,12 @@ import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } 
 
 export type ApiRequest = express.Request
 
-export interface ApiResponse extends express.Response {
+export interface ApiResponse<T = unknown> extends express.Response {
   locals: {
     claims: ApiAuthorizerClaims | null
   }
+  status: (code: number) => ApiResponse<T | { error: Error }>
+  send: (body: T) => ApiResponse<T | { error: Error }>
 }
 
 export const server = (

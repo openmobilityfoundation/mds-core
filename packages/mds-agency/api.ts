@@ -532,15 +532,14 @@ function api(app: express.Express): express.Express {
 
     const { provider_id } = res.locals
 
-    function fail(err: Error | string): void {
+    try {
+      const response = await getVehicles(skip, take, url, provider_id, req.query)
+      return res.status(200).send(response)
+    } catch (err) {
       log.error('readDeviceIds fail', err).then(() => {
         res.status(500).send(new ServerError())
       })
     }
-
-    const response = await getVehicles(skip, take, url, provider_id, req.query).catch(fail)
-
-    res.status(200).send(response)
   })
 
   // update the vehicle_id
