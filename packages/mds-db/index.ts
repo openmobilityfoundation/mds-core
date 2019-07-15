@@ -309,7 +309,7 @@ async function readDevice(device_id: UUID, provider_id?: UUID): Promise<Recorded
             if (res.rows.length === 1) {
               resolve(res.rows[0])
             } else {
-              await log.warn(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
+              await log.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
               reject(new Error(`device_id ${device_id} not found`))
             }
           },
