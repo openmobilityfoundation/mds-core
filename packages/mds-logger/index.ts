@@ -115,7 +115,11 @@ function makeCensoredLogMsgRecurse(msg: { [propName: string]: any }): { [propNam
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeCensoredLogMsg(...msg: any) {
-  return makeCensoredLogMsgRecurse(msg)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return makeCensoredLogMsgRecurse(msg).map((item: any) =>
+    // never print out '[object Object]'
+    String(item) === '[object Object]' ? JSON.stringify(item) : item
+  )
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

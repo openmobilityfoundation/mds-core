@@ -20,8 +20,8 @@ describe('MDS Logger', () => {
       .info(toCensor)
       .then(val => {
         const [result] = val
-        test.string(result.gps.lat).contains('CENSORED')
-        test.string(result.gps.lng).contains('CENSORED')
+        test.string(result).contains('"lat":"CENSORED')
+        test.string(result).contains('"lng":"CENSORED')
         done()
       })
       .catch(err => {
@@ -47,8 +47,8 @@ describe('MDS Logger', () => {
       .warn(toCensor)
       .then(val => {
         const [result] = val
-        test.string(result.gps.lat).contains('CENSORED')
-        test.string(result.gps.lng).contains('CENSORED')
+        test.string(result).contains('"lat":"CENSORED')
+        test.string(result).contains('"lng":"CENSORED')
         done()
       })
       .catch(err => {
@@ -95,8 +95,17 @@ describe('MDS Logger', () => {
         test.string(result2.gps.lng).contains('CENSORED')
         done()
       })
-      .catch(err => {
-        done(err)
+      .catch(done)
+  })
+
+  it('verifies', done => {
+    logger
+      .info({ key1: 1, key2: 2 })
+      .then(val => {
+        const [result] = val
+        test.string(result).contains('key1')
+        done()
       })
+      .catch(done)
   })
 })
