@@ -330,9 +330,12 @@ function api(app: express.Express): express.Express {
       }
       try {
         await db.writeEvent(event)
-        await Promise.all([cache.writeEvent(event), stream.writeEvent(event)]).catch(async err => {
+        try {
+          // writing to cache and stream is not fatal
+          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+        } catch (err) {
           await log.warn('/event exception cache/stream', err)
-        })
+        }
       } catch (err) {
         await log.error(err)
         throw new Error('writeEvent exception db')
