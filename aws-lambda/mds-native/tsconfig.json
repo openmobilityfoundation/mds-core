@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.settings.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../../aws-lambda/aws-serverless-express-handler" },
+    { "path": "../../packages/mds-api-server" },
+    { "path": "../../packages/mds-native" }
+  ],
+  "include": ["index.ts"]
+}

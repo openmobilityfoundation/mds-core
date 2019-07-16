@@ -7,6 +7,7 @@
     { "path": "mds-agency" },
     { "path": "mds-audit" },
     { "path": "mds-compliance" },
+    { "path": "mds-native" },
     { "path": "mds-policy" },
     { "path": "mds-provider" },
     { "path": "mds-metrics-sheet" }
