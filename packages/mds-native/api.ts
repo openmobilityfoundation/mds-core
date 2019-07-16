@@ -25,34 +25,34 @@ import { NativeApiResponse, NativeApiRequest, NativeApiGetEventsRequest, NativeA
 
 const NATIVE_API_VERSION = '0.0.1'
 
-async function authorize(req: NativeApiRequest, res: NativeApiResponse, next: NextFunction) {
-  if (!(req.path.includes('/health') || req.path === '/')) {
-    try {
-      if (res.locals.claims) {
-        const { provider_id } = res.locals.claims
-        if (isValidProviderId(provider_id)) {
-          res.locals.provider_id = provider_id
-          logger.info(providerName(provider_id), req.method, req.originalUrl)
-        }
-      } else {
-        return res.status(401).send({ error: new AuthorizationError('missing_provider_id') })
-      }
-    } catch (err) {
-      if (err instanceof ValidationError) {
-        // 400 Bad Request
-        return res.status(400).send({ error: err })
-      }
-      // 500 Internal Server Error
-      await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      return res.status(500).send({ error: new ServerError(err) })
-    }
-  }
-  next()
-}
-
 function api(app: express.Express): express.Express {
-  // Middleware
-  app.use(authorize)
+  // ///////////////////// begin middleware ///////////////////////
+  app.use(async (req: NativeApiRequest, res: NativeApiResponse, next: NextFunction) => {
+    if (!(req.path.includes('/health') || req.path === '/')) {
+      try {
+        if (res.locals.claims) {
+          const { provider_id } = res.locals.claims
+          if (isValidProviderId(provider_id)) {
+            res.locals.provider_id = provider_id
+            logger.info(providerName(provider_id), req.method, req.originalUrl)
+          }
+        } else {
+          return res.status(401).send({ error: new AuthorizationError('missing_provider_id') })
+        }
+      } catch (err) {
+        if (err instanceof ValidationError) {
+          // 400 Bad Request
+          return res.status(400).send({ error: err })
+        }
+        // 500 Internal Server Error
+        await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
+      }
+    }
+    next()
+  })
+  // ///////////////////// begin middleware ///////////////////////
+
   // ///////////////////// begin test-only endpoints ///////////////////////
 
   app.get(pathsFor('/test/initialize'), async (req: NativeApiRequest, res: NativeApiResponse) => {

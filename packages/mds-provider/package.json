@@ -31,7 +31,8 @@
     "mds-stream": "0.1.3",
     "mds-utils": "0.1.3",
     "url": "0.11.0",
-    "uuid": "3.3.2"
+    "uuid": "3.3.2",
+    "yargs": "13.3.0"
   },
   "devDependencies": {
     "mds-test-data": "0.1.3"
