@@ -8,7 +8,7 @@
   ],
   "files": [
     "*",
-    "packages/*/dist"
+    "packages/*/dist/"
   ],
   "devDependencies": {
     "@types/bluebird": "3.5.27",
