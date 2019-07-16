@@ -385,7 +385,7 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
 
 async function writeEvent(event_param: VehicleEvent) {
   await readDevice(event_param.device_id)
-  const client = await getWriteableClient() 
+  const client = await getWriteableClient()
   const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
   const event = { ...event_param, telemetry_timestamp }
   const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
@@ -1533,7 +1533,7 @@ async function seed(data: {
   return Promise.resolve('no data')
 }
 
-export = {
+export default {
   initialize,
   health,
   seed,
