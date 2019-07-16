@@ -346,7 +346,11 @@ function api(app: express.Express): express.Express {
     // and fixed later.
     try {
       await db.writeDevice(device)
-      await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+      try {
+        await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+      } catch (err) {
+        await log.error('failed to write device stream/cache', err)
+      }
       await log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device))
       await writeRegisterEvent()
       res.status(201).send({ result: 'register device success', recorded, device })
