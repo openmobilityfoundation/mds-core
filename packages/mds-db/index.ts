@@ -26,6 +26,7 @@ import {
 import log from 'mds-logger'
 
 import { QueryResult } from 'pg'
+import { VEHICLE_EVENTS } from 'mds-enums'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
@@ -385,14 +386,24 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
 
 async function writeEvent(event_param: VehicleEvent) {
   try {
-    await readDevice(event_param.device_id)
-    const client = await getWriteableClient() 
+    try {
+      await readDevice(event_param.device_id)
+    } catch (err) {
+      await log.error('writeEvent readDevice failure!', err)
+      throw err
+    }
+    const client = await getWriteableClient()
     const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
     const event = { ...event_param, telemetry_timestamp }
     const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
     const values = vals_list(schema.EVENTS_COLS, event)
     logSql(sql, values)
-    await client.query(sql, values)
+    try {
+      await client.query(sql, values)
+    } catch (err) {
+      if (event.event_type === VEHICLE_EVENTS.register) await log.error('writeEvent query failed!', err)
+      throw err
+    }
     return event as Recorded<VehicleEvent>
   } catch (err) {
     throw err
