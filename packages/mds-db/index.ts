@@ -292,37 +292,22 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 
 // TODO: FIX updateDevice/readDevice circular reference
 async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  return new Promise((resolve, reject) => {
-    // read from pg
-    getReadOnlyClient().then(client => {
-      const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
-      const values = [device_id]
-      logSql(sql, values)
-      client
-        .query(sql, values)
-        .then(
-          async res => {
-            // verify one row
-            if (res.rows.length === 1) {
-              resolve(res.rows[0])
-            } else {
-              await log.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
-              reject(new Error(`device_id ${device_id} not found`))
-            }
-          },
-          err => {
-            log.error(err).then(() => {
-              reject(err)
-            })
-          }
-        )
-        .catch(err => {
-          log.error(err).then(() => {
-            reject(err)
-          })
-        })
-    })
-  })
+  try {
+    const client = await getReadOnlyClient()
+    const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+    const values = [device_id]
+    logSql(sql, values)
+    const res = await client.query(sql, values)
+
+    // verify we only got one row
+    if (res.rows.length === 1) {
+      return res.rows[0]
+    }
+    throw new Error(`device_id ${device_id} not found`)
+  } catch (err) {
+    await log.error('readDevice fail', err)
+    throw err
+  }
 }
 
 async function readDeviceList(device_ids: UUID[]) {
