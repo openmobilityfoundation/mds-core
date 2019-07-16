@@ -294,7 +294,7 @@ function api(app: express.Express): express.Express {
    * Endpoint to register vehicles
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicle---register Register}
    */
-  app.post(pathsFor('/vehicles'), (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  app.post(pathsFor('/vehicles'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const { body } = req
     const recorded = now()
     const device: Device = {
@@ -307,7 +307,7 @@ function api(app: express.Express): express.Express {
       mfgr: body.mfgr,
       model: body.model,
       recorded,
-      status: undefined
+      status: VEHICLE_STATUSES.removed
     }
 
     const failure = badDevice(device)
@@ -316,73 +316,58 @@ function api(app: express.Express): express.Express {
     }
 
     async function writeRegisterEvent() {
-      return new Promise((resolve, reject) => {
-        const event: VehicleEvent = {
-          device_id: device.device_id,
-          provider_id: device.provider_id,
-          event_type: VEHICLE_EVENTS.register,
-          event_type_reason: null,
-          telemetry: null,
-          timestamp: recorded,
-          trip_id: null,
-          recorded,
-          telemetry_timestamp: undefined,
-          service_area_id: null
+      const event: VehicleEvent = {
+        device_id: device.device_id,
+        provider_id: device.provider_id,
+        event_type: VEHICLE_EVENTS.register,
+        event_type_reason: null,
+        telemetry: null,
+        timestamp: recorded,
+        trip_id: null,
+        recorded,
+        telemetry_timestamp: undefined,
+        service_area_id: null
+      }
+      try {
+        await db.writeEvent(event)
+        try {
+          // writing to cache and stream is not fatal
+          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+        } catch (err) {
+          await log.warn('/event exception cache/stream', err)
         }
-        db.writeEvent(event)
-          .then(() => {
-            Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
-              .then(resolve)
-              .catch(err => /* istanbul ignore next */ {
-                log.warn('/event exception cache/stream', err)
-                reject()
-              })
-          }, reject)
-          .catch(reject)
-      })
-    }
-
-    function success(): void {
-      device.status = VEHICLE_STATUSES.removed
-      log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device)).then(() => {
-        writeRegisterEvent().then(
-          () => {
-            res.status(201).send({
-              result: 'register device success',
-              recorded,
-              device
-            })
-          },
-          err => /* istanbul ignore next */ {
-            log.error('register device failed to write register event', err).then(() => {
-              res.status(500).send({
-                result: 'register device internal error'
-              })
-            })
-          }
-        )
-      })
+      } catch (err) {
+        await log.error(err)
+        throw new Error('writeEvent exception db')
+      }
     }
 
     // writing to the DB is the crucial part.  other failures should be noted as bugs but tolerated
     // and fixed later.
-    db.writeDevice(device).then(
-      () => {
-        Promise.all([cache.writeDevice(device), stream.writeDevice(device)]).then(success, success)
-      },
-      (err: Error | string) => /* istanbul ignore next */ {
-        if (String(err).includes('duplicate')) {
-          res.status(409).send({
-            error: 'already_registered',
-            error_description: 'A vehicle with this device_id is already registered'
-          })
-        } else {
-          log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err).then(() => {
-            res.status(500).send(new ServerError())
-          })
-        }
+    try {
+      await db.writeDevice(device)
+      try {
+        await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+      } catch (err) {
+        await log.error('failed to write device stream/cache', err)
       }
-    )
+      await log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device))
+      await writeRegisterEvent()
+      res.status(201).send({ result: 'register device success', recorded, device })
+    } catch (err) {
+      if (String(err).includes('duplicate')) {
+        res.status(409).send({
+          error: 'already_registered',
+          error_description: 'A vehicle with this device_id is already registered'
+        })
+      } else if (String(err).includes('db')) {
+        await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+        res.status(500).send(new ServerError())
+      } else {
+        await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+        res.status(500).send(new ServerError())
+      }
+    }
   })
 
   /**

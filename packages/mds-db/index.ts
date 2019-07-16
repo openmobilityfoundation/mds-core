@@ -346,7 +346,6 @@ async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
     await client.query(sql, values)
     return device as Recorded<Device>
   } catch (err) {
-    log.error(err)
     throw err
   }
 }
