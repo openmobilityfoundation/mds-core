@@ -16,7 +16,7 @@
 
 // Express local
 import { server } from 'mds-api-server'
-import { api } from './src/api'
+import { api } from './api'
 
 const {
   env: { npm_package_name, PORT = 4002 }
