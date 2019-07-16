@@ -383,28 +383,16 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
   })
 }
 
-async function writeEvent(event_param: VehicleEvent): Promise<Recorded<VehicleEvent>> {
-  const device = await readDevice(event_param.device_id)
-  return new Promise((resolve, reject) => {
-    if (!device) {
-      reject(new Error('device unregistered'))
-    } else {
-      // write pg
-      getWriteableClient().then(client => {
-        const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
-        const event = { ...event_param, telemetry_timestamp }
-        const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
-        const values = vals_list(schema.EVENTS_COLS, event)
-        logSql(sql, values)
-        client
-          .query(sql, values)
-          .then(() => {
-            resolve(event as Recorded<VehicleEvent>)
-          }, reject)
-          .catch(reject)
-      })
-    }
-  })
+async function writeEvent(event_param: VehicleEvent) {
+  await readDevice(event_param.device_id)
+  const client = await getWriteableClient() 
+  const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
+  const event = { ...event_param, telemetry_timestamp }
+  const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
+  const values = vals_list(schema.EVENTS_COLS, event)
+  logSql(sql, values)
+  await client.query(sql, values)
+  return event as Recorded<VehicleEvent>
 }
 
 async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<VehicleEvent> {
