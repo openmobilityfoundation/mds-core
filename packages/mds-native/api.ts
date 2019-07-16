@@ -15,13 +15,28 @@
  */
 
 import express from 'express'
-import { pathsFor, isValidProviderId, ValidationError, ServerError, AuthorizationError } from 'mds-utils'
+import {
+  pathsFor,
+  isValidProviderId,
+  ValidationError,
+  ServerError,
+  AuthorizationError,
+  isValidDeviceId,
+  NotFoundError
+} from 'mds-utils'
 import logger from 'mds-logger'
 import db from 'mds-db'
 import { NextFunction } from 'connect'
 import { providerName } from 'mds-providers'
 import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
-import { NativeApiResponse, NativeApiRequest, NativeApiGetEventsRequest, NativeApiGetEventsReponse } from './types'
+import {
+  NativeApiResponse,
+  NativeApiRequest,
+  NativeApiGetEventsRequest,
+  NativeApiGetEventsReponse,
+  NativeApiGetDeviceRequest,
+  NativeApiGetDeviceResponse
+} from './types'
 
 const NATIVE_API_VERSION = '0.0.1'
 
@@ -61,40 +76,78 @@ function api(app: express.Express): express.Express {
       const result = `Database initialized (${kind})`
       await logger.info(result)
       // 200 OK
-      res.status(200).send({ result })
+      return res.status(200).send({ result })
     } catch (err) /* istanbul ignore next */ {
       // 500 Internal Server Error
       await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new ServerError(err) })
+      return res.status(500).send({ error: new ServerError(err) })
     }
   })
 
   app.get(pathsFor('/test/shutdown'), async (req: NativeApiRequest, res: NativeApiResponse) => {
-    await db.shutdown()
-    await logger.info('shutdown complete (in theory)')
-    // 200 OK
-    res.status(200).send({
-      result: 'db shutdown'
-    })
+    try {
+      await db.shutdown()
+      const result = 'Database shutdown'
+      await logger.info(result)
+      // 200 OK
+      return res.status(200).send({ result })
+    } catch (err) /* istanbul ignore next */ {
+      // 500 Internal Server Error
+      await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+      return res.status(500).send({ error: new ServerError(err) })
+    }
   })
   // ///////////////////// end test-only endpoints ///////////////////////
 
   app.get(pathsFor('/events'), async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
     const { skip, take, start_time, end_time, ...query } = asPagingParams(req.query)
-    const { count, events } = await db.readEventsWithTelemetry({
-      ...query,
-      skip,
-      take,
-      start_time: start_time ? Number(start_time) : undefined,
-      end_time: end_time ? Number(end_time) : undefined
-    })
-    res.status(200).send({
-      version: NATIVE_API_VERSION,
-      count,
-      data: events.map(({ service_area_id, ...event }) => event),
-      links: asJsonApiLinks(req, skip, take, count)
-    })
+    try {
+      const { count, events } = await db.readEventsWithTelemetry({
+        ...query,
+        skip,
+        take,
+        start_time: start_time ? Number(start_time) : undefined,
+        end_time: end_time ? Number(end_time) : undefined
+      })
+      return res.status(200).send({
+        version: NATIVE_API_VERSION,
+        count,
+        data: events.map(({ service_area_id, ...event }) => event),
+        links: asJsonApiLinks(req, skip, take, count)
+      })
+    } catch (err) /* istanbul ignore next */ {
+      // 500 Internal Server Error
+      await logger.error(`fail ${req.method} ${req.originalUrl}`, JSON.stringify(err))
+      return res.status(500).send({ error: new ServerError(err) })
+    }
   })
+
+  app.get(pathsFor('/devices/:device_id'), async (req: NativeApiGetDeviceRequest, res: NativeApiGetDeviceResponse) => {
+    const { device_id } = req.params
+    try {
+      if (isValidDeviceId(device_id)) {
+        const device = await db.readDevice(device_id)
+        return res.status(200).send({
+          version: NATIVE_API_VERSION,
+          count: 1,
+          data: [device]
+        })
+      }
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        // 400 Bad Request
+        return res.status(400).send({ error: err })
+      }
+      if (err instanceof Error && err.message.includes('not found')) {
+        // 404 Not Found
+        return res.status(404).send({ error: new NotFoundError('device_id_not_found', { device_id }) })
+      }
+      // 500 Internal Server Error
+      await logger.error(`fail ${req.method} ${req.originalUrl}`, JSON.stringify(err))
+      return res.status(500).send({ error: new ServerError(err) })
+    }
+  })
+
   return app
 }
 

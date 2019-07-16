@@ -102,6 +102,9 @@ interface AuditEventValidatorOptions extends ValidatorOptions {
   accept: AUDIT_EVENT_TYPE[]
 }
 
+export const isValidDeviceId = (device_id: unknown, options: Partial<ValidatorOptions> = {}): device_id is UUID =>
+  Validate('device_id', device_id, uuidSchema, options)
+
 export const isValidAuditEventType = (
   audit_event_type: unknown,
   { accept, ...options }: Partial<AuditEventValidatorOptions> = {}

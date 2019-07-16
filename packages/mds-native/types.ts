@@ -16,7 +16,7 @@
 
 import { ApiRequest, ApiResponse } from 'mds-api-server'
 import { ApiAuthorizerClaims } from 'mds-api-authorizer'
-import { UUID, VehicleEvent, Recorded } from 'mds'
+import { UUID, VehicleEvent, Recorded, Device } from 'mds'
 import { JsonApiLinks } from 'mds-api-helpers'
 
 // Allow adding type definitions for Express Request objects
@@ -39,9 +39,19 @@ export interface NativeApiGetEventsRequest extends NativeApiRequest {
   >
 }
 
-export type NativeApiGetEventsReponse = NativeApiResponse<{
+interface NativeApiGetResponse<T> {
   version: string
   count: number
-  data: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
-  links: JsonApiLinks
-}>
+  data: T[]
+  links?: JsonApiLinks
+}
+
+export type NativeApiGetEventsReponse = NativeApiResponse<
+  NativeApiGetResponse<Omit<Recorded<VehicleEvent>, 'service_area_id'>>
+>
+
+export interface NativeApiGetDeviceRequest extends NativeApiRequest {
+  params: { device_id: UUID }
+}
+
+export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetResponse<Recorded<Device>>>

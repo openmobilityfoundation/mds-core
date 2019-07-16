@@ -22,6 +22,7 @@ import {
   isValidAuditTripId,
   isValidVehicleEventType,
   isValidTelemetry,
+  isValidDeviceId,
   isValidAuditDeviceId,
   isValidAuditEventId,
   isValidProviderVehicleId,
@@ -69,6 +70,14 @@ describe('Tests validators', () => {
     test.value(isValidProviderId('invalid', { assert: false })).is(false)
     test.value(isValidProviderId(Object.keys(providers)[0])).is(true)
 
+    done()
+  })
+
+  it('verifies Device ID validator', done => {
+    test.assert.throws(() => isValidDeviceId(undefined), ValidationError)
+    test.assert.throws(() => isValidDeviceId(null), ValidationError)
+    test.value(isValidDeviceId('invalid', { assert: false })).is(false)
+    test.value(isValidDeviceId(uuid())).is(true)
     done()
   })
 
