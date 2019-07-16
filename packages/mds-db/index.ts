@@ -384,7 +384,7 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
 }
 
 async function writeEvent(event_param: VehicleEvent) {
-  const device = await readDevice(event_param.device_id)
+  await readDevice(event_param.device_id)
   const client = await getWriteableClient() 
   const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
   const event = { ...event_param, telemetry_timestamp }
