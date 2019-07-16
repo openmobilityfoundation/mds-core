@@ -307,7 +307,7 @@ function api(app: express.Express): express.Express {
       mfgr: body.mfgr,
       model: body.model,
       recorded,
-      status: undefined
+      status: VEHICLE_STATUSES.removed
     }
 
     const failure = badDevice(device)
@@ -347,7 +347,6 @@ function api(app: express.Express): express.Express {
     try {
       await db.writeDevice(device)
       await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
-      device.status = VEHICLE_STATUSES.removed
       await log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device))
       await writeRegisterEvent()
       res.status(201).send({ result: 'register device success', recorded, device })
