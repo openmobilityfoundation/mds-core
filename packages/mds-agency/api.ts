@@ -361,6 +361,7 @@ function api(app: express.Express): express.Express {
           error_description: 'A vehicle with this device_id is already registered'
         })
       } else if (String(err).includes('db')) {
+        await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
         res.status(500).send(new ServerError())
       } else {
         await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
