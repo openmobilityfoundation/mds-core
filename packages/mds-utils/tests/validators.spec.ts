@@ -18,7 +18,6 @@ import test from 'unit.js'
 import uuid from 'uuid'
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from 'mds-enums'
 import { providers } from 'mds-providers' // map of uuids -> obj
-import { ValidationError } from 'mds-api-helpers'
 import {
   isValidAuditTripId,
   isValidVehicleEventType,
@@ -31,7 +30,8 @@ import {
   isValidAuditEventType,
   isValidAuditIssueCode,
   isValidAuditNote
-} from '../src/validators'
+} from '../validators'
+import { ValidationError } from '../exceptions'
 
 describe('Tests validators', () => {
   it('verifies Audit Trip ID validator', done => {

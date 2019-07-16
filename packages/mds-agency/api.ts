@@ -17,7 +17,7 @@
 import express from 'express'
 import urls from 'url'
 
-import { getVehicles, ServerError } from 'mds-api-helpers'
+import { getVehicles } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -59,7 +59,8 @@ import {
   pathsFor,
   head,
   tail,
-  isStateTransitionValid
+  isStateTransitionValid,
+  ServerError
 } from 'mds-utils'
 import { ServiceArea, AgencyApiRequest, AgencyApiResponse } from 'mds-agency/types'
 

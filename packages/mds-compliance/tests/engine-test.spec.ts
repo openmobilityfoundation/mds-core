@@ -7,8 +7,8 @@ import { RULE_TYPES } from 'mds-enums'
 import { la_city_boundary } from 'mds-policy/tests/la-city-boundary'
 import { Geography, Policy, Device } from 'mds'
 import { FeatureCollection } from 'geojson'
-import { ValidationError, RuntimeError } from 'mds-compliance/exceptions'
 import { processPolicy, filterPolicies, filterEvents } from 'mds-compliance/mds-compliance-engine'
+import { ValidationError, RuntimeError } from 'mds-utils'
 import { validateEvents, validateGeographies, validatePolicies } from '../validators'
 
 let policies: Policy[] = []

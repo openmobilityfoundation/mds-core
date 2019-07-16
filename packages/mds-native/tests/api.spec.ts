@@ -28,8 +28,7 @@ describe('Verify API', () => {
     request
       .get('/native/events')
       .expect(401)
-      .end((err, result) => {
-        test.value(result.text).is('Unauthorized')
+      .end(err => {
         done(err)
       })
   })
@@ -38,9 +37,8 @@ describe('Verify API', () => {
     request
       .get('/native/events')
       .set('Authorization', NO_PROVIDER_ID)
-      .expect(403)
-      .end((err, result) => {
-        test.value(result.text).is('Forbidden')
+      .expect(400)
+      .end(err => {
         done(err)
       })
   })
@@ -54,7 +52,6 @@ describe('Verify API', () => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('data')
-        test.object(result.body.data).hasProperty('events')
         done(err)
       })
   })

@@ -15,28 +15,36 @@
  */
 
 import express from 'express'
-import { pathsFor } from 'mds-utils'
+import { pathsFor, isValidProviderId, ValidationError, ServerError, AuthorizationError } from 'mds-utils'
 import logger from 'mds-logger'
 import db from 'mds-db'
 import { NextFunction } from 'connect'
 import { providerName } from 'mds-providers'
-import { asPagingParams, asJsonApiLinks, ServerError } from 'mds-api-helpers'
+import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import { NativeApiResponse, NativeApiRequest, NativeApiGetEventsRequest, NativeApiGetEventsReponse } from './types'
 
 const NATIVE_API_VERSION = '0.0.1'
 
 async function authorize(req: NativeApiRequest, res: NativeApiResponse, next: NextFunction) {
   if (!(req.path.includes('/health') || req.path === '/')) {
-    if (res.locals.claims) {
-      const { provider_id } = res.locals.claims
-      if (provider_id) {
-        res.locals.provider_id = provider_id
-        logger.info(providerName(provider_id), req.method, req.originalUrl)
+    try {
+      if (res.locals.claims) {
+        const { provider_id } = res.locals.claims
+        if (isValidProviderId(provider_id)) {
+          res.locals.provider_id = provider_id
+          logger.info(providerName(provider_id), req.method, req.originalUrl)
+        }
       } else {
-        return res.status(403).send('Forbidden')
+        return res.status(401).send({ error: new AuthorizationError('missing_provider_id') })
       }
-    } else {
-      return res.status(401).send('Unauthorized')
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        // 400 Bad Request
+        return res.status(400).send({ error: err })
+      }
+      // 500 Internal Server Error
+      await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+      return res.status(500).send({ error: new ServerError(err) })
     }
   }
   next()
