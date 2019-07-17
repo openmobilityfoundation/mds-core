@@ -87,10 +87,12 @@ if (pg_info.database) {
       })
       // ensure the exception bubbles up and the client is forced to
       // handle it
-      createTables(client).catch(async (err: Error) => {
+      try {
+        await createTables(client)
+      } catch (err) {
         assert.ok(err instanceof Error)
         assert.deepStrictEqual(err.message, 'err')
-      })
+      }
       await client.end()
     })
 
@@ -101,10 +103,12 @@ if (pg_info.database) {
         throw new Error('err')
       })
       // ensure the exception bubbles up
-      dropTables(client).catch((err: Error) => {
+      try {
+        await dropTables(client)
+      } catch (err) {
         assert.ok(err instanceof Error)
         assert.deepStrictEqual(err.message, 'err')
-      })
+      }
       await client.end()
     })
 
@@ -115,10 +119,12 @@ if (pg_info.database) {
         throw new Error('err')
       })
       // ensure the exception bubbles up
-      updateSchema(client).catch((err: Error) => {
+      try {
+        await updateSchema(client)
+      } catch (err) {
         assert.ok(err instanceof Error)
         assert.deepStrictEqual(err.message, 'err')
-      })
+      }
       log.info('hangingon')
       await client.end()
       log.info('hangingon')
