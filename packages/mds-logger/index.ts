@@ -74,6 +74,9 @@ async function sendPush(msg: string, priority?: number): Promise<string> {
 }
 
 function makeCensoredDatum(datum: Datum) {
+  if (datum instanceof Error) {
+    return datum.toString()
+  }
   const censoredDatum: Datum = { ...datum }
   if (censoredDatum.lat != null) {
     censoredDatum.lat = 'CENSORED_LAT'
@@ -93,28 +96,29 @@ function isAtomic(item: any) {
 // just in case we have to censor something nested like
 // { data: [{ lat:1, lng:2 }] }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeCensoredLogMsgRecurse(msg: { [propName: string]: any }): { [propName: string]: any } | any {
+function makeCensoredLogMsgRecurse(msg: any): any {
   if (isAtomic(msg)) {
     return msg
   }
-
   if (Array.isArray(msg)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return msg.map((arr_item: any) => makeCensoredLogMsgRecurse(arr_item))
   }
   const censoredObject = makeCensoredDatum(msg)
-  Object.keys(censoredObject).forEach((key: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const val: any = censoredObject[key]
-    if (!isAtomic(val)) {
-      censoredObject[key] = makeCensoredLogMsgRecurse(val)
-    }
-  })
+  if (typeof censoredObject === 'object') {
+    Object.keys(censoredObject).forEach((key: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const val: any = censoredObject[key]
+      if (!isAtomic(val)) {
+        censoredObject[key] = makeCensoredLogMsgRecurse(val)
+      }
+    })
+  }
   return censoredObject
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeCensoredLogMsg(...msg: any) {
+function makeCensoredLogMsg(...msg: any[]) {
   return makeCensoredLogMsgRecurse(msg)
 }
 
