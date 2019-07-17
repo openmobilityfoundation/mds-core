@@ -9,8 +9,8 @@ import { api } from '../api'
 
 process.env.PATH_PREFIX = '/native'
 const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|`).toString('base64')}`
 const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const NO_PROVIDER_ID = `basic ${Buffer.from(`|${PROVIDER_SCOPES}`).toString('base64')}`
 const APP_JSON = 'application/json; charset=utf-8'
 
 const provider_id = PROVIDER_UUID
@@ -58,6 +58,17 @@ describe('Verify API', () => {
     })
   })
 
+  it('Verifies unable to access test if not scoped', done => {
+    request
+      .get('/test/')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('Get events (no authorization)', done => {
     request
       .get('/native/events')
@@ -67,20 +78,10 @@ describe('Verify API', () => {
       })
   })
 
-  it('Get events (no provider_id)', done => {
-    request
-      .get('/native/events')
-      .set('Authorization', NO_PROVIDER_ID)
-      .expect(400)
-      .end(err => {
-        done(err)
-      })
-  })
-
   it('Get events', done => {
     request
       .get('/native/events')
-      .set('Authorization', ADMIN_AUTH)
+      .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -95,7 +96,7 @@ describe('Verify API', () => {
   it('Get Device', done => {
     request
       .get(`/native/devices/${device_id}`)
-      .set('Authorization', ADMIN_AUTH)
+      .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -110,7 +111,7 @@ describe('Verify API', () => {
   it('Get Device (not found)', done => {
     request
       .get(`/native/devices/${uuid()}`)
-      .set('Authorization', ADMIN_AUTH)
+      .set('Authorization', PROVIDER_AUTH)
       .expect(404)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -121,7 +122,7 @@ describe('Verify API', () => {
   it('Get Device (bad request)', done => {
     request
       .get(`/native/devices/invalid-device-id`)
-      .set('Authorization', ADMIN_AUTH)
+      .set('Authorization', PROVIDER_AUTH)
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)

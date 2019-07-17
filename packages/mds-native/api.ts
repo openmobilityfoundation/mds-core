@@ -15,19 +15,10 @@
  */
 
 import express from 'express'
-import {
-  pathsFor,
-  isValidProviderId,
-  ValidationError,
-  ServerError,
-  AuthorizationError,
-  isValidDeviceId,
-  NotFoundError
-} from 'mds-utils'
+import { pathsFor, ValidationError, ServerError, AuthorizationError, isValidDeviceId, NotFoundError } from 'mds-utils'
 import logger from 'mds-logger'
 import db from 'mds-db'
 import { NextFunction } from 'connect'
-import { providerName } from 'mds-providers'
 import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   NativeApiResponse,
@@ -46,13 +37,13 @@ function api(app: express.Express): express.Express {
     if (!(req.path.includes('/health') || req.path === '/')) {
       try {
         if (res.locals.claims) {
-          const { provider_id } = res.locals.claims
-          if (isValidProviderId(provider_id)) {
-            res.locals.provider_id = provider_id
-            logger.info(providerName(provider_id), req.method, req.originalUrl)
+          // no test access without auth
+          const { scope = '' } = res.locals.claims
+          if (req.path.includes('/test/') && !scope.includes('test:all')) {
+            return res.status(403).send({ error: new AuthorizationError('invalid_scope', { scope }) })
           }
         } else {
-          return res.status(401).send({ error: new AuthorizationError('missing_provider_id') })
+          return res.status(401).send({ error: new AuthorizationError('missing_claims') })
         }
       } catch (err) {
         if (err instanceof ValidationError) {
@@ -64,6 +55,7 @@ function api(app: express.Express): express.Express {
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
+    logger.info(req.method, req.originalUrl)
     next()
   })
   // ///////////////////// begin middleware ///////////////////////
