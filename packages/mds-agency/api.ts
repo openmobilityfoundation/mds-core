@@ -680,11 +680,12 @@ function api(app: express.Express): express.Express {
       case VEHICLE_EVENTS.provider_drop_off:
         return badTelemetry(event.telemetry)
       case VEHICLE_EVENTS.register:
+      case VEHICLE_EVENTS.deregister:
       case VEHICLE_EVENTS.reserve:
       case VEHICLE_EVENTS.cancel_reservation:
         return null
       default:
-        log.info(`-------- mystery event_type ${event.event_type}`)
+        log.warn(`unsure how to validate mystery event_type ${event.event_type}`)
         break
     }
     return null // we good
