@@ -245,51 +245,37 @@ async function readDeviceByVehicleId(
 
 async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): Promise<DeviceID[]> {
   // read from pg
-  try {
-    const client = await getReadOnlyClient()
-    let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
-    const vals = new SqlVals()
-    if (isUUID(provider_id)) {
-      sql += ` WHERE provider_id= ${vals.add(provider_id)}`
-    }
-    sql += ' ORDER BY recorded'
-    if (typeof skip === 'number' && skip >= 0) {
-      sql += ` OFFSET ${vals.add(skip)}`
-    }
-    if (typeof take === 'number' && take >= 0) {
-      sql += ` LIMIT ${vals.add(take)}`
-    }
-    const values = vals.values()
-    logSql(sql, values)
-    const res = await client.query(sql, values)
-    return res.rows
-  } catch (err) {
-    // eslint-disable-next-line
-    console.error(err, typeof err, Object.keys(err))
-    await log.error(err, typeof err, Object.keys(err))
-    throw err
+  const client = await getReadOnlyClient()
+  let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
+  const vals = new SqlVals()
+  if (isUUID(provider_id)) {
+    sql += ` WHERE provider_id= ${vals.add(provider_id)}`
   }
+  sql += ' ORDER BY recorded'
+  if (typeof skip === 'number' && skip >= 0) {
+    sql += ` OFFSET ${vals.add(skip)}`
+  }
+  if (typeof take === 'number' && take >= 0) {
+    sql += ` LIMIT ${vals.add(take)}`
+  }
+  const values = vals.values()
+  logSql(sql, values)
+  const res = await client.query(sql, values)
+  return res.rows
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
 async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  try {
-    const client = await getReadOnlyClient()
-    const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
-    const values = [device_id]
-    logSql(sql, values)
-    const res = await client.query(sql, values)
-    // verify we only got one row
-    if (res.rows.length !== 1) {
-      throw Error(`device_id ${device_id} not found`)
-    }
-    return res.rows[0]
-  } catch (err) {
-    // eslint-disable-next-line
-    console.error('readDevice', err, typeof err, Object.keys(err))
-    await log.error('readDevice', err, typeof err, Object.keys(err))
-    throw err
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+  const values = [device_id]
+  logSql(sql, values)
+  const res = await client.query(sql, values)
+  // verify we only got one row
+  if (res.rows.length !== 1) {
+    throw Error(`device_id ${device_id} not found`)
   }
+  return res.rows[0]
 }
 
 async function readDeviceList(device_ids: UUID[]) {
