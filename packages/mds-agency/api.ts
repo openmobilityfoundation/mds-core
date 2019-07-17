@@ -455,7 +455,7 @@ function api(app: express.Express): express.Express {
         (err: Error) => {
           // failed
           log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`).then(() => {
-            log.error(err)
+            log.error(`fail GET /vehicles/${device_id}`, err)
             res.status(404).send({
               error: 'not_found'
             })
@@ -488,7 +488,7 @@ function api(app: express.Express): express.Express {
           (err: Error) => {
             // failed
             log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`).then(() => {
-              log.error(err)
+              log.error(`fail GET /vehicles/${device_id}`, err)
               res.status(404).send({
                 error: 'not_found'
               })

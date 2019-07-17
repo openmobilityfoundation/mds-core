@@ -114,7 +114,7 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
       })
     return rows
   } catch (err) {
-    log.error(err)
+    log.error('getProviderMetrics', err)
     return getProviderMetrics(iter + 1)
   }
 }
@@ -122,4 +122,4 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
 export const VehicleCountsHandler = () =>
   getProviderMetrics(0)
     .then(rows => appendSheet('Vehicle Counts', rows))
-    .catch((err: Error) => log.error(err))
+    .catch((err: Error) => log.error('VehicleCountsHandler', err))

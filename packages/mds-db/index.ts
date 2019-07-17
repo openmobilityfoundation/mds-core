@@ -1286,7 +1286,7 @@ async function readGeographies(params?: { geography_id?: UUID }): Promise<Geogra
           resolve(res.rows.map(row => row.geography_json) as Geography[])
         },
         err => {
-          log.error(err)
+          log.error('readGeographies', err)
           reject(err)
         }
       )
@@ -1313,7 +1313,7 @@ async function writeGeography(geography: Geography) {
           resolve(geography)
         },
         err => {
-          log.error(err)
+          log.error('writeGeography', err)
           reject(err)
         }
       )
@@ -1354,7 +1354,7 @@ async function readPolicies(params?: {
           resolve(res.rows.map(row => row.policy_json))
         },
         err => {
-          log.error(err)
+          log.error('readPolicies', err)
           reject(err)
         }
       )
@@ -1379,7 +1379,7 @@ async function writePolicy(policy: Policy) {
           resolve(policy)
         },
         err => {
-          log.error(err)
+          log.error('writePolicy', err)
           reject(err)
         }
       )
