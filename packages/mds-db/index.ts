@@ -26,6 +26,7 @@ import {
 import log from 'mds-logger'
 
 import { QueryResult } from 'pg'
+import { VEHICLE_EVENTS } from 'mds-enums'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
@@ -110,42 +111,34 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
   })
 }
 
-async function getWriteableClient(): Promise<MDSPostgresClient> {
-  return new Promise((resolve, reject) => {
-    if (writeableCachedClient && writeableCachedClient.connected) {
-      return resolve(writeableCachedClient)
-    }
+async function getReadOnlyClient(): Promise<MDSPostgresClient> {
+  if (readOnlyCachedClient && readOnlyCachedClient.connected) {
+    return readOnlyCachedClient
+  }
 
-    setupClient(true)
-      .then(result => {
-        writeableCachedClient = result
-        resolve(result)
-      })
-      .catch((err: Error) => {
-        log.error('postgres connection error')
-        reject(err)
-        writeableCachedClient = null
-      })
-  })
+  try {
+    readOnlyCachedClient = await setupClient(false)
+    return readOnlyCachedClient
+  } catch (err) {
+    readOnlyCachedClient = null
+    await log.error('postgres connection error', err)
+    throw err
+  }
 }
 
-async function getReadOnlyClient(): Promise<MDSPostgresClient> {
-  return new Promise((resolve, reject) => {
-    if (readOnlyCachedClient && readOnlyCachedClient.connected) {
-      return resolve(readOnlyCachedClient)
-    }
+async function getWriteableClient(): Promise<MDSPostgresClient> {
+  if (writeableCachedClient && writeableCachedClient.connected) {
+    return writeableCachedClient
+  }
 
-    setupClient(false)
-      .then(result => {
-        readOnlyCachedClient = result
-        resolve(result)
-      })
-      .catch((err: Error) => {
-        log.error('postgres connection error')
-        reject(err)
-        readOnlyCachedClient = null
-      })
-  })
+  try {
+    writeableCachedClient = await setupClient(true)
+    return writeableCachedClient
+  } catch (err) {
+    writeableCachedClient = null
+    await log.error('postgres connection error', err)
+    throw err
+  }
 }
 
 async function initialize() {
@@ -251,77 +244,38 @@ async function readDeviceByVehicleId(
 }
 
 async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): Promise<DeviceID[]> {
-  return new Promise((resolve, reject) => {
-    // read from pg
-    getReadOnlyClient().then(client => {
-      let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
-      const vals = new SqlVals()
-      if (isUUID(provider_id)) {
-        sql += ` WHERE provider_id= ${vals.add(provider_id)}`
-      }
-      sql += ' ORDER BY recorded'
-      if (typeof skip === 'number' && skip >= 0) {
-        sql += ` OFFSET ${vals.add(skip)}`
-      }
-      if (typeof take === 'number' && take >= 0) {
-        sql += ` LIMIT ${vals.add(take)}`
-      }
-      const values = vals.values()
-      logSql(sql, values)
-      client
-        .query(sql, values)
-        .then(
-          res => {
-            resolve(res.rows)
-          },
-          err => {
-            log.error(err).then(() => {
-              reject(err)
-            })
-          }
-        )
-        .catch(err => {
-          log.error(err).then(() => {
-            reject(err)
-          })
-        })
-    })
-  })
+  // read from pg
+  const client = await getReadOnlyClient()
+  let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
+  const vals = new SqlVals()
+  if (isUUID(provider_id)) {
+    sql += ` WHERE provider_id= ${vals.add(provider_id)}`
+  }
+  sql += ' ORDER BY recorded'
+  if (typeof skip === 'number' && skip >= 0) {
+    sql += ` OFFSET ${vals.add(skip)}`
+  }
+  if (typeof take === 'number' && take >= 0) {
+    sql += ` LIMIT ${vals.add(take)}`
+  }
+  const values = vals.values()
+  logSql(sql, values)
+  const res = await client.query(sql, values)
+  return res.rows
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
 async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  return new Promise((resolve, reject) => {
-    // read from pg
-    getReadOnlyClient().then(client => {
-      const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
-      const values = [device_id]
-      logSql(sql, values)
-      client
-        .query(sql, values)
-        .then(
-          async res => {
-            // verify one row
-            if (res.rows.length === 1) {
-              resolve(res.rows[0])
-            } else {
-              await log.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
-              reject(new Error(`device_id ${device_id} not found`))
-            }
-          },
-          err => {
-            log.error(err).then(() => {
-              reject(err)
-            })
-          }
-        )
-        .catch(err => {
-          log.error(err).then(() => {
-            reject(err)
-          })
-        })
-    })
-  })
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+  const values = [device_id]
+  logSql(sql, values)
+  const res = await client.query(sql, values)
+  // verify we only got one row
+  if (res.rows.length !== 1) {
+    throw Error(`device_id ${device_id} not found`)
+  }
+  return res.rows[0]
 }
 
 async function readDeviceList(device_ids: UUID[]) {
@@ -337,17 +291,13 @@ async function readDeviceList(device_ids: UUID[]) {
 }
 
 async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
-  try {
-    const client = await getWriteableClient()
-    const device = { ...device_param, recorded: now() }
-    const sql = `INSERT INTO ${cols_sql(schema.DEVICES_TABLE, schema.DEVICES_COLS)} ${vals_sql(schema.DEVICES_COLS)}`
-    const values = vals_list(schema.DEVICES_COLS, device)
-    logSql(sql, values)
-    await client.query(sql, values)
-    return device as Recorded<Device>
-  } catch (err) {
-    throw err
-  }
+  const client = await getWriteableClient()
+  const device = { ...device_param, recorded: now() }
+  const sql = `INSERT INTO ${cols_sql(schema.DEVICES_TABLE, schema.DEVICES_COLS)} ${vals_sql(schema.DEVICES_COLS)}`
+  const values = vals_list(schema.DEVICES_COLS, device)
+  logSql(sql, values)
+  await client.query(sql, values)
+  return device as Recorded<Device>
 }
 
 async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<Device> {
@@ -385,7 +335,7 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
 
 async function writeEvent(event_param: VehicleEvent) {
   await readDevice(event_param.device_id)
-  const client = await getWriteableClient() 
+  const client = await getWriteableClient()
   const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
   const event = { ...event_param, telemetry_timestamp }
   const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
@@ -1336,7 +1286,7 @@ async function readGeographies(params?: { geography_id?: UUID }): Promise<Geogra
           resolve(res.rows.map(row => row.geography_json) as Geography[])
         },
         err => {
-          log.error(err)
+          log.error('readGeographies', err)
           reject(err)
         }
       )
@@ -1363,7 +1313,7 @@ async function writeGeography(geography: Geography) {
           resolve(geography)
         },
         err => {
-          log.error(err)
+          log.error('writeGeography', err)
           reject(err)
         }
       )
@@ -1404,7 +1354,7 @@ async function readPolicies(params?: {
           resolve(res.rows.map(row => row.policy_json))
         },
         err => {
-          log.error(err)
+          log.error('readPolicies', err)
           reject(err)
         }
       )
@@ -1429,7 +1379,7 @@ async function writePolicy(policy: Policy) {
           resolve(policy)
         },
         err => {
-          log.error(err)
+          log.error('writePolicy', err)
           reject(err)
         }
       )
