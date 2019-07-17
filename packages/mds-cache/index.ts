@@ -505,7 +505,6 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
         })
         // let's just purge a few as an experiment
         badKeys = badKeys.slice(0, 10000)
-
         ;(await getClient()).delAsync(...badKeys).then((result: number) => {
           // return a wee report
           report.deleted = result

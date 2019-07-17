@@ -385,7 +385,7 @@ function api(app: express.Express): express.Express {
       if (event) {
         composite.prev_event = event.event_type
         composite.updated = event.timestamp
-        composite.status = (EVENT_STATUS_MAP[event.event_type] || 'unknown') as VEHICLE_STATUS
+        composite.status = (EVENT_STATUS_MAP[event.event_type as VEHICLE_EVENT] || 'unknown') as VEHICLE_STATUS
       } else {
         composite.status = VEHICLE_STATUSES.removed
       }
