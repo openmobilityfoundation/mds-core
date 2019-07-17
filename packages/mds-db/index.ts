@@ -1469,7 +1469,7 @@ async function readEventsWithTelemetry({
     if (!isUUID(provider_id)) {
       throw new Error(`invalid provider_id ${provider_id}`)
     } else {
-      conditions.push(`E.provider_id = ${vals.add(provider_id)}`)
+      conditions.push(`provider_id = ${vals.add(provider_id)}`)
     }
   }
 
@@ -1477,7 +1477,7 @@ async function readEventsWithTelemetry({
     if (!isUUID(device_id)) {
       throw new Error(`invalid device_id ${device_id}`)
     } else {
-      conditions.push(`E.device_id = ${vals.add(device_id)}`)
+      conditions.push(`device_id = ${vals.add(device_id)}`)
     }
   }
 
@@ -1485,7 +1485,7 @@ async function readEventsWithTelemetry({
     if (!isTimestamp(start_time)) {
       throw new Error(`invalid start_time ${start_time}`)
     } else {
-      conditions.push(`E.timestamp >= ${vals.add(start_time)}`)
+      conditions.push(`timestamp >= ${vals.add(start_time)}`)
     }
   }
 
@@ -1493,7 +1493,7 @@ async function readEventsWithTelemetry({
     if (!isTimestamp(end_time)) {
       throw new Error(`invalid end_time ${end_time}`)
     } else {
-      conditions.push(`E.timestamp <= ${vals.add(end_time)}`)
+      conditions.push(`timestamp <= ${vals.add(end_time)}`)
     }
   }
 
@@ -1501,20 +1501,18 @@ async function readEventsWithTelemetry({
 
   const {
     rows: [{ count }]
-  } = await exec(`SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} E ${where}`, vals.values())
+  } = await exec(`SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} ${where}`, vals.values())
 
   if (count === 0) {
     return { count, events: [] }
   }
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge FROM ${
+    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge FROM (SELECT * FROM ${
       schema.EVENTS_TABLE
-    } E LEFT JOIN ${
-      schema.TELEMETRY_TABLE
-    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id${
-      skip !== undefined && skip > 0 ? ` OFFSET ${vals.add(skip)}` : ''
-    }${take !== undefined && take > 0 ? ` LIMIT ${vals.add(take)}` : ''}`,
+    } ${where} ORDER BY recorded${skip !== undefined && skip > 0 ? ` OFFSET ${vals.add(skip)}` : ''}${
+      take !== undefined && take > 0 ? ` LIMIT ${vals.add(take)}` : ''
+    }) AS E LEFT JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
     vals.values()
   )
 
