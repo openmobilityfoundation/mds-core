@@ -26,7 +26,6 @@ import {
 import log from 'mds-logger'
 
 import { QueryResult } from 'pg'
-import { VEHICLE_EVENTS } from 'mds-enums'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
