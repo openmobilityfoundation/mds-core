@@ -76,40 +76,31 @@ async function getClient() {
     cachedClient.on('error', async err => {
       await log.error(`redis cache error ${err}`)
     })
-
-    cachedClient
-      .dbsizeAsync()
-      .then(
-        (size: number) => {
-          log.info(`redis cache has ${size} keys`)
-        },
-        async err => {
-          await log.error('redis failed to get dbsize', err)
-        }
-      )
-      .catch(async err => {
-        await log.error('redis uncaught during dbsize', err.stack)
-      })
+    try {
+      const size = await cachedClient.dbsizeAsync()
+      log.info(`redis cache has ${size} keys`)
+    } catch (err) {
+      await log.error('redis failed to get dbsize', err)
+    }
   }
   return cachedClient
 }
 
 async function info() {
-  return (await getClient()).infoAsync().then((results: string) => {
-    const lines = results.split('\r\n')
-    const data: { [propName: string]: string | number } = {}
-    lines.map(line => {
-      const [key, val] = line.split(':')
-      if (val !== undefined) {
-        if (Number.isNaN(Number(val))) {
-          data[key] = val
-        } else {
-          data[key] = parseFloat(val)
-        }
+  const results = await (await getClient()).infoAsync()
+  const lines = results.split('\r\n')
+  const data: { [propName: string]: string | number } = {}
+  lines.map(line => {
+    const [key, val] = line.split(':')
+    if (val !== undefined) {
+      if (Number.isNaN(Number(val))) {
+        data[key] = val
+      } else {
+        data[key] = parseFloat(val)
       }
-    })
-    return data
+    }
   })
+  return data
 }
 
 // update the ordered list of (device_id, timestamp) tuples
@@ -124,16 +115,12 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
     throw new Error(`hread: tried to read ${suffix} for device_id ${device_id}`)
   }
   const key = `device:${device_id}:${suffix}`
-  return new Promise(async (resolve, reject) => {
-    return (await getClient()).hgetallAsync(key).then(flat => {
-      if (flat) {
-        resolve(unflatten({ ...flat, device_id }))
-      } else {
-        // log.info(`hread: ${suffix} for ${device_id} not found`)
-        reject(new Error(`${suffix} for ${device_id} not found`))
-      }
-    })
-  })
+  const flat = await (await getClient()).hgetallAsync(key)
+  if (flat) {
+    return unflatten({ ...flat, device_id })
+  }
+  // log.info(`hread: ${suffix} for ${device_id} not found`)
+  throw new Error(`${suffix} for ${device_id} not found`)
 }
 
 async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {
@@ -148,7 +135,11 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
 
   suffixes.map(suffix => device_ids.map(device_id => multi.hgetall(`device:${device_id}:${suffix}`)))
 
+  /* eslint-reason external lib weirdness */
+  /* eslint-disable-next-line promise/avoid-new */
   return new Promise((resolve, reject) => {
+    /* eslint-reason external lib weirdness */
+    /* eslint-disable-next-line promise/prefer-await-to-callbacks */
     multi.exec(async (err, replies) => {
       if (err) {
         await log.error('hreads', err)
@@ -185,65 +176,60 @@ async function readDevices(device_ids: UUID[]) {
 
 async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
   log.info('readDevicesStatus', JSON.stringify(query), 'start')
-  return new Promise(async resolve => {
-    const start = query.since || 0
-    const stop = now()
-    // read all device ids
-    log
-      .info('redis zrangebyscore device-ids', start, stop)(await getClient())
-      .zrangebyscoreAsync('device-ids', start, stop)
-      .then(async (device_ids_res: string[]) => {
-        log.info('readDevicesStatus', device_ids_res.length, 'entries')
+  const start = query.since || 0
+  const stop = now()
+  // read all device ids
+  const device_ids_res = log
+    .info('redis zrangebyscore device-ids', start, stop)(await getClient())
+    .zrangebyscoreAsync('device-ids', start, stop)
 
-        const skip = query.skip || 0
-        const take = query.take || 100000000000
-        const device_ids = device_ids_res.slice(skip, skip + take)
+  log.info('readDevicesStatus', device_ids_res.length, 'entries')
 
-        // read all devices
-        const device_status_map: { [device_id: string]: CachedItem | {} } = {}
+  const skip = query.skip || 0
+  const take = query.take || 100000000000
+  const device_ids = device_ids_res.slice(skip, skip + take)
 
-        // big batch redis nightmare!
-        let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
-        all = all.filter((item: CachedItem) => Boolean(item))
-        all.map(item => {
-          device_status_map[item.device_id] = device_status_map[item.device_id] || {}
-          Object.assign(device_status_map[item.device_id], item)
-        })
-        log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
+  // read all devices
+  const device_status_map: { [device_id: string]: CachedItem | {} } = {}
 
-        // log.info('device_status_map', JSON.stringify(device_status_map))
-        let values = Object.values(device_status_map)
-        if (query.bbox) {
-          values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
-        }
-
-        log.info('readDevicesStatus done')
-        resolve(values)
-      })
+  // big batch redis nightmare!
+  let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
+  all = all.filter((item: CachedItem) => Boolean(item))
+  all.map(item => {
+    device_status_map[item.device_id] = device_status_map[item.device_id] || {}
+    Object.assign(device_status_map[item.device_id], item)
   })
+  log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
+
+  // log.info('device_status_map', JSON.stringify(device_status_map))
+  let values = Object.values(device_status_map)
+  if (query.bbox) {
+    values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
+  }
+
+  log.info('readDevicesStatus done')
+  return values
 }
 
 // get the provider for a device
 async function getProviderId(device_id: UUID) {
-  return readDevice(device_id).then(device => device.provider_id)
+  return (await readDevice(device_id)).provider_id
 }
 
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
 async function updateProviderStats(suffix: string, device_id: UUID, timestamp: Timestamp | undefined | null) {
-  getProviderId(device_id).then(
-    async provider_id => {
-      return (await getClient()).hmsetAsync(
-        `provider:${provider_id}:stats`,
-        `last${capitalizeFirst(suffix)}`,
-        timestamp || now()
-      )
-    },
-    async err => {
-      const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-      await log.warn(msg)
-      return Promise.resolve(msg)
-    }
-  )
+  try {
+    const provider_id = await getProviderId(device_id)
+    return (await getClient()).hmsetAsync(
+      `provider:${provider_id}:stats`,
+      `last${capitalizeFirst(suffix)}`,
+      timestamp || now()
+    )
+  } catch (err) {
+    const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
+    await log.warn(msg)
+    return Promise.resolve(msg)
+  }
 }
 
 // anything with a device_id, e.g. device, telemetry, etc.
@@ -300,7 +286,7 @@ async function writeEvent(event: VehicleEvent) {
         return hwrite('event', event)
       } catch (err) {
         await log.error('hwrites', err.stack)
-        return Promise.reject(err)
+        throw err
       }
     } else {
       return null
@@ -310,7 +296,7 @@ async function writeEvent(event: VehicleEvent) {
       return hwrite('event', event)
     } catch (err) {
       await log.error('hwrites', err.stack)
-      return Promise.reject(err)
+      throw err
     }
   }
 }
@@ -318,27 +304,17 @@ async function writeEvent(event: VehicleEvent) {
 async function readEvent(device_id: UUID): Promise<VehicleEvent> {
   // log.info('redis read event', device_id)
   log.info('redis read event for', device_id)
-  return new Promise((resolve, reject) => {
-    hread('event', device_id)
-      .then((event: CachedItem) => resolve(parseEvent(event as StringifiedEventWithTelemetry)))
-      .catch((err: Error) => reject(err))
-  })
+  const event = await hread('event', device_id)
+  return parseEvent(event as StringifiedEventWithTelemetry)
 }
 
 async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
-  return new Promise((resolve, reject) => {
-    hreads(['event'], device_ids)
-      .then((events: CachedItem[]) =>
-        resolve(
-          events
-            .map(e => {
-              return parseEvent(e as StringifiedEventWithTelemetry)
-            })
-            .filter(e => !!e)
-        )
-      )
-      .catch((err: Error) => reject(err))
-  })
+  const events = await hreads(['event'], device_ids)
+  return events
+    .map(e => {
+      return parseEvent(e as StringifiedEventWithTelemetry)
+    })
+    .filter(e => !!e)
 }
 
 async function readKeys(pattern: string) {
@@ -359,11 +335,8 @@ async function readAllEvents() {
 
 async function readTelemetry(device_id: UUID): Promise<Telemetry> {
   // log.info('redis read telemetry for', device_id)
-  return new Promise((resolve, reject) => {
-    hread('telemetry', device_id)
-      .then(telemetry => resolve(parseTelemetry(telemetry as StringifiedTelemetry)))
-      .catch(err => reject(err))
-  })
+  const telemetry = await hread('telemetry', device_id)
+  return parseTelemetry(telemetry as StringifiedTelemetry)
 }
 
 async function writeOneTelemetry(telemetry: Telemetry) {
@@ -405,34 +378,30 @@ async function readAllTelemetry() {
     try {
       return [...acc, parseTelemetry(telemetry)]
     } catch (err) {
-      log.warn(JSON.parse(err))
+      log.info(JSON.parse(err))
       return acc
     }
   }, [])
 }
 
 async function wipeDevice(device_id: UUID) {
-  return readKeys(`*:${device_id}:*`).then(async keys => {
-    if (keys.length > 0) {
-      log.info('del', ...keys)
-      return (await getClient()).delAsync(...keys)
-    }
-    log.info('no keys found for', device_id)
-    return Promise.resolve(0)
-  })
+  const keys = await readKeys(`*:${device_id}:*`)
+  if (keys.length > 0) {
+    log.info('del', ...keys)
+    return (await getClient()).delAsync(...keys)
+  }
+  log.info('no keys found for', device_id)
+  return 0
 }
 
 async function readProviderStats(provider_id: UUID) {
   const key = `provider:${provider_id}:stats`
-  return new Promise(async (resolve, reject) => {
-    return (await getClient()).hgetallAsync(key).then(flat => {
-      if (!flat) {
-        reject(new Error(`no stats found for provider_id ${provider_id}`))
-      } else {
-        resolve(unflatten(flat))
-      }
-    })
-  })
+  const flat = await (await getClient()).hgetallAsync(key)
+  if (!flat) {
+    throw new Error(`no stats found for provider_id ${provider_id}`)
+  } else {
+    return unflatten(flat)
+  }
 }
 
 async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; telemetry: Telemetry[] }) {
@@ -454,12 +423,14 @@ async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; tele
 }
 
 async function reset() {
-  log.info('cache reset')
-  return (await getClient()).flushdbAsync().then(() => log.info('redis flushed'))
+  log
+    .info('cache reset')(await getClient())
+    .flushdbAsync()
+  return log.info('redis flushed')
 }
 
 async function initialize() {
-  getClient()
+  await getClient()
   await reset()
 }
 
@@ -490,32 +461,28 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
       device: 0,
       event: 0
     }
-    return new Promise(async (resolve, reject) => {
-      try {
-        // look for bogus keys
-        let badKeys: string[] = []
-        keys.map(key => {
-          const [, device_id, suffix] = key.split(':')
-          if (deviceIdMap[device_id]) {
-            // woot
-          } else if (suffix) {
-            badKeys.push(key)
-            report[suffix] += 1
-          }
-        })
-        // let's just purge a few as an experiment
-        badKeys = badKeys.slice(0, 10000)
-        ;(await getClient()).delAsync(...badKeys).then((result: number) => {
-          // return a wee report
-          report.deleted = result
-          resolve(report)
-        })
-      } catch (ex) {
-        await log.error('cleanup: exception', ex)
-        reject(ex)
-      }
-      resolve(report)
-    })
+    try {
+      // look for bogus keys
+      let badKeys: string[] = []
+      keys.map(key => {
+        const [, device_id, suffix] = key.split(':')
+        if (deviceIdMap[device_id]) {
+          // woot
+        } else if (suffix) {
+          badKeys.push(key)
+          report[suffix] += 1
+        }
+      })
+      // let's just purge a few as an experiment
+      badKeys = badKeys.slice(0, 10000)
+      const result = await (await getClient()).delAsync(...badKeys)
+      // return a wee report
+      report.deleted = result
+      return report
+    } catch (ex) {
+      await log.error('cleanup: exception', ex)
+      throw ex
+    }
   } catch (ex) {
     await log.error('cleanup: exception', ex)
     return Promise.reject(ex)

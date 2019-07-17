@@ -19,7 +19,6 @@ module.exports = {
     'prettier/@typescript-eslint'
   ],
   rules: {
-    'require-await': 'warn',
     '@typescript-eslint/no-floating-promises': 'warn',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
