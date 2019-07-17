@@ -32,7 +32,7 @@ function api(app: express.Express): express.Express {
   /**
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
+  app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
@@ -56,13 +56,13 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            log.warn('Missing provider_id in', req.originalUrl)
+            await log.warn('Missing provider_id in', req.originalUrl)
             return res.status(400).send({ result: 'missing provider_id' })
           }
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
             return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
           }
 
@@ -79,7 +79,7 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       /* istanbul ignore next */
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -112,15 +112,15 @@ function api(app: express.Express): express.Express {
           })
           res.status(200).send({ policies: active })
         },
-        /* istanbul ignore next */ (err: Error) => {
-          log.error('failed to read policies', err)
+        /* istanbul ignore next */ async (err: Error) => {
+          await log.error('failed to read policies', err)
           res.status(404).send({
             result: 'not found'
           })
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(ex)
         res.status(500).send(new ServerError())
       })
   })
@@ -136,13 +136,13 @@ function api(app: express.Express): express.Express {
             res.status(404).send({ result: 'not found' })
           }
         },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to read one policy', err.stack)
+        async (err: Error) => /* istanbul ignore next */ {
+          await log.error('failed to read one policy', err.stack)
           res.status(404).send({ result: 'not found' })
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(ex)
         res.status(500).send(new ServerError())
       })
   })
@@ -160,13 +160,13 @@ function api(app: express.Express): express.Express {
             res.status(404).send({ result: 'not found' })
           }
         },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to read geography', err.stack)
+        async (err: Error) => /* istanbul ignore next */ {
+          await log.error('failed to read geography', err.stack)
           res.status(404).send({ result: 'not found' })
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(ex)
         res.status(500).send(new ServerError())
       })
   })
@@ -210,13 +210,13 @@ function api(app: express.Express): express.Express {
         () => {
           res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
         },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to write geography', err.stack)
+        async (err: Error) => /* istanbul ignore next */ {
+          await log.error('failed to write geography', err.stack)
           res.status(404).send({ result: 'not found' })
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(ex)
         res.status(500).send(new ServerError())
       })
   })
@@ -290,13 +290,13 @@ function api(app: express.Express): express.Express {
     res.status(200).send(joiToJsonSchema(policySchema))
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id'), (req, res) => {
+  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
     if (details) {
-      log.error('questionable policy json', details)
+      await log.error('questionable policy json', details)
       res.status(422).send(details)
       return
     }
@@ -305,13 +305,13 @@ function api(app: express.Express): express.Express {
         () => {
           res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
         },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to write geography', err.stack)
+        async (err: Error) => /* istanbul ignore next */ {
+          await log.error('failed to write geography', err.stack)
           res.status(404).send({ result: 'not found' })
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(ex)
         res.status(500).send(new ServerError())
       })
   })
@@ -338,13 +338,13 @@ function api(app: express.Express): express.Express {
         () => {
           res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
         },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to write geography', err.stack)
+        async (err: Error) => /* istanbul ignore next */ {
+          await log.error('failed to write geography', err.stack)
           res.status(404).send({ result: 'not found' })
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(ex)
         res.status(500).send(new ServerError())
       })
   })
@@ -362,17 +362,15 @@ function api(app: express.Express): express.Express {
             result: `Policy initialized (${kind})`
           })
         },
-        err => {
+        async err => {
           /* istanbul ignore next */
-          log.error('initialize failed', err).then(() => {
-            res.status(500).send(new ServerError())
-          })
+          await log.error('initialize failed', err)
+          res.status(500).send(new ServerError())
         }
       )
-      .catch(ex => /* istanbul ignore next */ {
-        log.error('initialize exception', ex).then(() => {
-          res.status(500).send(new ServerError())
-        })
+      .catch(async ex => /* istanbul ignore next */ {
+        await log.error('initialize exception', ex)
+        res.status(500).send(new ServerError())
       })
   })
 

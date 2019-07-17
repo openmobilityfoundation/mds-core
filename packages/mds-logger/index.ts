@@ -186,32 +186,38 @@ if (argv.length > 3) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function info(...msg: any): Promise<any> {
+function info(...msg: any) {
   if (env.QUIET) {
     return
   }
 
   const censoredMsg = makeCensoredLogMsg(...msg)
   console.log.apply(console, ['INFO', ...censoredMsg])
-  return Promise.resolve(censoredMsg)
+  return censoredMsg
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function warn(...msg: any) {
-  if (env.QUIET) {
-    return
+  try {
+    if (env.QUIET) {
+      return
+    }
+
+    const censoredMsg = makeCensoredLogMsg(...msg)
+    console.log.apply(console, ['WARN', ...censoredMsg])
+    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+    await sendSlack(censoredMsg.join(' '))
+
+    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+    await sendPush(censoredMsg.join(' '), 0)
+    return censoredMsg
+  } catch (err) {
+    console.log(err)
   }
-
-  const censoredMsg = makeCensoredLogMsg(...msg)
-  console.log.apply(console, ['WARN', ...censoredMsg])
-
-  await sendSlack(censoredMsg.join(' '))
-  await sendPush(censoredMsg.join(' '), 0)
-  return Promise.resolve(censoredMsg)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function error(...msg: any): Promise<any> {
+async function error(...msg: any) {
   if (env.QUIET) {
     return
   }
@@ -221,7 +227,7 @@ async function error(...msg: any): Promise<any> {
 
   await sendSlack(censoredMsg.join(' '))
   await sendPush(censoredMsg.join(' '), 1)
-  return Promise.resolve(censoredMsg)
+  return censoredMsg
 }
 
 async function startup() {

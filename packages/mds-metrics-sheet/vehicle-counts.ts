@@ -114,7 +114,7 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
       })
     return rows
   } catch (err) {
-    log.error('getProviderMetrics', err)
+    await log.error('getProviderMetrics', err)
     return getProviderMetrics(iter + 1)
   }
 }

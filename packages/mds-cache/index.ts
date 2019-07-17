@@ -63,7 +63,7 @@ function insideBBox(status: CachedItem | {}, bbox: BoundingBox) {
   return bbox.latMin <= lat && lat <= bbox.latMax && bbox.lngMin <= lng && lng <= bbox.lngMax
 }
 
-function getClient(): redis.RedisClient {
+async function getClient() {
   if (!cachedClient) {
     const port = Number(env.REDIS_PORT) || 6379
     const host = env.REDIS_HOST || 'localhost'
@@ -73,8 +73,8 @@ function getClient(): redis.RedisClient {
     cachedClient.on('connect', () => {
       log.info('redis cache connected')
     })
-    cachedClient.on('error', err => {
-      log.error(`redis cache error ${err}`)
+    cachedClient.on('error', async err => {
+      await log.error(`redis cache error ${err}`)
     })
 
     cachedClient
@@ -83,35 +83,33 @@ function getClient(): redis.RedisClient {
         (size: number) => {
           log.info(`redis cache has ${size} keys`)
         },
-        err => {
-          log.error('redis failed to get dbsize', err)
+        async err => {
+          await log.error('redis failed to get dbsize', err)
         }
       )
-      .catch(err => {
-        log.error('redis uncaught during dbsize', err.stack)
+      .catch(async err => {
+        await log.error('redis uncaught during dbsize', err.stack)
       })
   }
   return cachedClient
 }
 
 async function info() {
-  return getClient()
-    .infoAsync()
-    .then((results: string) => {
-      const lines = results.split('\r\n')
-      const data: { [propName: string]: string | number } = {}
-      lines.map(line => {
-        const [key, val] = line.split(':')
-        if (val !== undefined) {
-          if (Number.isNaN(Number(val))) {
-            data[key] = val
-          } else {
-            data[key] = parseFloat(val)
-          }
+  return (await getClient()).infoAsync().then((results: string) => {
+    const lines = results.split('\r\n')
+    const data: { [propName: string]: string | number } = {}
+    lines.map(line => {
+      const [key, val] = line.split(':')
+      if (val !== undefined) {
+        if (Number.isNaN(Number(val))) {
+          data[key] = val
+        } else {
+          data[key] = parseFloat(val)
         }
-      })
-      return data
+      }
     })
+    return data
+  })
 }
 
 // update the ordered list of (device_id, timestamp) tuples
@@ -119,24 +117,22 @@ async function info() {
 async function updateVehicleList(device_id: UUID, timestamp?: Timestamp) {
   const when = timestamp || now()
   // log.info('redis zadd', device_id, when)
-  return getClient().zaddAsync('device-ids', when, device_id)
+  return (await getClient()).zaddAsync('device-ids', when, device_id)
 }
 async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   if (!device_id) {
     throw new Error(`hread: tried to read ${suffix} for device_id ${device_id}`)
   }
   const key = `device:${device_id}:${suffix}`
-  return new Promise((resolve, reject) => {
-    return getClient()
-      .hgetallAsync(key)
-      .then(flat => {
-        if (flat) {
-          resolve(unflatten({ ...flat, device_id }))
-        } else {
-          // log.info(`hread: ${suffix} for ${device_id} not found`)
-          reject(new Error(`${suffix} for ${device_id} not found`))
-        }
-      })
+  return new Promise(async (resolve, reject) => {
+    return (await getClient()).hgetallAsync(key).then(flat => {
+      if (flat) {
+        resolve(unflatten({ ...flat, device_id }))
+      } else {
+        // log.info(`hread: ${suffix} for ${device_id} not found`)
+        reject(new Error(`${suffix} for ${device_id} not found`))
+      }
+    })
   })
 }
 
@@ -148,14 +144,14 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
     throw new Error('hreads: no device_ids')
   }
   // bleah
-  const multi = getClient().multi()
+  const multi = (await getClient()).multi()
 
   suffixes.map(suffix => device_ids.map(device_id => multi.hgetall(`device:${device_id}:${suffix}`)))
 
   return new Promise((resolve, reject) => {
-    multi.exec((err, replies) => {
+    multi.exec(async (err, replies) => {
       if (err) {
-        log.error('hreads', err)
+        await log.error('hreads', err)
         reject(err)
       } else {
         resolve(
@@ -189,12 +185,12 @@ async function readDevices(device_ids: UUID[]) {
 
 async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
   log.info('readDevicesStatus', JSON.stringify(query), 'start')
-  return new Promise(resolve => {
+  return new Promise(async resolve => {
     const start = query.since || 0
     const stop = now()
     // read all device ids
-    log.info('redis zrangebyscore device-ids', start, stop)
-    getClient()
+    log
+      .info('redis zrangebyscore device-ids', start, stop)(await getClient())
       .zrangebyscoreAsync('device-ids', start, stop)
       .then(async (device_ids_res: string[]) => {
         log.info('readDevicesStatus', device_ids_res.length, 'entries')
@@ -235,16 +231,16 @@ async function getProviderId(device_id: UUID) {
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
 async function updateProviderStats(suffix: string, device_id: UUID, timestamp: Timestamp | undefined | null) {
   getProviderId(device_id).then(
-    provider_id => {
-      return getClient().hmsetAsync(
+    async provider_id => {
+      return (await getClient()).hmsetAsync(
         `provider:${provider_id}:stats`,
         `last${capitalizeFirst(suffix)}`,
         timestamp || now()
       )
     },
-    err => {
+    async err => {
       const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-      log.warn(msg)
+      await log.warn(msg)
       return Promise.resolve(msg)
     }
   )
@@ -253,7 +249,7 @@ async function updateProviderStats(suffix: string, device_id: UUID, timestamp: T
 // anything with a device_id, e.g. device, telemetry, etc.
 async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | VehicleEvent) {
   if (typeof item.device_id !== 'string') {
-    log.error(`hwrite: invalid device_id ${item.device_id}`)
+    await log.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
   const { device_id } = item
@@ -266,10 +262,10 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   if (nulls.length > 0) {
     // redis doesn't store null keys, so we have to delete them
     // TODO unit-test
-    await getClient().hdelAsync(key, ...nulls)
+    await (await getClient()).hdelAsync(key, ...nulls)
   }
 
-  await getClient().hmsetAsync(key, hmap)
+  await (await getClient()).hmsetAsync(key, hmap)
   if ('timestamp' in item) {
     return Promise.all([
       // make sure the device list is updated (per-provider)
@@ -303,7 +299,7 @@ async function writeEvent(event: VehicleEvent) {
       try {
         return hwrite('event', event)
       } catch (err) {
-        log.error('hwrites', err.stack)
+        await log.error('hwrites', err.stack)
         return Promise.reject(err)
       }
     } else {
@@ -346,7 +342,7 @@ async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
 }
 
 async function readKeys(pattern: string) {
-  return getClient().keysAsync(pattern)
+  return (await getClient()).keysAsync(pattern)
 }
 
 async function readAllEvents() {
@@ -377,7 +373,7 @@ async function writeOneTelemetry(telemetry: Telemetry) {
       try {
         return hwrite('telemetry', telemetry)
       } catch (err) {
-        log.error('hwrite', err.stack)
+        await log.error('hwrite', err.stack)
         return Promise.reject(err)
       }
     } else {
@@ -388,7 +384,7 @@ async function writeOneTelemetry(telemetry: Telemetry) {
     try {
       return hwrite('telemetry', telemetry)
     } catch (err2) {
-      log.error('writeOneTelemetry hwrite2', err.stack)
+      await log.error('writeOneTelemetry hwrite2', err.stack)
       return Promise.reject(err2)
     }
   }
@@ -416,10 +412,10 @@ async function readAllTelemetry() {
 }
 
 async function wipeDevice(device_id: UUID) {
-  return readKeys(`*:${device_id}:*`).then(keys => {
+  return readKeys(`*:${device_id}:*`).then(async keys => {
     if (keys.length > 0) {
       log.info('del', ...keys)
-      return getClient().delAsync(...keys)
+      return (await getClient()).delAsync(...keys)
     }
     log.info('no keys found for', device_id)
     return Promise.resolve(0)
@@ -428,16 +424,14 @@ async function wipeDevice(device_id: UUID) {
 
 async function readProviderStats(provider_id: UUID) {
   const key = `provider:${provider_id}:stats`
-  return new Promise((resolve, reject) => {
-    return getClient()
-      .hgetallAsync(key)
-      .then(flat => {
-        if (!flat) {
-          reject(new Error(`no stats found for provider_id ${provider_id}`))
-        } else {
-          resolve(unflatten(flat))
-        }
-      })
+  return new Promise(async (resolve, reject) => {
+    return (await getClient()).hgetallAsync(key).then(flat => {
+      if (!flat) {
+        reject(new Error(`no stats found for provider_id ${provider_id}`))
+      } else {
+        resolve(unflatten(flat))
+      }
+    })
   })
 }
 
@@ -459,11 +453,9 @@ async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; tele
   log.info('cache seed redis done')
 }
 
-function reset() {
+async function reset() {
   log.info('cache reset')
-  return getClient()
-    .flushdbAsync()
-    .then(() => log.info('redis flushed'))
+  return (await getClient()).flushdbAsync().then(() => log.info('redis flushed'))
 }
 
 async function initialize() {
@@ -498,7 +490,7 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
       device: 0,
       event: 0
     }
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         // look for bogus keys
         let badKeys: string[] = []
@@ -513,15 +505,15 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
         })
         // let's just purge a few as an experiment
         badKeys = badKeys.slice(0, 10000)
-        getClient()
-          .delAsync(...badKeys)
-          .then((result: number) => {
-            // return a wee report
-            report.deleted = result
-            resolve(report)
-          })
+
+        ;(await getClient()).delAsync(...badKeys).then((result: number) => {
+          // return a wee report
+          report.deleted = result
+          resolve(report)
+        })
       } catch (ex) {
-        log.error('cleanup: exception', ex).then(() => reject(ex))
+        await log.error('cleanup: exception', ex)
+        reject(ex)
       }
       resolve(report)
     })

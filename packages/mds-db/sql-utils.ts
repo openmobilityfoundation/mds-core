@@ -66,12 +66,12 @@ export function configureClient(pg_info: PGInfo) {
     log.info('disconnected', client.client_type, 'client from postgres')
   })
 
-  client.on('error', err => {
-    log.error('pg client error event', err.stack)
+  client.on('error', async err => {
+    await log.error('pg client error event', err.stack)
   })
 
-  client.on('notice', msg => {
-    log.warn('notice:', msg)
+  client.on('notice', async msg => {
+    await log.warn('notice:', msg)
   })
 
   if (!client) {

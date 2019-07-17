@@ -101,11 +101,10 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
         client.setConnected(true)
         resolve(client)
       })
-      .catch((err: Error) => {
-        log.error('postgres connection error', err.stack).then(() => {
-          reject(err)
-          client.setConnected(false)
-        })
+      .catch(async (err: Error) => {
+        await log.error('postgres connection error', err.stack)
+        reject(err)
+        client.setConnected(false)
       })
   })
 }
@@ -155,8 +154,9 @@ async function initialize() {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 async function makeReadOnlyQuery(sql: string): Promise<any[]> {
   return new Promise((resolve, reject) => {
-    function fail(err: Error) {
-      log.error(`error with SQL query ${sql}`, err.stack || err).then(() => reject(err))
+    async function fail(err: Error) {
+      await log.error(`error with SQL query ${sql}`, err.stack || err)
+      reject(err)
     }
 
     getReadOnlyClient().then(client => {
@@ -238,7 +238,7 @@ async function readDeviceByVehicleId(
   const error = `device associated with vehicle ${
     vehicle_ids.length === 1 ? vehicle_id : `(${csv(vehicle_ids)})`
   } for provider ${provider_id}: rows=${result.rows.length}`
-  log.warn(error)
+  await log.warn(error)
   throw Error(error)
 }
 
@@ -317,16 +317,14 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
                 .catch(reject)
             }
           },
-          err => {
-            log.error('update device db error', device_id, err).then(() => {
-              reject(err)
-            })
+          async err => {
+            await log.error('update device db error', device_id, err)
+            reject(err)
           }
         )
-        .catch(err => {
-          log.error('update device db exception', device_id, err.stack).then(() => {
-            reject(err)
-          })
+        .catch(async err => {
+          await log.error('update device db exception', device_id, err.stack)
+          reject(err)
         })
     })
   })
@@ -369,16 +367,14 @@ async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<Vehicl
               reject(new Error(`event for ${device_id}:${timestamp} not found`))
             }
           },
-          err => {
-            log.error('read event error', err).then(() => {
-              reject(err)
-            })
+          async err => {
+            await log.error('read event error', err)
+            reject(err)
           }
         )
-        .catch(err => {
-          log.error('write event exception', err.stack).then(() => {
-            reject(err)
-          })
+        .catch(async err => {
+          await log.error('write event exception', err.stack)
+          reject(err)
         })
     })
   })
@@ -418,10 +414,9 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
 
   logSql(countSql, countVals)
   return new Promise((resolve, reject) => {
-    function fail(err: Error) {
-      log.error('readEvents error', err.stack || err).then(() => {
-        reject(err)
-      })
+    async function fail(err: Error) {
+      await log.error('readEvents error', err.stack || err)
+      reject(err)
     }
 
     client
@@ -580,10 +575,9 @@ async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsRe
   logSql(countSql, countVals)
 
   return new Promise((resolve, reject) => {
-    function fail(err: Error) {
-      log.error('readTripIds error', err.stack || err).then(() => {
-        reject(err)
-      })
+    async function fail(err: Error) {
+      await log.error('readTripIds error', err.stack || err)
+      reject(err)
     }
 
     client
@@ -675,16 +669,14 @@ async function writeTelemetry(data: Telemetry[]): Promise<void> {
               }
               resolve()
             },
-            err => {
-              log.error('pg write telemetry error', err, sql).then(() => {
-                reject(err)
-              })
+            async err => {
+              await log.error('pg write telemetry error', err, sql)
+              reject(err)
             }
           )
-          .catch(err => {
-            log.error('pg write telemetry exception', err.stack).then(() => {
-              reject(err)
-            })
+          .catch(async err => {
+            await log.error('pg write telemetry exception', err.stack)
+            reject(err)
           })
       })
     }
@@ -724,16 +716,14 @@ async function readTelemetry(
               })
             )
           },
-          err => {
-            log.error('read telemetry error', err).then(() => {
-              reject(err)
-            })
+          async err => {
+            await log.error('read telemetry error', err)
+            reject(err)
           }
         )
-        .catch(err => {
-          log.error('read telemetry exception', err.stack).then(() => {
-            reject(err)
-          })
+        .catch(async err => {
+          await log.error('read telemetry exception', err.stack)
+          reject(err)
         })
     })
   })
@@ -757,16 +747,14 @@ async function wipeDevice(device_id: UUID): Promise<QueryResult> {
             // this returns a list of objects that represent the commands that just ran
             resolve(res)
           },
-          err => {
-            log.error('read telemetry error', err).then(() => {
-              reject(err)
-            })
+          async err => {
+            await log.error('read telemetry error', err)
+            reject(err)
           }
         )
-        .catch(err => {
-          log.error('read telemetry exception', err.stack).then(() => {
-            reject(err)
-          })
+        .catch(async err => {
+          await log.error('read telemetry exception', err.stack)
+          reject(err)
         })
     })
   })
@@ -855,7 +843,7 @@ async function shutdown(): Promise<void> {
     const readOnlyClient = await getReadOnlyClient()
     await readOnlyClient.end()
   } catch (err) {
-    log.error('error during disconnection', err.stack)
+    await log.error('error during disconnection', err.stack)
   }
 }
 
@@ -869,7 +857,7 @@ async function readAudit(audit_trip_id: UUID) {
     return result.rows[0]
   }
   const error = `readAudit db failed for ${audit_trip_id}: rows=${result.rows.length}`
-  log.warn(error)
+  await log.warn(error)
   throw Error(error)
 }
 
@@ -913,7 +901,7 @@ async function readAudits(query: ReadAuditsQueryParams) {
       audits: selectResult.rows
     }
   } catch (err) {
-    log.error('readAudits error', err.stack || err)
+    await log.error('readAudits error', err.stack || err)
     throw err
   }
 }
@@ -957,7 +945,7 @@ async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<AuditEvent
     const result = await client.query(sql, sqlVals)
     return result.rows
   } catch (err) {
-    log.error('readAuditEvents error', err.stack || err)
+    await log.error('readAuditEvents error', err.stack || err)
     throw err
   }
 }
@@ -1025,16 +1013,14 @@ async function writeTrips(trips: Trip[]) {
             count: trips.length
           })
         },
-        err => {
-          log.error('pg writeTrips error', err).then(() => {
-            reject(err)
-          })
+        async err => {
+          await log.error('pg writeTrips error', err)
+          reject(err)
         }
       )
-      .catch(err => {
-        log.error('pg writeTrips exception', err.stack).then(() => {
-          reject(err)
-        })
+      .catch(async err => {
+        await log.error('pg writeTrips exception', err.stack)
+        reject(err)
       })
   })
 }
@@ -1152,16 +1138,14 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
             count: status_changes.length
           })
         },
-        err => {
-          log.error('pg writeStatusChanges error', err, sql).then(() => {
-            reject(err)
-          })
+        async err => {
+          await log.error('pg writeStatusChanges error', err, sql)
+          reject(err)
         }
       )
-      .catch(ex => {
-        log.error('pg writeStatusChanges exception', ex.stack, sql).then(() => {
-          reject(ex)
-        })
+      .catch(async ex => {
+        await log.error('pg writeStatusChanges exception', ex.stack, sql)
+        reject(ex)
       })
   })
 }
@@ -1284,13 +1268,13 @@ async function readGeographies(params?: { geography_id?: UUID }): Promise<Geogra
         res => {
           resolve(res.rows.map(row => row.geography_json) as Geography[])
         },
-        err => {
-          log.error('readGeographies', err)
+        async err => {
+          await log.error('readGeographies', err)
           reject(err)
         }
       )
-      .catch(ex => {
-        log.error(ex)
+      .catch(async ex => {
+        await log.error(ex)
         reject(ex.message)
       })
   })
@@ -1311,13 +1295,13 @@ async function writeGeography(geography: Geography) {
         () => {
           resolve(geography)
         },
-        err => {
-          log.error('writeGeography', err)
+        async err => {
+          await log.error('writeGeography', err)
           reject(err)
         }
       )
-      .catch(ex => {
-        log.error(ex)
+      .catch(async ex => {
+        await log.error(ex)
         reject(ex.message)
       })
   })
@@ -1352,13 +1336,13 @@ async function readPolicies(params?: {
         res => {
           resolve(res.rows.map(row => row.policy_json))
         },
-        err => {
-          log.error('readPolicies', err)
+        async err => {
+          await log.error('readPolicies', err)
           reject(err)
         }
       )
-      .catch(ex => {
-        log.error(ex)
+      .catch(async ex => {
+        await log.error(ex)
         reject(ex.message)
       })
   })
@@ -1377,13 +1361,13 @@ async function writePolicy(policy: Policy) {
         () => {
           resolve(policy)
         },
-        err => {
-          log.error('writePolicy', err)
+        async err => {
+          await log.error('writePolicy', err)
           reject(err)
         }
       )
-      .catch(ex => {
-        log.error(ex)
+      .catch(async ex => {
+        await log.error(ex)
         reject(ex.message)
       })
   })

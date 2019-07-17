@@ -20,6 +20,7 @@ import stream from 'mds-stream'
 import db from 'mds-db'
 import log from 'mds-logger'
 import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape, isInStatesOrEvents } from 'mds-utils'
+import { ServerError } from 'mds-api-helpers'
 import { Policy, Geography, VehicleEvent, ComplianceResponse, Device, UUID } from 'mds'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName } from 'mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
@@ -27,7 +28,7 @@ import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
 
 function api(app: express.Express): express.Express {
-  app.use((req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
+  app.use(async (req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/')) {
@@ -54,7 +55,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            log.warn('Missing provider_id in', req.originalUrl)
+            await log.warn('Missing provider_id in', req.originalUrl)
             return res.status(400).send({
               result: 'missing provider_id'
             })
@@ -62,7 +63,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            log.warn(req.originalUrl, 'invalid provider_id', provider_id)
+            await log.warn(req.originalUrl, 'invalid provider_id', provider_id)
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -78,7 +79,7 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       /* istanbul ignore next */
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -91,19 +92,17 @@ function api(app: express.Express): express.Express {
             result: `Database initialized (${kind})`
           })
         },
-        err => {
+        async err => {
           /* istanbul ignore next */
-          log.error('initialize failed', err).then(() => {
-            res.status(500).send('Server Error')
-          })
+          await log.error('initialize failed', err)
+          res.status(500).send('Server Error')
         }
       )
       .catch(
         /* istanbul ignore next */
-        err => {
-          log.error('initialize exception', err).then(() => {
-            res.status(500).send('Server Error')
-          })
+        async err => {
+          await log.error('initialize exception', err)
+          res.status(500).send('Server Error')
         }
       )
   })
@@ -113,10 +112,9 @@ function api(app: express.Express): express.Express {
       res.status(401).send({ result: 'unauthorized access' })
     }
     /* istanbul ignore next */
-    function fail(err: Error): void {
-      log.error(err.stack || err).then(() => {
-        res.status(500).send('server error')
-      })
+    async function fail(err: Error) {
+      await log.error(err.stack || err)
+      res.status(500).send(new ServerError())
     }
 
     let start_date = now() - days(365)

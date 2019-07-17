@@ -38,7 +38,7 @@ function api(app: express.Express): express.Express {
   /**
    * Agency-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req: DailyApiRequest, res: DailyApiResponse, next) => {
+  app.use(async (req: DailyApiRequest, res: DailyApiResponse, next) => {
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/')) {
@@ -65,7 +65,7 @@ function api(app: express.Express): express.Express {
 
           if (provider_id) {
             if (!isUUID(provider_id)) {
-              log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+              await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
               return res.status(400).send({
                 result: `invalid provider_id ${provider_id} is not a UUID`
               })
@@ -85,7 +85,7 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       /* istanbul ignore next */
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -159,11 +159,10 @@ function api(app: express.Express): express.Express {
   }
 
   app.get(pathsFor('/admin/vehicle_counts'), (req: DailyApiRequest, res: DailyApiResponse) => {
-    function fail(err: Error | string): void {
-      log.error('/admin/vehicle_counts fail', err).then(() => {
-        res.status(500).send({
-          error: err
-        })
+    async function fail(err: Error | string): Promise<void> {
+      await log.error('/admin/vehicle_counts fail', err)
+      res.status(500).send({
+        error: err
       })
     }
 
@@ -193,7 +192,7 @@ function api(app: express.Express): express.Express {
       }
     }
 
-    db.getVehicleCountsPerProvider().then((rows: { provider_id: UUID; count: number }[]) => {
+    db.getVehicleCountsPerProvider().then(async (rows: { provider_id: UUID; count: number }[]) => {
       const stats: {
         provider_id: UUID
         provider: string
@@ -214,7 +213,7 @@ function api(app: express.Express): express.Express {
           areas_48h: {}
         }
       })
-      log.warn('/admin/vehicle_counts', JSON.stringify(stats))
+      await log.warn('/admin/vehicle_counts', JSON.stringify(stats))
       const HRS_48_AGO = now() - 172800000
 
       getMaps()
@@ -247,8 +246,8 @@ function api(app: express.Express): express.Express {
                 .catch(fail)
             })
           )
-            .then(() => {
-              log.warn(JSON.stringify(stats))
+            .then(async () => {
+              await log.warn(JSON.stringify(stats))
               res.status(200).send(stats)
             }, fail)
             .catch(fail)
@@ -317,8 +316,8 @@ function api(app: express.Express): express.Express {
   }
 
   app.get(pathsFor('/admin/last_day_trips_by_provider'), async (req: DailyApiRequest, res: DailyApiResponse) => {
-    function fail(err: Error | string): void {
-      log.error('last_day_trips_by_provider err:', err)
+    async function fail(err: Error | string): Promise<void> {
+      await log.error('last_day_trips_by_provider err:', err)
     }
 
     const { start_time, end_time } = startAndEnd(req.params)
@@ -375,13 +374,13 @@ function api(app: express.Express): express.Express {
             res.status(404).send({ result: 'not_found' })
           }
         },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error(`raw_trip_data: ${err}`)
+        async (err: Error) => /* istanbul ignore next */ {
+          await log.error(`raw_trip_data: ${err}`)
           res.status(500).send(SERVER_ERROR)
         }
       )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(`raw_trip_data: ${ex.stack}`)
+      .catch(async (ex: Error) => /* istanbul ignore next */ {
+        await log.error(`raw_trip_data: ${ex.stack}`)
         res.status(500).send(SERVER_ERROR)
       })
   })
@@ -410,8 +409,8 @@ function api(app: express.Express): express.Express {
 
     const { start_time, end_time } = startAndEnd(req.params)
 
-    function fail(err: Error | string): void {
-      log.error(
+    async function fail(err: Error | string): Promise<void> {
+      await log.error(
         'last_day_stats_by_provider err:',
         err instanceof Error ? err.message : err,
         err instanceof Error ? err.stack : ''
@@ -542,10 +541,9 @@ function api(app: express.Express): express.Express {
         })
         res.status(200).send(provider_info)
       }, fail)
-      .catch((ex: Error /* istanbul ignore next */) => {
-        log.error('unable to fetch data from last 24 hours', ex).then(() => {
-          res.status(500).send(SERVER_ERROR)
-        })
+      .catch(async (ex: Error /* istanbul ignore next */) => {
+        await log.error('unable to fetch data from last 24 hours', ex)
+        res.status(500).send(SERVER_ERROR)
       })
   })
 

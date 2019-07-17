@@ -41,7 +41,7 @@ function api(app: express.Express): express.Express {
   /**
    * Provider-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req: ProviderApiRequest, res: ProviderApiResponse, next) => {
+  app.use(async (req: ProviderApiRequest, res: ProviderApiResponse, next) => {
     try {
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
@@ -57,7 +57,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            log.warn('missing_provider_id', req.originalUrl)
+            await log.warn('missing_provider_id', req.originalUrl)
             return res.status(403).send({
               error: 'missing_provider_id'
             })
@@ -65,7 +65,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            log.warn('invalid_provider_id', provider_id, req.originalUrl)
+            await log.warn('invalid_provider_id', provider_id, req.originalUrl)
             return res.status(403).send({
               error: 'invalid_provider_id',
               error_description: `invalid provider_id ${provider_id} is not a UUID`
@@ -80,7 +80,7 @@ function api(app: express.Express): express.Express {
     } catch (err) {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      log.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
+      await log.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
     }
     next()
   })
@@ -100,7 +100,7 @@ function api(app: express.Express): express.Express {
   })
 
   // get => random data
-  app.get(pathsFor('/test/seed'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
+  app.get(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
       log.info('/test/seed', JSON.stringify(req.query))
@@ -125,8 +125,8 @@ function api(app: express.Express): express.Express {
             result: `Seeded ${count} devices/events/telemetry`
           })
         },
-        err => /* istanbul ignore next */ {
-          log.error('/test/seed failure:', err)
+        async err => /* istanbul ignore next */ {
+          await log.error('/test/seed failure:', err)
           res.status(500).send({
             result: `Failed to seed: ${err}`
           })
@@ -135,7 +135,7 @@ function api(app: express.Express): express.Express {
     } catch (err) /* istanbul ignore next */ {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
+      await log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
         result: `Failed to seed: ${desc}`
       })
@@ -143,7 +143,7 @@ function api(app: express.Express): express.Express {
   })
 
   // post => populate from body
-  app.post(pathsFor('/test/seed'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
+  app.post(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
       Promise.all([cache.seed(req.body), db.seed(req.body)]).then(
@@ -153,8 +153,8 @@ function api(app: express.Express): express.Express {
             result: `Seeded devices/events/telemetry`
           })
         },
-        err => /* istanbul ignore next */ {
-          log.error('/test/seed failure:', err)
+        async err => /* istanbul ignore next */ {
+          await log.error('/test/seed failure:', err)
           res.status(500).send({
             result: `Failed to seed: ${err}`
           })
@@ -163,7 +163,7 @@ function api(app: express.Express): express.Express {
     } catch (err) /* istanbul ignore next */ {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
+      await log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
         result: `Failed to seed: ${desc}`
       })
