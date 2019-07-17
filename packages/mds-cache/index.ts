@@ -155,7 +155,7 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
   return new Promise((resolve, reject) => {
     multi.exec((err, replies) => {
       if (err) {
-        log.error(err)
+        log.error('hreads', err)
         reject(err)
       } else {
         resolve(
