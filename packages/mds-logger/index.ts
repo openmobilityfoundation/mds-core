@@ -93,7 +93,7 @@ function isAtomic(item: any) {
 // just in case we have to censor something nested like
 // { data: [{ lat:1, lng:2 }] }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeCensoredLogMsgRecurse(msg: { [propName: string]: any }): { [propName: string]: any } | any {
+function makeCensoredLogMsgRecurse(msg: { [propName: string]: any }): { [propName: string]: any } {
   if (isAtomic(msg)) {
     return msg
   }
@@ -114,7 +114,7 @@ function makeCensoredLogMsgRecurse(msg: { [propName: string]: any }): { [propNam
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeCensoredLogMsg(...msg: any) {
+function makeCensoredLogMsg(...msg: any[]) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return makeCensoredLogMsgRecurse(msg).map((item: any) =>
     // never print out '[object Object]'
