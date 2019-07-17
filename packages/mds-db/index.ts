@@ -111,42 +111,34 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
   })
 }
 
-async function getWriteableClient(): Promise<MDSPostgresClient> {
-  return new Promise((resolve, reject) => {
-    if (writeableCachedClient && writeableCachedClient.connected) {
-      return resolve(writeableCachedClient)
-    }
+async function getReadOnlyClient(): Promise<MDSPostgresClient> {
+  if (readOnlyCachedClient && readOnlyCachedClient.connected) {
+    return readOnlyCachedClient
+  }
 
-    setupClient(true)
-      .then(result => {
-        writeableCachedClient = result
-        resolve(result)
-      })
-      .catch((err: Error) => {
-        log.error('postgres connection error')
-        reject(err)
-        writeableCachedClient = null
-      })
-  })
+  try {
+    readOnlyCachedClient = await setupClient(false)
+    return readOnlyCachedClient
+  } catch (err) {
+    readOnlyCachedClient = null
+    await log.error('postgres connection error', err)
+    throw err
+  }
 }
 
-async function getReadOnlyClient(): Promise<MDSPostgresClient> {
-  return new Promise((resolve, reject) => {
-    if (readOnlyCachedClient && readOnlyCachedClient.connected) {
-      return resolve(readOnlyCachedClient)
-    }
+async function getWriteableClient(): Promise<MDSPostgresClient> {
+  if (writeableCachedClient && writeableCachedClient.connected) {
+    return writeableCachedClient
+  }
 
-    setupClient(false)
-      .then(result => {
-        readOnlyCachedClient = result
-        resolve(result)
-      })
-      .catch((err: Error) => {
-        log.error('postgres connection error')
-        reject(err)
-        readOnlyCachedClient = null
-      })
-  })
+  try {
+    writeableCachedClient = await setupClient(true)
+    return writeableCachedClient
+  } catch (err) {
+    writeableCachedClient = null
+    await log.error('postgres connection error', err)
+    throw err
+  }
 }
 
 async function initialize() {
@@ -252,62 +244,38 @@ async function readDeviceByVehicleId(
 }
 
 async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): Promise<DeviceID[]> {
-  return new Promise((resolve, reject) => {
-    // read from pg
-    getReadOnlyClient().then(client => {
-      let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
-      const vals = new SqlVals()
-      if (isUUID(provider_id)) {
-        sql += ` WHERE provider_id= ${vals.add(provider_id)}`
-      }
-      sql += ' ORDER BY recorded'
-      if (typeof skip === 'number' && skip >= 0) {
-        sql += ` OFFSET ${vals.add(skip)}`
-      }
-      if (typeof take === 'number' && take >= 0) {
-        sql += ` LIMIT ${vals.add(take)}`
-      }
-      const values = vals.values()
-      logSql(sql, values)
-      client
-        .query(sql, values)
-        .then(
-          res => {
-            resolve(res.rows)
-          },
-          err => {
-            log.error(err).then(() => {
-              reject(err)
-            })
-          }
-        )
-        .catch(err => {
-          log.error(err).then(() => {
-            reject(err)
-          })
-        })
-    })
-  })
+  // read from pg
+  const client = await getReadOnlyClient()
+  let sql = `SELECT device_id, provider_id FROM ${schema.DEVICES_TABLE}`
+  const vals = new SqlVals()
+  if (isUUID(provider_id)) {
+    sql += ` WHERE provider_id= ${vals.add(provider_id)}`
+  }
+  sql += ' ORDER BY recorded'
+  if (typeof skip === 'number' && skip >= 0) {
+    sql += ` OFFSET ${vals.add(skip)}`
+  }
+  if (typeof take === 'number' && take >= 0) {
+    sql += ` LIMIT ${vals.add(take)}`
+  }
+  const values = vals.values()
+  logSql(sql, values)
+  const res = await client.query(sql, values)
+  return res.rows
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
 async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  try {
-    const client = await getReadOnlyClient()
-    const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
-    const values = [device_id]
-    logSql(sql, values)
-    const res = await client.query(sql, values)
-
-    // verify we only got one row
-    if (res.rows.length === 1) {
-      return res.rows[0]
-    }
-    throw new Error(`device_id ${device_id} not found`)
-  } catch (err) {
-    await log.error('readDevice fail', err)
-    throw err
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+  const values = [device_id]
+  logSql(sql, values)
+  const res = await client.query(sql, values)
+  // verify we only got one row
+  if (res.rows.length !== 1) {
+    throw Error(`device_id ${device_id} not found`)
   }
+  return res.rows[0]
 }
 
 async function readDeviceList(device_ids: UUID[]) {
