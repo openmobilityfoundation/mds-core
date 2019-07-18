@@ -246,8 +246,12 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
-async function readDevice(device_id: UUID, provider_id?: UUID) {
-  const client = await getReadOnlyClient()
+async function readDevice(
+  device_id: UUID,
+  provider_id?: UUID,
+  optionalClient?: MDSPostgresClient
+): Promise<Recorded<Device>> {
+  const client = optionalClient || (await getReadOnlyClient())
   const sql = provider_id
     ? `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1 AND provider_id=$2`
     : `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
@@ -299,21 +303,16 @@ async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial
   }
 }
 
-async function writeEvent(event_param: VehicleEvent): Promise<Recorded<VehicleEvent>> {
-  const device = await readDevice(event_param.device_id, event_param.provider_id)
-  if (!device) {
-    throw new Error('device unregistered')
-  } else {
-    // write pg
-    const client = await getWriteableClient()
-    const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
-    const event = { ...event_param, telemetry_timestamp }
-    const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
-    const values = vals_list(schema.EVENTS_COLS, event)
-    logSql(sql, values)
-    await client.query(sql, values)
-    return event as Recorded<VehicleEvent>
-  }
+async function writeEvent(event_param: VehicleEvent) {
+  await readDevice(event_param.device_id, event_param.provider_id, await getWriteableClient())
+  const client = await getWriteableClient()
+  const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
+  const event = { ...event_param, telemetry_timestamp }
+  const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
+  const values = vals_list(schema.EVENTS_COLS, event)
+  logSql(sql, values)
+  await client.query(sql, values)
+  return event as Recorded<VehicleEvent>
 }
 
 async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<VehicleEvent> {
