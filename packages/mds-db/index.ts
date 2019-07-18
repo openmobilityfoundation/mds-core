@@ -1251,7 +1251,7 @@ async function seed(data: {
   return Promise.resolve('no data')
 }
 
-export = {
+export default {
   initialize,
   health,
   seed,
