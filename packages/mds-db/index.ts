@@ -246,10 +246,12 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
-async function readDevice(device_id: UUID, provider_id: UUID) {
+async function readDevice(device_id: UUID, provider_id?: UUID) {
   const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1 AND provider_id=$2`
-  const values = [device_id, provider_id]
+  const sql = provider_id
+    ? `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1 AND provider_id=$2`
+    : `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+  const values = provider_id ? [device_id, provider_id] : [device_id]
   logSql(sql, values)
   const res = await client.query(sql, values)
   // verify one row

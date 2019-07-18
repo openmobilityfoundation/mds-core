@@ -432,7 +432,7 @@ function api(app: express.Express): express.Express {
       }
     } else {
       try {
-        const device = await db.readDevice(device_id).catch(err => {
+        const device = await db.readDevice(device_id, provider_id).catch(err => {
           log.error(err)
           res.status(404).send({
             error: 'not_found'
@@ -473,9 +473,8 @@ function api(app: express.Express): express.Express {
       const response = await getVehicles(skip, take, url, provider_id, req.query)
       return res.status(200).send(response)
     } catch (err) {
-      log.error('readDeviceIds fail', err).then(() => {
-        res.status(500).send(new ServerError())
-      })
+      await log.error('readDeviceIds fail', err)
+      res.status(500).send(new ServerError())
     }
   })
 
@@ -512,11 +511,11 @@ function api(app: express.Express): express.Express {
     }
 
     try {
-      const tempDevice = await db.readDevice(device_id)
+      const tempDevice = await db.readDevice(device_id, provider_id)
       if (tempDevice.provider_id !== provider_id) {
         fail('not found')
       } else {
-        const device = await db.updateDevice(device_id, update)
+        const device = await db.updateDevice(device_id, provider_id, update)
         await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
         return res.status(201).send({
           result: 'success',
@@ -866,7 +865,7 @@ function api(app: express.Express): express.Express {
    * Endpoint to submit telemetry
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicles---update-telemetry Telemetry}
    */
-  app.post(pathsFor('/vehicles/telemetry'), (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  app.post(pathsFor('/vehicles/telemetry'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const start = Date.now()
 
     const { data } = req.body
@@ -882,13 +881,12 @@ function api(app: express.Express): express.Express {
     const valid: Telemetry[] = []
 
     const recorded = now()
-    let p: Promise<Device | DeviceID[]>
-    if (data.length === 1 && isUUID(data[0].device_id)) {
-      p = db.readDevice(data[0].device_id, provider_id)
-    } else {
-      p = db.readDeviceIds(provider_id)
-    }
-    p.then((deviceOrDeviceIds: Device | DeviceID[]) => {
+    const p: Promise<Device | DeviceID[]> =
+      data.length === 1 && isUUID(data[0].device_id)
+        ? db.readDevice(data[0].device_id, provider_id)
+        : db.readDeviceIds(provider_id)
+    try {
+      const deviceOrDeviceIds = await p
       const deviceIds = Array.isArray(deviceOrDeviceIds) ? deviceOrDeviceIds : [deviceOrDeviceIds]
       for (const item of data) {
         // make sure the device exists
@@ -971,14 +969,14 @@ function api(app: express.Express): express.Express {
           })
         })
       }
-    }).catch(() => {
+    } catch (err) {
       res.status(400).send({
         error: 'invalid_data',
         error_description: 'none of the provided data was valid',
         result: 'no valid telemetry submitted',
         failures: [`device_id ${data[0].device_id}: not found`]
       })
-    })
+    }
   })
 
   // ///////////////////// begin Agency candidate endpoints ///////////////////////
