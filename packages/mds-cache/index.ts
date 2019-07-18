@@ -428,9 +428,8 @@ async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; tele
 }
 
 async function reset() {
-  log
-    .info('cache reset')(await getClient())
-    .flushdbAsync()
+  log.info('cache reset')
+  await (await getClient()).flushdbAsync()
   return log.info('redis flushed')
 }
 

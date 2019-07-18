@@ -401,11 +401,11 @@ function api(app: express.Express): express.Express {
     if (cached) {
       try {
         const device = await cache.readDevice(device_id)
-        const event = await cache.readEvent(device_id).catch(err => {
+        const event = await cache.readEvent(device_id).catch(async err => {
           await log.warn(err)
           return undefined
         })
-        const telemetry = await cache.readTelemetry(device_id).catch(err => {
+        const telemetry = await cache.readTelemetry(device_id).catch(async err => {
           await log.warn(err)
           return undefined
         })
@@ -503,7 +503,7 @@ function api(app: express.Express): express.Express {
       if (tempDevice.provider_id !== provider_id) {
         await fail('not found')
       } else {
-        const device = await db.updateDevice(device_id, provider_id, update)
+        const device = await db.updateDevice(device_id, update)
         await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
         return res.status(201).send({
           result: 'success',
