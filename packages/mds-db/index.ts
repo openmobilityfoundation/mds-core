@@ -361,34 +361,25 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
 
   logSql(countSql, countVals)
 
-    client
-      .query(countSql, countVals)
-      .then(res => {
-        // log.warn(JSON.stringify(res))
-        const count = parseInt(res.rows[0].count)
-        let selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} ${filter} ORDER BY recorded ASC, timestamp ASC, device_id ASC`
-        if (typeof skip === 'number' && skip >= 0) {
-          selectSql += ` OFFSET ${vals.add(skip)}`
-        }
-        if (typeof take === 'number' && take >= 0) {
-          selectSql += ` LIMIT ${vals.add(take)}`
-        }
-        const selectVals = vals.values()
-        logSql(selectSql, selectVals)
+  const res = await client.query(countSql, countVals)
+  // log.warn(JSON.stringify(res))
+  const count = parseInt(res.rows[0].count)
+  let selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} ${filter} ORDER BY recorded ASC, timestamp ASC, device_id ASC`
+  if (typeof skip === 'number' && skip >= 0) {
+    selectSql += ` OFFSET ${vals.add(skip)}`
+  }
+  if (typeof take === 'number' && take >= 0) {
+    selectSql += ` LIMIT ${vals.add(take)}`
+  }
+  const selectVals = vals.values()
+  logSql(selectSql, selectVals)
 
-        client
-          .query(selectSql, selectVals)
-          .then(res2 => {
-            const events = res2.rows
-            resolve({
-              events,
-              count
-            } as ReadEventsResult)
-          }, fail)
-          .catch(fail)
-      }, fail)
-      .catch(fail)
-  })
+  const res2 = await client.query(selectSql, selectVals)
+  const events = res2.rows
+  return {
+    events,
+    count
+  }
 }
 
 async function readHistoricalEvents(params: ReadHistoricalEventsQueryParams) {
