@@ -246,8 +246,8 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
-async function readDevice(device_id: UUID, useWriteable?: boolean): Promise<Recorded<Device>> {
-  const client = useWriteable ? await getWriteableClient() : await getReadOnlyClient()
+async function readDevice(device_id: UUID, optionalClient?: MDSPostgresClient): Promise<Recorded<Device>> {
+  const client = optionalClient || (await getReadOnlyClient())
   const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
   const values = [device_id]
   logSql(sql, values)
@@ -297,7 +297,7 @@ async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<
 }
 
 async function writeEvent(event_param: VehicleEvent) {
-  await readDevice(event_param.device_id, true)
+  await readDevice(event_param.device_id, await getWriteableClient())
   const client = await getWriteableClient()
   const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
   const event = { ...event_param, telemetry_timestamp }
