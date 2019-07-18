@@ -95,8 +95,29 @@ describe('MDS Logger', () => {
         test.string(result2.gps.lng).contains('CENSORED')
         done()
       })
-      .catch(err => {
-        done(err)
+      .catch(done)
+  })
+
+  it('verifies conversion of [object Object] to stringified version', done => {
+    logger
+      .info({ key1: 'key1', key2: 'key2' })
+      .then(val => {
+        const [result] = val
+        test.string(result.key1).contains('key1')
+        done()
       })
+      .catch(done)
+  })
+
+  it('verifies conversion of an error', done => {
+    const err = new Error('puzzling evidence')
+    logger
+      .info('ohai2', err)
+      .then(val => {
+        const [, result2] = val
+        test.string(result2).contains('evidence')
+        done()
+      })
+      .catch(done)
   })
 })

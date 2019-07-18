@@ -20,20 +20,31 @@ import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import urls from 'url'
-import { pathsFor, seconds, getBoundingBox } from 'mds-utils'
-import { providerName } from 'mds-providers' // map of uuids -> obj
-import { AUDIT_EVENT_TYPES } from 'mds-enums'
-import { AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
 import {
-  getVehicles,
-  asPagingParams,
-  asJsonApiLinks,
+  pathsFor,
+  seconds,
+  getBoundingBox,
+  isValidAuditDeviceId,
+  isValidAuditEventId,
+  isValidAuditEventType,
+  isValidAuditTripId,
+  isValidProviderId,
+  isValidProviderVehicleId,
+  isValidTelemetry,
+  isValidTimestamp,
+  isValidVehicleEventType,
+  isValidAuditIssueCode,
+  isValidAuditNote,
+  ValidationError,
   AuthorizationError,
   ConflictError,
   NotFoundError,
-  ServerError,
-  ValidationError
-} from 'mds-api-helpers'
+  ServerError
+} from 'mds-utils'
+import { providerName } from 'mds-providers' // map of uuids -> obj
+import { AUDIT_EVENT_TYPES } from 'mds-enums'
+import { AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
+import { getVehicles, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -46,7 +57,6 @@ import {
   AuditApiVehicleEventRequest,
   AuditApiVehicleTelemetryRequest
 } from './types'
-
 import {
   deleteAudit,
   readAudit,
@@ -60,20 +70,6 @@ import {
   writeAudit,
   writeAuditEvent
 } from './service'
-
-import {
-  isValidAuditDeviceId,
-  isValidAuditEventId,
-  isValidAuditEventType,
-  isValidAuditTripId,
-  isValidProviderId,
-  isValidProviderVehicleId,
-  isValidTelemetry,
-  isValidTimestamp,
-  isValidVehicleEventType,
-  isValidAuditIssueCode,
-  isValidAuditNote
-} from './validators'
 
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {

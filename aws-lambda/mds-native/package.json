@@ -1,0 +1,31 @@
+{
+  "name": "@aws-lambda/mds-native",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AWS Lambda for MDS Native API",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --build .",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "lambda:dev3-mds-native": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
+    "lambda:ladot-prod-mds-native": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
+    "lambda:ladot-sandbox-mds-native": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
+    "start": "yarn watch server",
+    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && ts-node"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@aws-lambda/aws-serverless-express-handler": "0.1.3",
+    "mds-api-server": "0.1.3",
+    "mds-native": "0.0.1"
+  },
+  "license": "Apache-2.0"
+}

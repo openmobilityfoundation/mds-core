@@ -14,7 +14,10 @@
     limitations under the License.
  */
 
-import { AwsServerlessExpressHandler } from '@aws-lambda/aws-serverless-express-handler'
+import {
+  AwsServerlessExpressHandler,
+  AwsServerlessExpressHandlerFunction
+} from '@aws-lambda/aws-serverless-express-handler'
 import { api as daily } from 'mds-daily'
 
-export const handler = AwsServerlessExpressHandler(daily)
+export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(daily)

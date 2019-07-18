@@ -17,7 +17,7 @@
 import express from 'express'
 import urls from 'url'
 
-import { getVehicles, ServerError } from 'mds-api-helpers'
+import { getVehicles } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -59,9 +59,10 @@ import {
   pathsFor,
   head,
   tail,
-  isStateTransitionValid
+  isStateTransitionValid,
+  ServerError
 } from 'mds-utils'
-import { ServiceArea, AgencyApiRequest, AgencyApiResponse } from 'mds-agency/types'
+import { AgencyApiRequest, AgencyApiResponse } from 'mds-agency/types'
 
 log.startup()
 
@@ -163,28 +164,27 @@ function api(app: express.Express): express.Express {
    * Get all service areas
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#service_areas Service Areas}
    */
-  app.get(pathsFor('/service_areas'), (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    areas.readServiceAreas().then(
-      (serviceAreas: object[]) => {
-        log.info('readServiceAreas (all)', serviceAreas.length)
-        res.status(200).send({
-          service_areas: serviceAreas
-        })
-      },
-      (err: object) => /* istanbul ignore next */ {
-        log.error('failed to read service areas', err)
-        res.status(404).send({
-          result: 'not found'
-        })
-      }
-    )
+  app.get(pathsFor('/service_areas'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+    try {
+      const serviceAreas = await areas.readServiceAreas()
+      log.info('readServiceAreas (all)', serviceAreas.length)
+      return res.status(200).send({
+        service_areas: serviceAreas
+      })
+    } catch (err) {
+      /* istanbul ignore next */
+      log.error('failed to read service areas', err)
+      return res.status(404).send({
+        result: 'not found'
+      })
+    }
   })
 
   /**
    * Get a particular service area
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#service_areas Service Areas}
    */
-  app.get(pathsFor('/service_areas/:service_area_id'), (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  app.get(pathsFor('/service_areas/:service_area_id'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const { service_area_id } = req.params
 
     if (!isUUID(service_area_id)) {
@@ -193,26 +193,24 @@ function api(app: express.Express): express.Express {
       })
     }
 
-    areas.readServiceAreas(undefined, service_area_id).then(
-      (serviceAreas: ServiceArea[]) => {
-        if (serviceAreas && serviceAreas.length > 0) {
-          log.info('readServiceAreas (one)')
-          res.status(200).send({
-            service_areas: serviceAreas
-          })
-        } else {
-          res.status(404).send({
-            result: `${service_area_id} not found`
-          })
-        }
-      },
-      (err: Error | string) => /* istanbul ignore next */ {
-        log.error('failed to read service area', err instanceof Error ? err.stack : err)
-        res.status(404).send({
-          result: 'not found'
+    try {
+      const serviceAreas = await areas.readServiceAreas(undefined, service_area_id)
+
+      if (serviceAreas && serviceAreas.length > 0) {
+        log.info('readServiceAreas (one)')
+        return res.status(200).send({
+          service_areas: serviceAreas
         })
       }
-    )
+    } catch {
+      return res.status(404).send({
+        result: `${service_area_id} not found`
+      })
+    }
+
+    return res.status(404).send({
+      result: `${service_area_id} not found`
+    })
   })
 
   function badDevice(device: Device): Partial<{ error: string; error_description: string }> | boolean {
@@ -294,7 +292,7 @@ function api(app: express.Express): express.Express {
    * Endpoint to register vehicles
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicle---register Register}
    */
-  app.post(pathsFor('/vehicles'), (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  app.post(pathsFor('/vehicles'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const { body } = req
     const recorded = now()
     const device: Device = {
@@ -307,7 +305,7 @@ function api(app: express.Express): express.Express {
       mfgr: body.mfgr,
       model: body.model,
       recorded,
-      status: undefined
+      status: VEHICLE_STATUSES.removed
     }
 
     const failure = badDevice(device)
@@ -316,79 +314,68 @@ function api(app: express.Express): express.Express {
     }
 
     async function writeRegisterEvent() {
-      return new Promise((resolve, reject) => {
-        const event: VehicleEvent = {
-          device_id: device.device_id,
-          provider_id: device.provider_id,
-          event_type: VEHICLE_EVENTS.register,
-          event_type_reason: null,
-          telemetry: null,
-          timestamp: recorded,
-          trip_id: null,
-          recorded,
-          telemetry_timestamp: undefined,
-          service_area_id: null
+      const event: VehicleEvent = {
+        device_id: device.device_id,
+        provider_id: device.provider_id,
+        event_type: VEHICLE_EVENTS.register,
+        event_type_reason: null,
+        telemetry: null,
+        timestamp: recorded,
+        trip_id: null,
+        recorded,
+        telemetry_timestamp: undefined,
+        service_area_id: null
+      }
+      try {
+        await db.writeEvent(event)
+        try {
+          // writing to cache and stream is not fatal
+          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+        } catch (err) {
+          await log.warn('/event exception cache/stream', err)
         }
-        db.writeEvent(event)
-          .then(() => {
-            Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
-              .then(resolve)
-              .catch(err => /* istanbul ignore next */ {
-                log.warn('/event exception cache/stream', err)
-                reject()
-              })
-          }, reject)
-          .catch(reject)
-      })
-    }
-
-    function success(): void {
-      device.status = VEHICLE_STATUSES.removed
-      log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device)).then(() => {
-        writeRegisterEvent().then(
-          () => {
-            res.status(201).send({
-              result: 'register device success',
-              recorded,
-              device
-            })
-          },
-          err => /* istanbul ignore next */ {
-            log.error('register device failed to write register event', err).then(() => {
-              res.status(500).send({
-                result: 'register device internal error'
-              })
-            })
-          }
-        )
-      })
+      } catch (err) {
+        await log.error('writeRegisterEvent failure', err)
+        throw new Error('writeEvent exception db')
+      }
     }
 
     // writing to the DB is the crucial part.  other failures should be noted as bugs but tolerated
     // and fixed later.
-    db.writeDevice(device).then(
-      () => {
-        Promise.all([cache.writeDevice(device), stream.writeDevice(device)]).then(success, success)
-      },
-      (err: Error | string) => /* istanbul ignore next */ {
-        if (String(err).includes('duplicate')) {
-          res.status(409).send({
-            error: 'already_registered',
-            error_description: 'A vehicle with this device_id is already registered'
-          })
-        } else {
-          log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err).then(() => {
-            res.status(500).send(new ServerError())
-          })
-        }
+    try {
+      await db.writeDevice(device)
+      try {
+        await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+      } catch (err) {
+        await log.error('failed to write device stream/cache', err)
       }
-    )
+      await log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device))
+      try {
+        await writeRegisterEvent()
+      } catch (err) {
+        log.error('writeRegisterEvent failure', err)
+      }
+      res.status(201).send({ result: 'register device success', recorded, device })
+    } catch (err) {
+      if (String(err).includes('duplicate')) {
+        res.status(409).send({
+          error: 'already_registered',
+          error_description: 'A vehicle with this device_id is already registered'
+        })
+      } else if (String(err).includes('db')) {
+        await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+        res.status(500).send(new ServerError())
+      } else {
+        await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+        res.status(500).send(new ServerError())
+      }
+    }
   })
 
   /**
    * Read back a vehicle.
    */
-  app.get(pathsFor('/vehicles/:device_id'), validateDeviceId, (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  app.get(pathsFor('/vehicles/:device_id'), validateDeviceId, async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const { device_id } = req.params
 
     const { cached } = req.query
@@ -424,93 +411,43 @@ function api(app: express.Express): express.Express {
     }
 
     log.info(`/vehicles/${device_id}`, cached)
-
     if (cached) {
-      // log.info('ohai device cached')
-      cache.readDevice(device_id).then(
-        (device: Device) => {
-          cache.readEvent(device_id).then(
-            (event: VehicleEvent) => {
-              cache
-                .readTelemetry(device_id)
-                .then(
-                  (telemetry: Telemetry) => {
-                    finish(device, event, telemetry)
-                  },
-                  () => {
-                    finish(device, event, undefined)
-                  }
-                )
-                .catch((ex: Error) => {
-                  log.error('device cached fail', ex.stack)
-                })
-            },
-            (err: Error) => {
-              log.warn('no cached event for', device_id, err)
-              cache
-                .readTelemetry(device_id)
-                .then(
-                  (telemetry: Telemetry) => {
-                    finish(device, undefined, telemetry)
-                  },
-                  () => {
-                    finish(device, undefined, undefined)
-                  }
-                )
-                .catch((ex: Error) => {
-                  log.error('device cached fail', ex.stack)
-                })
-            }
-          )
-        },
-        (err: Error) => {
-          // failed
-          log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`).then(() => {
-            log.error(err)
-            res.status(404).send({
-              error: 'not_found'
-            })
-          })
-        }
-      )
+      try {
+        const device = await cache.readDevice(device_id)
+        const event = await cache.readEvent(device_id).catch(err => {
+          log.warn(err)
+          return undefined
+        })
+        const telemetry = await cache.readTelemetry(device_id).catch(err => {
+          log.warn(err)
+          return undefined
+        })
+        if (device) return finish(device, event, telemetry)
+      } catch (err) {
+        log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`)
+        log.error(err)
+        res.status(404).send({
+          error: 'not_found'
+        })
+      }
     } else {
-      db.readDevice(device_id, provider_id)
-        .then(
-          (device: Device) => {
-            db.readEvent(device_id)
-              .then(
-                (event: VehicleEvent) => {
-                  db.readTelemetry(device_id).then((telemetry: Recorded<Telemetry>[]) => {
-                    finish(device, event, telemetry[0])
-                  })
-                },
-                (err: Error) => {
-                  log.warn('no latest event for', device_id, err)
-                  db.readTelemetry(device_id).then((telemetry: Recorded<Telemetry>[]) => {
-                    finish(device, undefined, telemetry[0])
-                  })
-                }
-              )
-              .catch((ex: Error) => /* istanbul ignore next */ {
-                log.error('fail db looking for event', ex.stack)
-                res.status(500).send(new ServerError())
-              })
-          },
-          (err: Error) => {
-            // failed
-            log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`).then(() => {
-              log.error(err)
-              res.status(404).send({
-                error: 'not_found'
-              })
-            })
-          }
-        )
-        .catch((ex: Error) => /* istanbul ignore next */ {
-          log.error('fail db looking for device', ex.stack).then(() => {
-            res.status(500).send(new ServerError())
+      try {
+        const device = await db.readDevice(device_id).catch(err => {
+          log.error(err)
+          res.status(404).send({
+            error: 'not_found'
           })
         })
+        const event = await db.readEvent(device_id).catch(err => {
+          log.warn(err)
+          return undefined
+        })
+        const telemetry = await db.readTelemetry(device_id)
+        if (device) return finish(device, event, telemetry[0])
+      } catch (err) {
+        log.error(err)
+        res.status(500).send(new ServerError())
+      }
     }
   })
 
@@ -532,19 +469,18 @@ function api(app: express.Express): express.Express {
 
     const { provider_id } = res.locals
 
-    function fail(err: Error | string): void {
-      log.error('readDeviceIds fail', JSON.stringify(err)).then(() => {
+    try {
+      const response = await getVehicles(skip, take, url, provider_id, req.query)
+      return res.status(200).send(response)
+    } catch (err) {
+      log.error('readDeviceIds fail', err).then(() => {
         res.status(500).send(new ServerError())
       })
     }
-
-    const response = await getVehicles(skip, take, url, provider_id, req.query).catch(fail)
-
-    res.status(200).send(response)
   })
 
   // update the vehicle_id
-  app.put(pathsFor('/vehicles/:device_id'), validateDeviceId, (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  app.put(pathsFor('/vehicles/:device_id'), validateDeviceId, async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const { device_id } = req.params
 
     const { vehicle_id } = req.body
@@ -555,7 +491,7 @@ function api(app: express.Express): express.Express {
 
     const { provider_id } = res.locals
 
-    function fail(err: Error | string): void {
+    async function fail(err: Error | string) {
       /* istanbul ignore else cannot easily test server failure */
       if (String(err).includes('not found')) {
         res.status(404).send({
@@ -570,41 +506,28 @@ function api(app: express.Express): express.Express {
           error: 'not_found'
         })
       } else {
-        log
-          .error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, JSON.stringify(req.body), err)
-          .then(() => {
-            res.status(500).send(new ServerError())
-          })
+        await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, JSON.stringify(req.body), err)
+        res.status(500).send(new ServerError())
       }
     }
 
-    // verify that it's my device
-    db.readDevice(device_id, provider_id)
-      .then(() => {
-        db.updateDevice(device_id, provider_id, update)
-          .then((device: Device) => {
-            // update in cache
-            // post event to stream
-            Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
-              .then(() => {
-                res.status(201).send({
-                  result: 'success',
-                  vehicle: device
-                })
-              }, fail)
-              .catch(fail)
-          }, fail)
-          .catch(fail)
-      }, fail)
-      .catch(() => fail('not found'))
+    try {
+      const tempDevice = await db.readDevice(device_id)
+      if (tempDevice.provider_id !== provider_id) {
+        fail('not found')
+      } else {
+        const device = await db.updateDevice(device_id, update)
+        await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+        return res.status(201).send({
+          result: 'success',
+          vehicle: device
+        })
+      }
+    } catch (err) {
+      fail(err)
+    }
   })
 
-  /**
-   * check telemetry element for validity
-   * @param  {telemetry}
-   * @return {false if the telemetry is legit}
-   */
-  // TODO: Joi
   function badTelemetry(telemetry: Telemetry | null | undefined): ErrorObject | null {
     if (!telemetry) {
       return {
@@ -758,11 +681,12 @@ function api(app: express.Express): express.Express {
       case VEHICLE_EVENTS.provider_drop_off:
         return badTelemetry(event.telemetry)
       case VEHICLE_EVENTS.register:
+      case VEHICLE_EVENTS.deregister:
       case VEHICLE_EVENTS.reserve:
       case VEHICLE_EVENTS.cancel_reservation:
         return null
       default:
-        log.info(`-------- mystery event_type ${event.event_type}`)
+        log.warn(`unsure how to validate mystery event_type ${event.event_type}`)
         break
     }
     return null // we good
@@ -823,7 +747,7 @@ function api(app: express.Express): express.Express {
   app.post(
     pathsFor('/vehicles/:device_id/event'),
     validateDeviceId,
-    (req: AgencyApiRequest, res: AgencyApiResponse) => {
+    async (req: AgencyApiRequest, res: AgencyApiResponse) => {
       const { device_id } = req.params
 
       const { provider_id } = res.locals
@@ -848,7 +772,7 @@ function api(app: express.Express): express.Express {
         event.telemetry_timestamp = event.telemetry.timestamp
       }
 
-      function success(): void {
+      async function success() {
         function fin() {
           res.status(201).send({
             result: 'success',
@@ -860,33 +784,31 @@ function api(app: express.Express): express.Express {
         const delta = now() - recorded
 
         if (delta > 100) {
-          log.info(name, 'post event took', delta, 'ms').then(fin)
+          await log.info(name, 'post event took', delta, 'ms')
+          fin()
         } else {
           fin()
         }
       }
 
       /* istanbul ignore next */
-      function fail(err: Error | Partial<{ message: string }>): void {
+      async function fail(err: Error | Partial<{ message: string }>): Promise<void> {
         const message = err.message || String(err)
         if (message.includes('duplicate')) {
-          log.info(name, 'duplicate event', event.event_type).then(() => {
-            res.status(409).send({
-              error: 'duplicate_event',
-              error_description: 'an event with this device_id and timestamp has already been received'
-            })
+          await log.info(name, 'duplicate event', event.event_type)
+          res.status(409).send({
+            error: 'duplicate_event',
+            error_description: 'an event with this device_id and timestamp has already been received'
           })
         } else if (message.includes('not found') || message.includes('unregistered')) {
-          log.info(name, 'event for unregistered', event.device_id, event.event_type).then(() => {
-            res.status(400).send({
-              error: 'unregistered',
-              error_description: 'the specified device_id has not been registered'
-            })
+          await log.info(name, 'event for unregistered', event.device_id, event.event_type)
+          res.status(400).send({
+            error: 'unregistered',
+            error_description: 'the specified device_id has not been registered'
           })
         } else {
-          log.error('post event fail:', JSON.stringify(event), message).then(() => {
-            res.status(500).send(new ServerError())
-          })
+          await log.error('post event fail:', JSON.stringify(event), message)
+          res.status(500).send(new ServerError())
         }
       }
 

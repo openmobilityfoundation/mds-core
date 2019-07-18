@@ -14,7 +14,10 @@
     limitations under the License.
  */
 
-import { AwsServerlessExpressHandler } from '@aws-lambda/aws-serverless-express-handler'
+import {
+  AwsServerlessExpressHandler,
+  AwsServerlessExpressHandlerFunction
+} from '@aws-lambda/aws-serverless-express-handler'
 import { api as compliance } from 'mds-compliance'
 
-export const handler = AwsServerlessExpressHandler(compliance)
+export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(compliance)
