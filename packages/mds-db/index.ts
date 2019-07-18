@@ -29,7 +29,6 @@ import { QueryResult } from 'pg'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
-  ReadTripIdsResult,
   ReadTripsResult,
   ReadStatusChangesResult,
   StatusChange,
@@ -332,7 +331,7 @@ async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<Vehicl
 }
 
 async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResult> {
-  const { skip, take, start_time, end_time, start_recorded, end_recorded, event_types, device_id, trip_id } = params
+  const { skip, take, start_time, end_time, start_recorded, end_recorded, device_id, trip_id } = params
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const conditions = []
@@ -355,10 +354,6 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   if (trip_id) {
     conditions.push(`trip_id = ${vals.add(trip_id)}`)
   }
-  // FIXME is this correct?
-  if (event_types) {
-    conditions.push('event_type in')
-  }
 
   const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const countSql = `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} ${filter}`
@@ -367,8 +362,9 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   logSql(countSql, countVals)
 
   const res = await client.query(countSql, countVals)
+  // log.warn(JSON.stringify(res))
   const count = parseInt(res.rows[0].count)
-  let selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} ${filter} ORDER BY recorded`
+  let selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} ${filter} ORDER BY recorded ASC, timestamp ASC, device_id ASC`
   if (typeof skip === 'number' && skip >= 0) {
     selectSql += ` OFFSET ${vals.add(skip)}`
   }
@@ -379,8 +375,11 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   logSql(selectSql, selectVals)
 
   const res2 = await client.query(selectSql, selectVals)
-
-  return { events: res2.rows, count }
+  const events = res2.rows
+  return {
+    events,
+    count
+  }
 }
 
 async function readHistoricalEvents(params: ReadHistoricalEventsQueryParams) {
@@ -476,56 +475,6 @@ WHERE         timestamp < '${end_date}'`
     ]
   }, [])
   return events
-}
-
-async function readTripIds(params: ReadEventsQueryParams): Promise<ReadTripIdsResult> {
-  const { skip, take, device_id, min_end_time, max_end_time } = params
-
-  if (typeof skip !== 'number' || skip < 0) {
-    throw new Error('requires integer skip')
-  }
-  if (typeof take !== 'number' || skip < 0) {
-    throw new Error('requires integer take')
-  }
-
-  const vals = new SqlVals()
-  const conditions = [`event_type = 'trip_end'`]
-  if (max_end_time) {
-    conditions.push(`"timestamp" <= ${vals.add(Number(max_end_time))}`)
-  }
-  if (min_end_time) {
-    conditions.push(`"timestamp" >= ${vals.add(Number(min_end_time))}`)
-  }
-  if (device_id) {
-    conditions.push(`device_id = ${vals.add(device_id)}`)
-  }
-
-  const condSql = conditions.join(' AND ')
-
-  const countSql = `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} WHERE ${condSql}`
-  const countVals = vals.values()
-  logSql(countSql, countVals)
-
-  try {
-    const client = await getReadOnlyClient()
-    const res = await client.query(countSql, countVals)
-    const count = parseInt(res.rows[0].count)
-
-    const selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} WHERE ${condSql} ORDER BY "timestamp" OFFSET ${vals.add(
-      skip
-    )} LIMIT ${vals.add(take)}`
-    const selectVals = vals.values()
-    logSql(selectSql, selectVals)
-
-    const res2 = await client.query(selectSql, selectVals)
-    return {
-      tripIds: res2.rows.map(row => row.trip_id),
-      count
-    }
-  } catch (err) {
-    log.error('readTripIds error', err.message || err)
-    throw err
-  }
 }
 
 async function readTripList(trip_ids: UUID[]) {
@@ -1215,13 +1164,102 @@ async function readUnprocessedStatusChangeEvents(
     events: rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
       ...event,
       telemetry_timestamp,
-      telemetry:
-        lat && lng
-          ? {
-              timestamp: telemetry_timestamp,
-              gps: { lat, lng }
-            }
-          : null
+      telemetry: telemetry_timestamp
+        ? {
+            timestamp: telemetry_timestamp,
+            gps: { lat, lng }
+          }
+        : null
+    }))
+  }
+}
+
+async function readEventsWithTelemetry({
+  skip,
+  take,
+  device_id,
+  provider_id,
+  start_time,
+  end_time
+}: Partial<{
+  skip: number
+  take: number
+  device_id: UUID
+  provider_id: UUID
+  start_time: Timestamp
+  end_time: Timestamp
+}> = {}): Promise<{
+  count: number
+  events: Recorded<VehicleEvent>[]
+}> {
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const exec = SqlExecuter(client)
+
+  const conditions: string[] = []
+
+  if (provider_id) {
+    if (!isUUID(provider_id)) {
+      throw new Error(`invalid provider_id ${provider_id}`)
+    } else {
+      conditions.push(`provider_id = ${vals.add(provider_id)}`)
+    }
+  }
+
+  if (device_id) {
+    if (!isUUID(device_id)) {
+      throw new Error(`invalid device_id ${device_id}`)
+    } else {
+      conditions.push(`device_id = ${vals.add(device_id)}`)
+    }
+  }
+
+  if (start_time !== undefined) {
+    if (!isTimestamp(start_time)) {
+      throw new Error(`invalid start_time ${start_time}`)
+    } else {
+      conditions.push(`timestamp >= ${vals.add(start_time)}`)
+    }
+  }
+
+  if (end_time !== undefined) {
+    if (!isTimestamp(end_time)) {
+      throw new Error(`invalid end_time ${end_time}`)
+    } else {
+      conditions.push(`timestamp <= ${vals.add(end_time)}`)
+    }
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const {
+    rows: [{ count }]
+  } = await exec(`SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} ${where}`, vals.values())
+
+  if (count === 0) {
+    return { count, events: [] }
+  }
+
+  const { rows } = await exec(
+    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge FROM (SELECT * FROM ${
+      schema.EVENTS_TABLE
+    } ${where} ORDER BY recorded${skip !== undefined && skip > 0 ? ` OFFSET ${vals.add(skip)}` : ''}${
+      take !== undefined && take > 0 ? ` LIMIT ${vals.add(take)}` : ''
+    }) AS E LEFT JOIN ${schema.TELEMETRY_TABLE} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
+    vals.values()
+  )
+
+  return {
+    count,
+    events: rows.map(({ lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
+      ...event,
+      telemetry: telemetry_timestamp
+        ? {
+            timestamp: telemetry_timestamp,
+            gps: { lat, lng, speed, heading, accuracy, altitude },
+            charge
+          }
+        : null
     }))
   }
 }
@@ -1266,7 +1304,6 @@ export default {
   readEvent,
   readEvents,
   readHistoricalEvents,
-  readTripIds,
   writeEvent,
   readTelemetry,
   writeTelemetry,
@@ -1300,5 +1337,6 @@ export default {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
-  readUnprocessedStatusChangeEvents
+  readUnprocessedStatusChangeEvents,
+  readEventsWithTelemetry
 }

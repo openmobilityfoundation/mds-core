@@ -96,7 +96,7 @@ export interface AuditApiGetTripRequest extends AuditApiTripRequest {
 }
 
 // Allow adding type definitions for Express Response objects
-export interface AuditApiResponse<T = {}> extends ApiResponse {
+export interface AuditApiResponse<T = {}> extends ApiResponse<T> {
   locals: {
     claims: ApiAuthorizerClaims
     audit_subject_id: string
@@ -104,7 +104,4 @@ export interface AuditApiResponse<T = {}> extends ApiResponse {
     audit: Audit | null
     recorded: Timestamp
   }
-
-  status: (code: number) => AuditApiResponse<T | { error: Error }>
-  send: (body: T) => AuditApiResponse<T | { error: Error }>
 }

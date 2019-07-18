@@ -8,6 +8,7 @@
     { "path": "mds-compliance" },
     { "path": "mds-enums" },
     { "path": "mds-logger" },
+    { "path": "mds-native" },
     { "path": "mds-policy" },
     { "path": "mds-provider" },
     { "path": "mds-providers" },
