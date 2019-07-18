@@ -113,7 +113,7 @@ function api(app: express.Express): express.Express {
           // stash provider_id
           res.locals.provider_id = provider_id
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          // log.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
@@ -727,16 +727,20 @@ function api(app: express.Express): express.Express {
     return null
   }
 
-  async function writeTelemetry(telemetry: Telemetry | Telemetry[]): Promise<void[]> {
+  async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
     if (!Array.isArray(telemetry)) {
-      const promises = [
+      const promises: (Promise<any>)[] = [
         db.writeTelemetry([telemetry]),
         cache.writeTelemetry([telemetry]),
         stream.writeTelemetry([telemetry])
       ]
       return Promise.all(promises)
     }
-    const promises = [db.writeTelemetry(telemetry), cache.writeTelemetry(telemetry), stream.writeTelemetry(telemetry)]
+    const promises: Promise<any>[] = [
+      db.writeTelemetry(telemetry),
+      cache.writeTelemetry(telemetry),
+      stream.writeTelemetry(telemetry)
+    ]
     return Promise.all(promises)
   }
 
@@ -880,6 +884,7 @@ function api(app: express.Express): express.Express {
       })
       return
     }
+    const name = providerName(provider_id)
     const failures: string[] = []
     const valid: Telemetry[] = []
 
@@ -922,27 +927,41 @@ function api(app: express.Express): express.Express {
       if (valid.length) {
         writeTelemetry(valid)
           .then(
-            () => {
+            counts => {
               const delta = Date.now() - start
               if (delta > 300) {
                 log.info(
+                  name,
                   'writeTelemetry',
                   valid.length,
+                  `(${counts[0]} unique)`,
                   'took',
                   delta,
                   `ms (${Math.round((1000 * valid.length) / delta)}/s)`
                 )
               }
-              res.status(201).send({
-                result: `telemetry success for ${valid.length} of ${data.length}`,
-                recorded: now(),
-                failures
-              })
+              if (counts[0]) {
+                res.status(201).send({
+                  result: `telemetry success for ${valid.length} of ${data.length}`,
+                  recorded: now(),
+                  unique: counts[0],
+                  failures
+                })
+              } else {
+                log.info(name, 'no unique telemetry in', data.length, 'items').then(() => {
+                  res.status(400).send({
+                    error: 'invalid_data',
+                    error_description: 'none of the provided data was unique',
+                    result: 'no new valid telemetry submitted',
+                    unique: 0
+                  })
+                })
+              }
               // success
             },
             err => {
               /* istanbul ignore next */
-              log.error(providerName(provider_id), 'writeTelemetry failure', JSON.stringify(err)).then(() => {
+              log.error(name, 'writeTelemetry failure', JSON.stringify(err)).then(() => {
                 res.status(400).send({
                   error: 'bad_param',
                   error_description: 'one or more items already exist in the db'
@@ -951,14 +970,14 @@ function api(app: express.Express): express.Express {
             }
           )
           .catch(err => {
-            log.error(providerName(provider_id), 'writeTelemetry exception', err.stack).then(() => {
+            log.error(name, 'writeTelemetry exception', err.stack).then(() => {
               res.status(500).send(new ServerError())
             })
           })
       } else {
         const body = `${JSON.stringify(req.body).substring(0, 128)} ...`
         const fails = `${JSON.stringify(failures).substring(0, 128)} ...`
-        log.info('no valid telemetry in', data.length, 'items:', body, 'failures:', fails).then(() => {
+        log.info(name, 'no valid telemetry in', data.length, 'items:', body, 'failures:', fails).then(() => {
           res.status(400).send({
             error: 'invalid_data',
             error_description: 'none of the provided data was valid',

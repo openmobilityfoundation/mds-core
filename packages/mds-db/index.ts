@@ -501,9 +501,9 @@ async function updateTrip(provider_trip_id: UUID, trip: Partial<Trip>) {
   return result.rowCount
 }
 
-async function writeTelemetry(data: Telemetry[]): Promise<void> {
+async function writeTelemetry(data: Telemetry[]): Promise<number> {
   if (data.length === 0) {
-    return
+    return 0
   }
   try {
     const client = await getWriteableClient()
@@ -528,15 +528,18 @@ async function writeTelemetry(data: Telemetry[]): Promise<void> {
 
     const sql = `INSERT INTO ${cols_sql(schema.TELEMETRY_TABLE, schema.TELEMETRY_COLS)} VALUES ${csv(
       rows
-    )} ON CONFLICT DO NOTHING`
+    )} ON CONFLICT DO NOTHING RETURNING 1`
     logSql(sql)
     const start = now()
-    await client.query(sql)
+    const result = await client.query(sql)
 
     const delta = now() - start
-    if (delta > 200) {
-      log.info('pg db writeTelemetry', data.length, 'rows, success in', delta, 'ms')
+    if (delta >= 300) {
+      await log.info(
+        `pg db writeTelemetry ${data.length} rows, success in ${delta} ms with ${result.rows.length} unique`
+      )
     }
+    return result.rows.length
   } catch (err) {
     log.error('pg write telemetry error', err)
     throw err
