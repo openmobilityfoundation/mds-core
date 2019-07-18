@@ -17,7 +17,7 @@
 import express from 'express'
 import urls from 'url'
 
-import { getVehicles, ServerError } from 'mds-api-helpers'
+import { getVehicles } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -48,9 +48,9 @@ import {
   pathsFor,
   head,
   tail,
-  isStateTransitionValid
+  isStateTransitionValid,
+  ServerError
 } from 'mds-utils'
-
 import { AgencyApiRequest, AgencyApiResponse } from 'mds-agency/types'
 
 function api(app: express.Express): express.Express {
@@ -397,15 +397,15 @@ function api(app: express.Express): express.Express {
       res.send(composite)
     }
 
-    await log.info(`/vehicles/${device_id}`, cached)
+    log.info(`/vehicles/${device_id}`, cached)
     if (cached) {
       try {
         const device = await cache.readDevice(device_id)
-        const event = await cache.readEvent(device_id).catch(async err => {
+        const event = await cache.readEvent(device_id).catch(err => {
           await log.warn(err)
           return undefined
         })
-        const telemetry = await cache.readTelemetry(device_id).catch(async err => {
+        const telemetry = await cache.readTelemetry(device_id).catch(err => {
           await log.warn(err)
           return undefined
         })
@@ -456,14 +456,14 @@ function api(app: express.Express): express.Express {
 
     const { provider_id } = res.locals
 
-    async function fail(err: Error | string) {
-      await log.error('readDeviceIds fail', err)
-      return res.status(500).send(new ServerError())
+    try {
+      const response = await getVehicles(skip, take, url, provider_id, req.query)
+      return res.status(200).send(response)
+    } catch (err) {
+      log.error('readDeviceIds fail', err).then(() => {
+        res.status(500).send(new ServerError())
+      })
     }
-
-    const response = await getVehicles(skip, take, url, provider_id, req.query).catch(fail)
-
-    res.status(200).send(response)
   })
 
   // update the vehicle_id
@@ -503,7 +503,7 @@ function api(app: express.Express): express.Express {
       if (tempDevice.provider_id !== provider_id) {
         await fail('not found')
       } else {
-        const device = await db.updateDevice(device_id, update)
+        const device = await db.updateDevice(device_id, provider_id, update)
         await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
         return res.status(201).send({
           result: 'success',
@@ -511,7 +511,7 @@ function api(app: express.Express): express.Express {
         })
       }
     } catch (err) {
-      await fail(err)
+      fail(err)
     }
   })
 

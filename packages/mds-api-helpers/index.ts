@@ -112,10 +112,13 @@ interface PagingParams {
   take: number
 }
 
-export const asPagingParams: (params: Partial<{ [P in keyof PagingParams]: unknown }>) => PagingParams = params => {
+export const asPagingParams: <T extends Partial<{ [P in keyof PagingParams]: unknown }>>(
+  params: T
+) => T & PagingParams = params => {
   const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
   const [skip, take] = [params.skip, params.take].map(Number)
   return {
+    ...params,
     skip: Number.isNaN(skip) || skip <= 0 ? 0 : skip,
     take: Number.isNaN(take) || take <= 0 ? DEFAULT_PAGE_SIZE : Math.min(take, MAX_PAGE_SIZE)
   }
@@ -129,7 +132,7 @@ const jsonApiLink = (req: express.Request, skip: number, take: number): string =
     query: { ...req.query, skip, take }
   })
 
-type JsonApiLinks = Partial<{ first: string; prev: string; next: string; last: string }> | undefined
+export type JsonApiLinks = Partial<{ first: string; prev: string; next: string; last: string }> | undefined
 
 export const asJsonApiLinks = (req: express.Request, skip: number, take: number, count: number): JsonApiLinks => {
   if (skip > 0 || take < count) {
@@ -140,59 +143,4 @@ export const asJsonApiLinks = (req: express.Request, skip: number, take: number,
     return { first, prev, next, last }
   }
   return undefined
-}
-
-export class ServerError extends Error {
-  public constructor(message: string = 'server_error', public info = {}) {
-    super(message)
-    this.name = 'ServerError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ServerError)
-    }
-  }
-}
-
-export class ValidationError extends Error {
-  public constructor(message: string = 'validation_error', public info = {}) {
-    super(message)
-    this.name = 'ValidationError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ValidationError)
-    }
-  }
-}
-
-export class NotFoundError extends Error {
-  public constructor(message: string = 'not_found_error', public info = {}) {
-    super(message)
-    this.name = 'NotFoundError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, NotFoundError)
-    }
-  }
-}
-
-export class ConflictError extends Error {
-  public constructor(message: string = 'conflict_error', public info = {}) {
-    super(message)
-    this.name = 'ConflictError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ConflictError)
-    }
-  }
-}
-
-export class AuthorizationError extends Error {
-  public constructor(message: string = 'authorization_error', public info = {}) {
-    super(message)
-    this.name = 'AuthorizationError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, AuthorizationError)
-    }
-  }
 }

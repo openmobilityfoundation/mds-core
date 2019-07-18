@@ -494,7 +494,7 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
   }
 }
 
-export = {
+export default {
   initialize,
   health,
   info,

@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import utils from '../index'
+import { routeDistance } from '../utils'
 
 const Boston = { lat: 42.360081, lng: -71.058884 }
 const LosAngeles = { lat: 34.052235, lng: -118.243683 }
@@ -23,17 +23,17 @@ const BostonToLA = 4169605.469765776
 
 describe('Tests Utilities', () => {
   it('routeDistance: Verifies single point', done => {
-    test.value(utils.routeDistance([Boston])).is(0)
+    test.value(routeDistance([Boston])).is(0)
     done()
   })
 
   it('routeDistance: Verifies 2 points', done => {
-    test.value(utils.routeDistance([Boston, LosAngeles])).is(BostonToLA)
+    test.value(routeDistance([Boston, LosAngeles])).is(BostonToLA)
     done()
   })
 
   it('routeDistance: Verifies 2+ points', done => {
-    test.value(utils.routeDistance([Boston, LosAngeles, Boston])).is(BostonToLA * 2)
+    test.value(routeDistance([Boston, LosAngeles, Boston])).is(BostonToLA * 2)
     done()
   })
 })

@@ -14,10 +14,4 @@
     limitations under the License.
  */
 
-import {
-  AwsServerlessExpressHandler,
-  AwsServerlessExpressHandlerFunction
-} from '@aws-lambda/aws-serverless-express-handler'
-import { api as audit } from 'mds-audit'
-
-export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(audit)
+export { api } from './api'

@@ -24,7 +24,7 @@ import test from 'unit.js'
 import uuid from 'uuid'
 import { server } from 'mds-api-server'
 import db from 'mds-db'
-import { api } from '../src/api'
+import { api } from '../api'
 
 process.env.PATH_PREFIX = '/audit'
 

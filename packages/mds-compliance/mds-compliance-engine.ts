@@ -29,9 +29,8 @@ import {
   MatchedVehicle
 } from 'mds'
 import { EVENT_STATUS_MAP, RULE_UNIT_MAP, DAY_OF_WEEK, VEHICLE_STATUS, TIME_FORMAT, DAYS_OF_WEEK } from 'mds-enums'
-import { pointInShape, getPolygon, isInStatesOrEvents, now } from 'mds-utils'
+import { pointInShape, getPolygon, isInStatesOrEvents, now, RuntimeError } from 'mds-utils'
 import moment from 'moment-timezone'
-import { RuntimeError } from './exceptions'
 
 const { env } = process
 

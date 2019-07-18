@@ -18,11 +18,11 @@ import test from 'unit.js'
 import uuid from 'uuid'
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from 'mds-enums'
 import { providers } from 'mds-providers' // map of uuids -> obj
-import { ValidationError } from 'mds-api-helpers'
 import {
   isValidAuditTripId,
   isValidVehicleEventType,
   isValidTelemetry,
+  isValidDeviceId,
   isValidAuditDeviceId,
   isValidAuditEventId,
   isValidProviderVehicleId,
@@ -31,7 +31,8 @@ import {
   isValidAuditEventType,
   isValidAuditIssueCode,
   isValidAuditNote
-} from '../src/validators'
+} from '../validators'
+import { ValidationError } from '../exceptions'
 
 describe('Tests validators', () => {
   it('verifies Audit Trip ID validator', done => {
@@ -69,6 +70,14 @@ describe('Tests validators', () => {
     test.value(isValidProviderId('invalid', { assert: false })).is(false)
     test.value(isValidProviderId(Object.keys(providers)[0])).is(true)
 
+    done()
+  })
+
+  it('verifies Device ID validator', done => {
+    test.assert.throws(() => isValidDeviceId(undefined), ValidationError)
+    test.assert.throws(() => isValidDeviceId(null), ValidationError)
+    test.value(isValidDeviceId('invalid', { assert: false })).is(false)
+    test.value(isValidDeviceId(uuid())).is(true)
     done()
   })
 

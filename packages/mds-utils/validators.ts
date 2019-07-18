@@ -18,7 +18,7 @@ import { providers } from 'mds-providers' // map of uuids -> obb
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS, AUDIT_EVENT_TYPE, VEHICLE_EVENT } from 'mds-enums'
 import { UUID, Timestamp, Telemetry } from 'mds'
 import * as Joi from '@hapi/joi'
-import { ValidationError } from 'mds-api-helpers'
+import { ValidationError } from './exceptions'
 
 interface ValidatorOptions {
   assert: boolean
@@ -101,6 +101,9 @@ export const isValidAuditTripId = (
 interface AuditEventValidatorOptions extends ValidatorOptions {
   accept: AUDIT_EVENT_TYPE[]
 }
+
+export const isValidDeviceId = (device_id: unknown, options: Partial<ValidatorOptions> = {}): device_id is UUID =>
+  Validate('device_id', device_id, uuidSchema, options)
 
 export const isValidAuditEventType = (
   audit_event_type: unknown,

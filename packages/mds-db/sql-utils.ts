@@ -129,7 +129,7 @@ export function to_sql(obj: boolean | number | string | object[] | null | object
 }
 
 // logging specific to sql debugging.  can be turned on/off using PG_DEBUG env var.
-export function logSql(sql: string, ...values: unknown[]): void {
+export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
   if (!pgDebug) {
     return
   }
@@ -144,7 +144,7 @@ export function logSql(sql: string, ...values: unknown[]): void {
     out = values
   }
 
-  log.info('sql>', sql, out)
+  return log.info('sql>', sql, out)
 }
 
 export class SqlVals {

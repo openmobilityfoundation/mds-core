@@ -43,10 +43,12 @@ export const ApiGatewayAuthorizer: ApiAuthorizer = (req: ApiGatewayRequest) =>
     req.apiGateway.event.requestContext.authorizer) ||
   null
 
+export type AwsServerlessExpressHandlerFunction = Handler<{}, awsServerlessExpress.Response>
+
 /* istanbul ignore next */
 export const AwsServerlessExpressHandler = (
   api: (app: express.Express) => express.Express
-): Handler<{}, awsServerlessExpress.Response> => {
+): AwsServerlessExpressHandlerFunction => {
   Object.assign(process.env, { npm_package_name: NPM_PACKAGE_NAME, npm_package_version: NPM_PACKAGE_VERSION })
   return async (event, context) => {
     if (process.env.PG_PASS_ENCRYPTED) {
