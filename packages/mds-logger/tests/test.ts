@@ -86,6 +86,7 @@ describe('MDS Logger', () => {
         test.string(result1.gps.lng).contains('CENSORED')
         test.string(result2.gps.lat).contains('CENSORED')
         test.string(result2.gps.lng).contains('CENSORED')
+        console.log('delete me!')
         done()
       })
       .catch(done)
