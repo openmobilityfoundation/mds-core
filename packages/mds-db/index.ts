@@ -371,7 +371,7 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   const res = await client.query(countSql, countVals)
   // log.warn(JSON.stringify(res))
   const count = parseInt(res.rows[0].count)
-  let selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} ${filter} ORDER BY recorded ASC, timestamp ASC, device_id ASC`
+  let selectSql = `SELECT * FROM ${schema.EVENTS_TABLE} ${filter} ORDER BY recorded`
   if (typeof skip === 'number' && skip >= 0) {
     selectSql += ` OFFSET ${vals.add(skip)}`
   }
@@ -906,9 +906,9 @@ async function readTrips(
   }
 
   const { rows: trips } = await exec(
-    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded ASC, provider_trip_id ASC${
-      skip ? ` OFFSET ${vals.add(skip)}` : ''
-    }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
+    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
+      take ? ` LIMIT ${vals.add(take)}` : ''
+    }`,
     vals.values()
   )
 
@@ -1015,9 +1015,9 @@ async function readStatusChanges(
   }
 
   const { rows: status_changes } = await exec(
-    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded ASC, event_time ASC, device_id ASC${
-      skip ? ` OFFSET ${vals.add(skip)}` : ''
-    }${take ? ` LIMIT ${vals.add(take)}` : ''}`,
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
+      take ? ` LIMIT ${vals.add(take)}` : ''
+    }`,
     vals.values()
   )
 
@@ -1135,7 +1135,7 @@ async function readRule(rule_id: UUID): Promise<Rule> {
 }
 
 async function readUnprocessedStatusChangeEvents(
-  before: { timestamp: Timestamp; device_id: UUID } | null,
+  before: VehicleEvent | null,
   take: number = 1000
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
@@ -1147,8 +1147,12 @@ async function readUnprocessedStatusChangeEvents(
   ]
 
   if (before) {
-    const [timestamp, device_id] = [before.timestamp, before.device_id].map(value => vals.add(value))
-    conditions.push(`(E.timestamp < ${timestamp} OR (E.timestamp = ${timestamp} AND E.device_id < ${device_id}))`)
+    const [recorded, device_id, timestamp] = [before.recorded, before.device_id, before.timestamp].map(value =>
+      vals.add(value)
+    )
+    conditions.push(
+      `(E.recorded < ${recorded} OR (E.recorded = ${recorded} AND (E.device_id, E.timestamp) < (${device_id}, ${timestamp})))`
+    )
   }
   const where = `WHERE ${conditions.join(' AND ')}`
 
@@ -1161,11 +1165,11 @@ async function readUnprocessedStatusChangeEvents(
   }
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng FROM ${schema.EVENTS_TABLE} E LEFT JOIN ${
+    `SELECT E.*, T.lat, T.lng FROM (SELECT * FROM ${
+      schema.EVENTS_TABLE
+    } E ${where} ORDER BY E.recorded LIMIT ${vals.add(take)}) AS E LEFT JOIN ${
       schema.TELEMETRY_TABLE
-    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ${where} ORDER BY E.timestamp, E.device_id LIMIT ${vals.add(
-      take
-    )}`,
+    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
     vals.values()
   )
 
