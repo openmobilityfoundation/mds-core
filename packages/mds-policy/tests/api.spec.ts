@@ -169,6 +169,15 @@ describe('Tests app', () => {
         done(err)
       })
   })
+
+  it('verifies no test access without scope', done => {
+    request
+      .get('/test/initialize')
+      .expect(403)
+      .end(() => {
+        done()
+      })
+  })
   it('reads teh Policy schema', done => {
     request
       .get('/schema/policy')
