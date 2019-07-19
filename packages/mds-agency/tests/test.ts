@@ -1252,13 +1252,13 @@ describe('Tests API', () => {
       .send({
         data: [TEST_TELEMETRY, TEST_TELEMETRY2]
       })
-      .expect(201)
+      .expect(400)
       .end((err, result) => {
         if (err) {
           log('telemetry err', err)
         } else {
           // log('telemetry result', result)
-          test.string(result.body.result).contains('success')
+          test.string(result.body.result).contains('no new valid')
         }
         done(err)
       })

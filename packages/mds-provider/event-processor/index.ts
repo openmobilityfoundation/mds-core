@@ -15,11 +15,12 @@
  */
 
 import db from 'mds-db'
+import { promisify } from 'util'
 import logger from 'mds-logger'
 import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
 import uuid from 'uuid'
 import { isUUID } from 'mds-utils'
-import { VehicleEvent, Timestamp, UUID } from 'mds'
+import { VehicleEvent } from 'mds'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -49,14 +50,8 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
-const streamItemVehicleEventKey = (item: StreamItem | null): { timestamp: Timestamp; device_id: UUID } | null => {
-  if (item) {
-    const {
-      data: { timestamp, device_id }
-    } = asStreamEntry<VehicleEvent>(item)
-    return { timestamp, device_id }
-  }
-  return null
+const firstStreamEvent = (item: StreamItem | null): VehicleEvent | null => {
+  return item ? asStreamEntry<VehicleEvent>(item).data : null
 }
 
 const processor = async (options: ReadStreamOptions): Promise<number> => {
@@ -64,7 +59,7 @@ const processor = async (options: ReadStreamOptions): Promise<number> => {
 
   if (info) {
     const { count, events } = await db.readUnprocessedStatusChangeEvents(
-      streamItemVehicleEventKey(info.firstEntry),
+      firstStreamEvent(info.firstEntry),
       options.count
     )
 
@@ -133,8 +128,7 @@ const stop = async (): Promise<void> => {
   await Promise.all([stream.shutdown(), db.shutdown()])
 }
 
-const wait = async (interval: number): Promise<number> =>
-  interval > 0 ? new Promise(resolve => setTimeout(() => resolve(interval), interval)) : Promise.resolve(interval)
+const pause = async (interval: number) => promisify(setTimeout)(interval, interval > 0)
 
 /* eslint-disable no-await-in-loop */
 /* eslint-reason this is the event processor's event loop */
@@ -144,7 +138,7 @@ const process = async (options: ProviderEventProcessorOptions = {}): Promise<num
   let processed = 0
   do {
     processed += await processor({ noack, count })
-  } while ((await wait(interval)) > 0)
+  } while (await pause(interval))
   return processed
 }
 /* eslint-enable no-await-in-loop */

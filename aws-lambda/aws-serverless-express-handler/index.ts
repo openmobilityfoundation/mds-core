@@ -25,6 +25,8 @@ import { ApiAuthorizerClaims, ApiAuthorizer } from 'mds-api-authorizer'
 // These global variables will be set by webpack
 declare const NPM_PACKAGE_NAME: string
 declare const NPM_PACKAGE_VERSION: string
+declare const NPM_PACKAGE_GIT_BRANCH: string
+declare const NPM_PACKAGE_GIT_COMMIT: string
 
 export interface ApiGatewayRequest extends express.Request {
   apiGateway?: {
@@ -49,7 +51,13 @@ export type AwsServerlessExpressHandlerFunction = Handler<{}, awsServerlessExpre
 export const AwsServerlessExpressHandler = (
   api: (app: express.Express) => express.Express
 ): AwsServerlessExpressHandlerFunction => {
-  Object.assign(process.env, { npm_package_name: NPM_PACKAGE_NAME, npm_package_version: NPM_PACKAGE_VERSION })
+  Object.assign(process.env, {
+    npm_package_name: NPM_PACKAGE_NAME,
+    npm_package_version: NPM_PACKAGE_VERSION,
+    npm_package_git_branch: NPM_PACKAGE_GIT_BRANCH,
+    npm_package_git_commit: NPM_PACKAGE_GIT_COMMIT
+  })
+
   return async (event, context) => {
     if (process.env.PG_PASS_ENCRYPTED) {
       Object.assign(process.env, { PG_PASS: await decrypt(process.env.PG_PASS_ENCRYPTED) })

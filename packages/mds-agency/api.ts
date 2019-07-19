@@ -111,7 +111,7 @@ function api(app: express.Express): express.Express {
           // stash provider_id
           res.locals.provider_id = provider_id
 
-          await log.info(providerName(provider_id), req.method, req.originalUrl)
+          // log.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
@@ -724,19 +724,22 @@ function api(app: express.Express): express.Express {
     return null
   }
 
-  function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
+  async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
     if (!Array.isArray(telemetry)) {
-      const promises = [
+      const promises: [Promise<number>, Promise<void>, Promise<void>] = [
         db.writeTelemetry([telemetry]),
         cache.writeTelemetry([telemetry]),
         stream.writeTelemetry([telemetry])
       ]
       return Promise.all(promises)
     }
-    const promises = [db.writeTelemetry(telemetry), cache.writeTelemetry(telemetry), stream.writeTelemetry(telemetry)]
+    const promises: [Promise<number>, Promise<void>, Promise<void>] = [
+      db.writeTelemetry(telemetry),
+      cache.writeTelemetry(telemetry),
+      stream.writeTelemetry(telemetry)
+    ]
     return Promise.all(promises)
   }
-
   /**
    * Endpoint to submit vehicle events
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicle---event Events}
@@ -871,6 +874,7 @@ function api(app: express.Express): express.Express {
       })
       return
     }
+    const name = providerName(provider_id)
     const failures: string[] = []
     const valid: Telemetry[] = []
 
@@ -916,34 +920,39 @@ function api(app: express.Express): express.Express {
       }
 
       if (valid.length) {
-        try {
-          await writeTelemetry(valid)
-          const delta = Date.now() - start
-          if (delta > 300) {
-            log.info(
-              'writeTelemetry',
-              valid.length,
-              'took',
-              delta,
-              `ms (${Math.round((1000 * valid.length) / delta)}/s)`
-            )
-          }
+        const counts = await writeTelemetry(valid)
+        const delta = Date.now() - start
+        if (delta > 300) {
+          log.info(
+            name,
+            'writeTelemetry',
+            valid.length,
+            `(${counts[0]} unique)`,
+            'took',
+            delta,
+            `ms (${Math.round((1000 * valid.length) / delta)}/s)`
+          )
+        }
+        if (counts[0]) {
           res.status(201).send({
             result: `telemetry success for ${valid.length} of ${data.length}`,
             recorded: now(),
+            unique: counts[0],
             failures
           })
-        } catch (err) {
-          await log.error(providerName(provider_id), 'writeTelemetry failure', JSON.stringify(err))
+        } else {
+          await log.info(name, 'no unique telemetry in', data.length, 'items')
           res.status(400).send({
-            error: 'bad_param',
-            error_description: 'one or more items already exist in the db'
+            error: 'invalid_data',
+            error_description: 'none of the provided data was unique',
+            result: 'no new valid telemetry submitted',
+            unique: 0
           })
         }
       } else {
         const body = `${JSON.stringify(req.body).substring(0, 128)} ...`
         const fails = `${JSON.stringify(failures).substring(0, 128)} ...`
-        log.info('no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
+        log.info(name, 'no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
         res.status(400).send({
           error: 'invalid_data',
           error_description: 'none of the provided data was valid',
