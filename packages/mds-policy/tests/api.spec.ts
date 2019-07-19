@@ -239,6 +239,39 @@ describe('Tests app', () => {
       })
   })
 
+  it('tries to get policy for invalid dates', done => {
+    request
+      .get('/policies?start_date=100000&end_date=100')
+      .set('Authorization', AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result.body.result === 'start_date after end_date')
+        done(err)
+      })
+  })
+
+  it('tries to read non-existant policy', done => {
+    request
+      .get('/policies/notarealgeography')
+      .set('Authorization', AUTH)
+      .expect(404)
+      .end((err, result) => {
+        test.value(result.body.result === 'not found')
+        done(err)
+      })
+  })
+
+  it('tries to read non-existant geography', done => {
+    request
+      .get('/geographies/notarealgeography')
+      .set('Authorization', AUTH)
+      .expect(404)
+      .end((err, result) => {
+        test.value(result.body.result === 'not found')
+        done(err)
+      })
+  })
+
   it('creates one current policy', done => {
     const policy = policy_json
     request
