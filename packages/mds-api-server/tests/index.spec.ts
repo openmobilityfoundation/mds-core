@@ -31,7 +31,7 @@ describe('Testing API Server', () => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('name')
         test.object(result.body).hasProperty('version')
-        test.object(result.body).hasProperty('runtime')
+        test.object(result.body).hasProperty('node')
         done(err)
       })
   })
@@ -42,7 +42,7 @@ describe('Testing API Server', () => {
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        test.object(result.body).hasProperty('runtime')
+        test.object(result.body).hasProperty('node')
         test.object(result.body).hasProperty('process')
         test.object(result.body).hasProperty('memory')
         test.object(result.body).hasProperty('uptime')

@@ -40,6 +40,7 @@
     "eslint-plugin-import": "2.18.0",
     "eslint-plugin-prettier": "3.1.0",
     "eslint-plugin-promise": "4.2.1",
+    "git-revision-webpack-plugin": "3.0.3",
     "mocha": "6.1.4",
     "mockdate": "2.0.3",
     "nodemon": "1.19.1",

@@ -36,17 +36,22 @@ export const server = (
 
   app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
     const {
-      versions: { node: runtime },
-      env: { npm_package_name: name, npm_package_version: version }
+      versions: { node },
+      env: {
+        npm_package_name: name,
+        npm_package_version: version,
+        npm_package_git_branch: branch,
+        npm_package_git_commit: commit
+      }
     } = process
     // 200 OK
-    res.status(200).send({ name, version, runtime })
+    res.status(200).send({ name, version, build: { branch, commit }, node })
   })
 
   app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
     // 200 OK
     res.status(200).send({
-      runtime: process.versions.node,
+      node: process.versions.node,
       process: process.pid,
       uptime: process.uptime(),
       memory: process.memoryUsage()

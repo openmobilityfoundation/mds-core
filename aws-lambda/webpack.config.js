@@ -1,9 +1,14 @@
 const webpack = require('webpack')
 const ZipPlugin = require('zip-webpack-plugin')
+const GitRevisionPlugin = require('git-revision-webpack-plugin')
+
+const gitRevisionPlugin = new GitRevisionPlugin({
+  commithashCommand: 'rev-parse --short HEAD'
+})
 
 module.exports = ({ env, argv, dirname, bundles }) => {
   const { npm_package_name, npm_package_version } = env
-  const [,package] = npm_package_name.split('/')
+  const [, package] = npm_package_name.split('/')
   const dist = `${dirname}/dist`
   return bundles.map(bundle => ({
     entry: { [bundle]: `${dirname}/${bundle}.ts` },
@@ -28,17 +33,26 @@ module.exports = ({ env, argv, dirname, bundles }) => {
       new webpack.IgnorePlugin(/^utf-8-validate$/),
       // Ignore Critical Dependency Warnings
       // https://medium.com/tomincode/hiding-critical-dependency-warnings-from-webpack-c76ccdb1f6c1
-      new webpack.ContextReplacementPlugin(/node_modules\/express\/lib|node_modules\/optional|node_modules\/google-spreadsheet/, data => {
-        delete data.dependencies[0].critical
-        return data
-      }),
+      new webpack.ContextReplacementPlugin(
+        /node_modules\/express\/lib|node_modules\/optional|node_modules\/google-spreadsheet/,
+        data => {
+          delete data.dependencies[0].critical
+          return data
+        }
+      ),
       // Make npm package name/version available to AWS Lambda handler
       new webpack.DefinePlugin({
         NPM_PACKAGE_NAME: JSON.stringify(npm_package_name),
-        NPM_PACKAGE_VERSION: JSON.stringify(npm_package_version)
+        NPM_PACKAGE_VERSION: JSON.stringify(npm_package_version),
+        NPM_PACKAGE_GIT_BRANCH: JSON.stringify(gitRevisionPlugin.branch()),
+        NPM_PACKAGE_GIT_COMMIT: JSON.stringify(gitRevisionPlugin.commithash())
       }),
       // Zip the dist folder
-      new ZipPlugin({ path: `${dist}/bundles`, filename: bundle === 'index' ? package : bundle, include: [`${bundle}.js`] })
+      new ZipPlugin({
+        path: `${dist}/bundles`,
+        filename: bundle === 'index' ? package : bundle,
+        include: [`${bundle}.js`]
+      })
     ],
     resolve: {
       extensions: ['.ts', '.js']
