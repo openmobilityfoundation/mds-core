@@ -24,7 +24,18 @@ import cache from 'mds-cache'
 import stream from 'mds-stream'
 import { providerName, isProviderId } from 'mds-providers'
 import areas from 'ladot-service-areas'
-import { UUID, Recorded, Device, VehicleEvent, Telemetry, ErrorObject, Timestamp, CountMap, TripsStats } from 'mds'
+import {
+  UUID,
+  Recorded,
+  Device,
+  VehicleEvent,
+  Telemetry,
+  ErrorObject,
+  Timestamp,
+  CountMap,
+  TripsStats,
+  DeviceID
+} from 'mds'
 import {
   isEnum,
   VEHICLE_EVENTS,
@@ -460,9 +471,8 @@ function api(app: express.Express): express.Express {
       const response = await getVehicles(skip, take, url, provider_id, req.query)
       return res.status(200).send(response)
     } catch (err) {
-      log.error('readDeviceIds fail', err).then(() => {
-        res.status(500).send(new ServerError())
-      })
+      await log.error('readDeviceIds fail', err)
+      res.status(500).send(new ServerError())
     }
   })
 
@@ -499,11 +509,11 @@ function api(app: express.Express): express.Express {
     }
 
     try {
-      const tempDevice = await db.readDevice(device_id)
+      const tempDevice = await db.readDevice(device_id, provider_id)
       if (tempDevice.provider_id !== provider_id) {
         await fail('not found')
       } else {
-        const device = await db.updateDevice(device_id, update)
+        const device = await db.updateDevice(device_id, provider_id, update)
         await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
         return res.status(201).send({
           result: 'success',
@@ -511,7 +521,7 @@ function api(app: express.Express): express.Express {
         })
       }
     } catch (err) {
-      fail(err)
+      await fail(err)
     }
   })
 
@@ -811,39 +821,33 @@ function api(app: express.Express): express.Express {
 
       // TODO switch to cache for speed?
       try {
-        const device = await db.readDevice(event.device_id)
-        if (device.provider_id !== provider_id) {
-          await fail({
-            message: 'not found'
-          })
-        } else {
-          if (event.telemetry) {
-            event.telemetry.device_id = event.device_id
-          }
-          const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
-          // TODO unify with fail() above
-          if (failure) {
-            await log.error(
-              providerName(res.locals.provider_id),
-              'event failure',
-              JSON.stringify(failure),
-              JSON.stringify(event)
-            )
-            return res.status(400).send(failure)
-          }
+        await db.readDevice(event.device_id, provider_id)
+        if (event.telemetry) {
+          event.telemetry.device_id = event.device_id
+        }
+        const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
+        // TODO unify with fail() above
+        if (failure) {
+          await log.error(
+            providerName(res.locals.provider_id),
+            'event failure',
+            JSON.stringify(failure),
+            JSON.stringify(event)
+          )
+          return res.status(400).send(failure)
+        }
 
-          // make a note of the service area
-          event.service_area_id = getServiceArea(event)
+        // make a note of the service area
+        event.service_area_id = getServiceArea(event)
 
-          // database write is crucial; failures of cache/stream should be noted and repaired
-          await db.writeEvent(event)
-          try {
-            await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
-            await finish()
-          } catch (err) {
-            await log.warn('/event exception cache/stream', err)
-            await finish()
-          }
+        // database write is crucial; failures of cache/stream should be noted and repaired
+        await db.writeEvent(event)
+        try {
+          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+          await finish()
+        } catch (err) {
+          await log.warn('/event exception cache/stream', err)
+          await finish()
         }
       } catch (err) {
         await fail(err)
@@ -863,7 +867,7 @@ function api(app: express.Express): express.Express {
     if (!provider_id) {
       res.status(400).send({
         error: 'bad_param',
-        error_description: 'missing provider_id'
+        error_description: 'bad or missing provider_id'
       })
       return
     }
@@ -871,75 +875,88 @@ function api(app: express.Express): express.Express {
     const valid: Telemetry[] = []
 
     const recorded = now()
+    const p: Promise<Device | DeviceID[]> =
+      data.length === 1 && isUUID(data[0].device_id)
+        ? db.readDevice(data[0].device_id, provider_id)
+        : db.readDeviceIds(provider_id)
+    try {
+      const deviceOrDeviceIds = await p
+      const deviceIds = Array.isArray(deviceOrDeviceIds) ? deviceOrDeviceIds : [deviceOrDeviceIds]
+      for (const item of data) {
+        // make sure the device exists
+        const { gps } = item
+        const telemetry: Telemetry = {
+          device_id: item.device_id,
+          provider_id,
+          timestamp: item.timestamp,
+          charge: item.charge,
+          gps: {
+            lat: gps.lat,
+            lng: gps.lng,
+            altitude: gps.altitude,
+            heading: gps.heading,
+            speed: gps.speed,
+            accuracy: gps.hdop,
+            satellites: gps.satellites
+          },
+          recorded
+        }
 
-    const device_ids = await db.readDeviceIds(provider_id)
-    for (const item of data) {
-      // make sure the device exists
-      const { gps } = item
-      const telemetry: Telemetry = {
-        device_id: item.device_id,
-        provider_id,
-        timestamp: item.timestamp,
-        charge: item.charge,
-        gps: {
-          lat: gps.lat,
-          lng: gps.lng,
-          altitude: gps.altitude,
-          heading: gps.heading,
-          speed: gps.speed,
-          accuracy: gps.hdop,
-          satellites: gps.satellites
-        },
-        recorded
+        const bad_telemetry: ErrorObject | null = badTelemetry(telemetry)
+        if (bad_telemetry) {
+          const msg = `bad telemetry for device_id ${telemetry.device_id}: ${bad_telemetry.error_description}`
+          // append to failure
+          failures.push(msg)
+        } else if (!deviceIds.some(item2 => item2.device_id === telemetry.device_id)) {
+          const msg = `device_id ${telemetry.device_id}: not found`
+          failures.push(msg)
+        } else {
+          valid.push(telemetry)
+        }
       }
 
-      const bad_telemetry: ErrorObject | null = badTelemetry(telemetry)
-      if (bad_telemetry) {
-        const msg = `bad telemetry for device_id ${telemetry.device_id}: ${bad_telemetry.error_description}`
-        // append to failure
-        failures.push(msg)
-      } else if (!device_ids.some(item2 => item2.device_id === telemetry.device_id)) {
-        const msg = `device_id ${telemetry.device_id}: not found`
-        failures.push(msg)
+      if (valid.length) {
+        try {
+          await writeTelemetry(valid)
+          const delta = Date.now() - start
+          if (delta > 300) {
+            log.info(
+              'writeTelemetry',
+              valid.length,
+              'took',
+              delta,
+              `ms (${Math.round((1000 * valid.length) / delta)}/s)`
+            )
+          }
+          res.status(201).send({
+            result: `telemetry success for ${valid.length} of ${data.length}`,
+            recorded: now(),
+            failures
+          })
+        } catch (err) {
+          await log.error(providerName(provider_id), 'writeTelemetry failure', JSON.stringify(err))
+          res.status(400).send({
+            error: 'bad_param',
+            error_description: 'one or more items already exist in the db'
+          })
+        }
       } else {
-        valid.push(telemetry)
-      }
-    }
-
-    if (valid.length) {
-      try {
-        await writeTelemetry(valid)
-      } catch (err) {
-        await log.error(providerName(provider_id), 'writeTelemetry failure', JSON.stringify(err))
+        const body = `${JSON.stringify(req.body).substring(0, 128)} ...`
+        const fails = `${JSON.stringify(failures).substring(0, 128)} ...`
+        log.info('no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
         res.status(400).send({
-          error: 'bad_param',
-          error_description: 'one or more items already exist in the db'
+          error: 'invalid_data',
+          error_description: 'none of the provided data was valid',
+          result: 'no valid telemetry submitted',
+          failures
         })
       }
-      const delta = Date.now() - start
-      if (delta > 300) {
-        await log.info(
-          'writeTelemetry',
-          valid.length,
-          'took',
-          delta,
-          `ms (${Math.round((1000 * valid.length) / delta)}/s)`
-        )
-      }
-      res.status(201).send({
-        result: `telemetry success for ${valid.length} of ${data.length}`,
-        recorded: now(),
-        failures
-      })
-    } else {
-      const body = `${JSON.stringify(req.body).substring(0, 128)} ...`
-      const fails = `${JSON.stringify(failures).substring(0, 128)} ...`
-      await log.info('no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
+    } catch (err) {
       res.status(400).send({
         error: 'invalid_data',
         error_description: 'none of the provided data was valid',
         result: 'no valid telemetry submitted',
-        failures
+        failures: [`device_id ${data[0].device_id}: not found`]
       })
     }
   })
@@ -1502,9 +1519,10 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  async function refresh(device_id: UUID) {
+  async function refresh(device_id: UUID, provider_id: UUID): Promise<string> {
     // TODO all of this back and forth between cache and db is slow
-    const device = await db.readDevice(device_id)
+    const device = await db.readDevice(device_id, provider_id)
+    // log.info('refresh device', JSON.stringify(device))
     await cache.writeDevice(device)
     try {
       const event = await db.readEvent(device_id)
@@ -1529,15 +1547,14 @@ function api(app: express.Express): express.Express {
     try {
       const rows = await db.readDeviceIds()
 
-      let device_ids = rows.map(row => row.device_id)
-      await log.info('read', device_ids.length, 'device_ids. skip', skip, 'take', take)
-      device_ids = device_ids.slice(skip, take + skip)
-      await log.info('device_ids', JSON.stringify(device_ids))
+      await log.info('read', rows.length, 'device_ids. skip', skip, 'take', take)
+      const devices = rows.slice(skip, take + skip)
+      await log.info('device_ids', JSON.stringify(devices))
 
-      const promises = device_ids.map((device_id: UUID) => refresh(device_id))
+      const promises = devices.map(device => refresh(device.device_id, device.provider_id))
       await Promise.all(promises)
       res.send({
-        result: `success for ${device_ids.length} devices`
+        result: `success for ${devices.length} devices`
       })
     } catch (err) {
       await log.error('cache refresh fail', err)

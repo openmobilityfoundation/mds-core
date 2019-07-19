@@ -246,17 +246,24 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
 }
 
 // TODO: FIX updateDevice/readDevice circular reference
-async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
-  const values = [device_id]
+async function readDevice(
+  device_id: UUID,
+  provider_id?: UUID,
+  optionalClient?: MDSPostgresClient
+): Promise<Recorded<Device>> {
+  const client = optionalClient || (await getReadOnlyClient())
+  const sql = provider_id
+    ? `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1 AND provider_id=$2`
+    : `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
+  const values = provider_id ? [device_id, provider_id] : [device_id]
   logSql(sql, values)
   const res = await client.query(sql, values)
-  // verify we only got one row
-  if (res.rows.length !== 1) {
-    throw Error(`device_id ${device_id} not found`)
+  // verify one row
+  if (res.rows.length === 1) {
+    return res.rows[0]
   }
-  return res.rows[0]
+  await log.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
+  throw new Error(`device_id ${device_id} not found`)
 }
 
 async function readDeviceList(device_ids: UUID[]) {
@@ -281,23 +288,23 @@ async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
   return device as Recorded<Device>
 }
 
-async function updateDevice(device_id: UUID, changes: Partial<Device>): Promise<Device> {
+async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial<Device>): Promise<Device> {
   const client = await getWriteableClient()
+
   const sql = `UPDATE ${schema.DEVICES_TABLE} SET vehicle_id = $1 WHERE device_id = $2`
   const values = [changes.vehicle_id, device_id]
   logSql(sql, values)
   const res = await client.query(sql, values)
 
   if (res.rowCount === 0) {
-    throw Error('not found')
+    throw new Error('not found')
   } else {
-    const device = await readDevice(device_id)
-    return device
+    return readDevice(device_id, provider_id)
   }
 }
 
 async function writeEvent(event_param: VehicleEvent) {
-  await readDevice(event_param.device_id)
+  await readDevice(event_param.device_id, event_param.provider_id, await getWriteableClient())
   const client = await getWriteableClient()
   const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
   const event = { ...event_param, telemetry_timestamp }

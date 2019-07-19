@@ -83,7 +83,7 @@ if (pg_info.database) {
       it('can make successful writes', async () => {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writeDevice(JUMP_TEST_DEVICE_1)
-        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id)
+        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id, JUMP_PROVIDER_ID)
         assert.deepEqual(device.device_id, JUMP_TEST_DEVICE_1.device_id)
       })
 
@@ -93,7 +93,7 @@ if (pg_info.database) {
 
         await MDSDBPostgres.writeDevice(JUMP_TEST_DEVICE_1)
         await MDSDBPostgres.shutdown()
-        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id)
+        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id, JUMP_PROVIDER_ID)
         assert.deepEqual(device.device_id, JUMP_TEST_DEVICE_1.device_id)
       })
 

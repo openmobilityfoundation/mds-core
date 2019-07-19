@@ -501,7 +501,7 @@ function api(app: express.Express): express.Express {
           const auditEvents = await readAuditEvents(audit_trip_id)
 
           const device = provider_device_id
-            ? await readDevice(provider_device_id)
+            ? await readDevice(provider_device_id, provider_id)
             : await readDeviceByVehicleId(provider_id, provider_vehicle_id)
 
           if (device) {
