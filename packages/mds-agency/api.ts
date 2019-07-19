@@ -729,21 +729,20 @@ function api(app: express.Express): express.Express {
 
   async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
     if (!Array.isArray(telemetry)) {
-      const promises: (Promise<any>)[] = [
+      const promises: [Promise<number>, Promise<void>, Promise<void>] = [
         db.writeTelemetry([telemetry]),
         cache.writeTelemetry([telemetry]),
         stream.writeTelemetry([telemetry])
       ]
       return Promise.all(promises)
     }
-    const promises: Promise<any>[] = [
+    const promises: [Promise<number>, Promise<void>, Promise<void>] = [
       db.writeTelemetry(telemetry),
       cache.writeTelemetry(telemetry),
       stream.writeTelemetry(telemetry)
     ]
     return Promise.all(promises)
   }
-
   /**
    * Endpoint to submit vehicle events
    * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicle---event Events}
