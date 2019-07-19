@@ -11,7 +11,7 @@ import { logSql, SqlExecuter, MDSPostgresClient } from './sql-utils'
  */
 async function dropTables(client: MDSPostgresClient) {
   const drop = `DROP TABLE IF EXISTS ${csv(Object.keys(schema.tables))};`
-  logSql(drop)
+  await logSql(drop)
   await client.query(drop)
   await log.info('postgres drop table succeeded')
 }
@@ -41,7 +41,7 @@ async function createTables(client: MDSPostgresClient) {
             .join(', ')}, PRIMARY KEY (${csv(schema.primaryKeys[table])}));`
       )
       .join('\n')
-    logSql(create)
+    await logSql(create)
     await log.warn(create)
     await client.query(create)
     await log.info('postgres create table suceeded')
