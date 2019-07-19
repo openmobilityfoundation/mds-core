@@ -119,7 +119,6 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   if (flat) {
     return unflatten({ ...flat, device_id })
   }
-  // log.info(`hread: ${suffix} for ${device_id} not found`)
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
@@ -204,7 +203,6 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
       })
       log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
 
-      // log.info('device_status_map', JSON.stringify(device_status_map))
       let values = Object.values(device_status_map)
       if (query.bbox) {
         values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
@@ -456,7 +454,7 @@ async function health() {
 
 // remove stale keys, if any
 // this was needed to clean up from failing to verify that a device was legit
-async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
+async function cleanup() {
   try {
     const keys = await readKeys('device:*')
     await log.warn('cleanup: read', keys.length)
@@ -469,10 +467,8 @@ async function cleanup(deviceIdMap: { [device_id: string]: boolean }) {
       // look for bogus keys
       let badKeys: string[] = []
       keys.map(key => {
-        const [, device_id, suffix] = key.split(':')
-        if (deviceIdMap[device_id]) {
-          // woot
-        } else if (suffix) {
+        const [, , suffix] = key.split(':')
+        if (suffix) {
           badKeys.push(key)
           report[suffix] += 1
         }
