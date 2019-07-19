@@ -18,6 +18,13 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-useless-concat */
 /* eslint-disable prefer-destructuring */
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/no-nesting */
+/* eslint-disable promise/no-callback-in-promise */
 
 import supertest from 'supertest'
 import test from 'unit.js'

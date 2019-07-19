@@ -8,7 +8,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2018,
-    sourceType: 'module'
+    sourceType: 'module',
+    project: 'tsconfig.settings.json'
   },
   extends: [
     'airbnb-base',
@@ -18,6 +19,7 @@ module.exports = {
     'prettier/@typescript-eslint'
   ],
   rules: {
+    '@typescript-eslint/no-floating-promises': 'warn',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-object-literal-type-assertion': [

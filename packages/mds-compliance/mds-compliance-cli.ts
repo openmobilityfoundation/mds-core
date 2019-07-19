@@ -53,20 +53,20 @@ async function readJson(path: string): Promise<object> {
 async function main(): Promise<(ComplianceResponse | undefined)[]> {
   const geographies = (await readJson(args.geographies)) as Geography[]
   if (!geographies || !validateGeographies(geographies)) {
-    log.error('unable to read geographies')
+    await log.error('unable to read geographies')
     process.exit(1)
   }
 
   const policies = (await readJson(args.policies)) as Policy[]
   if (!policies || !validatePolicies(policies)) {
-    log.error('unable to read policies')
+    await log.error('unable to read policies')
     process.exit(1)
   }
 
   // read events
   const events = (await readJson(args.events)) as VehicleEvent[]
   if (!events || !validateEvents(events)) {
-    log.error('unable to read events')
+    await log.error('unable to read events')
     process.exit(1)
   }
   const filteredEvents = filterEvents(events)
@@ -77,7 +77,7 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
   }, {})
   // TODO Validate Devices
   if (!devices) {
-    log.error('unable to read devices')
+    await log.error('unable to read devices')
     process.exit(1)
   }
 
@@ -105,6 +105,6 @@ main()
       }
     }
   )
-  .catch(err => {
-    log.error('exception:', err.stack)
+  .catch(async err => {
+    await log.error('exception:', err.stack)
   })

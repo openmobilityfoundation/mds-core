@@ -5,20 +5,18 @@ import KMS from 'aws-sdk/clients/kms'
 // variable should be set for Lambdas. To get this working locally, you will need to
 // export AWS_REGION='us-west-1'
 async function decrypt(cipherText: string): Promise<string> {
-  const kms = new KMS()
-  return new Promise((resolve, reject) => {
-    kms.decrypt({ CiphertextBlob: Buffer.from(cipherText, 'base64') }, (err, data) => {
-      if (err) {
-        reject(err)
-      }
+  try {
+    const kms = new KMS()
+    const data = await kms.decrypt({ CiphertextBlob: Buffer.from(cipherText, 'base64') }).promise()
 
-      if (!data || !data.Plaintext) {
-        reject(Error('no response to decryption attempt'))
-      } else {
-        resolve(data.Plaintext.toString('ascii'))
-      }
-    })
-  })
+    if (!data || !data.Plaintext) {
+      throw new Error('no response to decryption attempt')
+    } else {
+      return data.Plaintext.toString('ascii')
+    }
+  } catch (err) {
+    throw err
+  }
 }
 
 export { decrypt }

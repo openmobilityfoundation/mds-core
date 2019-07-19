@@ -150,7 +150,7 @@ async function initialize() {
 async function makeReadOnlyQuery(sql: string): Promise<any[]> {
   try {
     const client = await getReadOnlyClient()
-    logSql(sql)
+    await logSql(sql)
     const result = await client.query(sql)
     return result.rows
   } catch (err) {
@@ -212,7 +212,7 @@ async function readDeviceByVehicleId(
     .join(', ')}])`
 
   const values = vals.values()
-  logSql(sql, values)
+  await logSql(sql, values)
   const result = await client.query(sql, values)
   if (result.rows.length === 1) {
     return result.rows[0] as Recorded<Device>
@@ -220,7 +220,7 @@ async function readDeviceByVehicleId(
   const error = `device associated with vehicle ${
     vehicle_ids.length === 1 ? vehicle_id : `(${csv(vehicle_ids)})`
   } for provider ${provider_id}: rows=${result.rows.length}`
-  log.warn(error)
+  await log.warn(error)
   throw Error(error)
 }
 
@@ -240,7 +240,7 @@ async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): 
     sql += ` LIMIT ${vals.add(take)}`
   }
   const values = vals.values()
-  logSql(sql, values)
+  await logSql(sql, values)
   const res = await client.query(sql, values)
   return res.rows
 }
@@ -256,7 +256,7 @@ async function readDevice(
     ? `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1 AND provider_id=$2`
     : `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id=$1`
   const values = provider_id ? [device_id, provider_id] : [device_id]
-  logSql(sql, values)
+  await logSql(sql, values)
   const res = await client.query(sql, values)
   // verify one row
   if (res.rows.length === 1) {
@@ -273,7 +273,7 @@ async function readDeviceList(device_ids: UUID[]) {
     vals.add(device_id)
   )})`
   const values = vals.values()
-  logSql(sql, values)
+  await logSql(sql, values)
   const result = await client.query(sql, values)
   return result.rows
 }
@@ -283,7 +283,7 @@ async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
   const device = { ...device_param, recorded: now() }
   const sql = `INSERT INTO ${cols_sql(schema.DEVICES_TABLE, schema.DEVICES_COLS)} ${vals_sql(schema.DEVICES_COLS)}`
   const values = vals_list(schema.DEVICES_COLS, device)
-  logSql(sql, values)
+  await logSql(sql, values)
   await client.query(sql, values)
   return device as Recorded<Device>
 }
@@ -293,7 +293,7 @@ async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial
 
   const sql = `UPDATE ${schema.DEVICES_TABLE} SET vehicle_id = $1 WHERE device_id = $2`
   const values = [changes.vehicle_id, device_id]
-  logSql(sql, values)
+  await logSql(sql, values)
   const res = await client.query(sql, values)
 
   if (res.rowCount === 0) {
@@ -310,7 +310,7 @@ async function writeEvent(event_param: VehicleEvent) {
   const event = { ...event_param, telemetry_timestamp }
   const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(schema.EVENTS_COLS)}`
   const values = vals_list(schema.EVENTS_COLS, event)
-  logSql(sql, values)
+  await logSql(sql, values)
   await client.query(sql, values)
   return event as Recorded<VehicleEvent>
 }
@@ -326,7 +326,7 @@ async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<Vehicl
     sql += ' ORDER BY "timestamp" DESC LIMIT 1'
   }
   const values = vals.values()
-  logSql(sql, values)
+  await logSql(sql, values)
   const res = await client.query(sql, values)
 
   // verify one row
@@ -366,7 +366,7 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   const countSql = `SELECT COUNT(*) FROM ${schema.EVENTS_TABLE} ${filter}`
   const countVals = vals.values()
 
-  logSql(countSql, countVals)
+  await logSql(countSql, countVals)
 
   const res = await client.query(countSql, countVals)
   // log.warn(JSON.stringify(res))
@@ -379,7 +379,7 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
     selectSql += ` LIMIT ${vals.add(take)}`
   }
   const selectVals = vals.values()
-  logSql(selectSql, selectVals)
+  await logSql(selectSql, selectVals)
 
   const res2 = await client.query(selectSql, selectVals)
   const events = res2.rows
@@ -491,7 +491,7 @@ async function readTripList(trip_ids: UUID[]) {
     vals.add(trip_id)
   )})`
   const values = vals.values()
-  logSql(sql, values)
+  await logSql(sql, values)
   const result = await client.query(sql, values)
   return result.rows
 }
@@ -503,7 +503,7 @@ async function updateTrip(provider_trip_id: UUID, trip: Partial<Trip>) {
     .map(key => `${key} = ${vals.add(trip[key as keyof Trip] as string)}`)
     .join(', ')} WHERE provider_trip_id = ${vals.add(provider_trip_id)}`
   const values = vals.values()
-  logSql(sql, values)
+  await logSql(sql, values)
   const result = await client.query(sql, values)
   return result.rowCount
 }
@@ -536,7 +536,7 @@ async function writeTelemetry(data: Telemetry[]): Promise<number> {
     const sql = `INSERT INTO ${cols_sql(schema.TELEMETRY_TABLE, schema.TELEMETRY_COLS)} VALUES ${csv(
       rows
     )} ON CONFLICT DO NOTHING RETURNING 1`
-    logSql(sql)
+    await logSql(sql)
     const start = now()
     const result = await client.query(sql)
 
@@ -548,7 +548,7 @@ async function writeTelemetry(data: Telemetry[]): Promise<number> {
     }
     return result.rows.length
   } catch (err) {
-    log.error('pg write telemetry error', err)
+    await log.error('pg write telemetry error', err)
     throw err
   }
 }
@@ -574,7 +574,7 @@ async function readTelemetry(
       sql += ' ORDER BY "timestamp"'
     }
     const values = vals.values()
-    logSql(sql, values)
+    await logSql(sql, values)
     const res = await client.query(sql, values)
     return res.rows.map((row: TelemetryRecord) => {
       return convertTelemetryRecordToTelemetry(row) as Recorded<Telemetry>
@@ -593,7 +593,7 @@ async function wipeDevice(device_id: UUID): Promise<QueryResult> {
     ` DELETE FROM ${schema.TELEMETRY_TABLE} WHERE device_id='${device_id}';` +
     ` DELETE FROM ${schema.EVENTS_TABLE} WHERE device_id='${device_id}';` +
     ` COMMIT;`
-  logSql(sql)
+  await logSql(sql)
   const res = await client.query(sql)
   // this returns a list of objects that represent the commands that just ran
   return res
@@ -682,7 +682,7 @@ async function shutdown(): Promise<void> {
     const readOnlyClient = await getReadOnlyClient()
     await readOnlyClient.end()
   } catch (err) {
-    log.error('error during disconnection', err.stack)
+    await log.error('error during disconnection', err.stack)
   }
 }
 
@@ -690,13 +690,13 @@ async function readAudit(audit_trip_id: UUID) {
   const client = await getReadOnlyClient()
   const sql = `SELECT * FROM ${schema.AUDITS_TABLE} WHERE deleted IS NULL AND audit_trip_id=$1`
   const values = [audit_trip_id]
-  logSql(sql, values)
+  await logSql(sql, values)
   const result = await client.query(sql, values)
   if (result.rows.length === 1) {
     return result.rows[0]
   }
   const error = `readAudit db failed for ${audit_trip_id}: rows=${result.rows.length}`
-  log.warn(error)
+  await log.warn(error)
   throw new Error(error)
 }
 
@@ -720,7 +720,7 @@ async function readAudits(query: ReadAuditsQueryParams) {
     const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
     const countSql = `SELECT COUNT(*) FROM ${schema.AUDITS_TABLE} ${filter}`
     const countVals = vals.values()
-    logSql(countSql, countVals)
+    await logSql(countSql, countVals)
     const countResult = await client.query(countSql, countVals)
     const count = parseInt(countResult.rows[0].count)
     if (count === 0) {
@@ -733,14 +733,14 @@ async function readAudits(query: ReadAuditsQueryParams) {
       typeof skip === 'number' && skip >= 0 ? ` OFFSET ${vals.add(skip)}` : ''
     }${typeof take === 'number' && take >= 0 ? ` LIMIT ${vals.add(take)}` : ''}`
     const selectVals = vals.values()
-    logSql(selectSql, selectVals)
+    await logSql(selectSql, selectVals)
     const selectResult = await client.query(selectSql, selectVals)
     return {
       count,
       audits: selectResult.rows
     }
   } catch (err) {
-    log.error('readAudits error', err.stack || err)
+    await log.error('readAudits error', err.stack || err)
     throw err
   }
 }
@@ -751,7 +751,7 @@ async function writeAudit(audit_param: Audit & { audit_vehicle_id: UUID }): Prom
   const audit = { ...audit_param, recorded: now() }
   const sql = `INSERT INTO ${cols_sql(schema.AUDITS_TABLE, schema.AUDITS_COLS)} ${vals_sql(schema.AUDITS_COLS)}`
   const values = vals_list(schema.AUDITS_COLS, audit)
-  logSql(sql, values)
+  await logSql(sql, values)
   await client.query(sql, values)
   return audit
 }
@@ -760,7 +760,7 @@ async function deleteAudit(audit_trip_id: UUID) {
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.AUDITS_TABLE} SET deleted=$1 WHERE audit_trip_id=$2 AND deleted IS NULL`
   const values = [now(), audit_trip_id]
-  logSql(sql, values)
+  await logSql(sql, values)
   const result = await client.query(sql, values)
   return result.rowCount
 }
@@ -773,11 +773,11 @@ async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<AuditEvent
       audit_trip_id
     )} ORDER BY "timestamp"`
     const sqlVals = vals.values()
-    logSql(sql, sqlVals)
+    await logSql(sql, sqlVals)
     const result = await client.query(sql, sqlVals)
     return result.rows
   } catch (err) {
-    log.error('readAuditEvents error', err.stack || err)
+    await log.error('readAuditEvents error', err.stack || err)
     throw err
   }
 }
@@ -788,7 +788,7 @@ async function writeAuditEvent(event: AuditEvent): Promise<Recorded<AuditEvent>>
     schema.AUDIT_EVENTS_COLS
   )}`
   const values = vals_list(schema.AUDIT_EVENTS_COLS, { ...event, recorded: now() })
-  logSql(sql, values)
+  await logSql(sql, values)
   await client.query(sql, values)
   return event as Recorded<AuditEvent>
 }
@@ -829,13 +829,13 @@ async function writeTrips(trips: Trip[]) {
     const sql = `INSERT INTO ${cols_sql(schema.TRIPS_TABLE, schema.TRIPS_COLS)} VALUES ${csv(
       rows
     )} ON CONFLICT DO NOTHING`
-    logSql(sql)
+    await logSql(sql)
     await client.query(sql)
     return {
       count: trips.length
     }
   } catch (err) {
-    log.error('pg writeTrips error', err)
+    await log.error('pg writeTrips error', err)
     throw err
   }
 }
@@ -944,7 +944,7 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
     const sql = `INSERT INTO ${cols_sql(schema.STATUS_CHANGES_TABLE, schema.STATUS_CHANGES_COLS)} VALUES ${csv(
       rows
     )} ON CONFLICT DO NOTHING`
-    logSql(sql)
+    await logSql(sql)
     await client.query(sql)
     return { count: status_changes.length }
   } catch (err) {
@@ -1029,7 +1029,7 @@ async function getLatestTime(table: string, field: string): Promise<number> {
 
   const sql = `SELECT ${field} FROM ${table} ORDER BY ${field} DESC LIMIT 1`
 
-  logSql(sql)
+  await logSql(sql)
   const res = await client.query(sql)
   if (res.rows.length === 1) {
     return res.rows[0][field] as number
@@ -1063,7 +1063,7 @@ async function readGeographies(params?: { geography_id?: UUID }): Promise<Geogra
     const res = await client.query(sql, values)
     return res.rows.map(row => row.geography_json) as Geography[]
   } catch (err) {
-    log.error('readGeographies', err)
+    await log.error('readGeographies', err)
     throw err
   }
 }

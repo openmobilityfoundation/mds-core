@@ -44,33 +44,28 @@ if (env.PUSHOVER_TOKEN) {
   })
 }
 
-async function sendPush(msg: string, priority?: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!pushClient) {
-      resolve()
-      return
-    }
-    const payload = {
-      // These values correspond to the parameters detailed on https://pushover.net/api
-      // 'message' is required. All other values are optional.
-      message: msg, // required
-      // title: 'Test Pushover',
-      // sound: 'magic',
-      // device: 'devicename',
-      priority: priority || 0
-    }
+async function sendPush(msg: string, priority?: number) {
+  if (!pushClient) {
+    return
+  }
+  const payload = {
+    // These values correspond to the parameters detailed on https://pushover.net/api
+    // 'message' is required. All other values are optional.
+    message: msg, // required
+    // title: 'Test Pushover',
+    // sound: 'magic',
+    // device: 'devicename',
+    priority: priority || 0
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pushClient.send(payload, (err: any, result: string) => {
-      if (err) {
-        console.error('ERROR pushover fail', err)
-        reject(err)
-      } else {
-        console.log('INFO pushover success', result)
-        resolve(result)
-      }
-    })
-  })
+  const [err, result] = await pushClient.send(payload)
+  if (err) {
+    console.error('ERROR pushover fail', err)
+    throw err
+  } else {
+    console.log('INFO pushover success', result)
+    return result
+  }
 }
 
 function makeCensoredDatum(datum: Datum) {
@@ -131,39 +126,29 @@ if (env.SLACK_TOKEN) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function sendSlack(msg: any, channelParam?: string) {
-  return new Promise((resolve, reject) => {
-    if (!slackClient) {
-      resolve()
-      return
-    }
+  if (!slackClient) {
+    return
+  }
 
-    // See: https://api.slack.com/methods/chat.postMessage
-    const channel = channelParam || env.SLACK_CHANNEL || '#sandbox'
-    console.log('INFO sendSlack', channel, msg)
-    slackClient.chat
-      .postMessage({
-        // This argument can be a channel ID, a DM ID, a MPDM ID, or a group ID
-        token: env.SLACK_TOKEN,
-        channel,
-        text: msg
-      })
-      .then(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (res: any) => {
-          // `res` contains information about the posted message
-          // eslint-disable-next-line no-console
-          console.log('INFO slack message sent: ', res.ts)
-          resolve(res.ts)
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err: Error) => {
-          // eslint-disable-next-line no-console
-          console.error('ERROR slack message fail: ', err)
-          reject(err)
-        }
-      )
-      .catch(console.error)
-  })
+  // See: https://api.slack.com/methods/chat.postMessage
+  const channel = channelParam || env.SLACK_CHANNEL || '#sandbox'
+  console.log('INFO sendSlack', channel, msg)
+  try {
+    const res = await slackClient.chat.postMessage({
+      // This argument can be a channel ID, a DM ID, a MPDM ID, or a group ID
+      token: env.SLACK_TOKEN,
+      channel,
+      text: msg
+    })
+
+    // `res` contains information about the posted message
+    // eslint-disable-next-line no-console
+    console.log('INFO slack message sent: ', res.ts)
+    return res.ts
+  } catch (err) {
+    console.error('ERROR slack message fail: ', err)
+    throw err
+  }
 }
 
 const { argv } = process
@@ -172,12 +157,16 @@ if (argv.length > 3) {
   const verb = argv[2]
   if (verb === 'slack') {
     if (env.SLACK_TOKEN) {
+      /* eslint-reason can't use async/await in non-function */
+      /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
       sendSlack(argv[3])
     } else {
       console.error('no SLACK_TOKEN defined')
     }
   } else if (verb === 'push') {
     if (env.PUSHOVER_TOKEN) {
+      /* eslint-reason can't use async/await in non-function */
+      /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
       sendPush(argv[3])
     } else {
       console.error('no PUSHOVER_TOKEN defined')
@@ -186,32 +175,38 @@ if (argv.length > 3) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function info(...msg: any): Promise<any> {
+function info(...msg: any) {
   if (env.QUIET) {
     return
   }
 
   const censoredMsg = makeCensoredLogMsg(...msg)
   console.log.apply(console, ['INFO', ...censoredMsg])
-  return Promise.resolve(censoredMsg)
+  return censoredMsg
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function warn(...msg: any) {
-  if (env.QUIET) {
-    return
+  try {
+    if (env.QUIET) {
+      return
+    }
+
+    const censoredMsg = makeCensoredLogMsg(...msg)
+    console.log.apply(console, ['WARN', ...censoredMsg])
+    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+    await sendSlack(censoredMsg.join(' '))
+
+    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+    await sendPush(censoredMsg.join(' '), 0)
+    return censoredMsg
+  } catch (err) {
+    console.log(err)
   }
-
-  const censoredMsg = makeCensoredLogMsg(...msg)
-  console.log.apply(console, ['WARN', ...censoredMsg])
-
-  await sendSlack(censoredMsg.join(' '))
-  await sendPush(censoredMsg.join(' '), 0)
-  return Promise.resolve(censoredMsg)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function error(...msg: any): Promise<any> {
+async function error(...msg: any) {
   if (env.QUIET) {
     return
   }
@@ -221,7 +216,7 @@ async function error(...msg: any): Promise<any> {
 
   await sendSlack(censoredMsg.join(' '))
   await sendPush(censoredMsg.join(' '), 1)
-  return Promise.resolve(censoredMsg)
+  return censoredMsg
 }
 
 async function startup() {
