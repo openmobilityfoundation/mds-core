@@ -636,6 +636,10 @@ function routeDistance(coordinates: { lat: number; lng: number }[]): number {
     }, 0)
 }
 
+function clone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 export {
   isUUID,
   isPct,
@@ -674,5 +678,6 @@ export {
   convertTelemetryRecordToTelemetry,
   getPolygon,
   isInStatesOrEvents,
-  routeDistance
+  routeDistance,
+  clone
 }

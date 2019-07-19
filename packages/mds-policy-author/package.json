@@ -1,7 +1,7 @@
 {
-  "name": "mds-policy",
-  "description": "MDS Policy API",
-  "version": "0.0.4",
+  "name": "mds-policy-author",
+  "description": "MDS Policy Author API",
+  "version": "0.0.1",
   "private": true,
   "licence": "Apache-2.0",
   "engineStrict": true,

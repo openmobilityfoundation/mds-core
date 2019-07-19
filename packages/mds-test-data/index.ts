@@ -23,11 +23,20 @@ import {
   VEHICLE_STATUSES,
   VEHICLE_STATUS
 } from 'mds-enums'
-import { UUID, Device, Timestamp, Telemetry, VehicleEvent } from 'mds'
+import { UUID, Device, Timestamp, Telemetry, VehicleEvent, Policy } from 'mds'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from 'mds-db/types'
 
-import { addDistanceBearing, pointInShape, makePointInShape, rangeRandom, rangeRandomInt, range, now } from 'mds-utils'
+import {
+  addDistanceBearing,
+  pointInShape,
+  makePointInShape,
+  rangeRandom,
+  rangeRandomInt,
+  range,
+  now,
+  days
+} from 'mds-utils'
 
 import { serviceAreaMap } from 'ladot-service-areas'
 
@@ -43,6 +52,15 @@ import {
   TEST3_PROVIDER_ID,
   providerName
 } from 'mds-providers'
+
+const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
+const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
+
+const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
+const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
+const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
+
+const PROVIDER_SCOPES = 'admin:all test:all'
 
 // for test purposes
 const PROVIDER_AUTH =
@@ -63,6 +81,111 @@ const JUMP_TEST_DEVICE_1: Device = {
   mfgr: 'Schwinn',
   model: 'whoknows',
   recorded: now()
+}
+
+const START_YESTERDAY = now() - (now() % days(1))
+
+const POLICY_JSON: Policy = {
+  // TODO guts
+  name: 'LADOT Mobility Caps',
+  description: 'Mobility caps as described in the One-Year Permit',
+  policy_id: POLICY_UUID,
+  start_date: START_YESTERDAY,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      rule_type: 'count',
+      rule_id: '7ea0d16e-ad15-4337-9722-9924e3af9146',
+      name: 'Greater LA',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 3000,
+      minimum: 500
+    }
+  ]
+}
+
+const START_ONE_MONTH_AGO = now() - (now() % days(1)) - days(30)
+const START_ONE_WEEK_AGO = now() - (now() % days(1)) - days(7)
+
+// in the past
+const POLICY2_JSON: Policy = {
+  // TODO guts
+  name: 'Idle Times',
+  description: 'LADOT Idle Time Limitations',
+  policy_id: POLICY2_UUID,
+  start_date: START_ONE_MONTH_AGO,
+  end_date: START_ONE_WEEK_AGO,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA (rentable)',
+      rule_id: '2df37be2-b1cb-4152-9bb9-b23472a43b05',
+      rule_type: 'time',
+      rule_units: 'minutes',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { available: [], reserved: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 7200
+    },
+    {
+      name: 'Greater LA (non-rentable)',
+      rule_id: '06a97976-180d-4990-b497-ecafbe818d7d',
+      rule_type: 'time',
+      rule_units: 'minutes',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { unavailable: [], trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 720
+    }
+  ]
+}
+
+const START_ONE_MONTH_FROM_NOW = now() - (now() % days(1)) + days(30)
+
+// in the future
+const POLICY3_JSON: Policy = {
+  // TODO guts
+  policy_id: POLICY3_UUID,
+  name: 'Speed Limits',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: START_ONE_MONTH_FROM_NOW,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 15
+    },
+    {
+      name: 'Venice Beach on weekend afternoons',
+      geographies: [GEOGRAPHY2_UUID],
+      rule_id: 'dff14dd1-603e-43d1-b0cf-5d4fe21d8628',
+      rule_type: 'speed',
+      rule_units: 'mph',
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      days: ['sat', 'sun'],
+      start_time: '12:00',
+      end_time: '23:59',
+      maximum: 10,
+      messages: {
+        'en-US': 'Remember to stay under 10 MPH on Venice Beach on weekends!',
+        'es-US': '¡Recuerda permanecer menos de 10 millas por hora en Venice Beach los fines de semana!'
+      }
+    }
+  ]
 }
 
 function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
@@ -358,6 +481,15 @@ export {
   COMPLIANCE_AUTH,
   JUMP_TEST_DEVICE_1,
   JUMP_PROVIDER_ID,
+  POLICY_JSON,
+  POLICY2_JSON,
+  POLICY3_JSON,
+  POLICY_UUID,
+  POLICY2_UUID,
+  GEOGRAPHY_UUID,
+  START_ONE_MONTH_AGO,
+  START_ONE_WEEK_AGO,
+  PROVIDER_SCOPES,
   makeDevices,
   makeEvents,
   makeEventsWithTelemetry,
