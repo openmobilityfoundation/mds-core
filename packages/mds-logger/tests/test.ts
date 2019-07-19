@@ -22,7 +22,7 @@ describe('MDS Logger', () => {
     done()
   })
 
-  it('censors logs of lat and lng info for mds-logger.warn', async done => {
+  it('censors logs of lat and lng info for mds-logger.warn', done => {
     const toCensor = {
       device_id: 'ec551174-f324-4251-bfed-28d9f3f473fc',
       gps: {
@@ -36,14 +36,20 @@ describe('MDS Logger', () => {
       timestamp: 1555384091559,
       recorded: 1555384091836
     }
-    const val = await logger.warn(toCensor)
-    const [result] = val
-    test.string(result.gps.lat).contains('CENSORED')
-    test.string(result.gps.lng).contains('CENSORED')
-    done()
+    logger
+      .warn(toCensor)
+      .then((val: any[]) => {
+        const [result] = val
+        test.string(result.gps.lat).contains('CENSORED')
+        test.string(result.gps.lng).contains('CENSORED')
+        done()
+      })
+      .catch((err: Error) => {
+        done(err)
+      })
   })
 
-  it('censors logs of lat and lng info for mds-logger.error', async done => {
+  it('censors logs of lat and lng info for mds-logger.error', done => {
     const toCensor = [
       {
         device_id: 'ec551174-f324-4251-bfed-28d9f3f473fc',
@@ -72,13 +78,17 @@ describe('MDS Logger', () => {
         recorded: 1555384090000
       }
     ]
-    const val = await logger.error(toCensor)
-    const [[result1, result2]] = val
-    test.string(result1.gps.lat).contains('CENSORED')
-    test.string(result1.gps.lng).contains('CENSORED')
-    test.string(result2.gps.lat).contains('CENSORED')
-    test.string(result2.gps.lng).contains('CENSORED')
-    done()
+    logger
+      .error(toCensor)
+      .then((val: any[]) => {
+        const [[result1, result2]] = val
+        test.string(result1.gps.lat).contains('CENSORED')
+        test.string(result1.gps.lng).contains('CENSORED')
+        test.string(result2.gps.lat).contains('CENSORED')
+        test.string(result2.gps.lng).contains('CENSORED')
+        done()
+      })
+      .catch(done)
   })
 
   it('verifies conversion of [object Object] to stringified version', done => {
