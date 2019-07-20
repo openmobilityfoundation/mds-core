@@ -807,7 +807,7 @@ function api(app: express.Express): express.Express {
             error_description: 'the specified device_id has not been registered'
           })
         } else {
-          await log.error('post event fail:', JSON.stringify(event), message)
+          await log.error('post event fail:', event, message)
           res.status(500).send(new ServerError())
         }
       }
@@ -831,12 +831,7 @@ function api(app: express.Express): express.Express {
         const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
         // TODO unify with fail() above
         if (failure) {
-          await log.error(
-            providerName(res.locals.provider_id),
-            'event failure',
-            JSON.stringify(failure),
-            JSON.stringify(event)
-          )
+          await log.warn(name, 'event failure', failure, event)
           return res.status(400).send(failure)
         }
 
