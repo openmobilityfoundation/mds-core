@@ -5,7 +5,7 @@
   "description": "AWS Lambda for MDS Provider API",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc --build .",
+    "build": "tsc --project tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
     "lambda:dev3-mds-provider": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-provider --zip-file fileb://dist/bundles/mds-provider.zip",
     "lambda:ladot-prod-mds-provider": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-provider --zip-file fileb://dist/bundles/mds-provider.zip",

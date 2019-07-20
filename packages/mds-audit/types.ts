@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { UUID, Telemetry, Timestamp, Audit } from 'mds'
+import { UUID, Telemetry, Timestamp, Audit } from 'mds-types'
 import { ApiAuthorizerClaims } from 'mds-api-authorizer'
 import { ApiRequest, ApiResponse } from 'mds-api-server'
 

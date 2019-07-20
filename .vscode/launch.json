@@ -63,6 +63,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Server: mds-native",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-native",
+      "env": {
+        "npm_package_name": "mds-native"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Server: mds-policy",
       "runtimeArgs": ["-r", "ts-node/register"],
       "args": ["server.ts"],
@@ -171,17 +185,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Tests: mds-enums",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-enums"
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Tests: mds-logger",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
@@ -189,6 +192,17 @@
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-logger"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-native",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-native"
     },
     {
       "type": "node",
@@ -211,6 +225,17 @@
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-provider"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-types",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["-r", "ts-node/register", "--timeout", "999999", "--colors", "--recursive", "'tests/**/*.ts'"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-types"
     }
   ]
 }

@@ -16,10 +16,9 @@
 
 import supertest from 'supertest'
 import { now } from 'mds-utils'
-import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from 'mds-enums'
+import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from 'mds-types'
 import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from 'mds-test-data'
 import test from 'unit.js'
-import { Device, Telemetry, VehicleEvent } from 'mds'
 import { server } from 'mds-api-server'
 import log from 'mds-logger'
 import { api } from '../api'

@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "*": ["types/*", "*"]
-    },
     "target": "es2018",
     "module": "commonjs",
     "importHelpers": true,
@@ -11,10 +7,6 @@
     "esModuleInterop": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "preserveSymlinks": true,
-    "listEmittedFiles": true,
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true
+    "preserveSymlinks": true
   }
 }

@@ -22,8 +22,7 @@ import cache from 'mds-cache'
 import stream from 'mds-stream'
 import { providerName, isProviderId } from 'mds-providers'
 import areas from 'ladot-service-areas'
-import { UUID, VehicleEvent, CountMap, TripsStats } from 'mds'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-enums'
+import { UUID, VehicleEvent, CountMap, TripsStats, VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP } from 'mds-types'
 import {
   isUUID,
   isTimestamp,

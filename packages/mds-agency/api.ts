@@ -34,9 +34,7 @@ import {
   Timestamp,
   CountMap,
   TripsStats,
-  DeviceID
-} from 'mds'
-import {
+  DeviceID,
   isEnum,
   VEHICLE_EVENTS,
   VEHICLE_TYPES,
@@ -46,7 +44,7 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   VEHICLE_EVENT
-} from 'mds-enums'
+} from 'mds-types'
 import {
   isUUID,
   isPct,

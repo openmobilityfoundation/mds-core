@@ -16,8 +16,7 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import { PROPULSION_TYPE, VEHICLE_TYPE } from 'mds-enums'
-import { VehicleEvent, UUID } from 'mds'
+import { PROPULSION_TYPE, VEHICLE_TYPE, VehicleEvent, UUID } from 'mds-types'
 import { Trip } from 'mds-db/types'
 import { now } from 'mds-utils'
 import { DeviceLabel } from '../labelers/device-labeler'

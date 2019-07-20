@@ -2,10 +2,9 @@ import test from 'unit.js'
 import fs from 'fs'
 
 import { makeDevices, makeEventsWithTelemetry } from 'mds-test-data'
-import { RULE_TYPES } from 'mds-enums'
+import { RULE_TYPES, Geography, Policy, Device } from 'mds-types'
 
 import { la_city_boundary } from 'mds-policy/tests/la-city-boundary'
-import { Geography, Policy, Device } from 'mds'
 import { FeatureCollection } from 'geojson'
 import { processPolicy, filterPolicies, filterEvents } from 'mds-compliance/mds-compliance-engine'
 import { ValidationError, RuntimeError } from 'mds-utils'

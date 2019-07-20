@@ -21,8 +21,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_EVENTS } from 'mds-enums'
-import { Timestamp, Device, VehicleEvent, Telemetry } from 'mds'
+import { VEHICLE_EVENTS, Timestamp, Device, VehicleEvent, Telemetry } from 'mds-types'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import { makeDevices } from 'mds-test-data'
