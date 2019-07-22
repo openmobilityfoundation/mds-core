@@ -831,7 +831,7 @@ function api(app: express.Express): express.Express {
         const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
         // TODO unify with fail() above
         if (failure) {
-          await log.warn(name, 'event failure', failure, event)
+          log.info(name, 'event failure', failure, event)
           return res.status(400).send(failure)
         }
 

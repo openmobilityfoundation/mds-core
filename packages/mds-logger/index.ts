@@ -116,7 +116,7 @@ function makeCensoredLogMsgRecurse(msg: any): any {
 function makeCensoredLogMsg(...msgs: any[]): any[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const censored = msgs.map(msg => makeCensoredLogMsgRecurse(msg))
-  return censored.map(msg => (String(msg) === '[object Object]' ? JSON.stringify(msg) : msg))
+  return censored.map(msg => (typeof msg === 'object' ? JSON.stringify(msg) : msg))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
