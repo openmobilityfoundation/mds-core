@@ -19,7 +19,7 @@
     "uuid4": "1.1.4"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc --build tsconfig.build.json",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
