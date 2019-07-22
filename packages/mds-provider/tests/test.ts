@@ -19,7 +19,7 @@ import { now } from 'mds-utils'
 import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from 'mds-types'
 import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from 'mds-test-data'
 import test from 'unit.js'
-import { server } from 'mds-api-server'
+import { ApiServer } from 'mds-api-server'
 import log from 'mds-logger'
 import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
@@ -28,7 +28,7 @@ process.env.PATH_PREFIX = '/provider'
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 const ORIGINAL_TEST_TIMESTAMP = 1546453100001
 let test_timestamp = ORIGINAL_TEST_TIMESTAMP
