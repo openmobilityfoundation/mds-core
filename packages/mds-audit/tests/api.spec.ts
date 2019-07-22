@@ -36,13 +36,13 @@ import { now } from 'mds-utils'
 import cache from 'mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
-import { server } from 'mds-api-server'
+import { ApiServer } from 'mds-api-server'
 import db from 'mds-db'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/audit'
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 const PROVIDER_SCOPES = 'admin:all test:all'
 const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`

@@ -18,9 +18,9 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { server } from 'mds-api-server'
+import { ApiServer } from 'mds-api-server'
 
-const request = supertest(server(app => app))
+const request = supertest(ApiServer(app => app))
 
 const APP_JSON = 'application/json; charset=utf-8'
 

@@ -32,7 +32,7 @@ import { VEHICLE_EVENTS, Timestamp, Device, VehicleEvent, Telemetry } from 'mds-
 import db from 'mds-db'
 import cache from 'mds-cache'
 import { makeDevices } from 'mds-test-data'
-import { server } from 'mds-api-server'
+import { ApiServer } from 'mds-api-server'
 import { TEST1_PROVIDER_ID } from 'mds-providers'
 import { api } from '../api'
 
@@ -41,7 +41,7 @@ process.env.PATH_PREFIX = '/agency'
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 function now(): Timestamp {
   return Date.now()
