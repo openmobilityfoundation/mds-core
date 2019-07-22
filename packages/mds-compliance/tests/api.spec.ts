@@ -8,8 +8,17 @@ import cache from 'mds-cache'
 import db from 'mds-db'
 import supertest from 'supertest'
 import { now } from 'mds-utils'
-import { Telemetry, Device, Policy, Geography, VehicleEvent, UUID } from 'mds'
-import { RULE_TYPES, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
+import {
+  Telemetry,
+  Device,
+  Policy,
+  Geography,
+  VehicleEvent,
+  UUID,
+  RULE_TYPES,
+  VEHICLE_TYPES,
+  PROPULSION_TYPES
+} from 'mds-types'
 import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'

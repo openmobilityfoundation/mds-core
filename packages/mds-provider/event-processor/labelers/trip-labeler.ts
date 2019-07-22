@@ -16,7 +16,7 @@
 
 import db from 'mds-db'
 import logger from 'mds-logger'
-import { UUID } from 'mds'
+import { UUID } from 'mds-types'
 import { isUUID } from 'mds-utils'
 import { Trip } from 'mds-db/types'
 import { StreamEntry, StreamEntryLabels } from '../types'

@@ -12,15 +12,16 @@
   "dependencies": {
     "@hapi/joi": "15.1.0",
     "circle-to-polygon": "1.0.2",
+    "mds-types": "0.1.0",
     "point-in-polygon": "1.0.1"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build .",
+    "build": "tsc --project tsconfig.build.json",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 30 --reporter=text --reporter=html ts-mocha --require source-map-support/register --recursive tests/**/*.ts"
+    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 30 --reporter=text --reporter=html ts-mocha --project tsconfig.build.json --require source-map-support/register --recursive tests/**/*.ts"
   }
 }

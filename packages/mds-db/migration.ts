@@ -1,4 +1,4 @@
-import { AUDIT_EVENT_TYPES } from 'mds-enums'
+import { AUDIT_EVENT_TYPES } from 'mds-types'
 
 import { csv } from 'mds-utils'
 

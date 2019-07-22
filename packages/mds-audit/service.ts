@@ -26,7 +26,7 @@ import {
   VehicleEvent,
   TelemetryData,
   WithGpsProperty
-} from 'mds'
+} from 'mds-types'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)

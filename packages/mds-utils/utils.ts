@@ -18,9 +18,20 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography, Rule } from 'mds'
+import {
+  UUID,
+  Timestamp,
+  VehicleEvent,
+  Telemetry,
+  BoundingBox,
+  Geography,
+  Rule,
+  VEHICLE_EVENTS,
+  VEHICLE_STATUSES,
+  EVENT_STATUS_MAP,
+  VEHICLE_STATUS
+} from 'mds-types'
 import { TelemetryRecord } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
 import log from 'mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 

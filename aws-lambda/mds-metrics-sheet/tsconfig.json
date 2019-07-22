@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.settings.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  },
-  "references": [{ "path": "../../packages/mds-metrics-sheet" }],
-  "include": ["metrics-log.ts", "vehicle-counts.ts"]
-}

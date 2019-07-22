@@ -23,7 +23,7 @@ import { providerName } from 'mds-providers' // map of uuids -> obj
 
 import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
 import { isUUID, now, pathsFor, round, routeDistance } from 'mds-utils'
-import { Telemetry } from 'mds'
+import { Telemetry } from 'mds-types'
 import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from 'mds-db/types'
 import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { Feature, FeatureCollection } from 'geojson'

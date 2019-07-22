@@ -1,6 +1,5 @@
 import assert from 'assert'
-import { Telemetry, Recorded, VehicleEvent, Device } from 'mds'
-import { VEHICLE_EVENTS } from 'mds-enums'
+import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS } from 'mds-types'
 import {
   JUMP_TEST_DEVICE_1,
   makeDevices,

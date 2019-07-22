@@ -1,8 +1,6 @@
 import * as Joi from '@hapi/joi'
 
-import { VEHICLE_EVENTS, VEHICLE_TYPES } from 'mds-enums'
-
-import { Policy, Geography, VehicleEvent } from 'mds'
+import { VEHICLE_EVENTS, VEHICLE_TYPES, Policy, Geography, VehicleEvent } from 'mds-types'
 import { ValidationError } from 'mds-utils'
 
 const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']

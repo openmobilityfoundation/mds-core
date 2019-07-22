@@ -16,7 +16,7 @@
 
 import test from 'unit.js'
 import uuid from 'uuid'
-import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from 'mds-enums'
+import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from 'mds-types'
 import { providers } from 'mds-providers' // map of uuids -> obj
 import {
   isValidAuditTripId,

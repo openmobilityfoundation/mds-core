@@ -18,7 +18,6 @@ import express from 'express'
 import { pathsFor, ValidationError, ServerError, AuthorizationError, isValidDeviceId, NotFoundError } from 'mds-utils'
 import logger from 'mds-logger'
 import db from 'mds-db'
-import { NextFunction } from 'connect'
 import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   NativeApiResponse,
@@ -33,7 +32,7 @@ const NATIVE_API_VERSION = '0.0.1'
 
 function api(app: express.Express): express.Express {
   // ///////////////////// begin middleware ///////////////////////
-  app.use(async (req: NativeApiRequest, res: NativeApiResponse, next: NextFunction) => {
+  app.use(async (req: NativeApiRequest, res: NativeApiResponse, next: express.NextFunction) => {
     if (!(req.path.includes('/health') || req.path === '/')) {
       try {
         if (res.locals.claims) {

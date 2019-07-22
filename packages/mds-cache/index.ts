@@ -18,7 +18,7 @@ import log from 'mds-logger'
 
 import flatten from 'flat'
 import { capitalizeFirst, nullKeys, stripNulls, now } from 'mds-utils'
-import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from 'mds'
+import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from 'mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
 import { parseTelemetry, parseEvent, parseDevice } from './unflatteners'
@@ -181,36 +181,35 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   const start = query.since || 0
   const stop = now()
   // read all device ids
-  log
-    .info('redis zrangebyscore device-ids', start, stop)(await getClient())
-    .zrangebyscoreAsync('device-ids', start, stop)
-    .then(async (device_ids_res: string[]) => {
-      log.info('readDevicesStatus', device_ids_res.length, 'entries')
+  log.info('redis zrangebyscore device-ids', start, stop)
+  const client = await getClient()
+  client.zrangebyscoreAsync('device-ids', start, stop).then(async (device_ids_res: string[]) => {
+    log.info('readDevicesStatus', device_ids_res.length, 'entries')
 
-      const skip = query.skip || 0
-      const take = query.take || 100000000000
-      const device_ids = device_ids_res.slice(skip, skip + take)
+    const skip = query.skip || 0
+    const take = query.take || 100000000000
+    const device_ids = device_ids_res.slice(skip, skip + take)
 
-      // read all devices
-      const device_status_map: { [device_id: string]: CachedItem | {} } = {}
+    // read all devices
+    const device_status_map: { [device_id: string]: CachedItem | {} } = {}
 
-      // big batch redis nightmare!
-      let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
-      all = all.filter((item: CachedItem) => Boolean(item))
-      all.map(item => {
-        device_status_map[item.device_id] = device_status_map[item.device_id] || {}
-        Object.assign(device_status_map[item.device_id], item)
-      })
-      log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
-
-      let values = Object.values(device_status_map)
-      if (query.bbox) {
-        values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
-      }
-
-      log.info('readDevicesStatus done')
-      return values
+    // big batch redis nightmare!
+    let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
+    all = all.filter((item: CachedItem) => Boolean(item))
+    all.map(item => {
+      device_status_map[item.device_id] = device_status_map[item.device_id] || {}
+      Object.assign(device_status_map[item.device_id], item)
     })
+    log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
+
+    let values = Object.values(device_status_map)
+    if (query.bbox) {
+      values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
+    }
+
+    log.info('readDevicesStatus done')
+    return values
+  })
 }
 /* eslint-enable promise/catch-or-return */
 
