@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "3.5.5",
+    "cloudevents-sdk": "0.2.3",
     "flat": "4.1.0",
     "mds-logger": "0.1.3",
     "node-gzip": "1.1.2",

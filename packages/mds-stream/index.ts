@@ -1,3 +1,4 @@
+/* eslint-disable import/export */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -15,9 +16,36 @@
  */
 
 import logger from 'mds-logger'
+import { env } from 'process'
 import redis from 'redis'
 import bluebird from 'bluebird'
 import { Device, VehicleEvent, Telemetry } from 'mds'
+import Cloudevent from 'cloudevents-sdk'
+
+const binding = null
+
+function getBinding() {
+  if (!binding) {
+    const config = {
+      method: 'POST',
+      url: env.SINK
+    }
+
+    // eslint-disable-next-line new-cap
+    return new Cloudevent.bindings['http-binary0.2'](config)
+  }
+
+  return binding
+}
+
+async function write(type: string, data: string) {
+  const cloudevent = new Cloudevent(Cloudevent.specs['0.2'])
+    .type(type)
+    .source(env.CE_NAME)
+    .data(data)
+
+  return getBinding().emit(cloudevent)
+}
 
 export type ReadStreamOptions = Partial<{
   count: number
@@ -102,7 +130,11 @@ async function getClient() {
 }
 
 async function initialize() {
-  await getClient()
+  if (env.SINK) {
+    getBinding()
+  } else {
+    await getClient()
+  }
 }
 
 async function reset() {
@@ -135,15 +167,25 @@ async function writeStreamBatch(stream: Stream, field: string, values: unknown[]
 
 // put basics of vehicle in the cache
 async function writeDevice(device: Device) {
+  if (env.SINK) {
+    return write('mds.device', JSON.stringify(device))
+  }
   return writeStream(DEVICE_INDEX_STREAM, 'data', device)
 }
 
 async function writeEvent(event: VehicleEvent) {
+  if (env.SINK) {
+    return write('mds.event', JSON.stringify(event))
+  }
   return Promise.all([DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM].map(stream => writeStream(stream, 'event', event)))
 }
 
 // put latest locations in the cache
 async function writeTelemetry(telemetry: Telemetry[]) {
+  if (env.SINK) {
+    await Promise.all(telemetry.map(item => write('mds.telemetry', JSON.stringify(item))))
+    return
+  }
   const start = now()
   await writeStreamBatch(DEVICE_RAW_STREAM, 'telemetry', telemetry)
   const delta = now() - start
@@ -237,6 +279,9 @@ async function getStreamInfo(stream: Stream) {
 }
 
 async function health() {
+  if (env.SINK) {
+    return Promise.resolve({ using: 'cloudevents-emitter', status: true, stats: {} })
+  }
   const client = await getClient()
   const status = await client.pingAsync('connected')
   return { using: 'redis', status }
