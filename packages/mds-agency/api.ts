@@ -347,7 +347,7 @@ function api(app: express.Express): express.Express {
       } catch (err) {
         await log.error('failed to write device stream/cache', err)
       }
-      await log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device))
+      await log.info('new', providerName(res.locals.provider_id), 'vehicle added', device)
       try {
         await writeRegisterEvent()
       } catch (err) {
@@ -503,7 +503,7 @@ function api(app: express.Express): express.Express {
           error: 'not_found'
         })
       } else {
-        await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, JSON.stringify(req.body), err)
+        await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
         res.status(500).send(new ServerError())
       }
     }
@@ -807,7 +807,7 @@ function api(app: express.Express): express.Express {
             error_description: 'the specified device_id has not been registered'
           })
         } else {
-          await log.error('post event fail:', JSON.stringify(event), message)
+          await log.error('post event fail:', event, message)
           res.status(500).send(new ServerError())
         }
       }
@@ -831,12 +831,7 @@ function api(app: express.Express): express.Express {
         const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
         // TODO unify with fail() above
         if (failure) {
-          await log.error(
-            providerName(res.locals.provider_id),
-            'event failure',
-            JSON.stringify(failure),
-            JSON.stringify(event)
-          )
+          log.info(name, 'event failure', failure, event)
           return res.status(400).send(failure)
         }
 
@@ -1111,7 +1106,7 @@ function api(app: express.Express): express.Express {
           areas: {}
         }
       })
-      await log.warn('/admin/vehicle_counts', JSON.stringify(stats))
+      await log.warn('/admin/vehicle_counts', stats)
 
       const maps = await getMaps()
       const { eventMap } = maps
@@ -1496,7 +1491,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/admin/cache/info'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const details = await cache.info()
-    await log.warn('cache', JSON.stringify(details))
+    await log.warn('cache', details)
     res.send(details)
   })
 
@@ -1531,7 +1526,7 @@ function api(app: express.Express): express.Express {
   async function refresh(device_id: UUID, provider_id: UUID): Promise<string> {
     // TODO all of this back and forth between cache and db is slow
     const device = await db.readDevice(device_id, provider_id)
-    // log.info('refresh device', JSON.stringify(device))
+    // log.info('refresh device', device)
     await cache.writeDevice(device)
     try {
       const event = await db.readEvent(device_id)
@@ -1558,7 +1553,7 @@ function api(app: express.Express): express.Express {
 
       await log.info('read', rows.length, 'device_ids. skip', skip, 'take', take)
       const devices = rows.slice(skip, take + skip)
-      await log.info('device_ids', JSON.stringify(devices))
+      await log.info('device_ids', devices)
 
       const promises = devices.map(device => refresh(device.device_id, device.provider_id))
       await Promise.all(promises)

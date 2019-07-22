@@ -144,7 +144,7 @@ export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
     out = values
   }
 
-  return log.info('sql>', sql, out)
+  log.info('sql>', sql, out)
 }
 
 export class SqlVals {
