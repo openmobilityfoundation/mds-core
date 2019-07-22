@@ -17,8 +17,9 @@ describe('MDS Logger', () => {
       recorded: 1555384091836
     }
     const [result] = logger.info(toCensor)
-    test.string(result.gps.lat).contains('CENSORED')
-    test.string(result.gps.lng).contains('CENSORED')
+    const res = JSON.parse(result)
+    test.string(res.gps.lat).contains('CENSORED')
+    test.string(res.gps.lng).contains('CENSORED')
     done()
   })
 
@@ -40,8 +41,9 @@ describe('MDS Logger', () => {
       .warn(toCensor)
       .then((val: any[]) => {
         const [result] = val
-        test.string(result.gps.lat).contains('CENSORED')
-        test.string(result.gps.lng).contains('CENSORED')
+        const res = JSON.parse(result)
+        test.string(res.gps.lat).contains('CENSORED')
+        test.string(res.gps.lng).contains('CENSORED')
         done()
       })
       .catch((err: Error) => {
@@ -80,8 +82,9 @@ describe('MDS Logger', () => {
     ]
     logger
       .error(toCensor)
-      .then((val: any[]) => {
-        const [[result1, result2]] = val
+      .then((vals: any[]) => {
+        const [val] = vals
+        const [result1, result2] = JSON.parse(val)
         test.string(result1.gps.lat).contains('CENSORED')
         test.string(result1.gps.lng).contains('CENSORED')
         test.string(result2.gps.lat).contains('CENSORED')
@@ -93,7 +96,8 @@ describe('MDS Logger', () => {
 
   it('verifies conversion of [object Object] to stringified version', done => {
     const [result] = logger.info({ key1: 'key1', key2: 'key2' })
-    test.string(result.key1).contains('key1')
+    const res = JSON.parse(result)
+    test.string(res.key1).contains('key1')
     done()
   })
 
