@@ -160,7 +160,11 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
   }
 }
 
-export const MetricsLogHandler = () =>
-  getProviderMetrics(0)
-    .then(rows => appendSheet('Metrics Log', rows))
-    .catch((err: Error) => log.error('MetricsLogHandler', err))
+export const MetricsLogHandler = async () => {
+  try {
+    const rows = await getProviderMetrics(0)
+    await appendSheet('Metrics Log', rows)
+  } catch (err) {
+    await log.error('MetricsLogHandler', err)
+  }
+}

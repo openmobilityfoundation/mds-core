@@ -22,4 +22,6 @@ const [interval, count] = [PROVIDER_EVENT_PROCESSOR_INTERVAL, PROVIDER_EVENT_PRO
   .map(Number)
   .map(value => (Number.isNaN(value) ? undefined : value))
 
+/* eslint-reason Fire and forget */
+/* eslint-disable-next-line @typescript-eslint/no-floating-promises */
 ProviderEventProcessor({ interval, count })
