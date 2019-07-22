@@ -29,8 +29,6 @@ import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
 import { Feature, FeatureCollection } from 'geojson'
 import { ProviderApiRequest, ProviderApiResponse } from './types'
 
-log.startup()
-
 function api(app: express.Express): express.Express {
   // /////////// enums ////////////////
 
@@ -87,15 +85,14 @@ function api(app: express.Express): express.Express {
 
   // / //////////////////////// basic gets /////////////////////////////////
 
-  app.get(pathsFor('/test/initialize'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
+  app.get(pathsFor('/test/initialize'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     log.info('get /test/initialize')
 
     // nuke it all
-    Promise.all([cache.initialize(), db.initialize()]).then(() => {
-      log.info('got /test/initialize')
-      res.status(201).send({
-        result: 'Initialized'
-      })
+    await Promise.all([cache.initialize(), db.initialize()])
+    log.info('got /test/initialize')
+    res.status(201).send({
+      result: 'Initialized'
     })
   })
 
@@ -118,20 +115,11 @@ function api(app: express.Express): express.Express {
         telemetry
       }
 
-      Promise.all([cache.seed(data), db.seed(data)]).then(
-        () => {
-          log.info('/test/seed success')
-          res.status(201).send({
-            result: `Seeded ${count} devices/events/telemetry`
-          })
-        },
-        async err => /* istanbul ignore next */ {
-          await log.error('/test/seed failure:', err)
-          res.status(500).send({
-            result: `Failed to seed: ${err}`
-          })
-        }
-      )
+      await Promise.all([cache.seed(data), db.seed(data)])
+      log.info('/test/seed success')
+      res.status(201).send({
+        result: `Seeded ${count} devices/events/telemetry`
+      })
     } catch (err) /* istanbul ignore next */ {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
@@ -146,20 +134,11 @@ function api(app: express.Express): express.Express {
   app.post(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
-      Promise.all([cache.seed(req.body), db.seed(req.body)]).then(
-        () => {
-          log.info('/test/seed success')
-          res.status(201).send({
-            result: `Seeded devices/events/telemetry`
-          })
-        },
-        async err => /* istanbul ignore next */ {
-          await log.error('/test/seed failure:', err)
-          res.status(500).send({
-            result: `Failed to seed: ${err}`
-          })
-        }
-      )
+      await Promise.all([cache.seed(req.body), db.seed(req.body)])
+      log.info('/test/seed success')
+      res.status(201).send({
+        result: `Seeded devices/events/telemetry`
+      })
     } catch (err) /* istanbul ignore next */ {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
@@ -170,11 +149,10 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/test/shutdown'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    Promise.all([db.shutdown(), cache.shutdown()]).then(() => {
-      res.send({
-        result: 'shutdown done'
-      })
+  app.get(pathsFor('/test/shutdown'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    await Promise.all([db.shutdown(), cache.shutdown()])
+    res.send({
+      result: 'shutdown done'
     })
   })
 

@@ -1,3 +1,10 @@
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable promise/no-nesting */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import { PROVIDER_AUTH, makeDevices, makeEventsWithTelemetry, makeTelemetryInArea } from 'mds-test-data'
 
 import test from 'unit.js'

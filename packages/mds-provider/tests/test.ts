@@ -1,3 +1,9 @@
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /*
     Copyright 2019 City of Los Angeles.
 
