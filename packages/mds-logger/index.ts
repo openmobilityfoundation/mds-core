@@ -113,8 +113,10 @@ function makeCensoredLogMsgRecurse(msg: any): any {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeCensoredLogMsg(...msg: any[]) {
-  return makeCensoredLogMsgRecurse(msg)
+function makeCensoredLogMsg(...msgs: any[]): any[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const censored = msgs.map(msg => makeCensoredLogMsgRecurse(msg))
+  return censored.map(msg => (String(msg) === '[object Object]' ? JSON.stringify(msg) : msg))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -175,9 +177,9 @@ if (argv.length > 3) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function info(...msg: any) {
+function info(...msg: any[]): any[] {
   if (env.QUIET) {
-    return
+    return []
   }
 
   const censoredMsg = makeCensoredLogMsg(...msg)
@@ -186,29 +188,25 @@ function info(...msg: any) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function warn(...msg: any) {
-  try {
-    if (env.QUIET) {
-      return
-    }
-
-    const censoredMsg = makeCensoredLogMsg(...msg)
-    console.log.apply(console, ['WARN', ...censoredMsg])
-    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
-    await sendSlack(censoredMsg.join(' '))
-
-    /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
-    await sendPush(censoredMsg.join(' '), 0)
-    return censoredMsg
-  } catch (err) {
-    console.log(err)
+async function warn(...msg: any[]): Promise<any[]> {
+  if (env.QUIET) {
+    return []
   }
+
+  const censoredMsg = makeCensoredLogMsg(...msg)
+  console.log.apply(console, ['WARN', ...censoredMsg])
+  /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+  await sendSlack(censoredMsg.join(' '))
+
+  /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
+  await sendPush(censoredMsg.join(' '), 0)
+  return censoredMsg
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function error(...msg: any) {
+async function error(...msg: any[]): Promise<any[]> {
   if (env.QUIET) {
-    return
+    return []
   }
   const censoredMsg = makeCensoredLogMsg(...msg)
   // eslint-disable-next-line no-console
