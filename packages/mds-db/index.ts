@@ -11,7 +11,7 @@ import {
   Recorded,
   DeviceID,
   Rule
-} from 'mds'
+} from 'mds-types'
 import {
   convertTelemetryToTelemetryRecord,
   convertTelemetryRecordToTelemetry,

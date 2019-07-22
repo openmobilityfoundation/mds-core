@@ -21,9 +21,7 @@ import {
   VEHICLE_TYPES,
   PROPULSION_TYPES,
   VEHICLE_STATUSES,
-  VEHICLE_STATUS
-} from 'mds-enums'
-import { UUID, Device, Timestamp, Telemetry, VehicleEvent } from 'mds'
+  VEHICLE_STATUS, UUID, Device, Timestamp, Telemetry, VehicleEvent } from 'mds-types'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from 'mds-db/types'
 

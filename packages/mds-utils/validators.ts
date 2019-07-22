@@ -15,8 +15,15 @@
  */
 
 import { providers } from 'mds-providers' // map of uuids -> obb
-import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS, AUDIT_EVENT_TYPE, VEHICLE_EVENT } from 'mds-enums'
-import { UUID, Timestamp, Telemetry } from 'mds'
+import {
+  AUDIT_EVENT_TYPES,
+  VEHICLE_EVENTS,
+  AUDIT_EVENT_TYPE,
+  VEHICLE_EVENT,
+  UUID,
+  Timestamp,
+  Telemetry
+} from 'mds-types'
 import * as Joi from '@hapi/joi'
 import { ValidationError } from './exceptions'
 

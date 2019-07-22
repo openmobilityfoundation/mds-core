@@ -16,7 +16,7 @@
 
 import { ApiRequest, ApiResponse } from 'mds-api-server'
 import { ApiAuthorizerClaims } from 'mds-api-authorizer'
-import { UUID, VehicleEvent, Recorded, Device } from 'mds'
+import { UUID, VehicleEvent, Recorded, Device } from 'mds-types'
 import { JsonApiLinks } from 'mds-api-helpers'
 
 // Allow adding type definitions for Express Request objects

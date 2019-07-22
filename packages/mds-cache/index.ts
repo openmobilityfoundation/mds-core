@@ -18,7 +18,7 @@ import log from 'mds-logger'
 
 import flatten from 'flat'
 import { capitalizeFirst, nullKeys, stripNulls, now } from 'mds-utils'
-import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from 'mds'
+import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from 'mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
 import { parseTelemetry, parseEvent, parseDevice } from './unflatteners'

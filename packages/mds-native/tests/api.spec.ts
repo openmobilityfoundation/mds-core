@@ -4,7 +4,7 @@ import db from 'mds-db'
 import { server } from 'mds-api-server'
 import { PROVIDER_UUID } from 'mds-test-data'
 import uuid from 'uuid'
-import { PROPULSION_TYPES, VEHICLE_TYPES } from 'mds-enums'
+import { PROPULSION_TYPES, VEHICLE_TYPES } from 'mds-types'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/native'

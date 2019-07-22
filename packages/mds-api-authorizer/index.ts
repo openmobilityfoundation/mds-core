@@ -1,6 +1,6 @@
 import express from 'express'
 import jwtDecode from 'jwt-decode'
-import { UUID } from 'mds'
+import { UUID } from 'mds-types'
 
 export interface ApiAuthorizerClaims {
   principalId: string

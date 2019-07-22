@@ -15,10 +15,17 @@
  */
 
 import supertest from 'supertest'
-import { VEHICLE_EVENTS, AUDIT_EVENT_TYPES, PROPULSION_TYPES, VEHICLE_TYPES } from 'mds-enums'
+import {
+  Device,
+  Timestamp,
+  Telemetry,
+  VEHICLE_EVENTS,
+  AUDIT_EVENT_TYPES,
+  PROPULSION_TYPES,
+  VEHICLE_TYPES
+} from 'mds-types'
 import { PROVIDER_UUID, PROVIDER_AUTH, makeEventsWithTelemetry, makeDevices, COMPLIANCE_AUTH } from 'mds-test-data'
 import { now } from 'mds-utils'
-import { Device, Timestamp, Telemetry } from 'mds'
 import cache from 'mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'

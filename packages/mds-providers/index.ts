@@ -1,4 +1,4 @@
-import { Provider } from 'mds'
+import { Provider } from 'mds-types'
 
 // Officially recognized providers, from:
 // https://github.com/CityOfLosAngeles/mobility-data-specification/blob/dev/providers.csv

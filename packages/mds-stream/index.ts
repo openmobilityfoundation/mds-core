@@ -17,7 +17,7 @@
 import logger from 'mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import { Device, VehicleEvent, Telemetry } from 'mds'
+import { Device, VehicleEvent, Telemetry } from 'mds-types'
 
 export type ReadStreamOptions = Partial<{
   count: number

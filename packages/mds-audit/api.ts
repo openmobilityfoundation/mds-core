@@ -42,8 +42,7 @@ import {
   ServerError
 } from 'mds-utils'
 import { providerName } from 'mds-providers' // map of uuids -> obj
-import { AUDIT_EVENT_TYPES } from 'mds-enums'
-import { AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
+import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds-types'
 import { getVehicles, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
