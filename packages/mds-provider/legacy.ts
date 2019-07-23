@@ -168,9 +168,7 @@ function asFeatureCollection(items: Telemetry[]): FeatureCollection {
 }
 
 async function asRoute(trip_start: VehicleEvent, trip_end: VehicleEvent): Promise<FeatureCollection> {
-  logger.info('asRoute', JSON.stringify(trip_start), JSON.stringify(trip_end))
   const telemetry: Telemetry[] = await db.readTelemetry(trip_start.device_id, trip_start.timestamp, trip_end.timestamp)
-  logger.info('asRoute telemetry', JSON.stringify(telemetry))
   return Promise.resolve(asFeatureCollection(telemetry))
 }
 
@@ -238,14 +236,14 @@ async function getEventsAsTrips(req: ProviderApiRequest, res: ProviderApiRespons
   }
 
   try {
-    const { tripIds } = await db.readTripIds(params)
+    const { count, tripIds } = await db.readTripIds(params)
     const trips = await asEventTrips(tripIds)
     res.status(200).send({
       version: PROVIDER_VERSION,
       data: {
         trips
       },
-      links: asJsonApiLinks(req, skip, take, trips.length)
+      links: asJsonApiLinks(req, skip, take, count)
     })
   } catch (err) {
     const desc = err instanceof Error ? err.message : err
