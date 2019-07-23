@@ -32,13 +32,6 @@ import { getEventsAsStatusChanges, getEventsAsTrips } from './legacy'
 
 const { PROVIDER_MODERN } = process.env
 
-const handlers = PROVIDER_MODERN
-  ? null
-  : {
-      getEventsAsStatusChanges,
-      getEventsAsTrips
-    }
-
 function api(app: express.Express): express.Express {
   // / ////////// utilities ////////////////
 
@@ -215,9 +208,8 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/trips'),
-    handlers
-      ? handlers.getEventsAsTrips
-      : async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    PROVIDER_MODERN
+      ? async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
           const { provider_id, device_id, vehicle_id } = req.query
           const min_end_time = req.query.min_end_time && Number(req.query.min_end_time)
@@ -264,6 +256,7 @@ function api(app: express.Express): express.Express {
             res.status(500).send({ error: new Error(desc) })
           }
         }
+      : getEventsAsTrips
   )
 
   // / ////////////////////////////// status_changes /////////////////////////////
@@ -272,9 +265,8 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/status_changes'),
-    handlers
-      ? handlers.getEventsAsStatusChanges
-      : async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    PROVIDER_MODERN
+      ? async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
           const start_time = req.query.start_time && Number(req.query.start_time)
           const end_time = req.query.end_time && Number(req.query.end_time)
@@ -318,6 +310,7 @@ function api(app: express.Express): express.Express {
             res.status(500).send({ error: new Error(desc) })
           }
         }
+      : getEventsAsStatusChanges
   )
 
   return app
