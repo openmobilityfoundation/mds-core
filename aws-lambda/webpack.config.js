@@ -45,7 +45,8 @@ module.exports = ({ env, argv, dirname, bundles }) => {
         NPM_PACKAGE_NAME: JSON.stringify(npm_package_name),
         NPM_PACKAGE_VERSION: JSON.stringify(npm_package_version),
         NPM_PACKAGE_GIT_BRANCH: JSON.stringify(gitRevisionPlugin.branch()),
-        NPM_PACKAGE_GIT_COMMIT: JSON.stringify(gitRevisionPlugin.commithash())
+        NPM_PACKAGE_GIT_COMMIT: JSON.stringify(gitRevisionPlugin.commithash()),
+        NPM_PACKAGE_BUILD_DATE: JSON.stringify(new Date().toISOString())
       }),
       // Zip the dist folder
       new ZipPlugin({

@@ -41,11 +41,14 @@ export const ApiServer = (
         npm_package_name: name,
         npm_package_version: version,
         npm_package_git_branch: branch,
-        npm_package_git_commit: commit
+        npm_package_git_commit: commit,
+        npm_package_build_date: date
       }
     } = process
     // 200 OK
-    res.status(200).send({ name, version, build: { branch, commit }, node })
+    res
+      .status(200)
+      .send({ name, version, build: branch && commit && date ? { date, branch, commit } : undefined, node })
   })
 
   app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {

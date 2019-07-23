@@ -27,6 +27,7 @@ declare const NPM_PACKAGE_NAME: string
 declare const NPM_PACKAGE_VERSION: string
 declare const NPM_PACKAGE_GIT_BRANCH: string
 declare const NPM_PACKAGE_GIT_COMMIT: string
+declare const NPM_PACKAGE_BUILD_DATE: string
 
 export interface ApiGatewayRequest extends express.Request {
   apiGateway?: {
@@ -55,7 +56,8 @@ export const AwsServerlessExpressHandler = (
     npm_package_name: NPM_PACKAGE_NAME,
     npm_package_version: NPM_PACKAGE_VERSION,
     npm_package_git_branch: NPM_PACKAGE_GIT_BRANCH,
-    npm_package_git_commit: NPM_PACKAGE_GIT_COMMIT
+    npm_package_git_commit: NPM_PACKAGE_GIT_COMMIT,
+    npm_package_build_date: NPM_PACKAGE_BUILD_DATE
   })
 
   const server = awsServerlessExpress.createServer(
