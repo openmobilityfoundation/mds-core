@@ -195,9 +195,13 @@ export interface ComplianceResponse {
   compliance: Compliance[]
 }
 
+// We don't put the publish_date into the geography_json column
+// as we do with the Policy type, because we don't want to mess with
+// the geojson FeatureCollection type.
 export interface Geography {
   geography_id: UUID
-  geography_json: Feature | FeatureCollection
+  geography_json: FeatureCollection
+  publish_date?: Timestamp | null
 }
 
 export interface ErrorObject {

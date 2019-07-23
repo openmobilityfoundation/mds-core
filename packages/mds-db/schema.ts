@@ -122,7 +122,7 @@ const AUDIT_EVENTS_COLS = [
 // policy
 const POLICIES_COLS = ['policy_id', 'policy_json'] as const
 
-const GEOGRAPHIES_COLS = ['geography_id', 'geography_json'] as const
+const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'publish_date'] as const
 
 const tables: { [propName: string]: Readonly<string[]> } = {
   [DEVICES_TABLE]: DEVICES_COLS,
@@ -156,6 +156,7 @@ const PG_TYPES: { [propName: string]: string } = {
   telemetry_timestamp: 'bigint',
 
   recorded: 'bigint NOT NULL', // timestamp of when record was created
+  publish_date: 'bigint', // timestamp of when published
 
   vehicle_id: 'varchar(255) NOT NULL',
   year: 'smallint',

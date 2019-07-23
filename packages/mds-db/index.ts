@@ -1050,7 +1050,7 @@ async function readGeographies(params?: { geography_id?: UUID; get_unpublished?:
     }
 
     if (params && params.get_unpublished) {
-      conditions.push(`geography_json->>'publish_date' IS NULL`)
+      conditions.push(`publish_date IS NULL`)
     }
 
     if (conditions.length) {
@@ -1060,8 +1060,13 @@ async function readGeographies(params?: { geography_id?: UUID; get_unpublished?:
     const values = vals.values()
     // TODO insufficiently general
     // TODO add 'count'
-    const res = await client.query(sql, values)
-    return res.rows.map(row => row.geography_json) as Geography[]
+    const { rows } = await client.query(sql, values)
+    return rows
+    /*
+    return res.rows.map((row: Geography) => {
+      row.geography_json
+    }) as Geography[]
+    */
   } catch (err) {
     log.error('readGeographies', err)
     throw err
@@ -1075,7 +1080,7 @@ async function writeGeography(geography: Geography) {
   const sql = `INSERT INTO ${cols_sql(schema.GEOGRAPHIES_TABLE, schema.GEOGRAPHIES_COLS)} ${vals_sql(
     schema.GEOGRAPHIES_COLS
   )}`
-  const values = [geography.geography_id, JSON.stringify(geography.geography_json)]
+  const values = [geography.geography_id, JSON.stringify(geography.geography_json), null]
   await client.query(sql, values)
 
   return geography
@@ -1086,8 +1091,8 @@ async function isGeographyPublished(geography_id: UUID) {
   const result = await client.query(sql).catch(err => {
     throw err
   })
-  log.info('is geography published', result.rows[0])
-  return result.rows[0].geography_json.publish_date != null
+  log.info('is geography published', geography_id, result.rows[0].publish_date)
+  return Boolean(result.rows[0].publish_date)
 }
 
 async function editGeography(geography: Geography) {
@@ -1097,8 +1102,8 @@ async function editGeography(geography: Geography) {
   }
 
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND geography_json->>'publish_date' IS NULL`
-  await client.query(sql, [geography]).catch(err => {
+  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND publish_date IS NULL`
+  await client.query(sql, [geography.geography_json]).catch(err => {
     log.error(err)
     throw err
   })
@@ -1107,9 +1112,7 @@ async function editGeography(geography: Geography) {
 
 async function publishGeography(geography_id: UUID) {
   const client = await getWriteableClient()
-  const sql = `UPDATE ${
-    schema.GEOGRAPHIES_TABLE
-  } SET geography_json = geography_json::jsonb || '{"publish_date": ${now()}}' where geography_id='${geography_id}'`
+  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET publish_date = ${now()} where geography_id='${geography_id}'`
   await client.query(sql).catch(err => {
     throw err
   })
@@ -1165,7 +1168,7 @@ async function isPolicyPublished(policy_id: UUID) {
     throw err
   })
   log.info('is policy published', result.rows[0].policy_json.publish_date)
-  return result.rows[0].policy_json.publish_date != null
+  return Boolean(result.rows[0].policy_json.publish_date)
 }
 
 async function editPolicy(policy: Policy) {
@@ -1184,14 +1187,44 @@ async function editPolicy(policy: Policy) {
 }
 
 async function publishPolicy(policy_id: UUID) {
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${
-    schema.POLICIES_TABLE
-  } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
-  await client.query(sql).catch(err => {
+  try {
+    const client = await getWriteableClient()
+    const publishPolicySQL = `UPDATE ${
+      schema.POLICIES_TABLE
+    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
+    await client.query(publishPolicySQL).catch(err => {
+      throw err
+    })
+
+    const policy = (await readPolicies({ policy_id }))[0]
+    const geographies: UUID[] = []
+    log.info('about to publish some fine geographies')
+    policy.rules.forEach(rule => {
+      rule.geographies.forEach(geography_id => {
+        geographies.push(geography_id)
+      })
+    })
+    /*
+    geographies.forEach(async geography_id => {
+    })
+    */
+    await Promise.all(
+      geographies.map(async geography_id => {
+        log.info('publishing geography', geography_id)
+        publishGeography(geography_id)
+      })
+    )
+    await Promise.all(
+      geographies.map(async geography_id => {
+        const ispublished = isGeographyPublished(geography_id)
+        log.info('published geography', geography_id, ispublished)
+      })
+    )
+    return policy_id
+  } catch (err) {
+    log.error(err)
     throw err
-  })
-  return policy_id
+  }
 }
 
 async function readRule(rule_id: UUID): Promise<Rule> {

@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, VehicleEvent, Device, Geography } from 'mds'
+import { Telemetry, Recorded, VehicleEvent, Device, Geography, Timestamp } from 'mds'
 import { VEHICLE_EVENTS } from 'mds-enums'
 import {
   JUMP_TEST_DEVICE_1,
@@ -12,6 +12,7 @@ import {
   JUMP_PROVIDER_ID,
   POLICY_JSON,
   POLICY2_JSON,
+  POLICY3_JSON,
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
@@ -38,8 +39,8 @@ const pg_info: PGInfo = {
 
 const startTime = now() - 200
 const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
-const LAGeography: Geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
-const DistrictSeven: Geography = { geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN }
+const LAGeography: Geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY, publish_date: null }
+const DistrictSeven: Geography = { geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN, publish_date: null }
 
 /* You'll need postgres running and the env variable PG_NAME
  * to be set to run these tests.
@@ -306,7 +307,7 @@ if (pg_info.database) {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writeGeography(LAGeography)
         const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
-        assert.deepEqual(result[0], LAGeography.geography_json)
+        assert.deepEqual(result[0], LAGeography)
 
         const allGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: true })
         assert.deepEqual(allGeographies.length, 1)
@@ -326,14 +327,15 @@ if (pg_info.database) {
       })
 
       it('can edit a Geography', async () => {
-        const geography_json = clone(DistrictSeven.geography_json) as FeatureCollection
+        const geography_json = clone(DistrictSeven.geography_json)
         const numFeatures = geography_json.features.length
         geography_json.features = []
         await MDSDBPostgres.editGeography({ geography_id: DistrictSeven.geography_id, geography_json })
         const result = (await MDSDBPostgres.readGeographies({ geography_id: GEOGRAPHY2_UUID }))[0]
-          .geography_json as FeatureCollection
-        assert.notEqual(result.features.length, numFeatures)
-        assert.equal(result.features.length, 0)
+        console.log('rezzy rez')
+        console.log(result)
+        assert.notEqual(result.geography_json.features.length, numFeatures)
+        assert.equal(result.geography_json.features.length, 0)
       })
 
       it('will not edit a published Geography', async () => {
@@ -345,6 +347,28 @@ if (pg_info.database) {
             geography_json: publishedGeographyJSON
           })
         )
+      })
+    })
+
+    describe('test Geography Policy interaction', () => {
+      before(async () => {
+        await setFreshDB()
+      })
+
+      after(async () => {
+        await MDSDBPostgres.shutdown()
+      })
+
+      it('will publish a Geography if a Policy is published', async () => {
+        await MDSDBPostgres.writeGeography(LAGeography)
+        await MDSDBPostgres.writeGeography(DistrictSeven)
+        assert(!(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id)))
+        assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
+
+        await MDSDBPostgres.writePolicy(POLICY3_JSON)
+        await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
+        assert(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id))
+        assert(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id))
       })
     })
   })
