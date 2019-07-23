@@ -16,27 +16,46 @@ async function dropTables(client: MDSPostgresClient) {
   await log.info('postgres drop table succeeded')
 }
 
+// Add the index, if it doesn't already exist.
+async function addIndex(client: MDSPostgresClient, table: string, column: string) {
+  const exec = SqlExecuter(client)
+  const indexName = `idx_${column}_${table}`
+
+  const {
+    rows: { length: hasColumn }
+  } = await exec(
+    `SELECT column_name FROM information_schema.columns WHERE table_name='${table}' AND column_name='${column}' AND table_catalog=CURRENT_CATALOG AND table_schema=CURRENT_SCHEMA`
+  )
+
+  if (hasColumn) {
+    const {
+      rows: { length: hasIndex }
+    } = await exec(`SELECT tablename FROM pg_indexes WHERE tablename='${table}' AND indexname='${indexName}'`)
+
+    if (!hasIndex) {
+      await exec(`CREATE INDEX ${indexName} ON ${table}(${column})`)
+    }
+  }
+}
+
 /**
  * create tables from a list of table names
  */
 async function createTables(client: MDSPostgresClient) {
   /* eslint-reason ambiguous DB function */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const existing: { rows: any[]; [propName: string]: any } = await client.query(
+  const existing: { rows: { table_name: string }[] } = await client.query(
     'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA'
   )
 
-  const missing: string[] = Object.keys(schema.tables).filter(
-    /* eslint-reason ambiguous DB function */
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    (table: string) => !existing.rows.find((row: any) => row.table_name === table)
-  )
+  const missing = Object.keys(schema.tables).filter(table => !existing.rows.some(row => row.table_name === table))
   if (missing.length > 0) {
     await log.warn('existing', JSON.stringify(existing.rows), 'missing', JSON.stringify(missing))
-    const create: string = missing
+    const create = missing
       .map(
-        (table: string) =>
-          `CREATE TABLE ${table} (${schema.tables[table]
+        table =>
+          `CREATE TABLE ${table} (${[schema.IDENTITY_COLUMN] // All tables have an IDENTITY column
+            .concat(schema.tables[table])
             .map((column: string) => `${column} ${schema.PG_TYPES[column]}`)
             .join(', ')}, PRIMARY KEY (${csv(schema.primaryKeys[table])}));`
       )
@@ -45,6 +64,9 @@ async function createTables(client: MDSPostgresClient) {
     await log.warn(create)
     await client.query(create)
     await log.info('postgres create table suceeded')
+
+    await Promise.all(missing.map(table => addIndex(client, table, 'recorded')))
+    await Promise.all(missing.map(table => addIndex(client, table, schema.IDENTITY_COLUMN)))
   }
 }
 
@@ -172,20 +194,13 @@ async function updateTables(client: MDSPostgresClient) {
   await Promise.all(
     Object.keys(schema.tables).map(table =>
       (async () => {
-        const result = await exec(
+        const { rows }: { rows: { column_name: string }[] } = await exec(
           `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
         )
-        const existing = result.rows.map(row => row.column_name)
-        const drop = existing.filter(column => schema.tables[table].indexOf(column) < 0)
-        const create = schema.tables[table].filter(column => existing.indexOf(column) < 0)
-        if (drop.length > 0) {
-          try {
-            await exec(`ALTER TABLE ${table}\n${drop.map(column => `DROP COLUMN IF EXISTS ${column}`).join(',\n')};`)
-            await log.info(`postgres drop column succeeded for table ${table}:`, ...drop)
-          } catch (err) {
-            await log.error(`postgres drop column failed for table ${table}:`, ...drop, err)
-          }
-        }
+        const existing = rows.map(row => row.column_name)
+        const create = [schema.IDENTITY_COLUMN]
+          .concat(schema.tables[table])
+          .filter(column => existing.indexOf(column) < 0)
         if (create.length > 0) {
           try {
             await exec(
@@ -203,33 +218,10 @@ async function updateTables(client: MDSPostgresClient) {
   )
 }
 
-// Add the index, if it doesn't already exist.
-async function addIndex(client: MDSPostgresClient, table: string, column: string, indexName: string) {
-  const exec = SqlExecuter(client)
-
-  if (!schema.tables[table].includes(column)) {
-    // no need to build the index since that column's not there
-    return
-  }
-
-  const index = `${indexName}_${table}`
-
-  const result = await exec(`select tablename from pg_indexes where tablename='${table}' AND indexname = '${index}'`)
-
-  if (result.rows.length > 0) {
-    return
-  }
-
-  await exec(`create index ${index} on ${table}(${column})`)
-}
-
 async function updateSchema(client: MDSPostgresClient) {
   await validateSchema()
   await createTables(client)
   await updateTables(client)
-  await Promise.all(
-    Object.keys(schema.tables).map((table: string) => addIndex(client, table, 'recorded', 'idx_recorded'))
-  )
 }
 
 export { updateSchema, dropTables, createTables }

@@ -9,6 +9,8 @@ const AUDIT_EVENTS_TABLE = 'audit_events'
 const POLICIES_TABLE = 'policies'
 const GEOGRAPHIES_TABLE = 'geographies'
 
+const IDENTITY_COLUMN = 'id'
+
 // agency
 const DEVICES_COLS = [
   'device_id',
@@ -148,6 +150,7 @@ const primaryKeys: { [propName: string]: string[] } = {
 }
 
 const PG_TYPES: { [propName: string]: string } = {
+  id: 'bigint GENERATED ALWAYS AS IDENTITY',
   device_id: 'uuid NOT NULL',
   provider_id: 'uuid NOT NULL',
   provider_name: 'varchar(31) NOT NULL',
@@ -224,6 +227,7 @@ export default {
   AUDIT_EVENTS_TABLE,
   POLICIES_TABLE,
   GEOGRAPHIES_TABLE,
+  IDENTITY_COLUMN,
   DEVICES_COLS,
   EVENTS_COLS,
   TELEMETRY_COLS,
