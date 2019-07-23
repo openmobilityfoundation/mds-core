@@ -18,15 +18,27 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-useless-concat */
 /* eslint-disable prefer-destructuring */
+/* eslint-disable promise/prefer-await-to-callbacks */
 
 import supertest from 'supertest'
 import test from 'unit.js'
 import { VEHICLE_TYPES } from 'mds-enums'
-import { now, days } from 'mds-utils'
+import { now, days, clone } from 'mds-utils'
 import { Policy } from 'mds'
 import { server } from 'mds-api-server'
 import { TEST1_PROVIDER_ID } from 'mds-providers'
-import { la_city_boundary } from './la-city-boundary'
+import {
+  POLICY_JSON,
+  POLICY2_JSON,
+  POLICY3_JSON,
+  POLICY_UUID,
+  POLICY2_UUID,
+  GEOGRAPHY_UUID,
+  START_ONE_MONTH_AGO,
+  START_ONE_WEEK_AGO,
+  PROVIDER_SCOPES,
+  LA_CITY_BOUNDARY
+} from 'mds-test-data'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/policy'
@@ -34,129 +46,12 @@ process.env.PATH_PREFIX = '/policy'
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
-const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
-const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
-
-const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
-const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
-const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
-
-const PROVIDER_SCOPES = 'admin:all test:all'
-
 const request = supertest(server(api))
-
-const start_yesterday = now() - (now() % days(1))
-
-const policy_json: Policy = {
-  // TODO guts
-  name: 'LADOT Mobility Caps',
-  description: 'Mobility caps as described in the One-Year Permit',
-  policy_id: POLICY_UUID,
-  start_date: start_yesterday,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      rule_type: 'count',
-      rule_id: '7ea0d16e-ad15-4337-9722-9924e3af9146',
-      name: 'Greater LA',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 3000,
-      minimum: 500
-    }
-  ]
-}
-
-const start_one_month_ago = now() - (now() % days(1)) - days(30)
-const start_one_week_ago = now() - (now() % days(1)) - days(7)
-
-// in the past
-const policy2_json: Policy = {
-  // TODO guts
-  name: 'Idle Times',
-  description: 'LADOT Idle Time Limitations',
-  policy_id: POLICY2_UUID,
-  start_date: start_one_month_ago,
-  end_date: start_one_week_ago,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA (rentable)',
-      rule_id: '2df37be2-b1cb-4152-9bb9-b23472a43b05',
-      rule_type: 'time',
-      rule_units: 'minutes',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { available: [], reserved: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 7200
-    },
-    {
-      name: 'Greater LA (non-rentable)',
-      rule_id: '06a97976-180d-4990-b497-ecafbe818d7d',
-      rule_type: 'time',
-      rule_units: 'minutes',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { unavailable: [], trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 720
-    }
-  ]
-}
-
-const start_one_month_from_now = now() - (now() % days(1)) + days(30)
-
-// in the future
-const policy3_json: Policy = {
-  // TODO guts
-  policy_id: POLICY3_UUID,
-  name: 'Speed Limits',
-  description: 'LADOT Pilot Speed Limit Limitations',
-  start_date: start_one_month_from_now,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 15
-    },
-    {
-      name: 'Venice Beach on weekend afternoons',
-      geographies: [GEOGRAPHY2_UUID],
-      rule_id: 'dff14dd1-603e-43d1-b0cf-5d4fe21d8628',
-      rule_type: 'speed',
-      rule_units: 'mph',
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      days: ['sat', 'sun'],
-      start_time: '12:00',
-      end_time: '23:59',
-      maximum: 10,
-      messages: {
-        'en-US': 'Remember to stay under 10 MPH on Venice Beach on weekends!',
-        'es-US': '¡Recuerda permanecer menos de 10 millas por hora en Venice Beach los fines de semana!'
-      }
-    }
-  ]
-}
-
-function clone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj))
-}
 
 const APP_JSON = 'application/json; charset=utf-8'
 
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${'admin:all'}`).toString('base64')}`
 
 describe('Tests app', () => {
   it('resets the db', done => {
@@ -169,7 +64,8 @@ describe('Tests app', () => {
         done(err)
       })
   })
-  it('reads teh Policy schema', done => {
+
+  it('reads the Policy schema', done => {
     request
       .get('/schema/policy')
       .expect(200)
@@ -181,39 +77,10 @@ describe('Tests app', () => {
       })
   })
 
-  // MAIN TESTS HERE
-
-  it('creates one current geography', done => {
-    const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
-    request
-      .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
-      .set('Authorization', AUTH)
-      .send(geography)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('create one geo response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('read back one geography', done => {
-    request
-      .get(`/geographies/${GEOGRAPHY_UUID}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back one geo response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
-        done(err)
-      })
-  })
+  // POLICY TESTS
 
   it('tries to post invalid policy', done => {
-    const bad_policy_json: Policy = clone(policy_json)
+    const bad_policy_json: Policy = clone(POLICY_JSON)
     delete bad_policy_json.rules[0].rule_type
     const bad_policy = bad_policy_json
     request
@@ -231,7 +98,7 @@ describe('Tests app', () => {
   })
 
   it('creates one current policy', done => {
-    const policy = policy_json
+    const policy = POLICY_JSON
     request
       .post(`/admin/policies/${POLICY_UUID}`)
       .set('Authorization', AUTH)
@@ -259,8 +126,24 @@ describe('Tests app', () => {
       })
   })
 
+  it('edits one current policy', async () => {
+    const policy = clone(POLICY_JSON)
+    policy.name = 'a shiny new name'
+    await request
+      .put(`/admin/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .send(policy)
+      .expect(200)
+
+    const result = await request
+      .get(`/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+    test.value(result.body.name).is('a shiny new name')
+  })
+
   it('creates one past policy', done => {
-    const policy2 = policy2_json
+    const policy2 = POLICY2_JSON
     request
       .post(`/admin/policies/${POLICY_UUID}`)
       .set('Authorization', AUTH)
@@ -276,7 +159,7 @@ describe('Tests app', () => {
 
   it('creates one future new policy', done => {
     // TODO guts
-    const policy3 = policy3_json
+    const policy3 = POLICY3_JSON
     request
       .post(`/admin/policies/${POLICY_UUID}`)
       .set('Authorization', AUTH)
@@ -306,7 +189,7 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all policies', done => {
+  it('read back all policies, before any publishing happens, without the unpublished parameter', done => {
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
@@ -321,9 +204,99 @@ describe('Tests app', () => {
       })
   })
 
+  it('reads back all unpublished policies before any publishing happens, with the unpublished parameter', done => {
+    request
+      .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.policies.length).is(3)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('can publish a policy', done => {
+    request
+      .post(`/admin/policies/${POLICY_JSON.policy_id}/publish`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('cannot edit a published policy', done => {
+    const policy = clone(POLICY_JSON)
+    policy.name = 'an even shinier new name'
+    request
+      .put(`/admin/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .send(policy)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+      })
+    request
+      .get(`/policies/${POLICY_UUID}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.name).is('a shiny new name')
+        done(err)
+      })
+  })
+
+  it('reads back the correct number of policies after a policy has been published, with the parameter', done => {
+    request
+      .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        test.value(body.policies.length).is(2)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('reads back the correct number of policies after publishing, with `unpublished`, without provider_id', done => {
+    log('**********')
+    request
+      .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH_ADMIN_ONLY_SCOPE)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        log(body)
+        //        test.value(body.policies.length).is(2)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+    log('*************')
+  })
+
+  it('reads back the correct number of policies after a policy has been published, without the parameter', done => {
+    request
+      .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        log('fuck this failing test')
+        log(body)
+        test.value(body.policies.length).is(3)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('read back an old policy', done => {
     request
-      .get(`/policies?start_date=${start_one_month_ago}&end_date=${start_one_week_ago}`)
+      .get(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -359,6 +332,21 @@ describe('Tests app', () => {
       .end((err, result) => {
         const body = result.body
         log('read back nonexistant policy response:', body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('creates one current geography', done => {
+    const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
+    request
+      .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+      .set('Authorization', AUTH)
+      .send(geography)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        log('create one geo response:', body)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })

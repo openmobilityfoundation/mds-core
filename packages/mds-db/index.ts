@@ -1035,7 +1035,7 @@ async function getLatestTripTime(): Promise<number> {
   return getLatestTime(schema.TRIPS_TABLE, 'trip_end')
 }
 
-async function readGeographies(params?: { geography_id?: UUID }): Promise<Geography[]> {
+async function readGeographies(params?: { geography_id?: UUID; get_unpublished?: boolean }): Promise<Geography[]> {
   // use params to filter
   // query on ids
   // return geographies
@@ -1043,11 +1043,21 @@ async function readGeographies(params?: { geography_id?: UUID }): Promise<Geogra
     const client = await getReadOnlyClient()
 
     let sql = `select * from ${schema.GEOGRAPHIES_TABLE}`
-    const values = []
+    const conditions = []
+    const vals = new SqlVals()
     if (params && params.geography_id) {
-      sql += ` where geography_id = $1`
-      values.push(params.geography_id)
+      conditions.push(`geography_id = ${vals.add(params.geography_id)}`)
     }
+
+    if (params && params.get_unpublished) {
+      conditions.push(`geography_json->>'publish_date' IS NULL`)
+    }
+
+    if (conditions.length) {
+      sql += ` WHERE ${conditions.join(' AND ')}`
+    }
+
+    const values = vals.values()
     // TODO insufficiently general
     // TODO add 'count'
     const res = await client.query(sql, values)
@@ -1063,12 +1073,47 @@ async function writeGeography(geography: Geography) {
   // write
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${cols_sql(schema.GEOGRAPHIES_TABLE, schema.GEOGRAPHIES_COLS)} ${vals_sql(
-    schema.POLICIES_COLS
+    schema.GEOGRAPHIES_COLS
   )}`
-  const values = [geography.geography_id, JSON.stringify(geography), false]
+  const values = [geography.geography_id, JSON.stringify(geography.geography_json)]
   await client.query(sql, values)
 
   return geography
+}
+async function isGeographyPublished(geography_id: UUID) {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.GEOGRAPHIES_TABLE} WHERE geography_id='${geography_id}'`
+  const result = await client.query(sql).catch(err => {
+    throw err
+  })
+  log.info('is geography published', result.rows[0])
+  return result.rows[0].geography_json.publish_date != null
+}
+
+async function editGeography(geography: Geography) {
+  // validate TODO
+  if (await isGeographyPublished(geography.geography_id)) {
+    throw new Error('Cannot edit published Geography')
+  }
+
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND geography_json->>'publish_date' IS NULL`
+  await client.query(sql, [geography]).catch(err => {
+    log.error(err)
+    throw err
+  })
+  return geography
+}
+
+async function publishGeography(geography_id: UUID) {
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${
+    schema.GEOGRAPHIES_TABLE
+  } SET geography_json = geography_json::jsonb || '{"publish_date": ${now()}}' where geography_id='${geography_id}'`
+  await client.query(sql).catch(err => {
+    throw err
+  })
+  return geography_id
 }
 
 async function readPolicies(params?: {
@@ -1077,6 +1122,7 @@ async function readPolicies(params?: {
   description?: string
   start_date?: Timestamp
   end_date?: Timestamp
+  get_unpublished?: boolean
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -1090,6 +1136,11 @@ async function readPolicies(params?: {
   if (params && params.policy_id) {
     conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
   }
+
+  if (params && params.get_unpublished) {
+    conditions.push(`policy_json->>'publish_date' IS NULL`)
+  }
+
   if (conditions.length) {
     sql += ` WHERE ${conditions.join(' AND ')}`
   }
@@ -1102,9 +1153,45 @@ async function writePolicy(policy: Policy) {
   // validate TODO
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${cols_sql(schema.POLICIES_TABLE, schema.POLICIES_COLS)} ${vals_sql(schema.POLICIES_COLS)}`
-  const values = [policy.policy_id, policy, false]
+  const values = [policy.policy_id, policy]
   await client.query(sql, values)
   return policy
+}
+
+async function isPolicyPublished(policy_id: UUID) {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.POLICIES_TABLE} WHERE policy_id='${policy_id}'`
+  const result = await client.query(sql).catch(err => {
+    throw err
+  })
+  log.info('is policy published', result.rows[0].policy_json.publish_date)
+  return result.rows[0].policy_json.publish_date != null
+}
+
+async function editPolicy(policy: Policy) {
+  // validate TODO
+  if (await isPolicyPublished(policy.policy_id)) {
+    throw new Error('Cannot edit published policy')
+  }
+
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${schema.POLICIES_TABLE} SET policy_json=$1 WHERE policy_id='${policy.policy_id}' AND policy_json->>'publish_date' IS NULL`
+  await client.query(sql, [policy]).catch(err => {
+    log.error(err)
+    throw err
+  })
+  return policy
+}
+
+async function publishPolicy(policy_id: UUID) {
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${
+    schema.POLICIES_TABLE
+  } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
+  await client.query(sql).catch(err => {
+    throw err
+  })
+  return policy_id
 }
 
 async function readRule(rule_id: UUID): Promise<Rule> {
@@ -1320,8 +1407,14 @@ export default {
   readTripList,
   readGeographies,
   writeGeography,
+  publishGeography,
+  isGeographyPublished,
+  editGeography,
   readPolicies,
   writePolicy,
+  editPolicy,
+  publishPolicy,
+  isPolicyPublished,
   readRule,
   writeStatusChanges,
   readStatusChanges,

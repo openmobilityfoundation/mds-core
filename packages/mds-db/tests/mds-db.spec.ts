@@ -1,5 +1,6 @@
 import assert from 'assert'
-import { Telemetry, Recorded, VehicleEvent, Device } from 'mds'
+import { FeatureCollection } from 'geojson'
+import { Telemetry, Recorded, VehicleEvent, Device, Geography } from 'mds'
 import { VEHICLE_EVENTS } from 'mds-enums'
 import {
   JUMP_TEST_DEVICE_1,
@@ -8,9 +9,15 @@ import {
   makeEvents,
   makeStatusChange,
   makeTrip,
-  JUMP_PROVIDER_ID
+  JUMP_PROVIDER_ID,
+  POLICY_JSON,
+  POLICY2_JSON,
+  GEOGRAPHY_UUID,
+  GEOGRAPHY2_UUID,
+  LA_CITY_BOUNDARY,
+  DISTRICT_SEVEN
 } from 'mds-test-data'
-import { now } from 'mds-utils'
+import { now, clone } from 'mds-utils'
 
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
@@ -31,6 +38,8 @@ const pg_info: PGInfo = {
 
 const startTime = now() - 200
 const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
+const LAGeography: Geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
+const DistrictSeven: Geography = { geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN }
 
 /* You'll need postgres running and the env variable PG_NAME
  * to be set to run these tests.
@@ -62,6 +71,15 @@ async function seedDB() {
   })
 
   await MDSDBPostgres.seed({ devices, events, telemetry })
+}
+
+async function setFreshDB() {
+  const client: MDSPostgresClient = configureClient(pg_info)
+  await client.connect()
+  await dropTables(client)
+  await createTables(client)
+  await updateSchema(client)
+  await client.end()
 }
 
 if (pg_info.database) {
@@ -227,6 +245,106 @@ if (pg_info.database) {
         const result = await MDSDBPostgres.health()
         assert(result.using === 'postgres')
         assert(!isNullOrUndefined(result.stats.current_running_queries))
+      })
+    })
+
+    describe('unit test policy functions', () => {
+      before(async () => {
+        await setFreshDB()
+      })
+
+      after(async () => {
+        await MDSDBPostgres.shutdown()
+      })
+
+      it('can write, read, and publish a Policy', async () => {
+        await MDSDBPostgres.initialize()
+        await MDSDBPostgres.writePolicy(POLICY_JSON)
+        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY_JSON.policy_id })
+        assert.deepEqual(result[0], POLICY_JSON)
+
+        await MDSDBPostgres.writePolicy(POLICY2_JSON)
+        await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
+        const allPolicies = await MDSDBPostgres.readPolicies()
+        assert.deepEqual(allPolicies.length, 2)
+        const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true })
+        assert.deepEqual(unpublishedPolicies.length, 1)
+      })
+
+      it('can tell a Policy is published', async () => {
+        const publishedResult = await MDSDBPostgres.isPolicyPublished(POLICY_JSON.policy_id)
+        assert.deepEqual(publishedResult, true)
+        const unpublishedResult = await MDSDBPostgres.isPolicyPublished(POLICY2_JSON.policy_id)
+        assert.deepEqual(unpublishedResult, false)
+      })
+
+      it('can edit a Policy', async () => {
+        const policy = clone(POLICY2_JSON)
+        policy.name = 'a shiny new name'
+        await MDSDBPostgres.editPolicy(policy)
+        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY2_JSON.policy_id })
+        assert.deepEqual(result[0].name, 'a shiny new name')
+      })
+
+      it('will not edit a published Policy', async () => {
+        const publishedPolicy = clone(POLICY_JSON)
+        publishedPolicy.name = 'a shiny new name'
+        await assert.rejects(MDSDBPostgres.editPolicy(publishedPolicy))
+      })
+    })
+
+    describe('unit test geography functions', () => {
+      before(async () => {
+        await setFreshDB()
+      })
+
+      after(async () => {
+        await MDSDBPostgres.shutdown()
+      })
+
+      it('can write, read, and publish a Geography', async () => {
+        await MDSDBPostgres.initialize()
+        await MDSDBPostgres.writeGeography(LAGeography)
+        const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
+        assert.deepEqual(result[0], LAGeography.geography_json)
+
+        const allGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: true })
+        assert.deepEqual(allGeographies.length, 1)
+        await MDSDBPostgres.publishGeography(LAGeography.geography_id)
+        const publishedGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: false })
+        assert.deepEqual(publishedGeographies.length, 1)
+        const unpublishedGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: true })
+        assert.deepEqual(unpublishedGeographies.length, 0)
+      })
+
+      it('can tell a Geography is published', async () => {
+        await MDSDBPostgres.writeGeography(DistrictSeven)
+        const publishedResult = await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)
+        assert.deepEqual(publishedResult, true)
+        const unpublishedResult = await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id)
+        assert.deepEqual(unpublishedResult, false)
+      })
+
+      it('can edit a Geography', async () => {
+        const geography_json = clone(DistrictSeven.geography_json) as FeatureCollection
+        const numFeatures = geography_json.features.length
+        geography_json.features = []
+        await MDSDBPostgres.editGeography({ geography_id: DistrictSeven.geography_id, geography_json })
+        const result = (await MDSDBPostgres.readGeographies({ geography_id: GEOGRAPHY2_UUID }))[0]
+          .geography_json as FeatureCollection
+        assert.notEqual(result.features.length, numFeatures)
+        assert.equal(result.features.length, 0)
+      })
+
+      it('will not edit a published Geography', async () => {
+        const publishedGeographyJSON = clone(LAGeography.geography_json) as FeatureCollection
+        publishedGeographyJSON.features = []
+        await assert.rejects(
+          MDSDBPostgres.editGeography({
+            geography_id: LAGeography.geography_id,
+            geography_json: publishedGeographyJSON
+          })
+        )
       })
     })
   })

@@ -158,6 +158,7 @@ export interface Policy {
   end_date: Timestamp | null
   prev_policies: UUID[] | null
   rules: Rule[]
+  publish_date?: Timestamp
 }
 
 export interface MatchedVehicle {

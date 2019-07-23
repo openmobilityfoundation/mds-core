@@ -20,7 +20,7 @@ import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, Geography } from 'mds'
 import db from 'mds-db'
-import { VEHICLE_TYPES } from 'mds-enums'
+import { VEHICLE_TYPES, DAYS_OF_WEEK } from 'mds-enums'
 import { isUUID, now, pathsFor, ServerError } from 'mds-utils'
 import log from 'mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
@@ -83,7 +83,7 @@ function api(app: express.Express): express.Express {
     next()
   })
 
-  app.get(pathsFor('/policies'), (req, res) => {
+  app.get(pathsFor('/policies'), async (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
     const { start_date = now(), end_date = now() } = req.query
@@ -92,82 +92,59 @@ function api(app: express.Express): express.Express {
       res.status(400).send({ result: 'start_date after end_date' })
       return
     }
-    db.readPolicies({ start_date, end_date })
-      .then(
-        (policies: Policy[]) => {
-          log.info('read policies (all)', policies.length)
-          // filter here.  consider filtering in db?
-          const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
-            if (policy.prev_policies) {
-              prev_policies_acc.push(...policy.prev_policies)
-            }
-            return prev_policies_acc
-          }, [])
-          const active = policies.filter(p => {
-            // overlapping segment logic
-            const p_start_date = p.start_date
-            const p_end_date = p.end_date || Number.MAX_SAFE_INTEGER
-            return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
-          })
-          res.status(200).send({ policies: active })
-        },
-        /* istanbul ignore next */ (err: Error) => {
-          log.error('failed to read policies', err)
-          res.status(404).send({
-            result: 'not found'
-          })
+    try {
+      const policies: Policy[] = await db.readPolicies({ start_date, end_date })
+      const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
+        if (policy.prev_policies) {
+          prev_policies_acc.push(...policy.prev_policies)
         }
-      )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
-        res.status(500).send(new ServerError())
+        return prev_policies_acc
+      }, [])
+      const active = policies.filter(p => {
+        // overlapping segment logic
+        const p_start_date = p.start_date
+        const p_end_date = p.end_date || Number.MAX_SAFE_INTEGER
+        return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
       })
+      res.status(200).send({ policies: active })
+    } catch (err) {
+      log.error('failed to read policies', err)
+      res.status(404).send({
+        result: 'not found'
+      })
+    }
   })
 
-  app.get(pathsFor('/policies/:policy_id'), (req, res) => {
+  app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
-    db.readPolicies({ policy_id })
-      .then(
-        (policies: Policy[]) => {
-          if (policies.length > 0) {
-            res.status(200).send(policies[0])
-          } else {
-            res.status(404).send({ result: 'not found' })
-          }
-        },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to read one policy', err.stack)
-          res.status(404).send({ result: 'not found' })
-        }
-      )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
-        res.status(500).send(new ServerError())
-      })
+    try {
+      const policies: Policy[] = await db.readPolicies({ policy_id })
+      if (policies.length > 0) {
+        res.status(200).send(policies[0])
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      log.error('failed to read one policy', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
   })
 
-  app.get(pathsFor('/geographies/:geography_id'), (req, res) => {
+  app.get(pathsFor('/geographies/:geography_id'), async (req, res) => {
     log.info('read geo', JSON.stringify(req.params))
     const { geography_id } = req.params
     log.info('read geo', geography_id)
-    db.readGeographies({ geography_id })
-      .then(
-        (geographies: Geography[]) => {
-          if (geographies.length > 0) {
-            res.status(200).send({ geography: geographies[0] })
-          } else {
-            res.status(404).send({ result: 'not found' })
-          }
-        },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to read geography', err.stack)
-          res.status(404).send({ result: 'not found' })
-        }
-      )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
-        res.status(500).send(new ServerError())
-      })
+    try {
+      const geographies: Geography[] = await db.readGeographies({ geography_id })
+      if (geographies.length > 0) {
+        res.status(200).send({ geography: geographies[0] })
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      log.error('failed to read geography', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
   })
 
   // TODO build out validation of geojson NEIL
@@ -194,7 +171,7 @@ function api(app: express.Express): express.Express {
     })
     .unknown(true) // TODO
 
-  app.post(pathsFor('/admin/geographies/:geography_id'), (req, res) => {
+  app.post(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null
@@ -204,20 +181,13 @@ function api(app: express.Express): express.Express {
       return
     }
 
-    db.writeGeography(geography)
-      .then(
-        () => {
-          res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
-        },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to write geography', err.stack)
-          res.status(404).send({ result: 'not found' })
-        }
-      )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
-        res.status(500).send(new ServerError())
-      })
+    try {
+      await db.writeGeography(geography)
+      res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
+    } catch (err) {
+      log.error('failed to write geography', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
   })
 
   app.put(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
@@ -229,8 +199,6 @@ function api(app: express.Express): express.Express {
     // TODO implement deleting a non-published geography
     res.status(501)
   })
-
-  const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
   const ruleSchema = Joi.object().keys({
     name: Joi.string().required(),
@@ -256,7 +224,7 @@ function api(app: express.Express): express.Express {
     minimum: Joi.number(),
     start_time: Joi.string(),
     end_time: Joi.string(),
-    days: Joi.array().items(Joi.string().valid(DAYS_OF_WEEK)),
+    days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
     messages: Joi.object(),
     value_url: Joi.string().uri()
   })
@@ -289,7 +257,7 @@ function api(app: express.Express): express.Express {
     res.status(200).send(joiToJsonSchema(policySchema))
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id'), (req, res) => {
+  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -299,27 +267,21 @@ function api(app: express.Express): express.Express {
       res.status(422).send(details)
       return
     }
-    db.writePolicy(policy)
-      .then(
-        () => {
-          res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-        },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to write geography', err.stack)
-          res.status(404).send({ result: 'not found' })
-        }
-      )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
-        res.status(500).send(new ServerError())
-      })
+
+    try {
+      await db.writePolicy(policy)
+      res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+    } catch (err) {
+      log.error('failed to write geography', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
   })
 
   // TODO publish geography
 
   // TODO publish policy
 
-  app.put(pathsFor('/admin/policies/:policy_id'), (req, res) => {
+  app.put(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
     // TODO implement updating a non-published policy
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
@@ -332,20 +294,13 @@ function api(app: express.Express): express.Express {
       res.status(422).send(details)
       return
     }
-    db.writePolicy(policy)
-      .then(
-        () => {
-          res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-        },
-        (err: Error) => /* istanbul ignore next */ {
-          log.error('failed to write geography', err.stack)
-          res.status(404).send({ result: 'not found' })
-        }
-      )
-      .catch((ex: Error) => /* istanbul ignore next */ {
-        log.error(ex)
-        res.status(500).send(new ServerError())
-      })
+    try {
+      await db.editPolicy(policy)
+      res.status(200).send({ result: `successfully edited policy of id ${policy.policy_id}` })
+    } catch (err) {
+      log.error('failed to edit policy', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
   })
 
   app.delete(pathsFor('/admin/policies/:policy_id'), (req, res) => {
@@ -353,33 +308,22 @@ function api(app: express.Express): express.Express {
     res.status(501)
   })
 
-  app.get(pathsFor('/test/initialize'), (req, res) => {
-    Promise.all([db.initialize()])
-      .then(
-        kind => {
-          res.send({
-            result: `Policy initialized (${kind})`
-          })
-        },
-        err => {
-          /* istanbul ignore next */
-          log.error('initialize failed', err).then(() => {
-            res.status(500).send(new ServerError())
-          })
-        }
-      )
-      .catch(ex => /* istanbul ignore next */ {
-        log.error('initialize exception', ex).then(() => {
-          res.status(500).send(new ServerError())
-        })
+  app.get(pathsFor('/test/initialize'), async (req, res) => {
+    try {
+      const kind = await Promise.all([db.initialize()])
+      res.send({
+        result: `Policy initialized (${kind})`
       })
+    } catch (err) {
+      await log.error('initialize failed', err)
+      res.status(500).send(new ServerError())
+    }
   })
 
-  app.get(pathsFor('/test/shutdown'), (req, res) => {
-    Promise.all([db.shutdown()]).then(() => {
-      log.info('shutdown complete (in theory)')
-      res.send({ result: 'cache/stream/db shutdown done' })
-    })
+  app.get(pathsFor('/test/shutdown'), async (req, res) => {
+    await Promise.all([db.shutdown()])
+    log.info('shutdown complete (in theory)')
+    res.send({ result: 'cache/stream/db shutdown done' })
   })
 
   return app

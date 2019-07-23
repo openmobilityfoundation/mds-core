@@ -120,9 +120,9 @@ const AUDIT_EVENTS_COLS = [
 ] as const
 
 // policy
-const POLICIES_COLS = ['policy_id', 'policy_json', 'published'] as const
+const POLICIES_COLS = ['policy_id', 'policy_json'] as const
 
-const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'published'] as const
+const GEOGRAPHIES_COLS = ['geography_id', 'geography_json'] as const
 
 const tables: { [propName: string]: Readonly<string[]> } = {
   [DEVICES_TABLE]: DEVICES_COLS,

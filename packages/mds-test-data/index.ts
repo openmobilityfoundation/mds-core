@@ -53,6 +53,9 @@ import {
   providerName
 } from 'mds-providers'
 
+import { LA_CITY_BOUNDARY } from './la-city-boundary'
+import { DISTRICT_SEVEN } from './district-seven'
+
 const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
 const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
 
@@ -487,9 +490,12 @@ export {
   POLICY_UUID,
   POLICY2_UUID,
   GEOGRAPHY_UUID,
+  GEOGRAPHY2_UUID,
   START_ONE_MONTH_AGO,
   START_ONE_WEEK_AGO,
   PROVIDER_SCOPES,
+  LA_CITY_BOUNDARY,
+  DISTRICT_SEVEN,
   makeDevices,
   makeEvents,
   makeEventsWithTelemetry,
