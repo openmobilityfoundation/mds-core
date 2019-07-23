@@ -558,7 +558,7 @@ async function readTelemetry(
   start?: Timestamp | undefined,
   stop?: Timestamp | undefined
 ): Promise<Recorded<Telemetry>[]> {
-  const client = await getWriteableClient()
+  const client = await getReadOnlyClient()
   const vals = new SqlVals()
   try {
     let sql = `SELECT * FROM ${schema.TELEMETRY_TABLE} WHERE device_id=${vals.add(device_id)}`
