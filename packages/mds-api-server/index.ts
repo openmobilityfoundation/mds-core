@@ -13,7 +13,7 @@ export interface ApiResponse<T = unknown> extends express.Response {
   send: (body: T) => ApiResponse<T | { error: Error }>
 }
 
-export const server = (
+export const ApiServer = (
   api: (server: express.Express) => express.Express,
   authorizer: ApiAuthorizer = AuthorizationHeaderApiAuthorizer,
   app: express.Express = express()

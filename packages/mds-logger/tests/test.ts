@@ -1,3 +1,8 @@
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as test from 'unit.js'
 import logger from '../index'
 

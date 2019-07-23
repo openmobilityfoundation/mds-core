@@ -90,6 +90,7 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
 
 main()
   .then(
+    /* eslint-disable-next-line promise/always-return */
     result => {
       log.info(JSON.stringify(result, undefined, 2))
     },
@@ -105,6 +106,7 @@ main()
       }
     }
   )
+  /* eslint-disable-next-line promise/prefer-await-to-callbacks */
   .catch(async err => {
     await log.error('exception:', err.stack)
   })

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable promise/prefer-await-to-callbacks */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -16,9 +18,9 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { server } from 'mds-api-server'
+import { ApiServer } from 'mds-api-server'
 
-const request = supertest(server(app => app))
+const request = supertest(ApiServer(app => app))
 
 const APP_JSON = 'application/json; charset=utf-8'
 

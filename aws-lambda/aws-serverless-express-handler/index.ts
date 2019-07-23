@@ -19,7 +19,7 @@ import awsServerlessExpress from 'aws-serverless-express'
 import awsServerlessExpressMiddleware from 'aws-serverless-express/middleware'
 import { decrypt } from '@aws-lambda/aws-utils'
 import { Handler } from 'aws-lambda'
-import { server } from 'mds-api-server'
+import { ApiServer } from 'mds-api-server'
 import { ApiAuthorizerClaims, ApiAuthorizer } from 'mds-api-authorizer'
 
 // These global variables will be set by webpack
@@ -58,19 +58,16 @@ export const AwsServerlessExpressHandler = (
     npm_package_git_commit: NPM_PACKAGE_GIT_COMMIT
   })
 
+  const server = awsServerlessExpress.createServer(
+    ApiServer(api, ApiGatewayAuthorizer, express().use(awsServerlessExpressMiddleware.eventContext()))
+  )
+
   return async (event, context) => {
     if (process.env.PG_PASS_ENCRYPTED) {
       Object.assign(process.env, { PG_PASS: await decrypt(process.env.PG_PASS_ENCRYPTED) })
     }
     // The following is required to support async handlers with AWS serverless express:
     // https://github.com/awslabs/aws-serverless-express/issues/134#issuecomment-495026574
-    return awsServerlessExpress.proxy(
-      awsServerlessExpress.createServer(
-        server(api, ApiGatewayAuthorizer, express().use(awsServerlessExpressMiddleware.eventContext()))
-      ),
-      event,
-      context,
-      'PROMISE'
-    ).promise
+    return awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise
   }
 }
