@@ -150,7 +150,7 @@ const primaryKeys: { [propName: string]: string[] } = {
 }
 
 const PG_TYPES: { [propName: string]: string } = {
-  id: 'bigint GENERATED ALWAYS AS IDENTITY',
+  [IDENTITY_COLUMN]: 'bigint GENERATED ALWAYS AS IDENTITY',
   device_id: 'uuid NOT NULL',
   provider_id: 'uuid NOT NULL',
   provider_name: 'varchar(31) NOT NULL',
