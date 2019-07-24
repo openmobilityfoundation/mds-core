@@ -4,6 +4,9 @@
   "description": "Authorizer for API Gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",

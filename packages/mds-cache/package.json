@@ -4,6 +4,9 @@
   "description": "Mobility Data Specification cache interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "mds",
     "cache"

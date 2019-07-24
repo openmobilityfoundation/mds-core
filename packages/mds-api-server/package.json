@@ -4,6 +4,9 @@
   "description": "MDS API Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",

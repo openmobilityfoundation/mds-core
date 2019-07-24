@@ -4,6 +4,9 @@
   "description": "Mobility Data Specification stream interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "mds",
     "stream"
