@@ -21,12 +21,12 @@
  */
 
 import supertest from 'supertest'
-import { now } from 'mds-utils'
-import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from 'mds-types'
-import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from 'mds-test-data'
+import { now } from '@mds-core/mds-utils'
+import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
+import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from '@mds-core/mds-test-data'
 import test from 'unit.js'
-import { ApiServer } from 'mds-api-server'
-import log from 'mds-logger'
+import { ApiServer } from '@mds-core/mds-api-server'
+import log from '@mds-core/mds-logger'
 import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
 

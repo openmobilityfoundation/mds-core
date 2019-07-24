@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import db from 'mds-db'
+import db from '@mds-core/mds-db'
 import {
   Audit,
   AuditEvent,
@@ -26,7 +26,7 @@ import {
   VehicleEvent,
   TelemetryData,
   WithGpsProperty
-} from 'mds-types'
+} from '@mds-core/mds-types'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)

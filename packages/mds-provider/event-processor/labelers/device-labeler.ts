@@ -14,10 +14,10 @@
     limitations under the License.
  */
 
-import db from 'mds-db'
-import logger from 'mds-logger'
-import { Device, UUID } from 'mds-types'
-import { isUUID } from 'mds-utils'
+import db from '@mds-core/mds-db'
+import logger from '@mds-core/mds-logger'
+import { Device, UUID } from '@mds-core/mds-types'
+import { isUUID } from '@mds-core/mds-utils'
 import { StreamEntry, StreamEntryLabels } from '../types'
 
 export interface DeviceLabel {

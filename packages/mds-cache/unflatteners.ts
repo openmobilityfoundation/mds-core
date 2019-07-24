@@ -1,4 +1,4 @@
-import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS, Device, Telemetry, VehicleEvent } from 'mds-types'
+import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS, Device, Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult } from './types'
 
 function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {
