@@ -17,13 +17,14 @@
 import urls from 'url'
 import express from 'express'
 import { isInsideBoundingBox } from 'mds-utils'
-import { VehicleEvent, Device, Telemetry, BoundingBox, EVENT_STATUS_MAP, VEHICLE_STATUSES } from 'mds-types'
+import { VehicleEvent, Device, Telemetry, BoundingBox, EVENT_STATUS_MAP, VEHICLE_STATUSES, VEHICLE_STATUS, VEHICLE_EVENT } from 'mds-types'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
 import { CacheReadDeviceResult } from 'mds-cache/types'
+import { StringifiedEventWithTelemetry } from 'packages/mds-cache/types';
 
-export async function getVehicles(
+export async function getVehiclesDb(
   skip: number,
   take: number,
   url: string,
@@ -80,6 +81,67 @@ export async function getVehicles(
 
   return {
     total,
+    links: {
+      first: fmt({
+        skip: 0,
+        take
+      }),
+      last: fmt({
+        skip: lastSkip,
+        take
+      }),
+      prev: noPrev
+        ? null
+        : fmt({
+            skip: skip - take,
+            take
+          }),
+      next: noNext
+        ? null
+        : fmt({
+            skip: skip + take,
+            take
+          })
+    },
+    vehicles: devices
+  }
+}
+
+export async function getVehiclesCache(
+  skip: number,
+  take: number,
+  url: string,
+  provider_id: string,
+  reqQuery: { [x: string]: string },
+  bbox: BoundingBox
+) /*: Promise<{
+  total: number
+  links: { first: string; last: string; prev: string | null; next: string | null }
+  vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
+}> */ {
+  function fmt(query: { skip: number; take: number }): string {
+    const flat = Object.assign({}, reqQuery, query)
+    let s = `${url}?`
+    s += Object.keys(flat)
+      .map(key => `${key}=${flat[key]}`)
+      .join('&')
+    return s
+  }
+
+  const statusesSuperset = (await cache.readDevicesStatus({ bbox }) as (VehicleEvent & Device)[]).filter(status => EVENT_STATUS_MAP[status.event_type as VEHICLE_EVENT] !== VEHICLE_STATUSES.removed)
+  const statusesSubset = statusesSuperset.slice(skip, skip + take)
+  const devices = statusesSubset.reduce((acc: (VehicleEvent & Device)[], item) => {
+    const status = EVENT_STATUS_MAP[item.event_type as VEHICLE_EVENT]
+    const updated = item.timestamp
+    return [...acc, { ...item, status, updated }]
+  }, [])
+
+  const noNext = skip + take >= statusesSuperset.length
+  const noPrev = skip === 0 || skip > statusesSuperset.length
+  const lastSkip = take * Math.floor(statusesSuperset.length / take)
+
+  return {
+    total: statusesSuperset.length,
     links: {
       first: fmt({
         skip: 0,

@@ -412,9 +412,9 @@ describe('Testing API', () => {
   describe('Tests retreiving vehicles inside of bbox', () => {
     before(done => {
       const devices_a = makeDevices(10, now(), PROVIDER_UUID)
-      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY) // Generate a bunch of events outside of our BBOX
+      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
       const devices_b = makeDevices(10, now(), PROVIDER_UUID)
-      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS) // Generate a bunch of events inside of our BBOX
+      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
 
       const seedData = { devices: [...devices_a, ...devices_b], events: [...events_a, ...events_b], telemetry: [] }
       Promise.all([db.initialize(), cache.initialize()]).then(() => {
@@ -427,7 +427,7 @@ describe('Testing API', () => {
     it('Verify getting vehicles inside of a bounding box', done => {
       const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
       request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}&provider_id=${PROVIDER_UUID}`)
+        .get(`/vehicles?bbox=${JSON.stringify(bbox)}`)
         .set('Authorization', COMPLIANCE_AUTH)
         .expect(200)
         .end((err, result) => {

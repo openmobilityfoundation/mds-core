@@ -17,7 +17,7 @@
 import express from 'express'
 import urls from 'url'
 
-import { getVehicles } from 'mds-api-helpers'
+import { getVehiclesDb } from 'mds-api-helpers'
 import log from 'mds-logger'
 import db from 'mds-db'
 import cache from 'mds-cache'
@@ -450,7 +450,7 @@ function api(app: express.Express): express.Express {
     const { provider_id } = res.locals
 
     try {
-      const response = await getVehicles(skip, take, url, provider_id, req.query)
+      const response = await getVehiclesDb(skip, take, url, provider_id, req.query)
       return res.status(200).send(response)
     } catch (err) {
       await log.error('readDeviceIds fail', err)

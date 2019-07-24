@@ -26,6 +26,7 @@ import {
 } from 'mds-types'
 import * as Joi from '@hapi/joi'
 import { ValidationError } from './exceptions'
+import { StringifiedTelemetry, StringifiedEventWithTelemetry, StringifiedCacheReadDeviceResult } from 'mds-cache/types';
 
 interface ValidatorOptions {
   assert: boolean
@@ -155,3 +156,15 @@ export const isValidAuditIssueCode = (
 
 export const isValidAuditNote = (note: unknown, options: Partial<ValidatorOptions> = {}): note is string =>
   Validate('note', note, auditNoteSchema, options)
+
+export const isStringifiedTelemetry = (telemetry: any): telemetry is StringifiedTelemetry => {
+  return !!telemetry.gps
+}
+
+export const isStringifiedEventWithTelemetry = (event: any): event is StringifiedEventWithTelemetry => {
+  return (event.event_type && event.telemetry)
+}
+
+export const isStringifiedCacheReadDeviceResult = (device: any): device is StringifiedCacheReadDeviceResult => {
+  return (device.device_id && device.provider_id && device.type && device.propulsion)
+}

@@ -1,5 +1,6 @@
 import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS, Device, Telemetry, VehicleEvent } from 'mds-types'
-import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult } from './types'
+import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult, CachedItem } from './types'
+import { isStringifiedTelemetry, isStringifiedCacheReadDeviceResult, isStringifiedEventWithTelemetry } from 'mds-utils';
 
 function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {
   try {
@@ -65,4 +66,16 @@ function parseDevice(device: StringifiedCacheReadDeviceResult): Device {
   return device
 }
 
-export { parseEvent, parseTelemetry, parseDevice }
+function parseCachedItem(item: CachedItem): Device | Telemetry | VehicleEvent {
+  if (isStringifiedTelemetry(item)) {
+    return parseTelemetry(item)
+  } else if (isStringifiedEventWithTelemetry(item)) {
+    return parseEvent(item)
+  } else if (isStringifiedCacheReadDeviceResult(item)) {
+    return parseDevice(item)
+  }
+  
+  throw new Error(`unable to parse ${item}`)
+}
+
+export { parseEvent, parseTelemetry, parseDevice, parseCachedItem }
