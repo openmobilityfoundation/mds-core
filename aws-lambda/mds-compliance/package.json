@@ -13,9 +13,8 @@
     "lambda:ladot-prod-mds-compliance": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
     "lambda:ladot-sandbox-mds-compliance": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
     "start": "yarn watch server",
-    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0",
     "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && ts-node"
