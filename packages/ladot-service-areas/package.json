@@ -1,6 +1,7 @@
 {
   "name": "ladot-service-areas",
   "version": "0.1.3",
+  "private": true,
   "description": "Service Areas for LADOT",
   "main": "ladot-service-areas.js",
   "keywords": [
