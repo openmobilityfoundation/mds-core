@@ -14,10 +14,10 @@
     limitations under the License.
  */
 
-import logger from 'mds-logger'
+import logger from '@mds-core/mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import { Device, VehicleEvent, Telemetry } from 'mds-types'
+import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
 
 export type ReadStreamOptions = Partial<{
   count: number

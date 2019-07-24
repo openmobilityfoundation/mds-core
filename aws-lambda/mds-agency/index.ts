@@ -18,6 +18,6 @@ import {
   AwsServerlessExpressHandler,
   AwsServerlessExpressHandlerFunction
 } from '@aws-lambda/aws-serverless-express-handler'
-import { api as agency } from 'mds-agency'
+import { api as agency } from '@mds-core/mds-agency'
 
 export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(agency)

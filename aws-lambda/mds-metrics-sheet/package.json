@@ -1,9 +1,11 @@
 {
   "name": "@aws-lambda/mds-metrics-sheet",
   "version": "0.1.4",
-  "private": true,
   "description": "AWS Lambda for MDS Metrics Sheet",
   "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
@@ -19,7 +21,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "mds-metrics-sheet": "0.0.4"
+    "@mds-core/mds-metrics-sheet": "0.0.4"
   },
   "license": "Apache-2.0"
 }

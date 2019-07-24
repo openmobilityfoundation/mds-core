@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 import { verify } from 'jsonwebtoken'
 import { Handler, CustomAuthorizerResult } from 'aws-lambda'
-import { ApiAuthorizerClaims } from 'mds-api-authorizer'
+import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 
 const {
   AUTH0_CLIENT_PUBLIC_KEY = '',

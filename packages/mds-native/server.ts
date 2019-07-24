@@ -15,7 +15,7 @@
  */
 
 // Express local
-import { ApiServer } from 'mds-api-server'
+import { ApiServer } from '@mds-core/mds-api-server'
 import { api } from './api'
 
 const {

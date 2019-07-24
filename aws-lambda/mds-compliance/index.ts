@@ -18,6 +18,6 @@ import {
   AwsServerlessExpressHandler,
   AwsServerlessExpressHandlerFunction
 } from '@aws-lambda/aws-serverless-express-handler'
-import { api as compliance } from 'mds-compliance'
+import { api as compliance } from '@mds-core/mds-compliance'
 
 export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(compliance)

@@ -14,13 +14,13 @@
     limitations under the License.
  */
 
-import db from 'mds-db'
+import db from '@mds-core/mds-db'
 import { promisify } from 'util'
-import logger from 'mds-logger'
-import stream, { ReadStreamOptions, StreamItem } from 'mds-stream'
+import logger from '@mds-core/mds-logger'
+import stream, { ReadStreamOptions, StreamItem } from '@mds-core/mds-stream'
 import uuid from 'uuid'
-import { isUUID } from 'mds-utils'
-import { VehicleEvent } from 'mds-types'
+import { isUUID } from '@mds-core/mds-utils'
+import { VehicleEvent } from '@mds-core/mds-types'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'

@@ -18,6 +18,6 @@ import {
   AwsServerlessExpressHandler,
   AwsServerlessExpressHandlerFunction
 } from '@aws-lambda/aws-serverless-express-handler'
-import { api as native } from 'mds-native'
+import { api as native } from '@mds-core/mds-native'
 
 export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(native)

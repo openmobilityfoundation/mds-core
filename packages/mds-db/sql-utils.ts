@@ -1,7 +1,7 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
 import { Client as PostgresClient, types as PostgresTypes } from 'pg'
-import { range, csv } from 'mds-utils'
-import log from 'mds-logger'
+import { range, csv } from '@mds-core/mds-utils'
+import log from '@mds-core/mds-logger'
 
 const pgDebug = process.env.PG_DEBUG === 'true'
 

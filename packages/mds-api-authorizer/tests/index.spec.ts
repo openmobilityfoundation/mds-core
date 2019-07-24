@@ -1,5 +1,5 @@
 import test from 'unit.js'
-import { PROVIDER_UUID, PROVIDER_AUTH } from 'mds-test-data'
+import { PROVIDER_UUID, PROVIDER_AUTH } from '@mds-core/mds-test-data'
 import express from 'express'
 import { AuthorizationHeaderApiAuthorizer } from '../index'
 
