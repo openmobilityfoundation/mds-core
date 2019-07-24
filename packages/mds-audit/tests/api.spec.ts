@@ -31,7 +31,13 @@ import {
   PROPULSION_TYPES,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
-import { PROVIDER_UUID, PROVIDER_AUTH, makeEventsWithTelemetry, makeDevices, COMPLIANCE_AUTH } from '@mds-core/mds-test-data'
+import {
+  PROVIDER_UUID,
+  PROVIDER_AUTH,
+  makeEventsWithTelemetry,
+  makeDevices,
+  COMPLIANCE_AUTH
+} from '@mds-core/mds-test-data'
 import { now } from '@mds-core/mds-utils'
 import cache from '@mds-core/mds-cache'
 import test from 'unit.js'

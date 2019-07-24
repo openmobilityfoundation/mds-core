@@ -25,7 +25,11 @@ import {
   Telemetry
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
-import { StringifiedTelemetry, StringifiedEventWithTelemetry, StringifiedCacheReadDeviceResult } from 'mds-cache/types'
+import {
+  StringifiedTelemetry,
+  StringifiedEventWithTelemetry,
+  StringifiedCacheReadDeviceResult
+} from '@mds-core/mds-cache/types'
 import { ValidationError } from './exceptions'
 
 interface ValidatorOptions {
