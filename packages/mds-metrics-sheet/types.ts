@@ -1,4 +1,4 @@
-import { UUID, VEHICLE_STATUS, VEHICLE_EVENT } from 'mds-types'
+import { UUID, VEHICLE_STATUS, VEHICLE_EVENT } from '@mds-core/mds-types'
 
 interface VehicleCountRow {
   provider_id: UUID

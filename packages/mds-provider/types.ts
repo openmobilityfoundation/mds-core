@@ -1,4 +1,4 @@
-import { ApiRequest, ApiResponse } from 'mds-api-server'
+import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 
 // Allow adding type definitions for Express Request objects
 export type ProviderApiRequest = ApiRequest
