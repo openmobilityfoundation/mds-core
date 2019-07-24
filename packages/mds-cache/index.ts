@@ -195,7 +195,18 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
 
   // big batch redis nightmare!
   const allRaw: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
-  const all = allRaw.filter((item: CachedItem) => Boolean(item)).map(parseCachedItem)
+  log.info('read all raw', allRaw.length)
+  const all = allRaw.filter((item: CachedItem) => Boolean(item))
+  // .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
+  //   try {
+  //     const parsedItem = parseCachedItem(item)
+  //     return [...acc, parsedItem]
+  //   } catch (err) {
+  //     log.info(err)
+  //     return acc
+  //   }
+  // }, [])
+  log.info('readDevicesStatus finished reducing')
   all.map(item => {
     device_status_map[item.device_id] = device_status_map[item.device_id] || {}
     Object.assign(device_status_map[item.device_id], item)
@@ -210,7 +221,6 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   log.info('readDevicesStatus done')
   return values
 }
-/* eslint-enable promise/catch-or-return */
 
 // get the provider for a device
 async function getProviderId(device_id: UUID) {
