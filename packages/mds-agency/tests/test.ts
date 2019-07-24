@@ -36,12 +36,12 @@ import {
   Timestamp,
   Device,
   VehicleEvent
-} from 'mds-types'
-import db from 'mds-db'
-import cache from 'mds-cache'
-import { makeDevices, makeEvents } from 'mds-test-data'
-import { ApiServer } from 'mds-api-server'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from 'mds-providers'
+} from '@mds-core/mds-types'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import { makeDevices, makeEvents } from '@mds-core/mds-test-data'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/agency'

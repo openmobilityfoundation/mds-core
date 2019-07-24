@@ -1,7 +1,6 @@
 {
   "name": "@aws-lambda/aws-serverless-express-handler",
   "version": "0.1.3",
-  "private": true,
   "description": "Handler for AWS Serverless Express (AWS Lambda)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +19,7 @@
     "@aws-lambda/api-gateway-authorizer": "0.1.3",
     "@aws-lambda/aws-utils": "0.1.3",
     "aws-serverless-express": "3.3.6",
-    "mds-api-server": "0.1.3"
+    "@mds-core/mds-api-server": "0.1.3"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.30",

@@ -1,5 +1,5 @@
 {
-  "name": "mds-compliance",
+  "name": "@mds-core/mds-compliance",
   "version": "0.1.4",
   "description": "MDS Compliance Tool",
   "main": "dist/index.js",
@@ -24,21 +24,21 @@
     "@hapi/joi": "15.1.0",
     "express": "4.17.1",
     "fs": "0.0.1-security",
-    "mds-api-server": "0.1.3",
-    "mds-cache": "0.1.3",
-    "mds-db": "0.1.3",
-    "mds-logger": "0.1.3",
-    "mds-stream": "0.1.3",
-    "mds-types": "0.1.0",
-    "mds-utils": "0.1.3",
+    "@mds-core/mds-api-server": "0.1.3",
+    "@mds-core/mds-cache": "0.1.3",
+    "@mds-core/mds-db": "0.1.3",
+    "@mds-core/mds-logger": "0.1.3",
+    "@mds-core/mds-stream": "0.1.3",
+    "@mds-core/mds-types": "0.1.0",
+    "@mds-core/mds-utils": "0.1.3",
     "moment-timezone": "0.5.26",
     "uuid4": "1.1.4",
     "yargs": "13.3.0"
   },
   "devDependencies": {
-    "mds-agency": "0.0.5",
-    "mds-policy": "0.0.4",
-    "mds-provider": "1.0.3",
-    "mds-test-data": "0.1.3"
+    "@mds-core/mds-agency": "0.0.5",
+    "@mds-core/mds-policy": "0.0.4",
+    "@mds-core/mds-provider": "1.0.3",
+    "@mds-core/mds-test-data": "0.1.3"
   }
 }

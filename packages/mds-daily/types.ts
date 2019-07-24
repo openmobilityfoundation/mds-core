@@ -1,6 +1,6 @@
-import { UUID } from 'mds-types'
+import { UUID } from '@mds-core/mds-types'
 import { MultiPolygon } from 'geojson'
-import { ApiRequest, ApiResponse } from 'mds-api-server'
+import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 
 export type DailyApiRequest = ApiRequest
 export type DailyApiResponse = ApiResponse

@@ -1,7 +1,6 @@
 {
   "name": "@aws-lambda/api-gateway-authorizer",
   "version": "0.1.3",
-  "private": true,
   "description": "Authorizer for API Gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +18,7 @@
   "author": "City of Los Angeles",
   "dependencies": {
     "jsonwebtoken": "8.5.1",
-    "mds-api-authorizer": "0.1.3"
+    "@mds-core/mds-api-authorizer": "0.1.3"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.30",

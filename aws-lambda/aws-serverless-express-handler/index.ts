@@ -19,8 +19,8 @@ import awsServerlessExpress from 'aws-serverless-express'
 import awsServerlessExpressMiddleware from 'aws-serverless-express/middleware'
 import { decrypt } from '@aws-lambda/aws-utils'
 import { Handler } from 'aws-lambda'
-import { ApiServer } from 'mds-api-server'
-import { ApiAuthorizerClaims, ApiAuthorizer } from 'mds-api-authorizer'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { ApiAuthorizerClaims, ApiAuthorizer } from '@mds-core/mds-api-authorizer'
 
 // These global variables will be set by webpack
 declare const NPM_PACKAGE_NAME: string

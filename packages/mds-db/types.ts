@@ -9,7 +9,7 @@ import {
   VEHICLE_STATUS,
   VEHICLE_EVENT,
   VEHICLE_REASON
-} from 'mds-types'
+} from '@mds-core/mds-types'
 import { Feature, FeatureCollection } from 'geojson'
 import schema from './schema'
 
