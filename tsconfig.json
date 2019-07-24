@@ -5,7 +5,7 @@
     "paths": {
       "@aws-lambda/*": ["aws-lambda/*/index.ts"],
       "@mds-core/*": ["packages/*/index.ts"],
-      "*": ["types/*", "*"]
+      "*": ["@types/*", "*"]
     }
   }
 }
