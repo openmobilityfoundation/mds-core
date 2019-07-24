@@ -15,7 +15,14 @@
  */
 
 import express from 'express'
-import { pathsFor, ValidationError, ServerError, AuthorizationError, isValidDeviceId, NotFoundError } from '@mds-core/mds-utils'
+import {
+  pathsFor,
+  ValidationError,
+  ServerError,
+  AuthorizationError,
+  isValidDeviceId,
+  NotFoundError
+} from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'

@@ -19,7 +19,17 @@ import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
-import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape, isInStatesOrEvents, ServerError } from '@mds-core/mds-utils'
+import {
+  isUUID,
+  now,
+  days,
+  pathsFor,
+  head,
+  getPolygon,
+  pointInShape,
+  isInStatesOrEvents,
+  ServerError
+} from '@mds-core/mds-utils'
 import { Policy, Geography, ComplianceResponse, Device, UUID } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
