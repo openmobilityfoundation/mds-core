@@ -8,6 +8,8 @@ const AUDITS_TABLE = 'audits'
 const AUDIT_EVENTS_TABLE = 'audit_events'
 const POLICIES_TABLE = 'policies'
 const GEOGRAPHIES_TABLE = 'geographies'
+const POLICY_METADATA_TABLE = 'policy_metadata'
+const GEOGRAPHY_METADATA_TABLE = 'geography_metadata'
 
 // agency
 const DEVICES_COLS = [
@@ -119,10 +121,13 @@ const AUDIT_EVENTS_COLS = [
   'recorded'
 ] as const
 
-// policy
 const POLICIES_COLS = ['policy_id', 'policy_json'] as const
 
-const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'publish_date'] as const
+const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'read_only', 'previous_geography_ids', 'name'] as const
+
+const POLICY_METADATA_COLS = ['policy_metadata', 'policy_id'] as const
+
+const GEOGRAPHY_METADATA_COLS = ['geography_metadata', 'geography_id'] as const
 
 const tables: { [propName: string]: Readonly<string[]> } = {
   [DEVICES_TABLE]: DEVICES_COLS,
@@ -133,7 +138,9 @@ const tables: { [propName: string]: Readonly<string[]> } = {
   [AUDITS_TABLE]: AUDITS_COLS,
   [AUDIT_EVENTS_TABLE]: AUDIT_EVENTS_COLS,
   [POLICIES_TABLE]: POLICIES_COLS,
-  [GEOGRAPHIES_TABLE]: GEOGRAPHIES_COLS
+  [GEOGRAPHIES_TABLE]: GEOGRAPHIES_COLS,
+  [POLICY_METADATA_TABLE]: POLICY_METADATA_COLS,
+  [GEOGRAPHY_METADATA_TABLE]: GEOGRAPHY_METADATA_COLS
 }
 
 const primaryKeys: { [propName: string]: string[] } = {
@@ -145,7 +152,9 @@ const primaryKeys: { [propName: string]: string[] } = {
   [AUDITS_TABLE]: ['audit_trip_id'],
   [AUDIT_EVENTS_TABLE]: ['audit_trip_id', 'timestamp'],
   [POLICIES_TABLE]: ['policy_id'],
-  [GEOGRAPHIES_TABLE]: ['geography_id']
+  [GEOGRAPHIES_TABLE]: ['geography_id'],
+  [POLICY_METADATA_TABLE]: ['policy_id'],
+  [GEOGRAPHY_METADATA_TABLE]: ['geography_id']
 }
 
 const PG_TYPES: { [propName: string]: string } = {
@@ -211,6 +220,11 @@ const PG_TYPES: { [propName: string]: string } = {
   policy_json: 'json NOT NULL',
   geography_id: 'uuid NOT NULL',
   geography_json: 'json NOT NULL',
+  policy_metadata: 'jsonb',
+  geography_metadata: 'jsonb',
+  read_only: 'bool DEFAULT FALSE',
+  previous_geography_ids: 'uuid[]',
+  name: 'varchar(255)',
 
   published: 'bool',
 
@@ -227,6 +241,8 @@ export default {
   AUDIT_EVENTS_TABLE,
   POLICIES_TABLE,
   GEOGRAPHIES_TABLE,
+  POLICY_METADATA_TABLE,
+  GEOGRAPHY_METADATA_TABLE,
   DEVICES_COLS,
   EVENTS_COLS,
   TELEMETRY_COLS,

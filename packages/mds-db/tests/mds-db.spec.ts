@@ -39,8 +39,8 @@ const pg_info: PGInfo = {
 
 const startTime = now() - 200
 const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
-const LAGeography: Geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY, publish_date: null }
-const DistrictSeven: Geography = { geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN, publish_date: null }
+const LAGeography: Geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY, read_only: false }
+const DistrictSeven: Geography = { geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN, read_only: false }
 
 /* You'll need postgres running and the env variable PG_NAME
  * to be set to run these tests.
@@ -307,15 +307,14 @@ if (pg_info.database) {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writeGeography(LAGeography)
         const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
-        assert.deepEqual(result[0], LAGeography)
+        assert.deepEqual(result[0].geography_json, LAGeography.geography_json)
+        assert.deepEqual(result[0].geography_id, LAGeography.geography_id)
 
-        const allGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: true })
-        assert.deepEqual(allGeographies.length, 1)
+        const allGeographies = await MDSDBPostgres.readGeographies({ get_read_only: true })
+        assert.deepEqual(allGeographies.length, 0)
         await MDSDBPostgres.publishGeography(LAGeography.geography_id)
-        const publishedGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: false })
-        assert.deepEqual(publishedGeographies.length, 1)
-        const unpublishedGeographies = await MDSDBPostgres.readGeographies({ get_unpublished: true })
-        assert.deepEqual(unpublishedGeographies.length, 0)
+        const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
+        assert.deepEqual(writeableGeographies.length, 1)
       })
 
       it('can tell a Geography is published', async () => {

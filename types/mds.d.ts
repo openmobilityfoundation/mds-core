@@ -201,7 +201,9 @@ export interface ComplianceResponse {
 export interface Geography {
   geography_id: UUID
   geography_json: FeatureCollection
-  publish_date?: Timestamp | null
+  read_only?: boolean
+  previous_geography_ids?: UUID[]
+  name?: string
 }
 
 export interface ErrorObject {

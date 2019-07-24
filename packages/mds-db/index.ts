@@ -1035,7 +1035,7 @@ async function getLatestTripTime(): Promise<number> {
   return getLatestTime(schema.TRIPS_TABLE, 'trip_end')
 }
 
-async function readGeographies(params?: { geography_id?: UUID; get_unpublished?: boolean }): Promise<Geography[]> {
+async function readGeographies(params?: { geography_id?: UUID; get_read_only?: boolean }): Promise<Geography[]> {
   // use params to filter
   // query on ids
   // return geographies
@@ -1049,8 +1049,8 @@ async function readGeographies(params?: { geography_id?: UUID; get_unpublished?:
       conditions.push(`geography_id = ${vals.add(params.geography_id)}`)
     }
 
-    if (params && params.get_unpublished) {
-      conditions.push(`publish_date IS NULL`)
+    if (params && params.get_read_only) {
+      conditions.push(`read_only IS TRUE`)
     }
 
     if (conditions.length) {
@@ -1062,11 +1062,6 @@ async function readGeographies(params?: { geography_id?: UUID; get_unpublished?:
     // TODO add 'count'
     const { rows } = await client.query(sql, values)
     return rows
-    /*
-    return res.rows.map((row: Geography) => {
-      row.geography_json
-    }) as Geography[]
-    */
   } catch (err) {
     log.error('readGeographies', err)
     throw err
@@ -1080,7 +1075,13 @@ async function writeGeography(geography: Geography) {
   const sql = `INSERT INTO ${cols_sql(schema.GEOGRAPHIES_TABLE, schema.GEOGRAPHIES_COLS)} ${vals_sql(
     schema.GEOGRAPHIES_COLS
   )}`
-  const values = [geography.geography_id, JSON.stringify(geography.geography_json), null]
+  const values = [
+    geography.geography_id,
+    JSON.stringify(geography.geography_json),
+    geography.read_only,
+    geography.previous_geography_ids,
+    geography.name
+  ]
   await client.query(sql, values)
 
   return geography
@@ -1091,8 +1092,8 @@ async function isGeographyPublished(geography_id: UUID) {
   const result = await client.query(sql).catch(err => {
     throw err
   })
-  log.info('is geography published', geography_id, result.rows[0].publish_date)
-  return Boolean(result.rows[0].publish_date)
+  log.info('is geography published', geography_id, result.rows[0].read_only)
+  return Boolean(result.rows[0].read_only)
 }
 
 async function editGeography(geography: Geography) {
@@ -1102,7 +1103,7 @@ async function editGeography(geography: Geography) {
   }
 
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND publish_date IS NULL`
+  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND read_only IS FALSE`
   await client.query(sql, [geography.geography_json]).catch(err => {
     log.error(err)
     throw err
@@ -1112,7 +1113,7 @@ async function editGeography(geography: Geography) {
 
 async function publishGeography(geography_id: UUID) {
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET publish_date = ${now()} where geography_id='${geography_id}'`
+  const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET read_only = TRUE where geography_id='${geography_id}'`
   await client.query(sql).catch(err => {
     throw err
   })
