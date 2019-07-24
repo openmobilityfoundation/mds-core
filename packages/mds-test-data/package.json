@@ -22,8 +22,7 @@
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
   }
 }

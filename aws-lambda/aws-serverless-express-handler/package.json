@@ -9,9 +9,8 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --recursive tests/**/*.ts"
   },
   "keywords": [
