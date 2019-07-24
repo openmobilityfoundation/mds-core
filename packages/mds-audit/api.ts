@@ -43,7 +43,7 @@ import {
 } from '@mds-core/mds-utils'
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from '@mds-core/mds-types'
-import { getVehicles, asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
+import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -67,7 +67,8 @@ import {
   readTelemetry,
   withGpsProperty,
   writeAudit,
-  writeAuditEvent
+  writeAuditEvent,
+  getVehicles
 } from './service'
 
 // TODO lib
@@ -632,7 +633,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/vehicles'), async (req, res) => {
     const { skip, take } = asPagingParams(req.query)
-    const bbox = req.query.bbox ? getBoundingBox(JSON.parse(req.query.bbox)) : undefined
+    const bbox = getBoundingBox(JSON.parse(req.query.bbox))
 
     const url = urls.format({
       protocol: req.get('x-forwarded-proto') || req.protocol,

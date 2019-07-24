@@ -17,7 +17,6 @@
 import express from 'express'
 import urls from 'url'
 
-import { getVehicles } from '@mds-core/mds-api-helpers'
 import log from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
@@ -41,10 +40,23 @@ import {
   PROPULSION_TYPES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
-  VEHICLE_EVENT
+  VEHICLE_EVENT,
+  BoundingBox
 } from '@mds-core/mds-types'
-import { isUUID, isPct, isTimestamp, isFloat, pointInShape, now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import {
+  isUUID,
+  isPct,
+  isTimestamp,
+  isFloat,
+  pointInShape,
+  now,
+  pathsFor,
+  ServerError,
+  isInsideBoundingBox
+} from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
+
+import { CacheReadDeviceResult } from '@mds-core/mds-cache/types'
 
 function api(app: express.Express): express.Express {
   /**
@@ -430,6 +442,89 @@ function api(app: express.Express): express.Express {
       }
     }
   })
+
+  async function getVehicles(
+    skip: number,
+    take: number,
+    url: string,
+    provider_id: string,
+    reqQuery: { [x: string]: string },
+    bbox?: BoundingBox
+  ): Promise<{
+    total: number
+    links: { first: string; last: string; prev: string | null; next: string | null }
+    vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
+  }> {
+    function fmt(query: { skip: number; take: number }): string {
+      const flat = Object.assign({}, reqQuery, query)
+      let s = `${url}?`
+      s += Object.keys(flat)
+        .map(key => `${key}=${flat[key]}`)
+        .join('&')
+      return s
+    }
+
+    const rows = await db.readDeviceIds(provider_id)
+    const total = rows.length
+    log.info(`read ${total} deviceIds in /vehicles`)
+
+    const events = await cache.readEvents(rows.map(record => record.device_id))
+    const eventMap: { [s: string]: VehicleEvent } = {}
+    events.map(event => {
+      if (event) {
+        eventMap[event.device_id] = event
+      }
+    })
+
+    const deviceIdSuperset = bbox
+      ? rows.filter(record => {
+          return eventMap[record.device_id] ? isInsideBoundingBox(eventMap[record.device_id].telemetry, bbox) : true
+        })
+      : rows
+
+    const deviceIdSubset = deviceIdSuperset.slice(skip, skip + take).map(record => record.device_id)
+    const devices = (await cache.readDevices(deviceIdSubset)).reduce((acc: Device[], device: CacheReadDeviceResult) => {
+      if (!device) {
+        throw new Error('device in DB but not in cache')
+      }
+      const event = eventMap[device.device_id]
+      const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+      const telemetry = event ? event.telemetry : null
+      const updated = event ? event.timestamp : null
+      return [...acc, { ...device, status, telemetry, updated }]
+    }, [])
+
+    const noNext = skip + take >= deviceIdSuperset.length
+    const noPrev = skip === 0 || skip > deviceIdSuperset.length
+    const lastSkip = take * Math.floor(deviceIdSuperset.length / take)
+
+    return {
+      total,
+      links: {
+        first: fmt({
+          skip: 0,
+          take
+        }),
+        last: fmt({
+          skip: lastSkip,
+          take
+        }),
+        prev: noPrev
+          ? null
+          : fmt({
+              skip: skip - take,
+              take
+            }),
+        next: noNext
+          ? null
+          : fmt({
+              skip: skip + take,
+              take
+            })
+      },
+      vehicles: devices
+    }
+  }
 
   /**
    * Read back all the vehicles for this provider_id, with pagination

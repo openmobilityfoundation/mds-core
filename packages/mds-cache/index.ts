@@ -21,7 +21,7 @@ import { capitalizeFirst, nullKeys, stripNulls, now } from '@mds-core/mds-utils'
 import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from '@mds-core/mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import { parseTelemetry, parseEvent, parseDevice } from './unflatteners'
+import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
 import {
   CacheReadDeviceResult,
   CachedItem,
@@ -53,12 +53,12 @@ bluebird.promisifyAll(redis.RedisClient.prototype)
 
 let cachedClient: redis.RedisClient | null
 
-function insideBBox(status: CachedItem | {}, bbox: BoundingBox) {
-  if (!status || !('gps' in status)) {
+function insideBBox(status: any | {}, bbox: BoundingBox) {
+  if (!status || !status.telemetry) {
     return false
   }
 
-  const telemetry = parseTelemetry(status)
+  const telemetry = parseTelemetry(status.telemetry)
   const { lat, lng } = telemetry.gps
   return bbox.latMin <= lat && lat <= bbox.latMax && bbox.lngMin <= lng && lng <= bbox.lngMax
 }
@@ -194,8 +194,8 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   const device_status_map: { [device_id: string]: CachedItem | {} } = {}
 
   // big batch redis nightmare!
-  let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
-  all = all.filter((item: CachedItem) => Boolean(item))
+  const allRaw: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
+  const all = allRaw.filter((item: CachedItem) => Boolean(item)).map(parseCachedItem)
   all.map(item => {
     device_status_map[item.device_id] = device_status_map[item.device_id] || {}
     Object.assign(device_status_map[item.device_id], item)
