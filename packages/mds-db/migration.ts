@@ -198,7 +198,7 @@ async function updateTables(client: MDSPostgresClient) {
           `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
         )
         const existing = rows.map(row => row.column_name)
-        const create = [schema.IDENTITY_COLUMN]
+        const create = [schema.IDENTITY_COLUMN] // All tables have an IDENTITY column
           .concat(schema.tables[table])
           .filter(column => existing.indexOf(column) < 0)
         if (create.length > 0) {
