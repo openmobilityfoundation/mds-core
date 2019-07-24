@@ -14,8 +14,8 @@
     limitations under the License.
  */
 
-import db from 'mds-db'
-import cache from 'mds-cache'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
 import {
   Audit,
   AuditEvent,
@@ -31,7 +31,7 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_EVENT,
   VEHICLE_STATUSES
-} from 'mds-types'
+} from '@mds-core/mds-types'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)

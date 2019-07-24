@@ -16,9 +16,9 @@
 
 import express from 'express'
 import uuid from 'uuid'
-import log from 'mds-logger'
-import db from 'mds-db'
-import cache from 'mds-cache'
+import log from '@mds-core/mds-logger'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
 import urls from 'url'
 import {
   pathsFor,
@@ -40,10 +40,10 @@ import {
   ConflictError,
   NotFoundError,
   ServerError
-} from 'mds-utils'
-import { providerName } from 'mds-providers' // map of uuids -> obj
-import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds-types'
-import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
+} from '@mds-core/mds-utils'
+import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
+import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from '@mds-core/mds-types'
+import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,

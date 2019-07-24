@@ -33,8 +33,8 @@ import {
   VEHICLE_STATUS,
   TIME_FORMAT,
   DAYS_OF_WEEK
-} from 'mds-types'
-import { pointInShape, getPolygon, isInStatesOrEvents, now, RuntimeError } from 'mds-utils'
+} from '@mds-core/mds-types'
+import { pointInShape, getPolygon, isInStatesOrEvents, now, RuntimeError } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
 
 const { env } = process

@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
  */
-import { Device, VehicleEvent, Timestamp, Telemetry, Stringify, TelemetryData, PROPULSION_TYPE } from 'mds-types'
+import { Device, VehicleEvent, Timestamp, Telemetry, Stringify, TelemetryData, PROPULSION_TYPE } from '@mds-core/mds-types'
 
 export type StringifiedEvent = Stringify<Omit<VehicleEvent, 'telemetry'>>
 export type StringifiedTelemetry = Stringify<Omit<Telemetry, 'gps'>> & {

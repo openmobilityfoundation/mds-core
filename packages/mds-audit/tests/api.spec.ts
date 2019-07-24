@@ -30,14 +30,14 @@ import {
   AUDIT_EVENT_TYPES,
   PROPULSION_TYPES,
   VEHICLE_TYPES
-} from 'mds-types'
-import { PROVIDER_UUID, PROVIDER_AUTH, makeEventsWithTelemetry, makeDevices, COMPLIANCE_AUTH } from 'mds-test-data'
-import { now } from 'mds-utils'
-import cache from 'mds-cache'
+} from '@mds-core/mds-types'
+import { PROVIDER_UUID, PROVIDER_AUTH, makeEventsWithTelemetry, makeDevices, COMPLIANCE_AUTH } from '@mds-core/mds-test-data'
+import { now } from '@mds-core/mds-utils'
+import cache from '@mds-core/mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
-import { ApiServer } from 'mds-api-server'
-import db from 'mds-db'
+import { ApiServer } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/audit'

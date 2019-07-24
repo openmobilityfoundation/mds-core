@@ -23,10 +23,10 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_TYPES, Policy } from 'mds-types'
-import { now, days } from 'mds-utils'
-import { ApiServer } from 'mds-api-server'
-import { TEST1_PROVIDER_ID } from 'mds-providers'
+import { VEHICLE_TYPES, Policy } from '@mds-core/mds-types'
+import { now, days } from '@mds-core/mds-utils'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 

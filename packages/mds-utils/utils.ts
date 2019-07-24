@@ -30,9 +30,9 @@ import {
   VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS
-} from 'mds-types'
-import { TelemetryRecord } from 'mds-db/types'
-import log from 'mds-logger'
+} from '@mds-core/mds-types'
+import { TelemetryRecord } from '@mds-core/mds-db/types'
+import log from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
 const RADIUS = 30.48 // 100 feet, in meters
