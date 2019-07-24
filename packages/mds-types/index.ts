@@ -351,7 +351,7 @@ export interface TripsStats {
 // following type alias allows wrapping the above types with Recorded<> in order to represent what is read from the
 // database. This type alias will add the readonly attribute to all properties and also remove undefined as a valid
 // value since the database will never return undefined.
-export type Recorded<T> = Readonly<Required<T>>
+export type Recorded<T> = Readonly<Required<T & { id: number }>>
 
 export interface BoundingBox {
   latMin: number

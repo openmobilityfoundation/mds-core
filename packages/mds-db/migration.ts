@@ -17,7 +17,12 @@ async function dropTables(client: MDSPostgresClient) {
 }
 
 // Add the index, if it doesn't already exist.
-async function addIndex(client: MDSPostgresClient, table: string, column: string) {
+async function addIndex(
+  client: MDSPostgresClient,
+  table: string,
+  column: string,
+  options: Partial<{ unique: boolean }> = { unique: false }
+) {
   const exec = SqlExecuter(client)
   const indexName = `idx_${column}_${table}`
 
@@ -33,7 +38,7 @@ async function addIndex(client: MDSPostgresClient, table: string, column: string
     } = await exec(`SELECT tablename FROM pg_indexes WHERE tablename='${table}' AND indexname='${indexName}'`)
 
     if (!hasIndex) {
-      await exec(`CREATE INDEX ${indexName} ON ${table}(${column})`)
+      await exec(`CREATE${options.unique ? ' UNIQUE ' : ' '}INDEX ${indexName} ON ${table}(${column})`)
     }
   }
 }
@@ -66,7 +71,7 @@ async function createTables(client: MDSPostgresClient) {
     await log.info('postgres create table suceeded')
 
     await Promise.all(missing.map(table => addIndex(client, table, 'recorded')))
-    await Promise.all(missing.map(table => addIndex(client, table, schema.IDENTITY_COLUMN)))
+    await Promise.all(missing.map(table => addIndex(client, table, schema.IDENTITY_COLUMN, { unique: true })))
   }
 }
 
