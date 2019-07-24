@@ -15,8 +15,8 @@
  */
 
 // Express local
-import { ApiServer } from 'mds-api-server'
-import { api } from 'mds-provider'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { api } from '@mds-core/mds-provider'
 
 const {
   env: { npm_package_name, PORT = 4000 }
