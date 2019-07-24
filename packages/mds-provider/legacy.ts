@@ -2,13 +2,21 @@
 /* eslint-disable promise/always-return */
 /* eslint-disable promise/prefer-await-to-then */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
-import logger from 'mds-logger'
-import db from 'mds-db'
-import { isUUID, now, seconds, round } from 'mds-utils'
-import { ReadEventsResult, StatusChange, Trip } from 'mds-db/types'
-import { VehicleEvent, VEHICLE_TYPE, PROPULSION_TYPE, Telemetry, UUID, Device, VEHICLE_EVENTS } from 'mds-types'
-import { providerName } from 'mds-providers'
+import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
+import logger from '@mds-core/mds-logger'
+import db from '@mds-core/mds-db'
+import { isUUID, now, seconds, round } from '@mds-core/mds-utils'
+import { ReadEventsResult, StatusChange, Trip } from '@mds-core/mds-db/types'
+import {
+  VehicleEvent,
+  VEHICLE_TYPE,
+  PROPULSION_TYPE,
+  Telemetry,
+  UUID,
+  Device,
+  VEHICLE_EVENTS
+} from '@mds-core/mds-types'
+import { providerName } from '@mds-core/mds-providers'
 import { Feature, FeatureCollection } from 'geojson'
 import { asStatusChangeEvent } from './utils'
 import { ProviderApiRequest, ProviderApiResponse, PROVIDER_VERSION } from './types'
