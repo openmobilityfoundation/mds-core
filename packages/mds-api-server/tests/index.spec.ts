@@ -18,7 +18,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { ApiServer } from 'mds-api-server'
+import { ApiServer } from '@mds-core/mds-api-server'
 
 const request = supertest(ApiServer(app => app))
 

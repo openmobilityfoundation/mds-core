@@ -1,10 +1,12 @@
 {
-  "name": "mds-logger",
+  "name": "@mds-core/mds-logger",
   "version": "0.1.3",
-  "private": true,
   "description": "Mobility Data Specification logging interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "mds",
     "logger"

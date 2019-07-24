@@ -6,10 +6,6 @@
     "aws-lambda/*",
     "packages/*"
   ],
-  "files": [
-    "*",
-    "packages/*/dist/"
-  ],
   "devDependencies": {
     "@types/bluebird": "3.5.27",
     "@types/body-parser": "1.17.0",
@@ -62,7 +58,6 @@
   "types": "types/mds.d.ts",
   "dependencies": {},
   "scripts": {
-    "prepare": "yarn build",
     "build": "yarn run:concurrent build",
     "bundle": "yarn run:concurrent bundle",
     "clean": "git clean -fdX && yarn",

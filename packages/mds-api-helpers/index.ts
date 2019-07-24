@@ -16,12 +16,12 @@
 
 import urls from 'url'
 import express from 'express'
-import { isInsideBoundingBox } from 'mds-utils'
-import { VehicleEvent, Device, Telemetry, BoundingBox, EVENT_STATUS_MAP, VEHICLE_STATUSES } from 'mds-types'
-import log from 'mds-logger'
-import db from 'mds-db'
-import cache from 'mds-cache'
-import { CacheReadDeviceResult } from 'mds-cache/types'
+import { isInsideBoundingBox } from '@mds-core/mds-utils'
+import { VehicleEvent, Device, Telemetry, BoundingBox, EVENT_STATUS_MAP, VEHICLE_STATUSES } from '@mds-core/mds-types'
+import log from '@mds-core/mds-logger'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import { CacheReadDeviceResult } from '@mds-core/mds-cache/types'
 
 export async function getVehicles(
   skip: number,

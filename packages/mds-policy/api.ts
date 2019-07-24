@@ -15,13 +15,13 @@
  */
 
 import express from 'express'
-import { isProviderId, providerName } from 'mds-providers'
+import { isProviderId, providerName } from '@mds-core/mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
-import { Policy, UUID, VEHICLE_TYPES } from 'mds-types'
-import db from 'mds-db'
-import { isUUID, now, pathsFor, ServerError } from 'mds-utils'
-import log from 'mds-logger'
+import { Policy, UUID, VEHICLE_TYPES } from '@mds-core/mds-types'
+import db from '@mds-core/mds-db'
+import { isUUID, now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 function api(app: express.Express): express.Express {

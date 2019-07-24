@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { providers } from 'mds-providers' // map of uuids -> obb
+import { providers } from '@mds-core/mds-providers' // map of uuids -> obb
 import {
   AUDIT_EVENT_TYPES,
   VEHICLE_EVENTS,
@@ -23,7 +23,7 @@ import {
   UUID,
   Timestamp,
   Telemetry
-} from 'mds-types'
+} from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
 import { ValidationError } from './exceptions'
 

@@ -1,9 +1,11 @@
 {
-  "name": "mds-db",
+  "name": "@mds-core/mds-db",
   "version": "0.1.3",
-  "private": true,
   "description": "Mobility Data Specification database interface",
   "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "mds",
     "database"
@@ -18,12 +20,12 @@
   "author": "City of Los Angeles",
   "license": "ISC",
   "dependencies": {
-    "mds-logger": "0.1.3",
-    "mds-types": "0.1.0",
-    "mds-utils": "0.1.3",
+    "@mds-core/mds-logger": "0.1.3",
+    "@mds-core/mds-types": "0.1.0",
+    "@mds-core/mds-utils": "0.1.3",
     "pg": "7.11.0"
   },
   "devDependencies": {
-    "mds-test-data": "0.1.3"
+    "@mds-core/mds-test-data": "0.1.3"
   }
 }

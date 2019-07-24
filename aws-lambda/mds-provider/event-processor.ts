@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { ProviderEventProcessor } from 'mds-provider'
+import { ProviderEventProcessor } from '@mds-core/mds-provider'
 
 const { PROVIDER_EVENT_PROCESSOR_INTERVAL, PROVIDER_EVENT_PROCESSOR_COUNT } = process.env
 
