@@ -43,7 +43,7 @@ import {
 } from 'mds-utils'
 import { providerName } from 'mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds-types'
-import { getVehiclesCache, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
+import { asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -67,7 +67,8 @@ import {
   readTelemetry,
   withGpsProperty,
   writeAudit,
-  writeAuditEvent
+  writeAuditEvent,
+  getVehicles
 } from './service'
 
 // TODO lib
@@ -643,7 +644,7 @@ function api(app: express.Express): express.Express {
     const { provider_id } = req.query
 
     try {
-      const response = await getVehiclesCache(skip, take, url, provider_id, req.query, bbox)
+      const response = await getVehicles(skip, take, url, provider_id, req.query, bbox)
       res.status(200).send(response)
     } catch (err) {
       await log.error('getVehicles fail', err)
