@@ -32,7 +32,8 @@
       "mds-stream": ["packages/mds-stream/index.ts"],
       "mds-test-data": ["packages/mds-test-data/index.ts"],
       "mds-types": ["packages/mds-types/index.ts"],
-      "mds-utils": ["packages/mds-utils/index.ts"]
+      "mds-utils": ["packages/mds-utils/index.ts"],
+      "*": ["@types/*", "*"]
     }
   }
 }
