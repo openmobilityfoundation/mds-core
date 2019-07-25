@@ -73,6 +73,7 @@ async function createTables(client: MDSPostgresClient) {
     await client.query(create)
     await log.info('postgres create table suceeded')
     await Promise.all(missing.map(table => addIndex(client, table, 'recorded')))
+    await Promise.all(missing.map(table => addIndex(client, table, schema.IDENTITY_COLUMN, { unique: true })))
   }
 }
 

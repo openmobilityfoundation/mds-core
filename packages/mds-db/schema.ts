@@ -9,8 +9,11 @@ const AUDIT_EVENTS_TABLE = 'audit_events'
 const POLICIES_TABLE = 'policies'
 const GEOGRAPHIES_TABLE = 'geographies'
 
+const IDENTITY_COLUMN = 'id'
+
 // agency
 const DEVICES_COLS = [
+  IDENTITY_COLUMN,
   'device_id',
   'provider_id',
   'vehicle_id',
@@ -23,6 +26,7 @@ const DEVICES_COLS = [
 ] as const
 
 const EVENTS_COLS = [
+  IDENTITY_COLUMN,
   'device_id',
   'provider_id',
   'timestamp',
@@ -35,6 +39,7 @@ const EVENTS_COLS = [
 ] as const
 
 const TELEMETRY_COLS = [
+  IDENTITY_COLUMN,
   'device_id',
   'provider_id',
   'timestamp',
@@ -49,6 +54,7 @@ const TELEMETRY_COLS = [
 ] as const
 
 const TRIPS_COLS = [
+  IDENTITY_COLUMN,
   'provider_id',
   'provider_name',
   'provider_trip_id',
@@ -71,6 +77,7 @@ const TRIPS_COLS = [
 ] as const
 
 const STATUS_CHANGES_COLS = [
+  IDENTITY_COLUMN,
   'provider_id',
   'provider_name',
   'device_id',
@@ -88,6 +95,7 @@ const STATUS_CHANGES_COLS = [
 
 // audit
 const AUDITS_COLS = [
+  IDENTITY_COLUMN,
   'audit_trip_id',
   'audit_device_id',
   'audit_subject_id',
@@ -101,6 +109,7 @@ const AUDITS_COLS = [
 ] as const
 
 const AUDIT_EVENTS_COLS = [
+  IDENTITY_COLUMN,
   'audit_trip_id',
   'audit_event_id',
   'audit_event_type',
@@ -119,9 +128,9 @@ const AUDIT_EVENTS_COLS = [
 ] as const
 
 // policy
-const POLICIES_COLS = ['policy_id', 'policy_json', 'published'] as const
+const POLICIES_COLS = [IDENTITY_COLUMN, 'policy_id', 'policy_json', 'published'] as const
 
-const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'published'] as const
+const GEOGRAPHIES_COLS = [IDENTITY_COLUMN, 'geography_id', 'geography_json', 'published'] as const
 
 const tables: { [propName: string]: Readonly<string[]> } = {
   [DEVICES_TABLE]: DEVICES_COLS,
@@ -148,6 +157,7 @@ const primaryKeys: { [propName: string]: string[] } = {
 }
 
 const PG_TYPES: { [propName: string]: string } = {
+  id: 'bigint GENERATED ALWAYS AS IDENTITY',
   device_id: 'uuid NOT NULL',
   provider_id: 'uuid NOT NULL',
   provider_name: 'varchar(31) NOT NULL',
@@ -224,6 +234,7 @@ export default {
   AUDIT_EVENTS_TABLE,
   POLICIES_TABLE,
   GEOGRAPHIES_TABLE,
+  IDENTITY_COLUMN,
   DEVICES_COLS,
   EVENTS_COLS,
   TELEMETRY_COLS,

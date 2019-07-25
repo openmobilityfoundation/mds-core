@@ -161,14 +161,19 @@ export const isValidAuditIssueCode = (
 export const isValidAuditNote = (note: unknown, options: Partial<ValidatorOptions> = {}): note is string =>
   Validate('note', note, auditNoteSchema, options)
 
-export const isStringifiedTelemetry = (telemetry: any): telemetry is StringifiedTelemetry => {
-  return !!telemetry.gps
+export const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry => {
+  return !!(telemetry as StringifiedTelemetry).gps
 }
 
-export const isStringifiedEventWithTelemetry = (event: any): event is StringifiedEventWithTelemetry => {
-  return event.event_type && event.telemetry
+export const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry => {
+  return !!((event as StringifiedEventWithTelemetry).event_type && (event as StringifiedEventWithTelemetry).telemetry)
 }
 
-export const isStringifiedCacheReadDeviceResult = (device: any): device is StringifiedCacheReadDeviceResult => {
-  return device.device_id && device.provider_id && device.type && device.propulsion
+export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult => {
+  return !!(
+    (device as StringifiedCacheReadDeviceResult).device_id &&
+    (device as StringifiedCacheReadDeviceResult).provider_id &&
+    (device as StringifiedCacheReadDeviceResult).type &&
+    (device as StringifiedCacheReadDeviceResult).propulsion
+  )
 }

@@ -1,7 +1,8 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
 import { Client as PostgresClient, types as PostgresTypes } from 'pg'
-import { range, csv } from '@mds-core/mds-utils'
+import { csv } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
+import schema from './schema'
 
 const pgDebug = process.env.PG_DEBUG === 'true'
 
@@ -82,23 +83,20 @@ export function configureClient(pg_info: PGInfo) {
 
 // convert a list of column names to an SQL string of the form (e.g.) "VALUES($1, $2, $3)"
 export function vals_sql(cols: Readonly<string[]>) {
-  const list = range(cols.length).map((i: number) => `$${i + 1}`)
+  const list = cols.filter(col => col !== schema.IDENTITY_COLUMN).map((col, i) => `$${i + 1}`)
   return `VALUES (${csv(list)})`
 }
 
 // convert a table and its column names into an SQL string of the form (e.g.) "table_name(col1_name, col2_name, col3_name)"
 export function cols_sql(table: string, cols: Readonly<string[]>) {
-  return `${table}(${csv(cols)})`
+  return `${table}(${csv(cols.filter(col => col !== schema.IDENTITY_COLUMN))})`
 }
 
 // take a list of column names and extract the values into a list for SQL insertion
 export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: unknown }) {
-  return cols.map(col_name => (obj[col_name] === undefined ? null : obj[col_name]))
-}
-
-// take a list of column names and a list of column values and reconstitue an object with those name/value pairs
-export function vals_obj(cols: Readonly<string[]>, list: (string | number)[]): { [propName: string]: string | number } {
-  return range(cols.length).reduce((map, i: number) => Object.assign(map, { [i]: list[i] }), {})
+  return cols
+    .filter(col => col !== schema.IDENTITY_COLUMN)
+    .map(col_name => (obj[col_name] === undefined ? null : obj[col_name]))
 }
 
 // convert an object to sql string representation
