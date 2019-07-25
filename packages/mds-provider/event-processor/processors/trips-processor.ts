@@ -54,14 +54,20 @@ const createTrip = (entry: TripsProcessorStreamEntry): Trip => {
 
 const insertTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
-    await db.writeTrips(trips)
-    logger.info(`|- Trips Processor: Created ${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}`)
+    const recorded_trips = await db.writeTrips(trips)
+    logger.info(
+      `|- Trips Processor: Created ${recorded_trips.length}/${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}`
+    )
   }
 }
 
 const updateTrips = async (trips: Trip[]): Promise<void> => {
   if (trips.length > 0) {
-    await Promise.all(trips.map(trip => db.updateTrip(trip.provider_trip_id, trip)))
+    await Promise.all(
+      trips.map(({ provider_trip_id, trip_start, first_trip_enter, last_trip_leave, trip_end, recorded }) =>
+        db.updateTrip(provider_trip_id, { trip_start, first_trip_enter, last_trip_leave, trip_end, recorded })
+      )
+    )
     logger.info(`|- Trips Processor: Updated ${trips.length} ${trips.length === 1 ? 'trip' : 'trips'}`)
   }
 }

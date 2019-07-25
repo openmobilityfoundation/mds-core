@@ -71,9 +71,11 @@ const asStatusChange = (entry: StatusChangesProcessorStreamEntry): StatusChange 
 
 export const StatusChangesProcessor = async (entries: StatusChangesProcessorStreamEntry[]): Promise<void> => {
   if (entries.length > 0) {
-    await db.writeStatusChanges(entries.map(asStatusChange))
+    const recorded_status_changes = await db.writeStatusChanges(entries.map(asStatusChange))
     logger.info(
-      `|- Status Changes Processor: Created ${entries.length} status ${entries.length === 1 ? 'change' : 'changes'}`
+      `|- Status Changes Processor: Created ${recorded_status_changes.length}/${entries.length} status ${
+        entries.length === 1 ? 'change' : 'changes'
+      }`
     )
   }
 }

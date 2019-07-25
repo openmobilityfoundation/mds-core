@@ -319,10 +319,10 @@ function api(app: express.Express): express.Express {
         service_area_id: null
       }
       try {
-        await db.writeEvent(event)
+        const recorded_event = await db.writeEvent(event)
         try {
           // writing to cache and stream is not fatal
-          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+          await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
         } catch (err) {
           await log.warn('/event exception cache/stream', err)
         }
@@ -802,20 +802,9 @@ function api(app: express.Express): express.Express {
   }
 
   async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
-    if (!Array.isArray(telemetry)) {
-      const promises: [Promise<number>, Promise<void>, Promise<void>] = [
-        db.writeTelemetry([telemetry]),
-        cache.writeTelemetry([telemetry]),
-        stream.writeTelemetry([telemetry])
-      ]
-      return Promise.all(promises)
-    }
-    const promises: [Promise<number>, Promise<void>, Promise<void>] = [
-      db.writeTelemetry(telemetry),
-      cache.writeTelemetry(telemetry),
-      stream.writeTelemetry(telemetry)
-    ]
-    return Promise.all(promises)
+    const recorded_telemetry = await db.writeTelemetry(Array.isArray(telemetry) ? telemetry : [telemetry])
+    await Promise.all([cache.writeTelemetry(recorded_telemetry), stream.writeTelemetry(recorded_telemetry)])
+    return recorded_telemetry
   }
   /**
    * Endpoint to submit vehicle events
@@ -916,9 +905,9 @@ function api(app: express.Express): express.Express {
         event.service_area_id = getServiceArea(event)
 
         // database write is crucial; failures of cache/stream should be noted and repaired
-        await db.writeEvent(event)
+        const recorded_event = await db.writeEvent(event)
         try {
-          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+          await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
           await finish()
         } catch (err) {
           await log.warn('/event exception cache/stream', err)
@@ -992,24 +981,24 @@ function api(app: express.Express): express.Express {
       }
 
       if (valid.length) {
-        const counts = await writeTelemetry(valid)
+        const recorded_telemetry = await writeTelemetry(valid)
         const delta = Date.now() - start
         if (delta > 300) {
           log.info(
             name,
             'writeTelemetry',
             valid.length,
-            `(${counts[0]} unique)`,
+            `(${recorded_telemetry.length} unique)`,
             'took',
             delta,
             `ms (${Math.round((1000 * valid.length) / delta)}/s)`
           )
         }
-        if (counts[0]) {
+        if (recorded_telemetry.length) {
           res.status(201).send({
             result: `telemetry success for ${valid.length} of ${data.length}`,
             recorded: now(),
-            unique: counts[0],
+            unique: recorded_telemetry.length,
             failures
           })
         } else {
