@@ -893,7 +893,7 @@ async function readTrips(
   }
 
   const { rows: trips } = await exec(
-    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY recorded${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
+    `SELECT * FROM ${schema.TRIPS_TABLE} ${where} ORDER BY id${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
       take ? ` LIMIT ${vals.add(take)}` : ''
     }`,
     vals.values()
@@ -992,7 +992,7 @@ async function readStatusChanges(
   }
 
   const { rows: status_changes } = await exec(
-    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY recorded${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
+    `SELECT * FROM ${schema.STATUS_CHANGES_TABLE} ${where} ORDER BY id${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
       take ? ` LIMIT ${vals.add(take)}` : ''
     }`,
     vals.values()
@@ -1117,26 +1117,18 @@ async function readRule(rule_id: UUID): Promise<Rule> {
 }
 
 async function readUnprocessedStatusChangeEvents(
-  before: VehicleEvent | null,
+  before: Recorded<VehicleEvent> | null,
   take: number = 1000
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
 
-  const conditions = [
-    `NOT EXISTS (SELECT FROM ${schema.STATUS_CHANGES_TABLE} WHERE device_id = E.device_id AND event_time = E.timestamp)`
-  ]
-
-  if (before) {
-    const [recorded, device_id, timestamp] = [before.recorded, before.device_id, before.timestamp].map(value =>
-      vals.add(value)
+  const where = `WHERE ${(before ? [`E.id < ${before.id}`] : [])
+    .concat(
+      `NOT EXISTS (SELECT FROM ${schema.STATUS_CHANGES_TABLE} WHERE device_id = E.device_id AND event_time = E.timestamp)`
     )
-    conditions.push(
-      `(E.recorded < ${recorded} OR (E.recorded = ${recorded} AND (E.device_id, E.timestamp) < (${device_id}, ${timestamp})))`
-    )
-  }
-  const where = `WHERE ${conditions.join(' AND ')}`
+    .join(' AND ')}`
 
   const {
     rows: [{ count }]
@@ -1147,9 +1139,9 @@ async function readUnprocessedStatusChangeEvents(
   }
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng FROM (SELECT * FROM ${
-      schema.EVENTS_TABLE
-    } E ${where} ORDER BY E.recorded LIMIT ${vals.add(take)}) AS E LEFT JOIN ${
+    `SELECT E.*, T.lat, T.lng FROM (SELECT * FROM ${schema.EVENTS_TABLE} E ${where} ORDER BY E.id LIMIT ${vals.add(
+      take
+    )}) AS E LEFT JOIN ${
       schema.TELEMETRY_TABLE
     } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
     vals.values()

@@ -16,7 +16,7 @@
 
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
-import { PROPULSION_TYPE, VEHICLE_TYPE, VehicleEvent, UUID } from '@mds-core/mds-types'
+import { PROPULSION_TYPE, VEHICLE_TYPE, VehicleEvent, UUID, Recorded } from '@mds-core/mds-types'
 import { Trip } from '@mds-core/mds-db/types'
 import { now } from '@mds-core/mds-utils'
 import { DeviceLabel } from '../labelers/device-labeler'
@@ -25,7 +25,7 @@ import { ProviderLabel } from '../labelers/provider-labeler'
 import { TripLabel } from '../labelers/trip-labeler'
 
 export type TripEvent = Omit<VehicleEvent, 'trip_id'> & { trip_id: UUID }
-export type TripsProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, TripEvent>
+export type TripsProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel & TripLabel, Recorded<TripEvent>>
 
 const createTrip = (entry: TripsProcessorStreamEntry): Trip => {
   const {
