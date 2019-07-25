@@ -96,7 +96,19 @@ export function cols_sql(table: string, cols: Readonly<string[]>) {
 export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: unknown }) {
   return cols
     .filter(col => col !== schema.IDENTITY_COLUMN)
-    .map(col_name => (obj[col_name] === undefined ? null : obj[col_name]))
+    .map(col => {
+      const value = obj[col]
+      if (typeof value === 'undefined') {
+        return null
+      }
+      if (value === null || typeof value === 'string' || typeof value === 'number') {
+        return value
+      }
+      if (Array.isArray(value)) {
+        return value as (string | null)[] | (number | null)[]
+      }
+      return JSON.stringify(value)
+    })
 }
 
 // convert an object to sql string representation

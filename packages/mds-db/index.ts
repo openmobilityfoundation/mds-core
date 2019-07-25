@@ -514,28 +514,19 @@ async function writeTelemetry(data: Telemetry[]): Promise<number> {
   }
   try {
     const client = await getWriteableClient()
-    const rows: DBVal[] = []
-    data.map((telemetry): void => {
-      const telemetryRecord: TelemetryRecord = convertTelemetryToTelemetryRecord(telemetry)
-      const row = [
-        telemetryRecord.device_id,
-        telemetryRecord.provider_id,
-        telemetryRecord.timestamp,
-        telemetryRecord.lat,
-        telemetryRecord.lng,
-        telemetryRecord.altitude,
-        telemetryRecord.heading,
-        telemetryRecord.speed,
-        telemetryRecord.accuracy,
-        telemetryRecord.charge,
-        telemetryRecord.recorded
-      ]
-      rows.push(`(${csv(row.map(to_sql))})`)
-    })
 
-    const sql = `INSERT INTO ${cols_sql(schema.TELEMETRY_TABLE, schema.TELEMETRY_COLS)} VALUES ${csv(
-      rows
-    )} ON CONFLICT DO NOTHING RETURNING 1`
+    const values = csv(
+      data
+        .map(convertTelemetryToTelemetryRecord)
+        .map(telemetry => csv(vals_list(schema.TELEMETRY_COLS, { ...telemetry }).map(to_sql)))
+        .map(row => `(${row})`)
+    )
+
+    const sql = `INSERT INTO ${cols_sql(
+      schema.TELEMETRY_TABLE,
+      schema.TELEMETRY_COLS
+    )} VALUES ${values} ON CONFLICT DO NOTHING RETURNING 1`
+
     await logSql(sql)
     const start = now()
     const result = await client.query(sql)
@@ -799,41 +790,19 @@ async function writeTrips(trips: Trip[]) {
   }
   try {
     const client = await getWriteableClient()
-
-    const rows: (string | number)[] = []
     const recorded = now()
-    trips.map(trip => {
-      const row = [
-        trip.provider_id,
-        trip.provider_name,
-        trip.provider_trip_id,
-        trip.device_id,
-        trip.vehicle_id,
-        trip.vehicle_type,
-        trip.propulsion_type,
-        trip.trip_start,
-        trip.first_trip_enter,
-        trip.last_trip_leave,
-        trip.trip_end,
-        trip.trip_duration,
-        trip.trip_distance,
-        JSON.stringify(trip.route),
-        trip.accuracy,
-        trip.parking_verification_url,
-        trip.standard_cost,
-        trip.actual_cost,
-        trip.recorded || recorded
-      ]
-      rows.push(`(${csv(row.map(to_sql))})`)
-    })
-    const sql = `INSERT INTO ${cols_sql(schema.TRIPS_TABLE, schema.TRIPS_COLS)} VALUES ${csv(
-      rows
-    )} ON CONFLICT DO NOTHING`
+
+    const values = csv(
+      trips
+        .map(trip => csv(vals_list(schema.TRIPS_COLS, { ...trip, recorded: trip.recorded || recorded }).map(to_sql)))
+        .map(row => `(${row})`)
+    )
+
+    const sql = `INSERT INTO ${cols_sql(schema.TRIPS_TABLE, schema.TRIPS_COLS)} VALUES ${values} ON CONFLICT DO NOTHING`
+
     await logSql(sql)
     await client.query(sql)
-    return {
-      count: trips.length
-    }
+    return { count: trips.length }
   } catch (err) {
     await log.error('pg writeTrips error', err)
     throw err
@@ -921,29 +890,19 @@ async function writeStatusChanges(status_changes: StatusChange[]) {
   }
   try {
     const client = await getWriteableClient()
-    const rows: (string | number)[] = []
     const recorded = now()
-    status_changes.map(sc => {
-      const row = [
-        sc.provider_id,
-        sc.provider_name,
-        sc.device_id,
-        sc.vehicle_id,
-        sc.vehicle_type,
-        sc.propulsion_type,
-        sc.event_type,
-        sc.event_type_reason,
-        sc.event_time,
-        JSON.stringify(sc.event_location),
-        sc.battery_pct,
-        sc.associated_trip,
-        sc.recorded || recorded
-      ]
-      rows.push(`(${csv(row.map(to_sql))})`)
-    })
-    const sql = `INSERT INTO ${cols_sql(schema.STATUS_CHANGES_TABLE, schema.STATUS_CHANGES_COLS)} VALUES ${csv(
-      rows
-    )} ON CONFLICT DO NOTHING`
+
+    const values = csv(
+      status_changes
+        .map(sc => csv(vals_list(schema.STATUS_CHANGES_COLS, { ...sc, recorded: sc.recorded || recorded }).map(to_sql)))
+        .map(row => `(${row})`)
+    )
+
+    const sql = `INSERT INTO ${cols_sql(
+      schema.STATUS_CHANGES_TABLE,
+      schema.STATUS_CHANGES_COLS
+    )} VALUES ${values} ON CONFLICT DO NOTHING`
+
     await logSql(sql)
     await client.query(sql)
     return { count: status_changes.length }
