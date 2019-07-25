@@ -161,12 +161,29 @@ async function recreateProviderTables(client: MDSPostgresClient) {
     }
   }
 }
+
+async function addMetadataForeignKeys(client: MDSPostgresClient, table_plural: string, table_singular: string) {
+  const foreignKeyName = `fk_${table_singular}_metadata`
+  const sql = `DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${foreignKeyName}') THEN
+        ALTER TABLE ${table_singular}_metadata
+        ADD CONSTRAINT ${foreignKeyName}
+        FOREIGN KEY (${table_singular}_id) REFERENCES ${table_plural} (${table_singular}_id);
+      END IF;
+    END;
+    $$`
+  await SqlExecuter(client)(sql)
+}
+
 async function updateTables(client: MDSPostgresClient) {
   // Custom migrations run first (e.g. new non-nullable columns with no default value)
   await addTimestampColumnToAuditsTable(client)
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
+  await addMetadataForeignKeys(client, 'policies', 'policy')
+  await addMetadataForeignKeys(client, 'geographies', 'geography')
 
   const exec = SqlExecuter(client)
   await Promise.all(

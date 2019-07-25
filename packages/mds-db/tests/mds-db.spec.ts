@@ -1,6 +1,6 @@
 import assert from 'assert'
 import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, VehicleEvent, Device, Geography, Timestamp } from 'mds'
+import { Telemetry, Recorded, VehicleEvent, Device, Geography, GeographyMetadata } from 'mds'
 import { VEHICLE_EVENTS } from 'mds-enums'
 import {
   JUMP_TEST_DEVICE_1,
@@ -368,6 +368,28 @@ if (pg_info.database) {
         await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
         assert(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id))
         assert(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id))
+      })
+    })
+
+    describe('Geography metadata', () => {
+      before(async () => {
+        await setFreshDB()
+      })
+
+      after(async () => {
+        await MDSDBPostgres.shutdown()
+      })
+
+      it('should write a GeographyMetadata only if there is a Geography in the DB', async () => {
+        const geographyMetadata: GeographyMetadata = {
+          geography_id: GEOGRAPHY_UUID,
+          geography_metadata: { foo: 'afoo' }
+        }
+        await assert.rejects(MDSDBPostgres.writeGeographyMetadata(geographyMetadata))
+        await MDSDBPostgres.writeGeography(LAGeography)
+        await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
+        const geographyMetadataResult = await MDSDBPostgres.readGeographyMetadata(GEOGRAPHY_UUID)
+        assert.deepEqual(geographyMetadataResult, geographyMetadata)
       })
     })
   })

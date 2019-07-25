@@ -125,9 +125,9 @@ const POLICIES_COLS = ['policy_id', 'policy_json'] as const
 
 const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'read_only', 'previous_geography_ids', 'name'] as const
 
-const POLICY_METADATA_COLS = ['policy_metadata', 'policy_id'] as const
+const POLICY_METADATA_COLS = ['policy_id', 'policy_metadata'] as const
 
-const GEOGRAPHY_METADATA_COLS = ['geography_metadata', 'geography_id'] as const
+const GEOGRAPHY_METADATA_COLS = ['geography_id', 'geography_metadata'] as const
 
 const tables: { [propName: string]: Readonly<string[]> } = {
   [DEVICES_TABLE]: DEVICES_COLS,
@@ -220,8 +220,8 @@ const PG_TYPES: { [propName: string]: string } = {
   policy_json: 'json NOT NULL',
   geography_id: 'uuid NOT NULL',
   geography_json: 'json NOT NULL',
-  policy_metadata: 'jsonb',
-  geography_metadata: 'jsonb',
+  policy_metadata: 'json',
+  geography_metadata: 'json',
   read_only: 'bool DEFAULT FALSE',
   previous_geography_ids: 'uuid[]',
   name: 'varchar(255)',
@@ -252,6 +252,8 @@ export default {
   AUDIT_EVENTS_COLS,
   POLICIES_COLS,
   GEOGRAPHIES_COLS,
+  POLICY_METADATA_COLS,
+  GEOGRAPHY_METADATA_COLS,
   tables,
   primaryKeys,
   PG_TYPES

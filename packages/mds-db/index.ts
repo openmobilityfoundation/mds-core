@@ -10,7 +10,9 @@ import {
   Telemetry,
   Recorded,
   DeviceID,
-  Rule
+  Rule,
+  GeographyMetadata,
+  PolicyMetadata
 } from 'mds'
 import {
   convertTelemetryToTelemetryRecord,
@@ -1120,6 +1122,30 @@ async function publishGeography(geography_id: UUID) {
   return geography_id
 }
 
+async function writeGeographyMetadata(metadata: GeographyMetadata) {
+  const client = await getWriteableClient()
+  const sql = `INSERT INTO ${cols_sql(schema.GEOGRAPHY_METADATA_TABLE, schema.GEOGRAPHY_METADATA_COLS)}
+    ${vals_sql(schema.GEOGRAPHY_METADATA_COLS)}`
+  try {
+    await client.query(sql, [metadata.geography_id, metadata.geography_metadata])
+  } catch (err) {
+    log.error(err)
+    throw err
+  }
+}
+
+async function readGeographyMetadata(metadata_id: UUID): Promise<GeographyMetadata> {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.GEOGRAPHY_METADATA_TABLE} WHERE geography_id = '${metadata_id}'`
+  try {
+    const result = await client.query(sql)
+    return result.rows[0]
+  } catch (err) {
+    log.error(err)
+    throw err
+  }
+}
+
 async function readPolicies(params?: {
   policy_id?: UUID
   name?: string
@@ -1205,10 +1231,7 @@ async function publishPolicy(policy_id: UUID) {
         geographies.push(geography_id)
       })
     })
-    /*
-    geographies.forEach(async geography_id => {
-    })
-    */
+
     await Promise.all(
       geographies.map(async geography_id => {
         log.info('publishing geography', geography_id)
@@ -1222,6 +1245,30 @@ async function publishPolicy(policy_id: UUID) {
       })
     )
     return policy_id
+  } catch (err) {
+    log.error(err)
+    throw err
+  }
+}
+
+async function writePolicyMetadata(metadata: PolicyMetadata) {
+  const client = await getWriteableClient()
+  const sql = `INSERT INTO ${cols_sql(schema.POLICY_METADATA_TABLE, schema.POLICY_METADATA_COLS)}
+    ${vals_sql(schema.GEOGRAPHY_METADATA_COLS)}`
+  try {
+    await client.query(sql, [metadata.policy_id, metadata.policy_metadata])
+  } catch (err) {
+    log.error(err)
+    throw err
+  }
+}
+
+async function readPolicyMetadata(metadata_id: UUID): Promise<PolicyMetadata> {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * FROM ${schema.POLICY_METADATA_TABLE} WHERE geography_id = '${metadata_id}'`
+  try {
+    const result = await client.query(sql)
+    return result.rows[0]
   } catch (err) {
     log.error(err)
     throw err
@@ -1447,6 +1494,10 @@ export default {
   readPolicies,
   writePolicy,
   editPolicy,
+  writeGeographyMetadata,
+  readGeographyMetadata,
+  writePolicyMetadata,
+  readPolicyMetadata,
   publishPolicy,
   isPolicyPublished,
   readRule,

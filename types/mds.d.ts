@@ -161,6 +161,11 @@ export interface Policy {
   publish_date?: Timestamp
 }
 
+export interface PolicyMetadata {
+  policy_id: UUID
+  policy_metadata: Record<string, any>
+}
+
 export interface MatchedVehicle {
   device_id: UUID
   provider_id: UUID
@@ -204,6 +209,11 @@ export interface Geography {
   read_only?: boolean
   previous_geography_ids?: UUID[]
   name?: string
+}
+
+export interface GeographyMetadata {
+  geography_id: UUID
+  geography_metadata: Record<string, any>
 }
 
 export interface ErrorObject {
