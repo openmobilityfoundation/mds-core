@@ -89,6 +89,7 @@ const STATUS_CHANGES_COLS = [
 // audit
 const AUDITS_COLS = [
   'audit_trip_id',
+  'audit_vehicle_id',
   'audit_device_id',
   'audit_subject_id',
   'provider_id',
@@ -195,6 +196,7 @@ const PG_TYPES: { [propName: string]: string } = {
   charge: 'real',
 
   audit_trip_id: 'uuid NOT NULL',
+  audit_vehicle_id: 'varchar(255) NOT NULL',
   audit_device_id: 'uuid NOT NULL',
   audit_subject_id: 'varchar(255) NOT NULL',
   provider_vehicle_id: 'varchar(255) NOT NULL',

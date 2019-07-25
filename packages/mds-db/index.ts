@@ -745,7 +745,7 @@ async function readAudits(query: ReadAuditsQueryParams) {
   }
 }
 
-async function writeAudit(audit_param: Audit): Promise<Recorded<Audit>> {
+async function writeAudit(audit_param: Audit & { audit_vehicle_id: UUID }): Promise<Recorded<Audit>> {
   // write pg
   const client = await getWriteableClient()
   const audit = { ...audit_param, recorded: now() }
