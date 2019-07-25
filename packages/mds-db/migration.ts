@@ -195,31 +195,6 @@ async function updateTables(client: MDSPostgresClient) {
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
-
-  const exec = SqlExecuter(client)
-  await Promise.all(
-    Object.keys(schema.tables).map(table =>
-      (async () => {
-        const { rows }: { rows: { column_name: string }[] } = await exec(
-          `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
-        )
-        const existing = rows.map(row => row.column_name)
-        const create = schema.tables[table].filter(column => existing.indexOf(column) < 0)
-        if (create.length > 0) {
-          try {
-            await exec(
-              `ALTER TABLE ${table}\n${create
-                .map(column => `ADD COLUMN ${column} ${schema.PG_TYPES[column]}`)
-                .join(',\n')};`
-            )
-            await log.info(`postgres create column succeeded for table ${table}:`, ...create)
-          } catch (err) {
-            await log.error(`postgres create column failed for table ${table}:`, ...create, err)
-          }
-        }
-      })()
-    )
-  )
 }
 
 async function updateSchema(client: MDSPostgresClient) {
