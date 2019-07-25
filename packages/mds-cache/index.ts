@@ -16,10 +16,18 @@
 
 import log from '@mds-core/mds-logger'
 
-import _ from 'lodash'
 import flatten from 'flat'
 import { capitalizeFirst, nullKeys, stripNulls, now } from '@mds-core/mds-utils'
-import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from '@mds-core/mds-types'
+import {
+  UUID,
+  Timestamp,
+  Device,
+  VehicleEvent,
+  Telemetry,
+  BoundingBox,
+  EVENT_STATUS_MAP,
+  VEHICLE_STATUSES
+} from '@mds-core/mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
 import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
@@ -28,7 +36,8 @@ import {
   CachedItem,
   StringifiedCacheReadDeviceResult,
   StringifiedEventWithTelemetry,
-  StringifiedTelemetry
+  StringifiedTelemetry,
+  StringifiedEvent
 } from './types'
 
 const { env } = process
@@ -54,12 +63,11 @@ bluebird.promisifyAll(redis.RedisClient.prototype)
 
 let cachedClient: redis.RedisClient | null
 
-function insideBBox(status: any | {}, bbox: BoundingBox) {
-  if (!status || !status.telemetry) {
+function insideBBox(telemetry: Telemetry, bbox: BoundingBox) {
+  if (!telemetry || !telemetry.gps) {
     return false
   }
 
-  const telemetry = parseTelemetry(status.telemetry)
   const { lat, lng } = telemetry.gps
   return bbox.latMin <= lat && lat <= bbox.latMax && bbox.lngMin <= lng && lng <= bbox.lngMax
 }
@@ -197,36 +205,68 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
 
   time = now()
   // big batch redis nightmare!
-  const allRaw: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
+  const events = ((await hreads(['event'], device_ids)) as StringifiedEvent[])
+    .reduce((acc: VehicleEvent[], item: StringifiedEvent | StringifiedEventWithTelemetry) => {
+      try {
+        const parsedItem = parseEvent(item)
+        if (
+          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
+          (!parsedItem.telemetry || insideBBox(parsedItem.telemetry, query.bbox))
+        )
+          return [...acc, parsedItem]
+        return acc
+      } catch (err) {
+        // log.info(err)
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
 
-  log.info('read all raw', allRaw.length)
-  log.info('delta', now() - time)
+  const device_ids3 = events.map(item => item.device_id)
+
+  const telemetries = ((await hreads(['telemetry'], device_ids3)) as StringifiedTelemetry[]).reduce(
+    (acc: Telemetry[], item: StringifiedTelemetry) => {
+      try {
+        const parsedItem = parseTelemetry(item)
+        return [...acc, parsedItem]
+      } catch (err) {
+        return acc
+      }
+    },
+    []
+  )
+
+  log.info('initial telemetry read delta:', now() - time)
   time = now()
-  const all = allRaw.filter((item: CachedItem) => Boolean(item))
-  // .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
-  //   try {
-  //     const parsedItem = parseCachedItem(item)
-  //     return [...acc, parsedItem]
-  //   } catch (err) {
-  //     log.info(err)
-  //     return acc
-  //   }
-  // }, [])
-  log.info('delta', now() - time)
-  log.info('readDevicesStatus finished reducing')
+  const filteredTelemetries = telemetries.filter((status: Telemetry) => insideBBox(status, query.bbox))
+  log.info('filtering telemetry delta:', now() - time)
+  time = now()
+  const device_ids2 = filteredTelemetries.map(item => item.device_id)
+  log.info('eventAndDevice delta:', now() - time)
+  time = now()
+  const devices = (await hreads(['device'], device_ids2))
+    .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
+      try {
+        const parsedItem = parseCachedItem(item)
+        return [...acc, parsedItem]
+      } catch (err) {
+        // log.info(err)
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
+  log.info(filteredTelemetries)
+  const all = [...filteredTelemetries, ...devices, ...events]
   all.map(item => {
     device_status_map[item.device_id] = device_status_map[item.device_id] || {}
     Object.assign(device_status_map[item.device_id], item)
   })
   log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
-
-  let values = Object.values(device_status_map)
-  if (query.bbox) {
-    values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
-  }
+  log.info('misc ops delta:', now() - time)
+  const values = Object.values(device_status_map)
 
   log.info('readDevicesStatus done')
-  return values
+  return values.filter((item: any) => item.gps)
 }
 
 // get the provider for a device
