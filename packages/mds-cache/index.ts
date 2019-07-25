@@ -206,12 +206,12 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   time = now()
   // big batch redis nightmare!
   const events = ((await hreads(['event'], device_ids)) as StringifiedEvent[])
-    .reduce((acc: VehicleEvent[], item: StringifiedEvent | StringifiedEventWithTelemetry) => {
+    .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
       try {
         const parsedItem = parseEvent(item)
         if (
           EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
-          (!parsedItem.telemetry || insideBBox(parsedItem.telemetry, query.bbox))
+          (parsedItem.telemetry && insideBBox(parsedItem.telemetry, query.bbox))
         )
           return [...acc, parsedItem]
         return acc
@@ -221,30 +221,10 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
       }
     }, [])
     .filter(item => Boolean(item))
-
-  const device_ids3 = events.map(item => item.device_id)
-
-  const telemetries = ((await hreads(['telemetry'], device_ids3)) as StringifiedTelemetry[]).reduce(
-    (acc: Telemetry[], item: StringifiedTelemetry) => {
-      try {
-        const parsedItem = parseTelemetry(item)
-        return [...acc, parsedItem]
-      } catch (err) {
-        return acc
-      }
-    },
-    []
-  )
-
-  log.info('initial telemetry read delta:', now() - time)
+  const device_ids3 = events.map(event => event.device_id)
+  log.info('initial event read delta:', now() - time)
   time = now()
-  const filteredTelemetries = telemetries.filter((status: Telemetry) => insideBBox(status, query.bbox))
-  log.info('filtering telemetry delta:', now() - time)
-  time = now()
-  const device_ids2 = filteredTelemetries.map(item => item.device_id)
-  log.info('eventAndDevice delta:', now() - time)
-  time = now()
-  const devices = (await hreads(['device'], device_ids2))
+  const devices = (await hreads(['device'], device_ids3))
     .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
       try {
         const parsedItem = parseCachedItem(item)
@@ -255,8 +235,7 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
       }
     }, [])
     .filter(item => Boolean(item))
-  log.info(filteredTelemetries)
-  const all = [...filteredTelemetries, ...devices, ...events]
+  const all = [...devices, ...events]
   all.map(item => {
     device_status_map[item.device_id] = device_status_map[item.device_id] || {}
     Object.assign(device_status_map[item.device_id], item)
@@ -266,7 +245,7 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   const values = Object.values(device_status_map)
 
   log.info('readDevicesStatus done')
-  return values.filter((item: any) => item.gps)
+  return values.filter((item: any) => item.telemetry)
 }
 
 // get the provider for a device
