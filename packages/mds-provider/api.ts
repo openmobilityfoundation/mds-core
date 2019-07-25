@@ -209,7 +209,7 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/trips'),
     PROVIDER_MODERN
-      ? async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+      ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
           const { provider_id, device_id, vehicle_id } = req.query
           const min_end_time = req.query.min_end_time && Number(req.query.min_end_time)
@@ -266,7 +266,7 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/status_changes'),
     PROVIDER_MODERN
-      ? async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+      ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
           const start_time = req.query.start_time && Number(req.query.start_time)
           const end_time = req.query.end_time && Number(req.query.end_time)
