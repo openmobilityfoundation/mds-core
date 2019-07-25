@@ -16,6 +16,7 @@
 
 import log from '@mds-core/mds-logger'
 
+import _ from 'lodash'
 import flatten from 'flat'
 import { capitalizeFirst, nullKeys, stripNulls, now } from '@mds-core/mds-utils'
 import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from '@mds-core/mds-types'
@@ -183,9 +184,10 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   // read all device ids
   log.info('redis zrangebyscore device-ids', start, stop)
   const client = await getClient()
+  let time = now()
   const device_ids_res = await client.zrangebyscoreAsync('device-ids', start, stop)
   log.info('readDevicesStatus', device_ids_res.length, 'entries')
-
+  log.info('delta', now() - time)
   const skip = query.skip || 0
   const take = query.take || 100000000000
   const device_ids = device_ids_res.slice(skip, skip + take)
@@ -193,9 +195,13 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   // read all devices
   const device_status_map: { [device_id: string]: CachedItem | {} } = {}
 
+  time = now()
   // big batch redis nightmare!
   const allRaw: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
+
   log.info('read all raw', allRaw.length)
+  log.info('delta', now() - time)
+  time = now()
   const all = allRaw.filter((item: CachedItem) => Boolean(item))
   // .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
   //   try {
@@ -206,6 +212,7 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   //     return acc
   //   }
   // }, [])
+  log.info('delta', now() - time)
   log.info('readDevicesStatus finished reducing')
   all.map(item => {
     device_status_map[item.device_id] = device_status_map[item.device_id] || {}
