@@ -73,7 +73,7 @@ export async function readAudits(
 }
 
 export async function writeAudit(audit: Audit): Promise<Recorded<Audit>> {
-  const result: Recorded<Audit> = await db.writeAudit({ ...audit, audit_vehicle_id: audit.audit_device_id })
+  const result: Recorded<Audit> = await db.writeAudit(audit)
   return result
 }
 
