@@ -1113,6 +1113,20 @@ async function editGeography(geography: Geography) {
   return geography
 }
 
+async function deleteGeography(geography_id: UUID) {
+  if (await isGeographyPublished(geography_id)) {
+    throw new Error('Cannot edit published Geography')
+  }
+
+  const client = await getWriteableClient()
+  const sql = `DELETE FROM ${schema.GEOGRAPHIES_TABLE} WHERE geography_id='${geography_id}' AND read_only IS FALSE`
+  await client.query(sql).catch(err => {
+    log.error(err)
+    throw err
+  })
+  return geography_id
+}
+
 async function publishGeography(geography_id: UUID) {
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET read_only = TRUE where geography_id='${geography_id}'`
@@ -1211,6 +1225,20 @@ async function editPolicy(policy: Policy) {
     throw err
   })
   return policy
+}
+
+async function deletePolicy(policy_id: UUID) {
+  if (await isPolicyPublished(policy_id)) {
+    throw new Error('Cannot edit published Geography')
+  }
+
+  const client = await getWriteableClient()
+  const sql = `DELETE FROM ${schema.POLICIES_TABLE} WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
+  await client.query(sql).catch(err => {
+    log.error(err)
+    throw err
+  })
+  return policy_id
 }
 
 async function publishPolicy(policy_id: UUID) {
@@ -1489,11 +1517,13 @@ export default {
   readGeographies,
   writeGeography,
   publishGeography,
+  deleteGeography,
   isGeographyPublished,
   editGeography,
   readPolicies,
   writePolicy,
   editPolicy,
+  deletePolicy,
   writeGeographyMetadata,
   readGeographyMetadata,
   writePolicyMetadata,

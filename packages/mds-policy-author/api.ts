@@ -14,6 +14,13 @@
     limitations under the License.
  */
 
+/* TODO
+ * -- Finish testing deletion of unpublished policies
+ * -- Test deletion of un/published geographies
+ * -- Test that when a policy is published, the related geographies are set to read only
+ * -- Write endpoints for CRUD of policy and geography metadata endpoints
+ */
+
 import express from 'express'
 import { isProviderId, providerName } from 'mds-providers'
 import Joi from '@hapi/joi'
@@ -232,7 +239,7 @@ function api(app: express.Express): express.Express {
       await db.writePolicy(policy)
       res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
     } catch (err) {
-      log.error('failed to write geography', err.stack)
+      log.error('failed to write policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -265,11 +272,26 @@ function api(app: express.Express): express.Express {
     }
     try {
       await db.editPolicy(policy)
-      log.info('editing that damn policy succeeded', policy, details)
+      log.info('editing the policy succeeded', policy, details)
       res.status(200).send({ result: `successfully edited policy ${policy}` })
     } catch (err) {
       log.error('failed to edit policy', err.stack)
       res.status(404).send({ result: 'not found' })
+    }
+  })
+
+  // POLICIES DELETES
+
+  app.delete(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+    const { policy_id } = req.params
+    log.info('deleting this dumb policy')
+    try {
+      await db.deletePolicy(policy_id)
+      res.status(200).send({ result: `successfully deleted policy of id ${policy_id}` })
+      log.info('deleting this dumb policy success')
+    } catch (err) {
+      log.error('failed to delete policy', err.stack)
+      res.status(404).send({ result: 'policy either not found, or has already been published' })
     }
   })
 
@@ -332,6 +354,58 @@ function api(app: express.Express): express.Express {
       res.status(404).send({ result: 'not found' })
     }
   })
+
+  // METADATA ENDPOINTS
+  // GEOGRAPHY METADATA
+
+  /*
+GET /geographies/meta
+
+Get a list of geography metadata.  Search parameters TBD.
+*/
+
+  app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
+    /*
+    log.info('read geo', JSON.stringify(req.params))
+    const { geography_id } = req.params
+    log.info('read geo', geography_id)
+    try {
+      const geographies: Geography[] = await db.readGeographies({ geography_id })
+      if (geographies.length > 0) {
+        res.status(200).send({ geography: geographies[0] })
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      log.error('failed to read geography', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
+    */
+  })
+  /*
+
+POST /geographies/meta/{id}
+
+Create
+*/
+
+  app.post(pathsFor('/admin/geographies/meta/:geography_id'), async (req, res) => {
+    const geography_metadata = req.body
+
+    try {
+      await db.writeGeographyMetadata(geography_metadata)
+      res.status(200).send({ result: `successfully wrote policy of id ${geography_metadata.geography_id}` })
+    } catch (err) {
+      log.error('failed to write geography metadata', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
+  })
+  /*
+
+PUT /geographies/meta/{id}
+
+Update
+*/
 
   return app
 }

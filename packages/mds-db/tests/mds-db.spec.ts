@@ -258,6 +258,15 @@ if (pg_info.database) {
         await MDSDBPostgres.shutdown()
       })
 
+      it('can delete an unpublished Policy', async () => {
+        const { policy_id } = POLICY_JSON
+        await MDSDBPostgres.writePolicy(POLICY_JSON)
+        assert(!(await MDSDBPostgres.isPolicyPublished(policy_id)))
+        await MDSDBPostgres.deletePolicy(policy_id)
+        const result = await MDSDBPostgres.readPolicies({ policy_id })
+        assert.deepEqual(result, [])
+      })
+
       it('can write, read, and publish a Policy', async () => {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writePolicy(POLICY_JSON)
@@ -287,10 +296,11 @@ if (pg_info.database) {
         assert.deepEqual(result[0].name, 'a shiny new name')
       })
 
-      it('will not edit a published Policy', async () => {
+      it('will not edit or delete a published Policy', async () => {
         const publishedPolicy = clone(POLICY_JSON)
         publishedPolicy.name = 'a shiny new name'
         await assert.rejects(MDSDBPostgres.editPolicy(publishedPolicy))
+        await assert.rejects(MDSDBPostgres.deletePolicy(publishedPolicy.policy_id))
       })
     })
 
@@ -301,6 +311,14 @@ if (pg_info.database) {
 
       after(async () => {
         await MDSDBPostgres.shutdown()
+      })
+
+      it('can delete an unpublished Geography', async () => {
+        await MDSDBPostgres.writeGeography(LAGeography)
+        assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
+        await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
+        const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
+        assert.deepEqual(result, [])
       })
 
       it('can write, read, and publish a Geography', async () => {
@@ -331,13 +349,11 @@ if (pg_info.database) {
         geography_json.features = []
         await MDSDBPostgres.editGeography({ geography_id: DistrictSeven.geography_id, geography_json })
         const result = (await MDSDBPostgres.readGeographies({ geography_id: GEOGRAPHY2_UUID }))[0]
-        console.log('rezzy rez')
-        console.log(result)
         assert.notEqual(result.geography_json.features.length, numFeatures)
         assert.equal(result.geography_json.features.length, 0)
       })
 
-      it('will not edit a published Geography', async () => {
+      it('will not edit or delete a published Geography', async () => {
         const publishedGeographyJSON = clone(LAGeography.geography_json) as FeatureCollection
         publishedGeographyJSON.features = []
         await assert.rejects(
@@ -346,6 +362,7 @@ if (pg_info.database) {
             geography_json: publishedGeographyJSON
           })
         )
+        await assert.rejects(MDSDBPostgres.deleteGeography(LAGeography.geography_id))
       })
     })
 

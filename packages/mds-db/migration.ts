@@ -162,14 +162,14 @@ async function recreateProviderTables(client: MDSPostgresClient) {
   }
 }
 
-async function addMetadataForeignKeys(client: MDSPostgresClient, table_plural: string, table_singular: string) {
-  const foreignKeyName = `fk_${table_singular}_metadata`
+async function addMetadataForeignKeys(client: MDSPostgresClient, table: string, column: string) {
+  const foreignKeyName = `fk_${column}_metadata`
   const sql = `DO $$
     BEGIN
       IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${foreignKeyName}') THEN
-        ALTER TABLE ${table_singular}_metadata
+        ALTER TABLE ${column}_metadata
         ADD CONSTRAINT ${foreignKeyName}
-        FOREIGN KEY (${table_singular}_id) REFERENCES ${table_plural} (${table_singular}_id);
+        FOREIGN KEY (${column}_id) REFERENCES ${table} (${column}_id);
       END IF;
     END;
     $$`
