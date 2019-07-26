@@ -72,29 +72,23 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
 
   const client_type: ClientType = useWriteable ? 'writeable' : 'readonly'
 
-  const client = configureClient({
-    user: PG_USER,
+  const info = {
+    client_type,
     database: PG_NAME,
+    user: PG_USER,
     host: PG_HOST || 'localhost',
-    password: PG_PASS,
-    port: Number(PG_PORT) || 5432,
-    client_type
-  })
+    port: Number(PG_PORT) || 5432
+  }
+
+  await log.info('connecting to postgres:', ...Object.keys(info).map(key => (info as { [x: string]: unknown })[key]))
+
+  const client = configureClient({ ...info, password: PG_PASS })
 
   try {
     await client.connect()
     if (useWriteable) {
       await updateSchema(client)
     }
-    log.info(
-      'connected',
-      client_type,
-      'client to postgres:',
-      PG_NAME,
-      PG_USER,
-      PG_HOST || 'localhost',
-      PG_PORT || '5432'
-    )
     client.setConnected(true)
     return client
   } catch (err) {

@@ -51,7 +51,6 @@ export class MDSPostgresClient extends PostgresClient {
 export function configureClient(pg_info: PGInfo) {
   // Use parseInt for bigint columns so the values get returned as numbers instead of strings
   PostgresTypes.setTypeParser(20, parseInt)
-  log.info('configured new client')
 
   const client = new MDSPostgresClient({
     user: pg_info.user,
