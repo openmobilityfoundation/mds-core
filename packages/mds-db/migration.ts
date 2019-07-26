@@ -190,12 +190,49 @@ async function recreateProviderTables(client: MDSPostgresClient) {
     }
   }
 }
+
+async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
+  const exec = SqlExecuter(client)
+
+  const { rows: existing }: { rows: { table_name: string }[] } = await exec(
+    `SELECT table_name FROM information_schema.columns WHERE column_name = '${schema.IDENTITY_COLUMN}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+  )
+
+  const create = Object.keys(schema.tables)
+    .filter(name => schema.tables[name].some(col => col === schema.IDENTITY_COLUMN))
+    .filter(name => !existing.some(({ table_name }) => table_name === name))
+
+  if (create.length > 0) {
+    try {
+      await exec(
+        create
+          .map(
+            table =>
+              `ALTER TABLE ${table} ADD COLUMN ${schema.IDENTITY_COLUMN} ${schema.PG_TYPES[schema.IDENTITY_COLUMN]};`
+          )
+          .join('\n')
+      )
+      await log.info(
+        `Migration addIdentityColumnToAllTables create ${schema.IDENTITY_COLUMN} column succeeded for:`,
+        ...create
+      )
+    } catch (err) {
+      await log.error(
+        `Migration addIdentityColumnToAllTables create ${schema.IDENTITY_COLUMN} column failed for:`,
+        ...create,
+        err
+      )
+    }
+  }
+}
+
 async function updateTables(client: MDSPostgresClient) {
   // Custom migrations run first (e.g. new non-nullable columns with no default value)
   await addTimestampColumnToAuditsTable(client)
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
+  await addIdentityColumnToAllTables(client)
 }
 
 async function updateSchema(client: MDSPostgresClient) {
