@@ -355,6 +355,18 @@ function api(app: express.Express): express.Express {
     }
   })
 
+  // GEOGRAPHY DELETE
+  app.delete(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
+    const { geography_id } = req.params
+    try {
+      await db.deleteGeography(geography_id)
+      res.status(200).send({ result: `Successfully deleted geography of id ${geography_id}` })
+    } catch (err) {
+      log.error('failed to delete geography', err.stack)
+      res.status(404).send({ result: 'geography either not found or already published' })
+    }
+  })
+
   // METADATA ENDPOINTS
   // GEOGRAPHY METADATA
 
