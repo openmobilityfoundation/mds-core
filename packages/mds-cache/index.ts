@@ -64,7 +64,7 @@ declare module 'redis' {
       latitude: number,
       radius: number,
       unit: string
-    ) => Promise<string[]>
+    ) => Promise<UUID[]>
   }
 }
 
