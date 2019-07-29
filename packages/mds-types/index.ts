@@ -14,6 +14,7 @@
     limitations under the License.
  */
 import { Feature, FeatureCollection } from 'geojson'
+import { number } from '@hapi/joi';
 
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(keys.reduce((e, key) => {
@@ -352,13 +353,13 @@ export interface TripsStats {
 // database. This type alias will add the readonly attribute to all properties and also remove undefined as a valid
 // value since the database will never return undefined.
 export type Recorded<T> = Readonly<Required<T>>
-
-export interface BoundingBox {
-  latMin: number
-  latMax: number
-  lngMin: number
+export interface BBox {
+  latMin: number,
+  latMax: number,
+  lngMin: number,
   lngMax: number
 }
+export type BoundingBox = [[number, number], [number, number]]
 
 export interface Provider {
   provider_name: string

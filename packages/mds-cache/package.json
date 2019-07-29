@@ -19,6 +19,7 @@
     "@mds-core/mds-logger": "0.1.3",
     "@mds-core/mds-types": "0.1.0",
     "@mds-core/mds-utils": "0.1.3",
+    "geo-distance": "0.2.0",
     "redis": "2.8.0"
   },
   "scripts": {

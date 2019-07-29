@@ -16,8 +16,9 @@
 
 import log from '@mds-core/mds-logger'
 
+import distance from 'geo-distance'
 import flatten from 'flat'
-import { capitalizeFirst, nullKeys, stripNulls, now } from '@mds-core/mds-utils'
+import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox } from '@mds-core/mds-utils'
 import {
   UUID,
   Timestamp,
@@ -30,6 +31,7 @@ import {
 } from '@mds-core/mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
+
 import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
 import {
   CacheReadDeviceResult,
@@ -56,21 +58,19 @@ declare module 'redis' {
     keysAsync: (arg1: string) => Promise<string[]>
     zaddAsync: (arg1: string | number, arg2: number, arg3: string) => Promise<number>
     zrangebyscoreAsync: (key: string, min: number | string, max: number | string) => Promise<string[]>
+    georadiusAsync: (
+      key: string,
+      longitude: number,
+      latitude: number,
+      radius: number,
+      unit: string
+    ) => Promise<string[]>
   }
 }
 
 bluebird.promisifyAll(redis.RedisClient.prototype)
 
 let cachedClient: redis.RedisClient | null
-
-function insideBBox(telemetry: Telemetry, bbox: BoundingBox) {
-  if (!telemetry || !telemetry.gps) {
-    return false
-  }
-
-  const { lat, lng } = telemetry.gps
-  return bbox.latMin <= lat && lat <= bbox.latMax && bbox.lngMin <= lng && lng <= bbox.lngMax
-}
 
 async function getClient() {
   if (!cachedClient) {
@@ -193,9 +193,11 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   log.info('redis zrangebyscore device-ids', start, stop)
   const client = await getClient()
   let time = now()
-  const device_ids_res = await client.zrangebyscoreAsync('device-ids', start, stop)
-  log.info('readDevicesStatus', device_ids_res.length, 'entries')
-  log.info('delta', now() - time)
+
+  const { bbox } = query
+  const deviceIdsInBbox = await getEventsInBbox(bbox)
+  const device_ids_res =
+    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
   const skip = query.skip || 0
   const take = query.take || 100000000000
   const device_ids = device_ids_res.slice(skip, skip + take)
@@ -211,19 +213,17 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
         const parsedItem = parseEvent(item)
         if (
           EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
-          (parsedItem.telemetry && insideBBox(parsedItem.telemetry, query.bbox))
+          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
         )
           return [...acc, parsedItem]
         return acc
       } catch (err) {
-        // log.info(err)
         return acc
       }
     }, [])
     .filter(item => Boolean(item))
+
   const device_ids3 = events.map(event => event.device_id)
-  log.info('initial event read delta:', now() - time)
-  time = now()
   const devices = (await hreads(['device'], device_ids3))
     .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
       try {
@@ -240,11 +240,8 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
     device_status_map[item.device_id] = device_status_map[item.device_id] || {}
     Object.assign(device_status_map[item.device_id], item)
   })
-  log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
-  log.info('misc ops delta:', now() - time)
   const values = Object.values(device_status_map)
 
-  log.info('readDevicesStatus done')
   return values.filter((item: any) => item.telemetry)
 }
 
@@ -320,6 +317,10 @@ async function writeEvent(event: VehicleEvent) {
     const prev_event = parseEvent((await hread('event', event.device_id)) as StringifiedEventWithTelemetry)
     if (prev_event.timestamp < event.timestamp) {
       try {
+        if (event.telemetry) {
+          const { lat, lng } = event.telemetry.gps
+          await addGeospatialHash(event.device_id, [lat, lng])
+        }
         return hwrite('event', event)
       } catch (err) {
         await log.error('hwrites', err.stack)
@@ -330,6 +331,10 @@ async function writeEvent(event: VehicleEvent) {
     }
   } catch (_) {
     try {
+      if (event.telemetry) {
+        const { lat, lng } = event.telemetry.gps
+        await addGeospatialHash(event.device_id, [lat, lng])
+      }
       return hwrite('event', event)
     } catch (err) {
       await log.error('hwrites', err.stack)
@@ -377,10 +382,12 @@ async function readTelemetry(device_id: UUID): Promise<Telemetry> {
 }
 
 async function writeOneTelemetry(telemetry: Telemetry) {
+  const {lat, lng} = telemetry.gps
   try {
     const prevTelemetry = await readTelemetry(telemetry.device_id)
     if (prevTelemetry.timestamp < telemetry.timestamp) {
       try {
+        await addGeospatialHash(telemetry.device_id, [lat, lng])
         return hwrite('telemetry', telemetry)
       } catch (err) {
         await log.error('hwrite', err.stack)
@@ -392,6 +399,7 @@ async function writeOneTelemetry(telemetry: Telemetry) {
   } catch (err) {
     log.info('writeOneTelemetry: no prior telemetry found:', err.message)
     try {
+      await addGeospatialHash(telemetry.device_id, [lat, lng])
       return hwrite('telemetry', telemetry)
     } catch (err2) {
       await log.error('writeOneTelemetry hwrite2', err.stack)
@@ -521,6 +529,26 @@ async function cleanup() {
     await log.error('cleanup: exception', ex)
     return Promise.reject(ex)
   }
+}
+
+async function addGeospatialHash(key: string, coordinates: [number, number]) {
+  const client = await getClient()
+  const [lat, lng] = coordinates
+  const res = await client.geoadd('locations', lng, lat, key)
+  return res
+}
+
+async function getEventsInBbox(bbox: BoundingBox) {
+  const client = await getClient()
+  const [pt1, pt2] = bbox
+  const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
+  const [radius, unit] = distance
+    .between(pt1, pt2)
+    .toString()
+    .split(' ')
+  const res = await client.georadiusAsync('locations', lng, lat, radius, unit)
+  console.log(res.toString())
+  return res
 }
 
 export default {
