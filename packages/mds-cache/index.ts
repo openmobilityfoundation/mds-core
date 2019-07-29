@@ -131,6 +131,24 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
+async function addGeospatialHash(key: string, coordinates: [number, number]) {
+  const client = await getClient()
+  const [lat, lng] = coordinates
+  const res = await client.geoadd('locations', lng, lat, key)
+  return res
+}
+
+async function getEventsInBbox(bbox: BoundingBox) {
+  const client = await getClient()
+  const [pt1, pt2] = bbox
+  const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
+  const [radius, unit] = distance
+    .between(pt1, pt2)
+    .toString()
+    .split(' ')
+  return client.georadiusAsync('locations', lng, lat, radius, unit)
+}
+
 async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {
   if (suffixes === undefined) {
     throw new Error('hreads: no suffixes')
@@ -377,7 +395,7 @@ async function readTelemetry(device_id: UUID): Promise<Telemetry> {
 }
 
 async function writeOneTelemetry(telemetry: Telemetry) {
-  const {lat, lng} = telemetry.gps
+  const { lat, lng } = telemetry.gps
   try {
     const prevTelemetry = await readTelemetry(telemetry.device_id)
     if (prevTelemetry.timestamp < telemetry.timestamp) {
@@ -524,26 +542,6 @@ async function cleanup() {
     await log.error('cleanup: exception', ex)
     return Promise.reject(ex)
   }
-}
-
-async function addGeospatialHash(key: string, coordinates: [number, number]) {
-  const client = await getClient()
-  const [lat, lng] = coordinates
-  const res = await client.geoadd('locations', lng, lat, key)
-  return res
-}
-
-async function getEventsInBbox(bbox: BoundingBox) {
-  const client = await getClient()
-  const [pt1, pt2] = bbox
-  const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
-  const [radius, unit] = distance
-    .between(pt1, pt2)
-    .toString()
-    .split(' ')
-  const res = await client.georadiusAsync('locations', lng, lat, radius, unit)
-  console.log(res.toString())
-  return res
 }
 
 export default {
