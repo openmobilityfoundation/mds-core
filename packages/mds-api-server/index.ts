@@ -13,6 +13,20 @@ export interface ApiResponse<T = unknown> extends express.Response {
   send: (body: T) => ApiResponse<T | { error: Error }>
 }
 
+const about = () => {
+  const {
+    versions: { node },
+    env: {
+      npm_package_name: name,
+      npm_package_version: version,
+      npm_package_git_branch: branch,
+      npm_package_git_commit: commit,
+      npm_package_build_date: date
+    }
+  } = process
+  return { name, version, build: { date, branch, commit }, node }
+}
+
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
   authorizer: ApiAuthorizer = AuthorizationHeaderApiAuthorizer,
@@ -35,26 +49,14 @@ export const ApiServer = (
   )
 
   app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
-    const {
-      versions: { node },
-      env: {
-        npm_package_name: name,
-        npm_package_version: version,
-        npm_package_git_branch: branch,
-        npm_package_git_commit: commit,
-        npm_package_build_date: date
-      }
-    } = process
     // 200 OK
-    res
-      .status(200)
-      .send({ name, version, build: branch && commit && date ? { date, branch, commit } : undefined, node })
+    res.status(200).send(about())
   })
 
   app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
     // 200 OK
     res.status(200).send({
-      node: process.versions.node,
+      ...about(),
       process: process.pid,
       uptime: process.uptime(),
       memory: process.memoryUsage()
