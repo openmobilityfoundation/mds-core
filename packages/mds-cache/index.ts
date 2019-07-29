@@ -132,10 +132,10 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
 }
 
 /* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner.*/
-async function addGeospatialHash(device: UUID, coordinates: [number, number]) {
+async function addGeospatialHash(device_id: UUID, coordinates: [number, number]) {
   const client = await getClient()
   const [lat, lng] = coordinates
-  const res = await client.geoadd('locations', lng, lat, device)
+  const res = await client.geoadd('locations', lng, lat, device_id)
   return res
 }
 
