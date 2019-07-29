@@ -14,7 +14,8 @@
     limitations under the License.
  */
 
-import db from 'mds-db'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
 import {
   Audit,
   AuditEvent,
@@ -25,8 +26,12 @@ import {
   UUID,
   VehicleEvent,
   TelemetryData,
-  WithGpsProperty
-} from 'mds'
+  WithGpsProperty,
+  BoundingBox,
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT,
+  VEHICLE_STATUSES
+} from '@mds-core/mds-types'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)
@@ -82,8 +87,8 @@ export async function writeAuditEvent(event: AuditEvent): Promise<Recorded<Audit
   return result
 }
 
-export async function readDevice(device_id: UUID): Promise<Recorded<Device>> {
-  const result: Recorded<Device> = await db.readDevice(device_id)
+export async function readDevice(device_id: UUID, provider_id: UUID): Promise<Recorded<Device>> {
+  const result: Recorded<Device> = await db.readDevice(device_id, provider_id)
   return result
 }
 
@@ -142,4 +147,63 @@ export function withGpsProperty<T extends TelemetryData>({
   ...props
 }: T): WithGpsProperty<T> {
   return { ...props, gps: { lat, lng, speed, heading, accuracy, hdop, altitude, satellites } }
+}
+
+export async function getVehicles(
+  skip: number,
+  take: number,
+  url: string,
+  provider_id: string,
+  reqQuery: { [x: string]: string },
+  bbox: BoundingBox
+) {
+  function fmt(query: { skip: number; take: number }): string {
+    const flat = Object.assign({}, reqQuery, query)
+    let s = `${url}?`
+    s += Object.keys(flat)
+      .map(key => `${key}=${flat[key]}`)
+      .join('&')
+    return s
+  }
+
+  const statusesSuperset = ((await cache.readDevicesStatus({ bbox })) as (VehicleEvent & Device)[]).filter(
+    status => EVENT_STATUS_MAP[status.event_type as VEHICLE_EVENT] !== VEHICLE_STATUSES.removed
+  )
+  const statusesSubset = statusesSuperset.slice(skip, skip + take)
+  const devices = statusesSubset.reduce((acc: (VehicleEvent & Device)[], item) => {
+    const status = EVENT_STATUS_MAP[item.event_type as VEHICLE_EVENT]
+    const updated = item.timestamp
+    return [...acc, { ...item, status, updated }]
+  }, [])
+
+  const noNext = skip + take >= statusesSuperset.length
+  const noPrev = skip === 0 || skip > statusesSuperset.length
+  const lastSkip = take * Math.floor(statusesSuperset.length / take)
+
+  return {
+    total: statusesSuperset.length,
+    links: {
+      first: fmt({
+        skip: 0,
+        take
+      }),
+      last: fmt({
+        skip: lastSkip,
+        take
+      }),
+      prev: noPrev
+        ? null
+        : fmt({
+            skip: skip - take,
+            take
+          }),
+      next: noNext
+        ? null
+        : fmt({
+            skip: skip + take,
+            take
+          })
+    },
+    vehicles: devices
+  }
 }

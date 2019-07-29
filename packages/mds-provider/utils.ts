@@ -1,6 +1,5 @@
-import { VehicleEvent } from 'mds'
-import { StatusChangeEvent } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, VEHICLE_REASONS } from 'mds-enums'
+import { StatusChangeEvent } from '@mds-core/mds-db/types'
+import { VEHICLE_EVENTS, VEHICLE_STATUSES, VEHICLE_REASONS, VehicleEvent } from '@mds-core/mds-types'
 
 export function asStatusChangeEvent({ event_type }: VehicleEvent): StatusChangeEvent {
   // const agencyEventReason = agencyEvent.event_type_reason

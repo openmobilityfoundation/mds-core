@@ -15,8 +15,8 @@
  */
 
 // Express local
-import { server } from 'mds-api-server'
-import { api } from 'mds-daily'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { api } from '@mds-core/mds-daily'
 
 const {
   env: { npm_package_name, PORT = 4005 }
@@ -24,4 +24,4 @@ const {
 
 /* eslint-reason avoids import of logger */
 /* eslint-disable-next-line no-console */
-server(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
+ApiServer(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))

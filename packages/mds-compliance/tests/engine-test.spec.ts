@@ -1,14 +1,13 @@
 import test from 'unit.js'
 import fs from 'fs'
 
-import { makeDevices, makeEventsWithTelemetry } from 'mds-test-data'
-import { RULE_TYPES } from 'mds-enums'
+import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { RULE_TYPES, Geography, Policy, Device } from '@mds-core/mds-types'
 
-import { la_city_boundary } from 'mds-policy/tests/la-city-boundary'
-import { Geography, Policy, Device } from 'mds'
+import { la_city_boundary } from '@mds-core/mds-policy/tests/la-city-boundary'
 import { FeatureCollection } from 'geojson'
-import { processPolicy, filterPolicies, filterEvents } from 'mds-compliance/mds-compliance-engine'
-import { ValidationError, RuntimeError } from 'mds-utils'
+import { processPolicy, filterPolicies, filterEvents } from '@mds-core/mds-compliance/mds-compliance-engine'
+import { ValidationError, RuntimeError } from '@mds-core/mds-utils'
 import { validateEvents, validateGeographies, validatePolicies } from '../validators'
 
 let policies: Policy[] = []

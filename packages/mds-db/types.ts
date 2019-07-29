@@ -1,5 +1,15 @@
-import { Recorded, UUID, Timestamp, VehicleEvent, TelemetryData } from 'mds'
-import { VEHICLE_TYPE, PROPULSION_TYPE, VEHICLE_STATUS, VEHICLE_EVENT, VEHICLE_REASON } from 'mds-enums'
+import {
+  Recorded,
+  UUID,
+  Timestamp,
+  VehicleEvent,
+  TelemetryData,
+  VEHICLE_TYPE,
+  PROPULSION_TYPE,
+  VEHICLE_STATUS,
+  VEHICLE_EVENT,
+  VEHICLE_REASON
+} from '@mds-core/mds-types'
 import { Feature, FeatureCollection } from 'geojson'
 import schema from './schema'
 

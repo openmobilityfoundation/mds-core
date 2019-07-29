@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { ProviderEventProcessor } from 'mds-provider'
+import { ProviderEventProcessor } from '@mds-core/mds-provider'
 
 const { PROVIDER_EVENT_PROCESSOR_INTERVAL, PROVIDER_EVENT_PROCESSOR_COUNT } = process.env
 
@@ -22,4 +22,6 @@ const [interval, count] = [PROVIDER_EVENT_PROCESSOR_INTERVAL, PROVIDER_EVENT_PRO
   .map(Number)
   .map(value => (Number.isNaN(value) ? undefined : value))
 
+/* eslint-reason Fire and forget */
+/* eslint-disable-next-line @typescript-eslint/no-floating-promises */
 ProviderEventProcessor({ interval, count })

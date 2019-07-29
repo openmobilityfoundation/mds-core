@@ -18,7 +18,7 @@ import GoogleSpreadsheet from 'google-spreadsheet'
 
 import { promisify } from 'util'
 import requestPromise from 'request-promise'
-import log from 'mds-logger'
+import log from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
   LIME_PROVIDER_ID,
@@ -28,7 +28,7 @@ import {
   SPIN_PROVIDER_ID,
   SHERPA_PROVIDER_ID,
   BOLT_PROVIDER_ID
-} from 'mds-providers'
+} from '@mds-core/mds-providers'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow } from './types'
 
 require('dotenv').config()
@@ -160,7 +160,11 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
   }
 }
 
-export const MetricsLogHandler = () =>
-  getProviderMetrics(0)
-    .then(rows => appendSheet('Metrics Log', rows))
-    .catch((err: Error) => log.error('MetricsLogHandler', err))
+export const MetricsLogHandler = async () => {
+  try {
+    const rows = await getProviderMetrics(0)
+    await appendSheet('Metrics Log', rows)
+  } catch (err) {
+    await log.error('MetricsLogHandler', err)
+  }
+}

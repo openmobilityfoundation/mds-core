@@ -21,28 +21,18 @@ import {
   VEHICLE_TYPES,
   PROPULSION_TYPES,
   VEHICLE_STATUSES,
-  VEHICLE_STATUS
-} from 'mds-enums'
-import { UUID, Device, Timestamp, Telemetry, VehicleEvent, Policy } from 'mds'
+  VEHICLE_STATUS, UUID, Device, Timestamp, Telemetry, VehicleEvent, Policy } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
-import { StatusChange, Trip } from 'mds-db/types'
+import { StatusChange, Trip } from '@mds-core/mds-db/types'
 
-import {
-  addDistanceBearing,
-  pointInShape,
-  makePointInShape,
-  rangeRandom,
-  rangeRandomInt,
-  range,
-  now,
-  days
-} from 'mds-utils'
+
+import { addDistanceBearing, pointInShape, makePointInShape, rangeRandom, rangeRandomInt, range, now, days } from '@mds-core/mds-utils'
 
 import { serviceAreaMap } from 'ladot-service-areas'
 
 import uuid4 from 'uuid'
 
-import log from 'mds-logger'
+import log from '@mds-core/mds-logger'
 
 import {
   JUMP_PROVIDER_ID,
@@ -51,7 +41,7 @@ import {
   TEST1_PROVIDER_ID,
   TEST3_PROVIDER_ID,
   providerName
-} from 'mds-providers'
+} from '@mds-core/mds-providers'
 
 import { LA_CITY_BOUNDARY } from './la-city-boundary'
 import { DISTRICT_SEVEN } from './district-seven'

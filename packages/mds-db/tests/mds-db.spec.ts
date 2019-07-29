@@ -1,7 +1,6 @@
 import assert from 'assert'
 import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, VehicleEvent, Device, Geography, GeographyMetadata } from 'mds'
-import { VEHICLE_EVENTS } from 'mds-enums'
+import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS } from '@mds-core/mds-types'
 import {
   JUMP_TEST_DEVICE_1,
   makeDevices,
@@ -17,8 +16,8 @@ import {
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN
-} from 'mds-test-data'
-import { now, clone } from 'mds-utils'
+} from '@mds-core/mds-test-data'
+import { now, clone } from '@mds-core/mds-utils'
 
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
@@ -102,7 +101,7 @@ if (pg_info.database) {
       it('can make successful writes', async () => {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writeDevice(JUMP_TEST_DEVICE_1)
-        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id)
+        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id, JUMP_PROVIDER_ID)
         assert.deepEqual(device.device_id, JUMP_TEST_DEVICE_1.device_id)
       })
 
@@ -112,7 +111,7 @@ if (pg_info.database) {
 
         await MDSDBPostgres.writeDevice(JUMP_TEST_DEVICE_1)
         await MDSDBPostgres.shutdown()
-        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id)
+        const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id, JUMP_PROVIDER_ID)
         assert.deepEqual(device.device_id, JUMP_TEST_DEVICE_1.device_id)
       })
 

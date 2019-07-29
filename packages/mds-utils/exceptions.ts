@@ -1,65 +1,50 @@
-export class ServerError extends Error {
-  public constructor(message: string = 'server_error', public info = {}) {
-    super(message)
-    this.name = 'ServerError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ServerError)
-    }
+class BaseError extends Error {
+  public constructor(public name: string, public reason?: string, public info?: unknown) {
+    super(reason)
+    Error.captureStackTrace(this, BaseError)
   }
 }
 
-export class NotFoundError extends Error {
-  public constructor(message: string = 'not_found_error', public info = {}) {
-    super(message)
-    this.name = 'NotFoundError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, NotFoundError)
-    }
+const reason = (error?: Error | string) => (error instanceof Error ? error.message : error)
+
+/* istanbul ignore next */
+export class ServerError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(ServerError.name, reason(error))
   }
 }
 
-export class ConflictError extends Error {
-  public constructor(message: string = 'conflict_error', public info = {}) {
-    super(message)
-    this.name = 'ConflictError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ConflictError)
-    }
+/* istanbul ignore next */
+export class NotFoundError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(NotFoundError.name, reason(error))
   }
 }
 
-export class AuthorizationError extends Error {
-  public constructor(message: string = 'authorization_error', public info = {}) {
-    super(message)
-    this.name = 'AuthorizationError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, AuthorizationError)
-    }
+/* istanbul ignore next */
+export class ConflictError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(ConflictError.name, reason(error))
   }
 }
 
-export class RuntimeError extends Error {
-  public constructor(message: string = 'runtime_error', public info = {}) {
-    super(message)
-    this.name = 'RuntimeError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, RuntimeError)
-    }
+/* istanbul ignore next */
+export class AuthorizationError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(AuthorizationError.name, reason(error))
   }
 }
 
-export class ValidationError extends Error {
-  public constructor(message: string = 'validation_error', public info = {}) {
-    super(message)
-    this.name = 'ValidationError'
-    this.info = info
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ValidationError)
-    }
+/* istanbul ignore next */
+export class RuntimeError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(RuntimeError.name, reason(error))
+  }
+}
+
+/* istanbul ignore next */
+export class ValidationError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(ValidationError.name, reason(error))
   }
 }

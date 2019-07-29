@@ -25,5 +25,7 @@ const {
   .strict().argv
 
 if (command === 'start') {
+  /* eslint-reason Fire and forget */
+  /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
   ProviderEventProcessor({ interval, count })
 }

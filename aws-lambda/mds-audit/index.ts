@@ -18,6 +18,6 @@ import {
   AwsServerlessExpressHandler,
   AwsServerlessExpressHandlerFunction
 } from '@aws-lambda/aws-serverless-express-handler'
-import { api as audit } from 'mds-audit'
+import { api as audit } from '@mds-core/mds-audit'
 
 export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(audit)

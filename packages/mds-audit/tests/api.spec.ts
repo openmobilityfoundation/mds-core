@@ -1,3 +1,10 @@
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable promise/no-nesting */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable promise/catch-or-return */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -15,20 +22,33 @@
  */
 
 import supertest from 'supertest'
-import { VEHICLE_EVENTS, AUDIT_EVENT_TYPES, PROPULSION_TYPES, VEHICLE_TYPES } from 'mds-enums'
-import { PROVIDER_UUID, PROVIDER_AUTH, makeEventsWithTelemetry, makeDevices, COMPLIANCE_AUTH } from 'mds-test-data'
-import { now } from 'mds-utils'
-import { Device, Timestamp, Telemetry } from 'mds'
-import cache from 'mds-cache'
+import {
+  Device,
+  Timestamp,
+  Telemetry,
+  VEHICLE_EVENTS,
+  AUDIT_EVENT_TYPES,
+  PROPULSION_TYPES,
+  VEHICLE_TYPES
+} from '@mds-core/mds-types'
+import {
+  PROVIDER_UUID,
+  PROVIDER_AUTH,
+  makeEventsWithTelemetry,
+  makeDevices,
+  COMPLIANCE_AUTH
+} from '@mds-core/mds-test-data'
+import { now } from '@mds-core/mds-utils'
+import cache from '@mds-core/mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
-import { server } from 'mds-api-server'
-import db from 'mds-db'
+import { ApiServer } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/audit'
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 const PROVIDER_SCOPES = 'admin:all test:all'
 const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
@@ -398,9 +418,9 @@ describe('Testing API', () => {
   describe('Tests retreiving vehicles inside of bbox', () => {
     before(done => {
       const devices_a = makeDevices(10, now(), PROVIDER_UUID)
-      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY) // Generate a bunch of events outside of our BBOX
+      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
       const devices_b = makeDevices(10, now(), PROVIDER_UUID)
-      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS) // Generate a bunch of events inside of our BBOX
+      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
 
       const seedData = { devices: [...devices_a, ...devices_b], events: [...events_a, ...events_b], telemetry: [] }
       Promise.all([db.initialize(), cache.initialize()]).then(() => {
@@ -413,7 +433,7 @@ describe('Testing API', () => {
     it('Verify getting vehicles inside of a bounding box', done => {
       const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
       request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}&provider_id=${PROVIDER_UUID}`)
+        .get(`/vehicles?bbox=${JSON.stringify(bbox)}`)
         .set('Authorization', COMPLIANCE_AUTH)
         .expect(200)
         .end((err, result) => {

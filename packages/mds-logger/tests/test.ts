@@ -1,3 +1,8 @@
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as test from 'unit.js'
 import logger from '../index'
 
@@ -16,17 +21,11 @@ describe('MDS Logger', () => {
       timestamp: 1555384091559,
       recorded: 1555384091836
     }
-    logger
-      .info(toCensor)
-      .then(val => {
-        const [result] = val
-        test.string(result.gps.lat).contains('CENSORED')
-        test.string(result.gps.lng).contains('CENSORED')
-        done()
-      })
-      .catch(err => {
-        done(err)
-      })
+    const [result] = logger.info(toCensor)
+    const res = JSON.parse(result)
+    test.string(res.gps.lat).contains('CENSORED')
+    test.string(res.gps.lng).contains('CENSORED')
+    done()
   })
 
   it('censors logs of lat and lng info for mds-logger.warn', done => {
@@ -45,13 +44,14 @@ describe('MDS Logger', () => {
     }
     logger
       .warn(toCensor)
-      .then(val => {
+      .then((val: any[]) => {
         const [result] = val
-        test.string(result.gps.lat).contains('CENSORED')
-        test.string(result.gps.lng).contains('CENSORED')
+        const res = JSON.parse(result)
+        test.string(res.gps.lat).contains('CENSORED')
+        test.string(res.gps.lng).contains('CENSORED')
         done()
       })
-      .catch(err => {
+      .catch((err: Error) => {
         done(err)
       })
   })
@@ -87,8 +87,9 @@ describe('MDS Logger', () => {
     ]
     logger
       .error(toCensor)
-      .then(val => {
-        const [[result1, result2]] = val
+      .then((vals: any[]) => {
+        const [val] = vals
+        const [result1, result2] = JSON.parse(val)
         test.string(result1.gps.lat).contains('CENSORED')
         test.string(result1.gps.lng).contains('CENSORED')
         test.string(result2.gps.lat).contains('CENSORED')
@@ -99,25 +100,16 @@ describe('MDS Logger', () => {
   })
 
   it('verifies conversion of [object Object] to stringified version', done => {
-    logger
-      .info({ key1: 'key1', key2: 'key2' })
-      .then(val => {
-        const [result] = val
-        test.string(result.key1).contains('key1')
-        done()
-      })
-      .catch(done)
+    const [result] = logger.info({ key1: 'key1', key2: 'key2' })
+    const res = JSON.parse(result)
+    test.string(res.key1).contains('key1')
+    done()
   })
 
   it('verifies conversion of an error', done => {
     const err = new Error('puzzling evidence')
-    logger
-      .info('ohai2', err)
-      .then(val => {
-        const [, result2] = val
-        test.string(result2).contains('evidence')
-        done()
-      })
-      .catch(done)
+    const [, result] = logger.info('ohai2', err)
+    test.string(result).contains('evidence')
+    done()
   })
 })

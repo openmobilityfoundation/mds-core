@@ -1,6 +1,6 @@
-import { ApiRequest, ApiResponse } from 'mds-api-server'
-import { ApiAuthorizerClaims } from 'mds-api-authorizer'
-import { UUID } from 'mds'
+import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
+import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { UUID } from '@mds-core/mds-types'
 
 export type ComplianceApiRequest = ApiRequest
 export interface ComplianceApiResponse extends ApiResponse {

@@ -22,11 +22,10 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_TYPES } from 'mds-enums'
-import { now, days, clone } from 'mds-utils'
-import { Policy } from 'mds'
-import { server } from 'mds-api-server'
-import { TEST1_PROVIDER_ID } from 'mds-providers'
+import { now, days, clone } from '@mds-core/mds-utils'
+import { Policy } from '@mds-core/mds-types'
+import { server } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import {
   POLICY_JSON,
   POLICY2_JSON,
@@ -37,7 +36,7 @@ import {
   START_ONE_MONTH_AGO,
   START_ONE_WEEK_AGO,
   PROVIDER_SCOPES
-} from 'mds-test-data'
+} from '@mds-core/mds-test-data'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -120,6 +119,39 @@ describe('Tests app', () => {
         log('post bad policy response:', body)
         test.value(body[0].message).contains('rule_type')
         test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('tries to get policy for invalid dates', done => {
+    request
+      .get('/policies?start_date=100000&end_date=100')
+      .set('Authorization', AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result.body.result === 'start_date after end_date')
+        done(err)
+      })
+  })
+
+  it('tries to read non-existant policy', done => {
+    request
+      .get('/policies/notarealgeography')
+      .set('Authorization', AUTH)
+      .expect(404)
+      .end((err, result) => {
+        test.value(result.body.result === 'not found')
+        done(err)
+      })
+  })
+
+  it('tries to read non-existant geography', done => {
+    request
+      .get('/geographies/notarealgeography')
+      .set('Authorization', AUTH)
+      .expect(404)
+      .end((err, result) => {
+        test.value(result.body.result === 'not found')
         done(err)
       })
   })

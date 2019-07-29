@@ -15,19 +15,29 @@
  */
 
 import express from 'express'
-import cache from 'mds-cache'
-import stream from 'mds-stream'
-import db from 'mds-db'
-import log from 'mds-logger'
-import { isUUID, now, days, pathsFor, head, getPolygon, pointInShape, isInStatesOrEvents } from 'mds-utils'
-import { Policy, Geography, VehicleEvent, ComplianceResponse, Device, UUID } from 'mds'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName } from 'mds-providers'
+import cache from '@mds-core/mds-cache'
+import stream from '@mds-core/mds-stream'
+import db from '@mds-core/mds-db'
+import log from '@mds-core/mds-logger'
+import {
+  isUUID,
+  now,
+  days,
+  pathsFor,
+  head,
+  getPolygon,
+  pointInShape,
+  isInStatesOrEvents,
+  ServerError
+} from '@mds-core/mds-utils'
+import { Policy, Geography, ComplianceResponse, Device, UUID } from '@mds-core/mds-types'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
 
 function api(app: express.Express): express.Express {
-  app.use((req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
+  app.use(async (req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/')) {
@@ -54,7 +64,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            log.warn('Missing provider_id in', req.originalUrl)
+            await log.warn('Missing provider_id in', req.originalUrl)
             return res.status(400).send({
               result: 'missing provider_id'
             })
@@ -62,7 +72,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            log.warn(req.originalUrl, 'invalid provider_id', provider_id)
+            await log.warn(req.originalUrl, 'invalid provider_id', provider_id)
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -78,34 +88,22 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       /* istanbul ignore next */
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
 
-  app.get(pathsFor('/test/initialize'), (req, res) => {
-    Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
-      .then(
-        kind => {
-          res.send({
-            result: `Database initialized (${kind})`
-          })
-        },
-        err => {
-          /* istanbul ignore next */
-          log.error('initialize failed', err).then(() => {
-            res.status(500).send('Server Error')
-          })
-        }
-      )
-      .catch(
-        /* istanbul ignore next */
-        err => {
-          log.error('initialize exception', err).then(() => {
-            res.status(500).send('Server Error')
-          })
-        }
-      )
+  app.get(pathsFor('/test/initialize'), async (req, res) => {
+    try {
+      const kind = await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
+      res.send({
+        result: `Database initialized (${kind})`
+      })
+    } catch (err) {
+      /* istanbul ignore next */
+      await log.error('initialize failed', err)
+      res.status(500).send('Server Error')
+    }
   })
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
@@ -113,10 +111,9 @@ function api(app: express.Express): express.Express {
       res.status(401).send({ result: 'unauthorized access' })
     }
     /* istanbul ignore next */
-    function fail(err: Error): void {
-      log.error(err.stack || err).then(() => {
-        res.status(500).send('server error')
-      })
+    async function fail(err: Error) {
+      await log.error(err.stack || err)
+      res.status(500).send(new ServerError())
     }
 
     let start_date = now() - days(365)
@@ -152,55 +149,40 @@ function api(app: express.Express): express.Express {
           res.status(200).send(results)
         }
       } catch (err) {
-        fail(err)
+        await fail(err)
       }
     } else {
       end_date = now() + days(365)
-      db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
-        .then((policies: Policy[]) => {
-          db.readGeographies()
-            .then((geographies: Geography[]) => {
-              db.readDeviceIds(provider_id)
-                .then((deviceRecords: { device_id: UUID; provider_id: UUID }[]) => {
-                  const total = deviceRecords.length
-                  log.info(`read ${total} deviceIds in /vehicles`)
-                  const deviceIdSubset = deviceRecords.map(
-                    (record: { device_id: UUID; provider_id: UUID }) => record.device_id
-                  )
-                  cache
-                    .readDevices(deviceIdSubset)
-                    .then((devices: Device[]) => {
-                      cache
-                        .readEvents(deviceIdSubset)
-                        .then((events: VehicleEvent[]) => {
-                          /* istanbul ignore next */
-                          const deviceMap: { [d: string]: Device } = devices.reduce(
-                            (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-                              return Object.assign(deviceMapAcc, { [device.device_id]: device })
-                            },
-                            {}
-                          )
-                          log.info(`Policies: ${JSON.stringify(policies)}`)
-                          const filteredEvents = compliance_engine.filterEvents(events)
-                          const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
-                          const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
-                            compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
-                          )
-                          if (results[0] === undefined) {
-                            res.status(400).send({ err: 'bad_param' })
-                          } else {
-                            res.status(200).send(results)
-                          }
-                        }, fail)
-                        .catch(fail)
-                    }, fail)
-                    .catch(fail)
-                }, fail)
-                .catch(fail)
-            }, fail)
-            .catch(fail)
-        }, fail)
-        .catch(fail)
+      try {
+        const policies = await db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
+        const geographies = await db.readGeographies()
+        const deviceRecords = await db.readDeviceIds(provider_id)
+        const total = deviceRecords.length
+        log.info(`read ${total} deviceIds in /vehicles`)
+        const deviceIdSubset = deviceRecords.map((record: { device_id: UUID; provider_id: UUID }) => record.device_id)
+        const devices = await cache.readDevices(deviceIdSubset)
+        const events = await cache.readEvents(deviceIdSubset)
+        /* istanbul ignore next */
+        const deviceMap: { [d: string]: Device } = devices.reduce(
+          (deviceMapAcc: { [d: string]: Device }, device: Device) => {
+            return Object.assign(deviceMapAcc, { [device.device_id]: device })
+          },
+          {}
+        )
+        log.info(`Policies: ${JSON.stringify(policies)}`)
+        const filteredEvents = compliance_engine.filterEvents(events)
+        const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
+        const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
+          compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
+        )
+        if (results[0] === undefined) {
+          res.status(400).send({ err: 'bad_param' })
+        } else {
+          res.status(200).send(results)
+        }
+      } catch (err) {
+        await fail(err)
+      }
     }
   })
 
@@ -257,7 +239,7 @@ function api(app: express.Express): express.Express {
 
       res.status(200).send({ count })
     } catch (err) {
-      fail(err)
+      await fail(err)
     }
   })
   return app

@@ -15,23 +15,20 @@
  */
 
 import express from 'express'
-import { isProviderId, providerName } from 'mds-providers'
+import { isProviderId, providerName } from '@mds-core/mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
-import { Policy, UUID, Geography } from 'mds'
-import db from 'mds-db'
-import { VEHICLE_TYPES, DAYS_OF_WEEK } from 'mds-enums'
-import { isUUID, now, pathsFor, ServerError } from 'mds-utils'
-import log from 'mds-logger'
+import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
+import db from '@mds-core/mds-db'
+import { isUUID, now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
-
-log.startup()
 
 function api(app: express.Express): express.Express {
   /**
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
+  app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
@@ -55,13 +52,13 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            log.warn('Missing provider_id in', req.originalUrl)
+            await log.warn('Missing provider_id in', req.originalUrl)
             return res.status(400).send({ result: 'missing provider_id' })
           }
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
             return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
           }
 
@@ -78,7 +75,7 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       /* istanbul ignore next */
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -93,7 +90,7 @@ function api(app: express.Express): express.Express {
       return
     }
     try {
-      const policies: Policy[] = await db.readPolicies({ start_date, end_date })
+      const policies = await db.readPolicies({ start_date, end_date })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
@@ -108,7 +105,7 @@ function api(app: express.Express): express.Express {
       })
       res.status(200).send({ policies: active })
     } catch (err) {
-      log.error('failed to read policies', err)
+      await log.error('failed to read policies', err)
       res.status(404).send({
         result: 'not found'
       })
@@ -118,14 +115,14 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
-      const policies: Policy[] = await db.readPolicies({ policy_id })
+      const policies = await db.readPolicies({ policy_id })
       if (policies.length > 0) {
         res.status(200).send(policies[0])
       } else {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      log.error('failed to read one policy', err.stack)
+      await log.error('failed to read one policy', err)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -135,14 +132,14 @@ function api(app: express.Express): express.Express {
     const { geography_id } = req.params
     log.info('read geo', geography_id)
     try {
-      const geographies: Geography[] = await db.readGeographies({ geography_id })
+      const geographies = await db.readGeographies({ geography_id })
       if (geographies.length > 0) {
         res.status(200).send({ geography: geographies[0] })
       } else {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      log.error('failed to read geography', err.stack)
+      await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -185,7 +182,7 @@ function api(app: express.Express): express.Express {
       await db.writeGeography(geography)
       res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
     } catch (err) {
-      log.error('failed to write geography', err.stack)
+      await log.error('failed to write geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -263,7 +260,7 @@ function api(app: express.Express): express.Express {
     const details = validation.error ? validation.error.details : null
 
     if (details) {
-      log.error('questionable policy json', details)
+      await log.error('questionable policy json', details)
       res.status(422).send(details)
       return
     }
@@ -272,7 +269,7 @@ function api(app: express.Express): express.Express {
       await db.writePolicy(policy)
       res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
     } catch (err) {
-      log.error('failed to write geography', err.stack)
+      await log.error('failed to write geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -298,11 +295,12 @@ function api(app: express.Express): express.Express {
       await db.editPolicy(policy)
       res.status(200).send({ result: `successfully edited policy of id ${policy.policy_id}` })
     } catch (err) {
-      log.error('failed to edit policy', err.stack)
+      await log.error('failed to edit policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
 
+  /* istanbul ignore next */
   app.delete(pathsFor('/admin/policies/:policy_id'), (req, res) => {
     // TODO implement deletion of a non-published policy
     res.status(501)

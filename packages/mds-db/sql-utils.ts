@@ -1,7 +1,7 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
 import { Client as PostgresClient, types as PostgresTypes } from 'pg'
-import { range, csv } from 'mds-utils'
-import log from 'mds-logger'
+import { range, csv } from '@mds-core/mds-utils'
+import log from '@mds-core/mds-logger'
 
 const pgDebug = process.env.PG_DEBUG === 'true'
 
@@ -66,12 +66,12 @@ export function configureClient(pg_info: PGInfo) {
     log.info('disconnected', client.client_type, 'client from postgres')
   })
 
-  client.on('error', err => {
-    log.error('pg client error event', err.stack)
+  client.on('error', async err => {
+    await log.error('pg client error event', err.stack)
   })
 
-  client.on('notice', msg => {
-    log.warn('notice:', msg)
+  client.on('notice', async msg => {
+    await log.warn('notice:', msg)
   })
 
   if (!client) {
@@ -144,7 +144,7 @@ export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
     out = values
   }
 
-  return log.info('sql>', sql, out)
+  log.info('sql>', sql, out)
 }
 
 export class SqlVals {

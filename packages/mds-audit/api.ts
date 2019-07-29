@@ -16,9 +16,9 @@
 
 import express from 'express'
 import uuid from 'uuid'
-import log from 'mds-logger'
-import db from 'mds-db'
-import cache from 'mds-cache'
+import log from '@mds-core/mds-logger'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
 import urls from 'url'
 import {
   pathsFor,
@@ -40,11 +40,10 @@ import {
   ConflictError,
   NotFoundError,
   ServerError
-} from 'mds-utils'
-import { providerName } from 'mds-providers' // map of uuids -> obj
-import { AUDIT_EVENT_TYPES } from 'mds-enums'
-import { AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from 'mds'
-import { getVehicles, asPagingParams, asJsonApiLinks } from 'mds-api-helpers'
+} from '@mds-core/mds-utils'
+import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
+import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from '@mds-core/mds-types'
+import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -68,7 +67,8 @@ import {
   readTelemetry,
   withGpsProperty,
   writeAudit,
-  writeAuditEvent
+  writeAuditEvent,
+  getVehicles
 } from './service'
 
 // TODO lib
@@ -94,7 +94,7 @@ function api(app: express.Express): express.Express {
    * Audit-specific middleware to extract subject_id into locals, do some logging, etc.
    * NOTE that audit will be city-facing only, not Providers.
    */
-  app.use((req: AuditApiRequest, res: AuditApiResponse, next) => {
+  app.use(async (req: AuditApiRequest, res: AuditApiResponse, next) => {
     // CORS, because we are webby, not machine-to-machine
     res.header('Access-Control-Allow-Origin', '*')
 
@@ -124,7 +124,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore if */
           if (!subject_id) {
-            log.warn('Missing subject_id in', req.originalUrl)
+            await log.warn('Missing subject_id in', req.originalUrl)
             // 403 Forbidden
             return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
           }
@@ -136,7 +136,7 @@ function api(app: express.Express): express.Express {
           log.info(subject_id, req.method, req.originalUrl)
         }
       } catch (err) /* istanbul ignore next */ {
-        log.error(req.originalUrl, 'request validation fail:', err.stack)
+        await log.error(req.originalUrl, 'request validation fail:', err.stack)
       }
       next()
     }
@@ -501,7 +501,7 @@ function api(app: express.Express): express.Express {
           const auditEvents = await readAuditEvents(audit_trip_id)
 
           const device = provider_device_id
-            ? await readDevice(provider_device_id)
+            ? await readDevice(provider_device_id, provider_id)
             : await readDeviceByVehicleId(provider_id, provider_vehicle_id)
 
           if (device) {
@@ -633,7 +633,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/vehicles'), async (req, res) => {
     const { skip, take } = asPagingParams(req.query)
-    const bbox = req.query.bbox ? getBoundingBox(JSON.parse(req.query.bbox)) : undefined
+    const bbox = getBoundingBox(JSON.parse(req.query.bbox))
 
     const url = urls.format({
       protocol: req.get('x-forwarded-proto') || req.protocol,
@@ -647,11 +647,10 @@ function api(app: express.Express): express.Express {
       const response = await getVehicles(skip, take, url, provider_id, req.query, bbox)
       res.status(200).send(response)
     } catch (err) {
-      log.error('getVehicles fail', err).then(() => {
-        res.status(500).send({
-          error: 'server_error',
-          error_description: 'an internal server error has occurred and been logged'
-        })
+      await log.error('getVehicles fail', err)
+      res.status(500).send({
+        error: 'server_error',
+        error_description: 'an internal server error has occurred and been logged'
       })
     }
   })

@@ -18,10 +18,21 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography, Rule } from 'mds'
-import { TelemetryRecord } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
-import log from 'mds-logger'
+import {
+  UUID,
+  Timestamp,
+  VehicleEvent,
+  Telemetry,
+  BoundingBox,
+  Geography,
+  Rule,
+  VEHICLE_EVENTS,
+  VEHICLE_STATUSES,
+  EVENT_STATUS_MAP,
+  VEHICLE_STATUS
+} from '@mds-core/mds-types'
+import { TelemetryRecord } from '@mds-core/mds-db/types'
+import log from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
 const RADIUS = 30.48 // 100 feet, in meters

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable promise/prefer-await-to-callbacks */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -16,9 +18,9 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { server } from 'mds-api-server'
+import { ApiServer } from '@mds-core/mds-api-server'
 
-const request = supertest(server(app => app))
+const request = supertest(ApiServer(app => app))
 
 const APP_JSON = 'application/json; charset=utf-8'
 
@@ -31,7 +33,8 @@ describe('Testing API Server', () => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('name')
         test.object(result.body).hasProperty('version')
-        test.object(result.body).hasProperty('runtime')
+        test.object(result.body).hasProperty('node')
+        test.object(result.body).hasProperty('build')
         done(err)
       })
   })
@@ -42,7 +45,10 @@ describe('Testing API Server', () => {
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        test.object(result.body).hasProperty('runtime')
+        test.object(result.body).hasProperty('name')
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('node')
+        test.object(result.body).hasProperty('build')
         test.object(result.body).hasProperty('process')
         test.object(result.body).hasProperty('memory')
         test.object(result.body).hasProperty('uptime')
