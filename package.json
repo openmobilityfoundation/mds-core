@@ -32,6 +32,7 @@
     "@types/yargs": "13.0.0",
     "@typescript-eslint/eslint-plugin": "1.13.0",
     "@typescript-eslint/parser": "1.13.0",
+    "check-node-version": "4.0.1",
     "eslint": "6.1.0",
     "eslint-config-airbnb-base": "13.2.0",
     "eslint-config-prettier": "6.0.0",
@@ -67,7 +68,7 @@
     "deploy": "yarn run:sequential",
     "run:concurrent": "lerna run --stream",
     "run:sequential": "lerna run --stream --concurrency 1",
-    "test": "yarn run:sequential test",
+    "test": "check-node-version --package --print && yarn run:sequential test",
     "test:eslint": "yarn run:concurrent test:eslint",
     "test:unit": "yarn run:sequential test:unit"
   }

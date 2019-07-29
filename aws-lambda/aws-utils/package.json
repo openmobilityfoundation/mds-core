@@ -19,7 +19,7 @@
     "utils"
   ],
   "dependencies": {
-    "aws-sdk": "2.500.0"
+    "aws-sdk": "2.501.0"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
