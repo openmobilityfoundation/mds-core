@@ -33,7 +33,7 @@ export const ApiServer = (
   app: express.Express = express()
 ): express.Express => {
   // Authorizer
-  app.use((req: ApiRequest, res: ApiResponse, next) => {
+  app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     res.locals.claims = authorizer(req)
     next()
   })
@@ -42,20 +42,16 @@ export const ApiServer = (
   app.disable('x-powered-by')
 
   // Parse JSON bodiy
-  app.use(
-    bodyParser.json({
-      limit: '5mb'
-    })
-  )
+  app.use(bodyParser.json({ limit: '5mb' }))
 
   app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
     // 200 OK
-    res.status(200).send(about())
+    return res.status(200).send(about())
   })
 
   app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
     // 200 OK
-    res.status(200).send({
+    return res.status(200).send({
       ...about(),
       process: process.pid,
       uptime: process.uptime(),
