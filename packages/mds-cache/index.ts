@@ -131,6 +131,7 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
+/* Store latest known lat/lng for a given key (e.g. Device) in a redis geo-spatial analysis compatible manner.*/
 async function addGeospatialHash(key: string, coordinates: [number, number]) {
   const client = await getClient()
   const [lat, lng] = coordinates
@@ -138,7 +139,7 @@ async function addGeospatialHash(key: string, coordinates: [number, number]) {
   return res
 }
 
-async function getEventsInBbox(bbox: BoundingBox) {
+async function getEventsInBBox(bbox: BoundingBox) {
   const client = await getClient()
   const [pt1, pt2] = bbox
   const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
@@ -212,7 +213,7 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   const client = await getClient()
 
   const { bbox } = query
-  const deviceIdsInBbox = await getEventsInBbox(bbox)
+  const deviceIdsInBbox = await getEventsInBBox(bbox)
   const deviceIdsRes =
     deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
   const skip = query.skip || 0
