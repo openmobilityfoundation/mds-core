@@ -50,7 +50,7 @@ async function createTables(client: MDSPostgresClient) {
   /* eslint-reason ambiguous DB function */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const existing: { rows: { table_name: string }[] } = await client.query(
-    'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA'
+    'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA'
   )
 
   const missing = Object.keys(schema.tables).filter(
@@ -95,7 +95,7 @@ async function addTimestampColumnToAuditsTable(client: MDSPostgresClient) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${TIMESTAMP_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${TIMESTAMP_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
     )
     if (result.rowCount === 0) {
       // Do the migration
@@ -119,7 +119,7 @@ async function addAuditSubjectIdColumnToAuditEventsTable(client: MDSPostgresClie
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDIT_EVENTS_TABLE}' AND column_name = '${AUDIT_SUBJECT_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDIT_EVENTS_TABLE}' AND column_name = '${AUDIT_SUBJECT_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
     )
     if (result.rowCount === 0) {
       // Do the migration
@@ -153,7 +153,7 @@ async function removeAuditVehicleIdColumnFromAuditsTable(client: MDSPostgresClie
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${AUDIT_VEHICLE_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${AUDIT_VEHICLE_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
     )
     if (result.rowCount === 1) {
       // Convert audit_vehicle_id to a uuid and overwrite audit_device_id
@@ -180,7 +180,7 @@ async function recreateProviderTables(client: MDSPostgresClient) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.TRIPS_TABLE}' AND column_name = '${PROVIDER_TRIP_ID}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.TRIPS_TABLE}' AND column_name = '${PROVIDER_TRIP_ID}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
     )
     if (result.rowCount === 0) {
       // Do the migration
@@ -195,7 +195,7 @@ async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
 
   const { rows: existing }: { rows: { table_name: string }[] } = await exec(
-    `SELECT table_name FROM information_schema.columns WHERE column_name = '${schema.IDENTITY_COLUMN}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
+    `SELECT table_name FROM information_schema.columns WHERE column_name = '${schema.IDENTITY_COLUMN}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
   )
 
   const create = Object.keys(schema.tables)
