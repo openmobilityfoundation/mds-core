@@ -16,9 +16,8 @@
 
 import log from '@mds-core/mds-logger'
 
-import distance from 'geo-distance'
 import flatten from 'flat'
-import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox } from '@mds-core/mds-utils'
+import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
 import {
   UUID,
   Timestamp,
@@ -142,12 +141,12 @@ async function addGeospatialHash(device_id: UUID, coordinates: [number, number])
 async function getEventsInBBox(bbox: BoundingBox) {
   const client = await getClient()
   const [pt1, pt2] = bbox
+  const points = bbox.map(pt => {
+    return { lat: pt[0], lng: pt[1] }
+  })
   const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
-  const [radius, unit] = distance
-    .between(pt1, pt2)
-    .toString()
-    .split(' ')
-  return client.georadiusAsync('locations', lng, lat, radius, unit)
+  const radius = routeDistance(points)
+  return client.georadiusAsync('locations', lng, lat, radius, 'm')
 }
 
 async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {

@@ -19,7 +19,6 @@
     "@mds-core/mds-utils": "^0.1.4",
     "bluebird": "3.5.5",
     "flat": "4.1.0",
-    "geo-distance": "0.2.0",
     "redis": "2.8.0"
   },
   "scripts": {
