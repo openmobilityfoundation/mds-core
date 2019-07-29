@@ -195,15 +195,15 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
 
   const { bbox } = query
   const deviceIdsInBbox = await getEventsInBbox(bbox)
-  const device_ids_res =
+  const deviceIdsRes =
     deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
   const skip = query.skip || 0
   const take = query.take || 100000000000
-  const device_ids = device_ids_res.slice(skip, skip + take)
+  const deviceIds = deviceIdsRes.slice(skip, skip + take)
 
-  const device_status_map: { [device_id: string]: CachedItem | {} } = {}
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
 
-  const events = ((await hreads(['event'], device_ids)) as StringifiedEvent[])
+  const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
     .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
       try {
         const parsedItem = parseEvent(item)
@@ -219,8 +219,8 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
     }, [])
     .filter(item => Boolean(item))
 
-  const device_ids3 = events.map(event => event.device_id)
-  const devices = (await hreads(['device'], device_ids3))
+  const eventDeviceIds = events.map(event => event.device_id)
+  const devices = (await hreads(['device'], eventDeviceIds))
     .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
       try {
         const parsedItem = parseCachedItem(item)
@@ -232,10 +232,10 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
     .filter(item => Boolean(item))
   const all = [...devices, ...events]
   all.map(item => {
-    device_status_map[item.device_id] = device_status_map[item.device_id] || {}
-    Object.assign(device_status_map[item.device_id], item)
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
   })
-  const values = Object.values(device_status_map)
+  const values = Object.values(deviceStatusMap)
 
   return values.filter((item: any) => item.telemetry)
 }
