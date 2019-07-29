@@ -131,11 +131,11 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
-/* Store latest known lat/lng for a given key (e.g. Device) in a redis geo-spatial analysis compatible manner.*/
-async function addGeospatialHash(key: string, coordinates: [number, number]) {
+/* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner.*/
+async function addGeospatialHash(device: UUID, coordinates: [number, number]) {
   const client = await getClient()
   const [lat, lng] = coordinates
-  const res = await client.geoadd('locations', lng, lat, key)
+  const res = await client.geoadd('locations', lng, lat, device)
   return res
 }
 
