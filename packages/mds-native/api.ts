@@ -21,11 +21,15 @@ import {
   ServerError,
   AuthorizationError,
   isValidDeviceId,
-  NotFoundError
+  NotFoundError,
+  isValidProviderId,
+  isValidTimestamp,
+  isValidNumber
 } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
-import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
+import { UUID, Timestamp } from 'packages/mds-types'
+
 import {
   NativeApiResponse,
   NativeApiRequest,
@@ -97,25 +101,65 @@ function api(app: express.Express): express.Express {
   })
   // ///////////////////// end test-only endpoints ///////////////////////
 
-  app.get(pathsFor('/events'), async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
-    const { skip, take, start_time, end_time, ...query } = asPagingParams(req.query)
-    try {
-      const { count, events } = await db.readEventsWithTelemetry({
-        ...query,
-        skip,
-        take,
+  type NativeApiGetEventsCursor = Partial<{
+    provider_id: UUID
+    device_id: UUID
+    start_time: Timestamp
+    end_time: Timestamp
+    after: number
+    limit: number
+  }>
+
+  const getRequestCursor = (req: NativeApiGetEventsRequest): NativeApiGetEventsCursor => {
+    const {
+      params: { cursor },
+      query
+    } = req
+    if (cursor) {
+      try {
+        return JSON.parse(Buffer.from(cursor, 'base64').toString('ascii'))
+      } catch (err) /* istanbul ignore next */ {
+        throw new ValidationError('invalid_cursor', { cursor })
+      }
+    } else {
+      const { provider_id, device_id, start_time, end_time, limit } = query
+      isValidProviderId(provider_id, { required: false })
+      isValidDeviceId(device_id, { required: false })
+      isValidTimestamp(start_time, { required: false })
+      isValidTimestamp(end_time, { required: false })
+      isValidNumber(limit, { required: false, min: 1, max: 1000, property: 'limit' })
+      return {
+        provider_id,
+        device_id,
         start_time: start_time ? Number(start_time) : undefined,
-        end_time: end_time ? Number(end_time) : undefined
-      })
+        end_time: end_time ? Number(end_time) : undefined,
+        after: 0,
+        limit: limit ? Number(limit) : 1000
+      }
+    }
+  }
+
+  app.get(pathsFor('/events/:cursor?'), async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
+    try {
+      const cursor = getRequestCursor(req)
+      const events = await db.readEventsWithTelemetry(cursor)
       return res.status(200).send({
         version: NATIVE_API_VERSION,
-        count,
-        data: events.map(({ service_area_id, ...event }) => event),
-        links: asJsonApiLinks(req, skip, take, count)
+        cursor: Buffer.from(
+          JSON.stringify({
+            ...cursor,
+            after: events.length === 0 ? cursor.after : events[events.length - 1].id
+          })
+        ).toString('base64'),
+        events: events.map(({ service_area_id, ...event }) => event)
       })
     } catch (err) /* istanbul ignore next */ {
+      if (err instanceof ValidationError) {
+        await logger.warn(req.method, req.originalUrl, err)
+        return res.status(400).send({ error: err })
+      }
       // 500 Internal Server Error
-      await logger.error(`fail ${req.method} ${req.originalUrl}`, JSON.stringify(err))
+      await logger.error(req.method, req.originalUrl, err)
       return res.status(500).send({ error: new ServerError(err) })
     }
   })
@@ -125,11 +169,7 @@ function api(app: express.Express): express.Express {
     try {
       if (isValidDeviceId(device_id)) {
         const device = await db.readDevice(device_id)
-        return res.status(200).send({
-          version: NATIVE_API_VERSION,
-          count: 1,
-          data: [device]
-        })
+        return res.status(200).send({ version: NATIVE_API_VERSION, device })
       }
     } catch (err) {
       if (err instanceof ValidationError) {
@@ -141,7 +181,7 @@ function api(app: express.Express): express.Express {
         return res.status(404).send({ error: new NotFoundError('device_id_not_found', { device_id }) })
       }
       // 500 Internal Server Error
-      await logger.error(`fail ${req.method} ${req.originalUrl}`, JSON.stringify(err))
+      await logger.error(req.method, req.originalUrl, err)
       return res.status(500).send({ error: new ServerError(err) })
     }
   })

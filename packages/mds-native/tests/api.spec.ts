@@ -90,12 +90,50 @@ describe('Verify API', () => {
       .get('/native/events')
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
+      .end((err1, result1) => {
+        test.value(result1).hasHeader('content-type', APP_JSON)
+        test.object(result1.body).hasProperty('version')
+        test.object(result1.body).hasProperty('events')
+        test.value(result1.body.events.length).is(1)
+        test.object(result1.body.events[0]).hasProperty('device_id', device_id)
+        test.object(result1.body).hasProperty('cursor')
+        if (err1) {
+          done(err1)
+        } else {
+          request
+            .get(`/native/events/${result1.body.cursor}`)
+            .set('Authorization', PROVIDER_AUTH)
+            .expect(200)
+            .end((err2, result2) => {
+              test.value(result2).hasHeader('content-type', APP_JSON)
+              test.object(result2.body).hasProperty('version')
+              test.object(result2.body).hasProperty('events')
+              test.value(result2.body.events.length).is(0)
+              test.object(result2.body).hasProperty('cursor', result1.body.cursor)
+              done(err2)
+            })
+        }
+      })
+  })
+
+  it('Get events (Bad Request)', done => {
+    request
+      .get('/native/events?provider_id=invalid-provider-id')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        test.object(result.body).hasProperty('version')
-        test.object(result.body).hasProperty('data')
-        test.value(result.body.data.length).is(1)
-        test.object(result.body.data[0]).hasProperty('device_id', device_id)
+        done(err)
+      })
+  })
+
+  it('Get events (Bad Cursor)', done => {
+    request
+      .get('/native/events/invalid-cursor')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
   })
@@ -108,9 +146,8 @@ describe('Verify API', () => {
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
-        test.object(result.body).hasProperty('data')
-        test.value(result.body.data.length).is(1)
-        test.object(result.body.data[0]).hasProperty('device_id', device_id)
+        test.object(result.body).hasProperty('device')
+        test.object(result.body.device).hasProperty('device_id', device_id)
         done(err)
       })
   })

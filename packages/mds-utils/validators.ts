@@ -33,6 +33,7 @@ import {
 import { ValidationError } from './exceptions'
 
 interface ValidatorOptions {
+  property: string
   assert: boolean
   required: boolean
 }
@@ -88,13 +89,8 @@ const Format = (property: string, error: Joi.ValidationError): string => {
   return `${[property, ...path].join('.')} ${details.join(' ')}`
 }
 
-const Validate = (
-  property: string,
-  value: unknown,
-  schema: Joi.Schema,
-  options: Partial<ValidatorOptions>
-): boolean => {
-  const { assert, required } = { assert: true, required: true, ...options }
+const Validate = (value: unknown, schema: Joi.Schema, options: Partial<ValidatorOptions>): boolean => {
+  const { assert = true, required = true, property = 'value' } = options
   const { error } = Joi.validate(value, schema, { presence: required ? 'required' : 'optional' })
   if (error && assert) {
     throw new ValidationError(`invalid_${property}`.toLowerCase(), {
@@ -105,61 +101,66 @@ const Validate = (
   return !error
 }
 
+interface NumberValidatorOptions extends ValidatorOptions {
+  min: number
+  max: number
+}
+
+export const isValidNumber = (value: unknown, options: Partial<NumberValidatorOptions> = {}): value is number =>
+  Validate(
+    value,
+    Joi.number()
+      .min(options.min || Number.MIN_SAFE_INTEGER)
+      .max(options.max || Number.MAX_SAFE_INTEGER),
+    options
+  )
+
 export const isValidAuditTripId = (
   audit_trip_id: unknown,
   options: Partial<ValidatorOptions> = {}
-): audit_trip_id is UUID => Validate('audit_trip_id', audit_trip_id, uuidSchema, options)
+): audit_trip_id is UUID => Validate(audit_trip_id, uuidSchema, { property: 'audit_trip_id', ...options })
 
 interface AuditEventValidatorOptions extends ValidatorOptions {
   accept: AUDIT_EVENT_TYPE[]
 }
 
-export const isValidDeviceId = (device_id: unknown, options: Partial<ValidatorOptions> = {}): device_id is UUID =>
-  Validate('device_id', device_id, uuidSchema, options)
+export const isValidDeviceId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
+  Validate(value, uuidSchema, { property: 'device_id', ...options })
 
 export const isValidAuditEventType = (
-  audit_event_type: unknown,
+  value: unknown,
   { accept, ...options }: Partial<AuditEventValidatorOptions> = {}
-): audit_event_type is AUDIT_EVENT_TYPE =>
-  Validate('audit_event_type', audit_event_type, auditEventTypeSchema(accept), options)
+): value is AUDIT_EVENT_TYPE =>
+  Validate(value, auditEventTypeSchema(accept), { property: 'audit_event_type', ...options })
 
-export const isValidTimestamp = (timestamp: unknown, options: Partial<ValidatorOptions> = {}): timestamp is Timestamp =>
-  Validate('timestamp', timestamp, timestampSchema, options)
+export const isValidTimestamp = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Timestamp =>
+  Validate(value, timestampSchema, { property: 'timestamp', ...options })
 
-export const isValidProviderId = (provider_id: unknown, options: Partial<ValidatorOptions> = {}): provider_id is UUID =>
-  Validate('provider_id', provider_id, providerIdSchema, options)
+export const isValidProviderId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
+  Validate(value, providerIdSchema, { property: 'provider_id', ...options })
 
-export const isValidProviderVehicleId = (
-  provider_vehicle_id: unknown,
-  options: Partial<ValidatorOptions> = {}
-): provider_vehicle_id is string => Validate('provider_vehicle_id', provider_vehicle_id, vehicleIdSchema, options)
+export const isValidProviderVehicleId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
+  Validate(value, vehicleIdSchema, { property: 'provider_vehicle_id', ...options })
 
-export const isValidAuditEventId = (
-  audit_event_id: unknown,
-  options: Partial<ValidatorOptions> = {}
-): audit_event_id is UUID => Validate('audit_event_id', audit_event_id, uuidSchema, options)
+export const isValidAuditEventId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
+  Validate(value, uuidSchema, { property: 'audit_event_id', ...options })
 
-export const isValidAuditDeviceId = (
-  audit_device_id: unknown,
-  options: Partial<ValidatorOptions> = {}
-): audit_device_id is UUID => Validate('audit_device_id', audit_device_id, uuidSchema, options)
+export const isValidAuditDeviceId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
+  Validate(value, uuidSchema, { property: 'audit_device_id', ...options })
 
-export const isValidTelemetry = (telemetry: unknown, options: Partial<ValidatorOptions> = {}): telemetry is Telemetry =>
-  Validate('telemetry', telemetry, telemetrySchema, options)
+export const isValidTelemetry = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Telemetry =>
+  Validate(value, telemetrySchema, { property: 'telemetry', ...options })
 
 export const isValidVehicleEventType = (
-  vehicle_event_type: unknown,
+  value: unknown,
   options: Partial<ValidatorOptions> = {}
-): vehicle_event_type is VEHICLE_EVENT =>
-  Validate('vehicle_event_type', vehicle_event_type, vehicleEventTypeSchema, options)
+): value is VEHICLE_EVENT => Validate(value, vehicleEventTypeSchema, { property: 'vehicle_event_type', ...options })
 
-export const isValidAuditIssueCode = (
-  audit_issue_code: unknown,
-  options: Partial<ValidatorOptions> = {}
-): audit_issue_code is string => Validate('audit_issue_code', audit_issue_code, auditIssueCodeSchema, options)
+export const isValidAuditIssueCode = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
+  Validate(value, auditIssueCodeSchema, { property: 'audit_issue_code', ...options })
 
-export const isValidAuditNote = (note: unknown, options: Partial<ValidatorOptions> = {}): note is string =>
-  Validate('note', note, auditNoteSchema, options)
+export const isValidAuditNote = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
+  Validate(value, auditNoteSchema, { property: 'note', ...options })
 
 export const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry => {
   return !!(telemetry as StringifiedTelemetry).gps
