@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-types",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mobility Data Specification common types",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,6 +17,5 @@
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --recursive tests/**/*.ts"
-  },
-  "dependencies": {}
+  }
 }
