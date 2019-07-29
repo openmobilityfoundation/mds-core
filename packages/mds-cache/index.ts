@@ -189,10 +189,9 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   log.info('readDevicesStatus', JSON.stringify(query), 'start')
   const start = query.since || 0
   const stop = now()
-  // read all device ids
+
   log.info('redis zrangebyscore device-ids', start, stop)
   const client = await getClient()
-  let time = now()
 
   const { bbox } = query
   const deviceIdsInBbox = await getEventsInBbox(bbox)
@@ -202,11 +201,8 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   const take = query.take || 100000000000
   const device_ids = device_ids_res.slice(skip, skip + take)
 
-  // read all devices
   const device_status_map: { [device_id: string]: CachedItem | {} } = {}
 
-  time = now()
-  // big batch redis nightmare!
   const events = ((await hreads(['event'], device_ids)) as StringifiedEvent[])
     .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
       try {
@@ -230,7 +226,6 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
         const parsedItem = parseCachedItem(item)
         return [...acc, parsedItem]
       } catch (err) {
-        // log.info(err)
         return acc
       }
     }, [])
