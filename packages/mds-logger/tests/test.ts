@@ -88,8 +88,7 @@ describe('MDS Logger', () => {
     logger
       .error(toCensor)
       .then((vals: any[]) => {
-        const [val] = vals
-        const [result1, result2] = JSON.parse(val)
+        const [[result1, result2]] = vals
         test.string(result1.gps.lat).contains('CENSORED')
         test.string(result1.gps.lng).contains('CENSORED')
         test.string(result2.gps.lat).contains('CENSORED')

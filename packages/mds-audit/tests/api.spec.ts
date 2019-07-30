@@ -36,9 +36,10 @@ import {
   PROVIDER_AUTH,
   makeEventsWithTelemetry,
   makeDevices,
-  COMPLIANCE_AUTH
+  COMPLIANCE_AUTH,
+  makeTelemetryInArea
 } from '@mds-core/mds-test-data'
-import { now } from '@mds-core/mds-utils'
+import { now, rangeRandomInt } from '@mds-core/mds-utils'
 import cache from '@mds-core/mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
@@ -421,8 +422,16 @@ describe('Testing API', () => {
       const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
       const devices_b = makeDevices(10, now(), PROVIDER_UUID)
       const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
+      const telemetry_a = devices_a.map(device =>
+        makeTelemetryInArea(device, now(), SAN_FERNANDO_VALLEY, rangeRandomInt(10))
+      )
+      const telemetry_b = devices_b.map(device => makeTelemetryInArea(device, now(), CANALS, rangeRandomInt(10)))
 
-      const seedData = { devices: [...devices_a, ...devices_b], events: [...events_a, ...events_b], telemetry: [] }
+      const seedData = {
+        devices: [...devices_a, ...devices_b],
+        events: [...events_a, ...events_b],
+        telemetry: [...telemetry_a, ...telemetry_b]
+      }
       Promise.all([db.initialize(), cache.initialize()]).then(() => {
         Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
           done()

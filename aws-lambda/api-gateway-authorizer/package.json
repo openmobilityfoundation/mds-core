@@ -23,7 +23,7 @@
     "jsonwebtoken": "8.5.1"
   },
   "devDependencies": {
-    "@types/aws-lambda": "8.10.30",
+    "@types/aws-lambda": "8.10.31",
     "@types/jsonwebtoken": "8.3.2"
   },
   "license": "Apache-2.0"

@@ -23,7 +23,6 @@ import urls from 'url'
 import {
   pathsFor,
   seconds,
-  getBoundingBox,
   isValidAuditDeviceId,
   isValidAuditEventId,
   isValidAuditEventType,
@@ -633,7 +632,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/vehicles'), async (req, res) => {
     const { skip, take } = asPagingParams(req.query)
-    const bbox = getBoundingBox(JSON.parse(req.query.bbox))
+    const bbox = JSON.parse(req.query.bbox)
 
     const url = urls.format({
       protocol: req.get('x-forwarded-proto') || req.protocol,
