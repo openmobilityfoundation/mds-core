@@ -227,12 +227,16 @@ async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
 }
 
 async function updateTables(client: MDSPostgresClient) {
+  const { PG_MIGRATIONS } = process.env
+  const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []
   // Custom migrations run first (e.g. new non-nullable columns with no default value)
   await addTimestampColumnToAuditsTable(client)
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
-  await addIdentityColumnToAllTables(client)
+  if (migrations.includes('addIdentityColumnToAllTables')) {
+    await addIdentityColumnToAllTables(client)
+  }
 }
 
 async function updateSchema(client: MDSPostgresClient) {
