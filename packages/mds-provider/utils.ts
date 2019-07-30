@@ -35,7 +35,6 @@ export function asStatusChangeEvent({ event_type }: VehicleEvent | { event_type:
       }
 
     case 'rebalance_drop_off':
-    case 'provider_drop_off':
     case 'maintenance_drop_off':
       return {
         event_type: VEHICLE_STATUSES.available,
