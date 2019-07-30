@@ -47,6 +47,7 @@ export function asStatusChangeEvent({ event_type }: VehicleEvent | { event_type:
         event_type: VEHICLE_STATUSES.unavailable,
         event_type_reason: VEHICLE_REASONS.low_battery
       }
+
     case VEHICLE_EVENTS.agency_pick_up:
     case VEHICLE_EVENTS.deregister:
     case VEHICLE_EVENTS.service_end:
