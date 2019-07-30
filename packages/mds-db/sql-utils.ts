@@ -91,48 +91,54 @@ export function cols_sql(table: string, cols: Readonly<string[]>) {
   return `${table}(${csv(cols.filter(col => col !== schema.IDENTITY_COLUMN))})`
 }
 
+// These are the types representing data that can be stored in db
+type DBValueType = null | string | number | boolean | string[]
+
 // take a list of column names and extract the values into a list for SQL insertion
-export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: unknown }) {
+// undefined is coerced to null and objects are treated as JSON and stringified
+export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: DBValueType | undefined | object }) {
   return cols
     .filter(col => col !== schema.IDENTITY_COLUMN)
     .map(col => {
       const value = obj[col]
-      if (typeof value === 'undefined') {
+      if (value === undefined || value === null) {
         return null
       }
-      if (value === null || typeof value === 'string' || typeof value === 'number') {
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean' ||
+        Array.isArray(value)
+      ) {
         return value
-      }
-      if (Array.isArray(value)) {
-        return value as (string | null)[] | (number | null)[]
       }
       return JSON.stringify(value)
     })
 }
 
 // convert an object to sql string representation
-export function to_sql(obj: boolean | number | string | object[] | null | object | undefined) {
+export function to_sql(value: DBValueType | undefined | object) {
   // bools
-  if (obj === true || obj === false) {
-    return `${obj}`
+  if (value === true || value === false) {
+    return `${value}`
   }
   // numbers
-  if (typeof obj === 'number') {
-    return `${obj}`
+  if (typeof value === 'number') {
+    return `${value}`
   }
   // strings
-  if (typeof obj === 'string') {
-    return `'${obj}'`
+  if (typeof value === 'string') {
+    return `'${value}'`
   }
-  if (Array.isArray(obj)) {
-    return `'{${csv(obj.map(o => `"${o}"`))}}'`
+  if (Array.isArray(value)) {
+    return `'{${csv(value.map(o => `"${o}"`))}}'`
   }
-  if (obj === null) {
+  if (value === null) {
     return 'null'
   }
   // object
-  if (typeof obj === 'object') {
-    throw new Error(`can't render object to sql: ${JSON.stringify(obj)}`)
+  if (typeof value === 'object') {
+    throw new Error(`can't render object to sql: ${JSON.stringify(value)}`)
   }
   return 'null'
 }

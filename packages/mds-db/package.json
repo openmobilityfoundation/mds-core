@@ -22,7 +22,7 @@
     "@mds-core/mds-logger": "^0.1.4",
     "@mds-core/mds-types": "^0.1.1",
     "@mds-core/mds-utils": "^0.1.4",
-    "pg": "7.11.0"
+    "pg": "7.12.0"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "^0.1.4"

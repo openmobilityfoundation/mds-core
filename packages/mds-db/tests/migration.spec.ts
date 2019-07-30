@@ -45,7 +45,10 @@ if (pg_info.database) {
         `SELECT table_name FROM information_schema.tables ` +
           `WHERE table_catalog = CURRENT_CATALOG AND table_schema=CURRENT_SCHEMA`
       )
-      const table_names = result.rows.map((row: DBRow) => row.table_name).sort()
+      const table_names = result.rows
+        .map((row: DBRow) => row.table_name)
+        .filter(table => Object.keys(schema.tables).includes(table))
+        .sort()
       test.array(table_names).is(Object.keys(schema.tables).sort())
       await client.end()
     })
@@ -58,7 +61,10 @@ if (pg_info.database) {
         `SELECT table_name FROM information_schema.tables ` +
           `WHERE table_catalog = CURRENT_CATALOG AND table_schema=CURRENT_SCHEMA`
       )
-      const table_names = result.rows.map((row: DBRow) => row.table_name).sort()
+      const table_names = result.rows
+        .map((row: DBRow) => row.table_name)
+        .filter(table => Object.keys(schema.tables).includes(table))
+        .sort()
       test.array(table_names).is(Object.keys(schema.tables).sort())
       const indices_result = await client.query(`SELECT tablename FROM pg_indexes WHERE indexdef like '%idx_recorded%'`)
       const indices = indices_result.rows.map((row: DBRow) => row.tablename).sort()
@@ -74,7 +80,9 @@ if (pg_info.database) {
         `SELECT table_name FROM information_schema.tables ` +
           `WHERE table_catalog = CURRENT_CATALOG AND table_schema=CURRENT_SCHEMA`
       )
-      const table_names = result.rows.map((row: DBRow) => row.table_name)
+      const table_names = result.rows
+        .map((row: DBRow) => row.table_name)
+        .filter(table => Object.keys(schema.tables).includes(table))
       test.array(table_names).is([])
       await client.end()
     })
