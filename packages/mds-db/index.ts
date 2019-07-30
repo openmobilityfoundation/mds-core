@@ -55,7 +55,6 @@ import {
 
 const { env } = process
 
-type DBVal = UUID | string | number | undefined
 type ClientType = 'writeable' | 'readonly'
 
 let writeableCachedClient: MDSPostgresClient | null = null
