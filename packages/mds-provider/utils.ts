@@ -1,7 +1,7 @@
 import { StatusChangeEvent } from '@mds-core/mds-db/types'
 import { VEHICLE_EVENTS, VEHICLE_STATUSES, VEHICLE_REASONS, VehicleEvent } from '@mds-core/mds-types'
 
-export function asStatusChangeEvent({ event_type }: VehicleEvent | { event_type: string }): StatusChangeEvent {
+export function asStatusChangeEvent({ event_type }: VehicleEvent): StatusChangeEvent {
   // const agencyEventReason = agencyEvent.event_type_reason
 
   // event_type: 'removed',
@@ -22,17 +22,9 @@ export function asStatusChangeEvent({ event_type }: VehicleEvent | { event_type:
   //     event_type_reason: 'low_battery'
   //     event_type_reason: 'maintenance'
 
-  // TODO: any strings in the case values are legacy sandbox crud
+  // NOTE: any strings in the case values are legacy sandbox crud
   // and should eventually be removed
   switch (event_type) {
-    case 'register':
-    case 'maintenance_pick_up':
-    case 'deactivate':
-    case 'maintenance':
-      return {
-        event_type: VEHICLE_STATUSES.removed,
-        event_type_reason: VEHICLE_EVENTS.service_end
-      }
     case VEHICLE_EVENTS.agency_pick_up:
     case VEHICLE_EVENTS.deregister:
     case VEHICLE_EVENTS.service_end:
