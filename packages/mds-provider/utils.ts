@@ -42,12 +42,6 @@ export function asStatusChangeEvent({ event_type }: VehicleEvent | { event_type:
         event_type_reason: VEHICLE_EVENTS.provider_drop_off
       }
 
-    case 'provider_pick_up':
-      return {
-        event_type: VEHICLE_STATUSES.unavailable,
-        event_type_reason: VEHICLE_REASONS.maintenance
-      }
-
     case 'low_battery':
       return {
         event_type: VEHICLE_STATUSES.unavailable,
