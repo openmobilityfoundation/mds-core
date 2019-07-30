@@ -352,13 +352,13 @@ export interface TripsStats {
 // database. This type alias will add the readonly attribute to all properties and also remove undefined as a valid
 // value since the database will never return undefined.
 export type Recorded<T> = Readonly<Required<T>>
-
-export interface BoundingBox {
+export interface BBox {
   latMin: number
   latMax: number
   lngMin: number
   lngMax: number
 }
+export type BoundingBox = [[number, number], [number, number]]
 
 export interface Provider {
   provider_name: string
