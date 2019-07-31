@@ -372,8 +372,7 @@ GET /geographies/meta
 Get a list of geography metadata.  Search parameters TBD.
 */
 
-  // app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
-  /*
+  app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
     log.info('read geo', JSON.stringify(req.params))
     const { geography_id } = req.params
     log.info('read geo', geography_id)
@@ -385,13 +384,12 @@ Get a list of geography metadata.  Search parameters TBD.
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      log.error('failed to read geography', err.stack)
+      await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
-    */
-  // })
-  /*
+  })
 
+  /*
 POST /geographies/meta/{id}
 
 Create
