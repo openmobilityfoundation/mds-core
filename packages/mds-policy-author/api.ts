@@ -26,7 +26,7 @@ import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, Geography, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError, UUID_REGEX } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -226,8 +226,8 @@ function api(app: express.Express): express.Express {
     const details = validation.error ? validation.error.details : null
 
     if (details) {
-      await log.error('questionable policy json', details)
-      res.status(422).send(details)
+      await log.error('invalid policy json', details)
+      res.status(400).send(details)
       return
     }
 
@@ -235,8 +235,11 @@ function api(app: express.Express): express.Express {
       await db.writePolicy(policy)
       res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
     } catch (err) {
-      await log.error('failed to write policy', err.stack)
-      res.status(404).send({ result: 'not found' })
+      if (err.code === '23505') {
+        res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
+      }
+      await log.error('failed to write policy', err)
+      res.status(500).send({ error: new ServerError(err) })
     }
   })
 
@@ -247,6 +250,10 @@ function api(app: express.Express): express.Express {
       await db.publishPolicy(policy_id)
       res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
     } catch (err) {
+      if (err.message.includes('geography', 'not_found')) {
+        const geography_id = err.message.match(UUID_REGEX)
+        res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+      }
       await log.error('failed to publish policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
@@ -259,20 +266,25 @@ function api(app: express.Express): express.Express {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
-    log.info('editing that damn policy', policy, details)
 
     if (details) {
-      log.info('policy JSON', details)
-      res.status(422).send(details)
+      res.status(400).send(details)
       return
     }
+
     try {
       await db.editPolicy(policy)
       log.info('editing the policy succeeded', policy, details)
       res.status(200).send({ result: `successfully edited policy ${policy}` })
     } catch (err) {
+      if (err.message.includes('not_found')) {
+        res.status(404).send({ error: 'not_found' })
+      }
+      if (err.message.includes('Cannot edit published policy')) {
+        res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
+      }
       await log.error('failed to edit policy', err.stack)
-      res.status(404).send({ result: 'not found' })
+      res.status(500).send({ error: new ServerError(err) })
     }
   })
 

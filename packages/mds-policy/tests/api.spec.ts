@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable promise/prefer-await-to-callbacks */
 /*
     Copyright 2019 City of Los Angeles.
@@ -53,6 +54,7 @@ const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toS
 
 describe('Tests app', () => {
   it('resets the db', done => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     request
       .get('/test/initialize')
       .set('Authorization', AUTH)

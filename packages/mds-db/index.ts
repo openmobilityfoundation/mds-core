@@ -1073,6 +1073,13 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     // TODO insufficiently general
     // TODO add 'count'
     const { rows } = await client.query(sql, values)
+    if (rows.length === 0) {
+      if (params && params.geography_id) {
+        throw new Error(`geography ${params.geography_id} not_found`)
+      } else {
+        throw new Error(`geographies not_found`)
+      }
+    }
     return rows
   } catch (err) {
     await log.error('readGeographies', err)
@@ -1104,6 +1111,9 @@ async function isGeographyPublished(geography_id: UUID) {
   const result = await client.query(sql).catch(err => {
     throw err
   })
+  if (result.rows.length === 0) {
+    throw new Error(`geography_id ${geography_id} not_found`)
+  }
   log.info('is geography published', geography_id, result.rows[0].read_only)
   return Boolean(result.rows[0].read_only)
 }
@@ -1207,10 +1217,10 @@ async function writePolicy(policy: Policy) {
 async function isPolicyPublished(policy_id: UUID) {
   const client = await getReadOnlyClient()
   const sql = `SELECT * FROM ${schema.POLICIES_TABLE} WHERE policy_id='${policy_id}'`
-  const result = await client.query(sql).catch(err => {
-    throw err
-  })
-  log.info('is policy published', result.rows[0].policy_json.publish_date)
+  const result = await client.query(sql)
+  if (result.rows.length === 0) {
+    throw new Error(`policy_id ${policy_id} not_found`)
+  }
   return Boolean(result.rows[0].policy_json.publish_date)
 }
 
@@ -1255,6 +1265,12 @@ async function publishPolicy(policy_id: UUID) {
         geographies.push(geography_id)
       })
     })
+
+    await Promise.all(
+      geographies.map(geography_id => {
+        return readGeographies({ geography_id })
+      })
+    )
 
     await Promise.all(
       geographies.map(geography_id => {

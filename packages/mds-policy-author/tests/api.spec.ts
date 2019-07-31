@@ -121,11 +121,23 @@ describe('Tests app', () => {
         .post(`/admin/policies/${POLICY_UUID}`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(bad_policy)
-        .expect(422)
+        .expect(400)
         .end((err, result) => {
           const body = result.body
-          log('post bad policy response:', body)
           test.value(body[0].message).contains('rule_type')
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot PUT non-existant policy', done => {
+      const policy = POLICY_JSON
+      request
+        .put(`/admin/policies/${POLICY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(policy)
+        .expect(404)
+        .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -139,8 +151,19 @@ describe('Tests app', () => {
         .send(policy)
         .expect(200)
         .end((err, result) => {
-          const body = result.body
-          log('create one currrent policy response:', body)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot POST duplicate policy', done => {
+      const policy = POLICY_JSON
+      request
+        .post(`/admin/policies/${POLICY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(policy)
+        .expect(409)
+        .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -251,6 +274,32 @@ describe('Tests app', () => {
         })
     })
 
+    it('verifies cannot publish a policy with missing geographies', done => {
+      request
+        .post(`/admin/policies/${POLICY_JSON.policy_id}/publish`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(404)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('creates one current geography', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
+      request
+        .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(geography)
+        .expect(200)
+        .end((err, result) => {
+          const body = result.body
+          log('create one geo response:', body)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
     it('can publish a policy', done => {
       request
         .post(`/admin/policies/${POLICY_JSON.policy_id}/publish`)
@@ -269,17 +318,9 @@ describe('Tests app', () => {
         .put(`/admin/policies/${POLICY_UUID}`)
         .set('Authorization', AUTH_ADMIN_ONLY)
         .send(policy)
-        .expect(200)
+        .expect(409)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
-        })
-      request
-        .get(`/policies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          test.value(body.name).is('a shiny new name')
           done(err)
         })
     })

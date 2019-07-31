@@ -37,12 +37,13 @@ import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geo
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
+const UUID_REGEX = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
 
 function isUUID(s: unknown): s is UUID {
   if (typeof s !== 'string') {
     return false
   }
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)
+  return UUID_REGEX.test(s)
 }
 
 function round(value: string | number, decimals: number) {
@@ -649,6 +650,7 @@ function clone<T>(obj: T): T {
 }
 
 export {
+  UUID_REGEX,
   isUUID,
   isPct,
   isTimestamp,

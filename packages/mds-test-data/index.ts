@@ -21,12 +21,27 @@ import {
   VEHICLE_TYPES,
   PROPULSION_TYPES,
   VEHICLE_STATUSES,
-  VEHICLE_STATUS, UUID, Device, Timestamp, Telemetry, VehicleEvent, Policy } from '@mds-core/mds-types'
+  VEHICLE_STATUS,
+  UUID,
+  Device,
+  Timestamp,
+  Telemetry,
+  VehicleEvent,
+  Policy
+} from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from '@mds-core/mds-db/types'
 
-
-import { addDistanceBearing, pointInShape, makePointInShape, rangeRandom, rangeRandomInt, range, now, days } from '@mds-core/mds-utils'
+import {
+  addDistanceBearing,
+  pointInShape,
+  makePointInShape,
+  rangeRandom,
+  rangeRandomInt,
+  range,
+  now,
+  days
+} from '@mds-core/mds-utils'
 
 import { serviceAreaMap } from 'ladot-service-areas'
 
@@ -46,7 +61,7 @@ import {
 import { LA_CITY_BOUNDARY } from './la-city-boundary'
 import { DISTRICT_SEVEN } from './district-seven'
 
-const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
+const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
 
 const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
