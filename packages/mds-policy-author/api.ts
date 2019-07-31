@@ -22,14 +22,12 @@
  */
 
 import express from 'express'
-import { isProviderId, providerName } from 'mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
-import { Policy, UUID, Geography } from 'mds'
-import db from 'mds-db'
-import { VEHICLE_TYPES, DAYS_OF_WEEK } from 'mds-enums'
-import { isUUID, now, pathsFor, ServerError } from 'mds-utils'
-import log from 'mds-logger'
+import { Policy, UUID, Geography, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
+import db from '@mds-core/mds-db'
+import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 log.startup()

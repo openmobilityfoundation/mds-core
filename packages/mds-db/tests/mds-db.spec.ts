@@ -1,6 +1,14 @@
 import assert from 'assert'
 import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS } from '@mds-core/mds-types'
+import {
+  Telemetry,
+  Recorded,
+  VehicleEvent,
+  Device,
+  VEHICLE_EVENTS,
+  GeographyMetadata,
+  Geography
+} from '@mds-core/mds-types'
 import {
   JUMP_TEST_DEVICE_1,
   makeDevices,
@@ -298,8 +306,17 @@ if (pg_info.database) {
       it('will not edit or delete a published Policy', async () => {
         const publishedPolicy = clone(POLICY_JSON)
         publishedPolicy.name = 'a shiny new name'
-        await assert.rejects(MDSDBPostgres.editPolicy(publishedPolicy))
-        await assert.rejects(MDSDBPostgres.deletePolicy(publishedPolicy.policy_id))
+        try {
+          await MDSDBPostgres.editPolicy(publishedPolicy)
+          throw new Error('Should have thrown')
+        } catch {
+          try {
+            await MDSDBPostgres.deletePolicy(publishedPolicy.policy_id)
+            throw new Error('Should have thrown')
+          } catch {
+            return 'Yay happy fun times'
+          }
+        }
       })
     })
 
@@ -355,13 +372,20 @@ if (pg_info.database) {
       it('will not edit or delete a published Geography', async () => {
         const publishedGeographyJSON = clone(LAGeography.geography_json) as FeatureCollection
         publishedGeographyJSON.features = []
-        await assert.rejects(
-          MDSDBPostgres.editGeography({
+        try {
+          await MDSDBPostgres.editGeography({
             geography_id: LAGeography.geography_id,
             geography_json: publishedGeographyJSON
           })
-        )
-        await assert.rejects(MDSDBPostgres.deleteGeography(LAGeography.geography_id))
+          throw new Error('Should have thrown')
+        } catch {
+          try {
+            await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
+            throw new Error('Should have thrown')
+          } catch {
+            return 'Yay happy fun times'
+          }
+        }
       })
     })
 
@@ -401,11 +425,15 @@ if (pg_info.database) {
           geography_id: GEOGRAPHY_UUID,
           geography_metadata: { foo: 'afoo' }
         }
-        await assert.rejects(MDSDBPostgres.writeGeographyMetadata(geographyMetadata))
-        await MDSDBPostgres.writeGeography(LAGeography)
-        await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
-        const geographyMetadataResult = await MDSDBPostgres.readGeographyMetadata(GEOGRAPHY_UUID)
-        assert.deepEqual(geographyMetadataResult, geographyMetadata)
+        try {
+          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
+          throw new Error('Should have thrown')
+        } catch (err) {
+          await MDSDBPostgres.writeGeography(LAGeography)
+          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
+          const geographyMetadataResult = await MDSDBPostgres.readGeographyMetadata(GEOGRAPHY_UUID)
+          assert.deepEqual(geographyMetadataResult, geographyMetadata)
+        }
       })
     })
   })

@@ -22,11 +22,10 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_TYPES } from 'mds-enums'
-import { now, days, clone } from 'mds-utils'
-import { Policy } from 'mds'
-import { server } from 'mds-api-server'
-import { TEST1_PROVIDER_ID } from 'mds-providers'
+import { now, days, clone } from '@mds-core/mds-utils'
+import { Policy } from '@mds-core/mds-types'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import {
   POLICY_JSON,
   POLICY2_JSON,
@@ -38,8 +37,7 @@ import {
   START_ONE_WEEK_AGO,
   PROVIDER_SCOPES,
   LA_CITY_BOUNDARY
-} from 'mds-test-data'
-import { doesNotReject } from 'assert'
+} from '@mds-core/mds-test-data'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/policy'
@@ -47,7 +45,7 @@ process.env.PATH_PREFIX = '/policy'
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 const APP_JSON = 'application/json; charset=utf-8'
 

@@ -24,7 +24,7 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import { now, days, clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
-import { server } from '@mds-core/mds-api-server'
+import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import {
   POLICY_JSON,
@@ -45,7 +45,7 @@ process.env.PATH_PREFIX = '/policy'
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 const APP_JSON = 'application/json; charset=utf-8'
 

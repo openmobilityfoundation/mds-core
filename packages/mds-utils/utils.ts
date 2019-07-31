@@ -614,9 +614,6 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
   if (res === undefined) {
     throw new Error(`Geography ${geography} not found in ${geographies}!`)
   }
-  if (res.geography_json.type !== 'FeatureCollection') {
-    return res.geography_json.geometry
-  }
   return res.geography_json
 }
 

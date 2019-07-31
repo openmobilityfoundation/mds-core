@@ -1116,10 +1116,7 @@ async function editGeography(geography: Geography) {
 
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND read_only IS FALSE`
-  await client.query(sql, [geography.geography_json]).catch(err => {
-    await log.error(err)
-    throw err
-  })
+  await client.query(sql, [geography.geography_json])
   return geography
 }
 
@@ -1130,19 +1127,14 @@ async function deleteGeography(geography_id: UUID) {
 
   const client = await getWriteableClient()
   const sql = `DELETE FROM ${schema.GEOGRAPHIES_TABLE} WHERE geography_id='${geography_id}' AND read_only IS FALSE`
-  await client.query(sql).catch(err => {
-    await log.error(err)
-    throw err
-  })
+  await client.query(sql)
   return geography_id
 }
 
 async function publishGeography(geography_id: UUID) {
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.GEOGRAPHIES_TABLE} SET read_only = TRUE where geography_id='${geography_id}'`
-  await client.query(sql).catch(err => {
-    throw err
-  })
+  await client.query(sql)
   return geography_id
 }
 
@@ -1230,10 +1222,7 @@ async function editPolicy(policy: Policy) {
 
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.POLICIES_TABLE} SET policy_json=$1 WHERE policy_id='${policy.policy_id}' AND policy_json->>'publish_date' IS NULL`
-  await client.query(sql, [policy]).catch(err => {
-    await log.error(err)
-    throw err
-  })
+  await client.query(sql, [policy])
   return policy
 }
 
@@ -1244,10 +1233,7 @@ async function deletePolicy(policy_id: UUID) {
 
   const client = await getWriteableClient()
   const sql = `DELETE FROM ${schema.POLICIES_TABLE} WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
-  await client.query(sql).catch(err => {
-    await log.error(err)
-    throw err
-  })
+  await client.query(sql)
   return policy_id
 }
 
