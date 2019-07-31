@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -49,7 +50,6 @@ const request = supertest(ApiServer(api))
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 // TODO
 // change the auth token/authing system so it uses agency_id instead of provider_id
 const AUTH_NON_PROVIDER = `basic ${Buffer.from(`'BOGUS_PROVIDER_ID_TO_BE_REPLACED'|${PROVIDER_SCOPES}`).toString(
@@ -99,7 +99,7 @@ describe('Tests app', () => {
       request
         .get('/test/initialize')
         .set('Authorization', AUTH_NON_PROVIDER)
-        .end((err, result) => {
+        .end(err => {
           done(err)
         })
     })
@@ -108,7 +108,7 @@ describe('Tests app', () => {
       request
         .get('/test/shutdown')
         .set('Authorization', AUTH_NON_PROVIDER)
-        .end((err, result) => {
+        .end(err => {
           done(err)
         })
     })
@@ -399,7 +399,7 @@ describe('Tests app', () => {
         .delete(`/admin/policies/${POLICY_UUID}`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .expect(404)
-        .end((err, result) => {
+        .end(err => {
           done(err)
         })
     })
@@ -410,7 +410,7 @@ describe('Tests app', () => {
       request
         .get('/test/initialize')
         .set('Authorization', AUTH_NON_PROVIDER)
-        .end((err, result) => {
+        .end(err => {
           done(err)
         })
     })
@@ -419,7 +419,7 @@ describe('Tests app', () => {
       request
         .get('/test/shutdown')
         .set('Authorization', AUTH_NON_PROVIDER)
-        .end((err, result) => {
+        .end(err => {
           done(err)
         })
     })

@@ -30,8 +30,6 @@ import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
-log.startup()
-
 const ruleSchema = Joi.object().keys({
   name: Joi.string().required(),
   rule_id: Joi.string()
@@ -111,7 +109,7 @@ function api(app: express.Express): express.Express {
   /**
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
-  app.use((req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
+  app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
     try {
       // TODO verify presence of agency_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
@@ -140,7 +138,7 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       /* istanbul ignore next */
-      log.error(req.originalUrl, 'request validation fail:', err.stack)
+      await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -198,7 +196,7 @@ function api(app: express.Express): express.Express {
       })
       res.status(200).send({ policies: active })
     } catch (err) {
-      log.error('failed to read policies', err)
+      await log.error('failed to read policies', err)
       res.status(404).send({
         result: 'not found'
       })
@@ -215,7 +213,7 @@ function api(app: express.Express): express.Express {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      log.error('failed to read one policy', err.stack)
+      await log.error('failed to read one policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -228,7 +226,7 @@ function api(app: express.Express): express.Express {
     const details = validation.error ? validation.error.details : null
 
     if (details) {
-      log.error('questionable policy json', details)
+      await log.error('questionable policy json', details)
       res.status(422).send(details)
       return
     }
@@ -237,7 +235,7 @@ function api(app: express.Express): express.Express {
       await db.writePolicy(policy)
       res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
     } catch (err) {
-      log.error('failed to write policy', err.stack)
+      await log.error('failed to write policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -249,7 +247,7 @@ function api(app: express.Express): express.Express {
       await db.publishPolicy(policy_id)
       res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
     } catch (err) {
-      log.error('failed to publish policy', err.stack)
+      await log.error('failed to publish policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -273,7 +271,7 @@ function api(app: express.Express): express.Express {
       log.info('editing the policy succeeded', policy, details)
       res.status(200).send({ result: `successfully edited policy ${policy}` })
     } catch (err) {
-      log.error('failed to edit policy', err.stack)
+      await log.error('failed to edit policy', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -288,7 +286,7 @@ function api(app: express.Express): express.Express {
       res.status(200).send({ result: `successfully deleted policy of id ${policy_id}` })
       log.info('deleting this dumb policy success')
     } catch (err) {
-      log.error('failed to delete policy', err.stack)
+      await log.error('failed to delete policy', err.stack)
       res.status(404).send({ result: 'policy either not found, or has already been published' })
     }
   })
@@ -308,7 +306,7 @@ function api(app: express.Express): express.Express {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      log.error('failed to read geography', err.stack)
+      await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -328,7 +326,7 @@ function api(app: express.Express): express.Express {
       await db.writeGeography(geography)
       res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
     } catch (err) {
-      log.error('failed to write geography', err.stack)
+      await log.error('failed to write geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -348,7 +346,7 @@ function api(app: express.Express): express.Express {
       await db.writeGeography(geography)
       res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
     } catch (err) {
-      log.error('failed to write geography', err.stack)
+      await log.error('failed to write geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -360,7 +358,7 @@ function api(app: express.Express): express.Express {
       await db.deleteGeography(geography_id)
       res.status(200).send({ result: `Successfully deleted geography of id ${geography_id}` })
     } catch (err) {
-      log.error('failed to delete geography', err.stack)
+      await log.error('failed to delete geography', err.stack)
       res.status(404).send({ result: 'geography either not found or already published' })
     }
   })
@@ -374,8 +372,8 @@ GET /geographies/meta
 Get a list of geography metadata.  Search parameters TBD.
 */
 
-  app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
-    /*
+  // app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
+  /*
     log.info('read geo', JSON.stringify(req.params))
     const { geography_id } = req.params
     log.info('read geo', geography_id)
@@ -391,7 +389,7 @@ Get a list of geography metadata.  Search parameters TBD.
       res.status(404).send({ result: 'not found' })
     }
     */
-  })
+  // })
   /*
 
 POST /geographies/meta/{id}
@@ -406,7 +404,7 @@ Create
       await db.writeGeographyMetadata(geography_metadata)
       res.status(200).send({ result: `successfully wrote policy of id ${geography_metadata.geography_id}` })
     } catch (err) {
-      log.error('failed to write geography metadata', err.stack)
+      await log.error('failed to write geography metadata', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })

@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
  */
-import { Feature, FeatureCollection } from 'geojson'
+import { FeatureCollection } from 'geojson'
 
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(keys.reduce((e, key) => {
