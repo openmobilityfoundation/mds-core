@@ -44,13 +44,13 @@ export function asStatusChangeEvent({ event_type }: VehicleEvent): StatusChangeE
     case VEHICLE_EVENTS.trip_end:
       return {
         event_type: VEHICLE_STATUSES.available,
-        event_type_reason: VEHICLE_EVENTS.user_drop_off
+        event_type_reason: VEHICLE_REASONS.user_drop_off
       }
 
     case VEHICLE_EVENTS.provider_drop_off:
       return {
         event_type: VEHICLE_STATUSES.available,
-        event_type_reason: event_type // rebalance_drop_off or maintenance_drop_off
+        event_type_reason: VEHICLE_REASONS.rebalance_drop_off
       }
 
     case VEHICLE_EVENTS.reserve:
@@ -59,7 +59,7 @@ export function asStatusChangeEvent({ event_type }: VehicleEvent): StatusChangeE
     case VEHICLE_EVENTS.trip_enter:
       return {
         event_type: VEHICLE_STATUSES.reserved,
-        event_type_reason: VEHICLE_EVENTS.trip_start
+        event_type_reason: VEHICLE_REASONS.user_pick_up
       }
 
     case VEHICLE_EVENTS.provider_pick_up:
