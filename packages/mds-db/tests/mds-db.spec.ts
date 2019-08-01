@@ -1,4 +1,7 @@
 import assert from 'assert'
+/* eslint-reason extends object.prototype */
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+import should from 'should'
 import { FeatureCollection } from 'geojson'
 import {
   Telemetry,
@@ -270,12 +273,7 @@ if (pg_info.database) {
         await MDSDBPostgres.writePolicy(POLICY_JSON)
         assert(!(await MDSDBPostgres.isPolicyPublished(policy_id)))
         await MDSDBPostgres.deletePolicy(policy_id)
-        try {
-          await MDSDBPostgres.readPolicies({ policy_id })
-          throw new Error('Should have thrown')
-        } catch {
-          return "Hurrah, didn't throw"
-        }
+        await MDSDBPostgres.readPolicies({ policy_id }).should.be.rejected()
       })
 
       it('can write, read, and publish a Policy', async () => {
@@ -311,17 +309,8 @@ if (pg_info.database) {
       it('will not edit or delete a published Policy', async () => {
         const publishedPolicy = clone(POLICY_JSON)
         publishedPolicy.name = 'a shiny new name'
-        try {
-          await MDSDBPostgres.editPolicy(publishedPolicy)
-          throw new Error('Should have thrown')
-        } catch {
-          try {
-            await MDSDBPostgres.deletePolicy(publishedPolicy.policy_id)
-            throw new Error('Should have thrown')
-          } catch {
-            return 'Yay happy fun times'
-          }
-        }
+        await MDSDBPostgres.editPolicy(publishedPolicy).should.be.rejected()
+        await MDSDBPostgres.deletePolicy(publishedPolicy.policy_id).should.be.rejected()
       })
     })
 
@@ -338,12 +327,7 @@ if (pg_info.database) {
         await MDSDBPostgres.writeGeography(LAGeography)
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
-        try {
-          await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
-          throw new Error('Should have thrown')
-        } catch {
-          return 'Whoop'
-        }
+        await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id }).should.be.rejected()
       })
 
       it('can write, read, and publish a Geography', async () => {
@@ -353,8 +337,8 @@ if (pg_info.database) {
         assert.deepEqual(result[0].geography_json, LAGeography.geography_json)
         assert.deepEqual(result[0].geography_id, LAGeography.geography_id)
 
-        const allGeographies = await MDSDBPostgres.readGeographies({ get_read_only: true })
-        assert.deepEqual(allGeographies.length, 0)
+        await MDSDBPostgres.readGeographies({ get_read_only: true }).should.be.rejected()
+
         await MDSDBPostgres.publishGeography(LAGeography.geography_id)
         const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
         assert.deepEqual(writeableGeographies.length, 1)
@@ -381,20 +365,11 @@ if (pg_info.database) {
       it('will not edit or delete a published Geography', async () => {
         const publishedGeographyJSON = clone(LAGeography.geography_json) as FeatureCollection
         publishedGeographyJSON.features = []
-        try {
-          await MDSDBPostgres.editGeography({
-            geography_id: LAGeography.geography_id,
-            geography_json: publishedGeographyJSON
-          })
-          throw new Error('Should have thrown')
-        } catch {
-          try {
-            await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
-            throw new Error('Should have thrown')
-          } catch {
-            return 'Yay happy fun times'
-          }
-        }
+        await MDSDBPostgres.editGeography({
+          geography_id: LAGeography.geography_id,
+          geography_json: publishedGeographyJSON
+        }).should.be.rejected()
+        await MDSDBPostgres.deleteGeography(LAGeography.geography_id).should.be.rejected()
       })
     })
 
