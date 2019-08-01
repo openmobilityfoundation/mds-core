@@ -23,10 +23,10 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { now, days, clone } from '@mds-core/mds-utils'
-import { Policy } from '@mds-core/mds-types'
+import { now, days } from '@mds-core/mds-utils'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import db from '@mds-core/mds-db'
 import {
   POLICY_JSON,
   POLICY2_JSON,
@@ -78,22 +78,8 @@ describe('Tests app', () => {
 
   // MAIN TESTS HERE
 
-  it('creates one current geography', done => {
-    const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
-    request
-      .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
-      .set('Authorization', AUTH)
-      .send(geography)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('create one geo response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('read back one geography', done => {
+  it('read back one geography', async () => {
+    await db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
     request
       .get(`/geographies/${GEOGRAPHY_UUID}`)
       .set('Authorization', AUTH)
@@ -103,25 +89,7 @@ describe('Tests app', () => {
         log('read back one geo response:', body)
         test.value(result).hasHeader('content-type', APP_JSON)
         // TODO verify contents
-        done(err)
-      })
-  })
-
-  it('tries to post invalid policy', done => {
-    const bad_policy_json: Policy = clone(POLICY_JSON)
-    delete bad_policy_json.rules[0].rule_type
-    const bad_policy = bad_policy_json
-    request
-      .post(`/admin/policies/${POLICY_UUID}`)
-      .set('Authorization', AUTH)
-      .send(bad_policy)
-      .expect(422)
-      .end((err, result) => {
-        const body = result.body
-        log('post bad policy response:', body)
-        test.value(body[0].message).contains('rule_type')
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
+        return err
       })
   })
 
@@ -158,22 +126,8 @@ describe('Tests app', () => {
       })
   })
 
-  it('creates one current policy', done => {
-    const policy = POLICY_JSON
-    request
-      .post(`/admin/policies/${POLICY_UUID}`)
-      .set('Authorization', AUTH)
-      .send(policy)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('create one currrent policy response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('read back one policy', done => {
+  it('read back one policy', async () => {
+    await db.writePolicy(POLICY_JSON)
     request
       .get(`/policies/${POLICY_UUID}`)
       .set('Authorization', AUTH)
@@ -183,38 +137,7 @@ describe('Tests app', () => {
         log('read back one policy response:', body)
         test.value(result).hasHeader('content-type', APP_JSON)
         // TODO verify contents
-        done(err)
-      })
-  })
-
-  it('creates one past policy', done => {
-    const policy2 = POLICY2_JSON
-    request
-      .post(`/admin/policies/${POLICY_UUID}`)
-      .set('Authorization', AUTH)
-      .send(policy2)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back one past policy response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('creates one future new policy', done => {
-    // TODO guts
-    const policy3 = POLICY3_JSON
-    request
-      .post(`/admin/policies/${POLICY_UUID}`)
-      .set('Authorization', AUTH)
-      .send(policy3)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back one future policy response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
+        return err
       })
   })
 
@@ -234,7 +157,9 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all policies', done => {
+  it('read back all policies', async () => {
+    await db.writePolicy(POLICY2_JSON)
+    await db.writePolicy(POLICY3_JSON)
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
@@ -245,7 +170,7 @@ describe('Tests app', () => {
         test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
         // TODO verify contents
-        done(err)
+        return err
       })
   })
 
@@ -304,32 +229,6 @@ describe('Tests app', () => {
         done(err)
       })
   })
-
-  // PUBLISHING (TODO)
-  // a published policy or geography should be read-only,
-  // while an un-published policy or geography is not
-
-  // PROVIDER-SPECIFICITY (TODO)
-  // policies should be for all, some, or one Provider when published;
-  // providers should not be able to read each other's Provider-specific Policy objects
-
-  // publish geography
-
-  // publish policy
-
-  // fail to delete published geography
-
-  // fail to delete published policy
-
-  // update unpublished geography
-
-  // update unpublished policy
-
-  // delete unpublished geography
-
-  // delete unpublished policy
-
-  // END TESTS
 
   it('shuts down the db', done => {
     request

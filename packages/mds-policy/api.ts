@@ -144,59 +144,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  // TODO build out validation of geojson NEIL
-
-  const featureSchema = Joi.object()
-    .keys({
-      type: Joi.string()
-        .valid(['Feature'])
-        .required(),
-      properties: Joi.object().required(),
-      geometry: Joi.object().required()
-    })
-    .unknown(true) // TODO
-
-  const featureCollectionSchema = Joi.object()
-    .keys({
-      type: Joi.string()
-        .valid(['FeatureCollection'])
-        .required(),
-      features: Joi.array()
-        .min(1)
-        .items(featureSchema)
-        .required()
-    })
-    .unknown(true) // TODO
-
-  app.post(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
-    const geography = req.body
-    const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
-    const details = validation.error ? validation.error.details : null
-    if (details) {
-      log.info('questionable geojson', details)
-      res.status(422).send(details)
-      return
-    }
-
-    try {
-      await db.writeGeography(geography)
-      res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
-    } catch (err) {
-      await log.error('failed to write geography', err.stack)
-      res.status(404).send({ result: 'not found' })
-    }
-  })
-
-  app.put(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
-    // TODO implement updating a non-published geography
-    res.status(501)
-  })
-
-  app.delete(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
-    // TODO implement deleting a non-published geography
-    res.status(501)
-  })
-
   const ruleSchema = Joi.object().keys({
     name: Joi.string().required(),
     rule_id: Joi.string()
@@ -252,58 +199,6 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/schema/policy'), (req, res) => {
     res.status(200).send(joiToJsonSchema(policySchema))
-  })
-
-  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
-    const policy = req.body
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
-
-    if (details) {
-      await log.error('questionable policy json', details)
-      res.status(422).send(details)
-      return
-    }
-
-    try {
-      await db.writePolicy(policy)
-      res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-    } catch (err) {
-      await log.error('failed to write geography', err.stack)
-      res.status(404).send({ result: 'not found' })
-    }
-  })
-
-  // TODO publish geography
-
-  // TODO publish policy
-
-  app.put(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
-    // TODO implement updating a non-published policy
-    const policy = req.body
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
-
-    // TODO is basically identical to POST policy
-
-    if (details) {
-      log.info('policy JSON', details)
-      res.status(422).send(details)
-      return
-    }
-    try {
-      await db.editPolicy(policy)
-      res.status(200).send({ result: `successfully edited policy of id ${policy.policy_id}` })
-    } catch (err) {
-      await log.error('failed to edit policy', err.stack)
-      res.status(404).send({ result: 'not found' })
-    }
-  })
-
-  /* istanbul ignore next */
-  app.delete(pathsFor('/admin/policies/:policy_id'), (req, res) => {
-    // TODO implement deletion of a non-published policy
-    res.status(501)
   })
 
   app.get(pathsFor('/test/initialize'), async (req, res) => {
