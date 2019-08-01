@@ -270,8 +270,12 @@ if (pg_info.database) {
         await MDSDBPostgres.writePolicy(POLICY_JSON)
         assert(!(await MDSDBPostgres.isPolicyPublished(policy_id)))
         await MDSDBPostgres.deletePolicy(policy_id)
-        const result = await MDSDBPostgres.readPolicies({ policy_id })
-        assert.deepEqual(result, [])
+        try {
+          await MDSDBPostgres.readPolicies({ policy_id })
+          throw new Error('Should have thrown')
+        } catch {
+          return "Hurrah, didn't throw"
+        }
       })
 
       it('can write, read, and publish a Policy', async () => {
@@ -281,6 +285,7 @@ if (pg_info.database) {
         assert.deepEqual(result[0], POLICY_JSON)
 
         await MDSDBPostgres.writePolicy(POLICY2_JSON)
+        await MDSDBPostgres.writeGeography(LAGeography)
         await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
         const allPolicies = await MDSDBPostgres.readPolicies()
         assert.deepEqual(allPolicies.length, 2)
@@ -333,8 +338,12 @@ if (pg_info.database) {
         await MDSDBPostgres.writeGeography(LAGeography)
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
-        const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
-        assert.deepEqual(result, [])
+        try {
+          await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
+          throw new Error('Should have thrown')
+        } catch {
+          return 'Whoop'
+        }
       })
 
       it('can write, read, and publish a Geography', async () => {
