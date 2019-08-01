@@ -17,11 +17,13 @@
 // Express local
 import { ApiServer } from '@mds-core/mds-api-server'
 import { api } from '@mds-core/mds-audit'
+import { setEnv } from '@container-images/env-inject'
 
 const {
   env: { npm_package_name, PORT = 4002 }
 } = process
 
+setEnv()
 /* eslint-reason avoids import of logger */
 /* eslint-disable-next-line no-console */
 ApiServer(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
