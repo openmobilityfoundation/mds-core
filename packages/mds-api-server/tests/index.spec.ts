@@ -25,6 +25,11 @@ const request = supertest(ApiServer(app => app))
 const APP_JSON = 'application/json; charset=utf-8'
 
 describe('Testing API Server', () => {
+  afterEach(done => {
+    delete process.env.MAINTENANCE
+    done()
+  })
+
   it('verifies get root', done => {
     request
       .get('/')
@@ -35,6 +40,23 @@ describe('Testing API Server', () => {
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('node')
         test.object(result.body).hasProperty('build')
+        test.object(result.body).hasProperty('status', 'Running')
+        done(err)
+      })
+  })
+
+  it('verifies get root (MAINTENANCE)', done => {
+    process.env.MAINTENANCE = 'Testing'
+    request
+      .get('/')
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('name')
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('node')
+        test.object(result.body).hasProperty('build')
+        test.object(result.body).hasProperty('status', 'Testing (MAINTENANCE)')
         done(err)
       })
   })
@@ -52,6 +74,47 @@ describe('Testing API Server', () => {
         test.object(result.body).hasProperty('process')
         test.object(result.body).hasProperty('memory')
         test.object(result.body).hasProperty('uptime')
+        test.object(result.body).hasProperty('status', 'Running')
+        done(err)
+      })
+  })
+
+  it('verifies health (MAINTENANCE)', done => {
+    process.env.MAINTENANCE = 'Testing'
+    request
+      .get('/health')
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('name')
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('node')
+        test.object(result.body).hasProperty('build')
+        test.object(result.body).hasProperty('process')
+        test.object(result.body).hasProperty('memory')
+        test.object(result.body).hasProperty('uptime')
+        test.object(result.body).hasProperty('status', 'Testing (MAINTENANCE)')
+        done(err)
+      })
+  })
+
+  it('verifies MAINTENANCE repsonse', done => {
+    process.env.MAINTENANCE = 'Testing'
+    request
+      .get('/this-is-an-bad-route-but-it-should-return-503-in-maintenance-mode')
+      .expect(503)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('maintenance', 'Testing')
+        done(err)
+      })
+  })
+
+  it('verifies MAINTENANCE passthrough', done => {
+    request
+      .get('/this-is-an-bad-route-so-it-should-normally-return-404')
+      .expect(404)
+      .end(err => {
         done(err)
       })
   })
