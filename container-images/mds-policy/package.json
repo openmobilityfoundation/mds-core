@@ -1,0 +1,31 @@
+{
+  "name": "@container-images/mds-policy",
+  "version": "0.1.3",
+  "description": "AWS Lambda for MDS Policy API",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "lambda:dev3-mds-policy": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
+    "lambda:ladot-prod-mds-policy": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
+    "lambda:ladot-sandbox-mds-policy": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && ts-node"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@mds-core/mds-api-server": "0.1.3",
+    "@mds-core/mds-policy": "0.0.4"
+  },
+  "license": "Apache-2.0"
+}

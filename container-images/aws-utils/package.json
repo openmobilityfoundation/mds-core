@@ -1,0 +1,29 @@
+{
+  "name": "@container-images/aws-utils",
+  "version": "0.1.3",
+  "description": "MDS AWS utility functions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0"
+  },
+  "keywords": [
+    "mds",
+    "aws",
+    "utils"
+  ],
+  "dependencies": {
+    "aws-sdk": "2.493.0"
+  },
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "directories": {
+    "test": "tests"
+  }
+}
