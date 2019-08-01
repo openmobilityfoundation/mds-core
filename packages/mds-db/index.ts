@@ -1202,6 +1202,9 @@ async function readPolicies(params?: {
   }
   const values = vals.values()
   const res = await client.query(sql, values)
+  if (res.rows.length === 0) {
+    throw new Error('policy not_found')
+  }
   return res.rows.map(row => row.policy_json)
 }
 
@@ -1219,19 +1222,23 @@ async function isPolicyPublished(policy_id: UUID) {
   const sql = `SELECT * FROM ${schema.POLICIES_TABLE} WHERE policy_id='${policy_id}'`
   const result = await client.query(sql)
   if (result.rows.length === 0) {
-    throw new Error(`policy_id ${policy_id} not_found`)
+    return false
   }
   return Boolean(result.rows[0].policy_json.publish_date)
 }
 
 async function editPolicy(policy: Policy) {
   // validate TODO
-  if (await isPolicyPublished(policy.policy_id)) {
+  const { policy_id } = policy
+
+  if (await isPolicyPublished(policy_id)) {
     throw new Error('Cannot edit published policy')
   }
 
+  await readPolicies({ policy_id })
+
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.POLICIES_TABLE} SET policy_json=$1 WHERE policy_id='${policy.policy_id}' AND policy_json->>'publish_date' IS NULL`
+  const sql = `UPDATE ${schema.POLICIES_TABLE} SET policy_json=$1 WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
   await client.query(sql, [policy])
   return policy
 }
@@ -1250,14 +1257,12 @@ async function deletePolicy(policy_id: UUID) {
 async function publishPolicy(policy_id: UUID) {
   try {
     const client = await getWriteableClient()
-    const publishPolicySQL = `UPDATE ${
-      schema.POLICIES_TABLE
-    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
-    await client.query(publishPolicySQL).catch(err => {
-      throw err
-    })
+    if (await isPolicyPublished(policy_id)) {
+      throw new Error('Cannot re-publish existing policy')
+    }
 
-    const policy = (await readPolicies({ policy_id }))[0]
+    const policy = (await readPolicies({ policy_id, get_unpublished: true }))[0]
+
     const geographies: UUID[] = []
     log.info('about to publish some fine geographies')
     policy.rules.forEach(rule => {
@@ -1271,7 +1276,12 @@ async function publishPolicy(policy_id: UUID) {
         return readGeographies({ geography_id })
       })
     )
-
+    const publishPolicySQL = `UPDATE ${
+      schema.POLICIES_TABLE
+    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
+    await client.query(publishPolicySQL).catch(err => {
+      throw err
+    })
     await Promise.all(
       geographies.map(geography_id => {
         log.info('publishing geography', geography_id)

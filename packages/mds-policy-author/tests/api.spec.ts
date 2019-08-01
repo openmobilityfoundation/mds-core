@@ -285,6 +285,17 @@ describe('Tests app', () => {
         })
     })
 
+    it('verifies cannot publish a policy that was never POSTed', done => {
+      request
+        .post(`/admin/policies/${GEOGRAPHY_UUID}/publish`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(404)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
     it('creates one current geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
@@ -305,6 +316,17 @@ describe('Tests app', () => {
         .post(`/admin/policies/${POLICY_JSON.policy_id}/publish`)
         .set('Authorization', AUTH_ADMIN_ONLY)
         .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('cannot double-publish a policy', done => {
+      request
+        .post(`/admin/policies/${POLICY_JSON.policy_id}/publish`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(409)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)

@@ -250,9 +250,15 @@ function api(app: express.Express): express.Express {
       await db.publishPolicy(policy_id)
       res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
     } catch (err) {
-      if (err.message.includes('geography', 'not_found')) {
+      if (err.message.includes('geography') && err.message.includes('not_found')) {
         const geography_id = err.message.match(UUID_REGEX)
         res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+      }
+      if (err.message.includes('policy') && err.message.includes('not_found')) {
+        res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+      }
+      if (err.message.includes('Cannot re-publish existing policy')) {
+        res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
       }
       await log.error('failed to publish policy', err.stack)
       res.status(404).send({ result: 'not found' })
