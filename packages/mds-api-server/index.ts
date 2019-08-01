@@ -21,10 +21,17 @@ const about = () => {
       npm_package_version: version,
       npm_package_git_branch: branch,
       npm_package_git_commit: commit,
-      npm_package_build_date: date
+      npm_package_build_date: date,
+      MAINTENANCE: maintenance
     }
   } = process
-  return { name, version, build: { date, branch, commit }, node }
+  return {
+    name,
+    version,
+    build: { date, branch, commit },
+    node,
+    status: maintenance ? `${maintenance} (MAINTENANCE)` : 'Running'
+  }
 }
 
 export const ApiServer = (
@@ -34,7 +41,19 @@ export const ApiServer = (
 ): express.Express => {
   // Authorizer
   app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+    const { MAINTENANCE: maintenance } = process.env
     res.locals.claims = authorizer(req)
+    if (maintenance) {
+      if (req.method !== 'OPTIONS') {
+        if (
+          !pathsFor('/')
+            .concat(pathsFor('/health'))
+            .includes(req.path)
+        ) {
+          return res.status(503).send({ maintenance })
+        }
+      }
+    }
     next()
   })
 
