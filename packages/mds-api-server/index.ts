@@ -50,7 +50,7 @@ export const ApiServer = (
             .concat(pathsFor('/health'))
             .includes(req.path)
         ) {
-          return res.status(503).send({ maintenance })
+          return res.status(503).send(about())
         }
       }
     }

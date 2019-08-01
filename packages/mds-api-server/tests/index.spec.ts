@@ -105,7 +105,7 @@ describe('Testing API Server', () => {
       .expect(503)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        test.object(result.body).hasProperty('maintenance', 'Testing')
+        test.object(result.body).hasProperty('status', 'Testing (MAINTENANCE)')
         done(err)
       })
   })
