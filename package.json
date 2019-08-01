@@ -61,6 +61,7 @@
   "scripts": {
     "build": "yarn run:concurrent build",
     "bundle": "yarn run:concurrent bundle",
+    "image": "yarn run:concurrent image",
     "clean": "git clean -fdX && yarn",
     "deploy": "yarn run:sequential",
     "run:concurrent": "lerna run --stream",

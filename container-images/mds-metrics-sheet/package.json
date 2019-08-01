@@ -9,8 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "lambda:dev3-metrics-sheet": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-metrics-sheet --zip-file fileb://dist/bundles/metrics-log.zip",
-    "lambda:dev3-metrics-sheet-geo": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-metrics-sheet-geo --zip-file fileb://dist/bundles/vehicle-counts.zip",
+    "image": "yarn bundle && docker build -t mds-metrics-sheet:${npm_package_version} .",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
