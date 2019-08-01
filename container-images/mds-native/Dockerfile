@@ -1,9 +1,11 @@
 FROM node:8-alpine
 
+RUN apk add --no-cache tini
+
 RUN mkdir /mds
 
 COPY dist/* /mds/
 
 WORKDIR /mds
 
-ENTRYPOINT ["node", "server.js"]
+ENTRYPOINT ["/sbin/tini", "node", "server.js"]
