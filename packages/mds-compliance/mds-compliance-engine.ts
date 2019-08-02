@@ -32,7 +32,8 @@ import {
   DAY_OF_WEEK,
   VEHICLE_STATUS,
   TIME_FORMAT,
-  DAYS_OF_WEEK
+  DAYS_OF_WEEK,
+  UUID
 } from '@mds-core/mds-types'
 import { pointInShape, getPolygon, isInStatesOrEvents, now, RuntimeError } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
@@ -108,16 +109,11 @@ function processCountRule(
           },
           []
         )
-        if (
-          (rule.minimum !== undefined && rule.minimum !== null && matched_vehicles.length <= rule.minimum) ||
-          (rule.maximum !== undefined && rule.maximum !== null && matched_vehicles.length >= rule.maximum)
-        ) {
-          matches_acc.push({
-            geography_id: geography,
-            measured: matched_vehicles.length,
-            matched_vehicles
-          })
-        }
+        matches_acc.push({
+          geography_id: geography,
+          measured: matched_vehicles.length,
+          matched_vehicles
+        })
         return matches_acc
       },
       []
@@ -216,6 +212,8 @@ function processPolicy(
 ): ComplianceResponse | undefined {
   if (isPolicyActive(policy)) {
     const vehiclesToFilter: MatchedVehicle[] = []
+    const vehiclesUnmatched: MatchedVehicle[] = []
+    let vehiclesUnmatchedMap: { [key: string]: boolean } = {}
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
         /* eslint-reason need to remove matched vehicles */
@@ -230,15 +228,37 @@ function processPolicy(
             geographies,
             devices
           )
-          compliance_acc.push(comp)
-          vehiclesToFilter.push(
-            ...(comp.matches
-              ? comp.matches.reduce((acc: MatchedVehicle[], match: CountMatch) => {
-                  acc.push(...match.matched_vehicles)
-                  return acc
-                }, [])
-              : [])
-          )
+
+          const cleanedComp = {
+            rule, matches:
+              comp.matches ? comp.matches.reduce((acc: { measured: number, geography_id: UUID }[], inst: CountMatch) => {
+                const { measured, geography_id } = inst
+                return [...acc, { measured, geography_id }]
+              }, []) : []
+          }
+          
+          compliance_acc.push(cleanedComp)
+          const matchMap = comp.matches ? comp.matches[0].matched_vehicles.reduce(
+            (acc: { matched: MatchedVehicle[]; unmatched: MatchedVehicle[] }, match: MatchedVehicle, i: number) => {
+              if (rule.maximum && i < rule.maximum) {
+                if (vehiclesUnmatchedMap[match.device_id]) {
+                  delete vehiclesUnmatchedMap[match.device_id]
+                }
+                acc.matched.push(match)
+              } else {
+                acc.unmatched.push(match)
+              }
+              return acc
+            },
+            { matched: [], unmatched: [] }
+          ) : { matched: [], unmatched: [] }
+          
+          vehiclesToFilter.push(...matchMap.matched)
+          vehiclesUnmatched.push(...matchMap.unmatched)
+          vehiclesUnmatchedMap = {...vehiclesUnmatchedMap, ...matchMap.unmatched.reduce((acc: { [key: string]: boolean }, device: MatchedVehicle) => {
+            acc[device.device_id] = true
+            return acc
+          }, {})}
           break
         }
         case 'time': {

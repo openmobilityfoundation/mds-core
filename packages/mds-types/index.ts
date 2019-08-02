@@ -318,9 +318,14 @@ export interface TimeMatch {
   matched_vehicle: MatchedVehicle
 }
 
+export interface ReducedMatch {
+  measured: number
+  geography_id: UUID
+}
+
 export interface Compliance {
   rule: Rule
-  matches: CountMatch[] | TimeMatch[] | null // TODO Support for Speed issues.
+  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] | null // TODO Support for Speed issues.
 }
 
 export interface ComplianceResponse {
