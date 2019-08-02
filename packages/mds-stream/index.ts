@@ -1,4 +1,3 @@
-/* eslint-disable import/export */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -16,12 +15,12 @@
  */
 
 import logger from 'mds-logger'
-import { env } from 'process'
 import redis from 'redis'
 import bluebird from 'bluebird'
 import { Device, VehicleEvent, Telemetry } from 'mds'
 import Cloudevent from 'cloudevents-sdk'
 
+const { env } = process
 const binding = null
 
 function getBinding() {
