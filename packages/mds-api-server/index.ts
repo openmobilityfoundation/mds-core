@@ -42,18 +42,10 @@ export const ApiServer = (
   // Authorizer
   app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     const { MAINTENANCE: maintenance } = process.env
-    res.locals.claims = authorizer(req)
     if (maintenance) {
-      if (req.method !== 'OPTIONS') {
-        if (
-          !pathsFor('/')
-            .concat(pathsFor('/health'))
-            .includes(req.path)
-        ) {
-          return res.status(503).send(about())
-        }
-      }
+      return res.status(503).send(about())
     }
+    res.locals.claims = authorizer(req)
     next()
   })
 
