@@ -12,7 +12,7 @@
     "cache"
   ],
   "author": "City of Los Angeles",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-logger": "^0.1.4",
     "@mds-core/mds-types": "^0.1.1",

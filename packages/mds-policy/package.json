@@ -2,7 +2,7 @@
   "name": "@mds-core/mds-policy",
   "description": "MDS Policy API",
   "version": "0.0.5",
-  "licence": "Apache-2.0",
+  "license": "Apache-2.0",
   "engineStrict": true,
   "engines": {
     "node": ">= 8.0.0",
