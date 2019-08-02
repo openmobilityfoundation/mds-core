@@ -229,7 +229,7 @@ function api(app: express.Express): express.Express {
           areas_48h: {}
         }
       })
-      await log.warn('/admin/vehicle_counts', JSON.stringify(stats))
+      await log.info('/admin/vehicle_counts', JSON.stringify(stats))
       const HRS_48_AGO = now() - 172800000
 
       const maps = await getMaps()
