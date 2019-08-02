@@ -1105,6 +1105,7 @@ async function writeGeography(geography: Geography) {
 
   return geography
 }
+
 async function isGeographyPublished(geography_id: UUID) {
   const client = await getReadOnlyClient()
   const sql = `SELECT * FROM ${schema.GEOGRAPHIES_TABLE} WHERE geography_id='${geography_id}'`

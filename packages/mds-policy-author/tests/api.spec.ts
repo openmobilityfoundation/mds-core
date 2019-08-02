@@ -21,12 +21,16 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable promise/prefer-await-to-callbacks */
 
+/* eslint-reason extends object.prototype */
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+import should from 'should'
 import supertest from 'supertest'
 import test from 'unit.js'
-import { now, days, clone } from '@mds-core/mds-utils'
+import { clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import db from '@mds-core/mds-db'
 import {
   POLICY_JSON,
   POLICY2_JSON,
@@ -34,10 +38,9 @@ import {
   POLICY_UUID,
   POLICY2_UUID,
   GEOGRAPHY_UUID,
-  START_ONE_MONTH_AGO,
-  START_ONE_WEEK_AGO,
   PROVIDER_SCOPES,
-  LA_CITY_BOUNDARY
+  LA_CITY_BOUNDARY,
+  DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
 import { api } from '../api'
 
@@ -70,14 +73,14 @@ describe('Tests app', () => {
         })
     })
 
-    it('reads the Policy schema', done => {
+    it('verifies unable to access test if not scoped', done => {
       request
-        .get('/schema/policy')
-        .expect(200)
+        .get('/test/')
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(403)
         .end((err, result) => {
-          const body = result.body
-          log('schema', JSON.stringify(body))
           test.value(result).hasHeader('content-type', APP_JSON)
+          test.string(result.body.result).contains('no test access without test:all scope')
           done(err)
         })
     })
@@ -169,18 +172,15 @@ describe('Tests app', () => {
         })
     })
 
-    it('read back one policy', done => {
-      request
-        .get(`/policies/${POLICY_UUID}`)
+    it('verifies cannot PUT invalid policy', async () => {
+      const bad_policy_json: Policy = clone(POLICY_JSON)
+      delete bad_policy_json.rules[0].rule_type
+      const bad_policy = bad_policy_json
+      await request
+        .put(`/admin/policies/${POLICY_UUID}`)
         .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log('read back one policy response:', body)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          // TODO verify contents
-          done(err)
-        })
+        .send(bad_policy)
+        .expect(400)
     })
 
     it('edits one current policy', async () => {
@@ -192,11 +192,8 @@ describe('Tests app', () => {
         .send(policy)
         .expect(200)
 
-      const result = await request
-        .get(`/policies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-      test.value(result.body.name).is('a shiny new name')
+      const [result] = await db.readPolicies({ policy_id: POLICY_UUID })
+      test.value(result.name).is('a shiny new name')
     })
 
     it('creates one past policy', done => {
@@ -207,8 +204,6 @@ describe('Tests app', () => {
         .send(policy2)
         .expect(200)
         .end((err, result) => {
-          const body = result.body
-          log('read back one past policy response:', body)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -223,52 +218,6 @@ describe('Tests app', () => {
         .send(policy3)
         .expect(200)
         .end((err, result) => {
-          const body = result.body
-          log('read back one future policy response:', body)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('read back all active policies', done => {
-      request
-        .get(`/policies`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log('read back all policies response:', body)
-          test.value(body.policies.length).is(1) // only one should be currently valid
-          test.value(body.policies[0].policy_id).is(POLICY_UUID)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          // TODO verify contents
-          done(err)
-        })
-    })
-
-    it('read back all policies, before any publishing happens, without the unpublished parameter', done => {
-      request
-        .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log('read back all policies response:', body)
-          test.value(body.policies.length).is(3)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          // TODO verify contents
-          done(err)
-        })
-    })
-
-    it('reads back all unpublished policies before any publishing happens, with the unpublished parameter', done => {
-      request
-        .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          test.value(body.policies.length).is(3)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -347,91 +296,6 @@ describe('Tests app', () => {
         })
     })
 
-    it('reads back the correct number of policies after a policy has been published, with the parameter', done => {
-      request
-        .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          test.value(body.policies.length).is(2)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('reads back the correct number of policies after publishing, with `unpublished`, without provider_id', done => {
-      request
-        .get(`/policies?unpublished&start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log(body)
-          //        test.value(body.policies.length).is(2)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('reads back the correct number of policies after a policy has been published, without the parameter', done => {
-      request
-        .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log('fuck this failing test')
-          log(body)
-          test.value(body.policies.length).is(3)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('read back an old policy', done => {
-      request
-        .get(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log('read back all policies response:', body)
-          test.value(body.policies.length).is(1) // only one
-          test.value(body.policies[0].policy_id).is(POLICY2_UUID)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          // TODO verify contents
-          done(err)
-        })
-    })
-
-    it('read back current and future policies', done => {
-      request
-        .get(`/policies?end_date=${now() + days(365)}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          const body = result.body
-          log('read back all policies response:', body)
-          test.value(body.policies.length).is(2) // current and future
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('read back a nonexistant policy', done => {
-      request
-        .get(`/policies/${GEOGRAPHY_UUID}`) // obvs not a policy
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(404)
-        .end((err, result) => {
-          const body = result.body
-          log('read back nonexistant policy response:', body)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
     // TODO
     // this test does not behave the way I expect it to
     // that second get should not return anything
@@ -440,19 +304,11 @@ describe('Tests app', () => {
         .delete(`/admin/policies/${POLICY2_UUID}`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .expect(200)
-        .end((err, result) => {
+        .end(async (err, result) => {
           const body = result.body
           log('read back nonexistant policy response:', body)
           test.value(result).hasHeader('content-type', APP_JSON)
-        })
-      request
-        .get(`/policies/${POLICY2_UUID}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result2) => {
-          const body = result2.body
-          log('read back deleted policy response:', body)
-          test.value(result2).hasHeader('content-type', APP_JSON)
+          await db.readPolicies({ policy_id: POLICY2_UUID }).should.be.rejected()
           done(err)
         })
     })
@@ -502,43 +358,69 @@ describe('Tests app', () => {
         })
     })
 
-    it('read back a nonexistant geography', done => {
+    it('verifies updating one geography', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: DISTRICT_SEVEN }
       request
-        .get(`/geographies/${POLICY_UUID}`) // obvs not a geography
+        .put(`/admin/geographies/${GEOGRAPHY_UUID}`)
         .set('Authorization', AUTH_NON_PROVIDER)
+        .send(geography)
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot PUT bad geography', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
+      request
+        .put(`/admin/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(geography)
+        .expect(400)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot PUT non-existant geography', done => {
+      const geography = { geography_id: POLICY_UUID, geography_json: DISTRICT_SEVEN }
+      request
+        .put(`/admin/geographies/${POLICY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(geography)
         .expect(404)
         .end((err, result) => {
-          const body = result.body
-          log('read back nonexistant geography response:', body)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot POST invalid geography', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
+      request
+        .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(geography)
+        .expect(400)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('cannot POST duplicate geography', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
+      request
+        .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(geography)
+        .expect(409)
+        .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })
   })
 })
-
-// PUBLISHING (TODO)
-// a published policy or geography should be read-only,
-// while an un-published policy or geography is not
-
-// PROVIDER-SPECIFICITY (TODO)
-// policies should be for all, some, or one Provider when published;
-// providers should not be able to read each other's Provider-specific Policy objects
-
-// publish geography
-
-// publish policy
-
-// fail to delete published geography
-
-// fail to delete published policy
-
-// update unpublished geography
-
-// update unpublished policy
-
-// delete unpublished geography
-
-// delete unpublished policy
-
-// END TESTS
