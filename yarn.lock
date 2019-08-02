@@ -2972,11 +2972,6 @@ gauge@~2.7.3:
     strip-ansi "^3.0.1"
     wide-align "^1.1.0"
 
-geo-distance@0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/geo-distance/-/geo-distance-0.2.0.tgz#687bfa32ebb95a51438d219592388d74776b4418"
-  integrity sha512-FAWcCG6vhrfHIXMBipeNj1p6U4NucdlOMoTYrgRtFdudZEQjjrCDTYaw2Nh5go9MhjhY/RcZ+GVlAOa/dLDiVQ==
-
 get-caller-file@^1.0.1:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-1.0.3.tgz#f978fa4c90d1dfe7ff2d6beda2a515e713bdcf4a"
