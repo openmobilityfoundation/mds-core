@@ -18,10 +18,22 @@
 
 import circleToPolygon from 'circle-to-polygon'
 import pointInPoly from 'point-in-polygon'
-import { UUID, Timestamp, VehicleEvent, Telemetry, BoundingBox, Geography, Rule } from 'mds'
-import { TelemetryRecord } from 'mds-db/types'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'mds-enums'
-import log from 'mds-logger'
+import {
+  UUID,
+  Timestamp,
+  VehicleEvent,
+  Telemetry,
+  BoundingBox,
+  Geography,
+  Rule,
+  VEHICLE_EVENTS,
+  VEHICLE_STATUSES,
+  EVENT_STATUS_MAP,
+  VEHICLE_STATUS,
+  BBox
+} from '@mds-core/mds-types'
+import { TelemetryRecord } from '@mds-core/mds-db/types'
+import log from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
 const RADIUS = 30.48 // 100 feet, in meters
@@ -125,7 +137,7 @@ function tail<T>(list: T[]) {
  * @param  {MultiPolygon}
  * @return {bbox}
  */
-function calcBBox(geometry: Geometry): BoundingBox {
+function calcBBox(geometry: Geometry): BBox {
   // log.debug('calcBBox', geometry.type)
   let latMin = 10000
   let latMax = -10000
@@ -494,22 +506,18 @@ function pathsFor(path: string): string[] {
   return [path, PATH_PREFIX + path, `${PATH_PREFIX}/dev${path}`]
 }
 
-function getBoundingBox([[lng1, lat1], [lng2, lat2]]: [[number, number], [number, number]]): BoundingBox {
-  return {
-    latMin: Math.min(lat1, lat2),
-    latMax: Math.max(lat1, lat2),
-    lngMin: Math.min(lng1, lng2),
-    lngMax: Math.max(lng1, lng2)
-  }
-}
-
 function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: BoundingBox): boolean {
   if (telemetry && telemetry.gps) {
     const { lat, lng } = telemetry.gps
     if (!lat || !lng) {
       return false
     }
-    return bbox.latMin <= lat && lat <= bbox.latMax && bbox.lngMin <= lng && lng <= bbox.lngMax
+    const [[lng1, lat1], [lng2, lat2]] = bbox
+    const latMin = Math.min(lat1, lat2)
+    const latMax = Math.max(lat1, lat2)
+    const lngMin = Math.min(lng1, lng2)
+    const lngMax = Math.max(lng1, lng2)
+    return latMin <= lat && lat <= latMax && lngMin <= lng && lng <= lngMax
   }
   return false
 }
@@ -664,7 +672,6 @@ export {
   csv,
   inc,
   pathsFor,
-  getBoundingBox,
   isInsideBoundingBox,
   head,
   tail,

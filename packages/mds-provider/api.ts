@@ -16,26 +16,23 @@
 
 import express from 'express'
 
-import log from 'mds-logger'
-import db from 'mds-db'
-import cache from 'mds-cache'
-import { providerName } from 'mds-providers' // map of uuids -> obj
+import logger from '@mds-core/mds-logger'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 
-import { makeTelemetry, makeEvents, makeDevices } from 'mds-test-data'
-import { isUUID, now, pathsFor, round, routeDistance } from 'mds-utils'
-import { Telemetry } from 'mds'
-import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from 'mds-db/types'
-import { asJsonApiLinks, asPagingParams } from 'mds-api-helpers'
+import { makeTelemetry, makeEvents, makeDevices } from '@mds-core/mds-test-data'
+import { isUUID, now, pathsFor, round, routeDistance } from '@mds-core/mds-utils'
+import { Telemetry } from '@mds-core/mds-types'
+import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from '@mds-core/mds-db/types'
+import { asJsonApiLinks, asPagingParams } from '@mds-core/mds-api-helpers'
 import { Feature, FeatureCollection } from 'geojson'
-import { ProviderApiRequest, ProviderApiResponse } from './types'
+import { ProviderApiRequest, ProviderApiResponse, PROVIDER_VERSION } from './types'
+import { getEventsAsStatusChanges, getEventsAsTrips } from './legacy'
 
-log.startup()
+const { PROVIDER_MODERN } = process.env
 
 function api(app: express.Express): express.Express {
-  // /////////// enums ////////////////
-
-  const PROVIDER_VERSION = '0.3.1'
-
   // / ////////// utilities ////////////////
 
   /**
@@ -57,7 +54,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            await log.warn('missing_provider_id', req.originalUrl)
+            await logger.warn('missing_provider_id', req.originalUrl)
             return res.status(403).send({
               error: 'missing_provider_id'
             })
@@ -65,14 +62,14 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            await log.warn('invalid_provider_id', provider_id, req.originalUrl)
+            await logger.warn('invalid_provider_id', provider_id, req.originalUrl)
             return res.status(403).send({
               error: 'invalid_provider_id',
               error_description: `invalid provider_id ${provider_id} is not a UUID`
             })
           }
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          logger.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
@@ -80,22 +77,21 @@ function api(app: express.Express): express.Express {
     } catch (err) {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      await log.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
+      await logger.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
     }
     next()
   })
 
   // / //////////////////////// basic gets /////////////////////////////////
 
-  app.get(pathsFor('/test/initialize'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    log.info('get /test/initialize')
+  app.get(pathsFor('/test/initialize'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    logger.info('get /test/initialize')
 
     // nuke it all
-    Promise.all([cache.initialize(), db.initialize()]).then(() => {
-      log.info('got /test/initialize')
-      res.status(201).send({
-        result: 'Initialized'
-      })
+    await Promise.all([cache.initialize(), db.initialize()])
+    logger.info('got /test/initialize')
+    res.status(201).send({
+      result: 'Initialized'
     })
   })
 
@@ -103,7 +99,7 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
-      log.info('/test/seed', JSON.stringify(req.query))
+      logger.info('/test/seed', JSON.stringify(req.query))
       const { n, num } = req.query
 
       const count = parseInt(n) || parseInt(num) || 10000
@@ -118,24 +114,15 @@ function api(app: express.Express): express.Express {
         telemetry
       }
 
-      Promise.all([cache.seed(data), db.seed(data)]).then(
-        () => {
-          log.info('/test/seed success')
-          res.status(201).send({
-            result: `Seeded ${count} devices/events/telemetry`
-          })
-        },
-        async err => /* istanbul ignore next */ {
-          await log.error('/test/seed failure:', err)
-          res.status(500).send({
-            result: `Failed to seed: ${err}`
-          })
-        }
-      )
+      await Promise.all([cache.seed(data), db.seed(data)])
+      logger.info('/test/seed success')
+      res.status(201).send({
+        result: `Seeded ${count} devices/events/telemetry`
+      })
     } catch (err) /* istanbul ignore next */ {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      await log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
+      await logger.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
         result: `Failed to seed: ${desc}`
       })
@@ -146,35 +133,25 @@ function api(app: express.Express): express.Express {
   app.post(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
     // create seed data
     try {
-      Promise.all([cache.seed(req.body), db.seed(req.body)]).then(
-        () => {
-          log.info('/test/seed success')
-          res.status(201).send({
-            result: `Seeded devices/events/telemetry`
-          })
-        },
-        async err => /* istanbul ignore next */ {
-          await log.error('/test/seed failure:', err)
-          res.status(500).send({
-            result: `Failed to seed: ${err}`
-          })
-        }
-      )
+      await Promise.all([cache.seed(req.body), db.seed(req.body)])
+      logger.info('/test/seed success')
+      res.status(201).send({
+        result: `Seeded devices/events/telemetry`
+      })
     } catch (err) /* istanbul ignore next */ {
       const desc = err instanceof Error ? err.message : err
       const stack = err instanceof Error ? err.stack : desc
-      await log.error('/test/seed failure:', desc, stack || JSON.stringify(err))
+      await logger.error('/test/seed failure:', desc, stack || JSON.stringify(err))
       res.status(500).send({
         result: `Failed to seed: ${desc}`
       })
     }
   })
 
-  app.get(pathsFor('/test/shutdown'), (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    Promise.all([db.shutdown(), cache.shutdown()]).then(() => {
-      res.send({
-        result: 'shutdown done'
-      })
+  app.get(pathsFor('/test/shutdown'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+    await Promise.all([db.shutdown(), cache.shutdown()])
+    res.send({
+      result: 'shutdown done'
     })
   })
 
@@ -229,102 +206,112 @@ function api(app: express.Express): express.Express {
     return trip
   }
 
-  app.get(pathsFor('/trips'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // Standard Provider parameters
-    const { provider_id, device_id, vehicle_id } = req.query
-    const min_end_time = req.query.min_end_time && Number(req.query.min_end_time)
-    const max_end_time = req.query.max_end_time && Number(req.query.max_end_time)
+  app.get(
+    pathsFor('/trips'),
+    PROVIDER_MODERN
+      ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+          // Standard Provider parameters
+          const { provider_id, device_id, vehicle_id } = req.query
+          const min_end_time = req.query.min_end_time && Number(req.query.min_end_time)
+          const max_end_time = req.query.max_end_time && Number(req.query.max_end_time)
 
-    // Extensions to override paging
-    const { skip, take } = asPagingParams(req.query)
+          // Extensions to override paging
+          const { skip, take } = asPagingParams(req.query)
 
-    if (provider_id && !isUUID(provider_id)) {
-      return res.status(400).send({
-        result: `invalid provider_id ${provider_id} is not a UUID`
-      })
-    }
+          if (provider_id && !isUUID(provider_id)) {
+            return res.status(400).send({
+              result: `invalid provider_id ${provider_id} is not a UUID`
+            })
+          }
 
-    if (device_id && !isUUID(device_id)) {
-      return res.status(400).send({
-        result: `invalid device_id ${device_id} is not a UUID`
-      })
-    }
+          if (device_id && !isUUID(device_id)) {
+            return res.status(400).send({
+              result: `invalid device_id ${device_id} is not a UUID`
+            })
+          }
 
-    try {
-      const { count, trips }: ReadTripsResult = await db.readTrips({
-        provider_id,
-        device_id,
-        vehicle_id,
-        min_end_time,
-        max_end_time,
-        skip,
-        take
-      })
+          try {
+            const { count, trips }: ReadTripsResult = await db.readTrips({
+              provider_id,
+              device_id,
+              vehicle_id,
+              min_end_time,
+              max_end_time,
+              skip,
+              take
+            })
 
-      res.status(200).send({
-        version: PROVIDER_VERSION,
-        data: {
-          trips: await Promise.all(trips.map(asTrip))
-        },
-        links: asJsonApiLinks(req, skip, take, count)
-      })
-    } catch (err) {
-      // 500 Internal Server Error
-      const desc = err instanceof Error ? err.message : err
-      const stack = err instanceof Error ? err.stack : desc
-      await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(desc) })
-    }
-  })
+            res.status(200).send({
+              version: PROVIDER_VERSION,
+              data: {
+                trips: await Promise.all(trips.map(asTrip))
+              },
+              links: asJsonApiLinks(req, skip, take, count)
+            })
+          } catch (err) {
+            // 500 Internal Server Error
+            const desc = err instanceof Error ? err.message : err
+            const stack = err instanceof Error ? err.stack : desc
+            await logger.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
+            res.status(500).send({ error: new Error(desc) })
+          }
+        }
+      : getEventsAsTrips
+  )
 
   // / ////////////////////////////// status_changes /////////////////////////////
 
   const asStatusChange = ({ recorded, ...props }: StatusChange): Omit<StatusChange, 'recorded'> => props
 
-  app.get(pathsFor('/status_changes'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // Standard Provider parameters
-    const start_time = req.query.start_time && Number(req.query.start_time)
-    const end_time = req.query.end_time && Number(req.query.end_time)
-    const { device_id, provider_id } = req.query
+  app.get(
+    pathsFor('/status_changes'),
+    PROVIDER_MODERN
+      ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
+          // Standard Provider parameters
+          const start_time = req.query.start_time && Number(req.query.start_time)
+          const end_time = req.query.end_time && Number(req.query.end_time)
+          const { device_id, provider_id } = req.query
 
-    // Extensions to override paging
-    const { skip, take } = asPagingParams(req.query)
+          // Extensions to override paging
+          const { skip, take } = asPagingParams(req.query)
 
-    if (provider_id && !isUUID(provider_id)) {
-      return res.status(400).send({
-        result: `invalid provider_id ${provider_id} is not a UUID`
-      })
-    }
+          if (provider_id && !isUUID(provider_id)) {
+            return res.status(400).send({
+              result: `invalid provider_id ${provider_id} is not a UUID`
+            })
+          }
 
-    if (device_id && !isUUID(device_id)) {
-      return res.status(400).send({
-        result: `invalid device_id ${device_id} is not a UUID`
-      })
-    }
+          if (device_id && !isUUID(device_id)) {
+            return res.status(400).send({
+              result: `invalid device_id ${device_id} is not a UUID`
+            })
+          }
 
-    try {
-      const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
-        start_time,
-        end_time,
-        skip,
-        take
-      })
+          try {
+            const { count, status_changes }: ReadStatusChangesResult = await db.readStatusChanges({
+              start_time,
+              end_time,
+              skip,
+              take
+            })
 
-      res.status(200).send({
-        version: PROVIDER_VERSION,
-        data: {
-          status_changes: status_changes.map(asStatusChange)
-        },
-        links: asJsonApiLinks(req, skip, take, count)
-      })
-    } catch (err) {
-      // 500 Internal Server Error
-      const desc = err instanceof Error ? err.message : err
-      const stack = err instanceof Error ? err.stack : desc
-      await log.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
-      res.status(500).send({ error: new Error(desc) })
-    }
-  })
+            res.status(200).send({
+              version: PROVIDER_VERSION,
+              data: {
+                status_changes: status_changes.map(asStatusChange)
+              },
+              links: asJsonApiLinks(req, skip, take, count)
+            })
+          } catch (err) {
+            // 500 Internal Server Error
+            const desc = err instanceof Error ? err.message : err
+            const stack = err instanceof Error ? err.stack : desc
+            await logger.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
+            res.status(500).send({ error: new Error(desc) })
+          }
+        }
+      : getEventsAsStatusChanges
+  )
 
   return app
 }

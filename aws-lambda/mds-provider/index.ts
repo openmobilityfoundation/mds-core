@@ -18,6 +18,6 @@ import {
   AwsServerlessExpressHandler,
   AwsServerlessExpressHandlerFunction
 } from '@aws-lambda/aws-serverless-express-handler'
-import { api as provider } from 'mds-provider'
+import { api as provider } from '@mds-core/mds-provider'
 
 export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(provider)

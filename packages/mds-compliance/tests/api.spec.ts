@@ -1,27 +1,43 @@
-import { PROVIDER_AUTH, makeDevices, makeEventsWithTelemetry, makeTelemetryInArea } from 'mds-test-data'
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable promise/no-nesting */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import { PROVIDER_AUTH, makeDevices, makeEventsWithTelemetry, makeTelemetryInArea } from '@mds-core/mds-test-data'
 
 import test from 'unit.js'
-import { api as agency } from 'mds-agency'
-import { api as policy } from 'mds-policy'
-import { api as provider } from 'mds-provider'
-import cache from 'mds-cache'
-import db from 'mds-db'
+import { api as agency } from '@mds-core/mds-agency'
+import { api as policy } from '@mds-core/mds-policy'
+import { api as provider } from '@mds-core/mds-provider'
+import cache from '@mds-core/mds-cache'
+import db from '@mds-core/mds-db'
 import supertest from 'supertest'
-import { now } from 'mds-utils'
-import { Telemetry, Device, Policy, Geography, VehicleEvent, UUID } from 'mds'
-import { RULE_TYPES, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
+import { now } from '@mds-core/mds-utils'
+import {
+  Telemetry,
+  Device,
+  Policy,
+  Geography,
+  VehicleEvent,
+  UUID,
+  RULE_TYPES,
+  VEHICLE_TYPES,
+  PROPULSION_TYPES
+} from '@mds-core/mds-types'
 import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'
-import { server } from 'mds-api-server'
-import { TEST1_PROVIDER_ID } from 'mds-providers'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
-const request = supertest(server(api))
-const agency_request = supertest(server(agency))
-const policy_request = supertest(server(policy))
-const provider_request = supertest(server(provider))
+const request = supertest(ApiServer(api))
+const agency_request = supertest(ApiServer(agency))
+const policy_request = supertest(ApiServer(policy))
+const provider_request = supertest(ApiServer(provider))
 
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'

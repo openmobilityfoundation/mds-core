@@ -14,10 +14,10 @@
     limitations under the License.
  */
 
-import { ApiRequest, ApiResponse } from 'mds-api-server'
-import { ApiAuthorizerClaims } from 'mds-api-authorizer'
-import { UUID, VehicleEvent, Recorded, Device } from 'mds'
-import { JsonApiLinks } from 'mds-api-helpers'
+import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
+import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { UUID, VehicleEvent, Recorded, Device } from '@mds-core/mds-types'
+import { JsonApiLinks } from '@mds-core/mds-api-helpers'
 
 // Allow adding type definitions for Express Request objects
 export type NativeApiRequest = ApiRequest

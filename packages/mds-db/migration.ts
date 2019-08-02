@@ -1,8 +1,8 @@
-import { AUDIT_EVENT_TYPES } from 'mds-enums'
+import { AUDIT_EVENT_TYPES } from '@mds-core/mds-types'
 
-import { csv } from 'mds-utils'
+import { csv } from '@mds-core/mds-utils'
 
-import log from 'mds-logger'
+import log from '@mds-core/mds-logger'
 import schema from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient } from './sql-utils'
 
@@ -16,26 +16,53 @@ async function dropTables(client: MDSPostgresClient) {
   await log.info('postgres drop table succeeded')
 }
 
+// Add the index, if it doesn't already exist.
+async function addIndex(
+  client: MDSPostgresClient,
+  table: string,
+  column: string,
+  options: Partial<{ unique: boolean }> = { unique: false }
+) {
+  const exec = SqlExecuter(client)
+  const indexName = `idx_${column}_${table}`
+
+  const {
+    rows: { length: hasColumn }
+  } = await exec(
+    `SELECT column_name FROM information_schema.columns WHERE table_name='${table}' AND column_name='${column}' AND table_catalog=CURRENT_CATALOG AND table_schema=CURRENT_SCHEMA`
+  )
+
+  if (hasColumn) {
+    const {
+      rows: { length: hasIndex }
+    } = await exec(`SELECT tablename FROM pg_indexes WHERE tablename='${table}' AND indexname='${indexName}'`)
+
+    if (!hasIndex) {
+      await exec(`CREATE${options.unique ? ' UNIQUE ' : ' '}INDEX ${indexName} ON ${table}(${column})`)
+    }
+  }
+}
+
 /**
  * create tables from a list of table names
  */
 async function createTables(client: MDSPostgresClient) {
   /* eslint-reason ambiguous DB function */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const existing: { rows: any[]; [propName: string]: any } = await client.query(
+  const existing: { rows: { table_name: string }[] } = await client.query(
     'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA'
   )
 
-  const missing: string[] = Object.keys(schema.tables).filter(
+  const missing = Object.keys(schema.tables).filter(
     /* eslint-reason ambiguous DB function */
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     (table: string) => !existing.rows.find((row: any) => row.table_name === table)
   )
   if (missing.length > 0) {
     await log.warn('existing', JSON.stringify(existing.rows), 'missing', JSON.stringify(missing))
-    const create: string = missing
+    const create = missing
       .map(
-        (table: string) =>
+        table =>
           `CREATE TABLE ${table} (${schema.tables[table]
             .map((column: string) => `${column} ${schema.PG_TYPES[column]}`)
             .join(', ')}, PRIMARY KEY (${csv(schema.primaryKeys[table])}));`
@@ -45,6 +72,7 @@ async function createTables(client: MDSPostgresClient) {
     await log.warn(create)
     await client.query(create)
     await log.info('postgres create table suceeded')
+    await Promise.all(missing.map(table => addIndex(client, table, 'recorded')))
   }
 }
 
@@ -127,7 +155,7 @@ async function removeAuditVehicleIdColumnFromAuditsTable(client: MDSPostgresClie
       `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${AUDIT_VEHICLE_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
     )
     if (result.rowCount === 1) {
-      // Convert audit_vehicle_id to a uuis and overwrite audit_device_id
+      // Convert audit_vehicle_id to a uuid and overwrite audit_device_id
       const updated = await exec(
         `UPDATE ${schema.AUDITS_TABLE} SET ${AUDIT_DEVICE_ID_COL} = uuid(${AUDIT_VEHICLE_ID_COL})`
       )
@@ -167,69 +195,12 @@ async function updateTables(client: MDSPostgresClient) {
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
-
-  const exec = SqlExecuter(client)
-  await Promise.all(
-    Object.keys(schema.tables).map(table =>
-      (async () => {
-        const result = await exec(
-          `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
-        )
-        const existing = result.rows.map(row => row.column_name)
-        const drop = existing.filter(column => schema.tables[table].indexOf(column) < 0)
-        const create = schema.tables[table].filter(column => existing.indexOf(column) < 0)
-        if (drop.length > 0) {
-          try {
-            await exec(`ALTER TABLE ${table}\n${drop.map(column => `DROP COLUMN IF EXISTS ${column}`).join(',\n')};`)
-            await log.info(`postgres drop column succeeded for table ${table}:`, ...drop)
-          } catch (err) {
-            await log.error(`postgres drop column failed for table ${table}:`, ...drop, err)
-          }
-        }
-        if (create.length > 0) {
-          try {
-            await exec(
-              `ALTER TABLE ${table}\n${create
-                .map(column => `ADD COLUMN ${column} ${schema.PG_TYPES[column]}`)
-                .join(',\n')};`
-            )
-            await log.info(`postgres create column succeeded for table ${table}:`, ...create)
-          } catch (err) {
-            await log.error(`postgres create column failed for table ${table}:`, ...create, err)
-          }
-        }
-      })()
-    )
-  )
-}
-
-// Add the index, if it doesn't already exist.
-async function addIndex(client: MDSPostgresClient, table: string, column: string, indexName: string) {
-  const exec = SqlExecuter(client)
-
-  if (!schema.tables[table].includes(column)) {
-    // no need to build the index since that column's not there
-    return
-  }
-
-  const index = `${indexName}_${table}`
-
-  const result = await exec(`select tablename from pg_indexes where tablename='${table}' AND indexname = '${index}'`)
-
-  if (result.rows.length > 0) {
-    return
-  }
-
-  await exec(`create index ${index} on ${table}(${column})`)
 }
 
 async function updateSchema(client: MDSPostgresClient) {
   await validateSchema()
   await createTables(client)
   await updateTables(client)
-  await Promise.all(
-    Object.keys(schema.tables).map((table: string) => addIndex(client, table, 'recorded', 'idx_recorded'))
-  )
 }
 
 export { updateSchema, dropTables, createTables }

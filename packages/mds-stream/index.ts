@@ -14,11 +14,11 @@
     limitations under the License.
  */
 
-import logger from 'mds-logger'
+import logger from '@mds-core/mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import { Device, VehicleEvent, Telemetry } from 'mds'
 import Cloudevent from 'cloudevents-sdk'
+import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
 
 const { env } = process
 const binding = null
@@ -120,8 +120,8 @@ async function getClient() {
     const { REDIS_HOST: host = 'localhost', REDIS_PORT: port = 6379 } = process.env
     logger.info(`connecting to redis on ${host}:${port}`)
     cachedClient = redis.createClient(Number(port), host)
-    cachedClient.on('error', err => {
-      logger.error(`redis error ${err}`)
+    cachedClient.on('error', async err => {
+      await logger.error(`redis error ${err}`)
     })
     await cachedClient.dbsizeAsync().then(size => logger.info(`redis has ${size} keys`))
   }

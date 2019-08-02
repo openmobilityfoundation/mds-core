@@ -1,10 +1,17 @@
+/* eslint-disable promise/no-callback-in-promise */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/no-nesting */
+/* eslint-disable promise/always-return */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import supertest from 'supertest'
 import test from 'unit.js'
-import db from 'mds-db'
-import { server } from 'mds-api-server'
-import { PROVIDER_UUID } from 'mds-test-data'
+import db from '@mds-core/mds-db'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { PROVIDER_UUID } from '@mds-core/mds-test-data'
 import uuid from 'uuid'
-import { PROPULSION_TYPES, VEHICLE_TYPES } from 'mds-enums'
+import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/native'
@@ -16,7 +23,7 @@ const APP_JSON = 'application/json; charset=utf-8'
 const provider_id = PROVIDER_UUID
 const device_id = uuid()
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 before('Initializing Database', done => {
   request

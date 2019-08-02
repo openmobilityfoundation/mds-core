@@ -17,12 +17,11 @@
 import express from 'express'
 import urls from 'url'
 
-import { getVehicles } from 'mds-api-helpers'
-import log from 'mds-logger'
-import db from 'mds-db'
-import cache from 'mds-cache'
-import stream from 'mds-stream'
-import { providerName, isProviderId } from 'mds-providers'
+import log from '@mds-core/mds-logger'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import stream from '@mds-core/mds-stream'
+import { providerName, isProviderId } from '@mds-core/mds-providers'
 import areas from 'ladot-service-areas'
 import {
   UUID,
@@ -32,11 +31,7 @@ import {
   Telemetry,
   ErrorObject,
   Timestamp,
-  CountMap,
-  TripsStats,
-  DeviceID
-} from 'mds'
-import {
+  DeviceID,
   isEnum,
   VEHICLE_EVENTS,
   VEHICLE_TYPES,
@@ -45,8 +40,9 @@ import {
   PROPULSION_TYPES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
-  VEHICLE_EVENT
-} from 'mds-enums'
+  VEHICLE_EVENT,
+  BoundingBox
+} from '@mds-core/mds-types'
 import {
   isUUID,
   isPct,
@@ -54,15 +50,13 @@ import {
   isFloat,
   pointInShape,
   now,
-  days,
-  inc,
   pathsFor,
-  head,
-  tail,
-  isStateTransitionValid,
-  ServerError
-} from 'mds-utils'
-import { AgencyApiRequest, AgencyApiResponse } from 'mds-agency/types'
+  ServerError,
+  isInsideBoundingBox
+} from '@mds-core/mds-utils'
+import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
+
+import { CacheReadDeviceResult } from '@mds-core/mds-cache/types'
 
 function api(app: express.Express): express.Express {
   /**
@@ -347,7 +341,7 @@ function api(app: express.Express): express.Express {
       } catch (err) {
         await log.error('failed to write device stream/cache', err)
       }
-      await log.info('new', providerName(res.locals.provider_id), 'vehicle added', JSON.stringify(device))
+      await log.info('new', providerName(res.locals.provider_id), 'vehicle added', device)
       try {
         await writeRegisterEvent()
       } catch (err) {
@@ -449,6 +443,89 @@ function api(app: express.Express): express.Express {
     }
   })
 
+  async function getVehicles(
+    skip: number,
+    take: number,
+    url: string,
+    provider_id: string,
+    reqQuery: { [x: string]: string },
+    bbox?: BoundingBox
+  ): Promise<{
+    total: number
+    links: { first: string; last: string; prev: string | null; next: string | null }
+    vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
+  }> {
+    function fmt(query: { skip: number; take: number }): string {
+      const flat = Object.assign({}, reqQuery, query)
+      let s = `${url}?`
+      s += Object.keys(flat)
+        .map(key => `${key}=${flat[key]}`)
+        .join('&')
+      return s
+    }
+
+    const rows = await db.readDeviceIds(provider_id)
+    const total = rows.length
+    log.info(`read ${total} deviceIds in /vehicles`)
+
+    const events = await cache.readEvents(rows.map(record => record.device_id))
+    const eventMap: { [s: string]: VehicleEvent } = {}
+    events.map(event => {
+      if (event) {
+        eventMap[event.device_id] = event
+      }
+    })
+
+    const deviceIdSuperset = bbox
+      ? rows.filter(record => {
+          return eventMap[record.device_id] ? isInsideBoundingBox(eventMap[record.device_id].telemetry, bbox) : true
+        })
+      : rows
+
+    const deviceIdSubset = deviceIdSuperset.slice(skip, skip + take).map(record => record.device_id)
+    const devices = (await cache.readDevices(deviceIdSubset)).reduce((acc: Device[], device: CacheReadDeviceResult) => {
+      if (!device) {
+        throw new Error('device in DB but not in cache')
+      }
+      const event = eventMap[device.device_id]
+      const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+      const telemetry = event ? event.telemetry : null
+      const updated = event ? event.timestamp : null
+      return [...acc, { ...device, status, telemetry, updated }]
+    }, [])
+
+    const noNext = skip + take >= deviceIdSuperset.length
+    const noPrev = skip === 0 || skip > deviceIdSuperset.length
+    const lastSkip = take * Math.floor(deviceIdSuperset.length / take)
+
+    return {
+      total,
+      links: {
+        first: fmt({
+          skip: 0,
+          take
+        }),
+        last: fmt({
+          skip: lastSkip,
+          take
+        }),
+        prev: noPrev
+          ? null
+          : fmt({
+              skip: skip - take,
+              take
+            }),
+        next: noNext
+          ? null
+          : fmt({
+              skip: skip + take,
+              take
+            })
+      },
+      vehicles: devices
+    }
+  }
+
   /**
    * Read back all the vehicles for this provider_id, with pagination
    */
@@ -503,7 +580,7 @@ function api(app: express.Express): express.Express {
           error: 'not_found'
         })
       } else {
-        await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, JSON.stringify(req.body), err)
+        await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
         res.status(500).send(new ServerError())
       }
     }
@@ -807,7 +884,7 @@ function api(app: express.Express): express.Express {
             error_description: 'the specified device_id has not been registered'
           })
         } else {
-          await log.error('post event fail:', JSON.stringify(event), message)
+          await log.error('post event fail:', event, message)
           res.status(500).send(new ServerError())
         }
       }
@@ -831,12 +908,7 @@ function api(app: express.Express): express.Express {
         const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
         // TODO unify with fail() above
         if (failure) {
-          await log.error(
-            providerName(res.locals.provider_id),
-            'event failure',
-            JSON.stringify(failure),
-            JSON.stringify(event)
-          )
+          log.info(name, 'event failure', failure, event)
           return res.status(400).send(failure)
         }
 
@@ -1009,420 +1081,6 @@ function api(app: express.Express): express.Express {
     })
   })
 
-  const RIGHT_OF_WAY_STATUSES: string[] = [
-    VEHICLE_STATUSES.available,
-    VEHICLE_STATUSES.unavailable,
-    VEHICLE_STATUSES.reserved,
-    VEHICLE_STATUSES.trip
-  ]
-
-  function asInt(n: string | number | undefined): number | undefined {
-    if (n === undefined) {
-      return undefined
-    }
-    if (typeof n === 'number') {
-      return n
-    }
-    if (typeof n === 'string') {
-      return parseInt(n)
-    }
-  }
-
-  // TODO move to utils?
-  function startAndEnd(
-    params: Partial<{ start_time: number | string | undefined; end_time: number | string | undefined }>
-  ): Partial<{ start_time: number | undefined; end_time: number | undefined }> {
-    const { start_time, end_time } = params
-
-    const start_time_out: number | undefined = asInt(start_time)
-    const end_time_out: number | undefined = asInt(end_time)
-
-    if (start_time_out !== undefined) {
-      if (Number.isNaN(start_time_out) || !isTimestamp(start_time_out)) {
-        throw new Error(`invalid start_time ${start_time}`)
-      }
-    }
-    if (end_time_out !== undefined) {
-      if (Number.isNaN(end_time_out) || !isTimestamp(end_time_out)) {
-        throw new Error(`invalid end_time ${end_time}`)
-      }
-    }
-
-    if (start_time_out !== undefined && end_time_out === undefined) {
-      if (now() - start_time_out > days(7)) {
-        throw new Error('queries over 1 week not supported')
-      }
-    }
-    if (start_time_out !== undefined && end_time_out !== undefined) {
-      if (end_time_out - start_time_out > days(7)) {
-        throw new Error('queries over 1 week not supported')
-      }
-    }
-    return {
-      start_time: start_time_out,
-      end_time: end_time_out
-    }
-  }
-
-  app.get(pathsFor('/admin/vehicle_counts'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    async function fail(err: Error | string) {
-      await log.error('/admin/vehicle_counts fail', err)
-      res.status(500).send({
-        error: err
-      })
-    }
-
-    async function getMaps(): Promise<{
-      eventMap: { [s: string]: VehicleEvent }
-      telemetryMap: { [s: string]: Telemetry }
-    }> {
-      const telemetry: Telemetry[] = await cache.readAllTelemetry()
-      const events: VehicleEvent[] = await cache.readAllEvents()
-      const eventSeed: { [s: string]: VehicleEvent } = {}
-      const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
-        return Object.assign(map, { [event.device_id]: event })
-      }, eventSeed)
-      const telemetrySeed: { [s: string]: Telemetry } = {}
-      const telemetryMap = telemetry.reduce((map, t) => {
-        return Object.assign(map, { [t.device_id]: t })
-      }, telemetrySeed)
-      return Promise.resolve({
-        telemetryMap,
-        eventMap
-      })
-    }
-    try {
-      const rows = await db.getVehicleCountsPerProvider()
-      const stats: {
-        provider_id: UUID
-        provider: string
-        count: number
-        status: { [s: string]: number }
-        event_type: { [s: string]: number }
-        areas: { [s: string]: number }
-      }[] = rows.map(row => {
-        const { provider_id, count } = row
-        return {
-          provider_id,
-          provider: providerName(provider_id),
-          count,
-          status: {},
-          event_type: {},
-          areas: {}
-        }
-      })
-      await log.warn('/admin/vehicle_counts', JSON.stringify(stats))
-
-      const maps = await getMaps()
-      const { eventMap } = maps
-      await Promise.all(
-        stats.map(async stat => {
-          const items = await db.readDeviceIds(stat.provider_id)
-          return items.map(item => {
-            const event = eventMap[item.device_id]
-            const event_type = event ? event.event_type : 'default'
-            inc(stat.event_type, event_type)
-            const status = EVENT_STATUS_MAP[event_type]
-            inc(stat.status, status)
-            // TODO latest-state should remove service_area_id if it's null
-            if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
-              const serviceArea = areas.serviceAreaMap[event.service_area_id]
-              if (serviceArea) {
-                inc(stat.areas, serviceArea.description)
-              }
-            }
-          })
-        })
-      )
-      res.status(200).send(stats)
-    } catch (err) {
-      await fail(err)
-    }
-  })
-
-  // read all the latest events out of the cache
-  app.get(pathsFor('/admin/events'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    const events = await cache.readAllEvents()
-    res.status(200).send({
-      events
-    })
-  })
-
-  // NOTE: experimental code while we learn how to interpret trip data
-  function categorizeTrips(perTripId: {
-    [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [n: number]: string } }
-  }): { [s: string]: TripsStats } {
-    const perProvider: { [s: string]: TripsStats } = {}
-    Object.keys(perTripId).map((trip_id: UUID) => {
-      const trip = perTripId[trip_id]
-      const pid: UUID = trip.provider_id
-      perProvider[pid] = perProvider[pid] || {}
-      const counts: CountMap = {}
-      const events: string[] = Object.keys(trip.eventTypes)
-        .sort()
-        .map((key: string) => trip.eventTypes[parseInt(key)])
-      if (events.length === 1) {
-        inc(counts, 'single') // single: one-off
-        perProvider[pid].singles = perProvider[pid].singles || {}
-        inc(perProvider[pid].singles, head(events))
-      } else if (head(events) === VEHICLE_EVENTS.trip_start && tail(events) === VEHICLE_EVENTS.trip_end) {
-        inc(counts, 'simple') // simple: starts with start, ends with end
-      } else if (head(events) === VEHICLE_EVENTS.trip_start) {
-        if (tail(events) === VEHICLE_EVENTS.trip_leave) {
-          inc(counts, 'left') // left: started with start, ends with leave
-        } else {
-          inc(counts, 'noEnd') // noEnd: started with start, did not end with end or leave
-        }
-      } else if (tail(events) === VEHICLE_EVENTS.trip_end) {
-        if (head(events) === VEHICLE_EVENTS.trip_enter) {
-          inc(counts, 'entered') // entered: started with enter, ends with end
-        } else {
-          inc(counts, 'noStart') // noStart: weird start, ends with end
-        }
-      } else if (head(events) === VEHICLE_EVENTS.trip_enter && tail(events) === VEHICLE_EVENTS.trip_leave) {
-        inc(counts, 'flyby') // flyby: starts with enter, ends with leave
-      } else {
-        inc(counts, 'mystery') // mystery: weird non-conforming trip
-        perProvider[pid].mysteries = perProvider[pid].mysteries || {}
-        const key = events.map(event => event.replace('trip_', '')).join('-')
-        inc(perProvider[pid].mysteries, key)
-
-        perProvider[pid].mystery_examples = perProvider[pid].mystery_examples || {}
-        perProvider[pid].mystery_examples[key] = perProvider[pid].mystery_examples[key] || []
-        if (perProvider[pid].mystery_examples[key].length < 10) {
-          perProvider[pid].mystery_examples[key].push(trip_id)
-        }
-      }
-      Object.assign(perProvider[pid], counts)
-    })
-    return perProvider
-  }
-
-  app.get(pathsFor('/admin/last_day_trips_by_provider'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    async function fail(err: Error | string) {
-      await log.error('last_day_trips_by_provider err:', err)
-    }
-
-    const { start_time, end_time } = startAndEnd(req.params)
-    try {
-      const rows = await db.getTripEventsLast24HoursByProvider(start_time, end_time)
-      const perTripId = categorizeTrips(
-        rows.reduce(
-          (
-            acc: {
-              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VehicleEvent } }
-            },
-            row
-          ) => {
-            const tid = row.trip_id
-            acc[tid] = acc[tid] || {
-              provider_id: row.provider_id,
-              trip_id: tid,
-              eventTypes: {}
-            }
-            acc[tid].eventTypes[row.timestamp] = row.event_type
-            return acc
-          },
-          {}
-        )
-      )
-
-      const provider_info = Object.keys(perTripId).reduce(
-        (map: { [s: string]: TripsStats & { name: string } }, provider_id) => {
-          return Object.assign(map, { [provider_id]: { ...perTripId[provider_id], name: providerName(provider_id) } })
-        },
-        {}
-      )
-      res.status(200).send(provider_info)
-    } catch (err) {
-      await fail(err)
-    }
-  })
-
-  // get raw trip data for analysis
-  app.get(pathsFor('/admin/raw_trip_data/:trip_id'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    const { trip_id } = req.params
-    try {
-      const eventsAndCount: { events: VehicleEvent[]; count: number } = await db.readEvents({ trip_id })
-
-      if (eventsAndCount.events.length > 0) {
-        const { events } = eventsAndCount
-        events[0].timestamp_long = new Date(events[0].timestamp).toString()
-        for (let i = 1; i < events.length; i += 1) {
-          events[i].timestamp_long = new Date(events[i].timestamp).toString()
-          events[i].delta = events[i].timestamp - events[i - 1].timestamp
-        }
-        res.status(200).send({ events })
-      } else {
-        res.status(404).send({ result: 'not_found' })
-      }
-    } catch (err) {
-      await log.error(`raw_trip_data: ${err}`)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  // Get a hash set up where the keys are the provider IDs, so it's easier
-  // to combine the result of each db query.
-  // I could have just used the providers who have vehicles registered, but
-  // I didn't want to have to wrap everything in another Promise.then callback
-  // by asking the DB for that information.
-  // This function is ludicrously long as it is.
-  app.get(pathsFor('/admin/last_day_stats_by_provider'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    const provider_info: {
-      [p: string]: {
-        name: string
-        events_last_24h: number
-        trips_last_24h: number
-        ms_since_last_event: number
-        event_counts_last_24h: { [s: string]: number }
-        late_event_counts_last_24h: { [s: string]: number }
-        telemetry_counts_last_24h: number
-        late_telemetry_counts_last_24h: number
-        registered_last_24h: number
-        events_not_in_conformance: number
-      }
-    } = {}
-
-    const { start_time, end_time } = startAndEnd(req.params)
-
-    async function fail(err: Error | string) {
-      await log.error(
-        'last_day_stats_by_provider err:',
-        err instanceof Error ? err.message : err,
-        err instanceof Error ? err.stack : ''
-      )
-    }
-
-    const getTripCountsSince = async () => {
-      try {
-        const rows = await db.getTripCountsPerProviderSince(start_time, end_time)
-        await log.info('trips last 24h', rows)
-        rows.map(row => {
-          const pid = row.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].trips_last_24h = Number(row.count)
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    const getTimeSinceLastEvent = async () => {
-      try {
-        const rows = await db.getMostRecentEventByProvider()
-        await log.info('time since last event', rows)
-        rows.map(row => {
-          const pid = row.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].ms_since_last_event = now() - row.max
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    const getEventCountsPerProviderSince = async () => {
-      try {
-        const rows = await db.getEventCountsPerProviderSince(start_time, end_time)
-        await log.info('time since last event', rows)
-        rows.map(row => {
-          const pid = row.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].event_counts_last_24h = provider_info[pid].event_counts_last_24h || {}
-          provider_info[pid].late_event_counts_last_24h = provider_info[pid].late_event_counts_last_24h || {}
-          provider_info[pid].event_counts_last_24h[row.event_type] = row.count
-          provider_info[pid].late_event_counts_last_24h[row.event_type] = row.slacount
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    const getTelemetryCountsPerProviderSince = async () => {
-      try {
-        const rows = await db.getTelemetryCountsPerProviderSince(start_time, end_time)
-        await log.info('time since last event', rows)
-        rows.map(row => {
-          const pid = row.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].telemetry_counts_last_24h = row.count
-          provider_info[pid].late_telemetry_counts_last_24h = row.slacount
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    const getNumVehiclesRegisteredLast24Hours = async () => {
-      try {
-        const rows = await db.getNumVehiclesRegisteredLast24HoursByProvider(start_time, end_time)
-        await log.info('num vehicles since last 24', rows)
-        rows.map(row => {
-          const pid = row.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].registered_last_24h = row.count
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    const getNumEventsLast24Hours = async () => {
-      try {
-        const rows = await db.getNumEventsLast24HoursByProvider(start_time, end_time)
-        rows.map(row => {
-          const pid = row.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].events_last_24h = row.count
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    const getConformanceLast24Hours = async () => {
-      try {
-        const rows = await db.getEventsLast24HoursPerProvider(start_time, end_time)
-        const prev_event: { [key: string]: VehicleEvent } = {}
-        await log.info('event', rows)
-        rows.map(event => {
-          const pid = event.provider_id
-          provider_info[pid] = provider_info[pid] || {}
-          provider_info[pid].events_not_in_conformance = provider_info[pid].events_not_in_conformance || 0
-          if (prev_event[event.device_id]) {
-            provider_info[pid].events_not_in_conformance += isStateTransitionValid(prev_event[event.device_id], event)
-              ? 0
-              : 1
-          }
-          prev_event[event.device_id] = event
-        })
-      } catch (err) {
-        await fail(err)
-      }
-    }
-
-    try {
-      await Promise.all([
-        getTimeSinceLastEvent(),
-        getNumVehiclesRegisteredLast24Hours(),
-        getNumEventsLast24Hours(),
-        getTripCountsSince(),
-        getEventCountsPerProviderSince(),
-        getTelemetryCountsPerProviderSince(),
-        getConformanceLast24Hours()
-      ])
-
-      Object.keys(provider_info).map(provider_id => {
-        provider_info[provider_id].name = providerName(provider_id)
-      })
-      res.status(200).send(provider_info)
-    } catch (err) {
-      await log.error('unable to fetch data from last 24 hours', err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
   // /////////////////// end Agency candidate endpoints ////////////////////
 
   // ///////////////////// begin test-only endpoints ///////////////////////
@@ -1496,7 +1154,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/admin/cache/info'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const details = await cache.info()
-    await log.warn('cache', JSON.stringify(details))
+    await log.warn('cache', details)
     res.send(details)
   })
 
@@ -1531,7 +1189,7 @@ function api(app: express.Express): express.Express {
   async function refresh(device_id: UUID, provider_id: UUID): Promise<string> {
     // TODO all of this back and forth between cache and db is slow
     const device = await db.readDevice(device_id, provider_id)
-    // log.info('refresh device', JSON.stringify(device))
+    // log.info('refresh device', device)
     await cache.writeDevice(device)
     try {
       const event = await db.readEvent(device_id)
@@ -1558,7 +1216,7 @@ function api(app: express.Express): express.Express {
 
       await log.info('read', rows.length, 'device_ids. skip', skip, 'take', take)
       const devices = rows.slice(skip, take + skip)
-      await log.info('device_ids', JSON.stringify(devices))
+      await log.info('device_ids', devices)
 
       const promises = devices.map(device => refresh(device.device_id, device.provider_id))
       await Promise.all(promises)

@@ -14,20 +14,31 @@
     limitations under the License.
  */
 
-import log from 'mds-logger'
+import log from '@mds-core/mds-logger'
 
 import flatten from 'flat'
-import { capitalizeFirst, nullKeys, stripNulls, now } from 'mds-utils'
-import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from 'mds'
+import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
+import {
+  UUID,
+  Timestamp,
+  Device,
+  VehicleEvent,
+  Telemetry,
+  BoundingBox,
+  EVENT_STATUS_MAP,
+  VEHICLE_STATUSES
+} from '@mds-core/mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import { parseTelemetry, parseEvent, parseDevice } from './unflatteners'
+
+import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
 import {
   CacheReadDeviceResult,
   CachedItem,
   StringifiedCacheReadDeviceResult,
   StringifiedEventWithTelemetry,
-  StringifiedTelemetry
+  StringifiedTelemetry,
+  StringifiedEvent
 } from './types'
 
 const { env } = process
@@ -46,22 +57,19 @@ declare module 'redis' {
     keysAsync: (arg1: string) => Promise<string[]>
     zaddAsync: (arg1: string | number, arg2: number, arg3: string) => Promise<number>
     zrangebyscoreAsync: (key: string, min: number | string, max: number | string) => Promise<string[]>
+    georadiusAsync: (
+      key: string,
+      longitude: number,
+      latitude: number,
+      radius: number,
+      unit: string
+    ) => Promise<UUID[]>
   }
 }
 
 bluebird.promisifyAll(redis.RedisClient.prototype)
 
 let cachedClient: redis.RedisClient | null
-
-function insideBBox(status: CachedItem | {}, bbox: BoundingBox) {
-  if (!status || !('gps' in status)) {
-    return false
-  }
-
-  const telemetry = parseTelemetry(status)
-  const { lat, lng } = telemetry.gps
-  return bbox.latMin <= lat && lat <= bbox.latMax && bbox.lngMin <= lng && lng <= bbox.lngMax
-}
 
 async function getClient() {
   if (!cachedClient) {
@@ -122,6 +130,25 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
+/* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner.*/
+async function addGeospatialHash(device_id: UUID, coordinates: [number, number]) {
+  const client = await getClient()
+  const [lat, lng] = coordinates
+  const res = await client.geoadd('locations', lng, lat, device_id)
+  return res
+}
+
+async function getEventsInBBox(bbox: BoundingBox) {
+  const client = await getClient()
+  const [pt1, pt2] = bbox
+  const points = bbox.map(pt => {
+    return { lat: pt[0], lng: pt[1] }
+  })
+  const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
+  const radius = routeDistance(points)
+  return client.georadiusAsync('locations', lng, lat, radius, 'm')
+}
+
 async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {
   if (suffixes === undefined) {
     throw new Error('hreads: no suffixes')
@@ -180,39 +207,56 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   log.info('readDevicesStatus', JSON.stringify(query), 'start')
   const start = query.since || 0
   const stop = now()
-  // read all device ids
-  log
-    .info('redis zrangebyscore device-ids', start, stop)(await getClient())
-    .zrangebyscoreAsync('device-ids', start, stop)
-    .then(async (device_ids_res: string[]) => {
-      log.info('readDevicesStatus', device_ids_res.length, 'entries')
 
-      const skip = query.skip || 0
-      const take = query.take || 100000000000
-      const device_ids = device_ids_res.slice(skip, skip + take)
+  log.info('redis zrangebyscore device-ids', start, stop)
+  const client = await getClient()
 
-      // read all devices
-      const device_status_map: { [device_id: string]: CachedItem | {} } = {}
+  const { bbox } = query
+  const deviceIdsInBbox = await getEventsInBBox(bbox)
+  const deviceIdsRes =
+    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
+  const skip = query.skip || 0
+  const take = query.take || 100000000000
+  const deviceIds = deviceIdsRes.slice(skip, skip + take)
 
-      // big batch redis nightmare!
-      let all: CachedItem[] = await hreads(['device', 'event', 'telemetry'], device_ids)
-      all = all.filter((item: CachedItem) => Boolean(item))
-      all.map(item => {
-        device_status_map[item.device_id] = device_status_map[item.device_id] || {}
-        Object.assign(device_status_map[item.device_id], item)
-      })
-      log.info('readDevicesStatus', device_ids.length, 'entries:', all.length)
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
 
-      let values = Object.values(device_status_map)
-      if (query.bbox) {
-        values = values.filter((status: CachedItem | {}) => insideBBox(status, query.bbox))
+  const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
+    .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
+      try {
+        const parsedItem = parseEvent(item)
+        if (
+          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
+          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
+        )
+          return [...acc, parsedItem]
+        return acc
+      } catch (err) {
+        return acc
       }
+    }, [])
+    .filter(item => Boolean(item))
 
-      log.info('readDevicesStatus done')
-      return values
-    })
+  const eventDeviceIds = events.map(event => event.device_id)
+  const devices = (await hreads(['device'], eventDeviceIds))
+    .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
+      try {
+        const parsedItem = parseCachedItem(item)
+        return [...acc, parsedItem]
+      } catch (err) {
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
+  const all = [...devices, ...events]
+  all.map(item => {
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
+  })
+  const values = Object.values(deviceStatusMap)
+
+  return values.filter((item: any) => item.telemetry)
 }
-/* eslint-enable promise/catch-or-return */
 
 // get the provider for a device
 async function getProviderId(device_id: UUID) {
@@ -286,6 +330,10 @@ async function writeEvent(event: VehicleEvent) {
     const prev_event = parseEvent((await hread('event', event.device_id)) as StringifiedEventWithTelemetry)
     if (prev_event.timestamp < event.timestamp) {
       try {
+        if (event.telemetry) {
+          const { lat, lng } = event.telemetry.gps
+          await addGeospatialHash(event.device_id, [lat, lng])
+        }
         return hwrite('event', event)
       } catch (err) {
         await log.error('hwrites', err.stack)
@@ -296,6 +344,10 @@ async function writeEvent(event: VehicleEvent) {
     }
   } catch (_) {
     try {
+      if (event.telemetry) {
+        const { lat, lng } = event.telemetry.gps
+        await addGeospatialHash(event.device_id, [lat, lng])
+      }
       return hwrite('event', event)
     } catch (err) {
       await log.error('hwrites', err.stack)
@@ -343,10 +395,12 @@ async function readTelemetry(device_id: UUID): Promise<Telemetry> {
 }
 
 async function writeOneTelemetry(telemetry: Telemetry) {
+  const { lat, lng } = telemetry.gps
   try {
     const prevTelemetry = await readTelemetry(telemetry.device_id)
     if (prevTelemetry.timestamp < telemetry.timestamp) {
       try {
+        await addGeospatialHash(telemetry.device_id, [lat, lng])
         return hwrite('telemetry', telemetry)
       } catch (err) {
         await log.error('hwrite', err.stack)
@@ -358,6 +412,7 @@ async function writeOneTelemetry(telemetry: Telemetry) {
   } catch (err) {
     log.info('writeOneTelemetry: no prior telemetry found:', err.message)
     try {
+      await addGeospatialHash(telemetry.device_id, [lat, lng])
       return hwrite('telemetry', telemetry)
     } catch (err2) {
       await log.error('writeOneTelemetry hwrite2', err.stack)

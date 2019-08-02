@@ -1,3 +1,5 @@
+/* eslint-disable promise/prefer-await-to-callbacks */
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -21,11 +23,10 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_TYPES } from 'mds-enums'
-import { now, days } from 'mds-utils'
-import { Policy } from 'mds'
-import { server } from 'mds-api-server'
-import { TEST1_PROVIDER_ID } from 'mds-providers'
+import { VEHICLE_TYPES, Policy } from '@mds-core/mds-types'
+import { now, days } from '@mds-core/mds-utils'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -43,7 +44,7 @@ const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
 
 const PROVIDER_SCOPES = 'admin:all test:all'
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 const start_yesterday = now() - (now() % days(1))
 

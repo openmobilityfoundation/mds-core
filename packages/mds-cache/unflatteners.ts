@@ -1,6 +1,11 @@
-import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS } from 'mds-enums'
-import { Device, Telemetry, VehicleEvent } from 'mds'
-import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult } from './types'
+import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS, Device, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+import {
+  isStringifiedTelemetry,
+  isStringifiedEventWithTelemetry,
+  isStringifiedCacheReadDeviceResult
+} from '@mds-core/mds-utils'
+
+import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult, CachedItem } from './types'
 
 function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {
   try {
@@ -66,4 +71,18 @@ function parseDevice(device: StringifiedCacheReadDeviceResult): Device {
   return device
 }
 
-export { parseEvent, parseTelemetry, parseDevice }
+function parseCachedItem(item: CachedItem): Device | Telemetry | VehicleEvent {
+  if (isStringifiedTelemetry(item)) {
+    return parseTelemetry(item)
+  }
+  if (isStringifiedEventWithTelemetry(item)) {
+    return parseEvent(item)
+  }
+  if (isStringifiedCacheReadDeviceResult(item)) {
+    return parseDevice(item)
+  }
+
+  throw new Error(`unable to parse ${JSON.stringify(item)}`)
+}
+
+export { parseEvent, parseTelemetry, parseDevice, parseCachedItem }

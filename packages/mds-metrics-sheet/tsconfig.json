@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.settings.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  },
-  "strict": false,
-  "references": [{ "path": "../../packages/mds-logger" }, { "path": "../../packages/mds-providers" }]
-}

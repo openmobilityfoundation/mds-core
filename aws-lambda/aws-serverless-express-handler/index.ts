@@ -19,14 +19,15 @@ import awsServerlessExpress from 'aws-serverless-express'
 import awsServerlessExpressMiddleware from 'aws-serverless-express/middleware'
 import { decrypt } from '@aws-lambda/aws-utils'
 import { Handler } from 'aws-lambda'
-import { server } from 'mds-api-server'
-import { ApiAuthorizerClaims, ApiAuthorizer } from 'mds-api-authorizer'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { ApiAuthorizerClaims, ApiAuthorizer } from '@mds-core/mds-api-authorizer'
 
 // These global variables will be set by webpack
 declare const NPM_PACKAGE_NAME: string
 declare const NPM_PACKAGE_VERSION: string
 declare const NPM_PACKAGE_GIT_BRANCH: string
 declare const NPM_PACKAGE_GIT_COMMIT: string
+declare const NPM_PACKAGE_BUILD_DATE: string
 
 export interface ApiGatewayRequest extends express.Request {
   apiGateway?: {
@@ -55,8 +56,13 @@ export const AwsServerlessExpressHandler = (
     npm_package_name: NPM_PACKAGE_NAME,
     npm_package_version: NPM_PACKAGE_VERSION,
     npm_package_git_branch: NPM_PACKAGE_GIT_BRANCH,
-    npm_package_git_commit: NPM_PACKAGE_GIT_COMMIT
+    npm_package_git_commit: NPM_PACKAGE_GIT_COMMIT,
+    npm_package_build_date: NPM_PACKAGE_BUILD_DATE
   })
+
+  const server = awsServerlessExpress.createServer(
+    ApiServer(api, ApiGatewayAuthorizer, express().use(awsServerlessExpressMiddleware.eventContext()))
+  )
 
   return async (event, context) => {
     if (process.env.PG_PASS_ENCRYPTED) {
@@ -64,13 +70,6 @@ export const AwsServerlessExpressHandler = (
     }
     // The following is required to support async handlers with AWS serverless express:
     // https://github.com/awslabs/aws-serverless-express/issues/134#issuecomment-495026574
-    return awsServerlessExpress.proxy(
-      awsServerlessExpress.createServer(
-        server(api, ApiGatewayAuthorizer, express().use(awsServerlessExpressMiddleware.eventContext()))
-      ),
-      event,
-      context,
-      'PROMISE'
-    ).promise
+    return awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise
   }
 }

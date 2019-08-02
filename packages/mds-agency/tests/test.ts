@@ -28,13 +28,20 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { VEHICLE_EVENTS, VEHICLE_STATUSES, VEHICLE_TYPES, PROPULSION_TYPES } from 'mds-enums'
-import { Timestamp, Device, VehicleEvent } from 'mds'
-import db from 'mds-db'
-import cache from 'mds-cache'
-import { makeDevices, makeEvents } from 'mds-test-data'
-import { server } from 'mds-api-server'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from 'mds-providers'
+import {
+  VEHICLE_EVENTS,
+  VEHICLE_STATUSES,
+  VEHICLE_TYPES,
+  PROPULSION_TYPES,
+  Timestamp,
+  Device,
+  VehicleEvent
+} from '@mds-core/mds-types'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import { makeDevices, makeEvents } from '@mds-core/mds-test-data'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 
 process.env.PATH_PREFIX = '/agency'
@@ -42,7 +49,7 @@ process.env.PATH_PREFIX = '/agency'
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
-const request = supertest(server(api))
+const request = supertest(ApiServer(api))
 
 function now(): Timestamp {
   return Date.now()
@@ -605,17 +612,6 @@ describe('Tests API', () => {
         testTimestamp += 20000
         test.string(result.body.result).contains('success')
         test.string(result.body.status).is('available')
-        done(err)
-      })
-  })
-  it('verifies read back all events from cache', done => {
-    request
-      .get('/admin/events')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.string(result.body.events[0].device_id).is(DEVICE_UUID)
-        test.string(result.body.events[0].event_type).is(VEHICLE_EVENTS.service_start)
         done(err)
       })
   })
@@ -1419,27 +1415,6 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('verifies read-back of trip events', done => {
-    request
-      .get(`/admin/raw_trip_data/${TRIP_UUID}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        const { body } = result
-        test.value(body.events.length).is(6)
-        done(err)
-      })
-  })
-  it('verifies failed read-back of non-existent trip events', done => {
-    request
-      .get(`/admin/raw_trip_data/${DEVICE_UUID}`)
-      .set('Authorization', AUTH)
-      .expect(404)
-      .end(err => {
-        // just care about 404
-        done(err)
-      })
-  })
   it('verifies get device readback w/telemetry success (database)', done => {
     request
       .get(`/vehicles/${DEVICE_UUID}`)
@@ -1552,63 +1527,6 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('gets vehicle counts per provider', done => {
-    request
-      .get('/admin/vehicle_counts')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // log('result----->', result.body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('gets recent stats by provider', done => {
-    // These outer two promises are here to help check that old telemetry/event data
-    // added by the call to .seed later don't show up in the final results
-    request
-      .get('/admin/last_day_trips_by_provider')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // log('result----->', result.body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  // TODO make the checks in here more robust. There should be a check to ensure
-  // that old recorded items don't show up. This will probably require
-  // writing functions that allow you to update the recorded column but
-  // I've spent enough time on this right now.
-  it('gets recent stats by provider', done => {
-    // These outer two promises are here to help check that old telemetry/event data
-    // added by the call to .seed later don't show up in the final results
-    request
-      .get('/admin/last_day_stats_by_provider')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // log('result----->', result.body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        const testObject = test.object(result.body)
-        testObject.hasProperty(TEST1_PROVIDER_ID)
-        const providerTestObject1 = test.object(result.body[TEST1_PROVIDER_ID])
-        providerTestObject1.hasProperty('ms_since_last_event')
-        // providerTestObject1.hasProperty('time_since_last_telemetry')
-        providerTestObject1.hasProperty('registered_last_24h')
-        providerTestObject1.hasProperty('events_last_24h')
-        // providerTestObject1.hasProperty('num_telemetry')
-
-        // Fewer fixtures exist for this one right now
-        // const providerTestObject2 = test.object(result.body[TEST2_PROVIDER_ID])
-        // providerTestObject1.hasProperty('time_since_last_telemetry')
-        // providerTestObject1.hasProperty('events_last_24h')
-        // providerTestObject1.hasProperty('num_telemetry')
-        done(err)
-      })
-  })
 
   it('refreshes the cache', done => {
     request
@@ -1706,102 +1624,6 @@ describe('Tests pagination', () => {
         test.string(result.body.links.first).contains('http')
         test.string(result.body.links.last).contains('http')
         test.value(result.body.links.next).is(null)
-        done(err)
-      })
-  })
-})
-
-describe('Tests state conformance endpoint', () => {
-  before(done => {
-    const testTimestampNow = now() // Hacky fix
-    const devices: Device[] = makeDevices(3, now() - 1000)
-    const events: VehicleEvent[] = [
-      // BEGIN GOOD TRANSITIONS
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.provider_pick_up,
-        recorded: testTimestampNow - 90,
-        timestamp: testTimestampNow - 90,
-        telemetry: TEST_TELEMETRY
-      },
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.trip_enter,
-        trip_id: TRIP_UUID,
-        recorded: testTimestampNow - 80,
-        timestamp: testTimestampNow - 80,
-        telemetry: TEST_TELEMETRY
-      },
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.trip_leave,
-        trip_id: TRIP_UUID,
-        recorded: testTimestampNow - 70,
-        timestamp: testTimestampNow - 70,
-        telemetry: TEST_TELEMETRY
-      },
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.provider_pick_up,
-        recorded: testTimestampNow - 60,
-        timestamp: testTimestampNow - 60,
-        telemetry: TEST_TELEMETRY
-      }, // BEGIN BAD TRANSITIONS
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.service_start,
-        recorded: testTimestampNow - 50,
-        timestamp: testTimestampNow - 50,
-        telemetry: TEST_TELEMETRY
-      },
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.trip_leave,
-        trip_id: TRIP_UUID,
-        recorded: testTimestampNow - 40,
-        timestamp: testTimestampNow - 40,
-        telemetry: TEST_TELEMETRY
-      },
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.trip_start,
-        trip_id: TRIP_UUID,
-        recorded: testTimestampNow - 30,
-        timestamp: testTimestampNow - 30,
-        telemetry: TEST_TELEMETRY
-      },
-      {
-        provider_id: TEST1_PROVIDER_ID,
-        device_id: devices[0].device_id,
-        event_type: VEHICLE_EVENTS.provider_pick_up,
-        recorded: testTimestampNow - 20,
-        timestamp: testTimestampNow - 20,
-        telemetry: TEST_TELEMETRY
-      }
-    ]
-    const seedData = { devices, events, telemetry: [] }
-    Promise.all([db.initialize(), cache.initialize()]).then(() => {
-      Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
-        done()
-      })
-    })
-  })
-
-  it('verifies 8 total events, and 4 are non-conformant', done => {
-    request
-      .get('/admin/last_day_stats_by_provider')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.assert(result.body[TEST1_PROVIDER_ID].events_not_in_conformance === 4)
-        test.assert(result.body[TEST1_PROVIDER_ID].events_last_24h === 8)
         done(err)
       })
   })

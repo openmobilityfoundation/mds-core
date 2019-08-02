@@ -20,7 +20,7 @@ import { promisify } from 'util'
 
 import requestPromise from 'request-promise'
 
-import log from 'mds-logger'
+import log from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
   LIME_PROVIDER_ID,
@@ -30,7 +30,7 @@ import {
   SPIN_PROVIDER_ID,
   SHERPA_PROVIDER_ID,
   BOLT_PROVIDER_ID
-} from 'mds-providers'
+} from '@mds-core/mds-providers'
 
 import { VehicleCountResponse } from './types'
 
@@ -119,7 +119,11 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
   }
 }
 
-export const VehicleCountsHandler = () =>
-  getProviderMetrics(0)
-    .then(rows => appendSheet('Vehicle Counts', rows))
-    .catch((err: Error) => log.error('VehicleCountsHandler', err))
+export const VehicleCountsHandler = async () => {
+  try {
+    const rows = await getProviderMetrics(0)
+    await appendSheet('Vehicle Counts', rows)
+  } catch (err) {
+    await log.error('VehicleCountsHandler', err)
+  }
+}

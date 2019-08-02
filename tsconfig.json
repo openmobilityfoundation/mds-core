@@ -1,20 +1,11 @@
 {
+  "extends": "./tsconfig.settings.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "*": ["types/*", "*"]
-    },
-    "target": "es2018",
-    "module": "commonjs",
-    "importHelpers": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "preserveSymlinks": true,
-    "listEmittedFiles": true,
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true
+      "@aws-lambda/*": ["aws-lambda/*/index.ts"],
+      "@mds-core/*": ["packages/*/index.ts"],
+      "*": ["@types/*", "*"]
+    }
   }
 }
