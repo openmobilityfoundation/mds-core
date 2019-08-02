@@ -1,0 +1,63 @@
+apis:
+  - name: provider
+    port: 4000
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: agency
+    port: 4001
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: audit
+    port: 4002
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: policy
+    port: 4003
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: compliance
+    port: 4004
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: daily
+    port: 4005
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: native
+    port: 4006
+    version: latest
+    useDB: true
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+namespace: default
+useJwtAuth: true
+jwtIssuer: 
+registry: 
+useLatestImage: true
+pgName: 
+pgUser: 
+pgPass: 
+pgHost: 
+pgHostReader: 
+pgPort: 5432
+redisHost: 
+redisPort: 6379

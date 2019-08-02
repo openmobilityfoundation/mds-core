@@ -1,0 +1,56 @@
+{{- range $api := .Values.apis }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $api.name }}
+  labels:
+    app: {{ $api.name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $api.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $api.name }}
+    spec:
+      containers:
+      - name: user-container
+        image: {{ $.Values.registry }}/mds-{{ $api.name }}:{{ $api.version }}
+        ports:
+        - containerPort: {{ $api.port }}
+          name: user-port
+          protocol: TCP
+        env:
+          - name: PATH_PREFIX
+            value: /{{ $api.name }}
+          {{- if $api.useDB }}
+          - name: PG_USER
+            value: {{ $.Values.pgUser }}
+          - name: PG_NAME
+            value: {{ $.Values.pgName }}
+          - name: PG_PASS
+            value: {{ $.Values.pgPass }}
+          - name: PG_PORT
+            value: {{ $.Values.pgPort | quote }}
+          - name: PG_HOST
+            value: {{ $.Values.pgHost }}
+          - name: PG_HOST_READER
+            value: {{ $.Values.pgHostReader }}
+          {{- end }}
+          {{- if $api.useCache }}
+          - name: REDIS_HOST
+            value: {{ $.Values.cacheHost }}
+          - name: REDIS_PORT
+            value: {{ $.Values.cachePort | quote }}
+          {{- end }}
+          {{- if $api.useEvents }}
+          - name: CE_NAME
+            value: {{ $api.name }}
+          - name: SINK
+            value: http://default-broker.{{ $.Values.namespace }}.svc.cluster.local
+          {{- end }}
+{{- end }}

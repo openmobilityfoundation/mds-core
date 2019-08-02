@@ -1,0 +1,23 @@
+{{- if .Values.useJwtAuth }}
+{{- range $api := .Values.apis }}
+---
+apiVersion: authentication.istio.io/v1alpha1
+kind: Policy
+metadata:
+  name: {{ $api.name }}-auth
+  namespace: {{ $.Values.namespace }}
+spec:
+  targets:
+  - name: {{ $api.name }}
+  peers:
+  - mtls:
+      mode: PERMISSIVE
+  origins:
+  - jwt:
+      audiences:
+      - {{ $api.jwtAudience | quote }}
+      issuer: {{ $.Values.jwtIssuer | quote }}
+      jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwtIssuer }}
+  principalBinding: USE_ORIGIN
+{{- end }}
+{{- end }}

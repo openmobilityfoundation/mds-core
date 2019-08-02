@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: pg-rw-external
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+  - {{ .Values.pgHost }}
+  ports:
+  - number: {{ .Values.pgPort }}
+    name: tcp
+    protocol: TCP
+  location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: pg-ro-external
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+  - {{ .Values.pgHostReader }}
+  ports:
+  - number: {{ .Values.pgPort }}
+    name: tcp
+    protocol: TCP
+  location: MESH_EXTERNAL
