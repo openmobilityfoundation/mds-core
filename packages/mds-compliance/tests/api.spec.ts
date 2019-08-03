@@ -373,7 +373,7 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.assert(result.body[0].total_violations === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -501,8 +501,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 10)
+          test.assert(result.body[0].total_violations === 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -781,8 +781,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 10)
+          test.assert(result.body[0].total_violations === 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -846,7 +846,7 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.assert(result.body[0].total_violations === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -897,7 +897,7 @@ describe('Tests Compliance API:', () => {
             geographies: veniceSpecOpsPointIds,
             statuses: { available: ['provider_drop_off'] },
             vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-            maximum: 0
+            maximum: 999999
           },
           {
             name: 'Drop-off No-Fly Zones',
@@ -970,13 +970,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body[0].compliance[0].matches.length === 22)
-          for (const issue of result.body[0].compliance[0].matches) {
-            test.assert(issue.matched_vehicles.length >= 1)
-          }
           test.assert(result.body[0].compliance[1].matches.length === 1)
-          for (const issue of result.body[0].compliance[1].matches) {
-            test.assert(issue.matched_vehicles.length === 10)
-          }
+          test.assert(result.body[0].compliance[1].matches[0].measured === 10)
           done(err)
         })
     })
@@ -1023,15 +1018,14 @@ describe('Tests Compliance API:', () => {
         })
     })
 
-    it('Historical check reports 15 violations', done => {
+    it('Historical check reports 5 violations', done => {
       request
         .get(`/snapshot/${COUNT_POLICY_UUID_4}?end_date=${yesterday + 200}`)
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.assert(result.body[0].total_violations === 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -1044,7 +1038,7 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.assert(result.body[0].total_violations === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

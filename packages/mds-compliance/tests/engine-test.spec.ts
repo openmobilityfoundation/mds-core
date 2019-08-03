@@ -65,7 +65,7 @@ describe('Tests Compliance Engine', () => {
       if (result) {
         result.compliance.forEach(compliance => {
           if (compliance.matches && compliance.rule.rule_type === RULE_TYPES.count) {
-            test.assert(compliance.matches.length === 0)
+            test.assert(compliance.matches.length === 1)
           }
         })
       }

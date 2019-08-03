@@ -325,12 +325,13 @@ export interface ReducedMatch {
 
 export interface Compliance {
   rule: Rule
-  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] | null // TODO Support for Speed issues.
+  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] // TODO Support for Speed issues.
 }
 
 export interface ComplianceResponse {
   policy: Policy
   compliance: Compliance[]
+  total_violations: number
 }
 
 export interface Geography {
