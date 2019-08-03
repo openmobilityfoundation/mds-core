@@ -20,12 +20,26 @@ import {
   VEHICLE_EVENT,
   VEHICLE_TYPES,
   PROPULSION_TYPES,
-  VEHICLE_STATUSES,
-  VEHICLE_STATUS, UUID, Device, Timestamp, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+  UUID,
+  Device,
+  Timestamp,
+  Telemetry,
+  VehicleEvent,
+  PROVIDER_EVENT,
+  PROVIDER_REASON
+} from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from '@mds-core/mds-db/types'
 
-import { addDistanceBearing, pointInShape, makePointInShape, rangeRandom, rangeRandomInt, range, now } from '@mds-core/mds-utils'
+import {
+  addDistanceBearing,
+  pointInShape,
+  makePointInShape,
+  rangeRandom,
+  rangeRandomInt,
+  range,
+  now
+} from '@mds-core/mds-utils'
 
 import { serviceAreaMap } from 'ladot-service-areas'
 
@@ -41,6 +55,7 @@ import {
   TEST3_PROVIDER_ID,
   providerName
 } from '@mds-core/mds-providers'
+import { PROVIDER_EVENTS, PROVIDER_REASONS } from 'packages/mds-types/dist'
 
 // for test purposes
 const PROVIDER_AUTH =
@@ -291,18 +306,18 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
 }
 
 function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
-  const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
-  const vehicleStatusKeys = Object.keys(VEHICLE_STATUSES)
-  const event_reason = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
-  const event_type = vehicleStatusKeys[rangeRandomInt(vehicleStatusKeys.length)]
+  const providerEventTypes = Object.keys(PROVIDER_EVENTS)
+  const event_type = providerEventTypes[rangeRandomInt(providerEventTypes.length)] as PROVIDER_EVENT
+  const providerReasons = Object.keys(PROVIDER_REASONS)
+  const event_type_reason = providerReasons[rangeRandomInt(providerReasons.length)] as PROVIDER_REASON
 
   return {
     provider_id: device.provider_id,
     provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
-    event_type: event_type as VEHICLE_STATUS,
-    event_type_reason: event_reason as VEHICLE_EVENT,
+    event_type,
+    event_type_reason,
     event_location: null,
     battery_pct: rangeRandomInt(1, 100),
     associated_trip: uuid4(),
