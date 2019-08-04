@@ -10,30 +10,26 @@ import {
 } from '@mds-core/mds-types'
 
 const AgencyEventMap: {
-  [E in VEHICLE_EVENT]: { primary: StatusChangeEvent } & {
-    secondary: Partial<{ [R in VEHICLE_REASON]: StatusChangeEvent }>
-  }
+  [E in VEHICLE_EVENT]: {
+    when: Partial<{ [R in VEHICLE_REASON]: StatusChangeEvent }>
+  } & { otherwise: StatusChangeEvent }
 } = {
   [VEHICLE_EVENTS.register]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.removed,
       event_type_reason: PROVIDER_REASONS.service_end
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.service_start]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.available,
       event_type_reason: PROVIDER_REASONS.service_start
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.service_end]: {
-    primary: {
-      event_type: PROVIDER_EVENTS.removed,
-      event_type_reason: PROVIDER_REASONS.service_end
-    },
-    secondary: {
+    when: {
       [VEHICLE_REASONS.low_battery]: {
         event_type: PROVIDER_EVENTS.unavailable,
         event_type_reason: PROVIDER_REASONS.low_battery
@@ -42,21 +38,21 @@ const AgencyEventMap: {
         event_type: PROVIDER_EVENTS.unavailable,
         event_type_reason: PROVIDER_REASONS.maintenance
       }
+    },
+    otherwise: {
+      event_type: PROVIDER_EVENTS.removed,
+      event_type_reason: PROVIDER_REASONS.service_end
     }
   },
   [VEHICLE_EVENTS.provider_drop_off]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.available,
       event_type_reason: PROVIDER_REASONS.rebalance_drop_off
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.provider_pick_up]: {
-    primary: {
-      event_type: PROVIDER_EVENTS.removed,
-      event_type_reason: PROVIDER_REASONS.service_end
-    },
-    secondary: {
+    when: {
       [VEHICLE_REASONS.rebalance]: {
         event_type: PROVIDER_EVENTS.removed,
         event_type_reason: PROVIDER_REASONS.rebalance_pick_up
@@ -69,70 +65,74 @@ const AgencyEventMap: {
         event_type: PROVIDER_EVENTS.removed,
         event_type_reason: PROVIDER_REASONS.maintenance_pick_up
       }
+    },
+    otherwise: {
+      event_type: PROVIDER_EVENTS.removed,
+      event_type_reason: PROVIDER_REASONS.service_end
     }
   },
   [VEHICLE_EVENTS.agency_drop_off]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.available,
       event_type_reason: PROVIDER_REASONS.agency_drop_off
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.agency_pick_up]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.removed,
       event_type_reason: PROVIDER_REASONS.agency_pick_up
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.reserve]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.reserved,
       event_type_reason: PROVIDER_REASONS.user_pick_up
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.cancel_reservation]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.available,
       event_type_reason: PROVIDER_REASONS.user_drop_off
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.trip_start]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.reserved,
       event_type_reason: PROVIDER_REASONS.user_pick_up
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.trip_enter]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.reserved,
       event_type_reason: PROVIDER_REASONS.user_pick_up
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.trip_leave]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.reserved,
       event_type_reason: PROVIDER_REASONS.user_pick_up
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.trip_end]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.available,
       event_type_reason: PROVIDER_REASONS.user_drop_off
-    },
-    secondary: {}
+    }
   },
   [VEHICLE_EVENTS.deregister]: {
-    primary: {
+    when: {},
+    otherwise: {
       event_type: PROVIDER_EVENTS.removed,
       event_type_reason: PROVIDER_REASONS.service_end
-    },
-    secondary: {}
+    }
   }
 }
 
@@ -142,8 +142,8 @@ export function asStatusChangeEvent({
 }: Pick<VehicleEvent, 'event_type' | 'event_type_reason'>): StatusChangeEvent {
   const map = AgencyEventMap[event_type]
   if (map) {
-    const { primary, secondary } = map
-    return (event_type_reason ? secondary[event_type_reason] : undefined) || primary
+    const { otherwise, when } = map
+    return (event_type_reason ? when[event_type_reason] : undefined) || otherwise
   }
   throw Error(`No computable state for "${event_type}${event_type_reason ? `/${event_type_reason}` : ''}"`)
 }
