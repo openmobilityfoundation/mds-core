@@ -26,7 +26,9 @@ import {
   Telemetry,
   VehicleEvent,
   PROVIDER_EVENT,
-  PROVIDER_REASON
+  PROVIDER_REASON,
+  PROVIDER_EVENTS,
+  PROVIDER_REASONS
 } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from '@mds-core/mds-db/types'
@@ -55,7 +57,6 @@ import {
   TEST3_PROVIDER_ID,
   providerName
 } from '@mds-core/mds-providers'
-import { PROVIDER_EVENTS, PROVIDER_REASONS } from 'packages/mds-types/dist'
 
 // for test purposes
 const PROVIDER_AUTH =
