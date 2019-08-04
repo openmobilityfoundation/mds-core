@@ -307,10 +307,10 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
 }
 
 function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
-  const providerEventTypes = Object.keys(PROVIDER_EVENTS)
-  const event_type = providerEventTypes[rangeRandomInt(providerEventTypes.length)] as PROVIDER_EVENT
-  const providerReasons = Object.keys(PROVIDER_REASONS)
-  const event_type_reason = providerReasons[rangeRandomInt(providerReasons.length)] as PROVIDER_REASON
+  const providerEventTypes = Object.keys(PROVIDER_EVENTS) as PROVIDER_EVENT[]
+  const event_type = providerEventTypes[rangeRandomInt(providerEventTypes.length)]
+  const providerReasons = Object.keys(PROVIDER_REASONS) as PROVIDER_REASON[]
+  const event_type_reason = providerReasons[rangeRandomInt(providerReasons.length)]
 
   return {
     provider_id: device.provider_id,
