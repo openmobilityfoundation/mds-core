@@ -38,6 +38,7 @@ import {
   pointInShape,
   makePointInShape,
   rangeRandom,
+  randomElement,
   rangeRandomInt,
   range,
   now
@@ -307,10 +308,8 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
 }
 
 function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
-  const providerEventTypes = Object.keys(PROVIDER_EVENTS) as PROVIDER_EVENT[]
-  const event_type = providerEventTypes[rangeRandomInt(providerEventTypes.length)]
-  const providerReasons = Object.keys(PROVIDER_REASONS) as PROVIDER_REASON[]
-  const event_type_reason = providerReasons[rangeRandomInt(providerReasons.length)]
+  const event_type = randomElement(Object.keys(PROVIDER_EVENTS) as PROVIDER_EVENT[])
+  const event_type_reason = randomElement(Object.keys(PROVIDER_REASONS) as PROVIDER_REASON[])
 
   return {
     provider_id: device.provider_id,
