@@ -14,10 +14,16 @@
     limitations under the License.
  */
 
-import {
-  AwsServerlessExpressHandler,
-  AwsServerlessExpressHandlerFunction
-} from '@aws-lambda/aws-serverless-express-handler'
-import { api as daily } from '@mds-core/mds-daily'
+// Express local
+import { ApiServer } from '@mds-core/mds-api-server'
+import { api } from '@mds-core/mds-daily'
+import { setEnv } from '@container-images/env-inject'
 
-export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(daily)
+const {
+  env: { npm_package_name, PORT = 4005 }
+} = process
+
+setEnv()
+/* eslint-reason avoids import of logger */
+/* eslint-disable-next-line no-console */
+ApiServer(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
