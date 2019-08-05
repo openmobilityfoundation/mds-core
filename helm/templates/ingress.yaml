@@ -12,7 +12,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: /{{ $api.name }}
+        prefix: {{ $api.pathPrefix }}
     route:
     - destination:
         port:

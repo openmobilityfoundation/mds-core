@@ -19,14 +19,18 @@ spec:
     spec:
       containers:
       - name: user-container
-        image: {{ $.Values.registry }}/mds-{{ $api.name }}:{{ $api.version }}
+        {{- if $.Values.registry }}
+        image: {{ $.Values.registry }}/{{ $api.name }}:{{ $api.version }}
+        {{- else }}
+        image: mds-{{ $api.name }}:{{ $api.version }}
+        {{- end }}
         ports:
         - containerPort: {{ $api.port }}
           name: user-port
           protocol: TCP
         env:
           - name: PATH_PREFIX
-            value: /{{ $api.name }}
+            value: {{ $api.pathPrefix }}
           {{- if $api.useDB }}
           - name: PG_USER
             value: {{ $.Values.pgUser }}
@@ -46,9 +50,9 @@ spec:
           {{- end }}
           {{- if $api.useCache }}
           - name: REDIS_HOST
-            value: {{ $.Values.cacheHost }}
+            value: {{ $.Values.redisHost }}
           - name: REDIS_PORT
-            value: {{ $.Values.cachePort | quote }}
+            value: {{ $.Values.redisPort | quote }}
           {{- end }}
           {{- if $api.useEvents }}
           - name: CE_NAME
