@@ -46,8 +46,8 @@ export const VEHICLE_EVENTS = Enum(
   'service_end',
   'provider_drop_off',
   'provider_pick_up',
-  'agency_pick_up', // city_pick_up
-  'agency_drop_off', // not in spec
+  'agency_pick_up',
+  'agency_drop_off',
   'reserve',
   'cancel_reservation',
   'trip_start',
