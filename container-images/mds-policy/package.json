@@ -1,5 +1,5 @@
 {
-  "name": "@aws-lambda/mds-policy",
+  "name": "@container-images/mds-policy",
   "version": "0.1.4",
   "description": "AWS Lambda for MDS Policy API",
   "main": "dist/index.js",
@@ -22,7 +22,6 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "^0.1.4",
     "@mds-core/mds-api-server": "^0.1.4",
     "@mds-core/mds-policy": "^0.0.5"
   },
