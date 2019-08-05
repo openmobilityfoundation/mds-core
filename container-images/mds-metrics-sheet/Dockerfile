@@ -8,4 +8,4 @@ COPY dist/* /mds/
 
 WORKDIR /mds
 
-ENTRYPOINT ["/sbin/tini", "node", "index.js"]
+ENTRYPOINT ["/sbin/tini", "node", "metrics-log.js"]
