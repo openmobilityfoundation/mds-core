@@ -33,7 +33,10 @@ spec:
           - name: PG_NAME
             value: {{ $.Values.pgName }}
           - name: PG_PASS
-            value: {{ $.Values.pgPass }}
+            valueFrom:
+              secretKeyRef:
+                name: pg-pass
+                key: PG_PASS
           - name: PG_PORT
             value: {{ $.Values.pgPort | quote }}
           - name: PG_HOST
