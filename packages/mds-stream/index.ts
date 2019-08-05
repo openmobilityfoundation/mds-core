@@ -21,7 +21,9 @@ import Cloudevent from 'cloudevents-sdk'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
 
 const { env } = process
-const binding = null
+/* eslint-reason no cloud-event typings */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+let binding: any = null
 
 function getBinding() {
   if (!binding) {
@@ -31,7 +33,7 @@ function getBinding() {
     }
 
     // eslint-disable-next-line new-cap
-    return new Cloudevent.bindings['http-binary0.2'](config)
+    binding = new Cloudevent.bindings['http-binary0.2'](config)
   }
 
   return binding
