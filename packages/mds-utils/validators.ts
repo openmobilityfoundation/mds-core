@@ -162,19 +162,14 @@ export const isValidAuditIssueCode = (value: unknown, options: Partial<Validator
 export const isValidAuditNote = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
   Validate(value, auditNoteSchema, { property: 'note', ...options })
 
-export const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry => {
-  return !!(telemetry as StringifiedTelemetry).gps
-}
+const PropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
+  typeof obj === 'object' && obj !== null && props.every(prop => prop in obj)
 
-export const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry => {
-  return !!((event as StringifiedEventWithTelemetry).event_type && (event as StringifiedEventWithTelemetry).telemetry)
-}
+export const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry =>
+  PropertyAssertion<StringifiedTelemetry>(telemetry, 'gps')
 
-export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult => {
-  return !!(
-    (device as StringifiedCacheReadDeviceResult).device_id &&
-    (device as StringifiedCacheReadDeviceResult).provider_id &&
-    (device as StringifiedCacheReadDeviceResult).type &&
-    (device as StringifiedCacheReadDeviceResult).propulsion
-  )
-}
+export const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry =>
+  PropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_type', 'telemetry')
+
+export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
+  PropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')

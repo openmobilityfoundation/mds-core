@@ -82,13 +82,12 @@ export function configureClient(pg_info: PGInfo) {
 
 // convert a list of column names to an SQL string of the form (e.g.) "VALUES($1, $2, $3)"
 export function vals_sql(cols: Readonly<string[]>) {
-  const list = cols.filter(col => col !== schema.IDENTITY_COLUMN).map((col, i) => `$${i + 1}`)
-  return `VALUES (${csv(list)})`
+  return csv(cols.filter(col => col !== schema.IDENTITY_COLUMN).map((col, i) => `$${i + 1}`))
 }
 
 // convert a table and its column names into an SQL string of the form (e.g.) "table_name(col1_name, col2_name, col3_name)"
-export function cols_sql(table: string, cols: Readonly<string[]>) {
-  return `${table}(${csv(cols.filter(col => col !== schema.IDENTITY_COLUMN))})`
+export function cols_sql(cols: Readonly<string[]>) {
+  return csv(cols.filter(col => col !== schema.IDENTITY_COLUMN))
 }
 
 // These are the types representing data that can be stored in db

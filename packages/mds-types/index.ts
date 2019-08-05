@@ -62,6 +62,7 @@ export type VEHICLE_EVENT = keyof typeof VEHICLE_EVENTS
 
 export const VEHICLE_REASONS = Enum(
   'user_drop_off',
+  'user_pick_up',
   'rebalance',
   'maintenance',
   'charge',
@@ -71,6 +72,7 @@ export const VEHICLE_REASONS = Enum(
   'off_hours',
   'missing',
   'decommissioned',
+  'rebalance_drop_off',
   'default'
 )
 export type VEHICLE_REASON = keyof typeof VEHICLE_REASONS

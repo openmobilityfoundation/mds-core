@@ -17,7 +17,7 @@
     "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 0 ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --timeout 6000 --require source-map-support/register --recursive tests/**/*.ts && nyc report --reporter=html"
   },
   "author": "City of Los Angeles",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-logger": "^0.1.4",
     "@mds-core/mds-types": "^0.1.1",

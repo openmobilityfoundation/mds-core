@@ -271,18 +271,17 @@ async function readDeviceList(device_ids: UUID[]) {
   return result.rows
 }
 
-async function writeDevice(device_param: Device): Promise<Recorded<Device>> {
+async function writeDevice(device: Device): Promise<Recorded<Device>> {
   const client = await getWriteableClient()
-  const device = { ...device_param, recorded: now() }
-  const sql = `INSERT INTO ${cols_sql(schema.DEVICES_TABLE, schema.DEVICES_COLS)} ${vals_sql(
+  const sql = `INSERT INTO ${schema.DEVICES_TABLE} (${cols_sql(schema.DEVICES_COLS)}) VALUES (${vals_sql(
     schema.DEVICES_COLS
-  )} RETURNING *`
-  const values = vals_list(schema.DEVICES_COLS, device)
+  )}) RETURNING *`
+  const values = vals_list(schema.DEVICES_COLS, { ...device, recorded: now() })
   await logSql(sql, values)
   const {
     rows: [recorded_device]
-  } = await client.query(sql, values)
-  return recorded_device as Recorded<Device>
+  }: { rows: Recorded<Device>[] } = await client.query(sql, values)
+  return { ...device, ...recorded_device }
 }
 
 async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial<Device>): Promise<Device> {
@@ -300,20 +299,19 @@ async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial
   }
 }
 
-async function writeEvent(event_param: VehicleEvent) {
-  await readDevice(event_param.device_id, event_param.provider_id, await getWriteableClient())
+async function writeEvent(event: VehicleEvent) {
   const client = await getWriteableClient()
-  const telemetry_timestamp = event_param.telemetry ? event_param.telemetry.timestamp : null
-  const event = { ...event_param, telemetry_timestamp }
-  const sql = `INSERT INTO ${cols_sql(schema.EVENTS_TABLE, schema.EVENTS_COLS)} ${vals_sql(
+  await readDevice(event.device_id, event.provider_id, client)
+  const telemetry_timestamp = event.telemetry ? event.telemetry.timestamp : null
+  const sql = `INSERT INTO ${schema.EVENTS_TABLE} (${cols_sql(schema.EVENTS_COLS)}) VALUES (${vals_sql(
     schema.EVENTS_COLS
-  )} RETURNING *`
-  const values = vals_list(schema.EVENTS_COLS, event)
+  )}) RETURNING *`
+  const values = vals_list(schema.EVENTS_COLS, { ...event, telemetry_timestamp })
   await logSql(sql, values)
   const {
     rows: [recorded_event]
-  } = await client.query(sql, values)
-  return recorded_event as Recorded<VehicleEvent>
+  }: { rows: Recorded<VehicleEvent>[] } = await client.query(sql, values)
+  return { ...event, ...recorded_event }
 }
 
 async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<VehicleEvent> {
@@ -510,36 +508,45 @@ async function updateTrip(provider_trip_id: UUID, trip: Partial<Trip>) {
   return result.rowCount
 }
 
-async function writeTelemetry(data: Telemetry[]): Promise<Recorded<Telemetry>[]> {
-  if (data.length === 0) {
+async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded<Telemetry>[]> {
+  if (telemetries.length === 0) {
     return []
   }
   try {
     const client = await getWriteableClient()
 
     const values = csv(
-      data
+      telemetries
         .map(convertTelemetryToTelemetryRecord)
         .map(telemetry => csv(vals_list(schema.TELEMETRY_COLS, { ...telemetry }).map(to_sql)))
         .map(row => `(${row})`)
     )
 
-    const sql = `INSERT INTO ${cols_sql(
-      schema.TELEMETRY_TABLE,
+    const sql = `INSERT INTO ${schema.TELEMETRY_TABLE} (${cols_sql(
       schema.TELEMETRY_COLS
-    )} VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
+    )}) VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
 
     await logSql(sql)
     const start = now()
-    const { rows: recorded_telemetry } = await client.query(sql)
+    const { rows: recorded_telemetries }: { rows: Recorded<TelemetryRecord>[] } = await client.query(sql)
 
     const delta = now() - start
     if (delta >= 300) {
       await log.info(
-        `pg db writeTelemetry ${data.length} rows, success in ${delta} ms with ${recorded_telemetry.length} unique`
+        `pg db writeTelemetry ${telemetries.length} rows, success in ${delta} ms with ${recorded_telemetries.length} unique`
       )
     }
-    return recorded_telemetry.map(convertTelemetryRecordToTelemetry) as Recorded<Telemetry>[]
+    return recorded_telemetries.map(
+      recorded_telemetry =>
+        convertTelemetryRecordToTelemetry({
+          ...telemetries.find(
+            telemetry =>
+              telemetry.device_id === recorded_telemetry.device_id &&
+              telemetry.timestamp === recorded_telemetry.timestamp
+          ),
+          ...recorded_telemetry
+        }) as Recorded<Telemetry>
+    )
   } catch (err) {
     await log.error('pg write telemetry error', err)
     throw err
@@ -738,19 +745,18 @@ async function readAudits(query: ReadAuditsQueryParams) {
   }
 }
 
-async function writeAudit(audit_param: Audit): Promise<Recorded<Audit>> {
+async function writeAudit(audit: Audit): Promise<Recorded<Audit>> {
   // write pg
   const client = await getWriteableClient()
-  const audit = { ...audit_param, recorded: now() }
-  const sql = `INSERT INTO ${cols_sql(schema.AUDITS_TABLE, schema.AUDITS_COLS)} ${vals_sql(
+  const sql = `INSERT INTO ${schema.AUDITS_TABLE} (${cols_sql(schema.AUDITS_COLS)}) VALUES (${vals_sql(
     schema.AUDITS_COLS
-  )} RETURNING *`
-  const values = vals_list(schema.AUDITS_COLS, audit)
+  )}) RETURNING *`
+  const values = vals_list(schema.AUDITS_COLS, { ...audit, recorded: now() })
   await logSql(sql, values)
   const {
     rows: [recorded_audit]
-  } = await client.query(sql, values)
-  return recorded_audit as Recorded<Audit>
+  }: { rows: Recorded<Audit>[] } = await client.query(sql, values)
+  return { ...audit, ...recorded_audit }
 }
 
 async function deleteAudit(audit_trip_id: UUID) {
@@ -779,17 +785,17 @@ async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<AuditEvent
   }
 }
 
-async function writeAuditEvent(event: AuditEvent): Promise<Recorded<AuditEvent>> {
+async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded<AuditEvent>> {
   const client = await getWriteableClient()
-  const sql = `INSERT INTO ${cols_sql(schema.AUDIT_EVENTS_TABLE, schema.AUDIT_EVENTS_COLS)} ${vals_sql(
+  const sql = `INSERT INTO ${schema.AUDIT_EVENTS_TABLE} (${cols_sql(schema.AUDIT_EVENTS_COLS)}) VALUES (${vals_sql(
     schema.AUDIT_EVENTS_COLS
-  )} RETURNING *`
-  const values = vals_list(schema.AUDIT_EVENTS_COLS, { ...event, recorded: now() })
+  )}) RETURNING *`
+  const values = vals_list(schema.AUDIT_EVENTS_COLS, { ...audit_event, recorded: now() })
   await logSql(sql, values)
   const {
     rows: [recorded_audit_event]
-  } = await client.query(sql, values)
-  return recorded_audit_event as Recorded<AuditEvent>
+  }: { rows: Recorded<AuditEvent>[] } = await client.query(sql, values)
+  return { ...audit_event, ...recorded_audit_event }
 }
 
 async function writeTrips(trips: Trip[]): Promise<Recorded<Trip>[]> {
@@ -806,14 +812,16 @@ async function writeTrips(trips: Trip[]): Promise<Recorded<Trip>[]> {
         .map(row => `(${row})`)
     )
 
-    const sql = `INSERT INTO ${cols_sql(
-      schema.TRIPS_TABLE,
+    const sql = `INSERT INTO ${schema.TRIPS_TABLE} (${cols_sql(
       schema.TRIPS_COLS
-    )} VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
+    )}) VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
 
     await logSql(sql)
-    const { rows: recorded_trips } = await client.query(sql)
-    return recorded_trips as Recorded<Trip>[]
+    const { rows: recorded_trips }: { rows: Recorded<Trip>[] } = await client.query(sql)
+    return recorded_trips.map(recorded_trip => ({
+      ...trips.find(trip => trip.provider_trip_id === recorded_trip.provider_trip_id),
+      ...recorded_trip
+    }))
   } catch (err) {
     await log.error('pg writeTrips error', err)
     throw err
@@ -909,14 +917,20 @@ async function writeStatusChanges(status_changes: StatusChange[]): Promise<Recor
         .map(row => `(${row})`)
     )
 
-    const sql = `INSERT INTO ${cols_sql(
-      schema.STATUS_CHANGES_TABLE,
+    const sql = `INSERT INTO ${schema.STATUS_CHANGES_TABLE} (${cols_sql(
       schema.STATUS_CHANGES_COLS
-    )} VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
+    )}) VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
 
     await logSql(sql)
-    const { rows: recorded_status_changes } = await client.query(sql)
-    return recorded_status_changes as Recorded<StatusChange>[]
+    const { rows: recorded_status_changes }: { rows: Recorded<StatusChange>[] } = await client.query(sql)
+    return recorded_status_changes.map(recorded_status_change => ({
+      ...status_changes.find(
+        status_change =>
+          status_change.device_id === recorded_status_change.device_id &&
+          status_change.event_time === recorded_status_change.event_time
+      ),
+      ...recorded_status_change
+    }))
   } catch (err) {
     await log.error('pg writeStatusChanges error', err)
     return err
@@ -1042,14 +1056,14 @@ async function writeGeography(geography: Geography): Promise<Recorded<Geography>
   // validate TODO
   // write
   const client = await getWriteableClient()
-  const sql = `INSERT INTO ${cols_sql(schema.GEOGRAPHIES_TABLE, schema.GEOGRAPHIES_COLS)} ${vals_sql(
-    schema.POLICIES_COLS
-  )} RETURNING *`
+  const sql = `INSERT INTO ${schema.GEOGRAPHIES_TABLE} (${cols_sql(schema.GEOGRAPHIES_COLS)}) VALUES (${vals_sql(
+    schema.GEOGRAPHIES_COLS
+  )}) RETURNING *`
   const values = [geography.geography_id, JSON.stringify(geography), false]
   const {
     rows: [recorded_geography]
-  } = await client.query(sql, values)
-  return recorded_geography as Recorded<Geography>
+  }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
+  return { ...geography, ...recorded_geography }
 }
 
 async function readPolicies(params?: {
@@ -1082,14 +1096,14 @@ async function readPolicies(params?: {
 async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
   // validate TODO
   const client = await getWriteableClient()
-  const sql = `INSERT INTO ${cols_sql(schema.POLICIES_TABLE, schema.POLICIES_COLS)} ${vals_sql(
+  const sql = `INSERT INTO ${schema.POLICIES_TABLE} (${cols_sql(schema.POLICIES_COLS)}) VALUES (${vals_sql(
     schema.POLICIES_COLS
-  )} RETURNING *`
+  )}) RETURNING *`
   const values = [policy.policy_id, policy, false]
   const {
     rows: [recorded_policy]
-  } = await client.query(sql, values)
-  return recorded_policy as Recorded<Policy>
+  }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
+  return { ...policy, ...recorded_policy }
 }
 
 async function readRule(rule_id: UUID): Promise<Rule> {
