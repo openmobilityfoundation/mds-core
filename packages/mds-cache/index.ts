@@ -57,13 +57,7 @@ declare module 'redis' {
     keysAsync: (arg1: string) => Promise<string[]>
     zaddAsync: (arg1: string | number, arg2: number, arg3: string) => Promise<number>
     zrangebyscoreAsync: (key: string, min: number | string, max: number | string) => Promise<string[]>
-    georadiusAsync: (
-      key: string,
-      longitude: number,
-      latitude: number,
-      radius: number,
-      unit: string
-    ) => Promise<UUID[]>
+    georadiusAsync: (key: string, longitude: number, latitude: number, radius: number, unit: string) => Promise<UUID[]>
   }
 }
 
@@ -130,7 +124,7 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
-/* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner.*/
+/* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner. */
 async function addGeospatialHash(device_id: UUID, coordinates: [number, number]) {
   const client = await getClient()
   const [lat, lng] = coordinates
