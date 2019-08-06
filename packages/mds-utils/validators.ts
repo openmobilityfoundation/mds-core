@@ -161,14 +161,14 @@ export const isValidAuditIssueCode = (
 export const isValidAuditNote = (note: unknown, options: Partial<ValidatorOptions> = {}): note is string =>
   Validate('note', note, auditNoteSchema, options)
 
-const PropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
+const HasPropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
   typeof obj === 'object' && obj !== null && props.every(prop => prop in obj)
 
 export const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry =>
-  PropertyAssertion<StringifiedTelemetry>(telemetry, 'gps')
+  HasPropertyAssertion<StringifiedTelemetry>(telemetry, 'gps')
 
 export const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry =>
-  PropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_type', 'telemetry')
+  HasPropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_type', 'telemetry')
 
 export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
-  PropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
+  HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
