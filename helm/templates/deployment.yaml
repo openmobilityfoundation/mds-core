@@ -23,6 +23,7 @@ spec:
         image: {{ $.Values.registry }}/{{ $api.name }}:{{ $api.version }}
         {{- else }}
         image: {{ $api.name }}:{{ $api.version }}
+        imagePullPolicy: IfNotPresent
         {{- end }}
         ports:
         - containerPort: {{ $api.port }}
