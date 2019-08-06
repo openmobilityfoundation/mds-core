@@ -373,7 +373,7 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.assert(result.body[0].total_violations === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -390,70 +390,71 @@ describe('Tests Compliance API:', () => {
     })
   })
 
-  describe('Count Violation Under Test: ', () => {
-    before(done => {
-      const devices: Device[] = makeDevices(3, now())
-      const events = makeEventsWithTelemetry(devices, now() - 100000, CITY_OF_LA, 'trip_end')
-      const telemetry: Telemetry[] = []
-      devices.forEach(device => {
-        telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
-      })
-      request
-        .get('/test/initialize')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(() => {
-          provider_request
-            .post('/test/seed')
-            .set('Authorization', PROVIDER_AUTH)
-            .send({ devices, events, telemetry })
-            .expect(201)
-            .end((err, result) => {
-              test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
-              policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
-                .set('Authorization', ADMIN_AUTH)
-                .send(geography)
-                .expect(200)
-                .end(() => {
-                  policy_request
-                    .post(`/admin/policies/${COUNT_POLICY_UUID}`)
-                    .set('Authorization', ADMIN_AUTH)
-                    .send(COUNT_POLICY_JSON)
-                    .expect(200)
-                    .end(() => {
-                      done(err)
-                    })
-                })
-            })
-        })
-    })
+  /* TODO -- Implement count minimums */
+  // describe('Count Violation Under Test: ', () => {
+  //   before(done => {
+  //     const devices: Device[] = makeDevices(3, now())
+  //     const events = makeEventsWithTelemetry(devices, now() - 100000, CITY_OF_LA, 'trip_end')
+  //     const telemetry: Telemetry[] = []
+  //     devices.forEach(device => {
+  //       telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
+  //     })
+  //     request
+  //       .get('/test/initialize')
+  //       .set('Authorization', ADMIN_AUTH)
+  //       .expect(200)
+  //       .end(() => {
+  //         provider_request
+  //           .post('/test/seed')
+  //           .set('Authorization', PROVIDER_AUTH)
+  //           .send({ devices, events, telemetry })
+  //           .expect(201)
+  //           .end((err, result) => {
+  //             test.value(result).hasHeader('content-type', APP_JSON)
+  //             const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+  //             policy_request
+  //               .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+  //               .set('Authorization', ADMIN_AUTH)
+  //               .send(geography)
+  //               .expect(200)
+  //               .end(() => {
+  //                 policy_request
+  //                   .post(`/admin/policies/${COUNT_POLICY_UUID}`)
+  //                   .set('Authorization', ADMIN_AUTH)
+  //                   .send(COUNT_POLICY_JSON)
+  //                   .expect(200)
+  //                   .end(() => {
+  //                     done(err)
+  //                   })
+  //               })
+  //           })
+  //       })
+  //   })
 
-    it('Verifies violation of count compliance (under)', done => {
-      request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end((err, result) => {
-          test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 3)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 3)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
+  //   it('Verifies violation of count compliance (under)', done => {
+  //     request
+  //       .get(`/snapshot/${COUNT_POLICY_UUID}`)
+  //       .set('Authorization', ADMIN_AUTH)
+  //       .expect(200)
+  //       .end((err, result) => {
+  //         test.assert(result.body.length === 1)
+  //         test.assert(result.body[0].compliance[0].matches[0].measured === 3)
+  //         test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 3)
+  //         test.value(result).hasHeader('content-type', APP_JSON)
+  //         done(err)
+  //       })
+  //   })
 
-    afterEach(done => {
-      agency_request
-        .get('/test/shutdown')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(err => {
-          done(err)
-        })
-    })
-  })
+  //   afterEach(done => {
+  //     agency_request
+  //       .get('/test/shutdown')
+  //       .set('Authorization', ADMIN_AUTH)
+  //       .expect(200)
+  //       .end(err => {
+  //         done(err)
+  //       })
+  //   })
+  // })
   describe('Count Violation Over Test: ', () => {
     before(done => {
       const devices: Device[] = makeDevices(15, now())
@@ -501,8 +502,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 10)
+          test.assert(result.body[0].total_violations === 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -781,8 +782,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 10)
+          test.assert(result.body[0].total_violations === 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -846,7 +847,7 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.assert(result.body[0].total_violations === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -896,8 +897,7 @@ describe('Tests Compliance API:', () => {
             rule_type: RULE_TYPES.count,
             geographies: veniceSpecOpsPointIds,
             statuses: { available: ['provider_drop_off'] },
-            vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-            maximum: 0
+            vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter]
           },
           {
             name: 'Drop-off No-Fly Zones',
@@ -970,13 +970,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body[0].compliance[0].matches.length === 22)
-          for (const issue of result.body[0].compliance[0].matches) {
-            test.assert(issue.matched_vehicles.length >= 1)
-          }
           test.assert(result.body[0].compliance[1].matches.length === 1)
-          for (const issue of result.body[0].compliance[1].matches) {
-            test.assert(issue.matched_vehicles.length === 10)
-          }
+          test.assert(result.body[0].compliance[1].matches[0].measured === 10)
           done(err)
         })
     })
@@ -1023,15 +1018,14 @@ describe('Tests Compliance API:', () => {
         })
     })
 
-    it('Historical check reports 15 violations', done => {
+    it('Historical check reports 5 violations', done => {
       request
         .get(`/snapshot/${COUNT_POLICY_UUID_4}?end_date=${yesterday + 200}`)
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 15)
-          test.assert(result.body[0].compliance[0].matches[0].matched_vehicles.length === 15)
+          test.assert(result.body[0].total_violations === 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -1044,7 +1038,7 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches.length === 0)
+          test.assert(result.body[0].total_violations === 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
