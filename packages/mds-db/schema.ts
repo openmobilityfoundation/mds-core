@@ -1,4 +1,4 @@
-import { Enum } from 'packages/mds-types'
+import { Enum } from '@mds-core/mds-types'
 
 // TODO providers are in CSV
 
