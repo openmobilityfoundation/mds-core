@@ -110,7 +110,18 @@ describe('Verify API', () => {
               test.object(result2.body).hasProperty('events')
               test.value(result2.body.events.length).is(0)
               test.object(result2.body).hasProperty('cursor', result1.body.cursor)
-              done(err2)
+              if (err2) {
+                done(err2)
+              } else {
+                request
+                  .get(`/native/events/${result1.body.cursor}?provider_id=invalid-filter-with-cursor`)
+                  .set('Authorization', PROVIDER_AUTH)
+                  .expect(400)
+                  .end(err3 => {
+                    test.value(result2).hasHeader('content-type', APP_JSON)
+                    done(err3)
+                  })
+              }
             })
         }
       })

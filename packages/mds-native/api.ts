@@ -107,42 +107,51 @@ function api(app: express.Express): express.Express {
     start_time: Timestamp
     end_time: Timestamp
     after: number
-    limit: number
   }>
 
-  const getRequestCursor = (req: NativeApiGetEventsRequest): NativeApiGetEventsCursor => {
+  const getRequestParameters = (
+    req: NativeApiGetEventsRequest
+  ): { cursor: NativeApiGetEventsCursor; limit: number } => {
     const {
       params: { cursor },
-      query
+      query: { limit = 1000, ...filters }
     } = req
+    isValidNumber(limit, { required: false, min: 1, max: 1000, property: 'limit' })
     if (cursor) {
+      if (Object.keys(filters).length > 0) {
+        throw new ValidationError('unexpected_filters', { cursor, filters })
+      }
       try {
-        return JSON.parse(Buffer.from(cursor, 'base64').toString('ascii'))
+        return {
+          cursor: JSON.parse(Buffer.from(cursor, 'base64').toString('ascii')),
+          limit: Number(limit)
+        }
       } catch (err) /* istanbul ignore next */ {
         throw new ValidationError('invalid_cursor', { cursor })
       }
     } else {
-      const { provider_id, device_id, start_time, end_time, limit } = query
+      const { provider_id, device_id, start_time, end_time } = filters
       isValidProviderId(provider_id, { required: false })
       isValidDeviceId(device_id, { required: false })
       isValidTimestamp(start_time, { required: false })
       isValidTimestamp(end_time, { required: false })
-      isValidNumber(limit, { required: false, min: 1, max: 1000, property: 'limit' })
       return {
-        provider_id,
-        device_id,
-        start_time: start_time ? Number(start_time) : undefined,
-        end_time: end_time ? Number(end_time) : undefined,
-        after: 0,
-        limit: limit ? Number(limit) : 1000
+        cursor: {
+          provider_id,
+          device_id,
+          start_time: start_time ? Number(start_time) : undefined,
+          end_time: end_time ? Number(end_time) : undefined,
+          after: 0
+        },
+        limit: Number(limit)
       }
     }
   }
 
   app.get(pathsFor('/events/:cursor?'), async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
     try {
-      const cursor = getRequestCursor(req)
-      const events = await db.readEventsWithTelemetry(cursor)
+      const { cursor, limit } = getRequestParameters(req)
+      const events = await db.readEventsWithTelemetry({ ...cursor, limit })
       return res.status(200).send({
         version: NATIVE_API_VERSION,
         cursor: Buffer.from(
