@@ -257,7 +257,7 @@ function api(app: express.Express): express.Express {
           })
         })
       )
-      await log.warn(JSON.stringify(stats))
+      await log.info(JSON.stringify(stats))
       res.status(200).send(stats)
     } catch (err) {
       await fail(err)
