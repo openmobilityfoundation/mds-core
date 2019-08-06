@@ -188,7 +188,7 @@ const COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
   ]
 }
 
-const PRIMARY_KEY: { [T in TABLE_NAME]: COLUMN_NAME[] } = {
+const TABLE_KEY: { [T in TABLE_NAME]: COLUMN_NAME[] } = {
   [TABLE.audits]: [COLUMN.audit_trip_id],
   [TABLE.audit_events]: [COLUMN.audit_trip_id, COLUMN.timestamp],
   [TABLE.devices]: [COLUMN.device_id],
@@ -263,7 +263,7 @@ export default {
   COLUMN,
   COLUMNS,
   COLUMN_TYPE,
-  PRIMARY_KEY,
   TABLE,
-  TABLES
+  TABLES,
+  TABLE_KEY
 }

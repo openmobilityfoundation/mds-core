@@ -65,7 +65,7 @@ async function createTables(client: MDSPostgresClient) {
         table =>
           `CREATE TABLE ${table} (${schema.COLUMNS[table]
             .map(column => `${column} ${schema.COLUMN_TYPE[column]}`)
-            .join(', ')}, PRIMARY KEY (${csv(schema.PRIMARY_KEY[table])}));`
+            .join(', ')}, PRIMARY KEY (${csv(schema.TABLE_KEY[table])}));`
       )
       .join('\n')
     await logSql(create)
@@ -127,7 +127,7 @@ async function addAuditSubjectIdColumnToAuditEventsTable(client: MDSPostgresClie
 async function updateAuditEventsTablePrimaryKey(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
   // Change the PK to avoid errors when two events have the same timestamp
-  const AUDIT_EVENTS_PK = csv(schema.PRIMARY_KEY[schema.TABLE.audit_events])
+  const AUDIT_EVENTS_PK = csv(schema.TABLE_KEY[schema.TABLE.audit_events])
   await exec(`ALTER TABLE ${schema.TABLE.audit_events} DROP CONSTRAINT ${schema.TABLE.audit_events}_pkey`)
   await exec(`ALTER TABLE ${schema.TABLE.audit_events} ADD PRIMARY KEY (${AUDIT_EVENTS_PK})`)
   await log.info(
