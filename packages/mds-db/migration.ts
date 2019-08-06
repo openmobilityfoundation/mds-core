@@ -3,7 +3,7 @@ import { AUDIT_EVENT_TYPES } from '@mds-core/mds-types'
 import { csv } from '@mds-core/mds-utils'
 
 import log from '@mds-core/mds-logger'
-import schema from './schema'
+import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient } from './sql-utils'
 
 /**
@@ -19,8 +19,8 @@ async function dropTables(client: MDSPostgresClient) {
 // Add the index, if it doesn't already exist.
 async function addIndex(
   client: MDSPostgresClient,
-  table: string,
-  column: string,
+  table: TABLE_NAME,
+  column: COLUMN_NAME,
   options: Partial<{ unique: boolean }> = { unique: false }
 ) {
   const exec = SqlExecuter(client)
@@ -63,7 +63,7 @@ async function createTables(client: MDSPostgresClient) {
     const create = missing
       .map(
         table =>
-          `CREATE TABLE ${table} (${schema.COLUMNS[table]
+          `CREATE TABLE ${table} (${schema.TABLE_COLUMNS[table]
             .map(column => `${column} ${schema.COLUMN_TYPE[column]}`)
             .join(', ')}, PRIMARY KEY (${csv(schema.TABLE_KEY[table])}));`
       )
@@ -72,14 +72,14 @@ async function createTables(client: MDSPostgresClient) {
     await log.warn(create)
     await client.query(create)
     await log.info('postgres create table suceeded')
-    await Promise.all(missing.map(table => addIndex(client, table, 'recorded')))
+    await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.recorded)))
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.id, { unique: true })))
   }
 }
 
 async function addTimestampColumnToAuditsTable(client: MDSPostgresClient) {
   // Make sure this migration is still required
-  if (schema.COLUMNS.audits.some((column: string) => column === schema.COLUMN.timestamp)) {
+  if (schema.TABLE_COLUMNS.audits.some((column: string) => column === schema.COLUMN.timestamp)) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
@@ -103,7 +103,7 @@ async function addTimestampColumnToAuditsTable(client: MDSPostgresClient) {
 
 async function addAuditSubjectIdColumnToAuditEventsTable(client: MDSPostgresClient) {
   // Make sure this migration is still required
-  if (schema.COLUMNS.audit_events.some((column: string) => column === schema.COLUMN.audit_subject_id)) {
+  if (schema.TABLE_COLUMNS.audit_events.some((column: string) => column === schema.COLUMN.audit_subject_id)) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
@@ -139,7 +139,7 @@ async function removeAuditVehicleIdColumnFromAuditsTable(client: MDSPostgresClie
   const DEPRECATED_AUDIT_VEHICLE_ID_COL = 'audit_vehicle_id'
 
   // Only run if the audit_vehicle_id column has been removed from the schema
-  if (!schema.COLUMNS.audits.some(column => (column as string) === DEPRECATED_AUDIT_VEHICLE_ID_COL)) {
+  if (!schema.TABLE_COLUMNS.audits.some(column => (column as string) === DEPRECATED_AUDIT_VEHICLE_ID_COL)) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
@@ -165,7 +165,7 @@ async function recreateProviderTables(client: MDSPostgresClient) {
   const RECREATE_TABLES = csv([schema.TABLE.trips, schema.TABLE.status_changes])
 
   // Make sure this migration is still required
-  if (schema.COLUMNS.trips.some(column => (column as string) === schema.COLUMN.provider_trip_id)) {
+  if (schema.TABLE_COLUMNS.trips.some(column => (column as string) === schema.COLUMN.provider_trip_id)) {
     const exec = SqlExecuter(client)
     // Make sure this migration hasn't already run
     const result = await exec(
@@ -187,7 +187,7 @@ async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
     `SELECT table_name FROM information_schema.columns WHERE column_name = '${schema.COLUMN.id}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
   )
 
-  const create = schema.TABLES.filter(name => schema.COLUMNS[name].some(col => col === schema.COLUMN.id)).filter(
+  const create = schema.TABLES.filter(name => schema.TABLE_COLUMNS[name].some(col => col === schema.COLUMN.id)).filter(
     name => !existing.some(({ table_name }) => table_name === name)
   )
 

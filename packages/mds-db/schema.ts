@@ -13,7 +13,7 @@ const TABLE = Enum(
   'telemetry',
   'trips'
 )
-type TABLE_NAME = keyof typeof TABLE
+export type TABLE_NAME = keyof typeof TABLE
 const TABLES = Object.keys(TABLE) as TABLE_NAME[]
 
 const COLUMN = Enum(
@@ -74,9 +74,10 @@ const COLUMN = Enum(
   'vehicle_type',
   'year'
 )
-type COLUMN_NAME = keyof typeof COLUMN
+export type COLUMN_NAME = keyof typeof COLUMN
+const COLUMNS = Object.keys(COLUMN) as COLUMN_NAME[]
 
-const COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
+const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
   [TABLE.audits]: [
     COLUMN.id,
     COLUMN.audit_trip_id,
@@ -265,5 +266,6 @@ export default {
   COLUMN_TYPE,
   TABLE,
   TABLES,
+  TABLE_COLUMNS,
   TABLE_KEY
 }
