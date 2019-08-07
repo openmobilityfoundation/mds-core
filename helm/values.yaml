@@ -57,6 +57,8 @@ apis:
     jwtAudience: 
 namespace: default
 useJwtAuth: true
+useAws: true
+certificateArn: 
 jwtIssuer: 
 registry: 
 useLatestImage: true
