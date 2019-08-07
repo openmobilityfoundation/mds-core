@@ -34,4 +34,4 @@ kubectl create secret generic registry-login \
 
 h2. Installation
 
-At this point, you should be able to run `helm install --name mds .` from this directory.
+At this point, you should be able to run `helm install --values=values.local.yaml --name mds .` from this directory.
