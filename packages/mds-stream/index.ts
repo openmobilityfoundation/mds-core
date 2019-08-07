@@ -39,7 +39,7 @@ function getBinding() {
   return binding
 }
 
-async function write(type: string, data: string) {
+async function writeCloudEvent(type: string, data: string) {
   const cloudevent = new Cloudevent(Cloudevent.specs['0.2'])
     .type(type)
     .source(env.CE_NAME)
@@ -169,14 +169,14 @@ async function writeStreamBatch(stream: Stream, field: string, values: unknown[]
 // put basics of vehicle in the cache
 async function writeDevice(device: Device) {
   if (env.SINK) {
-    return write('mds.device', JSON.stringify(device))
+    return writeCloudEvent('mds.device', JSON.stringify(device))
   }
   return writeStream(DEVICE_INDEX_STREAM, 'data', device)
 }
 
 async function writeEvent(event: VehicleEvent) {
   if (env.SINK) {
-    return write('mds.event', JSON.stringify(event))
+    return writeCloudEvent('mds.event', JSON.stringify(event))
   }
   return Promise.all([DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM].map(stream => writeStream(stream, 'event', event)))
 }
@@ -184,7 +184,7 @@ async function writeEvent(event: VehicleEvent) {
 // put latest locations in the cache
 async function writeTelemetry(telemetry: Telemetry[]) {
   if (env.SINK) {
-    await Promise.all(telemetry.map(item => write('mds.telemetry', JSON.stringify(item))))
+    await Promise.all(telemetry.map(item => writeCloudEvent('mds.telemetry', JSON.stringify(item))))
     return
   }
   const start = now()
