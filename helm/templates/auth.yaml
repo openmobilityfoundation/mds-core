@@ -21,6 +21,7 @@ spec:
       trigger_rules:
       - excluded_paths:
         - exact: {{ $api.pathPrefix }}/health
+        - exact: /health
   principalBinding: USE_ORIGIN
 {{- end }}
 {{- end }}

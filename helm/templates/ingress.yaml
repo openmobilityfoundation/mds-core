@@ -2,13 +2,13 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: gateway
+  name: alb
   namespace: {{ .Values.namespace }}
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/healthcheck-path: /health
-    alb.ingress.kubernetes.io/success-codes: "401"
+    alb.ingress.kubernetes.io/success-codes: "200"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
     alb.ingress.kubernetes.io/certificate-arn: {{ .Values.certificateArn }}
   labels:
@@ -33,13 +33,13 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ $api.name }}
+  name: {{ $api.name }}-route
   namespace: {{ $.Values.namespace }}
 spec:
   hosts:
   - "*"
   gateways:
-  - mds-gateway
+  - ingressgateway
   http:
   - match:
     - uri:
@@ -54,7 +54,7 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: mds-gateway
+  name: ingressgateway
   namespace: {{ .Values.namespace }}
 spec:
   selector:
