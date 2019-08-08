@@ -56,16 +56,16 @@ apis:
     useEvents: true
     jwtAudience: 
 namespace: default
-useJwtAuth: true
-useAws: true
-certificateArn: 
+useJwtAuth: false
 jwtIssuer: 
+useAws: false
+certificateArn: 
 registry: 
 useLatestImage: true
-pgName: 
-pgUser: 
-pgHost: 
-pgHostReader: 
+pgName: mds
+pgUser: mdsadmin
+pgHost: host.docker.internal
+pgHostReader: host.docker.internal
 pgPort: 5432
-redisHost: 
+redisHost: host.docker.internal 
 redisPort: 6379

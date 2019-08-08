@@ -1,5 +1,5 @@
-{{- if .Values.useJwtAuth }}
 {{- range $api := .Values.apis }}
+{{- if $api.jwtAudience }}
 ---
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
@@ -18,6 +18,9 @@ spec:
       - {{ $api.jwtAudience | quote }}
       issuer: {{ $.Values.jwtIssuer | quote }}
       jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwtIssuer }}
+      trigger_rules:
+      - excluded_paths:
+        - exact: {{ $api.pathPrefix }}/health
   principalBinding: USE_ORIGIN
 {{- end }}
 {{- end }}
