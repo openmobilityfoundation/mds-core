@@ -153,7 +153,7 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
     provider_name: 'Test 3'
   }),
   [TEST4_PROVIDER_ID]: Object.freeze({
-    provider_name: 'Blue*'
+    provider_name: 'Test 4'
   })
 })
 
