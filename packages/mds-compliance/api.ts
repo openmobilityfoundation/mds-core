@@ -31,7 +31,7 @@ import {
   ServerError
 } from '@mds-core/mds-utils'
 import { Policy, Geography, ComplianceResponse, Device, UUID } from '@mds-core/mds-types'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName, BLUE_PROVIDER_ID } from '@mds-core/mds-providers'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName, BLUE_TEST_PROVIDER_ID } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
@@ -107,7 +107,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
-    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_PROVIDER_ID].includes(res.locals.provider_id)) {
+    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_TEST_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
     /* istanbul ignore next */
@@ -187,7 +187,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
-    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_PROVIDER_ID].includes(res.locals.provider_id)) {
+    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_TEST_PROVIDER_ID].includes(res.locals.provider_id)) {
       res.status(401).send({ result: 'unauthorized access' })
     }
 
