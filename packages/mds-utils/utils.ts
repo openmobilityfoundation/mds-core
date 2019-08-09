@@ -619,7 +619,7 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
 
 function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
   const status = rule.statuses ? rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS] : null
-  return status
+  return status !== null
     ? rule.statuses !== null &&
         Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
         status !== undefined &&
