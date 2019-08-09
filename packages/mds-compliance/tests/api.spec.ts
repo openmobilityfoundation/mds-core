@@ -102,7 +102,7 @@ const COUNT_POLICY_JSON: Policy = {
       rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
       rule_type: RULE_TYPES.count,
       geographies: [GEOGRAPHY_UUID],
-      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
+      statuses: null,
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 10,
       minimum: 5

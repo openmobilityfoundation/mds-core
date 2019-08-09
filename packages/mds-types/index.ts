@@ -253,7 +253,7 @@ interface BaseRule {
   name: string
   rule_id: UUID
   geographies: UUID[]
-  statuses: Partial<{ [S in keyof typeof STATUS_EVENT_MAP]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }>
+  statuses: Partial<{ [S in keyof typeof STATUS_EVENT_MAP]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }> | null
   rule_type: 'count' | 'speed' | 'time'
   vehicle_types?: VEHICLE_TYPE[] | null
   maximum?: number | null
@@ -286,7 +286,8 @@ export type Rule = CountRule | TimeRule | SpeedRule
 export interface Policy {
   name: string
   description: string
-  provider_ids: UUID[]
+  provider_ids?: UUID[]
+  published_date?: Timestamp
   policy_id: UUID
   start_date: Timestamp
   end_date: Timestamp | null
