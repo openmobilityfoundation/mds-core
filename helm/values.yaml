@@ -62,6 +62,12 @@ useAws: false
 certificateArn: 
 registry: 
 useLatestImage: true
+dns:
+  zones:
+    - ladot.io.
+    - mdscompliance.app.
+    - movement.systems.
+  owner: dns-owner  # fixme: figure out dns owner-id strategy
 pgName: mds
 pgUser: mdsadmin
 pgHost: host.docker.internal
