@@ -63,11 +63,12 @@ certificateArn:
 registry: 
 useLatestImage: true
 dns:
+  owner: dns-owner  # fixme: figure out dns owner-id naming strategy
+  policy: upsert-only # [ sync | upsert]; would prevent ExternalDNS from deleting any records, omit to enable full synchronization
   zones:
     - ladot.io.
     - mdscompliance.app.
     - movement.systems.
-  owner: dns-owner  # fixme: figure out dns owner-id strategy
 pgName: mds
 pgUser: mdsadmin
 pgHost: host.docker.internal
