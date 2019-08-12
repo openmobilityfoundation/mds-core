@@ -92,7 +92,7 @@ const fixtures: {
   },
   {
     agency: { event_type: VEHICLE_EVENTS.trip_leave },
-    provider: { event_type: PROVIDER_EVENTS.reserved, event_type_reason: PROVIDER_REASONS.user_pick_up }
+    provider: { event_type: PROVIDER_EVENTS.removed, event_type_reason: PROVIDER_REASONS.service_end }
   },
   {
     agency: { event_type: VEHICLE_EVENTS.trip_end },
