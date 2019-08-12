@@ -1178,21 +1178,21 @@ async function readEventsWithTelemetry({
   provider_id,
   start_time,
   end_time,
-  after,
+  last_id = 0,
   limit = 1000
 }: Partial<{
   device_id: UUID
   provider_id: UUID
   start_time: Timestamp
   end_time: Timestamp
-  after: number
+  last_id: number
   limit: number
 }>): Promise<Recorded<VehicleEvent>[]> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
 
-  const conditions: string[] = after ? [`id > ${vals.add(after)}`] : []
+  const conditions: string[] = after ? [`id > ${vals.add(last_id)}`] : []
 
   if (provider_id) {
     if (!isUUID(provider_id)) {

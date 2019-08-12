@@ -106,7 +106,7 @@ function api(app: express.Express): express.Express {
     device_id: UUID
     start_time: Timestamp
     end_time: Timestamp
-    after: number
+    last_id: number
   }>
 
   const getRequestParameters = (
@@ -140,8 +140,7 @@ function api(app: express.Express): express.Express {
           provider_id,
           device_id,
           start_time: start_time ? Number(start_time) : undefined,
-          end_time: end_time ? Number(end_time) : undefined,
-          after: 0
+          end_time: end_time ? Number(end_time) : undefined
         },
         limit: Number(limit)
       }
@@ -157,7 +156,7 @@ function api(app: express.Express): express.Express {
         cursor: Buffer.from(
           JSON.stringify({
             ...cursor,
-            after: events.length === 0 ? cursor.after : events[events.length - 1].id
+            last_id: events.length === 0 ? cursor.last_id : events[events.length - 1].id
           })
         ).toString('base64'),
         events: events.map(({ service_area_id, ...event }) => event)
