@@ -36,7 +36,7 @@ If you are using a private container image registry, you may need to add its cre
 
 ```bash
 kubectl create secret generic registry-login \
-    --from-file=.docker/configjson=${HOME}/.docker/config.json \
+    --from-file=.dockerconfigjson=${HOME}/.docker/config.json \
     --type=kubernetes.io/dockerconfigjson
 ```
 
