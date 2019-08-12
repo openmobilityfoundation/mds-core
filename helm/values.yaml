@@ -64,7 +64,7 @@ registry:
 useLatestImage: true
 dns:
   owner: mds-dns  # fixme: figure out dns owner-id naming strategy
-  policy: upsert-only # [ sync | upsert]; would prevent ExternalDNS from deleting any records, omit to enable full synchronization
+  policy: upsert-only # [ sync | upsert-only]; would prevent ExternalDNS from deleting any records, omit to enable full synchronization
   zones:
     - ladot.io.
     - mdscompliance.app.
