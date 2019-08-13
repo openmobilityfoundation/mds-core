@@ -234,8 +234,8 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.parking_verification_url]: 'varchar(255)',
   [COLUMN.policy_id]: 'uuid NOT NULL',
   [COLUMN.policy_json]: 'json NOT NULL',
-  [COLUMN.propulsion]: 'varchar(31) NOT NULL',
-  [COLUMN.propulsion_type]: 'varchar(31) NOT NULL',
+  [COLUMN.propulsion]: 'varchar(31)[] NOT NULL',
+  [COLUMN.propulsion_type]: 'varchar(31)[] NOT NULL',
   [COLUMN.provider_device_id]: 'uuid', // May be null if can't find
   [COLUMN.provider_id]: 'uuid NOT NULL',
   [COLUMN.provider_name]: 'varchar(31) NOT NULL',
