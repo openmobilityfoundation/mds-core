@@ -83,7 +83,7 @@ kubectl port-forward $(kubectl get pods -n=istio-system | \
       grep prometheus | cut -d' ' -f1) 8443:8443 -n=istio-system &
 ```
 
-View
+## View
 
   * [dashboard](https://localhost:8443)
   * [prometheus](https://localhost:9090)
