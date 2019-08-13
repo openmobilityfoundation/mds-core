@@ -63,4 +63,22 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost/agency/test/initialize
 
 ## Installation
 
-At this point, you should be able to run `helm install --name mds .` from this directory.  If you're using a custom values file, you'll need to add the argument `--values=...` to this command. If you're using a custom namespace, you'll want to add the `--namespace=...` argument.
+At this point, you should be able to deploy an MDS cluster from this directory noting that if you're using a custom values file, you'll need to add the argument `--values=...` to this command, if you're using a custom namespace, you'll want to add the `--namespace=...` argument, etc.
+
+```bash
+helm install --name mds .
+```
+
+### Installation : beta
+
+In order to locally deploy a fully self-contained cluster consider:
+
+```bash
+helm install --set postgresql.enabled=true,redis.enabled=true --name mds .
+```
+
+## Cleanup
+
+```bash
+helm delete --purge mds
+```
