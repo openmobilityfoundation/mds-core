@@ -63,16 +63,21 @@ certificateArn:
 registry: 
 useLatestImage: true
 dns:
+  enabled: false
   owner: mds-dns  # fixme: figure out dns owner-id naming strategy
   policy: upsert-only # [ sync | upsert-only]; would prevent ExternalDNS from deleting any records, omit to enable full synchronization
   zones:
-    - ladot.io.
-    - mdscompliance.app.
-    - movement.systems.
-pgName: mds
-pgUser: mdsadmin
-pgHost: host.docker.internal
-pgHostReader: host.docker.internal
-pgPort: 5432
-redisHost: host.docker.internal 
-redisPort: 6379
+    - zone.a.
+    - zone.b.
+    - zone.c.
+postgresql:
+  enabled: false
+  name: mds
+  user: mdsadmin
+  host: host.docker.internal
+  hostReader: host.docker.internal
+  port: 5432
+redis:
+  enabled: false
+  host: host.docker.internal
+  port: 6379

@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   hosts:
-  - {{ .Values.pgHost }}
+  - {{ $.Values.postgresql.host }}
   ports:
-  - number: {{ .Values.pgPort }}
+  - number: {{ $.Values.postgresql.port }}
     name: tcp
     protocol: TCP
   location: MESH_EXTERNAL
@@ -19,9 +19,9 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   hosts:
-  - {{ .Values.pgHostReader }}
+  - {{ $.Values.postgresql.hostReader }}
   ports:
-  - number: {{ .Values.pgPort }}
+  - number: {{ $.Values.postgresql.port }}
     name: tcp
     protocol: TCP
   location: MESH_EXTERNAL

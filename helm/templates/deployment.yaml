@@ -34,26 +34,26 @@ spec:
             value: {{ $api.pathPrefix }}
           {{- if $api.useDB }}
           - name: PG_USER
-            value: {{ $.Values.pgUser }}
+            value: {{ $.Values.postgresql.user }}
           - name: PG_NAME
-            value: {{ $.Values.pgName }}
+            value: {{ $.Values.postgresql.name }}
           - name: PG_PASS
             valueFrom:
               secretKeyRef:
                 name: pg-pass
                 key: PG_PASS
           - name: PG_PORT
-            value: {{ $.Values.pgPort | quote }}
+            value: {{ $.Values.postgresql.port | quote }}
           - name: PG_HOST
-            value: {{ $.Values.pgHost }}
+            value: {{ $.Values.postgresql.host }}
           - name: PG_HOST_READER
-            value: {{ $.Values.pgHostReader }}
+            value: {{ $.Values.postgresql.host }}
           {{- end }}
           {{- if $api.useCache }}
           - name: REDIS_HOST
-            value: {{ $.Values.redisHost }}
+            value: {{ $.Values.redis.host }}
           - name: REDIS_PORT
-            value: {{ $.Values.redisPort | quote }}
+            value: {{ $.Values.redis.port | quote }}
           {{- end }}
           {{- if $api.useEvents }}
           - name: CE_NAME
