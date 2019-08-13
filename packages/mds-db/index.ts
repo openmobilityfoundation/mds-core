@@ -1192,7 +1192,7 @@ async function readEventsWithTelemetry({
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
 
-  const conditions: string[] = after ? [`id > ${vals.add(last_id)}`] : []
+  const conditions: string[] = last_id ? [`id > ${vals.add(last_id)}`] : []
 
   if (provider_id) {
     if (!isUUID(provider_id)) {
