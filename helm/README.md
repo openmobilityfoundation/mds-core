@@ -71,7 +71,7 @@ helm install --name mds .
 
 ### Installation : beta
 
-In order to locally deploy a fully self-contained cluster consider:
+In order to locally deploy a fully self-contained cluster, ie standalone-cluster, consider the following operation:
 
 ```bash
 helm install --set postgresql.enabled=true,redis.enabled=true --name mds .
