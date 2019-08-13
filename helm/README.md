@@ -31,7 +31,6 @@ kubectl create secret generic pg-pass \
     --from-literal 'PG_PASS=Password123#'
 ```
 
-
 If you are using a private container image registry, you may need to add its credentials.
 
 ```bash
@@ -69,15 +68,27 @@ At this point, you should be able to deploy an MDS cluster from this directory n
 helm install --name mds .
 ```
 
-### Installation : alpha
+## Installation : standalone
 
 In order to locally deploy a fully self-contained cluster, ie standalone-cluster, consider the following operation:
 
 ```bash
+kubectl create secret generic pg-pass --from-literal 'PG_PASS=Password123#'
 helm install --set postgresql.enabled=true,redis.enabled=true --name mds .
+# dashboard
+kubectl port-forward $(kubectl get pods -n=kube-system | \
+      grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
+# prometheus
+kubectl port-forward $(kubectl get pods -n=istio-system | \
+      grep prometheus | cut -d' ' -f1) 8443:8443 -n=istio-system &
 ```
 
-## Cleanup
+View
+
+  * [dashboard](https://localhost:8443)
+  * [prometheus](https://localhost:9090)
+
+## Uninstall
 
 ```bash
 helm delete --purge mds
