@@ -69,7 +69,7 @@ At this point, you should be able to deploy an MDS cluster from this directory n
 helm install --name mds .
 ```
 
-### Installation : beta
+### Installation : alpha
 
 In order to locally deploy a fully self-contained cluster, ie standalone-cluster, consider the following operation:
 
