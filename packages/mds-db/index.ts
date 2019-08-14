@@ -1149,23 +1149,26 @@ async function publishGeography(geography_id: UUID) {
   return geography_id
 }
 
-async function writeGeographyMetadata(metadata: GeographyMetadata) {
+async function writeGeographyMetadata(geography_id: UUID, metadata: GeographyMetadata) {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${cols_sql(schema.GEOGRAPHY_METADATA_TABLE, schema.GEOGRAPHY_METADATA_COLS)}
     ${vals_sql(schema.GEOGRAPHY_METADATA_COLS)}`
   try {
-    await client.query(sql, [metadata.geography_id, metadata.geography_metadata])
+    await client.query(sql, [geography_id, metadata])
   } catch (err) {
     await log.error(err)
     throw err
   }
 }
 
-async function readGeographyMetadata(metadata_id: UUID): Promise<GeographyMetadata> {
+async function readGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
   const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.GEOGRAPHY_METADATA_TABLE} WHERE geography_id = '${metadata_id}'`
+  const sql = `SELECT * FROM ${schema.GEOGRAPHY_METADATA_TABLE} WHERE geography_id = '${geography_id}'`
   try {
     const result = await client.query(sql)
+    if (result.rows.length === 0) {
+      throw new Error(`Metadata for ${geography_id} not found`)
+    }
     return result.rows[0]
   } catch (err) {
     await log.error(err)
@@ -1302,23 +1305,26 @@ async function publishPolicy(policy_id: UUID) {
   }
 }
 
-async function writePolicyMetadata(metadata: PolicyMetadata) {
+async function writePolicyMetadata(policy_id: UUID, metadata: PolicyMetadata) {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${cols_sql(schema.POLICY_METADATA_TABLE, schema.POLICY_METADATA_COLS)}
     ${vals_sql(schema.GEOGRAPHY_METADATA_COLS)}`
   try {
-    await client.query(sql, [metadata.policy_id, metadata.policy_metadata])
+    await client.query(sql, [policy_id, metadata])
   } catch (err) {
     await log.error(err)
     throw err
   }
 }
 
-async function readPolicyMetadata(metadata_id: UUID): Promise<PolicyMetadata> {
+async function readPolicyMetadata(policy_id: UUID): Promise<PolicyMetadata> {
   const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.POLICY_METADATA_TABLE} WHERE geography_id = '${metadata_id}'`
+  const sql = `SELECT * FROM ${schema.POLICY_METADATA_TABLE} WHERE policy_id = '${policy_id}'`
   try {
     const result = await client.query(sql)
+    if (result.rows.length === 0) {
+      throw new Error(`Metadata for ${policy_id} not found`)
+    }
     return result.rows[0]
   } catch (err) {
     await log.error(err)

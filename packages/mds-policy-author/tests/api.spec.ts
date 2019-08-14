@@ -296,9 +296,6 @@ describe('Tests app', () => {
         })
     })
 
-    // TODO
-    // this test does not behave the way I expect it to
-    // that second get should not return anything
     it('can delete an unpublished policy', done => {
       request
         .delete(`/admin/policies/${POLICY2_UUID}`)
@@ -319,6 +316,43 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_NON_PROVIDER)
         .expect(404)
         .end(err => {
+          done(err)
+        })
+    })
+
+    it('verifies POSTing policy metadata', done => {
+      const metadata = { some_arbitrary_thing: 'boop' }
+      request
+        .post(`/admin/policies/meta/${POLICY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(metadata)
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies GETing policy metadata', done => {
+      request
+        .get(`/admin/policies/meta/${POLICY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.some_arbitrary_thing === 'boop')
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot GET non-existant policy metadata', done => {
+      request
+        .get(`/admin/policies/meta/beepbapboop`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .expect(404)
+        .end((err, result) => {
+          test.assert(result.body.result === 'not found')
+          test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })
@@ -366,6 +400,43 @@ describe('Tests app', () => {
         .send(geography)
         .expect(200)
         .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies POSTing geography metadata', done => {
+      const metadata = { some_arbitrary_thing: 'boop' }
+      request
+        .post(`/admin/geographies/meta/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(metadata)
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies GETing geography metadata', done => {
+      request
+        .get(`/admin/geographies/meta/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.some_arbitrary_thing === 'boop')
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot GET non-existant geography metadata', done => {
+      request
+        .get(`/admin/geographies/meta/beepbapboop`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .expect(404)
+        .end((err, result) => {
+          test.assert(result.body.result === 'not found')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

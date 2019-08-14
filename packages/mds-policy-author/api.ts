@@ -243,22 +243,22 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/admin/policies/meta/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
-      const metadata = await db.readPolicyMetadata(policy_id)
-      return res.status(200).send(metadata)
+      const { policy_metadata } = await db.readPolicyMetadata(policy_id)
+      return res.status(200).send(policy_metadata)
     } catch (err) {
-      await log.error('failed to read geography', err.stack)
+      await log.error('failed to read geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
     }
   })
 
   app.post(pathsFor('/admin/policies/meta/:policy_id'), async (req, res) => {
     const policy_metadata = req.body
-
+    const { policy_id } = req.params
     try {
-      await db.writePolicyMetadata(policy_metadata)
-      return res.status(200).send({ result: `successfully wrote policy of id ${policy_metadata.policy_id}` })
+      await db.writePolicyMetadata(policy_id, policy_metadata)
+      return res.status(200).send({ result: `successfully wrote policy metadata of id ${policy_id}` })
     } catch (err) {
-      await log.error('failed to write policy metadata', err.stack)
+      await log.error('failed to write geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
     }
   })
@@ -318,20 +318,20 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/admin/geographies/meta/:geography_id'), async (req, res) => {
     const { geography_id } = req.params
     try {
-      const metadata = await db.readGeographyMetadata(geography_id)
-      return res.status(200).send(metadata)
+      const { geography_metadata } = await db.readGeographyMetadata(geography_id)
+      return res.status(200).send(geography_metadata)
     } catch (err) {
-      await log.error('failed to read geography', err.stack)
+      await log.error('failed to read geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
     }
   })
 
   app.post(pathsFor('/admin/geographies/meta/:geography_id'), async (req, res) => {
     const geography_metadata = req.body
-
+    const { geography_id } = req.params
     try {
-      await db.writeGeographyMetadata(geography_metadata)
-      return res.status(200).send({ result: `successfully wrote policy of id ${geography_metadata.geography_id}` })
+      await db.writeGeographyMetadata(geography_id, geography_metadata)
+      return res.status(200).send({ result: `successfully wrote geography metadata of id ${geography_id}` })
     } catch (err) {
       await log.error('failed to write geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
