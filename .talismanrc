@@ -5,3 +5,6 @@ fileignoreconfig:
 - filename: packages/mds-db/index.ts
   checksum: 8151608430058deb53da1eff88b324626cabee9efa9c2d11713b72be14803de1
   ignore_detectors: []
+- filename: packages/mds-db/tests/mds-db.spec.ts
+  checksum: a0fb1b929510e0ae22da4b8f749000167638c5b09c4f83005cbf4788b185aa8c
+  ignore_detectors: []

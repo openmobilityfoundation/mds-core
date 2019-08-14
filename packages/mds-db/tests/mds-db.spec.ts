@@ -3,15 +3,7 @@ import assert from 'assert'
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import should from 'should'
 import { FeatureCollection } from 'geojson'
-import {
-  Telemetry,
-  Recorded,
-  VehicleEvent,
-  Device,
-  VEHICLE_EVENTS,
-  GeographyMetadata,
-  Geography
-} from '@mds-core/mds-types'
+import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS, Geography } from '@mds-core/mds-types'
 import {
   JUMP_TEST_DEVICE_1,
   makeDevices,
@@ -395,30 +387,30 @@ if (pg_info.database) {
       })
     })
 
-    describe('Geography metadata', () => {
-      before(async () => {
-        await setFreshDB()
-      })
+    // describe('Geography metadata', () => {
+    //   before(async () => {
+    //     await setFreshDB()
+    //   })
 
-      after(async () => {
-        await MDSDBPostgres.shutdown()
-      })
+    //   after(async () => {
+    //     await MDSDBPostgres.shutdown()
+    //   })
 
-      it('should write a GeographyMetadata only if there is a Geography in the DB', async () => {
-        const geographyMetadata: GeographyMetadata = {
-          geography_id: GEOGRAPHY_UUID,
-          geography_metadata: { foo: 'afoo' }
-        }
-        try {
-          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
-          throw new Error('Should have thrown')
-        } catch (err) {
-          await MDSDBPostgres.writeGeography(LAGeography)
-          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
-          const geographyMetadataResult = await MDSDBPostgres.readGeographyMetadata(GEOGRAPHY_UUID)
-          assert.deepEqual(geographyMetadataResult, geographyMetadata)
-        }
-      })
-    })
+    //   it('should write a GeographyMetadata only if there is a Geography in the DB', async () => {
+    //     const geographyMetadata: GeographyMetadata = {
+    //       geography_id: GEOGRAPHY_UUID,
+    //       geography_metadata: { foo: 'afoo' }
+    //     }
+    //     try {
+    //       await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
+    //       throw new Error('Should have thrown')
+    //     } catch (err) {
+    //       await MDSDBPostgres.writeGeography(LAGeography)
+    //       await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
+    //       const geographyMetadataResult = await MDSDBPostgres.readGeographyMetadata(GEOGRAPHY_UUID)
+    //       assert.deepEqual(geographyMetadataResult, geographyMetadata)
+    //     }
+    //   })
+    // })
   })
 }
