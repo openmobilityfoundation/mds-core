@@ -82,7 +82,7 @@ function parseCachedItem(item: CachedItem): Device | Telemetry | VehicleEvent {
     return parseDevice(item)
   }
 
-  throw new Error(`unable to parse ${item}`)
+  throw new Error(`unable to parse ${JSON.stringify(item)}`)
 }
 
 export { parseEvent, parseTelemetry, parseDevice, parseCachedItem }

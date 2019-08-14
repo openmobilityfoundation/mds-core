@@ -62,6 +62,7 @@ export type VEHICLE_EVENT = keyof typeof VEHICLE_EVENTS
 
 export const VEHICLE_REASONS = Enum(
   'user_drop_off',
+  'user_pick_up',
   'rebalance',
   'maintenance',
   'charge',
@@ -71,6 +72,7 @@ export const VEHICLE_REASONS = Enum(
   'off_hours',
   'missing',
   'decommissioned',
+  'rebalance_drop_off',
   'default'
 )
 export type VEHICLE_REASON = keyof typeof VEHICLE_REASONS
@@ -322,14 +324,20 @@ export interface TimeMatch {
   matched_vehicle: MatchedVehicle
 }
 
+export interface ReducedMatch {
+  measured: number
+  geography_id: UUID
+}
+
 export interface Compliance {
   rule: Rule
-  matches: CountMatch[] | TimeMatch[] | null // TODO Support for Speed issues.
+  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] // TODO Support for Speed issues.
 }
 
 export interface ComplianceResponse {
   policy: Policy
   compliance: Compliance[]
+  total_violations: number
 }
 
 // We don't put the publish_date into the geography_json column
@@ -369,13 +377,13 @@ export interface TripsStats {
 // database. This type alias will add the readonly attribute to all properties and also remove undefined as a valid
 // value since the database will never return undefined.
 export type Recorded<T> = Readonly<Required<T>>
-
-export interface BoundingBox {
+export interface BBox {
   latMin: number
   latMax: number
   lngMin: number
   lngMax: number
 }
+export type BoundingBox = [[number, number], [number, number]]
 
 export interface Provider {
   provider_name: string
