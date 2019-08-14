@@ -29,7 +29,7 @@ import {
   SHERPA_PROVIDER_ID,
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
-import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from 'packages/mds-types'
+import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow } from './types'
 
 require('dotenv').config()
