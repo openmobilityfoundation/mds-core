@@ -1,0 +1,9 @@
+suite: test external-dns
+templates:
+  - external-dns.yaml
+tests:
+  - it: should work
+    set:
+      dns.enabled: true
+    asserts:
+      - isKind: ServiceAccount
