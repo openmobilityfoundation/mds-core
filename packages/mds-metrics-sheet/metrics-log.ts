@@ -80,11 +80,11 @@ async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
 }
 
 function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
-  return Object.keys(events).reduce(
+  return (Object.keys(events) as VEHICLE_EVENT[]).reduce(
     (acc: { [s in VEHICLE_STATUS]: number }, event) => {
+      const status = EVENT_STATUS_MAP[event]
       return Object.assign(acc, {
-        [EVENT_STATUS_MAP[event as VEHICLE_EVENT]]:
-          acc[EVENT_STATUS_MAP[event as VEHICLE_EVENT]] + events[event as VEHICLE_EVENT]
+        [status]: acc[status] + events[event]
       })
     },
     {
