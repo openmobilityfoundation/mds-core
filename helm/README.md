@@ -75,18 +75,45 @@ In order to locally deploy a fully self-contained cluster, ie standalone-cluster
 ```bash
 kubectl create secret generic pg-pass --from-literal 'PG_PASS=Password123#'
 helm install --set postgresql.enabled=true,redis.enabled=true --name mds .
-# dashboard
-kubectl port-forward $(kubectl get pods -n=kube-system | \
-      grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
 # prometheus
 kubectl port-forward $(kubectl get pods -n=istio-system | \
-      grep prometheus | cut -d' ' -f1) 8443:8443 -n=istio-system &
+      grep prometheus | cut -d' ' -f1) 9090:9090 -n=istio-system &
+# dashboard: optional, requires additional installation steps
+kubectl port-forward $(kubectl get pods -n=kube-system | \
+      grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
 ```
 
 ## View
 
-  * [dashboard](https://localhost:8443)
-  * [prometheus](https://localhost:9090)
+* [prometheus](htttp://localhost:9090)
+* [dashboard](https://localhost:8443)
+
+## Development
+
+Installation of [helm unit-test plugin](https://github.com/lrills/helm-unittest)
+
+```bash
+helm plugin install https://github.com/lrills/helm-unittest
+```
+
+The following [helm sub-commands](https://helm.sh/docs/helm/) ease chart development:
+
+```bash
+cd [CHART]
+# materialize the specified template
+helm template . --set [KEY]=[VLAUE] ... -x templates/[TEMPLATE] --debug
+# largely the same as 'helm template'
+helm install . --set [KEY]=[VALUE] ... --dry-run --debug
+# checks the chart for well-formedness
+helm lint . --set [KEY]=[VALUE] ... --debug
+```
+
+Run tests:
+
+```bash
+cd [CHART]
+heml unittest .
+```
 
 ## Uninstall
 
