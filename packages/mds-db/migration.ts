@@ -212,6 +212,34 @@ async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
   }
 }
 
+async function increaseVarcharColumnSize(client: MDSPostgresClient, size: number, ...columns: COLUMN_NAME[]) {
+  if (columns.length > 0) {
+    const exec = SqlExecuter(client)
+
+    const { rows: migrate }: { rows: { table_name: TABLE_NAME; column_name: COLUMN_NAME }[] } = await exec(
+      `SELECT table_name, column_name FROM information_schema.columns WHERE column_name in (${csv(
+        columns.map(column => `'${column}'`)
+      )}) AND udt_name = 'varchar' AND character_maximum_length < ${size} AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
+    )
+
+    if (migrate.length > 0) {
+      try {
+        await exec(
+          migrate
+            .map(
+              ({ table_name: table, column_name: column }) =>
+                `ALTER TABLE ${table} ALTER COLUMN ${column} TYPE varchar(${size});`
+            )
+            .join('\n')
+        )
+        await log.info(`Migration increaseVarcharColumnSize succeeded for:`, columns)
+      } catch (err) {
+        await log.error(`Migration increaseVarcharColumnSize failed for:`, columns, err)
+      }
+    }
+  }
+}
+
 async function updateTables(client: MDSPostgresClient) {
   const { PG_MIGRATIONS } = process.env
   const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []
@@ -223,6 +251,7 @@ async function updateTables(client: MDSPostgresClient) {
   if (migrations.includes('addIdentityColumnToAllTables')) {
     await addIdentityColumnToAllTables(client)
   }
+  await increaseVarcharColumnSize(client, 127, schema.COLUMN.mfgr, schema.COLUMN.model, schema.COLUMN.provider_name)
 }
 
 async function updateSchema(client: MDSPostgresClient) {
