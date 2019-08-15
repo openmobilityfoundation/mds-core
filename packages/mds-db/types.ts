@@ -6,9 +6,8 @@ import {
   TelemetryData,
   VEHICLE_TYPE,
   PROPULSION_TYPE,
-  VEHICLE_STATUS,
-  VEHICLE_EVENT,
-  VEHICLE_REASON
+  PROVIDER_EVENT,
+  PROVIDER_REASON
 } from '@mds-core/mds-types'
 import { Feature, FeatureCollection } from 'geojson'
 import schema from './schema'
@@ -53,8 +52,8 @@ export interface StatusChange {
   vehicle_id: string
   vehicle_type: VEHICLE_TYPE
   propulsion_type: PROPULSION_TYPE[]
-  event_type: VEHICLE_STATUS
-  event_type_reason: VEHICLE_EVENT | VEHICLE_REASON
+  event_type: PROVIDER_EVENT
+  event_type_reason: PROVIDER_REASON
   event_time: Timestamp
   event_location: Feature | null
   battery_pct: number | null
