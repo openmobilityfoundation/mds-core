@@ -5,9 +5,9 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   hosts:
-  - {{ .Values.redisHost }}
+  - {{ $.Values.redis.host }}
   ports:
-  - number: {{ .Values.redisPort }}
+  - number: {{ $.Values.redis.port }}
     name: tcp
     protocol: TCP
   location: MESH_EXTERNAL

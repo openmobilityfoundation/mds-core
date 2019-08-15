@@ -62,10 +62,14 @@ useAws: false
 certificateArn: 
 registry: 
 useLatestImage: true
-pgName: mds
-pgUser: mdsadmin
-pgHost: host.docker.internal
-pgHostReader: host.docker.internal
-pgPort: 5432
-redisHost: host.docker.internal 
-redisPort: 6379
+postgresql:
+  internal: false
+  name: mds
+  user: mdsadmin
+  host: host.docker.internal
+  hostReader: host.docker.internal
+  port: 5432
+redis:
+  internal: false
+  host: host.docker.internal
+  port: 6379
