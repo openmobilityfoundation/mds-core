@@ -63,13 +63,13 @@ certificateArn:
 registry: 
 useLatestImage: true
 postgresql:
-  internal: false
+  internal: true
   name: mds
   user: mdsadmin
   host: host.docker.internal
   hostReader: host.docker.internal
   port: 5432
 redis:
-  internal: false
+  internal: true
   host: host.docker.internal
   port: 6379
