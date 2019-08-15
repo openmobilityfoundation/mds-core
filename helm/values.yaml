@@ -71,13 +71,13 @@ dns:
     - zone.b.
     - zone.c.
 postgresql:
-  enabled: false
+  internal: false
   name: mds
   user: mdsadmin
   host: host.docker.internal
   hostReader: host.docker.internal
   port: 5432
 redis:
-  enabled: false
+  internal: false
   host: host.docker.internal
   port: 6379
