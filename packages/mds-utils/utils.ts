@@ -594,12 +594,13 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
 }
 
 function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
-  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
-  return (
-    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
-    status !== undefined &&
-    (status.length === 0 || (status as string[]).includes(event.event_type))
-  )
+  const status = rule.statuses ? rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS] : null
+  return status !== null
+    ? rule.statuses !== null &&
+        Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+        status !== undefined &&
+        (status.length === 0 || (status as string[]).includes(event.event_type))
+    : true
 }
 
 function routeDistance(coordinates: { lat: number; lng: number }[]): number {

@@ -154,15 +154,17 @@ function api(app: express.Express): express.Express {
       .required(),
     rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
     geographies: Joi.array().items(Joi.string().guid()),
-    statuses: Joi.object().keys({
-      available: Joi.array(),
-      reserved: Joi.array(),
-      unavailable: Joi.array(),
-      removed: Joi.array(),
-      inactive: Joi.array(),
-      trip: Joi.array(),
-      elsewhere: Joi.array()
-    }),
+    statuses: Joi.object()
+      .keys({
+        available: Joi.array(),
+        reserved: Joi.array(),
+        unavailable: Joi.array(),
+        removed: Joi.array(),
+        inactive: Joi.array(),
+        trip: Joi.array(),
+        elsewhere: Joi.array()
+      })
+      .allow(null),
     vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
     maximum: Joi.number(),
     minimum: Joi.number(),
