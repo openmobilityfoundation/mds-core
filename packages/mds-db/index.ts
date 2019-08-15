@@ -1174,28 +1174,25 @@ async function readUnprocessedStatusChangeEvents(
 }
 
 async function readEventsWithTelemetry({
-  skip,
-  take,
   device_id,
   provider_id,
   start_time,
-  end_time
+  end_time,
+  last_id = 0,
+  limit = 1000
 }: Partial<{
-  skip: number
-  take: number
   device_id: UUID
   provider_id: UUID
   start_time: Timestamp
   end_time: Timestamp
-}> = {}): Promise<{
-  count: number
-  events: Recorded<VehicleEvent>[]
-}> {
+  last_id: number
+  limit: number
+}>): Promise<Recorded<VehicleEvent>[]> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const exec = SqlExecuter(client)
 
-  const conditions: string[] = []
+  const conditions: string[] = last_id ? [`id > ${vals.add(last_id)}`] : []
 
   if (provider_id) {
     if (!isUUID(provider_id)) {
@@ -1229,38 +1226,28 @@ async function readEventsWithTelemetry({
     }
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-
-  const {
-    rows: [{ count }]
-  } = await exec(`SELECT COUNT(*) FROM ${schema.TABLE.events} ${where}`, vals.values())
-
-  if (count === 0) {
-    return { count, events: [] }
-  }
+  const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
   const { rows } = await exec(
     `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge FROM (SELECT * FROM ${
       schema.TABLE.events
-    } ${where} ORDER BY recorded${skip !== undefined && skip > 0 ? ` OFFSET ${vals.add(skip)}` : ''}${
-      take !== undefined && take > 0 ? ` LIMIT ${vals.add(take)}` : ''
-    }) AS E LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
+    }${where} ORDER BY id LIMIT ${vals.add(limit)}
+    ) AS E LEFT JOIN ${
+      schema.TABLE.telemetry
+    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ORDER BY id`,
     vals.values()
   )
 
-  return {
-    count,
-    events: rows.map(({ lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
-      ...event,
-      telemetry: telemetry_timestamp
-        ? {
-            timestamp: telemetry_timestamp,
-            gps: { lat, lng, speed, heading, accuracy, altitude },
-            charge
-          }
-        : null
-    }))
-  }
+  return rows.map(({ lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
+    ...event,
+    telemetry: telemetry_timestamp
+      ? {
+          timestamp: telemetry_timestamp,
+          gps: { lat, lng, speed, heading, accuracy, altitude },
+          charge
+        }
+      : null
+  }))
 }
 
 async function seed(data: {
