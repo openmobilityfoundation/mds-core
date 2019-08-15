@@ -246,9 +246,8 @@ function api(app: express.Express): express.Express {
           const items = await db.readDeviceIds(stat.provider_id)
           items.map(item => {
             const event = eventMap[item.device_id]
-            const event_type = event ? event.event_type : 'default'
-            inc(stat.event_type, event_type)
-            const status = EVENT_STATUS_MAP[event_type]
+            inc(stat.event_type, event ? event.event_type : 'default')
+            const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
             inc(stat.status, status)
             // TODO latest-state should remove service_area_id if it's null
             if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
