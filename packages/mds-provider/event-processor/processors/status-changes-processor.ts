@@ -18,14 +18,14 @@ import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import { Feature, Point } from 'geojson'
 import { round, now } from '@mds-core/mds-utils'
-import { PROPULSION_TYPE, VEHICLE_TYPE, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+import { PROPULSION_TYPE, VEHICLE_TYPE, Telemetry, VehicleEvent, Recorded } from '@mds-core/mds-types'
 import { StatusChange } from '@mds-core/mds-db/types'
 import { LabeledStreamEntry } from '../types'
 import { DeviceLabel } from '../labelers/device-labeler'
 import { ProviderLabel } from '../labelers/provider-labeler'
 import { asStatusChangeEvent } from '../../utils'
 
-export type StatusChangesProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel, VehicleEvent>
+export type StatusChangesProcessorStreamEntry = LabeledStreamEntry<ProviderLabel & DeviceLabel, Recorded<VehicleEvent>>
 
 const asPointFeature = (telemetry?: Telemetry | null): Feature<Point> | null => {
   return telemetry && telemetry.gps
@@ -71,9 +71,11 @@ const asStatusChange = (entry: StatusChangesProcessorStreamEntry): StatusChange 
 
 export const StatusChangesProcessor = async (entries: StatusChangesProcessorStreamEntry[]): Promise<void> => {
   if (entries.length > 0) {
-    await db.writeStatusChanges(entries.map(asStatusChange))
+    const recorded_status_changes = await db.writeStatusChanges(entries.map(asStatusChange))
     logger.info(
-      `|- Status Changes Processor: Created ${entries.length} status ${entries.length === 1 ? 'change' : 'changes'}`
+      `|- Status Changes Processor: Created ${recorded_status_changes.length}/${entries.length} status ${
+        entries.length === 1 ? 'change' : 'changes'
+      }`
     )
   }
 }

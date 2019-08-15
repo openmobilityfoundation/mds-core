@@ -167,5 +167,5 @@ export function isProviderId(provider_id: unknown): provider_id is PROVIDER_ID {
  * @return name or provider_id substring
  */
 export function providerName(provider_id: string): string {
-  return isProviderId(provider_id) ? providers[provider_id].provider_name : provider_id.split('-')[0]
+  return isProviderId(provider_id) ? providers[provider_id].provider_name : provider_id
 }
