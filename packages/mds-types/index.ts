@@ -249,12 +249,12 @@ export interface AuditDetails extends Audit {
   }
 }
 
-interface BaseRule {
+interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
   name: string
   rule_id: UUID
   geographies: UUID[]
   statuses: Partial<{ [S in keyof typeof STATUS_EVENT_MAP]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }> | null
-  rule_type: 'count' | 'speed' | 'time'
+  rule_type: RuleType
   vehicle_types?: VEHICLE_TYPE[] | null
   maximum?: number | null
   minimum?: number | null
@@ -267,17 +267,13 @@ interface BaseRule {
   value_url?: URL | null
 }
 
-export interface CountRule extends BaseRule {
-  rule_type: 'count'
-}
+export type CountRule = BaseRule<'count'>
 
-export interface TimeRule extends BaseRule {
-  rule_type: 'time'
+export interface TimeRule extends BaseRule<'time'> {
   rule_units: 'minutes' | 'hours'
 }
 
-export interface SpeedRule extends BaseRule {
-  rule_type: 'speed'
+export interface SpeedRule extends BaseRule<'speed'> {
   rule_units: 'kph' | 'mph'
 }
 
