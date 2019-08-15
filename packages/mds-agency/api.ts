@@ -41,7 +41,8 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   VEHICLE_EVENT,
-  BoundingBox
+  BoundingBox,
+  VEHICLE_REASON
 } from '@mds-core/mds-types'
 import {
   isUUID,
@@ -825,7 +826,7 @@ function api(app: express.Express): express.Express {
         device_id: req.params.device_id,
         provider_id: res.locals.provider_id,
         event_type: lower(req.body.event_type) as VEHICLE_EVENT,
-        event_type_reason: lower(req.body.event_type_reason),
+        event_type_reason: lower(req.body.event_type_reason) as VEHICLE_REASON,
         telemetry: req.body.telemetry ? { ...req.body.telemetry, provider_id: res.locals.provider_id } : null,
         timestamp: req.body.timestamp,
         trip_id: req.body.trip_id,
