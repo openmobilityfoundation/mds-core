@@ -110,8 +110,8 @@ export const isValidNumber = (value: unknown, options: Partial<NumberValidatorOp
   Validate(
     value,
     Joi.number()
-      .min(options.min || Number.MIN_SAFE_INTEGER)
-      .max(options.max || Number.MAX_SAFE_INTEGER),
+      .min(options.min === undefined ? Number.MIN_SAFE_INTEGER : options.min)
+      .max(options.max === undefined ? Number.MAX_SAFE_INTEGER : options.max),
     options
   )
 
