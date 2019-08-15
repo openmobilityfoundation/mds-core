@@ -149,6 +149,9 @@ function api(app: express.Express): express.Express {
           res.status(200).send(results)
         }
       } catch (err) {
+        if (err.message.includes('not_found')) {
+          res.status(400).send({ err: 'bad_param' })
+        }
         await fail(err)
       }
     } else {
@@ -181,6 +184,9 @@ function api(app: express.Express): express.Express {
           res.status(200).send(results)
         }
       } catch (err) {
+        if (err.message.includes('not_found')) {
+          res.status(400).send({ err: 'bad_param' })
+        }
         await fail(err)
       }
     }

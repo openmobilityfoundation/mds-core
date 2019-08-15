@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
  */
-import { Feature, FeatureCollection } from 'geojson'
+import { FeatureCollection } from 'geojson'
 
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(keys.reduce((e, key) => {
@@ -280,6 +280,12 @@ export interface Policy {
   end_date: Timestamp | null
   prev_policies: UUID[] | null
   rules: Rule[]
+  publish_date?: Timestamp
+}
+
+export interface PolicyMetadata {
+  policy_id: UUID
+  policy_metadata: Record<string, any>
 }
 
 export interface MatchedVehicle {
@@ -322,9 +328,20 @@ export interface ComplianceResponse {
   total_violations: number
 }
 
+// We don't put the publish_date into the geography_json column
+// as we do with the Policy type, because we don't want to mess with
+// the geojson FeatureCollection type.
 export interface Geography {
   geography_id: UUID
-  geography_json: Feature | FeatureCollection
+  geography_json: FeatureCollection
+  read_only?: boolean
+  previous_geography_ids?: UUID[]
+  name?: string
+}
+
+export interface GeographyMetadata {
+  geography_id: UUID
+  geography_metadata: Record<string, any>
 }
 
 export interface ErrorObject {
