@@ -1,6 +1,7 @@
 const webpack = require('webpack')
 const ZipPlugin = require('zip-webpack-plugin')
 const GitRevisionPlugin = require('git-revision-webpack-plugin')
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer')
 
 const gitRevisionPlugin = new GitRevisionPlugin({
   commithashCommand: 'rev-parse --short HEAD'
@@ -53,6 +54,12 @@ module.exports = ({ env, argv, dirname, bundles }) => {
         path: `${dist}/bundles`,
         filename: bundle === 'index' ? package : bundle,
         include: [`${bundle}.js`]
+      }),
+      // Analyze bundle
+      new BundleAnalyzerPlugin({
+        analyzerMode: 'static',
+        openAnalyzer: false,
+        reportFilename: `${bundle === 'index' ? package : bundle}.report.html`
       })
     ],
     resolve: {

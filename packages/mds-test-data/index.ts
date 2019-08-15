@@ -20,27 +20,30 @@ import {
   VEHICLE_EVENT,
   VEHICLE_TYPES,
   PROPULSION_TYPES,
-  VEHICLE_STATUSES,
-  VEHICLE_STATUS,
   UUID,
   Device,
   Timestamp,
   Telemetry,
   VehicleEvent,
-  Policy
+  Policy,
+  PROVIDER_EVENT,
+  PROVIDER_REASON,
+  PROVIDER_EVENTS,
+  PROVIDER_REASONS
 } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from '@mds-core/mds-db/types'
 
 import {
   addDistanceBearing,
-  pointInShape,
+  days,
   makePointInShape,
-  rangeRandom,
-  rangeRandomInt,
-  range,
   now,
-  days
+  pointInShape,
+  randomElement,
+  range,
+  rangeRandom,
+  rangeRandomInt
 } from '@mds-core/mds-utils'
 
 import { serviceAreaMap } from 'ladot-service-areas'
@@ -424,18 +427,16 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
 }
 
 function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
-  const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
-  const vehicleStatusKeys = Object.keys(VEHICLE_STATUSES)
-  const event_reason = vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)]
-  const event_type = vehicleStatusKeys[rangeRandomInt(vehicleStatusKeys.length)]
+  const event_type = randomElement(Object.keys(PROVIDER_EVENTS) as PROVIDER_EVENT[])
+  const event_type_reason = randomElement(Object.keys(PROVIDER_REASONS) as PROVIDER_REASON[])
 
   return {
     provider_id: device.provider_id,
     provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
-    event_type: event_type as VEHICLE_STATUS,
-    event_type_reason: event_reason as VEHICLE_EVENT,
+    event_type,
+    event_type_reason,
     event_location: null,
     battery_pct: rangeRandomInt(1, 100),
     associated_trip: uuid4(),

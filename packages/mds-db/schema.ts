@@ -1,260 +1,292 @@
+import { Enum } from '@mds-core/mds-types'
+
 // TODO providers are in CSV
-const DEVICES_TABLE = 'devices'
-const TELEMETRY_TABLE = 'telemetry'
-const EVENTS_TABLE = 'events'
-const TRIPS_TABLE = 'trips'
-const STATUS_CHANGES_TABLE = 'status_changes'
-const AUDITS_TABLE = 'audits'
-const AUDIT_EVENTS_TABLE = 'audit_events'
-const POLICIES_TABLE = 'policies'
-const GEOGRAPHIES_TABLE = 'geographies'
-const POLICY_METADATA_TABLE = 'policy_metadata'
-const GEOGRAPHY_METADATA_TABLE = 'geography_metadata'
 
-// agency
-const DEVICES_COLS = [
-  'device_id',
-  'provider_id',
-  'vehicle_id',
-  'type',
-  'propulsion',
-  'year',
-  'mfgr',
-  'model',
-  'recorded'
-] as const
+const TABLE = Enum(
+  'audit_events',
+  'audits',
+  'devices',
+  'events',
+  'geographies',
+  'geography_metadata',
+  'policies',
+  'policy_metadata',
+  'status_changes',
+  'telemetry',
+  'trips'
+)
+export type TABLE_NAME = keyof typeof TABLE
+const TABLES = Object.keys(TABLE) as TABLE_NAME[]
 
-const EVENTS_COLS = [
-  'device_id',
-  'provider_id',
-  'timestamp',
-  'event_type',
-  'event_type_reason',
-  'telemetry_timestamp',
-  'trip_id',
-  'service_area_id',
-  'recorded'
-] as const
-
-const TELEMETRY_COLS = [
-  'device_id',
-  'provider_id',
-  'timestamp',
-  'lat',
-  'lng',
-  'speed',
-  'heading',
+const COLUMN = Enum(
   'accuracy',
-  'altitude',
-  'charge',
-  'recorded'
-] as const
-
-const TRIPS_COLS = [
-  'provider_id',
-  'provider_name',
-  'provider_trip_id',
-  'device_id',
-  'vehicle_id',
-  'vehicle_type',
-  'propulsion_type',
-  'trip_start',
-  'first_trip_enter',
-  'last_trip_leave',
-  'trip_end',
-  'trip_duration',
-  'trip_distance',
-  'route',
-  'accuracy',
-  'parking_verification_url',
-  'standard_cost',
   'actual_cost',
-  'recorded'
-] as const
-
-const STATUS_CHANGES_COLS = [
-  'provider_id',
-  'provider_name',
-  'device_id',
-  'vehicle_id',
-  'vehicle_type',
-  'propulsion_type',
-  'event_type',
-  'event_type_reason',
-  'event_time',
-  'event_location',
-  'battery_pct',
+  'altitude',
   'associated_trip',
-  'recorded'
-] as const
-
-// audit
-const AUDITS_COLS = [
-  'audit_trip_id',
-  'audit_vehicle_id',
   'audit_device_id',
-  'audit_subject_id',
-  'provider_id',
-  'provider_name',
-  'provider_vehicle_id',
-  'provider_device_id',
-  'timestamp',
-  'deleted',
-  'recorded'
-] as const
-
-const AUDIT_EVENTS_COLS = [
-  'audit_trip_id',
   'audit_event_id',
   'audit_event_type',
   'audit_issue_code',
   'audit_subject_id',
-  'note',
-  'timestamp',
+  'audit_trip_id',
+  'battery_pct',
+  'charge',
+  'deleted',
+  'device_id',
+  'event_location',
+  'event_time',
+  'event_type_reason',
+  'event_type',
+  'first_trip_enter',
+  'geography_id',
+  'geography_json',
+  'geography_metadata',
+  'heading',
+  'id',
+  'last_trip_leave',
   'lat',
   'lng',
+  'mfgr',
+  'model',
+  'name',
+  'note',
+  'parking_verification_url',
+  'policy_id',
+  'policy_json',
+  'policy_metadata',
+  'previous_geography_ids',
+  'propulsion_type',
+  'propulsion',
+  'provider_device_id',
+  'provider_id',
+  'provider_name',
+  'provider_trip_id',
+  'provider_vehicle_id',
+  'read_only',
+  'recorded',
+  'route',
+  'service_area_id',
   'speed',
-  'heading',
-  'accuracy',
-  'altitude',
-  'charge',
-  'recorded'
-] as const
+  'standard_cost',
+  'telemetry_timestamp',
+  'timestamp',
+  'trip_distance',
+  'trip_duration',
+  'trip_end',
+  'trip_id',
+  'trip_start',
+  'type',
+  'vehicle_id',
+  'vehicle_type',
+  'year'
+)
+export type COLUMN_NAME = keyof typeof COLUMN
+const COLUMNS = Object.keys(COLUMN) as COLUMN_NAME[]
 
-const POLICIES_COLS = ['policy_id', 'policy_json'] as const
-
-const GEOGRAPHIES_COLS = ['geography_id', 'geography_json', 'read_only', 'previous_geography_ids', 'name'] as const
-
-const POLICY_METADATA_COLS = ['policy_id', 'policy_metadata'] as const
-
-const GEOGRAPHY_METADATA_COLS = ['geography_id', 'geography_metadata'] as const
-
-const tables: { [propName: string]: Readonly<string[]> } = {
-  [DEVICES_TABLE]: DEVICES_COLS,
-  [EVENTS_TABLE]: EVENTS_COLS,
-  [TELEMETRY_TABLE]: TELEMETRY_COLS,
-  [TRIPS_TABLE]: TRIPS_COLS,
-  [STATUS_CHANGES_TABLE]: STATUS_CHANGES_COLS,
-  [AUDITS_TABLE]: AUDITS_COLS,
-  [AUDIT_EVENTS_TABLE]: AUDIT_EVENTS_COLS,
-  [POLICIES_TABLE]: POLICIES_COLS,
-  [GEOGRAPHIES_TABLE]: GEOGRAPHIES_COLS,
-  [POLICY_METADATA_TABLE]: POLICY_METADATA_COLS,
-  [GEOGRAPHY_METADATA_TABLE]: GEOGRAPHY_METADATA_COLS
+const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
+  [TABLE.audits]: [
+    COLUMN.id,
+    COLUMN.audit_trip_id,
+    COLUMN.audit_device_id,
+    COLUMN.audit_subject_id,
+    COLUMN.provider_id,
+    COLUMN.provider_name,
+    COLUMN.provider_vehicle_id,
+    COLUMN.provider_device_id,
+    COLUMN.timestamp,
+    COLUMN.deleted,
+    COLUMN.recorded
+  ],
+  [TABLE.audit_events]: [
+    COLUMN.id,
+    COLUMN.audit_trip_id,
+    COLUMN.audit_event_id,
+    COLUMN.audit_event_type,
+    COLUMN.audit_issue_code,
+    COLUMN.audit_subject_id,
+    COLUMN.note,
+    COLUMN.timestamp,
+    COLUMN.lat,
+    COLUMN.lng,
+    COLUMN.speed,
+    COLUMN.heading,
+    COLUMN.accuracy,
+    COLUMN.altitude,
+    COLUMN.charge,
+    COLUMN.recorded
+  ],
+  [TABLE.devices]: [
+    COLUMN.id,
+    COLUMN.device_id,
+    COLUMN.provider_id,
+    COLUMN.vehicle_id,
+    COLUMN.type,
+    COLUMN.propulsion,
+    COLUMN.year,
+    COLUMN.mfgr,
+    COLUMN.model,
+    COLUMN.recorded
+  ],
+  [TABLE.events]: [
+    COLUMN.id,
+    COLUMN.device_id,
+    COLUMN.provider_id,
+    COLUMN.timestamp,
+    COLUMN.event_type,
+    COLUMN.event_type_reason,
+    COLUMN.telemetry_timestamp,
+    COLUMN.trip_id,
+    COLUMN.service_area_id,
+    COLUMN.recorded
+  ],
+  [TABLE.geographies]: [
+    COLUMN.id,
+    COLUMN.geography_id,
+    COLUMN.geography_json,
+    COLUMN.read_only,
+    COLUMN.previous_geography_ids,
+    COLUMN.name
+  ],
+  [TABLE.geography_metadata]: [COLUMN.id, COLUMN.geography_id, COLUMN.geography_metadata],
+  [TABLE.policies]: [COLUMN.id, COLUMN.policy_id, COLUMN.policy_json],
+  [TABLE.policy_metadata]: [COLUMN.id, COLUMN.policy_id, COLUMN.policy_metadata],
+  [TABLE.status_changes]: [
+    COLUMN.id,
+    COLUMN.provider_id,
+    COLUMN.provider_name,
+    COLUMN.device_id,
+    COLUMN.vehicle_id,
+    COLUMN.vehicle_type,
+    COLUMN.propulsion_type,
+    COLUMN.event_type,
+    COLUMN.event_type_reason,
+    COLUMN.event_time,
+    COLUMN.event_location,
+    COLUMN.battery_pct,
+    COLUMN.associated_trip,
+    COLUMN.recorded
+  ],
+  [TABLE.telemetry]: [
+    COLUMN.id,
+    COLUMN.device_id,
+    COLUMN.provider_id,
+    COLUMN.timestamp,
+    COLUMN.lat,
+    COLUMN.lng,
+    COLUMN.speed,
+    COLUMN.heading,
+    COLUMN.accuracy,
+    COLUMN.altitude,
+    COLUMN.charge,
+    COLUMN.recorded
+  ],
+  [TABLE.trips]: [
+    COLUMN.id,
+    COLUMN.provider_id,
+    COLUMN.provider_name,
+    COLUMN.provider_trip_id,
+    COLUMN.device_id,
+    COLUMN.vehicle_id,
+    COLUMN.vehicle_type,
+    COLUMN.propulsion_type,
+    COLUMN.trip_start,
+    COLUMN.first_trip_enter,
+    COLUMN.last_trip_leave,
+    COLUMN.trip_end,
+    COLUMN.trip_duration,
+    COLUMN.trip_distance,
+    COLUMN.route,
+    COLUMN.accuracy,
+    COLUMN.parking_verification_url,
+    COLUMN.standard_cost,
+    COLUMN.actual_cost,
+    COLUMN.recorded
+  ]
 }
 
-const primaryKeys: { [propName: string]: string[] } = {
-  [DEVICES_TABLE]: ['device_id'],
-  [EVENTS_TABLE]: ['device_id', 'timestamp'],
-  [TELEMETRY_TABLE]: ['device_id', 'timestamp'],
-  [TRIPS_TABLE]: ['provider_trip_id'],
-  [STATUS_CHANGES_TABLE]: ['device_id', 'event_time'],
-  [AUDITS_TABLE]: ['audit_trip_id'],
-  [AUDIT_EVENTS_TABLE]: ['audit_trip_id', 'timestamp'],
-  [POLICIES_TABLE]: ['policy_id'],
-  [GEOGRAPHIES_TABLE]: ['geography_id'],
-  [POLICY_METADATA_TABLE]: ['policy_id'],
-  [GEOGRAPHY_METADATA_TABLE]: ['geography_id']
+const TABLE_KEY: { [T in TABLE_NAME]: COLUMN_NAME[] } = {
+  [TABLE.audits]: [COLUMN.audit_trip_id],
+  [TABLE.audit_events]: [COLUMN.audit_trip_id, COLUMN.timestamp],
+  [TABLE.devices]: [COLUMN.device_id],
+  [TABLE.events]: [COLUMN.device_id, COLUMN.timestamp],
+  [TABLE.geographies]: [COLUMN.geography_id],
+  [TABLE.geography_metadata]: [COLUMN.geography_id],
+  [TABLE.policies]: [COLUMN.policy_id],
+  [TABLE.policy_metadata]: [COLUMN.policy_id],
+  [TABLE.status_changes]: [COLUMN.device_id, COLUMN.event_time],
+  [TABLE.telemetry]: [COLUMN.device_id, COLUMN.timestamp],
+  [TABLE.trips]: [COLUMN.provider_trip_id]
 }
 
-const PG_TYPES: { [propName: string]: string } = {
-  device_id: 'uuid NOT NULL',
-  provider_id: 'uuid NOT NULL',
-  provider_name: 'varchar(31) NOT NULL',
-  timestamp: 'bigint NOT NULL',
-  telemetry_timestamp: 'bigint',
-
-  recorded: 'bigint NOT NULL', // timestamp of when record was created
-  publish_date: 'bigint', // timestamp of when published
-
-  vehicle_id: 'varchar(255) NOT NULL',
-  year: 'smallint',
-  type: 'varchar(31) NOT NULL',
-  vehicle_type: 'varchar(31) NOT NULL',
-  mfgr: 'varchar(31)',
-  model: 'varchar(31)',
-  propulsion: 'varchar(31)[] NOT NULL',
-  propulsion_type: 'varchar(31)[] NOT NULL',
-  event_type: 'varchar(31) NOT NULL',
-  event_type_reason: 'varchar(31)',
-  trip_id: 'uuid',
-
-  provider_trip_id: 'uuid NOT NULL',
-  trip_duration: 'int',
-  trip_distance: 'int',
-  route: 'jsonb',
-  trip_start: 'bigint',
-  first_trip_enter: 'bigint',
-  last_trip_leave: 'bigint',
-  trip_end: 'bigint',
-  parking_verification_url: 'varchar(255)',
-  standard_cost: 'int',
-  actual_cost: 'int',
-
-  event_time: 'bigint NOT NULL',
-  event_location: 'jsonb',
-  battery_pct: 'real',
-  associated_trip: 'uuid',
-  service_area_id: 'uuid',
-
-  lat: 'double precision NOT NULL',
-  lng: 'double precision NOT NULL',
-  speed: 'real',
-  heading: 'real',
-  accuracy: 'real',
-  altitude: 'real',
-  charge: 'real',
-
-  audit_trip_id: 'uuid NOT NULL',
-  audit_vehicle_id: 'varchar(255) NOT NULL',
-  audit_device_id: 'uuid NOT NULL',
-  audit_subject_id: 'varchar(255) NOT NULL',
-  provider_vehicle_id: 'varchar(255) NOT NULL',
-  provider_device_id: 'uuid', // May be null if can't find
-  audit_event_id: 'uuid NOT NULL',
-  audit_event_type: 'varchar(31) NOT NULL',
-  audit_issue_code: 'varchar(31)',
-  note: 'varchar(255)',
-
-  policy_id: 'uuid NOT NULL',
-  policy_json: 'json NOT NULL',
-  geography_id: 'uuid NOT NULL',
-  geography_json: 'json NOT NULL',
-  policy_metadata: 'json',
-  geography_metadata: 'json',
-  read_only: 'bool DEFAULT FALSE',
-  previous_geography_ids: 'uuid[]',
-  name: 'varchar(255)',
-
-  published: 'bool',
-
-  deleted: 'bigint'
+const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
+  [COLUMN.accuracy]: 'real',
+  [COLUMN.actual_cost]: 'int',
+  [COLUMN.altitude]: 'real',
+  [COLUMN.associated_trip]: 'uuid',
+  [COLUMN.audit_device_id]: 'uuid NOT NULL',
+  [COLUMN.audit_event_id]: 'uuid NOT NULL',
+  [COLUMN.audit_event_type]: 'varchar(31) NOT NULL',
+  [COLUMN.audit_issue_code]: 'varchar(31)',
+  [COLUMN.audit_subject_id]: 'varchar(255) NOT NULL',
+  [COLUMN.audit_trip_id]: 'uuid NOT NULL',
+  [COLUMN.battery_pct]: 'real',
+  [COLUMN.charge]: 'real',
+  [COLUMN.deleted]: 'bigint',
+  [COLUMN.device_id]: 'uuid NOT NULL',
+  [COLUMN.event_location]: 'jsonb',
+  [COLUMN.event_time]: 'bigint NOT NULL',
+  [COLUMN.event_type_reason]: 'varchar(31)',
+  [COLUMN.event_type]: 'varchar(31) NOT NULL',
+  [COLUMN.first_trip_enter]: 'bigint',
+  [COLUMN.geography_id]: 'uuid NOT NULL',
+  [COLUMN.geography_json]: 'json NOT NULL',
+  [COLUMN.geography_metadata]: 'json',
+  [COLUMN.heading]: 'real',
+  [COLUMN.id]: 'bigint GENERATED ALWAYS AS IDENTITY',
+  [COLUMN.last_trip_leave]: 'bigint',
+  [COLUMN.lat]: 'double precision NOT NULL',
+  [COLUMN.lng]: 'double precision NOT NULL',
+  [COLUMN.mfgr]: 'varchar(127)',
+  [COLUMN.model]: 'varchar(127)',
+  [COLUMN.name]: 'varchar(255)',
+  [COLUMN.note]: 'varchar(255)',
+  [COLUMN.parking_verification_url]: 'varchar(255)',
+  [COLUMN.policy_id]: 'uuid NOT NULL',
+  [COLUMN.policy_json]: 'json NOT NULL',
+  [COLUMN.policy_metadata]: 'json',
+  [COLUMN.previous_geography_ids]: 'uuid[]',
+  [COLUMN.propulsion_type]: 'varchar(31)[] NOT NULL',
+  [COLUMN.propulsion]: 'varchar(31)[] NOT NULL',
+  [COLUMN.provider_device_id]: 'uuid', // May be null if can't find
+  [COLUMN.provider_id]: 'uuid NOT NULL',
+  [COLUMN.provider_name]: 'varchar(127) NOT NULL',
+  [COLUMN.provider_trip_id]: 'uuid NOT NULL',
+  [COLUMN.provider_vehicle_id]: 'varchar(255) NOT NULL',
+  [COLUMN.read_only]: 'bool DEFAULT FALSE',
+  [COLUMN.recorded]: 'bigint NOT NULL', // timestamp of when record was created
+  [COLUMN.route]: 'jsonb',
+  [COLUMN.service_area_id]: 'uuid',
+  [COLUMN.speed]: 'real',
+  [COLUMN.standard_cost]: 'int',
+  [COLUMN.telemetry_timestamp]: 'bigint',
+  [COLUMN.timestamp]: 'bigint NOT NULL',
+  [COLUMN.trip_distance]: 'int',
+  [COLUMN.trip_duration]: 'int',
+  [COLUMN.trip_end]: 'bigint',
+  [COLUMN.trip_id]: 'uuid',
+  [COLUMN.trip_start]: 'bigint',
+  [COLUMN.type]: 'varchar(31) NOT NULL',
+  [COLUMN.vehicle_id]: 'varchar(255) NOT NULL',
+  [COLUMN.vehicle_type]: 'varchar(31) NOT NULL',
+  [COLUMN.year]: 'smallint'
 }
 
 export default {
-  DEVICES_TABLE,
-  TELEMETRY_TABLE,
-  EVENTS_TABLE,
-  TRIPS_TABLE,
-  STATUS_CHANGES_TABLE,
-  AUDITS_TABLE,
-  AUDIT_EVENTS_TABLE,
-  POLICIES_TABLE,
-  GEOGRAPHIES_TABLE,
-  POLICY_METADATA_TABLE,
-  GEOGRAPHY_METADATA_TABLE,
-  DEVICES_COLS,
-  EVENTS_COLS,
-  TELEMETRY_COLS,
-  TRIPS_COLS,
-  STATUS_CHANGES_COLS,
-  AUDITS_COLS,
-  AUDIT_EVENTS_COLS,
-  POLICIES_COLS,
-  GEOGRAPHIES_COLS,
-  POLICY_METADATA_COLS,
-  GEOGRAPHY_METADATA_COLS,
-  tables,
-  primaryKeys,
-  PG_TYPES
+  COLUMN,
+  COLUMNS,
+  COLUMN_TYPE,
+  TABLE,
+  TABLES,
+  TABLE_COLUMNS,
+  TABLE_KEY
 }

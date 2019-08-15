@@ -381,6 +381,27 @@
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-types"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-utils",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-utils"
     }
   ]
 }

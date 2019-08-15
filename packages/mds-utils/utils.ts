@@ -456,49 +456,27 @@ function inc(map: { [key: string]: number }, key: string) {
 }
 function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
   const {
-    device_id,
-    provider_id,
-    timestamp,
     gps: { lat, lng, altitude, heading, speed, accuracy },
-    charge,
-    recorded = now()
+    recorded = now(),
+    ...props
   } = telemetry
   return {
-    device_id,
-    provider_id,
-    timestamp,
+    ...props,
     lat,
     lng,
     altitude,
     heading,
     speed,
     accuracy,
-    charge,
     recorded
   }
 }
 
 function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Telemetry {
-  const {
-    device_id,
-    provider_id,
-    timestamp,
-    lat,
-    lng,
-    altitude,
-    heading,
-    speed,
-    accuracy,
-    charge,
-    recorded
-  } = telemetryRecord
+  const { lat, lng, altitude, heading, speed, accuracy, ...props } = telemetryRecord
   return {
-    device_id,
-    provider_id,
-    timestamp,
-    gps: { lat, lng, altitude, heading, speed, accuracy },
-    charge,
-    recorded
+    ...props,
+    gps: { lat, lng, altitude, heading, speed, accuracy }
   }
 }
 

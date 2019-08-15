@@ -30,11 +30,26 @@ import {
   isValidTimestamp,
   isValidAuditEventType,
   isValidAuditIssueCode,
-  isValidAuditNote
+  isValidAuditNote,
+  isValidNumber
 } from '../validators'
 import { ValidationError } from '../exceptions'
 
 describe('Tests validators', () => {
+  it('verified Number validator', done => {
+    test.assert.throws(() => isValidNumber(undefined), ValidationError)
+    test.assert.throws(() => isValidNumber(null), ValidationError)
+    test.assert.throws(() => isValidNumber('invalid'), ValidationError)
+    test.assert.throws(() => isValidNumber(0, { min: 1, max: 1 }), ValidationError)
+    test.assert.throws(() => isValidNumber(2, { min: 1, max: 1 }), ValidationError)
+    test.assert.throws(() => isValidNumber(-1, { min: 0, max: 1 }), ValidationError)
+    test.assert.throws(() => isValidNumber(1, { min: -1, max: 0 }), ValidationError)
+    test.value(isValidNumber(1, { min: 1, max: 1 })).is(true)
+    test.value(isValidNumber(undefined, { assert: false })).is(false)
+    test.value(isValidNumber(undefined, { assert: false, required: false })).is(true)
+    done()
+  })
+
   it('verifies Audit Trip ID validator', done => {
     test.assert.throws(() => isValidAuditTripId(undefined), ValidationError)
     test.assert.throws(() => isValidAuditTripId(null), ValidationError)
