@@ -62,14 +62,6 @@ useAws: false
 certificateArn: 
 registry: 
 useLatestImage: true
-dns:
-  enabled: false
-  owner: mds-dns  # fixme: figure out dns owner-id naming strategy
-  policy: upsert-only # [ sync | upsert-only]; would prevent ExternalDNS from deleting any records, omit to enable full synchronization
-  zones:
-    - zone.a.
-    - zone.b.
-    - zone.c.
 postgresql:
   internal: false
   name: mds
