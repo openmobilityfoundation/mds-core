@@ -1,0 +1,19 @@
+fileignoreconfig:
+- filename: yarn.lock
+  checksum: 02a19fab10ddc762593b76e4aa5a4700cff5705a153a9acfe97467d2c9163068
+  ignore_detectors: []
+- filename: packages/mds-test-data/index.ts
+  checksum: 05f2841259712d755e0091f0b460e31d7b9c7912fb7c9e76bbb83f942aa5ebfb
+  ignore_detectors: []
+- filename: yarn.lock
+  checksum: e8d2933455ddcfacc282ae191867806efba5af96df769a85714b01460ddd7646
+  ignore_detectors: []
+- filename: packages/mds-db/tests/migration.spec.ts
+  checksum: 17ff3100aeb42e5436e20ef69f8dd8585eca4352829bae2a0312582d8da20677
+  ignore_detectors: []
+- filename: packages/mds-db/sql-utils.ts
+  checksum: c5448443595c520b55184bfb67a4b4ee0f346d6b1864d8738268c52177c567a8
+  ignore_detectors: []
+- filename: packages/mds-db/index.ts
+  checksum: 7fabf330dfff4237df05e0c350f4433c739b9f6a71543d69fdc89401e8849c0a
+  ignore_detectors: []
