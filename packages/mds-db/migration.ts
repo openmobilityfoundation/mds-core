@@ -180,6 +180,20 @@ async function recreateProviderTables(client: MDSPostgresClient) {
   }
 }
 
+async function addMetadataForeignKeys(client: MDSPostgresClient, table: string, column: string) {
+  const foreignKeyName = `fk_${column}_metadata`
+  const sql = `DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${foreignKeyName}') THEN
+        ALTER TABLE ${column}_metadata
+        ADD CONSTRAINT ${foreignKeyName}
+        FOREIGN KEY (${column}_id) REFERENCES ${table} (${column}_id);
+      END IF;
+    END;
+    $$`
+  await SqlExecuter(client)(sql)
+}
+
 async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
 
@@ -240,6 +254,35 @@ async function increaseVarcharColumnSize(client: MDSPostgresClient, size: number
   }
 }
 
+async function addNewColumnsAndRemovePublishedColumnFromPoliciesAndGeographies(client: MDSPostgresClient) {
+  const PUBLISHED_COLUMN = 'published'
+  // Make sure this migration is still required
+  if (!schema.TABLE_COLUMNS.geographies.some((column: string) => column === PUBLISHED_COLUMN)) {
+    const exec = SqlExecuter(client)
+    // Make sure this migration hasn't already run
+    const result = await exec(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.TABLE.geographies}' AND column_name = '${PUBLISHED_COLUMN}' AND table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA`
+    )
+    if (result.rowCount > 0) {
+      try {
+        // Do the migration
+        await exec(
+          `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.read_only} ${
+            schema.COLUMN_TYPE[schema.COLUMN.read_only]
+          }, ADD COLUMN ${schema.COLUMN.previous_geography_ids} ${
+            schema.COLUMN_TYPE[schema.COLUMN.previous_geography_ids]
+          }, ADD COLUMN ${schema.COLUMN.name} ${schema.COLUMN_TYPE[schema.COLUMN.name]},
+        DROP COLUMN ${PUBLISHED_COLUMN}`
+        )
+        await exec(`ALTER TABLE ${schema.TABLE.policies} DROP COLUMN ${PUBLISHED_COLUMN}`)
+        await log.info('Migration addNewColumnsAndRemovePublishedColumnFromPoliciesAndGeographies succeeded.')
+      } catch (err) {
+        await log.error('Migration addNewColumnsAndRemovePublishedColumnFromPoliciesAndGeographies failed.')
+      }
+    }
+  }
+}
+
 async function updateTables(client: MDSPostgresClient) {
   const { PG_MIGRATIONS } = process.env
   const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []
@@ -248,10 +291,13 @@ async function updateTables(client: MDSPostgresClient) {
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
+  await addMetadataForeignKeys(client, 'policies', 'policy')
+  await addMetadataForeignKeys(client, 'geographies', 'geography')
   if (migrations.includes('addIdentityColumnToAllTables')) {
     await addIdentityColumnToAllTables(client)
   }
   await increaseVarcharColumnSize(client, 127, schema.COLUMN.mfgr, schema.COLUMN.model, schema.COLUMN.provider_name)
+  await addNewColumnsAndRemovePublishedColumnFromPoliciesAndGeographies(client)
 }
 
 async function updateSchema(client: MDSPostgresClient) {

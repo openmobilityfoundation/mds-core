@@ -18,7 +18,7 @@ import express from 'express'
 import { isProviderId, providerName } from '@mds-core/mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
-import { Policy, UUID, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import { isUUID, now, pathsFor, ServerError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
@@ -91,8 +91,6 @@ function api(app: express.Express): express.Express {
     }
     try {
       const policies = await db.readPolicies({ start_date, end_date })
-      log.info('read policies (all)', policies.length)
-      // filter here.  consider filtering in db?
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
@@ -146,61 +144,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  // TODO build out validation of geojson NEIL
-
-  const featureSchema = Joi.object()
-    .keys({
-      type: Joi.string()
-        .valid(['Feature'])
-        .required(),
-      properties: Joi.object().required(),
-      geometry: Joi.object().required()
-    })
-    .unknown(true) // TODO
-
-  const featureCollectionSchema = Joi.object()
-    .keys({
-      type: Joi.string()
-        .valid(['FeatureCollection'])
-        .required(),
-      features: Joi.array()
-        .min(1)
-        .items(featureSchema)
-        .required()
-    })
-    .unknown(true) // TODO
-
-  app.post(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
-    const geography = req.body
-    const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
-    const details = validation.error ? validation.error.details : null
-    if (details) {
-      log.info('questionable geojson', details)
-      res.status(422).send(details)
-      return
-    }
-
-    try {
-      await db.writeGeography(geography)
-      res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  app.put(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
-    // TODO implement updating a non-published geography
-    res.status(501)
-  })
-
-  app.delete(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
-    // TODO implement deleting a non-published geography
-    res.status(501)
-  })
-
-  const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-
   const ruleSchema = Joi.object().keys({
     name: Joi.string().required(),
     rule_id: Joi.string()
@@ -227,7 +170,7 @@ function api(app: express.Express): express.Express {
     minimum: Joi.number(),
     start_time: Joi.string(),
     end_time: Joi.string(),
-    days: Joi.array().items(Joi.string().valid(DAYS_OF_WEEK)),
+    days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
     messages: Joi.object(),
     value_url: Joi.string().uri()
   })
@@ -260,59 +203,6 @@ function api(app: express.Express): express.Express {
     res.status(200).send(joiToJsonSchema(policySchema))
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
-    const policy = req.body
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
-
-    if (details) {
-      await log.error('questionable policy json', details)
-      res.status(422).send(details)
-      return
-    }
-    try {
-      await db.writePolicy(policy)
-      res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  // TODO publish geography
-
-  // TODO publish policy
-
-  /* istanbul ignore next */
-  app.put(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
-    // TODO implement updating a non-published policy
-    const policy = req.body
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
-
-    // TODO is basically identical to POST policy
-
-    if (details) {
-      log.info('policy JSON', details)
-      res.status(422).send(details)
-      return
-    }
-    try {
-      await db.writePolicy(policy)
-      res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  /* istanbul ignore next */
-  app.delete(pathsFor('/admin/policies/:policy_id'), (req, res) => {
-    // TODO implement deletion of a non-published policy
-    res.status(501)
-  })
-
-  /* istanbul ignore next */
   app.get(pathsFor('/test/initialize'), async (req, res) => {
     try {
       const kind = await Promise.all([db.initialize()])
@@ -320,7 +210,7 @@ function api(app: express.Express): express.Express {
         result: `Policy initialized (${kind})`
       })
     } catch (err) {
-      await log.error('initialize exception', err)
+      await log.error('initialize failed', err)
       res.status(500).send(new ServerError())
     }
   })

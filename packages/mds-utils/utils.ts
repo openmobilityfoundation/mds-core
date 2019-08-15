@@ -38,12 +38,13 @@ import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geo
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
+const UUID_REGEX = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
 
 function isUUID(s: unknown): s is UUID {
   if (typeof s !== 'string') {
     return false
   }
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)
+  return UUID_REGEX.test(s)
 }
 
 function round(value: string | number, decimals: number) {
@@ -589,9 +590,6 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
   if (res === undefined) {
     throw new Error(`Geography ${geography} not found in ${geographies}!`)
   }
-  if (res.geography_json.type !== 'FeatureCollection') {
-    return res.geography_json.geometry
-  }
   return res.geography_json
 }
 
@@ -623,7 +621,12 @@ function routeDistance(coordinates: { lat: number; lng: number }[]): number {
     }, 0)
 }
 
+function clone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 export {
+  UUID_REGEX,
   isUUID,
   isPct,
   isTimestamp,
@@ -660,5 +663,6 @@ export {
   convertTelemetryRecordToTelemetry,
   getPolygon,
   isInStatesOrEvents,
-  routeDistance
+  routeDistance,
+  clone
 }

@@ -1,19 +1,22 @@
 fileignoreconfig:
-- filename: yarn.lock
-  checksum: 02a19fab10ddc762593b76e4aa5a4700cff5705a153a9acfe97467d2c9163068
-  ignore_detectors: []
-- filename: packages/mds-test-data/index.ts
-  checksum: 05f2841259712d755e0091f0b460e31d7b9c7912fb7c9e76bbb83f942aa5ebfb
-  ignore_detectors: []
-- filename: yarn.lock
-  checksum: e8d2933455ddcfacc282ae191867806efba5af96df769a85714b01460ddd7646
+- filename: packages/mds-db/sql-utils.ts
+  checksum: c5448443595c520b55184bfb67a4b4ee0f346d6b1864d8738268c52177c567a8
   ignore_detectors: []
 - filename: packages/mds-db/tests/migration.spec.ts
   checksum: 17ff3100aeb42e5436e20ef69f8dd8585eca4352829bae2a0312582d8da20677
   ignore_detectors: []
-- filename: packages/mds-db/sql-utils.ts
-  checksum: c5448443595c520b55184bfb67a4b4ee0f346d6b1864d8738268c52177c567a8
+- filename: packages/mds-test-data/district-seven.ts
+  checksum: e32cbf7433d9cdee5a7280f8f3f3e1c4bedcfb2147d28a4a0e50bdddfb8147ca
+  ignore_detectors: []
+- filename: packages/mds-db/tests/mds-db.spec.ts
+  checksum: a0fb1b929510e0ae22da4b8f749000167638c5b09c4f83005cbf4788b185aa8c
+  ignore_detectors: []
+- filename: packages/mds-test-data/index.ts
+  checksum: 95d97f6c5b54528dc0eae59ee9bf2adb6f0c4553575c0e907f5348dc55854486
+  ignore_detectors: []
+- filename: yarn.lock
+  checksum: 51d51d8230980a102e2db845002f965fa282551c4eb7ca987da212504a45b809
   ignore_detectors: []
 - filename: packages/mds-db/index.ts
-  checksum: 7fabf330dfff4237df05e0c350f4433c739b9f6a71543d69fdc89401e8849c0a
+  checksum: 83befe1d1d0289f7713f5f41c196be90cf62349091bda37c8feb1a4f8fd18945
   ignore_detectors: []
