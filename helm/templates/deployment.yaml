@@ -25,6 +25,13 @@ spec:
         image: {{ $api.name }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
         ports:
         - containerPort: {{ $api.port }}
           name: user-port
