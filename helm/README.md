@@ -7,22 +7,6 @@
 
 ## Configuration
 
-### Credentials
-
-For the postgresql password, create a secret in kuberenetes.  Remember to add `--namespace=...` to the below command if you are not deploying to the default kubernetes namespace. (Security note: the command below will put the password string into your command history and also make it briefly visible in the system process table.)
-
-```bash
-kubectl create secret generic pg-pass --from-literal 'PG_PASS=Password123#'
-```
-
-If you are using a private container image registry, you may need to add its credentials:
-
-```bash
-kubectl create secret generic registry-login \
-  --from-file=.dockerconfigjson=${HOME}/.docker/config.json \
-  --type=kubernetes.io/dockerconfigjson
-```
-
 ### Helm Chart Configuration (values.yaml)
 
 `apis:` does not need to be modified for normal usage
@@ -44,9 +28,9 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dependency update
 ```
 
-### Credentials/Secrets
+### Credentials
 
-Create a Postgresql password:
+Create a Postgresql password noting the command below will put the password string into your command history and also make it briefly visible in the system process table:
 
 ```bash
 kubectl create secret generic pg-pass --from-literal 'PG_PASS=Password123#'
@@ -59,6 +43,16 @@ If you're not using JWT, you'll still need to include a token in the header for 
 ```bash
 TOKEN=.$(base64 <<< '{"scope": "admin:all test:all"}').
 curl -H "Authorization: Bearer $TOKEN" http://localhost/agency/test/initialize
+```
+
+### Registry 
+
+If you are using a private container image registry, you may need to add its credentials:
+
+```bash
+kubectl create secret generic registry-login \
+  --from-file=.dockerconfigjson=${HOME}/.docker/config.json \
+  --type=kubernetes.io/dockerconfigjson
 ```
 
 ## Installation
