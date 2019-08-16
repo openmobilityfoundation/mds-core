@@ -1,0 +1,27 @@
+suite: test deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: all docs
+    set:
+      foo: bar
+    asserts:
+      - hasDocuments:
+          count: 7
+      - equal:
+          path: apiVersion
+          value: apps/v1
+      - isKind:
+          of: Deployment
+  - it: doc 0
+    asserts:
+      - equal:
+          path: metadata[0].name
+          value: mds-provider
+      - equals:
+          path: metadata[0].labels.app
+          value: mds-provider
+      - equal:
+          path: metadata[0].namespace
+          value: default
+    documentIndex: 0
