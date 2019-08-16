@@ -16,8 +16,8 @@ spec:
   - jwt:
       audiences:
       - {{ $api.jwtAudience | quote }}
-      issuer: {{ $.Values.jwtIssuer | quote }}
-      jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwtIssuer }}
+      issuer: {{ $.Values.jwt.issuer | quote }}
+      jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwt.issuer }}
       trigger_rules:
       - excluded_paths:
         - exact: {{ $api.pathPrefix }}/health

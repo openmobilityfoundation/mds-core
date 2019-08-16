@@ -13,9 +13,9 @@
 
 `useJwtAuth:` enables JWT authorization for each endpoint.  Required for production usage.  Note that some admin operations (e.g. database initialization) require a scoped token - see below for how to work around this when this field is set to `false`.
 
-`useAws:` configures an EKS-specific ingress gateway
+`aws.enabled:` configures an EKS-specific ingress gateway
 
-`certificateArn:` configures the ingress gateway with an AWS Certificate Manager (ACM) certificate.
+`aws.certificateArn:` configures the ingress gateway with an AWS Certificate Manager (ACM) certificate.
 
 `registry`: Image registry domain name for pulling container images.  If empty, helm will look for images on the local host.
 

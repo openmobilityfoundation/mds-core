@@ -56,10 +56,12 @@ apis:
     useEvents: true
     jwtAudience: 
 namespace: default
-useJwtAuth: false
-jwtIssuer: 
-useAws: false
-certificateArn: 
+jwt:
+  issuer:
+  enabled: false 
+aws:
+  enabled: false
+  certificateArn:
 registry: 
 useLatestImage: true
 postgresql:
