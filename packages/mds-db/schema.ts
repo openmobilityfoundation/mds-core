@@ -216,7 +216,7 @@ const PG_TYPES: { [propName: string]: string } = {
   deleted: 'bigint'
 }
 
-export default {
+export = {
   DEVICES_TABLE,
   TELEMETRY_TABLE,
   EVENTS_TABLE,
