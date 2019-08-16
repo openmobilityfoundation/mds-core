@@ -41,9 +41,9 @@ spec:
             value: {{ $api.pathPrefix }}
           {{- if $api.useDB }}
           - name: PG_USER
-            value: {{ $.Values.postgresql.user }}
+            value: {{ $.Values.postgresql.postgresqlUsername }}
           - name: PG_NAME
-            value: {{ $.Values.postgresql.name }}
+            value: {{ $.Values.postgresql.postgresqlDatabase }}
           - name: PG_PASS
             valueFrom:
               secretKeyRef:
@@ -54,7 +54,7 @@ spec:
           - name: PG_HOST
             value: {{ $.Values.postgresql.host }}
           - name: PG_HOST_READER
-            value: {{ $.Values.postgresql.host }}
+            value: {{ $.Values.postgresql.hostReader }}
           {{- end }}
           {{- if $api.useCache }}
           - name: REDIS_HOST
