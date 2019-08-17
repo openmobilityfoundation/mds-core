@@ -1,10 +1,13 @@
 # !! File must end with empty line !!
 dependencies:
   - name: redis
+    version: 9.0.2
     repository: alias:stable
-    condition: redis.enabled
+    condition: redis.internal
   - name: postgresql
     repository: alias:stable
-    condition: postgresql.enabled
+    version: 6.2.1
+    condition: postgresql.internal
   - name: kube-metrics-adapter
+    version: 0.0.4
     repository: alias:banzaicloud-stable
