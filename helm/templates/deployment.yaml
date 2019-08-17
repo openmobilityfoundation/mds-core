@@ -41,24 +41,32 @@ spec:
             value: {{ $api.pathPrefix }}
           {{- if $api.useDB }}
           - name: PG_USER
-            value: {{ $.Values.postgresql.user }}
+            value: {{ $.Values.postgresql.postgresqlUsername }}
           - name: PG_NAME
-            value: {{ $.Values.postgresql.name }}
+            value: {{ $.Values.postgresql.postgresqlDatabase }}
           - name: PG_PASS
             valueFrom:
               secretKeyRef:
                 name: pg-pass
-                key: PG_PASS
+                key: postgresql-password
           - name: PG_PORT
             value: {{ $.Values.postgresql.port | quote }}
           - name: PG_HOST
+            {{- if $.Values.postgresql.host }}
             value: {{ $.Values.postgresql.host }}
           - name: PG_HOST_READER
             value: {{ $.Values.postgresql.host }}
+            {{- else }}
+            value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            {{- end }}
           {{- end }}
           {{- if $api.useCache }}
           - name: REDIS_HOST
+            {{- if $.Values.redis.host }}
             value: {{ $.Values.redis.host }}
+            {{- else }}
+            value: mds-redis.{{ $.Values.namespace }}.svc.cluster.local
+            {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
           {{- end }}

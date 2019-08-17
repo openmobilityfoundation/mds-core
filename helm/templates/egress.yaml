@@ -1,3 +1,4 @@
+{{- if .Values.postgresql.host }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
@@ -12,6 +13,8 @@ spec:
     protocol: TCP
   location: MESH_EXTERNAL
 ---
+{{- end }}
+{{- if .Values.postgresql.hostReader }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
@@ -25,3 +28,20 @@ spec:
     name: tcp
     protocol: TCP
   location: MESH_EXTERNAL
+---
+{{- end }}
+{{- if .Values.redis.host }}
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: redis-external
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+  - {{ $.Values.redis.host }}
+  ports:
+  - number: {{ $.Values.redis.port }}
+    name: tcp
+    protocol: TCP
+  location: MESH_EXTERNAL
+{{- end }}

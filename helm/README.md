@@ -5,6 +5,12 @@
 * A [Kubernetes](https://kubernetes.io) cluster with [Istio 1.1.x](https://istio.io) installed, set as the default context in `kubectl`
 * (optional) [Postgresql](https://www.postgresql.org) and [Redis](https://redis.io) backends available to the cluster
 * (optional) When deploying to [AWS' Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), you'll need to follow the [documentation](https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html) for adding the AWS IAM policies and the ALB ingress controller to your cluster
+* First-Party Stable and Banzai Helm Repos:
+```
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com/
+helm dependency update
+```
 
 ## Configuration
 
@@ -80,8 +86,6 @@ helm install --name mds .
 In order to locally deploy a self-contained cluster, ie standalone, consider the following operation:
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm dependency update
 helm install --set postgresql.internal=true --set redis.internal=true --name mds ./helm
 # prometheus
 kubectl port-forward $(kubectl get pods -n=istio-system | \
