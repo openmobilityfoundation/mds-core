@@ -54,10 +54,14 @@ spec:
           - name: PG_HOST
             {{- if $.Values.postgresql.host }}
             value: {{ $.Values.postgresql.host }}
-          - name: PG_HOST_READER
-            value: {{ $.Values.postgresql.host }}
             {{- else }}
             value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            {{- end }}
+          - name: PG_HOST_READER
+            {{- if $.Values.postgresql.hostReader }}
+            value: {{ $.Values.postgresql.hostReader }}
+            {{- else }}
+            value: {{ $.Values.postgresql.host }}
             {{- end }}
           {{- end }}
           {{- if $api.useCache }}
