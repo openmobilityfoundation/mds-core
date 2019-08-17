@@ -65,7 +65,6 @@ aws:
 registry: 
 useLatestImage: true
 postgresql:
-<<<<<<< HEAD
   host: false
   hostReader: 
   port: 5432
@@ -82,16 +81,3 @@ redis:
   image:
     repository: redis
     tag: 5
-=======
-  postgresqlUsername: mdsadmin
-  postgresqlPassword: Password123#
-  postgresqlDatabase: mds
-  host: host.docker.internal
-  hostReader: host.docker.internal
-  port: 5432
-  enabled: true
-redis:
-  host: host.docker.internal
-  port: 6379
-  enabled: true
->>>>>>> 869073ed31a868d6d8408b0c272edeef3173ea34
