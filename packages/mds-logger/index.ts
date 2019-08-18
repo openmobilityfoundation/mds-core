@@ -232,4 +232,4 @@ async function startup() {
   // }
 }
 
-export default { info, warn, error, startup }
+export = { info, warn, error, startup }

@@ -19,8 +19,19 @@ import redis from 'redis'
 import bluebird from 'bluebird'
 import Cloudevent from 'cloudevents-sdk'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
+import {
+  Stream,
+  StreamItem,
+  ReadStreamResult,
+  DEVICE_INDEX_STREAM,
+  DEVICE_RAW_STREAM,
+  PROVIDER_EVENT_STREAM,
+  ReadStreamOptions,
+  StreamItemID
+} from './types'
 
 const { env } = process
+
 /* eslint-reason no cloud-event typings */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 let binding: any = null
@@ -47,22 +58,6 @@ async function writeCloudEvent(type: string, data: string) {
 
   return getBinding().emit(cloudevent)
 }
-
-export type ReadStreamOptions = Partial<{
-  count: number
-  block: number
-  noack: boolean
-}>
-
-const Streams = ['device:index', 'device:raw', 'provider:event'] as const
-const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM] = Streams
-type Stream = typeof Streams[number]
-
-type StreamItemID = string
-type StreamItemType = string
-type StreamItemData = string
-export type StreamItem = [StreamItemID, [StreamItemType, StreamItemData]]
-export type ReadStreamResult = [Stream, StreamItem[]]
 
 declare module 'redis' {
   interface RedisClient {
@@ -288,7 +283,7 @@ async function health() {
   return { using: 'redis', status }
 }
 
-export default {
+export = {
   createStreamGroup,
   getStreamInfo,
   health,
