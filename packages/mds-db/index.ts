@@ -1548,7 +1548,7 @@ async function readTripIds(params: Partial<ReadTripIdsQueryParams> = {}): Promis
   }
 }
 
-export default {
+export = {
   initialize,
   health,
   seed,
