@@ -173,7 +173,6 @@ helm lint --set [KEY]=[VALUE] ... --debug ./helm
 Run tests:
 
 ```bash
-cd [CHART]
 heml unittest ./helm
 ```
 
