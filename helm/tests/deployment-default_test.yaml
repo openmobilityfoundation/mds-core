@@ -1,0 +1,8 @@
+suite: test deployment default
+templates:
+  - deployment.yaml
+tests:
+  - it: all docs
+    asserts:
+      - hasDocuments:
+          count: 7
