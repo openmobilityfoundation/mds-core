@@ -51,7 +51,6 @@ helm template [PROJECT-DIR]/istio-1.2.4/install/kubernetes/helm/istio \
 brew install kubernetes-helm
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
-(deprecated) helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dependency update
 helm plugin install https://github.com/lrills/helm-unittest
 ```
