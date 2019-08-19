@@ -1,0 +1,82 @@
+apis:
+  - name: mds-provider
+    pathPrefix: /provider
+    port: 4000
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: mds-agency
+    pathPrefix: /agency
+    port: 4001
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: mds-audit
+    pathPrefix: /audit
+    port: 4002
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: mds-policy
+    pathPrefix: /policy
+    port: 4003
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: mds-compliance
+    pathPrefix: /compliance
+    port: 4004
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: mds-daily
+    pathPrefix: /daily
+    port: 4005
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+  - name: mds-native
+    pathPrefix: /native
+    port: 4006
+    version: latest
+    useDB: false
+    useCache: true
+    useEvents: true
+    jwtAudience: 
+namespace: default
+registry: 
+useLatestImage: true
+jwt:
+  issuer:
+  enabled: false 
+postgresql:
+  internal: true
+  host:
+  hostReader: 
+  port: 5432
+  existingSecret: pg-pass
+  postgresqlUsername: mdsadmin
+  postgresqlDatabase: mds
+  image:
+    repository: postgres
+    tag: 10
+redis:
+  internal: true
+  host:
+  port: 6379
+  usePassword: false
+  image:
+    repository: redis
+    tag: 5

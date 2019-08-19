@@ -1,8 +1,10 @@
-suite: test deployment default
+suite: test deployment all no-cache
 templates:
   - deployment.yaml
 tests:
   - it: all docs
+    values:
+      - ./values-no-cache.yaml
     asserts:
       - hasDocuments:
           count: 7
