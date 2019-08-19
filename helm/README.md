@@ -9,8 +9,6 @@
   * [Banzai Cloud Charts Repository](https://kubernetes-charts.banzaicloud.com/)
   * [Helm UnitTest Plugin](https://github.com/lrills/helm-unittest)
 * (optional) [Kubernetes Dashboard](https://github.com/kubernetes/dashboard)
-* (optional) [AWS' Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/)
-  * see [documentation](https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html) to add AWS IAM policies and ALB ingress controller
 
 ## Cluster Installation
 
@@ -35,7 +33,7 @@ kubectl create namespace istio-system
 helm template [PROJECT-DIR]/istio-1.2.4/install/kubernetes/helm/istio-init \
   --name istio-init \
   --namespace istio-system | kubectl apply -f -
-[ "$(kubectl get crds | grep 'istio.io' | wc -l)" -eq "23" ] && \
+[ "$(kubectl -n istio-system get crds | grep 'istio.io' | wc -l)" -eq "23" ] && \
       echo "istio is initialized" || echo "istio is not initialized"
 # install an istio-cluster-profile: demo (note: not for production)
 helm template [PROJECT-DIR]/istio-1.2.4/install/kubernetes/helm/istio \

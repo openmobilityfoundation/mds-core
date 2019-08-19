@@ -56,16 +56,14 @@ apis:
     useEvents: true
     jwtAudience: 
 namespace: default
+registry: 
+useLatestImage: true
 jwt:
   issuer:
   enabled: false 
-aws:
-  enabled: false
-  certificateArn:
-registry: 
-useLatestImage: true
 postgresql:
-  host: false
+  internal: true
+  host:
   hostReader: 
   port: 5432
   existingSecret: pg-pass
@@ -75,7 +73,8 @@ postgresql:
     repository: postgres
     tag: 10
 redis:
-  host: false
+  internal: true
+  host:
   port: 6379
   usePassword: false
   image:
