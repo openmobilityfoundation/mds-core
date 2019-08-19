@@ -4,7 +4,7 @@ templates:
 tests:
   - it: doc 4
     values:
-      - values-no-cache.yaml
+      - ./values-no-cache.yaml
     asserts:
       - isAPIVersion:
           of: apps/v1
