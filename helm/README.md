@@ -178,7 +178,7 @@ helm lint --set [KEY]=[VALUE] ... --debug ./helm
 Run tests:
 
 ```bash
-heml unittest ./helm
+helm unittest ./helm
 ```
 
 ## Uninstall
