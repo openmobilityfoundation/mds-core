@@ -77,6 +77,8 @@ redis:
   host:
   port: 6379
   usePassword: false
-  image:
-    repository: redis
-    tag: 5
+  cluster:
+    enabled: false
+kube-metrics-adapter:
+  prometheus:
+    url: http://prometheus.istio-system.svc.cluster.local
