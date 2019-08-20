@@ -8,7 +8,10 @@
   * [Google Charts Repository](https://kubernetes-charts.storage.googleapis.com/)
   * [Banzai Cloud Charts Repository](https://kubernetes-charts.banzaicloud.com/)
   * [Helm UnitTest Plugin](https://github.com/lrills/helm-unittest)
-* (optional) [Kubernetes Dashboard](https://github.com/kubernetes/dashboard)
+* Tools
+  * (optional) [Kubernetes Dashboard](https://github.com/kubernetes/dashboard)
+  * (optional) [kubefwd](https://github.com/txn2/kubefwd)
+  * (optional) [pgcli](https://www.pgcli.com)
 
 ## Cluster Installation
 
@@ -164,6 +167,8 @@ kubectl port-forward $(kubectl get pods -n=istio-system | \
 
 ## Development (work in progress)
 
+### Helm
+
 The following [helm sub-commands](https://helm.sh/docs/helm/) ease chart development:
 
 ```bash
@@ -175,15 +180,22 @@ helm install --set [KEY]=[VALUE] ... --dry-run --debug ./helm
 helm lint --set [KEY]=[VALUE] ... --debug ./helm
 ```
 
-Run tests:
+### Helm tests
 
 ```bash
 helm unittest ./helm
 ```
 
+### Database/PostgreSQL
+
+```bash
+sudo kubefwd svc -n default &
+pgcli -h mds-postgresql -p 5432 -U msadmin mds
+```
+
 ## Uninstall
 
-### Uninstall MDS Cluster
+### Uninstall MDS
 
 ```bash
 helm delete --purge mds
