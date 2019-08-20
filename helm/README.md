@@ -190,7 +190,7 @@ helm unittest ./helm
 
 ```bash
 sudo kubefwd svc -n default &
-pgcli -h mds-postgresql -p 5432 -U msadmin mds
+pgcli postgres://mdsadmin@mds-postgresql:5432/mds
 ```
 
 ## Cleanup
