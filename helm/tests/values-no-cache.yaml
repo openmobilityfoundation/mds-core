@@ -66,12 +66,11 @@ postgresql:
   host:
   hostReader: 
   port: 5432
-  existingSecret: pg-pass
+  existingSecret: postgresql-password
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
-  image:
-    repository: postgres
-    tag: 10
+  repository: postgres
+  tag: 10
 redis:
   internal: true
   host:
