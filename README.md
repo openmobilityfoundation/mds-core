@@ -12,6 +12,26 @@ Repo for LADOT MDS implementation for contribution to the Open Mobility Foundati
 * Redis
 * [Yarn](https://yarnpkg.com/en/docs/install#mac-stable)
 
+#### Databse config on mac
+If you haven't installed PostegreSQL and Redis you can install them with homebrew on Mac
+```
+brew install postgresql
+brew install redis
+```
+
+Make sure they are running before you run the tests
+```
+brew services start postgresql
+brew services start redis
+```
+
+If you encounter the following error:
+`FATAL: database “<user>” does not exist`
+
+The following command should fix your issue
+`createdb -h localhost`
+
+#### Package setup
 Install [Lerna](https://lerna.js.org/)
 ```sh
 yarn global add lerna
@@ -21,12 +41,18 @@ Install all packages.  Uses Yarn workspaces.
 ```sh
 yarn install
 ```
+#### Running the tests
 
 Now you can work with each package
 ```
 cd packages/mds-audit
 yarn test
 yarn start
+```
+
+You can also run all tests from the project root with
+```
+yarn test
 ```
 
 ### Package Management - Lerna
