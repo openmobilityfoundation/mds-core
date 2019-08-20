@@ -547,7 +547,7 @@ function api(app: express.Express): express.Express {
       const response = await getVehicles(skip, take, url, provider_id, req.query)
       return res.status(200).send(response)
     } catch (err) {
-      await log.error('readDeviceIds fail', err)
+      await log.error('getVehicles fail', err)
       res.status(500).send(new ServerError())
     }
   })

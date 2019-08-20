@@ -267,6 +267,9 @@ async function readDevice(
 }
 
 async function readDeviceList(device_ids: UUID[]) {
+  if (device_ids.length === 0) {
+    return []
+  }
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
   const sql = `SELECT * FROM ${schema.DEVICES_TABLE} WHERE device_id IN (${device_ids.map(device_id =>
