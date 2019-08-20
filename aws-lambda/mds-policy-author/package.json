@@ -26,7 +26,7 @@
   "dependencies": {
     "@aws-lambda/aws-serverless-express-handler": "^0.1.4",
     "@mds-core/mds-api-server": "^0.1.4",
-    "@mds-core/mds-policy-author": "^0.0.5"
+    "@mds-core/mds-policy-author": "^0.0.1"
   },
   "license": "Apache-2.0"
 }
