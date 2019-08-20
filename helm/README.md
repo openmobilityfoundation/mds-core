@@ -53,7 +53,6 @@ Binaries can be installed from the [Helm GitHub releases page](https://github.co
 ```bash
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
-(deprecated) helm repo add bitnami https://charts.bitnami.com/bitnami
 helm dependency update
 helm plugin install https://github.com/lrills/helm-unittest
 ```
@@ -178,7 +177,6 @@ helm lint --set [KEY]=[VALUE] ... --debug ./helm
 Run tests:
 
 ```bash
-cd [CHART]
 heml unittest ./helm
 ```
 
