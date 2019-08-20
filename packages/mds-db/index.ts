@@ -1140,7 +1140,7 @@ async function writeGeographyMetadata(geography_id: UUID, metadata: GeographyMet
   const sql = `INSERT INTO ${schema.TABLE.geography_metadata} (${cols_sql(
     schema.TABLE_COLUMNS.geography_metadata
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.geography_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, { geography_id, ...metadata })
+  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, { geography_id, geography_metadata: metadata })
   const {
     rows: [recorded_metadata]
   }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
@@ -1300,7 +1300,7 @@ async function writePolicyMetadata(policy_id: UUID, metadata: PolicyMetadata) {
   const sql = `INSERT INTO ${schema.TABLE.policy_metadata} (${cols_sql(
     schema.TABLE_COLUMNS.policy_metadata
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.policy_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, { policy_id, ...metadata })
+  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, { policy_id, policy_metadata: metadata })
   const {
     rows: [recorded_metadata]
   }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
