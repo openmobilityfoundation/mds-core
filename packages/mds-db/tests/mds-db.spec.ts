@@ -271,14 +271,12 @@ if (pg_info.database) {
       it('can write, read, and publish a Policy', async () => {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writePolicy(POLICY_JSON)
-        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY_JSON.policy_id })
-        assert.deepEqual(result[0], POLICY_JSON)
 
         await MDSDBPostgres.writePolicy(POLICY2_JSON)
         await MDSDBPostgres.writeGeography(LAGeography)
         await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
-        const allPolicies = await MDSDBPostgres.readPolicies()
-        assert.deepEqual(allPolicies.length, 2)
+        const publishedPolicies = await MDSDBPostgres.readPolicies()
+        assert.deepEqual(publishedPolicies.length, 1)
         const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true })
         assert.deepEqual(unpublishedPolicies.length, 1)
       })
@@ -294,7 +292,7 @@ if (pg_info.database) {
         const policy = clone(POLICY2_JSON)
         policy.name = 'a shiny new name'
         await MDSDBPostgres.editPolicy(policy)
-        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY2_JSON.policy_id })
+        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY2_JSON.policy_id, get_unpublished: true })
         assert.deepEqual(result[0].name, 'a shiny new name')
       })
 

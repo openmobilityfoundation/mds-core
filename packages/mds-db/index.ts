@@ -1231,7 +1231,7 @@ async function editPolicy(policy: Policy) {
     throw new Error('Cannot edit published policy')
   }
 
-  await readPolicies({ policy_id })
+  await readPolicies({ policy_id, get_unpublished: true })
 
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.TABLE.policies} SET policy_json=$1 WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`

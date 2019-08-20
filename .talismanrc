@@ -8,18 +8,18 @@ fileignoreconfig:
 - filename: packages/mds-test-data/district-seven.ts
   checksum: e32cbf7433d9cdee5a7280f8f3f3e1c4bedcfb2147d28a4a0e50bdddfb8147ca
   ignore_detectors: []
-- filename: packages/mds-db/tests/mds-db.spec.ts
-  checksum: a0fb1b929510e0ae22da4b8f749000167638c5b09c4f83005cbf4788b185aa8c
-  ignore_detectors: []
 - filename: packages/mds-test-data/index.ts
   checksum: 95d97f6c5b54528dc0eae59ee9bf2adb6f0c4553575c0e907f5348dc55854486
   ignore_detectors: []
 - filename: yarn.lock
   checksum: 51d51d8230980a102e2db845002f965fa282551c4eb7ca987da212504a45b809
   ignore_detectors: []
-- filename: packages/mds-db/index.ts
-  checksum: 4b9841b7d8c1d97ba62329611368f5cf56774cc91f75afaa6a81880984cf99aa
-  ignore_detectors: []
 - filename: packages/mds-cache/index.ts
   checksum: 370d8215e861a9857fcca7b65057a7c14d39977d74857297225802c15284b4ff
+  ignore_detectors: []
+- filename: packages/mds-db/index.ts
+  checksum: f1fd1fac7ea01fb8b3d8f98e6020f6f3a9173102501da97ff862c611afa0469f
+  ignore_detectors: []
+- filename: packages/mds-db/tests/mds-db.spec.ts
+  checksum: 4704adb7f4c2d2e24bff0c49fd0fbf12969bfe4cb5e36ef839a2f2bf12bde6a0
   ignore_detectors: []
