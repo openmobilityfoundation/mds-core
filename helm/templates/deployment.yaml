@@ -52,24 +52,28 @@ spec:
           - name: PG_PORT
             value: {{ $.Values.postgresql.port | quote }}
           - name: PG_HOST
-            {{- if $.Values.postgresql.host }}
-            value: {{ $.Values.postgresql.host }}
-            {{- else }}
+            {{- if $.Values.postgresql.internal }}
             value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            {{- else }}
+            value: {{ $.Values.postgresql.host }}
             {{- end }}
           - name: PG_HOST_READER
+            {{- if $.Values.postgresql.internal }}
+            value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            {{- else }}
             {{- if $.Values.postgresql.hostReader }}
             value: {{ $.Values.postgresql.hostReader }}
             {{- else }}
             value: {{ $.Values.postgresql.host }}
             {{- end }}
+            {{- end }}
           {{- end }}
           {{- if $api.useCache }}
           - name: REDIS_HOST
-            {{- if $.Values.redis.host }}
-            value: {{ $.Values.redis.host }}
+            {{- if $.Values.redis.internal }}
+            value: mds-redis-master.{{ $.Values.namespace }}.svc.cluster.local
             {{- else }}
-            value: mds-redis.{{ $.Values.namespace }}.svc.cluster.local
+            value: {{ $.Values.redis.host }}
             {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
