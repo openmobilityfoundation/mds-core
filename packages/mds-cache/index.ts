@@ -268,7 +268,7 @@ async function updateProviderStats(suffix: string, device_id: UUID, timestamp: T
     )
   } catch (err) {
     const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-    await log.warn(msg)
+    await log.info(msg)
     return Promise.resolve(msg)
   }
 }
