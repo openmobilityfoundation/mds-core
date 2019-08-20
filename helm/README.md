@@ -24,6 +24,8 @@ kubectl config set-context docker-desktop
 
 ### [Istio](https://istio.io)
 
+Note that for the last step (labeling the namespace for istio injection), you will need to specify the namespace into which MDS will be installed.  In this example, the default namespace is used.
+
 ```bash
 (mkdir -p [PROJECT-DIR]; cd [PROJECT-DIR]; curl -L https://git.io/getLatestIstio | \
   ISTIO_VERSION=1.2.4 sh -)
@@ -41,12 +43,14 @@ helm template [PROJECT-DIR]/istio-1.2.4/install/kubernetes/helm/istio \
   --namespace istio-system --values \
   [PROJECT-DIR]/istio-1.2.4/install/kubernetes/helm/istio/values-istio-demo.yaml | \
   kubectl apply -f -
+kubectl label namespaces default istio-injection=enabled
 ```
 
 ### [Helm](https://helm.sh)
 
+Binaries can be installed from the [Helm GitHub releases page](https://github.com/helm/helm/releases)
+
 ```bash
-brew install kubernetes-helm
 helm repo add stable https://kubernetes-charts.storage.googleapis.com
 helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
 (deprecated) helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -120,7 +124,7 @@ kubectl get pods -n istio-system
 Create a Postgresql password noting the command below will put the password string into your command history and also make it briefly visible in the system process table:
 
 ```bash
-kubectl create secret generic pg-pass --from-literal 'PG_PASS=Password123#'
+kubectl create secret generic postgresql-password --from-literal 'PG_PASS=Password123#'
 ```
 
 ### JWT
