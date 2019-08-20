@@ -193,7 +193,7 @@ sudo kubefwd svc -n default &
 pgcli -h mds-postgresql -p 5432 -U msadmin mds
 ```
 
-## Uninstall
+## Cleanup
 
 ### Uninstall MDS
 

@@ -90,7 +90,7 @@ tests:
         documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[1].value
-          value: mds-redis.default.svc.cluster.local
+          value: mds-redis-master.default.svc.cluster.local
         documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[2].name
