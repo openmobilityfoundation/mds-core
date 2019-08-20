@@ -36,10 +36,12 @@ import {
   GEOGRAPHY_UUID,
   START_ONE_MONTH_AGO,
   START_ONE_WEEK_AGO,
-  PROVIDER_SCOPES
+  PROVIDER_SCOPES,
+  GEOGRAPHY2_UUID
 } from '@mds-core/mds-test-data'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
+const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')
 
 process.env.PATH_PREFIX = '/policy'
 
@@ -128,6 +130,7 @@ describe('Tests app', () => {
 
   it('read back one policy', async () => {
     await db.writePolicy(POLICY_JSON)
+    await db.publishPolicy(POLICY_UUID)
     request
       .get(`/policies/${POLICY_UUID}`)
       .set('Authorization', AUTH)
@@ -158,8 +161,11 @@ describe('Tests app', () => {
   })
 
   it('read back all policies', async () => {
+    await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: veniceSpecialOpsZone })
     await db.writePolicy(POLICY2_JSON)
+    await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)
+    await db.publishPolicy(POLICY3_JSON.policy_id)
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)

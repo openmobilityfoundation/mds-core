@@ -1185,6 +1185,8 @@ async function readPolicies(params?: {
 
   if (params && params.get_unpublished) {
     conditions.push(`policy_json->>'publish_date' IS NULL`)
+  } else {
+    conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
   }
 
   if (conditions.length) {
