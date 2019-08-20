@@ -57,8 +57,6 @@ import {
 } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 
-import { CacheReadDeviceResult } from '@mds-core/mds-cache/types'
-
 function api(app: express.Express): express.Express {
   /**
    * Agency-specific middleware to extract provider_id into locals, do some logging, etc.
@@ -484,7 +482,7 @@ function api(app: express.Express): express.Express {
       : rows
 
     const deviceIdSubset = deviceIdSuperset.slice(skip, skip + take).map(record => record.device_id)
-    const devices = (await cache.readDevices(deviceIdSubset)).reduce((acc: Device[], device: CacheReadDeviceResult) => {
+    const devices = (await db.readDeviceList(deviceIdSubset)).reduce((acc: Device[], device: Device) => {
       if (!device) {
         throw new Error('device in DB but not in cache')
       }
@@ -549,7 +547,7 @@ function api(app: express.Express): express.Express {
       const response = await getVehicles(skip, take, url, provider_id, req.query)
       return res.status(200).send(response)
     } catch (err) {
-      await log.error('readDeviceIds fail', err)
+      await log.error('getVehicles fail', err)
       res.status(500).send(new ServerError())
     }
   })
