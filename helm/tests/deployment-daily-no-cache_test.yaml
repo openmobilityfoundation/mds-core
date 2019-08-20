@@ -106,7 +106,7 @@ tests:
         documentIndex: 5
       - equal:
           path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
-          value: pg-pass
+          value: postgresql-password
         documentIndex: 5
       - equal:
           path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key

@@ -120,7 +120,7 @@ kubectl get pods -n istio-system
 
 ### Credentials
 
-Create a Postgresql password noting the command below will put the password string into your command history and also make it briefly visible in the system process table:
+Create a Postgresql password secret in the kubernetes cluster.  Note that this command will put the password string into your command history and also make it briefly visible in the system process table:
 
 ```bash
 kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
@@ -160,6 +160,7 @@ kubectl port-forward $(kubectl get pods -n=istio-system | \
 ## Dashboards
 
 * [prometheus](htttp://localhost:9090)
+* (optional) [dashboard](https://localhost:8443)
 
 ## Development (work in progress)
 
@@ -177,7 +178,7 @@ helm lint --set [KEY]=[VALUE] ... --debug ./helm
 Run tests:
 
 ```bash
-heml unittest ./helm
+helm unittest ./helm
 ```
 
 ## Uninstall
