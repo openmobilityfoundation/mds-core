@@ -123,7 +123,7 @@ kubectl get pods -n istio-system
 Create a Postgresql password noting the command below will put the password string into your command history and also make it briefly visible in the system process table:
 
 ```bash
-kubectl create secret generic postgresql-password --from-literal 'PG_PASS=Password123#'
+kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
 ```
 
 ### JWT
