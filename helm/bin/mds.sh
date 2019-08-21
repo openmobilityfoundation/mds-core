@@ -102,7 +102,7 @@ EOF
 }
 
 build()  {
-  (cd ..; yarn build; yarn image)
+  (cd ..; yarn; yarn build; yarn image)
 }
 
 installMds() {
@@ -112,7 +112,7 @@ installMds() {
 }
 
 unitTest() {
-  usage "todo: unitTest"
+  (cd ..; yarn test)
 }
 
 integrationTest() {
@@ -146,7 +146,7 @@ proxy() {
 }
 
 forward() {
-  subo kubefwd services -n default
+  sudo kubefwd services -n default
 }
 
 dashboardToken() {
