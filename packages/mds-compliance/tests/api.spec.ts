@@ -917,7 +917,9 @@ describe('Tests Compliance API:', () => {
             Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
               db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(() => {
                 db.writePolicy(COUNT_POLICY_JSON_4).then(() => {
-                  done()
+                  db.publishPolicy(COUNT_POLICY_JSON_4.policy_id).then(() => {
+                    done()
+                  })
                 })
               })
             })
