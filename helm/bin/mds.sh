@@ -155,7 +155,7 @@ if [[ $# != 0 ]]; then
         integrationTest || usage "integration test failed";;
       unit-test) unitTest;;
       integratio-ntest) integrationtTest;;
-      postgresql) postgresql || usage "postgresql failed";;
+      postgresql|postgres) postgresql || usage "postgresql failed";;
       uninstall) uninstallMds || usage "uninstall mds failure";
         uninstallIstio || usage "uninstall istio failure";;
       uninstall-mds) uninstallMds;;
