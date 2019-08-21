@@ -253,12 +253,7 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
 }
 
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
-async function updateProviderStats(
-  suffix: string,
-  device_id: UUID,
-  timestamp: Timestamp | undefined | null,
-  provider_id: UUID
-) {
+async function updateProviderStats(suffix: string, device_id: UUID, provider_id: UUID, timestamp?: Timestamp) {
   try {
     return (await getClient()).hmsetAsync(
       `provider:${provider_id}:stats`,
@@ -297,14 +292,14 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
       // make sure the device list is updated (per-provider)
       updateVehicleList(device_id, item.timestamp),
       // update last-written values
-      updateProviderStats(suffix, device_id, item.timestamp, provider_id)
+      updateProviderStats(suffix, device_id, provider_id, item.timestamp)
     ])
   }
   return Promise.all([
     // make sure the device list is updated (per-provider)
     updateVehicleList(device_id),
     // update last-written values
-    updateProviderStats(suffix, device_id, null, provider_id)
+    updateProviderStats(suffix, device_id, provider_id)
   ])
 }
 
