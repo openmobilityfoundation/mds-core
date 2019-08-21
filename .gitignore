@@ -204,3 +204,4 @@ $RECYCLE.BIN/
 .helmignore
 values.*.yaml
 helm/charts
+helm/tools
