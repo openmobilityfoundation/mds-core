@@ -12,8 +12,8 @@ Repo for LADOT MDS implementation for contribution to the Open Mobility Foundati
 * Redis
 * [Yarn](https://yarnpkg.com/en/docs/install#mac-stable)
 
-#### Databse config on mac
-If you haven't installed PostegreSQL and Redis you can install them with homebrew on Mac
+#### Database config on macOS
+If you haven't installed PostegreSQL and Redis you can install them with homebrew on macOS
 ```
 brew install postgresql
 brew install redis
@@ -41,8 +41,8 @@ Install all packages.  Uses Yarn workspaces.
 ```sh
 yarn install
 ```
-#### Running the tests
 
+#### Launching a local server for a package
 Now you can work with each package
 ```
 cd packages/mds-audit
@@ -50,6 +50,7 @@ yarn test
 yarn start
 ```
 
+#### Running the tests
 You can also run all tests from the project root with
 ```
 yarn test
