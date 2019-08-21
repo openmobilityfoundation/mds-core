@@ -192,7 +192,7 @@ describe('Tests app', () => {
         .send(policy)
         .expect(200)
 
-      const [result] = await db.readPolicies({ policy_id: POLICY_UUID })
+      const [result] = await db.readPolicies({ policy_id: policy.policy_id, get_unpublished: true })
       test.value(result.name).is('a shiny new name')
     })
 

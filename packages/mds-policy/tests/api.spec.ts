@@ -41,6 +41,7 @@ import {
 } from '@mds-core/mds-test-data'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
+/* eslint-disable-next-line @typescript/no-var-requires */
 const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')
 
 process.env.PATH_PREFIX = '/policy'
