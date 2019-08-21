@@ -252,15 +252,14 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   return values.filter((item: any) => item.telemetry)
 }
 
-// get the provider for a device
-async function getProviderId(device_id: UUID) {
-  return (await readDevice(device_id)).provider_id
-}
-
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
-async function updateProviderStats(suffix: string, device_id: UUID, timestamp: Timestamp | undefined | null) {
+async function updateProviderStats(
+  suffix: string,
+  device_id: UUID,
+  timestamp: Timestamp | undefined | null,
+  provider_id: UUID
+) {
   try {
-    const provider_id = await getProviderId(device_id)
     return (await getClient()).hmsetAsync(
       `provider:${provider_id}:stats`,
       `last${capitalizeFirst(suffix)}`,
@@ -279,7 +278,7 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
     await log.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
-  const { device_id } = item
+  const { device_id, provider_id } = item
   const key = `device:${device_id}:${suffix}`
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
@@ -298,14 +297,14 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
       // make sure the device list is updated (per-provider)
       updateVehicleList(device_id, item.timestamp),
       // update last-written values
-      updateProviderStats(suffix, device_id, item.timestamp)
+      updateProviderStats(suffix, device_id, item.timestamp, provider_id)
     ])
   }
   return Promise.all([
     // make sure the device list is updated (per-provider)
     updateVehicleList(device_id),
     // update last-written values
-    updateProviderStats(suffix, device_id, null)
+    updateProviderStats(suffix, device_id, null, provider_id)
   ])
 }
 
