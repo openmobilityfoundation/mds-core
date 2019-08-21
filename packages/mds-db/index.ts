@@ -62,7 +62,7 @@ let writeableCachedClient: MDSPostgresClient | null = null
 let readOnlyCachedClient: MDSPostgresClient | null = null
 
 async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
-  const { PG_NAME, PG_USER, PG_PASS, PG_PORT } = env
+  const { PG_NAME, PG_USER, PG_PASS, PG_PORT, PG_MIGRATIONS = 'false' } = env
   let PG_HOST: string | undefined
   if (useWriteable) {
     ;({ PG_HOST } = env)
@@ -84,7 +84,9 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
   try {
     await client.connect()
     if (useWriteable) {
-      await updateSchema(client)
+      if (PG_MIGRATIONS === 'true') {
+        await updateSchema(client)
+      }
     }
     log.info(
       'connected',
