@@ -25,6 +25,8 @@ commands:
   uninstall             : uninstall
   uninstall-mds         : uninstall mds
   uninstall-istio       : uninstall istio
+  proxy                 : port forward to kuberneetes cluster
+  forward               : port forward all s
   dashboard-token       : put dashboard-token in copy buffer
   help                  : help message
 EOF
@@ -139,6 +141,14 @@ uninstallIstio() {
   kubectl delete -f ${istioPath}/install/kubernetes/helm/istio-init/files
 }
 
+proxy() {
+  kubectl proxy &
+}
+
+forward() {
+  subo kubefwd services -n default
+}
+
 dashboardToken() {
   kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
     grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | pbcopy
@@ -147,20 +157,24 @@ dashboardToken() {
 if [[ $# != 0 ]]; then 
   for arg in "$@"; do
     case "${arg}" in
-      bootstrap) bootstrap || usage  "bootstrap failed";;
-      build) build || usage "build failed";;
-      install) installMds || usage "install mds failed";;
+      bootstrap) bootstrap || usage  "${arg} failure";;
+      build) build || usage "${arg} failure";;
+      install) installMds || usage "${arg} failure";;
       install-mds) installMds;;
-      test) unitTest || usage "unit tests failed";
-        integrationTest || usage "integration test failed";;
-      unit-test) unitTest;;
-      integratio-ntest) integrationtTest;;
-      postgresql|postgres) postgresql || usage "postgresql failed";;
-      uninstall) uninstallMds || usage "uninstall mds failure";
-        uninstallIstio || usage "uninstall istio failure";;
-      uninstall-mds) uninstallMds;;
-      uninstall-istio) uninstallIstio;;
-      dashboard-token) dashboardToken;;
+      test)
+        unitTest || usage "unitTests failure"
+        integrationTest || usage "integrationTest failure";;
+      unit-test) unitTest || usage "${arg} failure";;
+      integration-ntest) integrationtTest || usage  "${arg} failure";;
+      postgresql|postgres) postgresql || usage "${arfg} failure";;
+      uninstall)
+        uninstallMds || usage "uninstallMds failure"
+        uninstallIstio || usage "uninstallIstio failure";;
+      uninstall-mds) uninstallMds || usage "${arg} failure";;
+      uninstall-istio) uninstallIstio || usage "${arg} failure";;
+      proxy) proxy || usage "${arg} failure";;
+      forward) forward || usage "${arg} failure";;
+      dashboard-token) dashboardToken || usage "${arg} failure";;
       help|*) usage;;
     esac
   done
