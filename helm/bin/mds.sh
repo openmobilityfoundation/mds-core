@@ -118,7 +118,7 @@ integrationTest() {
   usage "todo: cypress"
 }
 
-postrgresql() {
+postgresql() {
   # note: assumes `kubefwd svc -n default` is running
   pgcli postgres://mdsadmin@mds-postgresql:5432/mds || usage "pgcli failure"
 }
@@ -155,7 +155,7 @@ if [[ $# != 0 ]]; then
         integrationTest || usage "integration test failed";;
       unit-test) unitTest;;
       integratio-ntest) integrationtTest;;
-      postgresql) postresql || usage "postgresql failed";;
+      postgresql) postgresql || usage "postgresql failed";;
       uninstall) uninstallMds || usage "uninstall mds failure";
         uninstallIstio || usage "uninstall istio failure";;
       uninstall-mds) uninstallMds;;
