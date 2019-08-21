@@ -19,7 +19,6 @@
     "@mds-core/mds-logger": "^0.1.4",
     "@mds-core/mds-providers": "^0.1.4",
     "@mds-core/mds-types": "^0.1.1",
-    "dotenv": "8.0.0",
     "google-spreadsheet": "2.0.7",
     "request": "2.88.0",
     "request-promise": "4.2.4"

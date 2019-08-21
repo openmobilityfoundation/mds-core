@@ -1128,9 +1128,8 @@ function api(app: express.Express): express.Express {
     validateDeviceId,
     async (req: AgencyApiRequest, res: AgencyApiResponse) => {
       const { device_id } = req.params
-      let { timestamp } = req.params
 
-      timestamp = parseInt(timestamp) || undefined
+      const timestamp = parseInt(req.params.timestamp) || undefined
 
       const { cached } = req.query
 
@@ -1235,7 +1234,9 @@ function api(app: express.Express): express.Express {
     pathsFor('/test/vehicles/:device_id/telemetry/:timestamp'),
     validateDeviceId,
     async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-      const { device_id, timestamp } = req.params
+      const { device_id } = req.params
+
+      const timestamp = parseInt(req.params.timestamp) || undefined
 
       try {
         const telemetry = await db.readTelemetry(device_id, timestamp, timestamp)

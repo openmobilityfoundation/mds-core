@@ -32,8 +32,6 @@ import {
 import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow } from './types'
 
-require('dotenv').config()
-
 // The list of providers ids on which to report
 const reportProviders = [
   JUMP_PROVIDER_ID,
