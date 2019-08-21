@@ -15,7 +15,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@slack/client": "5.0.2",
-    "dotenv": "8.0.0",
     "pushover-notifications": "1.2.0"
   },
   "scripts": {
