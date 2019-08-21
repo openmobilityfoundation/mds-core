@@ -79,6 +79,10 @@ redis:
   usePassword: false
   cluster:
     enabled: false
+  master:
+    disableCommands: []
+  slave:
+    disableCommands: []
 kube-metrics-adapter:
   prometheus:
     url: http://prometheus.istio-system.svc.cluster.local
