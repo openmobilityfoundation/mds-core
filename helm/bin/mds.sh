@@ -8,6 +8,7 @@ defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
 defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
 defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
+defaultToken=${MDS_TOKEN:-dashboard}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -27,9 +28,9 @@ commands:
   build                                  : build project
   install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
   test[:unit,integration]                : preform specified tests; default: ${defaultTest}
-  proxy                                  : port forward to kuberneetes cluster
   forward                                : add host names and port-forwarding for all services
-  token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: dashboard
+  proxy                                  : port forward to kuberneetes cluster
+  token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   postgresql                             : create a postgresql console
   uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: ${defaultUninstall}
   help                                   : help message
@@ -132,12 +133,13 @@ testIntegration() {
   usage "todo: cypress"
 }
 
-proxy() {
-  kubectl proxy &
+forward() {
+  echo "note: this is a blocking operation"
+  sudo kubefwd services -n default
 }
 
-forward() {
-  sudo kubefwd services -n default
+proxy() {
+  kubectl proxy &
 }
 
 tokenDashboard() {
@@ -163,10 +165,10 @@ uninstallIstio() {
   istioPath=${tools}/istio-${istio}
 
   helm template ${istioPath}/install/kubernetes/helm/istio \
-  --name istio \
-  --namespace istio-system \
-  --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
-    kubectl delete -f -
+    --name istio \
+    --namespace istio-system \
+    --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      kubectl delete -f -
   kubectl delete namespace istio-system
   kubectl delete -f ${istioPath}/install/kubernetes/helm/istio-init/files
 }
@@ -199,8 +201,8 @@ for arg in "$@"; do
     install:*) invoke install "$(normalize ${arg})";;
     test) arg="${defaultTest}";&
     test:*) invoke test "$(normalize ${arg})";;
-    proxy) proxy || usage "${arg} failure";;
     forward) forward || usage "${arg} failure";;
+    proxy) proxy || usage "${arg} failure";;
     token) arg="${defaultToken}";&
     token:*) invoke token "$(normalize ${arg})";;
     postgresql|postgres) postgresql || usage "${arfg} failure";;
