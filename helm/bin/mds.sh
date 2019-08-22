@@ -2,11 +2,19 @@
 
 formulas=("kubernetes-helm" "brew install txn2/tap/kubefwd" "pgsql")
 tools=$(dirname ${0})/../tools
-istio=1.2.4
 os=${MDS_OS:-`uname`}
+istio=${ISTIO_VERSION:-1.2.4}
+defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
+defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
+defaultTest=${MDS_TEST:-unit,integration}
+defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
+
+warn() {
+  echo "${red}warn: ${1}${reset}"
+}
 
 usage() {
   [ "${1}" ] && warn "${1}"
@@ -15,23 +23,19 @@ usage() {
 usage: $(basename ${0}) [commands]
 
 commands:
-  bootstrap                              : install dependencies; default: (tool-chain), helm, dashboard, istio
+  bootstrap                              : install dependencies; default: [tool-chain],${defaultBootstrap}
   build                                  : build project
-  install[:helm,dashboard,istio,mds]     : install specified components; default: all
-  test[:unit,integration]                : preform specified tests; default: all
+  install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
+  test[:unit,integration]                : preform specified tests; default: ${defaultTest}
   proxy                                  : port forward to kuberneetes cluster
   forward                                : add host names and port-forwarding for all services
   token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: dashboard
   postgresql                             : create a postgresql console
-  uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: all
+  uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: ${defaultUninstall}
   help                                   : help message
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
-}
-
-warn() {
-  echo "${red}warn: ${1}${reset}"
 }
 
 bootstrap() {
@@ -181,23 +185,27 @@ invoke() {
   done
 }
 
+normalize() {
+  echo "$(echo ${1} | cut -d ':' -f 2 | tr ',' ' ')"
+}
+
 [[ $# == 0 ]] && usage
 
 for arg in "$@"; do
   case "${arg}" in
     bootstrap) bootstrap || warn  "${arg} failure";;
     build) build || usage "${arg} failure";;
-    install) arg="helm,dashboard,istio,mds";&
-    install:*) invoke install "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
-    test) arg="unit,integration";&
-    test:*) invoke test "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    install) arg="${defaultInstall}";&
+    install:*) invoke install "$(normalize ${arg})";;
+    test) arg="${defaultTest}";&
+    test:*) invoke test "$(normalize ${arg})";;
     proxy) proxy || usage "${arg} failure";;
     forward) forward || usage "${arg} failure";;
-    token) arg="dashboard";&
-    token:*) invoke token "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    token) arg="${defaultToken}";&
+    token:*) invoke token "$(normalize ${arg})";;
     postgresql|postgres) postgresql || usage "${arfg} failure";;
-    uninstall) arg="mds,istio,dashboard,helm";&
-    uninstall:*) invoke uninstall "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    uninstall) arg="${defaultUninstall}";&
+    uninstall:*) invoke uninstall "$(normalize ${arg})";;
     help) usage;;
     *) usage "unknown command: ${arg}"
   esac
