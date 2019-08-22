@@ -9,29 +9,29 @@ red=`tput setaf 9`
 reset=`tput sgr0`
 
 usage() {
-  [ "${1}" ] && echo "${red}error: ${1}${reset}"
+  [ "${1}" ] && warn "${1}"
 
   cat << EOF
 usage: $(basename ${0}) [commands]
 
 commands:
-  bootstrap             : install dependencies
-  build                 : build project
-  install               : install project
-  test                  : preform unit and integration tests
-  unit-test             : perform unit tests
-  integration-test      : perform integration tests
-  postgresql            : create a postgresql console
-  uninstall             : uninstall
-  uninstall-mds         : uninstall mds
-  uninstall-istio       : uninstall istio
-  proxy                 : port forward to kuberneetes cluster
-  forward               : port forward all s
-  dashboard-token       : put dashboard-token in copy buffer
-  help                  : help message
+  bootstrap                              : install dependencies; default: (tool-chain), helm, dashboard, istio
+  build                                  : build project
+  install[:helm,dashboard,istio,mds]     : install specified components; default: all
+  test[:unit,integration]                : preform specified tests; default: all
+  proxy                                  : port forward to kuberneetes cluster
+  forward                                : add host names and port-forwarding for all services
+  token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: dashboard
+  postgresql                             : create a postgresql console
+  uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: all
+  help                                   : help message
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
+}
+
+warn() {
+  echo "${red}warn: ${1}${reset}"
 }
 
 bootstrap() {
@@ -40,12 +40,22 @@ bootstrap() {
     *) usage "unsupported os: ${os}";;
   esac
 
+  install helm dashboard istio
+}
+
+build()  {
+  (cd ..; yarn; yarn build; yarn image)
+}
+
+installHelm() {
   helm init || usage "helm intialization failure"
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
   helm dependency update
   helm plugin install https://github.com/lrills/helm-unittest
+}
 
+installDashboard() {
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   cat <<EOF | kubectl apply -f - || echo "kubernetes dashboard installation failure"
@@ -70,7 +80,9 @@ subjects:
 EOF
   kubectl port-forward $(kubectl get pods -n=kube-system |
     grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
+}
 
+installIstio() {
   istioPath=${tools}/istio-${istio}
 
   if [ ! -d ${istioPath} ]; then
@@ -80,7 +92,7 @@ EOF
 
   export PATH=${istioPath}/bin:${PATH}
 
-  istioctl verify-install || usage "istio installation failure"
+  istioctl verify-install || warn "istio verify installation failure"
 
   [[ $(kubectl get namespace istio-system) ]] || {
     kubectl create namespace istio-system
@@ -101,24 +113,37 @@ EOF
   }
 }
 
-build()  {
-  (cd ..; yarn; yarn build; yarn image)
-}
-
 installMds() {
   # todo: don't install if secret exists
   kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
   helm install --name mds .
 }
 
-unitTest() {
+testUnit() {
   (cd ..; yarn test)
   helm unittest .
 }
 
-integrationTest() {
-  helm unittest .
+testIntegration() {
   usage "todo: cypress"
+}
+
+proxy() {
+  kubectl proxy &
+}
+
+forward() {
+  sudo kubefwd services -n default
+}
+
+tokenDashboard() {
+    case "${os}" in
+      ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
+        pbcopy;;
+      *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
+    esac
 }
 
 postgresql() {
@@ -142,48 +167,38 @@ uninstallIstio() {
   kubectl delete -f ${istioPath}/install/kubernetes/helm/istio-init/files
 }
 
-proxy() {
-  kubectl proxy &
+uninstallDashboard() {
+  usage "not yet implemented: ${0}"
 }
 
-forward() {
-  sudo kubefwd services -n default
+uninstallHelm() {
+  usage "not yet implemented: ${0}"
 }
 
-dashboardToken() {
-    case "${os}" in
-      ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
-        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
-        pbcopy;;
-      *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
-        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
-    esac
-}
-
-if [[ $# != 0 ]]; then 
-  for arg in "$@"; do
-    case "${arg}" in
-      bootstrap) bootstrap || usage  "${arg} failure";;
-      build) build || usage "${arg} failure";;
-      install) installMds || usage "${arg} failure";;
-      install-mds) installMds;;
-      test)
-        unitTest || usage "unitTests failure"
-        integrationTest || usage "integrationTest failure";;
-      unit-test) unitTest || usage "${arg} failure";;
-      integration-ntest) integrationtTest || usage  "${arg} failure";;
-      postgresql|postgres) postgresql || usage "${arfg} failure";;
-      uninstall)
-        uninstallMds || usage "uninstallMds failure"
-        uninstallIstio || usage "uninstallIstio failure";;
-      uninstall-mds) uninstallMds || usage "${arg} failure";;
-      uninstall-istio) uninstallIstio || usage "${arg} failure";;
-      proxy) proxy || usage "${arg} failure";;
-      forward) forward || usage "${arg} failure";;
-      dashboard-token) dashboardToken || usage "${arg} failure";;
-      help|*) usage;;
-    esac
+invoke() {
+  for arg in ${2}; do
+    ${1}${arg^}
   done
-else
-  usage
-fi
+}
+
+[[ $# == 0 ]] && usage
+
+for arg in "$@"; do
+  case "${arg}" in
+    bootstrap) bootstrap || warn  "${arg} failure";;
+    build) build || usage "${arg} failure";;
+    install) arg="helm,dashboard,istio,mds";&
+    install:*) invoke install "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    test) arg="unit,integration";&
+    test:*) invoke test "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    proxy) proxy || usage "${arg} failure";;
+    forward) forward || usage "${arg} failure";;
+    token) arg="dashboard";&
+    token:*) invoke token "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    postgresql|postgres) postgresql || usage "${arfg} failure";;
+    uninstall) arg="mds,istio,dashboard,helm";&
+    uninstall:*) invoke uninstall "$(echo ${arg} | cut -d ':' -f 2 | tr ',' ' ')";;
+    help) usage;;
+    *) usage "unknown command: ${arg}"
+  esac
+done
