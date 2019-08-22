@@ -212,8 +212,9 @@ function processPolicy(
   devices: { [d: string]: Device }
 ): ComplianceResponse | undefined {
   if (isPolicyActive(policy)) {
-    const vehiclesToFilter: MatchedVehicle[] = []
+    let total_violations = 0
     let overflowVehiclesMap: { [key: string]: boolean } = {}
+    const vehiclesToFilter: MatchedVehicle[] = []
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
         /* eslint-reason need to remove matched vehicles */
@@ -224,7 +225,6 @@ function processPolicy(
       switch (rule.rule_type) {
         case 'count': {
           const comp: Compliance & { matches: CountMatch[] } = processCountRule(rule, events, geographies, devices)
-
           const compressedComp = {
             rule,
             matches: comp.matches
@@ -247,9 +247,6 @@ function processPolicy(
                   ) => {
                     const maximum = rule.maximum || Number.POSITIVE_INFINITY
                     if (maximum && i < maximum) {
-                      if (overflowVehiclesMap[match_instance.device_id]) {
-                        delete overflowVehiclesMap[match_instance.device_id]
-                      }
                       acc.matched.push(match_instance)
                     } else {
                       acc.overflowed.push(match_instance)
@@ -280,6 +277,15 @@ function processPolicy(
             }, {})
           }
 
+          if (rule.minimum && vehiclesMatched.length < rule.minimum) {
+            total_violations = rule.minimum - vehiclesMatched.length
+          }
+
+          const overflowVehiclesNumber = Object.keys(overflowVehiclesMap).length
+          if (rule.maximum && overflowVehiclesNumber > 0) {
+            total_violations = overflowVehiclesNumber
+          }
+
           compliance_acc.push(compressedComp)
           break
         }
@@ -304,10 +310,11 @@ function processPolicy(
       }
       return compliance_acc
     }, [])
-    return { policy, compliance, total_violations: Object.keys(overflowVehiclesMap).length }
+    return { policy, compliance, total_violations }
   }
 }
 
+// Find policies that are currently active.
 function filterPolicies(policies: Policy[]): Policy[] {
   const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: Policy) => {
     if (policy.prev_policies) {

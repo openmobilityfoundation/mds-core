@@ -73,8 +73,41 @@ describe('Tests Compliance Engine', () => {
     done()
   })
 
-  it('Verifies count compliance violation', done => {
+  it('Verifies count compliance violation through exceeding rule maximum', done => {
     const devices = makeDevices(3000, now())
+    const events = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'trip_start')
+    test.assert.doesNotThrow(() => validatePolicies(policies))
+    test.assert.doesNotThrow(() => validateGeographies(geographies))
+    test.assert.doesNotThrow(() => validateEvents(events))
+
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
+    const deviceMap: { [d: string]: Device } = devices.reduce(
+      (deviceMapAcc: { [d: string]: Device }, device: Device) => {
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
+      },
+      {}
+    )
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
+
+    results.forEach(result => {
+      if (result) {
+        result.compliance.forEach(compliance => {
+          if (
+            compliance.matches &&
+            compliance.rule.rule_type === RULE_TYPES.count &&
+            compliance.rule.geographies.includes(CITY_OF_LA)
+          ) {
+            test.assert(compliance.matches.length !== 0)
+          }
+        })
+      }
+    })
+    done()
+  })
+
+  it('Verifies count compliance violation through falling below rule minimum', done => {
+    const devices = makeDevices(1, now())
     const events = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'trip_start')
     test.assert.doesNotThrow(() => validatePolicies(policies))
     test.assert.doesNotThrow(() => validateGeographies(geographies))
