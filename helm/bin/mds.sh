@@ -155,7 +155,8 @@ dashboardToken() {
       ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
         grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
         pbcopy;;
-      *) usage "unsupported os: ${os}";;
+      *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
     esac
 }
 
