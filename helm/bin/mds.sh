@@ -37,7 +37,7 @@ EOF
 bootstrap() {
   case "${os}" in
     ${OSX}) brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
-    *) usage "unsupported os: ${os}"
+    *) usage "unsupported os: ${os}";;
   esac
 
   helm init || usage "helm intialization failure"
@@ -113,6 +113,7 @@ installMds() {
 
 unitTest() {
   (cd ..; yarn test)
+  helm unittest .
 }
 
 integrationTest() {
@@ -150,8 +151,12 @@ forward() {
 }
 
 dashboardToken() {
-  kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
-    grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | pbcopy
+    case "${os}" in
+      ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
+        pbcopy;;
+      *) usage "unsupported os: ${os}";;
+    esac
 }
 
 if [[ $# != 0 ]]; then 
