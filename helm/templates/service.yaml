@@ -10,7 +10,7 @@ spec:
     app: {{ $api.name }}
   ports:
   -
-    name: http
+    name: http-{{ $api.name }}
     port: {{ $api.port }}
     targetPort: {{ $api.port }}
 {{- end }}
