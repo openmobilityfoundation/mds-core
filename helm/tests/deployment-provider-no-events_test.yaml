@@ -106,7 +106,7 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
-          value: postgresql-password
+          value: pg-pass
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
@@ -132,8 +132,9 @@ tests:
           path: spec.template.spec.containers[0].env[6].name
           value: PG_HOST_READER
         documentIndex: 0
-      - isNull:
+      - equal:
           path: spec.template.spec.containers[0].env[6].value
+          value: mds-postgresql.default.svc.cluster.local
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[7].name
@@ -141,7 +142,7 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: mds-redis.default.svc.cluster.local
+          value: mds-redis-master.default.svc.cluster.local
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[8].name

@@ -20,3 +20,5 @@
 *.tmproj
 .vscode/
 tests/
+# misc
+tools/
