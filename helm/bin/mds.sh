@@ -106,9 +106,7 @@ installIstio() {
     (cd ${tools}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${istio} sh -)
   fi
 
-  export PATH=${istioPath}/bin:${PATH}
-
-  istioctl verify-install || warn "istio verify installation failure"
+  ${istioPath}/bin/istioctl verify-install || warn "istio verify installation failure"
 
   [[ $(kubectl get namespace istio-system) ]] || {
     kubectl create namespace istio-system
@@ -197,16 +195,9 @@ uninstallHelm() {
   brew uninstall kubernetes-helm
 }
 
-reinstall() {
-  for arg in ${1}; do
-    uninstall${arg^}
-    install${arg^}
-  done
-}
-
 invoke() {
   for arg in ${2}; do
-    ${1}${arg^}
+    ${1}${arg^} || warn "${1} error: ${arg}"
   done
 }
 
@@ -231,7 +222,9 @@ for arg in "$@"; do
     uninstall) arg="${defaultUninstall}";&
     uninstall:*) invoke uninstall "$(normalize ${arg})";;
     reinstall) arg="${defaultReinstall}";&
-    reinstall:*) reinstall "$(normalize ${arg})";;
+    reinstall:*)
+      invoke uninstall "$(normalize ${arg})"
+      invoke install "$(normalize ${arg})";;
     help) usage;;
     *) usage "unknown command: ${arg}"
   esac
