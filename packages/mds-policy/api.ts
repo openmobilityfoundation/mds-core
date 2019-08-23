@@ -83,14 +83,14 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies'), async (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
-    const { start_date = now(), end_date = now() } = req.query
+    const { start_date = now(), end_date = now(), get_unpublished = false } = req.query
     log.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
       res.status(400).send({ result: 'start_date after end_date' })
       return
     }
     try {
-      const policies = await db.readPolicies({ start_date, end_date })
+      const policies = await db.readPolicies({ start_date, end_date, get_unpublished })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
