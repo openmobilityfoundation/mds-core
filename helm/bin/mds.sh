@@ -40,6 +40,9 @@ pre-requisites:
   docker desktop with kubernetes         : see https://www.docker.com/products/docker-desktop
   bash 4.x                               : see https://www.gnu.org/software/bash/
   homebrew                               : see https://brew.sh
+  yarn                                   : see https://yarnpkg.com/en/
+  nvm                                    : see https://nvm.sh
+  lerna                                  : see https://lerna.js.org
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
