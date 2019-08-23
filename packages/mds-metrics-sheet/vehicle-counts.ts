@@ -34,8 +34,6 @@ import {
 
 import { VehicleCountResponse } from './types'
 
-require('dotenv').config()
-
 // The list of providers ids on which to report
 const reportProviders = [
   JUMP_PROVIDER_ID,
