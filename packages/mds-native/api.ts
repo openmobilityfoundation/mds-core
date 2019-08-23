@@ -44,6 +44,13 @@ import {
 
 const NATIVE_API_VERSION = '0.0.1'
 
+/* istanbul ignore next */
+const InternalServerError = async <T>(req: NativeApiRequest, res: NativeApiResponse<T>, err?: string | Error) => {
+  // 500 Internal Server Error
+  await logger.error(req.method, req.originalUrl, err)
+  return res.status(500).send({ error: new ServerError(err) })
+}
+
 function api(app: express.Express): express.Express {
   // ///////////////////// begin middleware ///////////////////////
   app.use(async (req: NativeApiRequest, res: NativeApiResponse, next: express.NextFunction) => {
@@ -59,13 +66,8 @@ function api(app: express.Express): express.Express {
           return res.status(401).send({ error: new AuthorizationError('missing_claims') })
         }
       } catch (err) {
-        if (err instanceof ValidationError) {
-          // 400 Bad Request
-          return res.status(400).send({ error: err })
-        }
-        // 500 Internal Server Error
-        await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-        return res.status(500).send({ error: new ServerError(err) })
+        /* istanbul ignore next */
+        return InternalServerError(req, res, err)
       }
     }
     logger.info(req.method, req.originalUrl)
@@ -82,10 +84,9 @@ function api(app: express.Express): express.Express {
       await logger.info(result)
       // 200 OK
       return res.status(200).send({ result })
-    } catch (err) /* istanbul ignore next */ {
-      // 500 Internal Server Error
-      await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      return res.status(500).send({ error: new ServerError(err) })
+    } catch (err) {
+      /* istanbul ignore next */
+      return InternalServerError(req, res, err)
     }
   })
 
@@ -96,10 +97,9 @@ function api(app: express.Express): express.Express {
       await logger.info(result)
       // 200 OK
       return res.status(200).send({ result })
-    } catch (err) /* istanbul ignore next */ {
-      // 500 Internal Server Error
-      await logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      return res.status(500).send({ error: new ServerError(err) })
+    } catch (err) {
+      /* istanbul ignore next */
+      return InternalServerError(req, res, err)
     }
   })
   // ///////////////////// end test-only endpoints ///////////////////////
@@ -169,9 +169,8 @@ function api(app: express.Express): express.Express {
         await logger.warn(req.method, req.originalUrl, err)
         return res.status(400).send({ error: err })
       }
-      // 500 Internal Server Error
-      await logger.error(req.method, req.originalUrl, err)
-      return res.status(500).send({ error: new ServerError(err) })
+      /* istanbul ignore next */
+      return InternalServerError(req, res, err)
     }
   })
 
@@ -191,9 +190,8 @@ function api(app: express.Express): express.Express {
         // 404 Not Found
         return res.status(404).send({ error: new NotFoundError('device_id_not_found', { device_id }) })
       }
-      // 500 Internal Server Error
-      await logger.error(req.method, req.originalUrl, err)
-      return res.status(500).send({ error: new ServerError(err) })
+      /* istanbul ignore next */
+      return InternalServerError(req, res, err)
     }
   })
 
