@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-formulas=("kubernetes-helm" "brew install txn2/tap/kubefwd" "pgsql")
 tools=$(dirname ${0})/../tools
 os=${MDS_OS:-`uname`}
 istio=${ISTIO_VERSION:-1.2.4}
@@ -9,6 +8,7 @@ defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
 defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
 defaultToken=${MDS_TOKEN:-dashboard}
+defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,mds}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -29,19 +29,29 @@ commands:
   install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
   test[:unit,integration]                : preform specified tests; default: ${defaultTest}
   forward                                : add host names and port-forwarding for all services
-  proxy                                  : port forward to kuberneetes cluster
   token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   postgresql                             : create a postgresql console
   uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: ${defaultUninstall}
+  reinstall[:helm,dashboard,istio,mds]   : reinstall specified components; default: ${defaultReinstall}
   help                                   : help message
+
+pre-requisites:
+  bash 4.x
+  brew (osx)
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
 }
 
+# todo: uninstall bootstrap/tools(kubefwd,pgcli)
+
 bootstrap() {
   case "${os}" in
-    ${OSX}) brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
+    ${OSX})
+      if ! hash brew 2>/dev/null ; then
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+      fi
+      brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
     *) usage "unsupported os: ${os}";;
   esac
 
@@ -136,12 +146,9 @@ testIntegration() {
 }
 
 forward() {
+  # todo: background, don't block
   echo "note: this is a blocking operation"
   sudo kubefwd services -n default
-}
-
-proxy() {
-  kubectl proxy &
 }
 
 tokenDashboard() {
@@ -176,11 +183,24 @@ uninstallIstio() {
 }
 
 uninstallDashboard() {
-  usage "not yet implemented: ${0}"
+  kubectl delete deployment kubernetes-dashboard --namespace=kube-system 
+  kubectl delete service kubernetes-dashboard  --namespace=kube-system 
+  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system 
+  kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system
+  kubectl delete sa kubernetes-dashboard --namespace=kube-system 
+  kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system
+  kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system
 }
 
 uninstallHelm() {
-  usage "not yet implemented: ${0}"
+  brew uninstall kubernetes-helm
+}
+
+reinstall() {
+  for arg in ${1}; do
+    uninstall${arg^}
+    install${arg^}
+  done
 }
 
 invoke() {
@@ -204,12 +224,13 @@ for arg in "$@"; do
     test) arg="${defaultTest}";&
     test:*) invoke test "$(normalize ${arg})";;
     forward) forward || usage "${arg} failure";;
-    proxy) proxy || usage "${arg} failure";;
     token) arg="${defaultToken}";&
     token:*) invoke token "$(normalize ${arg})";;
     postgresql|postgres) postgresql || usage "${arfg} failure";;
     uninstall) arg="${defaultUninstall}";&
     uninstall:*) invoke uninstall "$(normalize ${arg})";;
+    reinstall) arg="${defaultReinstall}";&
+    reinstall:*) reinstall "$(normalize ${arg})";;
     help) usage;;
     *) usage "unknown command: ${arg}"
   esac
