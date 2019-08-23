@@ -5,7 +5,7 @@ import {
   PROVIDER_EVENTS,
   VEHICLE_REASONS,
   VEHICLE_EVENT
-} from 'packages/mds-types'
+} from '@mds-core/mds-types'
 import { StatusChangeEvent } from '@mds-core/mds-db/types'
 import test from 'unit.js'
 import { asStatusChangeEvent } from '../utils'
