@@ -14,7 +14,6 @@ import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
-process.env.PATH_PREFIX = '/native'
 const PROVIDER_SCOPES = 'admin:all test:all'
 const PROVIDER_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|`).toString('base64')}`
 const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
