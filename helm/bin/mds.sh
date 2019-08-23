@@ -173,6 +173,7 @@ postgresql() {
 
 uninstallMds() {
   helm delete --purge mds
+  helm delete --purge logging
 }
 
 uninstallIstio() {
