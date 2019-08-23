@@ -3,6 +3,7 @@
 tools=$(dirname ${0})/../tools
 os=${MDS_OS:-`uname`}
 istio=${ISTIO_VERSION:-1.2.4}
+defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
 defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
 defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
@@ -24,7 +25,7 @@ usage() {
 usage: $(basename ${0}) [commands]
 
 commands:
-  bootstrap                              : install dependencies; default: [tool-chain],${defaultBootstrap}
+  bootstrap                              : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                  : build project
   install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
   test[:unit,integration]                : preform specified tests; default: ${defaultTest}
