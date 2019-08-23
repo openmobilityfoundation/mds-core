@@ -37,8 +37,9 @@ commands:
   help                                   : help message
 
 pre-requisites:
-  bash 4.x
-  brew (osx)
+  docker desktop with kubernetes         : see https://www.docker.com/products/docker-desktop
+  bash 4.x                               : see https://www.gnu.org/software/bash/
+  homebrew                               : see https://brew.sh
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -64,6 +65,13 @@ build()  {
 }
 
 installHelm() {
+  if ! hash helm 2>/dev/null ; then
+    case "${os}" in
+      ${OSX}) brew install kubernetes-helm;;
+      *) usage "unsupported os: ${os}";;
+    esac
+  fi
+
   helm init || usage "helm intialization failure"
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
@@ -190,7 +198,10 @@ uninstallDashboard() {
 }
 
 uninstallHelm() {
-  brew uninstall kubernetes-helm
+  case "${os}" in
+    ${OSX}) brew uninstall kubernetes-helm;;
+    *) usage "unsupported os: ${os}";;
+  esac
 }
 
 invoke() {
