@@ -316,6 +316,17 @@ describe('Tests app', () => {
       })
   })
 
+  it('initializes the db and cache (final)', done => {
+    request
+      .get('/test/initialize')
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(201)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('shuts down the db', done => {
     request
       .get('/test/shutdown')

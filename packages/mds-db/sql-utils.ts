@@ -1,7 +1,8 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
 import { Client as PostgresClient, types as PostgresTypes } from 'pg'
-import { range, csv } from '@mds-core/mds-utils'
+import { csv } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
+import schema from './schema'
 
 const pgDebug = process.env.PG_DEBUG === 'true'
 
@@ -50,7 +51,6 @@ export class MDSPostgresClient extends PostgresClient {
 export function configureClient(pg_info: PGInfo) {
   // Use parseInt for bigint columns so the values get returned as numbers instead of strings
   PostgresTypes.setTypeParser(20, parseInt)
-  log.info('configured new client')
 
   const client = new MDSPostgresClient({
     user: pg_info.user,
@@ -82,48 +82,62 @@ export function configureClient(pg_info: PGInfo) {
 
 // convert a list of column names to an SQL string of the form (e.g.) "VALUES($1, $2, $3)"
 export function vals_sql(cols: Readonly<string[]>) {
-  const list = range(cols.length).map((i: number) => `$${i + 1}`)
-  return `VALUES (${csv(list)})`
+  return csv(cols.filter(col => col !== schema.COLUMN.id).map((col, i) => `$${i + 1}`))
 }
 
 // convert a table and its column names into an SQL string of the form (e.g.) "table_name(col1_name, col2_name, col3_name)"
-export function cols_sql(table: string, cols: Readonly<string[]>) {
-  return `${table}(${csv(cols)})`
+export function cols_sql(cols: Readonly<string[]>) {
+  return csv(cols.filter(col => col !== schema.COLUMN.id))
 }
+
+// These are the types representing data that can be stored in db
+type DBValueType = null | string | number | boolean | string[]
 
 // take a list of column names and extract the values into a list for SQL insertion
-export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: unknown }) {
-  return cols.map(col_name => (obj[col_name] === undefined ? null : obj[col_name]))
-}
-
-// take a list of column names and a list of column values and reconstitue an object with those name/value pairs
-export function vals_obj(cols: Readonly<string[]>, list: (string | number)[]): { [propName: string]: string | number } {
-  return range(cols.length).reduce((map, i: number) => Object.assign(map, { [i]: list[i] }), {})
+// undefined is coerced to null and objects are treated as JSON and stringified
+export function vals_list(cols: Readonly<string[]>, obj: { [s: string]: DBValueType | undefined | object }) {
+  return cols
+    .filter(col => col !== schema.COLUMN.id)
+    .map(col => {
+      const value = obj[col]
+      if (value === undefined || value === null) {
+        return null
+      }
+      if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean' ||
+        Array.isArray(value)
+      ) {
+        return value
+      }
+      return JSON.stringify(value)
+    })
 }
 
 // convert an object to sql string representation
-export function to_sql(obj: boolean | number | string | object[] | null | object | undefined) {
+export function to_sql(value: DBValueType | undefined | object) {
   // bools
-  if (obj === true || obj === false) {
-    return `${obj}`
+  if (value === true || value === false) {
+    return `${value}`
   }
   // numbers
-  if (typeof obj === 'number') {
-    return `${obj}`
+  if (typeof value === 'number') {
+    return `${value}`
   }
   // strings
-  if (typeof obj === 'string') {
-    return `'${obj}'`
+  if (typeof value === 'string') {
+    return `'${value}'`
   }
-  if (Array.isArray(obj)) {
-    return `'{${csv(obj.map(o => `"${o}"`))}}'`
+  if (Array.isArray(value)) {
+    return `'{${csv(value.map(o => `"${o}"`))}}'`
   }
-  if (obj === null) {
+  if (value === null) {
     return 'null'
   }
   // object
-  if (typeof obj === 'object') {
-    throw new Error(`can't render object to sql: ${JSON.stringify(obj)}`)
+  if (typeof value === 'object') {
+    throw new Error(`can't render object to sql: ${JSON.stringify(value)}`)
   }
   return 'null'
 }

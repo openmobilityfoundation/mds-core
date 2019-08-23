@@ -17,7 +17,6 @@
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { UUID, VehicleEvent, Recorded, Device } from '@mds-core/mds-types'
-import { JsonApiLinks } from '@mds-core/mds-api-helpers'
 
 // Allow adding type definitions for Express Request objects
 export type NativeApiRequest = ApiRequest
@@ -31,27 +30,28 @@ export interface NativeApiResponse<T = {}> extends ApiResponse<T> {
 }
 
 export interface NativeApiGetEventsRequest extends NativeApiRequest {
+  params: {
+    cursor?: string
+  }
   // Query string parameters always come in as strings
   query: Partial<
     {
-      [P in 'skip' | 'take' | 'device_id' | 'provider_id' | 'start_time' | 'end_time']: string
+      [P in 'limit' | 'device_id' | 'provider_id' | 'start_time' | 'end_time']: string
     }
   >
 }
 
-interface NativeApiGetResponse<T> {
+export type NativeApiGetEventsReponse = NativeApiResponse<{
   version: string
-  count: number
-  data: T[]
-  links?: JsonApiLinks
-}
-
-export type NativeApiGetEventsReponse = NativeApiResponse<
-  NativeApiGetResponse<Omit<Recorded<VehicleEvent>, 'service_area_id'>>
->
+  events: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
+  cursor: string
+}>
 
 export interface NativeApiGetDeviceRequest extends NativeApiRequest {
   params: { device_id: UUID }
 }
 
-export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetResponse<Recorded<Device>>>
+export type NativeApiGetDeviceResponse = NativeApiResponse<{
+  version: string
+  device: Device
+}>

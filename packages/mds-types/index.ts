@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
  */
-import { Feature, FeatureCollection } from 'geojson'
+import { FeatureCollection } from 'geojson'
 
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(keys.reduce((e, key) => {
@@ -237,12 +237,12 @@ export interface AuditDetails extends Audit {
   }
 }
 
-interface BaseRule {
+interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
   name: string
   rule_id: UUID
   geographies: UUID[]
-  statuses: Partial<{ [S in VEHICLE_STATUS]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }>
-  rule_type: 'count' | 'speed' | 'time'
+  statuses: Partial<{ [S in VEHICLE_STATUS]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }> | null
+  rule_type: RuleType
   vehicle_types?: VEHICLE_TYPE[] | null
   maximum?: number | null
   minimum?: number | null
@@ -255,17 +255,13 @@ interface BaseRule {
   value_url?: URL | null
 }
 
-export interface CountRule extends BaseRule {
-  rule_type: 'count'
-}
+export type CountRule = BaseRule<'count'>
 
-export interface TimeRule extends BaseRule {
-  rule_type: 'time'
+export interface TimeRule extends BaseRule<'time'> {
   rule_units: 'minutes' | 'hours'
 }
 
-export interface SpeedRule extends BaseRule {
-  rule_type: 'speed'
+export interface SpeedRule extends BaseRule<'speed'> {
   rule_units: 'kph' | 'mph'
 }
 
@@ -274,12 +270,19 @@ export type Rule = CountRule | TimeRule | SpeedRule
 export interface Policy {
   name: string
   description: string
-  provider_ids: UUID[]
+  provider_ids?: UUID[]
+  published_date?: Timestamp
   policy_id: UUID
   start_date: Timestamp
   end_date: Timestamp | null
   prev_policies: UUID[] | null
   rules: Rule[]
+  publish_date?: Timestamp
+}
+
+export interface PolicyMetadata {
+  policy_id: UUID
+  policy_metadata: Record<string, any>
 }
 
 export interface MatchedVehicle {
@@ -322,9 +325,20 @@ export interface ComplianceResponse {
   total_violations: number
 }
 
+// We don't put the publish_date into the geography_json column
+// as we do with the Policy type, because we don't want to mess with
+// the geojson FeatureCollection type.
 export interface Geography {
   geography_id: UUID
-  geography_json: Feature | FeatureCollection
+  geography_json: FeatureCollection
+  read_only?: boolean
+  previous_geography_ids?: UUID[]
+  name?: string
+}
+
+export interface GeographyMetadata {
+  geography_id: UUID
+  geography_metadata: Record<string, any>
 }
 
 export interface ErrorObject {
@@ -345,9 +359,10 @@ export interface TripsStats {
 
 // The above types represent objects that can be created and passed into functions that write to the database. The
 // following type alias allows wrapping the above types with Recorded<> in order to represent what is read from the
-// database. This type alias will add the readonly attribute to all properties and also remove undefined as a valid
-// value since the database will never return undefined.
-export type Recorded<T> = Readonly<Required<T>>
+// database. This type alias will add the identity column, add the readonly attribute to all properties, and also
+// remove undefined as a valid value since the database will never return undefined.
+export type Recorded<T> = Readonly<Required<T & { id: number }>>
+
 export interface BBox {
   latMin: number
   latMax: number

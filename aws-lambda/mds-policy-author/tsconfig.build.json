@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../../aws-lambda/aws-serverless-express-handler/tsconfig.build.json" },
+    { "path": "../../packages/mds-policy/tsconfig.build.json" },
+    { "path": "../../packages/mds-api-server/tsconfig.build.json" }
+  ]
+}
