@@ -33,8 +33,16 @@ const AgencyEventMap: {
       [VEHICLE_REASONS.low_battery]: {
         event_type: PROVIDER_EVENTS.unavailable,
         event_type_reason: PROVIDER_REASONS.low_battery
+      },
+      [VEHICLE_REASONS.maintenance]: {
+        event_type: PROVIDER_EVENTS.unavailable,
+        event_type_reason: PROVIDER_REASONS.maintenance
       }
     },
+    // There is a discrepancy between Agency and Provider with the definition of the service_end event.
+    // service_end transitions vehicles to the unavailable state in Agency while Provider considers them removed.
+    // The service_end mapping is being modified such that Provider more closely matches Agency and the resulting
+    // vehicle state is consistent.
     otherwise: {
       event_type: PROVIDER_EVENTS.unavailable,
       event_type_reason: PROVIDER_REASONS.maintenance
