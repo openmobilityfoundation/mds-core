@@ -33,15 +33,11 @@ const AgencyEventMap: {
       [VEHICLE_REASONS.low_battery]: {
         event_type: PROVIDER_EVENTS.unavailable,
         event_type_reason: PROVIDER_REASONS.low_battery
-      },
-      [VEHICLE_REASONS.maintenance]: {
-        event_type: PROVIDER_EVENTS.unavailable,
-        event_type_reason: PROVIDER_REASONS.maintenance
       }
     },
     otherwise: {
-      event_type: PROVIDER_EVENTS.removed,
-      event_type_reason: PROVIDER_REASONS.service_end
+      event_type: PROVIDER_EVENTS.unavailable,
+      event_type_reason: PROVIDER_REASONS.maintenance
     }
   },
   [VEHICLE_EVENTS.provider_drop_off]: {

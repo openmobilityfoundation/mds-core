@@ -24,7 +24,7 @@ const fixtures: {
   },
   {
     agency: { event_type: VEHICLE_EVENTS.service_end },
-    provider: { event_type: PROVIDER_EVENTS.removed, event_type_reason: PROVIDER_REASONS.service_end }
+    provider: { event_type: PROVIDER_EVENTS.unavailable, event_type_reason: PROVIDER_REASONS.maintenance }
   },
   {
     agency: { event_type: VEHICLE_EVENTS.service_end, event_type_reason: VEHICLE_REASONS.low_battery },
@@ -36,11 +36,11 @@ const fixtures: {
   },
   {
     agency: { event_type: VEHICLE_EVENTS.service_end, event_type_reason: VEHICLE_REASONS.compliance },
-    provider: { event_type: PROVIDER_EVENTS.removed, event_type_reason: PROVIDER_REASONS.service_end }
+    provider: { event_type: PROVIDER_EVENTS.unavailable, event_type_reason: PROVIDER_REASONS.maintenance }
   },
   {
     agency: { event_type: VEHICLE_EVENTS.service_end, event_type_reason: VEHICLE_REASONS.off_hours },
-    provider: { event_type: PROVIDER_EVENTS.removed, event_type_reason: PROVIDER_REASONS.service_end }
+    provider: { event_type: PROVIDER_EVENTS.unavailable, event_type_reason: PROVIDER_REASONS.maintenance }
   },
   {
     agency: { event_type: VEHICLE_EVENTS.provider_drop_off },
