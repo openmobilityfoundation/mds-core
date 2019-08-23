@@ -16,7 +16,7 @@
 
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
-import { UUID, VehicleEvent, Recorded, Device } from '@mds-core/mds-types'
+import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
 
 // Allow adding type definitions for Express Request objects
 export type NativeApiRequest = ApiRequest
@@ -54,4 +54,11 @@ export interface NativeApiGetDeviceRequest extends NativeApiRequest {
 export type NativeApiGetDeviceResponse = NativeApiResponse<{
   version: string
   device: Device
+}>
+
+export type NativeApiGetProvidersRequest = NativeApiRequest
+
+export type NativeApiGetProvidersResponse = NativeApiResponse<{
+  version: string
+  providers: Provider[]
 }>

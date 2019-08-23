@@ -10,6 +10,7 @@ import test from 'unit.js'
 import db from '@mds-core/mds-db'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { PROVIDER_UUID } from '@mds-core/mds-test-data'
+import { providers } from '@mds-core/mds-providers'
 import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
@@ -180,6 +181,20 @@ describe('Verify API', () => {
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('Get Providers', done => {
+    request
+      .get(`/native/providers`)
+      .set('Authorization', PROVIDER_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result.body).hasProperty('version')
+        test.object(result.body).hasProperty('providers')
+        test.value(result.body.providers.length).is(Object.keys(providers).length)
         done(err)
       })
   })

@@ -28,7 +28,8 @@ import {
 } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
-import { UUID, Timestamp } from 'packages/mds-types'
+import { UUID, Timestamp } from '@mds-core/mds-types'
+import { providers } from '@mds-core/mds-providers'
 
 import {
   NativeApiResponse,
@@ -36,7 +37,9 @@ import {
   NativeApiGetEventsRequest,
   NativeApiGetEventsReponse,
   NativeApiGetDeviceRequest,
-  NativeApiGetDeviceResponse
+  NativeApiGetDeviceResponse,
+  NativeApiGetProvidersRequest,
+  NativeApiGetProvidersResponse
 } from './types'
 
 const NATIVE_API_VERSION = '0.0.1'
@@ -126,7 +129,7 @@ function api(app: express.Express): express.Express {
           cursor: JSON.parse(Buffer.from(cursor, 'base64').toString('ascii')),
           limit: Number(limit)
         }
-      } catch (err) /* istanbul ignore next */ {
+      } catch (err) {
         throw new ValidationError('invalid_cursor', { cursor })
       }
     } else {
@@ -161,7 +164,7 @@ function api(app: express.Express): express.Express {
         ).toString('base64'),
         events: events.map(({ service_area_id, ...event }) => event)
       })
-    } catch (err) /* istanbul ignore next */ {
+    } catch (err) {
       if (err instanceof ValidationError) {
         await logger.warn(req.method, req.originalUrl, err)
         return res.status(400).send({ error: err })
@@ -193,6 +196,13 @@ function api(app: express.Express): express.Express {
       return res.status(500).send({ error: new ServerError(err) })
     }
   })
+
+  app.get(pathsFor('/providers'), async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
+    res.status(200).send({
+      version: NATIVE_API_VERSION,
+      providers: Object.values(providers)
+    })
+  )
 
   return app
 }
