@@ -145,9 +145,7 @@ testIntegration() {
 }
 
 forward() {
-  # todo: background, don't block
-  echo "note: this is a blocking operation"
-  sudo kubefwd services -n default
+  sudo --background kubefwd services -n default
 }
 
 tokenDashboard() {
