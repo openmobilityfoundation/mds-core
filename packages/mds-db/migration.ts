@@ -4,6 +4,9 @@ import log from '@mds-core/mds-logger'
 import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient, cols_sql } from './sql-utils'
 
+const MIGRATIONS = ['createMigrationsTable'] as const
+type MIGRATION = typeof MIGRATIONS[number]
+
 // drop tables from a list of table names
 async function dropTables(client: MDSPostgresClient) {
   const drop = `DROP TABLE IF EXISTS ${csv(schema.TABLES)};`
@@ -59,9 +62,10 @@ async function addIndex(
  * create tables from a list of table names
  */
 async function createTables(client: MDSPostgresClient) {
+  const exec = SqlExecuter(client)
   /* eslint-reason ambiguous DB function */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const existing: { rows: { table_name: string }[] } = await client.query(
+  const existing: { rows: { table_name: string }[] } = await exec(
     'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA'
   )
 
@@ -80,38 +84,45 @@ async function createTables(client: MDSPostgresClient) {
             .join(', ')}, PRIMARY KEY (${csv(schema.TABLE_KEY[table])}));`
       )
       .join('\n')
-    await logSql(create)
     await log.warn(create)
-    await client.query(create)
+    await exec(create)
     await log.info('postgres create table suceeded')
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.recorded)))
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.id, { unique: true })))
     await addForeignKey(client, schema.TABLE.policy_metadata, schema.TABLE.policies, schema.COLUMN.policy_id)
     await addForeignKey(client, schema.TABLE.geography_metadata, schema.TABLE.geographies, schema.COLUMN.geography_id)
+    // If the migrations table is being created then this is a new installation and all known migrations can be marked as run
+    if (create.includes(schema.TABLE.migrations)) {
+      await exec(
+        `INSERT INTO ${schema.TABLE.migrations} (${cols_sql(schema.TABLE_COLUMNS.migrations)}) VALUES ${MIGRATIONS.map(
+          migration => `('${migration}', ${now()})`
+        ).join(', ')}`
+      )
+    }
   }
 }
 
-async function doMigration(client: MDSPostgresClient, name: string, method: () => void) {
+async function doMigration(client: MDSPostgresClient, migration: MIGRATION, method: () => void) {
   const { PG_MIGRATIONS } = process.env
   const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []
-  if (migrations.includes('true') || migrations.includes(name)) {
+  if (migrations.includes('true') || migrations.includes(migration)) {
     const exec = SqlExecuter(client)
     const { rowCount } = await exec(
-      `SELECT * FROM ${schema.TABLE.migrations} WHERE ${schema.COLUMN.migration} = '${name}'`
+      `SELECT * FROM ${schema.TABLE.migrations} WHERE ${schema.COLUMN.migration} = '${migration}'`
     )
     if (rowCount === 0) {
       try {
         await exec(
           `INSERT INTO ${schema.TABLE.migrations} (${cols_sql(
             schema.TABLE_COLUMNS.migrations
-          )}) VALUES ('${name}', ${now()})`
+          )}) VALUES ('${migration}', ${now()})`
         )
         try {
-          await log.warn('Running migration', name)
+          await log.warn('Running migration', migration)
           await method()
-          await log.warn('Migration', name, 'succeeded')
+          await log.warn('Migration', migration, 'succeeded')
         } catch (err) {
-          await log.error('Migration', name, 'failed', err)
+          await log.error('Migration', migration, 'failed', err)
         }
       } catch {
         /* Another process is running this migration */
@@ -121,6 +132,7 @@ async function doMigration(client: MDSPostgresClient, name: string, method: () =
 }
 
 async function doMigrations(client: MDSPostgresClient) {
+  // The list of all migrations goes here
   await doMigration(client, 'createMigrationsTable', async () => {})
 }
 
