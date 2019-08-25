@@ -121,7 +121,7 @@ async function doMigration(client: MDSPostgresClient, name: string, method: () =
 }
 
 async function doMigrations(client: MDSPostgresClient) {
-  await doMigration(client, 'enableMigrations', async () => {})
+  await doMigration(client, 'createMigrationsTable', async () => {})
 }
 
 async function updateSchema(client: MDSPostgresClient) {
