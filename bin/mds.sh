@@ -30,7 +30,7 @@ commands:
   build                                  : build project
   install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
   test[:unit,integration]                : preform specified tests; default: ${defaultTest}
-  forward[:{namespace,...}]              : add host names and port-forwarding for the provided namespaces; default: ${defaultForward}
+  forward[:{namespace,...}]              : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
   token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   postgresql                             : create a postgresql client console
   redis                                  : create a redis client console
