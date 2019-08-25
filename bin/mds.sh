@@ -26,29 +26,29 @@ usage() {
 usage: $(basename ${0}) [commands]
 
 commands:
-  bootstrap                                     : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
-  build                                         : build project
-  install[:helm,dashboard,istio,logging,mds]    : install specified components; default: ${defaultInstall}
-  forward[:{namespace,...}]                     : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
-  test[:unit,integration]                       : preform specified tests; default: ${defaultTest}
-  token[:dashboard]                             : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
-  cli:[postgresql,redis]                        : create a cli console for the provided service
-  uninstall[:mds,logging,istio,dashboard,helm]  : uninstall specified components; default: ${defaultUninstall}
-  reinstall[:helm,dashboard,istio,logging,mds]  : reinstall specified components; default: ${defaultReinstall}
-  help                                          : help message
+  bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
+  build                                               : build project
+  install[:helm,dashboard,istio,logging,mds]          : install specified components; default: ${defaultInstall}
+  forward[:default,logging,kube-system,istio-system]  : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
+  test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
+  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
+  cli:[postgresql,redis]                              : create a cli console for the provided service
+  uninstall[:mds,logging,istio,dashboard,helm]        : uninstall specified components; default: ${defaultUninstall}
+  reinstall[:helm,dashboard,istio,logging,mds]        : reinstall specified components; default: ${defaultReinstall}
+  help                                                : help message
 
 example:
   % ./bin/mds.sh bootstrap build install:mds forward test:integration
-  
+
 pre-requisites:
-  docker desktop with kubernetes                : see https://www.docker.com/products/docker-desktop
-  bash 4.x                                      : see https://www.gnu.org/software/bash/
-  homebrew                                      : see https://brew.sh
-  yarn                                          : see https://yarnpkg.com/en/
-  nvm                                           : see https://nvm.sh
-  lerna                                         : see https://lerna.js.org
-  npm                                           : see https://www.npmjs.com
-  cypress                                       : see http://cypress.io
+  docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
+  bash 4.x                                            : see https://www.gnu.org/software/bash/
+  homebrew                                            : see https://brew.sh
+  yarn                                                : see https://yarnpkg.com/en/
+  nvm                                                 : see https://nvm.sh
+  lerna                                               : see https://lerna.js.org
+  npm                                                 : see https://www.npmjs.com
+  cypress                                             : see http://cypress.io
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
