@@ -29,8 +29,8 @@ commands:
   bootstrap                                     : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                         : build project
   install[:helm,dashboard,istio,logging,mds]    : install specified components; default: ${defaultInstall}
-  test[:unit,integration]                       : preform specified tests; default: ${defaultTest}
   forward[:{namespace,...}]                     : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
+  test[:unit,integration]                       : preform specified tests; default: ${defaultTest}
   token[:dashboard]                             : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   cli:[postgresql,redis]                        : create a cli console for the provided service
   uninstall[:mds,logging,istio,dashboard,helm]  : uninstall specified components; default: ${defaultUninstall}
@@ -44,7 +44,7 @@ pre-requisites:
   yarn                                          : see https://yarnpkg.com/en/
   nvm                                           : see https://nvm.sh
   lerna                                         : see https://lerna.js.org
-  npm                                           : https://www.npmjs.com
+  npm                                           : see https://www.npmjs.com
   cypress                                       : see http://cypress.io
 EOF
 
@@ -151,6 +151,13 @@ installMds() {
   helm install --name mds ./charts/mds
 }
 
+forward() {
+  # todo: not entirely sure backgrounding is optimal
+  for n in ${@}; do
+    sudo --background kubefwd services -n ${n}
+  done
+}
+
 testUnit() {
   # todo: make mds unit tests work
   # yarn test
@@ -164,13 +171,6 @@ testIntegration() {
   # todo: provide [ ui | cli ] option
   # $(npm bin)/cypress open
   $(npm bin)/cypress run
-}
-
-forward() {
-  # todo: not entirely sure backgrounding is optimal
-  for n in ${@}; do
-    sudo --background kubefwd services -n ${n}
-  done
 }
 
 tokenDashboard() {
@@ -248,10 +248,10 @@ for arg in "$@"; do
     build) build || usage "${arg} failure";;
     install) arg="${defaultInstall}";&
     install:*) invoke install "$(normalize ${arg})";;
-    test) arg="${defaultTest}";&
-    test:*) invoke test "$(normalize ${arg})";;
     forward) arg="${defaultForward}";&
     forward:*) forward "$(normalize ${arg})";;
+    test) arg="${defaultTest}";&
+    test:*) invoke test "$(normalize ${arg})";;
     token) arg="${defaultToken}";&
     token:*) invoke token "$(normalize ${arg})";;
     cli:*) invoke cli "$(normalize ${arg})";;
