@@ -205,3 +205,8 @@ $RECYCLE.BIN/
 values.*.yaml
 helm/charts
 helm/tools
+
+cypress/fixtures
+cypress/plugins
+cypress/screenshots
+cypress/videos

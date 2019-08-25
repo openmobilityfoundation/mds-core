@@ -5,11 +5,11 @@ os=${MDS_OS:-`uname`}
 istio=${ISTIO_VERSION:-1.2.4}
 defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
 defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
-defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
+defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,logging,mds}
 defaultTest=${MDS_TEST:-unit,integration}
-defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
+defaultUninstall=${MDS_UNINSTALL:-mds,logging,istio,dashboard,helm}
 defaultToken=${MDS_TOKEN:-dashboard}
-defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,mds}
+defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,logging,mds}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -31,7 +31,8 @@ commands:
   test[:unit,integration]                : preform specified tests; default: ${defaultTest}
   forward                                : add host names and port-forwarding for all services
   token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
-  postgresql                             : create a postgresql console
+  postgresql                             : create a postgresql client console
+  redis                                  : create a redis client console
   uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: ${defaultUninstall}
   reinstall[:helm,dashboard,istio,mds]   : reinstall specified components; default: ${defaultReinstall}
   help                                   : help message
@@ -43,6 +44,8 @@ pre-requisites:
   yarn                                   : see https://yarnpkg.com/en/
   nvm                                    : see https://nvm.sh
   lerna                                  : see https://lerna.js.org
+  npm                                    : https://www.npmjs.com
+  cypress                                : see http://cypress.io
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -64,7 +67,9 @@ bootstrap() {
 }
 
 build()  {
-  (cd ..; yarn; yarn build; yarn image)
+  yarn
+  yarn build
+  yarn image
 }
 
 installHelm() {
@@ -138,25 +143,32 @@ installIstio() {
   }
 }
 
+installLogging() {
+  helm install --name mds ./charts/logging
+}
+
 installMds() {
   # todo: don't install if secret exists
   kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
-  helm install --name mds .
+  helm install --name mds ./charts/mds
 }
 
 testUnit() {
   # todo: make mds unit tests work
-  # (cd ..; yarn test)
-  helm unittest .
+  # yarn test
+  for c in mds; do #logging; do
+    helm unittest ./charts/${c}
+  done
 }
 
 testIntegration() {
-  # todo: make mds integration tests work
-  usage "todo: cypress"
+  # $(npm bin)/cypress open
+  $(npm bin)/cypress run
 }
 
 forward() {
-  sudo --background kubefwd services -n default
+  # sudo --background kubefwd services -n default
+  sudo kubefwd services -n default
 }
 
 tokenDashboard() {
@@ -174,8 +186,15 @@ postgresql() {
   pgcli postgres://mdsadmin@mds-postgresql:5432/mds || usage "pgcli failure"
 }
 
+redis() {
+  redis-cli -u redis://mds-redis-master:6379/0
+}
+
 uninstallMds() {
   helm delete --purge mds
+}
+
+uninstallLogging() {
   helm delete --purge logging
 }
 
@@ -232,6 +251,7 @@ for arg in "$@"; do
     token) arg="${defaultToken}";&
     token:*) invoke token "$(normalize ${arg})";;
     postgresql|postgres) postgresql || usage "${arfg} failure";;
+    redis) redis || usage "${arfg} failure";;
     uninstall) arg="${defaultUninstall}";&
     uninstall:*) invoke uninstall "$(normalize ${arg})";;
     reinstall) arg="${defaultReinstall}";&
