@@ -143,7 +143,7 @@ installIstio() {
 }
 
 installLogging() {
-  helm install --name mds ./charts/logging
+  helm install --name logging ./charts/logging
 }
 
 installMds() {
@@ -155,12 +155,14 @@ installMds() {
 testUnit() {
   # todo: make mds unit tests work
   # yarn test
+
   for c in mds; do #logging; do
     helm unittest ./charts/${c}
   done
 }
 
 testIntegration() {
+  # todo: provide [ ui | cli ] option
   # $(npm bin)/cypress open
   $(npm bin)/cypress run
 }
@@ -173,13 +175,13 @@ forward() {
 }
 
 tokenDashboard() {
-    case "${os}" in
-      ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
-        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
-        pbcopy;;
-      *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
-        grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
-    esac
+  case "${os}" in
+    ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+      grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
+      pbcopy;;
+    *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+      grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
+  esac
 }
 
 postgresql() {
@@ -188,6 +190,7 @@ postgresql() {
 }
 
 redis() {
+  # note: assumes `kubefwd svc -n default` is running
   redis-cli -u redis://mds-redis-master:6379/0
 }
 
