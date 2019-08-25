@@ -8,6 +8,7 @@ defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio,logging}
 defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,logging,mds}
 defaultTest=${MDS_TEST:-unit,integration}
 defaultUninstall=${MDS_UNINSTALL:-mds,logging,istio,dashboard,helm}
+defaultForward=${MDS_FORWARD:-default}
 defaultToken=${MDS_TOKEN:-dashboard}
 defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,logging,mds}
 OSX=Darwin
@@ -29,7 +30,7 @@ commands:
   build                                  : build project
   install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
   test[:unit,integration]                : preform specified tests; default: ${defaultTest}
-  forward                                : add host names and port-forwarding for all services
+  forward[:{namespace,...}]              : add host names and port-forwarding for the provided namespaces; default: ${defaultForward}
   token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   postgresql                             : create a postgresql client console
   redis                                  : create a redis client console
@@ -51,8 +52,6 @@ EOF
   [ "${1}" ] && exit 1 || exit 0
 }
 
-# todo: uninstall bootstrap/tools(kubefwd,pgcli)
-
 bootstrap() {
   case "${os}" in
     ${OSX})
@@ -63,7 +62,7 @@ bootstrap() {
     *) usage "unsupported os: ${os}";;
   esac
 
-  install helm dashboard istio
+  invoke install "helm dashboard istio"
 }
 
 build()  {
@@ -167,8 +166,10 @@ testIntegration() {
 }
 
 forward() {
-  # sudo --background kubefwd services -n default
-  sudo kubefwd services -n default
+  # todo: not entirely sure backgrounding is optimal
+  for n in ${@}; do
+    sudo --background kubefwd services -n ${n}
+  done
 }
 
 tokenDashboard() {
@@ -247,7 +248,8 @@ for arg in "$@"; do
     install:*) invoke install "$(normalize ${arg})";;
     test) arg="${defaultTest}";&
     test:*) invoke test "$(normalize ${arg})";;
-    forward) forward || usage "${arg} failure";;
+    forward) arg="${defaultForward}";&
+    forward:*) forward "$(normalize ${arg})";;
     token) arg="${defaultToken}";&
     token:*) invoke token "$(normalize ${arg})";;
     postgresql|postgres) postgresql || usage "${arfg} failure";;
