@@ -82,6 +82,7 @@ function processCountRule(
 ): Compliance & { matches: CountMatch[] | null } {
   const maximum = rule.maximum || Number.POSITIVE_INFINITY
   if (isRuleActive(rule)) {
+    console.log('rule is active')
     const matches: CountMatch[] = rule.geographies.reduce(
       (matches_acc: CountMatch[], geography: string): CountMatch[] => {
         const matched_vehicles: MatchedVehicle[] = events.reduce(
@@ -247,6 +248,11 @@ function processPolicy(
                   ) => {
                     const maximum = rule.maximum || Number.POSITIVE_INFINITY
                     if (maximum && i < maximum) {
+                      // seems like this can be deleted?
+                      // oh it might have a purpose when there are multiple rules
+                      if (overflowVehiclesMap[match_instance.device_id]) {
+                        delete overflowVehiclesMap[match_instance.device_id]
+                      }
                       acc.matched.push(match_instance)
                     } else {
                       acc.overflowed.push(match_instance)
@@ -278,12 +284,14 @@ function processPolicy(
           }
 
           if (rule.minimum && vehiclesMatched.length < rule.minimum) {
-            total_violations = rule.minimum - vehiclesMatched.length
+            console.log('rule min: ', rule.minimum, vehiclesMatched.length)
+            total_violations += rule.minimum - vehiclesMatched.length
           }
 
           const overflowVehiclesNumber = Object.keys(overflowVehiclesMap).length
           if (rule.maximum && overflowVehiclesNumber > 0) {
-            total_violations = overflowVehiclesNumber
+            console.log('rule max: ', rule.maximum, overflowVehiclesNumber)
+            total_violations += overflowVehiclesNumber
           }
 
           compliance_acc.push(compressedComp)

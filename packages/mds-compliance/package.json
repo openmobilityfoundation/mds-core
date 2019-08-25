@@ -31,6 +31,7 @@
     "@mds-core/mds-stream": "^0.1.4",
     "@mds-core/mds-types": "^0.1.1",
     "@mds-core/mds-utils": "^0.1.4",
+    "@mds-core/mds-test-data": "^0.1.4",
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.26",

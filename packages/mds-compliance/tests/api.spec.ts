@@ -43,10 +43,12 @@ const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const LA_BEACH = 'ff822e26-a70c-4721-ac32-2f6734beff9b'
+const SAN_FERNANDO_DAC = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const restrictedAreas = require('../../ladot-service-areas/restricted-areas')
 const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')
+const sanFernandoDAC = require('../../ladot-service-areas/san-fernando-dac')
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 let testTimestamp = now()
@@ -87,7 +89,7 @@ const COUNT_POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
 const COUNT_POLICY_UUID_2 = '37637f96-2580-475a-89e7-cfc5d2e70f84'
 const COUNT_POLICY_UUID_3 = 'e8f9a720-6c12-41c8-a31c-715e76d65ea1'
 const COUNT_POLICY_UUID_4 = 'b3b8529e-46e0-4d44-877b-2fb4e0ba3515'
-const GEOGRAPHY_UUID = '8917cf2d-a963-4ea2-a98b-7725050b3ec5'
+const COUNT_POLICY_UUID_5 = '5b2b2b43-3f7e-4a90-b273-deb296c8fd93'
 const COUNT_POLICY_JSON: Policy = {
   name: 'LADOT Mobility Caps',
   description: 'Mobility caps as described in the One-Year Permit',
@@ -101,7 +103,7 @@ const COUNT_POLICY_JSON: Policy = {
       name: 'Greater LA',
       rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
       rule_type: RULE_TYPES.count,
-      geographies: [GEOGRAPHY_UUID],
+      geographies: [CITY_OF_LA],
       statuses: { available: [], unavailable: [], reserved: [], trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 10,
@@ -145,7 +147,7 @@ const COUNT_POLICY_JSON_3: Policy = {
       name: 'Greater LA',
       rule_id: '04dc545b-41d8-401d-89bd-bfac9247b555',
       rule_type: RULE_TYPES.count,
-      geographies: [GEOGRAPHY_UUID],
+      geographies: [CITY_OF_LA],
       statuses: { available: ['service_start'], unavailable: [], reserved: [], trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 10
@@ -166,13 +168,48 @@ const COUNT_POLICY_JSON_4: Policy = {
       name: 'Greater LA',
       rule_id: '04dc545b-41d8-401d-89bd-bfac9247b555',
       rule_type: RULE_TYPES.count,
-      geographies: [GEOGRAPHY_UUID],
+      geographies: [CITY_OF_LA],
       statuses: { trip: [] },
       vehicle_types: ['bicycle', 'scooter'],
       maximum: 10
     }
   ]
 }
+
+// /*
+const COUNT_POLICY_JSON_5: Policy = {
+  name: 'exercise rules with stacking violations',
+  description: 'see the name',
+  policy_id: COUNT_POLICY_UUID_5,
+  start_date: 1558389669540,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'San Fernando DAC',
+      rule_id: '2622242d-7658-43d3-b1c7-3abe46fcabd1',
+      rule_type: RULE_TYPES.count,
+      geographies: [SAN_FERNANDO_DAC],
+      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 10,
+      minimum: 1
+    }
+    /* ,
+    {
+      name: 'Venice Beach',
+      rule_id: '5117e94a-08c8-4538-b97d-a2e24b150448',
+      rule_type: RULE_TYPES.count,
+      geographies: [LA_BEACH],
+      statuses: { trip: [] },
+      vehicle_types: ['bicycle', 'scooter'],
+      minimum: 10
+    }
+    */
+  ]
+}
+//* /
 
 const TIME_POLICY_UUID = 'a2c9a65f-fd85-463e-9564-fc95ea473f7d'
 
@@ -190,7 +227,7 @@ const TIME_POLICY_JSON: Policy = {
       rule_id: '1ec4fe12-10f8-4bb9-808e-3222d5a5425f',
       rule_type: RULE_TYPES.time,
       rule_units: 'minutes',
-      geographies: [GEOGRAPHY_UUID],
+      geographies: [CITY_OF_LA],
       statuses: { available: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 7200
@@ -260,9 +297,9 @@ describe('Tests Compliance API:', () => {
                 })
                 .expect(201)
                 .end(() => {
-                  const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+                  const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
                   policy_request
-                    .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                    .post(`/admin/geographies/${CITY_OF_LA}`)
                     .set('Authorization', ADMIN_AUTH)
                     .send(geography)
                     .expect(200)
@@ -297,6 +334,8 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
+          console.log('initial policy hit')
+          console.log(result.body)
           test.assert(result.body.length === 1)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -346,9 +385,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -392,7 +431,7 @@ describe('Tests Compliance API:', () => {
 
   describe('Count Violation Under Test: ', () => {
     before(done => {
-      const devices: Device[] = makeDevices(3, now())
+      const devices: Device[] = makeDevices(2, now())
       const events = makeEventsWithTelemetry(devices, now() - 100000, CITY_OF_LA, 'trip_end')
       const telemetry: Telemetry[] = []
       devices.forEach(device => {
@@ -410,9 +449,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -437,8 +476,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.length === 1)
-          test.assert(result.body[0].compliance[0].matches[0].measured === 3)
-          test.assert(result.body[0].total_violations === 2)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 2)
+          test.assert(result.body[0].total_violations === 3)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -454,6 +493,7 @@ describe('Tests Compliance API:', () => {
         })
     })
   })
+
   describe('Count Violation Over Test: ', () => {
     before(done => {
       const devices: Device[] = makeDevices(15, now())
@@ -474,9 +514,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -500,6 +540,8 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
+          console.log(result.body)
+          console.log(result.body[0].compliance[0])
           test.assert(result.body.length === 1)
           test.assert(result.body[0].compliance[0].matches[0].measured === 10)
           test.assert(result.body[0].total_violations === 5)
@@ -539,9 +581,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -603,9 +645,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -754,9 +796,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -819,9 +861,9 @@ describe('Tests Compliance API:', () => {
             .expect(201)
             .end((err, result) => {
               test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+              const geography = { geography_id: CITY_OF_LA, geography_json: la_city_boundary }
               policy_request
-                .post(`/admin/geographies/${GEOGRAPHY_UUID}`)
+                .post(`/admin/geographies/${CITY_OF_LA}`)
                 .set('Authorization', ADMIN_AUTH)
                 .send(geography)
                 .expect(200)
@@ -1007,7 +1049,7 @@ describe('Tests Compliance API:', () => {
           }
           Promise.all([db.initialize(), cache.initialize()]).then(() => {
             Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
-              db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(() => {
+              db.writeGeography({ geography_id: CITY_OF_LA, geography_json: la_city_boundary }).then(() => {
                 db.writePolicy(COUNT_POLICY_JSON_4).then(() => {
                   done()
                 })
@@ -1072,7 +1114,7 @@ describe('Tests Compliance API:', () => {
           Promise.all([db.initialize(), cache.initialize()]).then(() => {
             Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
               db.writePolicy(COUNT_POLICY_JSON).then(() => {
-                db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(() => {
+                db.writeGeography({ geography_id: CITY_OF_LA, geography_json: la_city_boundary }).then(() => {
                   done()
                 })
               })
@@ -1098,6 +1140,100 @@ describe('Tests Compliance API:', () => {
         .get(`/count/33ca0ee8-e74b-419d-88d3-aaaf05ac0509`)
         .set('Authorization', ADMIN_AUTH)
         .expect(404)
+        .end(err => {
+          done(err)
+        })
+    })
+  })
+
+  describe('Test stacking violations: ', () => {
+    before(done => {
+      const sanFernandoDevices: Device[] = makeDevices(11, now())
+      //      const LABeachDevices: Device[] = makeDevices(4, now())
+      const sanFernandoEvents = makeEventsWithTelemetry(
+        sanFernandoDevices,
+        now() - 100000,
+        SAN_FERNANDO_DAC,
+        'trip_end'
+      )
+      //     const LABeachEvents = makeEventsWithTelemetry(LABeachDevices, now() - 100000, LA_BEACH, 'trip_end')
+      const sanFernandoTelemetry: Telemetry[] = []
+      //    const LABeachTelemetry: Telemetry[] = []
+      sanFernandoDevices.forEach(device => {
+        sanFernandoTelemetry.push(makeTelemetryInArea(device, now(), SAN_FERNANDO_DAC, 10))
+      })
+      /*
+      LABeachDevices.forEach(device => {
+        LABeachTelemetry.push(makeTelemetryInArea(device, now(), LA_BEACH, 10))
+      })
+      */
+      request
+        .get('/test/initialize')
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end(() => {
+          provider_request
+            .post('/test/seed')
+            .set('Authorization', PROVIDER_AUTH)
+            .send({
+              devices: sanFernandoDevices, // .concat(LABeachDevices),
+              events: sanFernandoEvents, // LABeachEvents.concat(sanFernandoEvents),
+              telemetry: sanFernandoTelemetry // .concat(LABeachTelemetry)
+            })
+            .expect(201)
+            .end((err, result) => {
+              test.value(result).hasHeader('content-type', APP_JSON)
+              const geography = { geography_id: SAN_FERNANDO_DAC, geography_json: sanFernandoDAC }
+              policy_request
+                .post(`/admin/geographies/${SAN_FERNANDO_DAC}`)
+                .set('Authorization', ADMIN_AUTH)
+                .send(geography)
+                .expect(200)
+                .end(() => {
+                  const geography2 = { geography_id: LA_BEACH, geography_json: veniceSpecialOpsZone }
+                  policy_request
+                    .post(`/admin/geographies/${LA_BEACH}`)
+                    .set('Authorization', ADMIN_AUTH)
+                    .send(geography2)
+                    .expect(200)
+                    .end(() => {
+                      policy_request
+                        .post(`/admin/policies/${COUNT_POLICY_UUID_5}`)
+                        .set('Authorization', ADMIN_AUTH)
+                        .send(COUNT_POLICY_JSON_5)
+                        .expect(200)
+                        .end(() => {
+                          done(err)
+                        })
+                    })
+                })
+            })
+        })
+    })
+
+    it('Verifies violations stack properly', done => {
+      request
+        .get(`/snapshot/${COUNT_POLICY_UUID_5}`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end((err, result) => {
+          console.log('result.body', result.body)
+          console.log(result.body[0].compliance[0])
+          console.log(result.body[0].compliance[1])
+          // only one policy
+          test.assert(result.body.length === 1)
+          test.assert(result.body[0].compliance[0].matches[0].measured === 10)
+          test.assert(result.body[0].total_violations === 5)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    afterEach(done => {
+      agency_request
+        .get('/test/shutdown')
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
         .end(err => {
           done(err)
         })
