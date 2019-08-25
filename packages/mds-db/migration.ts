@@ -6,9 +6,7 @@ import log from '@mds-core/mds-logger'
 import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient } from './sql-utils'
 
-/**
- * drop tables from a list of table names
- */
+// drop tables from a list of table names
 async function dropTables(client: MDSPostgresClient) {
   const drop = `DROP TABLE IF EXISTS ${csv(schema.TABLES)};`
   await logSql(drop)
@@ -16,7 +14,23 @@ async function dropTables(client: MDSPostgresClient) {
   await log.info('postgres drop table succeeded')
 }
 
-// Add the index, if it doesn't already exist.
+// Add a foreign key if it doesn't already exist
+async function addForeignKey(client: MDSPostgresClient, from: TABLE_NAME, to: TABLE_NAME, column: COLUMN_NAME) {
+  const exec = SqlExecuter(client)
+  const foreignKeyName = `fk_${to}_${column}`
+  const sql = `DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${foreignKeyName}') THEN
+        ALTER TABLE ${from}
+        ADD CONSTRAINT ${foreignKeyName}
+        FOREIGN KEY (${column}) REFERENCES ${to} (${column});
+      END IF;
+    END;
+    $$`
+  await exec(sql)
+}
+
+// Add an index if it doesn't already exist
 async function addIndex(
   client: MDSPostgresClient,
   table: TABLE_NAME,
@@ -74,6 +88,8 @@ async function createTables(client: MDSPostgresClient) {
     await log.info('postgres create table suceeded')
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.recorded)))
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.id, { unique: true })))
+    await addForeignKey(client, schema.TABLE.policy_metadata, schema.TABLE.policies, schema.COLUMN.policy_id)
+    await addForeignKey(client, schema.TABLE.geography_metadata, schema.TABLE.geographies, schema.COLUMN.geography_id)
   }
 }
 
@@ -180,20 +196,6 @@ async function recreateProviderTables(client: MDSPostgresClient) {
   }
 }
 
-async function addMetadataForeignKeys(client: MDSPostgresClient, table: string, column: string) {
-  const foreignKeyName = `fk_${column}_metadata`
-  const sql = `DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${foreignKeyName}') THEN
-        ALTER TABLE ${column}_metadata
-        ADD CONSTRAINT ${foreignKeyName}
-        FOREIGN KEY (${column}_id) REFERENCES ${table} (${column}_id);
-      END IF;
-    END;
-    $$`
-  await SqlExecuter(client)(sql)
-}
-
 async function addIdentityColumnToAllTables(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
 
@@ -291,8 +293,6 @@ async function updateTables(client: MDSPostgresClient) {
   await addAuditSubjectIdColumnToAuditEventsTable(client)
   await removeAuditVehicleIdColumnFromAuditsTable(client)
   await recreateProviderTables(client)
-  await addMetadataForeignKeys(client, 'policies', 'policy')
-  await addMetadataForeignKeys(client, 'geographies', 'geography')
   if (migrations.includes('addIdentityColumnToAllTables')) {
     await addIdentityColumnToAllTables(client)
   }
