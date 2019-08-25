@@ -37,6 +37,9 @@ commands:
   reinstall[:helm,dashboard,istio,logging,mds]  : reinstall specified components; default: ${defaultReinstall}
   help                                          : help message
 
+example:
+  % ./bin/mds.sh bootstrap build install:mds forward test:integration
+  
 pre-requisites:
   docker desktop with kubernetes                : see https://www.docker.com/products/docker-desktop
   bash 4.x                                      : see https://www.gnu.org/software/bash/
