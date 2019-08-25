@@ -102,7 +102,7 @@ async function createTables(client: MDSPostgresClient) {
   }
 }
 
-async function doMigration(client: MDSPostgresClient, migration: MIGRATION, method: () => void) {
+async function doMigration(client: MDSPostgresClient, migration: MIGRATION, migrate: () => Promise<void>) {
   const { PG_MIGRATIONS } = process.env
   const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []
   if (migrations.includes('true') || migrations.includes(migration)) {
@@ -119,7 +119,7 @@ async function doMigration(client: MDSPostgresClient, migration: MIGRATION, meth
         )
         try {
           await log.warn('Running migration', migration)
-          await method()
+          await migrate()
           await log.warn('Migration', migration, 'succeeded')
         } catch (err) {
           await log.error('Migration', migration, 'failed', err)
@@ -132,7 +132,8 @@ async function doMigration(client: MDSPostgresClient, migration: MIGRATION, meth
 }
 
 async function doMigrations(client: MDSPostgresClient) {
-  // The list of all migrations goes here
+  // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
+  // migrations table is created, but it is included as it provides a template for how to invoke them.
   await doMigration(client, 'createMigrationsTable', async () => {})
 }
 
