@@ -82,7 +82,6 @@ function processCountRule(
 ): Compliance & { matches: CountMatch[] | null } {
   const maximum = rule.maximum || Number.POSITIVE_INFINITY
   if (isRuleActive(rule)) {
-    console.log('rule is active')
     const matches: CountMatch[] = rule.geographies.reduce(
       (matches_acc: CountMatch[], geography: string): CountMatch[] => {
         const matched_vehicles: MatchedVehicle[] = events.reduce(
@@ -213,9 +212,8 @@ function processPolicy(
   devices: { [d: string]: Device }
 ): ComplianceResponse | undefined {
   if (isPolicyActive(policy)) {
-    let total_violations = 0
-    let overflowVehiclesMap: { [key: string]: boolean } = {}
     const vehiclesToFilter: MatchedVehicle[] = []
+    let overflowVehiclesMap: { [key: string]: boolean } = {}
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
         /* eslint-reason need to remove matched vehicles */
@@ -226,6 +224,7 @@ function processPolicy(
       switch (rule.rule_type) {
         case 'count': {
           const comp: Compliance & { matches: CountMatch[] } = processCountRule(rule, events, geographies, devices)
+
           const compressedComp = {
             rule,
             matches: comp.matches
@@ -248,8 +247,6 @@ function processPolicy(
                   ) => {
                     const maximum = rule.maximum || Number.POSITIVE_INFINITY
                     if (maximum && i < maximum) {
-                      // seems like this can be deleted?
-                      // oh it might have a purpose when there are multiple rules
                       if (overflowVehiclesMap[match_instance.device_id]) {
                         delete overflowVehiclesMap[match_instance.device_id]
                       }
@@ -283,17 +280,6 @@ function processPolicy(
             }, {})
           }
 
-          if (rule.minimum && vehiclesMatched.length < rule.minimum) {
-            console.log('rule min: ', rule.minimum, vehiclesMatched.length)
-            total_violations += rule.minimum - vehiclesMatched.length
-          }
-
-          const overflowVehiclesNumber = Object.keys(overflowVehiclesMap).length
-          if (rule.maximum && overflowVehiclesNumber > 0) {
-            console.log('rule max: ', rule.maximum, overflowVehiclesNumber)
-            total_violations += overflowVehiclesNumber
-          }
-
           compliance_acc.push(compressedComp)
           break
         }
@@ -318,11 +304,10 @@ function processPolicy(
       }
       return compliance_acc
     }, [])
-    return { policy, compliance, total_violations }
+    return { policy, compliance, total_violations: Object.keys(overflowVehiclesMap).length }
   }
 }
 
-// Find policies that are currently active.
 function filterPolicies(policies: Policy[]): Policy[] {
   const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: Policy) => {
     if (policy.prev_policies) {

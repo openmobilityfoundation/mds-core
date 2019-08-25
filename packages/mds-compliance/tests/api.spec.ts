@@ -1148,7 +1148,7 @@ describe('Tests Compliance API:', () => {
 
   describe('Test stacking violations: ', () => {
     before(done => {
-      const sanFernandoDevices: Device[] = makeDevices(11, now())
+      const sanFernandoDevices: Device[] = makeDevices(15, now())
       //      const LABeachDevices: Device[] = makeDevices(4, now())
       const sanFernandoEvents = makeEventsWithTelemetry(
         sanFernandoDevices,
