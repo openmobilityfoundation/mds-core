@@ -26,27 +26,26 @@ usage() {
 usage: $(basename ${0}) [commands]
 
 commands:
-  bootstrap                              : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
-  build                                  : build project
-  install[:helm,dashboard,istio,mds]     : install specified components; default: ${defaultInstall}
-  test[:unit,integration]                : preform specified tests; default: ${defaultTest}
-  forward[:{namespace,...}]              : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
-  token[:dashboard]                      : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
-  postgresql                             : create a postgresql client console
-  redis                                  : create a redis client console
-  uninstall[:mds,istio,dashboard,helm]   : uninstall specified components; default: ${defaultUninstall}
-  reinstall[:helm,dashboard,istio,mds]   : reinstall specified components; default: ${defaultReinstall}
-  help                                   : help message
+  bootstrap                                     : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
+  build                                         : build project
+  install[:helm,dashboard,istio,logging,mds]    : install specified components; default: ${defaultInstall}
+  test[:unit,integration]                       : preform specified tests; default: ${defaultTest}
+  forward[:{namespace,...}]                     : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
+  token[:dashboard]                             : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
+  cli:[postgresql,redis]                        : create a cli console for the provided service
+  uninstall[:mds,logging,istio,dashboard,helm]  : uninstall specified components; default: ${defaultUninstall}
+  reinstall[:helm,dashboard,istio,logging,mds]  : reinstall specified components; default: ${defaultReinstall}
+  help                                          : help message
 
 pre-requisites:
-  docker desktop with kubernetes         : see https://www.docker.com/products/docker-desktop
-  bash 4.x                               : see https://www.gnu.org/software/bash/
-  homebrew                               : see https://brew.sh
-  yarn                                   : see https://yarnpkg.com/en/
-  nvm                                    : see https://nvm.sh
-  lerna                                  : see https://lerna.js.org
-  npm                                    : https://www.npmjs.com
-  cypress                                : see http://cypress.io
+  docker desktop with kubernetes                : see https://www.docker.com/products/docker-desktop
+  bash 4.x                                      : see https://www.gnu.org/software/bash/
+  homebrew                                      : see https://brew.sh
+  yarn                                          : see https://yarnpkg.com/en/
+  nvm                                           : see https://nvm.sh
+  lerna                                         : see https://lerna.js.org
+  npm                                           : https://www.npmjs.com
+  cypress                                       : see http://cypress.io
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -184,12 +183,12 @@ tokenDashboard() {
   esac
 }
 
-postgresql() {
+cliPostgresql() {
   # note: assumes `kubefwd svc -n default` is running
-  pgcli postgres://mdsadmin@mds-postgresql:5432/mds || usage "pgcli failure"
+  pgcli postgres://mdsadmin@mds-postgresql:5432/mds
 }
 
-redis() {
+cliRedis() {
   # note: assumes `kubefwd svc -n default` is running
   redis-cli -u redis://mds-redis-master:6379/0
 }
@@ -255,8 +254,7 @@ for arg in "$@"; do
     forward:*) forward "$(normalize ${arg})";;
     token) arg="${defaultToken}";&
     token:*) invoke token "$(normalize ${arg})";;
-    postgresql|postgres) postgresql || usage "${arfg} failure";;
-    redis) redis || usage "${arfg} failure";;
+    cli:*) invoke cli "$(normalize ${arg})";;
     uninstall) arg="${defaultUninstall}";&
     uninstall:*) invoke uninstall "$(normalize ${arg})";;
     reinstall) arg="${defaultReinstall}";&
