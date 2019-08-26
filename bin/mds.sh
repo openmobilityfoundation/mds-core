@@ -43,7 +43,9 @@ example:
 applications:
   http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
   http://kibana:5601                                  : kibana; see https://www.elastic.co/products/kibana
-  http://prometheus                                   : prometheus; see https://prometheus.io
+  http://prometheus:9090                              : prometheus; see https://prometheus.io
+  http://tracing                                      : jaeger; see https://www.jaegertracing.io
+  http://kiali:20001                                  : kiali; see https://www.kiali.io
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
