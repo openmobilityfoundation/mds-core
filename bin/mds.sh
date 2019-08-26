@@ -73,7 +73,7 @@ bootstrap() {
 
   for y in cypress mocha chai mochawesome; do
     if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
-      echo "yarn add -W ${y}"
+      yarn add -W ${y}
     fi
   done
 
