@@ -3437,11 +3437,6 @@ https-browserify@^1.0.0:
   resolved "https://registry.yarnpkg.com/https-browserify/-/https-browserify-1.0.0.tgz#ec06c10e0a34c0f2faf199f7fd7fc78fffd03c73"
   integrity sha1-7AbBDgo0wPL68Zn3/X/Hj//QPHM=
 
-husky-talisman@2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/husky-talisman/-/husky-talisman-2.0.1.tgz#a8bd64c6f7db9be53a8d0ddec815618c632c358a"
-  integrity sha512-HBqboiyEuAw2k6rjrbA5Ygo08Obrdx7O/1gi1794bjESO649uvV5G7jQ3du2Tnj+8fG+tj/C45/1xs1C09DEvg==
-
 husky@3.0.2:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/husky/-/husky-3.0.2.tgz#e78fd2ae16edca59fc88e56aeb8d70acdcc1c082"
