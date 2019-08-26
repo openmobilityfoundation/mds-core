@@ -30,8 +30,6 @@ import log from '@mds-core/mds-logger'
 import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
 
-process.env.PATH_PREFIX = '/provider'
-
 const APP_JSON = 'application/json; charset=utf-8'
 
 const request = supertest(ApiServer(api))

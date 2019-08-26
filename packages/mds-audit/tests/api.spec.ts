@@ -47,8 +47,6 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
 import { api } from '../api'
 
-process.env.PATH_PREFIX = '/audit'
-
 const request = supertest(ApiServer(api))
 
 const PROVIDER_SCOPES = 'admin:all test:all'
