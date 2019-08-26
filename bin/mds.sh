@@ -40,6 +40,11 @@ commands:
 example:
   % ./bin/mds.sh bootstrap build install:mds forward test:integration
 
+applications:
+  http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
+  http://kibana                                       : kibana; see https://www.elastic.co/products/kibana
+  http://prometheus                                   : prometheus; see https://prometheus.io
+
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
   bash 4.x                                            : see https://www.gnu.org/software/bash/

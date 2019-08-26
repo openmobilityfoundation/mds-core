@@ -206,8 +206,12 @@ values.*.yaml
 helm/charts
 helm/tools
 
+# cypress
 cypress/fixtures
 cypress/plugins
 cypress/screenshots
 cypress/support
 cypress/videos
+
+# tools
+tools

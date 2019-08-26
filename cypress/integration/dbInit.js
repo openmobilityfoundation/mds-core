@@ -2,7 +2,7 @@
 describe('dbInit', function() {
   it('successfully initializes', function() {
     cy.request({
-      url: 'http://mds-agency:4001/agency/test/initialize',
+      url: 'http://mds-agency/agency/test/initialize',
       auth: {
         bearer: ".eyJzY29wZSI6ICJhZG1pbjphbGwgdGVzdDphbGwifQo=",
       },
