@@ -42,7 +42,7 @@ example:
 
 applications:
   http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
-  http://kibana                                       : kibana; see https://www.elastic.co/products/kibana
+  http://kibana:5601                                  : kibana; see https://www.elastic.co/products/kibana
   http://prometheus                                   : prometheus; see https://prometheus.io
 
 pre-requisites:
