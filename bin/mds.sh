@@ -97,7 +97,11 @@ installHelm() {
   helm init || usage "helm intialization failure"
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
-  helm dependency update
+
+  for d in $(find ./charts -type d -depth 1); do
+    (cd charts/$(basename ${d}); helm dependency update)
+  done
+
   helm plugin install https://github.com/lrills/helm-unittest
 }
 
