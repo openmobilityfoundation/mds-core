@@ -187,8 +187,8 @@ testUnit() {
 
 testIntegration() {
   # todo: provide [ ui | cli ] option
-  # $(npm bin)/cypress open
-  $(npm bin)/cypress run
+  # yarn cypress open
+  yarn cypress run
 }
 
 tokenDashboard() {
