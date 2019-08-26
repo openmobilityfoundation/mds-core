@@ -30,7 +30,7 @@ import {
   isInStatesOrEvents,
   ServerError
 } from '@mds-core/mds-utils'
-import { Policy, Geography, ComplianceResponse, Device, UUID } from '@mds-core/mds-types'
+import { Geography, Device, UUID } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName, TEST4_PROVIDER_ID } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
@@ -161,6 +161,8 @@ function api(app: express.Express): express.Express {
               res.status(200).send(result)
             }
           }
+        } else {
+          res.status(401).send({ err: 'Unauthorized' })
         }
       } catch (err) {
         if (err.message.includes('not_found')) {
@@ -205,6 +207,8 @@ function api(app: express.Express): express.Express {
               res.status(200).send(result)
             }
           }
+        } else {
+          res.status(401).send({ err: 'Unauthorized' })
         }
       } catch (err) {
         if (err.message.includes('not_found')) {

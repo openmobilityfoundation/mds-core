@@ -5,7 +5,13 @@
 /* eslint-disable promise/catch-or-return */
 /* eslint-disable promise/prefer-await-to-callbacks */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { PROVIDER_AUTH, makeDevices, makeEventsWithTelemetry, makeTelemetryInArea } from '@mds-core/mds-test-data'
+import {
+  PROVIDER_AUTH,
+  makeDevices,
+  makeEventsWithTelemetry,
+  makeTelemetryInArea,
+  PROVIDER_UUID
+} from '@mds-core/mds-test-data'
 
 import test from 'unit.js'
 import { api as agency } from '@mds-core/mds-agency'
@@ -29,7 +35,7 @@ import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST5_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -37,6 +43,9 @@ const request = supertest(ApiServer(api))
 const agency_request = supertest(ApiServer(agency))
 const provider_request = supertest(ApiServer(provider))
 
+const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_AUTH_2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const PROVIDER_AUTH_3 = `basic ${Buffer.from(`${TEST5_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
@@ -64,7 +73,6 @@ const TEST_TELEMETRY = {
 
 process.env.TIMEZONE = 'America/Los_Angeles'
 process.env.PATH_PREFIX = '/compliance'
-const PROVIDER_SCOPES = 'admin:all test:all'
 const ADMIN_AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|admin:all`).toString('base64')}`
 const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
@@ -108,6 +116,27 @@ const COUNT_POLICY_JSON: Policy = {
   ]
 }
 
+const SCOPED_COUNT_POLICY_JSON = {
+  name: 'LADOT Mobility Caps',
+  description: 'Mobility caps as described in the One-Year Permit',
+  policy_id: COUNT_POLICY_UUID,
+  start_date: 1558389669540,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [TEST2_PROVIDER_ID],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
+      rule_type: RULE_TYPES.count,
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 10,
+      minimum: 5
+    }
+  ]
+}
 const COUNT_POLICY_JSON_2: Policy = {
   name: 'Something Mobility Caps',
   description: 'Mobility caps as described in the One-Year Permit',
@@ -997,6 +1026,59 @@ describe('Tests Compliance API:', () => {
         .get(`/count/33ca0ee8-e74b-419d-88d3-aaaf05ac0509`)
         .set('Authorization', ADMIN_AUTH)
         .expect(404)
+        .end(err => {
+          done(err)
+        })
+    })
+  })
+
+  describe('Count Compliant Test: ', () => {
+    before(async () => {
+      const devices: Device[] = makeDevices(7, now(), PROVIDER_UUID)
+      const events = makeEventsWithTelemetry(devices, now() - 100000, CITY_OF_LA, 'trip_end')
+      const telemetry: Telemetry[] = []
+      devices.forEach(device => {
+        telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
+      })
+
+      const seedData = { events, telemetry, devices }
+      await Promise.all([db.initialize(), cache.initialize()])
+      await Promise.all([cache.seed(seedData), db.seed(seedData)])
+
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+      await db.writeGeography(geography)
+      await db.writePolicy(SCOPED_COUNT_POLICY_JSON)
+      await db.publishPolicy(SCOPED_COUNT_POLICY_JSON.policy_id)
+    })
+
+    it("Verifies scoped provider can access policy's compliance", done => {
+      request
+        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .set('Authorization', PROVIDER_AUTH_2)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.total_violations === 0)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it("Verifies non-scoped provider cannot access policy's compliance", done => {
+      request
+        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .set('Authorization', PROVIDER_AUTH_3)
+        .expect(401)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    afterEach(done => {
+      agency_request
+        .get('/test/shutdown')
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
         .end(err => {
           done(err)
         })
