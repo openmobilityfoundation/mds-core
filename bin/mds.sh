@@ -69,7 +69,9 @@ bootstrap() {
     *) usage "unsupported os: ${os}";;
   esac
 
-  invoke install "helm dashboard istio"
+  # todo: boostrap all-the-things
+
+  invoke install "$(normalize ${defaultBootstrap})"
 }
 
 build()  {
@@ -165,6 +167,8 @@ forward() {
     sudo --background kubefwd services -n ${n}
   done
 }
+
+# todo: unforward
 
 testUnit() {
   # todo: make mds unit tests work
