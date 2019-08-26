@@ -187,3 +187,5 @@ export const SqlExecuter = (client: MDSPostgresClient) => async (command: string
   await logSql(command, values)
   return client.query(command, values)
 }
+
+export type SqlExecuterFunction = ReturnType<typeof SqlExecuter>
