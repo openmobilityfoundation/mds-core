@@ -1,6 +1,6 @@
 fileignoreconfig:
 - filename: packages/mds-db/sql-utils.ts
-  checksum: c5448443595c520b55184bfb67a4b4ee0f346d6b1864d8738268c52177c567a8
+  checksum: 532fb512aa6868689a76d3a49904c56e255b77c98abbe7e1b57e640ef344d4e6
   ignore_detectors: []
 - filename: packages/mds-db/tests/migration.spec.ts
   checksum: 17ff3100aeb42e5436e20ef69f8dd8585eca4352829bae2a0312582d8da20677
