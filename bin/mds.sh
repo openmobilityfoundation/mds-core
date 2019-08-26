@@ -54,8 +54,6 @@ pre-requisites:
   yarn                                                : see https://yarnpkg.com/en/
   nvm                                                 : see https://nvm.sh
   lerna                                               : see https://lerna.js.org
-  npm                                                 : see https://www.npmjs.com
-  cypress                                             : see http://cypress.io
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -64,14 +62,20 @@ EOF
 bootstrap() {
   case "${os}" in
     ${OSX})
-      if ! hash brew 2>/dev/null ; then
+      if ! hash brew 2>/dev/null; then
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       fi
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
     *) usage "unsupported os: ${os}";;
   esac
 
-  # todo: boostrap all-the-things
+# todo: boostrap all-the-things
+
+  for y in cypress mocha chai mochawesome; do
+    if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
+      echo "yarn add -W ${y}"
+    fi
+  done
 
   invoke install "$(normalize ${defaultBootstrap})"
 }
