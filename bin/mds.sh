@@ -43,7 +43,9 @@ example:
 applications:
   http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
   http://kibana:5601                                  : kibana; see https://www.elastic.co/products/kibana
-  http://prometheus                                   : prometheus; see https://prometheus.io
+  http://prometheus:9090                              : prometheus; see https://prometheus.io
+  http://tracing                                      : jaeger; see https://www.jaegertracing.io
+  http://kiali:20001                                  : kiali; see https://www.kiali.io
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
@@ -52,8 +54,6 @@ pre-requisites:
   yarn                                                : see https://yarnpkg.com/en/
   nvm                                                 : see https://nvm.sh
   lerna                                               : see https://lerna.js.org
-  npm                                                 : see https://www.npmjs.com
-  cypress                                             : see http://cypress.io
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -62,14 +62,22 @@ EOF
 bootstrap() {
   case "${os}" in
     ${OSX})
-      if ! hash brew 2>/dev/null ; then
+      if ! hash brew 2>/dev/null; then
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       fi
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
     *) usage "unsupported os: ${os}";;
   esac
 
-  invoke install "helm dashboard istio"
+# todo: boostrap all-the-things
+
+  for y in cypress mocha chai mochawesome; do
+    if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
+      echo "yarn add -W ${y}"
+    fi
+  done
+
+  invoke install "$(normalize ${defaultBootstrap})"
 }
 
 build()  {
@@ -166,6 +174,8 @@ forward() {
   done
 }
 
+# todo: unforward
+
 testUnit() {
   # todo: make mds unit tests work
   # yarn test
@@ -177,8 +187,8 @@ testUnit() {
 
 testIntegration() {
   # todo: provide [ ui | cli ] option
-  # $(npm bin)/cypress open
-  $(npm bin)/cypress run
+  # yarn cypress open
+  yarn cypress run
 }
 
 tokenDashboard() {
