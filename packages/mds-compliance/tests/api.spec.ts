@@ -687,6 +687,11 @@ describe('Tests Compliance API:', () => {
           done(err)
         })
     })
+
+    after('Reset system time', done => {
+      MockDate.reset()
+      done()
+    })
   })
 
   describe('Particular Event Violation: ', () => {
