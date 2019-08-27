@@ -154,6 +154,15 @@ function api(app: express.Express): express.Express {
     return res.send({ result: 'cache/stream/db shutdown done' })
   })
 
+  app.get(pathsFor('/admin/policies'), async (req, res) => {
+    try {
+      const policies = await db.readPolicies()
+      return res.status(200).send({ result: policies })
+    } catch (err) {
+      return res.status(502).send({ error: new ServerError(err) })
+    }
+  })
+
   app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
@@ -240,6 +249,21 @@ function api(app: express.Express): express.Express {
     }
   })
 
+  app.get(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+    const { policy_id } = req.params
+    try {
+      const policies = await db.readPolicies({ policy_id })
+      if (policies.length > 0) {
+        res.status(200).send(policies[0])
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      await log.error('failed to read one policy', err)
+      res.status(404).send({ result: 'not found' })
+    }
+  })
+
   app.get(pathsFor('/admin/policies/meta/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
@@ -260,6 +284,23 @@ function api(app: express.Express): express.Express {
     } catch (err) {
       await log.error('failed to write geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
+    }
+  })
+
+  app.get(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
+    log.info('read geo', JSON.stringify(req.params))
+    const { geography_id } = req.params
+    log.info('read geo', geography_id)
+    try {
+      const geographies = await db.readGeographies({ geography_id })
+      if (geographies.length > 0) {
+        res.status(200).send({ geography: geographies[0] })
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      await log.error('failed to read geography', err.stack)
+      res.status(404).send({ result: 'not found' })
     }
   })
 

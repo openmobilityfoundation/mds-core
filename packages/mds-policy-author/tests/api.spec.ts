@@ -35,8 +35,11 @@ import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
+  SUPERSEDING_POLICY_JSON,
+  SUPERSEDING_POLICY_UUID,
   POLICY_UUID,
   POLICY2_UUID,
+  POLICY3_UUID,
   GEOGRAPHY_UUID,
   PROVIDER_SCOPES,
   LA_CITY_BOUNDARY,
@@ -213,7 +216,7 @@ describe('Tests app', () => {
       // TODO guts
       const policy3 = POLICY3_JSON
       request
-        .post(`/admin/policies/${POLICY_UUID}`)
+        .post(`/admin/policies/${POLICY3_UUID}`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(policy3)
         .expect(200)
@@ -356,9 +359,40 @@ describe('Tests app', () => {
           done(err)
         })
     })
+
+    it('can GET a single policy', done => {
+      request
+        .get(`/admin/policies/${POLICY_UUID}`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(200)
+        .end(async (err, result) => {
+          test.assert(result.body.policy_id === POLICY_UUID)
+          test.assert(result.body.description === POLICY_JSON.description)
+          done(err)
+        })
+    })
+
+    it('can GET all policies, unpublished, active, or whatever', done => {
+      request
+        .post(`/admin/policies/${SUPERSEDING_POLICY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .send(SUPERSEDING_POLICY_JSON)
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          request
+            .get(`/admin/policies`)
+            .set('Authorization', AUTH_ADMIN_ONLY)
+            .expect(200)
+            .end(async (policies_err, policies_result) => {
+              test.assert(policies_result.body.result.length === 3)
+              done(policies_err)
+            })
+        })
+    })
   })
 
-  describe('Geography endpoint tests', () => {
+  describe.only('Geography endpoint tests', () => {
     before(done => {
       request
         .get('/test/initialize')
@@ -387,6 +421,18 @@ describe('Tests app', () => {
         .end((err, result) => {
           const body = result.body
           log('create one geo response:', body)
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('GETs one current geography', done => {
+      request
+        .get(`/admin/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', AUTH_NON_PROVIDER)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.geography.geography_id === GEOGRAPHY_UUID)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

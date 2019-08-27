@@ -1171,6 +1171,7 @@ async function readPolicies(params?: {
   start_date?: Timestamp
   end_date?: Timestamp
   get_unpublished?: boolean
+  all?: boolean
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -1185,10 +1186,12 @@ async function readPolicies(params?: {
     conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
   }
 
-  if (params && params.get_unpublished) {
-    conditions.push(`policy_json->>'publish_date' IS NULL`)
-  } else {
-    conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
+  if (params && !params.all) {
+    if (params.get_unpublished) {
+      conditions.push(`policy_json->>'publish_date' IS NULL`)
+    } else {
+      conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
+    }
   }
 
   if (conditions.length) {
@@ -1196,7 +1199,7 @@ async function readPolicies(params?: {
   }
   const values = vals.values()
   const res = await client.query(sql, values)
-  if (res.rows.length === 0) {
+  if (res.rows.length === 0 && params && params.policy_id) {
     throw new Error('policy not_found')
   }
   return res.rows.map(row => row.policy_json)

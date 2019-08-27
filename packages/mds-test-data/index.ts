@@ -70,6 +70,7 @@ const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
 const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
 const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
 const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
+const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
 const PROVIDER_SCOPES = 'admin:all test:all'
 
@@ -114,6 +115,29 @@ const POLICY_JSON: Policy = {
       statuses: { available: [], unavailable: [], reserved: [], trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 3000,
+      minimum: 500
+    }
+  ]
+}
+
+const SUPERSEDING_POLICY_JSON: Policy = {
+  // TODO guts
+  name: 'LADOT Mobility Caps',
+  description: 'Mobility caps as described in the One-Year Permit',
+  policy_id: SUPERSEDING_POLICY_UUID,
+  start_date: START_YESTERDAY,
+  end_date: null,
+  prev_policies: [POLICY_UUID],
+  provider_ids: [],
+  rules: [
+    {
+      rule_type: 'count',
+      rule_id: 'f518e886-ec06-4eb9-ad19-d91d34ee73d3',
+      name: 'Greater LA',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 1000,
       minimum: 500
     }
   ]
@@ -491,10 +515,13 @@ export {
   JUMP_TEST_DEVICE_1,
   JUMP_PROVIDER_ID,
   POLICY_JSON,
+  SUPERSEDING_POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
   POLICY_UUID,
+  SUPERSEDING_POLICY_UUID,
   POLICY2_UUID,
+  POLICY3_UUID,
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   START_ONE_MONTH_AGO,
