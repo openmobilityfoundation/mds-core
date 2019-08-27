@@ -45,7 +45,7 @@ const provider_request = supertest(ApiServer(provider))
 
 const PROVIDER_SCOPES = 'admin:all test:all'
 const PROVIDER_AUTH_2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const PROVIDER_AUTH_3 = `basic ${Buffer.from(`${TEST5_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const PROVIDER_AUTH_5 = `basic ${Buffer.from(`${TEST5_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
@@ -1071,7 +1071,7 @@ describe('Tests Compliance API:', () => {
     it("Verifies non-scoped provider cannot access policy's compliance", done => {
       request
         .get(`/snapshot/${COUNT_POLICY_UUID}`)
-        .set('Authorization', PROVIDER_AUTH_3)
+        .set('Authorization', PROVIDER_AUTH_5)
         .expect(401)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
