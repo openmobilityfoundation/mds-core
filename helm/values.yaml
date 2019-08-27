@@ -58,6 +58,8 @@ apis:
 namespace: default
 registry: 
 useLatestImage: true
+tls:
+  enabled: false
 jwt:
   issuer:
   enabled: false 
@@ -83,6 +85,3 @@ redis:
     disableCommands: []
   slave:
     disableCommands: []
-kube-metrics-adapter:
-  prometheus:
-    url: http://prometheus.istio-system.svc.cluster.local

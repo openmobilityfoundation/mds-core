@@ -8,6 +8,3 @@ dependencies:
     repository: alias:stable
     version: 6.2.1
     condition: postgresql.internal
-  - name: kube-metrics-adapter
-    version: 0.0.4
-    repository: alias:banzaicloud-stable
