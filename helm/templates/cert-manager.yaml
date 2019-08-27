@@ -1,3 +1,4 @@
+{{- if .Values.tls.enabled }}
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
@@ -8,12 +9,13 @@ spec:
   issuerRef:
     name: letsencrypt-staging
     kind: ClusterIssuer
-  commonName: {{ .Values.certificate.domain }}
+  commonName: {{ .Values.tls.domain }}
   dnsNames:
-  - {{ .Values.certificate.domain }}
+  - {{ .Values.tls.domain }}
   acme:
     config:
     - http01:
         ingressClass: istio
       domains:
-      - {{ .Values.certificate.domain }}
+      - {{ .Values.tls.domain }}
+{{- end }}
