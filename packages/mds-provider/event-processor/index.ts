@@ -17,10 +17,11 @@
 import db from '@mds-core/mds-db'
 import { promisify } from 'util'
 import logger from '@mds-core/mds-logger'
-import stream, { ReadStreamOptions, StreamItem } from '@mds-core/mds-stream'
+import stream from '@mds-core/mds-stream'
 import uuid from 'uuid'
 import { isUUID } from '@mds-core/mds-utils'
-import { VehicleEvent } from '@mds-core/mds-types'
+import { VehicleEvent, Recorded } from '@mds-core/mds-types'
+import { ReadStreamOptions, StreamItem } from '@mds-core/mds-stream/types'
 import { DeviceLabeler } from './labelers/device-labeler'
 import { ProviderLabeler } from './labelers/provider-labeler'
 import { StreamEntry } from './types'
@@ -30,12 +31,12 @@ import { TripsProcessor, TripEvent } from './processors/trips-processor'
 
 export type ProviderEventProcessorOptions = ReadStreamOptions & Partial<{ interval: number }>
 
-const isStatusChangesProcessorStreamEntry = (entry: StreamEntry): entry is StreamEntry<VehicleEvent> =>
+const isStatusChangesProcessorStreamEntry = (entry: StreamEntry): entry is StreamEntry<Recorded<VehicleEvent>> =>
   entry && typeof entry === 'object' && entry.type === 'event' && typeof entry.data === 'object'
 
-const isTripsProcessorStreamEntry = (entry: StreamEntry): entry is StreamEntry<TripEvent> =>
+const isTripsProcessorStreamEntry = (entry: StreamEntry): entry is StreamEntry<Recorded<TripEvent>> =>
   isStatusChangesProcessorStreamEntry(entry) &&
-  isUUID((entry.data as TripEvent).trip_id) &&
+  isUUID((entry.data as Recorded<TripEvent>).trip_id) &&
   ['trip_start', 'trip_enter', 'trip_leave', 'trip_end'].includes(entry.data.event_type)
 
 const asStreamEntry = <T>([id, [type, data]]: StreamItem): StreamEntry<T> => {
@@ -50,8 +51,8 @@ const readStreamEntries = async (options: ReadStreamOptions) => {
   }
 }
 
-const firstStreamEvent = (item: StreamItem | null): VehicleEvent | null => {
-  return item ? asStreamEntry<VehicleEvent>(item).data : null
+const firstStreamEvent = (item: StreamItem | null): Recorded<VehicleEvent> | null => {
+  return item ? asStreamEntry<Recorded<VehicleEvent>>(item).data : null
 }
 
 const processor = async (options: ReadStreamOptions): Promise<number> => {

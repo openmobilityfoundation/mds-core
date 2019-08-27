@@ -135,7 +135,7 @@ function api(app: express.Express): express.Express {
         }, [])
         const devices = await cache.readDevices(deviceIds)
         const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
-          return Object.assign(map, { [device.device_id]: device })
+          return device ? Object.assign(map, { [device.device_id]: device }) : map
         }, {})
         const events = await db.readHistoricalEvents({ provider_id, end_date })
         const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
@@ -149,6 +149,9 @@ function api(app: express.Express): express.Express {
           res.status(200).send(results)
         }
       } catch (err) {
+        if (err.message.includes('not_found')) {
+          res.status(400).send({ err: 'bad_param' })
+        }
         await fail(err)
       }
     } else {
@@ -163,12 +166,9 @@ function api(app: express.Express): express.Express {
         const devices = await cache.readDevices(deviceIdSubset)
         const events = await cache.readEvents(deviceIdSubset)
         /* istanbul ignore next */
-        const deviceMap: { [d: string]: Device } = devices.reduce(
-          (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-            return Object.assign(deviceMapAcc, { [device.device_id]: device })
-          },
-          {}
-        )
+        const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
+          return device ? Object.assign(map, { [device.device_id]: device }) : map
+        }, {})
         log.info(`Policies: ${JSON.stringify(policies)}`)
         const filteredEvents = compliance_engine.filterEvents(events)
         const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
@@ -181,6 +181,9 @@ function api(app: express.Express): express.Express {
           res.status(200).send(results)
         }
       } catch (err) {
+        if (err.message.includes('not_found')) {
+          res.status(400).send({ err: 'bad_param' })
+        }
         await fail(err)
       }
     }

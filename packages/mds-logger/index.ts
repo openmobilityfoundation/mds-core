@@ -23,8 +23,6 @@ import PushClient from 'pushover-notifications'
 
 import { WebClient as SlackClient } from '@slack/client'
 
-require('dotenv').config()
-
 const { env } = process
 
 interface Datum {
@@ -232,4 +230,4 @@ async function startup() {
   // }
 }
 
-export default { info, warn, error, startup }
+export = { info, warn, error, startup }

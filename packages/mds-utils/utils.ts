@@ -38,12 +38,13 @@ import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geo
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
+const UUID_REGEX = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
 
 function isUUID(s: unknown): s is UUID {
   if (typeof s !== 'string') {
     return false
   }
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(s)
+  return UUID_REGEX.test(s)
 }
 
 function round(value: string | number, decimals: number) {
@@ -455,49 +456,27 @@ function inc(map: { [key: string]: number }, key: string) {
 }
 function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
   const {
-    device_id,
-    provider_id,
-    timestamp,
     gps: { lat, lng, altitude, heading, speed, accuracy },
-    charge,
-    recorded = now()
+    recorded = now(),
+    ...props
   } = telemetry
   return {
-    device_id,
-    provider_id,
-    timestamp,
+    ...props,
     lat,
     lng,
     altitude,
     heading,
     speed,
     accuracy,
-    charge,
     recorded
   }
 }
 
 function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Telemetry {
-  const {
-    device_id,
-    provider_id,
-    timestamp,
-    lat,
-    lng,
-    altitude,
-    heading,
-    speed,
-    accuracy,
-    charge,
-    recorded
-  } = telemetryRecord
+  const { lat, lng, altitude, heading, speed, accuracy, ...props } = telemetryRecord
   return {
-    device_id,
-    provider_id,
-    timestamp,
-    gps: { lat, lng, altitude, heading, speed, accuracy },
-    charge,
-    recorded
+    ...props,
+    gps: { lat, lng, altitude, heading, speed, accuracy }
   }
 }
 
@@ -611,19 +590,17 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
   if (res === undefined) {
     throw new Error(`Geography ${geography} not found in ${geographies}!`)
   }
-  if (res.geography_json.type !== 'FeatureCollection') {
-    return res.geography_json.geometry
-  }
   return res.geography_json
 }
 
 function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
-  const status = rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS]
-  return (
-    Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
-    status !== undefined &&
-    (status.length === 0 || (status as string[]).includes(event.event_type))
-  )
+  const status = rule.statuses ? rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS] : null
+  return status !== null
+    ? rule.statuses !== null &&
+        Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+        status !== undefined &&
+        (status.length === 0 || (status as string[]).includes(event.event_type))
+    : true
 }
 
 function routeDistance(coordinates: { lat: number; lng: number }[]): number {
@@ -644,7 +621,12 @@ function routeDistance(coordinates: { lat: number; lng: number }[]): number {
     }, 0)
 }
 
+function clone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
 export {
+  UUID_REGEX,
   isUUID,
   isPct,
   isTimestamp,
@@ -681,5 +663,6 @@ export {
   convertTelemetryRecordToTelemetry,
   getPolygon,
   isInStatesOrEvents,
-  routeDistance
+  routeDistance,
+  clone
 }

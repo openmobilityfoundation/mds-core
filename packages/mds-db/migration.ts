@@ -1,26 +1,41 @@
-import { AUDIT_EVENT_TYPES } from '@mds-core/mds-types'
-
-import { csv } from '@mds-core/mds-utils'
+import { csv, now } from '@mds-core/mds-utils'
 
 import log from '@mds-core/mds-logger'
-import schema from './schema'
-import { logSql, SqlExecuter, MDSPostgresClient } from './sql-utils'
+import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
+import { logSql, SqlExecuter, MDSPostgresClient, cols_sql, SqlExecuterFunction } from './sql-utils'
 
-/**
- * drop tables from a list of table names
- */
+const MIGRATIONS = ['createMigrationsTable'] as const
+type MIGRATION = typeof MIGRATIONS[number]
+
+// drop tables from a list of table names
 async function dropTables(client: MDSPostgresClient) {
-  const drop = `DROP TABLE IF EXISTS ${csv(Object.keys(schema.tables))};`
+  const drop = `DROP TABLE IF EXISTS ${csv(schema.TABLES)};`
   await logSql(drop)
   await client.query(drop)
   await log.info('postgres drop table succeeded')
 }
 
-// Add the index, if it doesn't already exist.
+// Add a foreign key if it doesn't already exist
+async function addForeignKey(client: MDSPostgresClient, from: TABLE_NAME, to: TABLE_NAME, column: COLUMN_NAME) {
+  const exec = SqlExecuter(client)
+  const foreignKeyName = `fk_${to}_${column}`
+  const sql = `DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${foreignKeyName}') THEN
+        ALTER TABLE ${from}
+        ADD CONSTRAINT ${foreignKeyName}
+        FOREIGN KEY (${column}) REFERENCES ${to} (${column});
+      END IF;
+    END;
+    $$`
+  await exec(sql)
+}
+
+// Add an index if it doesn't already exist
 async function addIndex(
   client: MDSPostgresClient,
-  table: string,
-  column: string,
+  table: TABLE_NAME,
+  column: COLUMN_NAME,
   options: Partial<{ unique: boolean }> = { unique: false }
 ) {
   const exec = SqlExecuter(client)
@@ -47,13 +62,14 @@ async function addIndex(
  * create tables from a list of table names
  */
 async function createTables(client: MDSPostgresClient) {
+  const exec = SqlExecuter(client)
   /* eslint-reason ambiguous DB function */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const existing: { rows: { table_name: string }[] } = await client.query(
-    'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA'
+  const existing: { rows: { table_name: string }[] } = await exec(
+    'SELECT table_name FROM information_schema.tables WHERE table_catalog = CURRENT_CATALOG AND table_schema = CURRENT_SCHEMA'
   )
 
-  const missing = Object.keys(schema.tables).filter(
+  const missing = schema.TABLES.filter(
     /* eslint-reason ambiguous DB function */
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     (table: string) => !existing.rows.find((row: any) => row.table_name === table)
@@ -63,144 +79,67 @@ async function createTables(client: MDSPostgresClient) {
     const create = missing
       .map(
         table =>
-          `CREATE TABLE ${table} (${schema.tables[table]
-            .map((column: string) => `${column} ${schema.PG_TYPES[column]}`)
-            .join(', ')}, PRIMARY KEY (${csv(schema.primaryKeys[table])}));`
+          `CREATE TABLE ${table} (${schema.TABLE_COLUMNS[table]
+            .map(column => `${column} ${schema.COLUMN_TYPE[column]}`)
+            .join(', ')}, PRIMARY KEY (${csv(schema.TABLE_KEY[table])}));`
       )
       .join('\n')
-    await logSql(create)
     await log.warn(create)
-    await client.query(create)
+    await exec(create)
     await log.info('postgres create table suceeded')
-    await Promise.all(missing.map(table => addIndex(client, table, 'recorded')))
+    await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.recorded)))
+    await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.id, { unique: true })))
+    await addForeignKey(client, schema.TABLE.policy_metadata, schema.TABLE.policies, schema.COLUMN.policy_id)
+    await addForeignKey(client, schema.TABLE.geography_metadata, schema.TABLE.geographies, schema.COLUMN.geography_id)
+    // If the migrations table is being created then this is a new installation and all known migrations can be marked as run
+    if (create.includes(schema.TABLE.migrations)) {
+      await exec(
+        `INSERT INTO ${schema.TABLE.migrations} (${cols_sql(schema.TABLE_COLUMNS.migrations)}) VALUES ${MIGRATIONS.map(
+          migration => `('${migration}', ${now()})`
+        ).join(', ')}`
+      )
+    }
   }
 }
 
-function validateSchema() {
-  Object.keys(schema.tables).forEach(table =>
-    schema.tables[table].forEach((column: string) => {
-      if (schema.PG_TYPES[column] === undefined) {
-        throw Error(`no type defined for ${column} in ${table}`)
+async function doMigration(exec: SqlExecuterFunction, migration: MIGRATION, migrate: () => Promise<void>) {
+  const { PG_MIGRATIONS } = process.env
+  const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []
+  if (migrations.includes('true') || migrations.includes(migration)) {
+    const { rowCount } = await exec(
+      `SELECT * FROM ${schema.TABLE.migrations} WHERE ${schema.COLUMN.migration} = '${migration}'`
+    )
+    if (rowCount === 0) {
+      try {
+        await exec(
+          `INSERT INTO ${schema.TABLE.migrations} (${cols_sql(
+            schema.TABLE_COLUMNS.migrations
+          )}) VALUES ('${migration}', ${now()})`
+        )
+        try {
+          await log.warn('Running migration', migration)
+          await migrate()
+          await log.warn('Migration', migration, 'succeeded')
+        } catch (err) {
+          await log.error('Migration', migration, 'failed', err)
+        }
+      } catch {
+        /* Another process is running this migration */
       }
-    })
-  )
-}
-
-async function addTimestampColumnToAuditsTable(client: MDSPostgresClient) {
-  const TIMESTAMP_COL = 'timestamp'
-
-  // Make sure this migration is still required
-  if (schema.AUDITS_COLS.some((column: string) => column === TIMESTAMP_COL)) {
-    const exec = SqlExecuter(client)
-    // Make sure this migration hasn't already run
-    const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${TIMESTAMP_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
-    )
-    if (result.rowCount === 0) {
-      // Do the migration
-      await exec(
-        `ALTER TABLE ${schema.AUDITS_TABLE} ADD COLUMN ${TIMESTAMP_COL} ${schema.PG_TYPES[TIMESTAMP_COL]} DEFAULT 0`
-      )
-      const updated = await exec(
-        `UPDATE ${schema.AUDITS_TABLE} SET ${TIMESTAMP_COL} = COALESCE(${schema.AUDIT_EVENTS_TABLE}.timestamp, ${schema.AUDITS_TABLE}.recorded) FROM ${schema.AUDIT_EVENTS_TABLE} where ${schema.AUDIT_EVENTS_TABLE}.audit_trip_id = ${schema.AUDITS_TABLE}.audit_trip_id AND ${schema.AUDIT_EVENTS_TABLE}.audit_event_type = '${AUDIT_EVENT_TYPES.start}'`
-      )
-      await exec(`ALTER TABLE ${schema.AUDITS_TABLE} ALTER COLUMN ${TIMESTAMP_COL} DROP DEFAULT`)
-      log.info('Migration addTimestampColumnToAuditsTable complete.', updated.rowCount, 'row(s) updated')
     }
   }
 }
 
-async function addAuditSubjectIdColumnToAuditEventsTable(client: MDSPostgresClient) {
-  const AUDIT_SUBJECT_ID_COL = 'audit_subject_id'
-
-  // Make sure this migration is still required
-  if (schema.AUDIT_EVENTS_COLS.some((column: string) => column === AUDIT_SUBJECT_ID_COL)) {
-    const exec = SqlExecuter(client)
-    // Make sure this migration hasn't already run
-    const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDIT_EVENTS_TABLE}' AND column_name = '${AUDIT_SUBJECT_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
-    )
-    if (result.rowCount === 0) {
-      // Do the migration
-      await exec(
-        `ALTER TABLE ${schema.AUDIT_EVENTS_TABLE} ADD COLUMN ${AUDIT_SUBJECT_ID_COL} ${schema.PG_TYPES[AUDIT_SUBJECT_ID_COL]} DEFAULT ''`
-      )
-      const updated = await exec(
-        `UPDATE ${schema.AUDIT_EVENTS_TABLE} SET ${AUDIT_SUBJECT_ID_COL} = ${schema.AUDITS_TABLE}.audit_subject_id FROM ${schema.AUDITS_TABLE} where ${schema.AUDIT_EVENTS_TABLE}.audit_trip_id = ${schema.AUDITS_TABLE}.audit_trip_id`
-      )
-      await exec(`ALTER TABLE ${schema.AUDIT_EVENTS_TABLE} ALTER COLUMN ${AUDIT_SUBJECT_ID_COL} DROP DEFAULT`)
-      log.info('Migration addAuditSubjectIdColumnToAuditEventsTable complete.', updated.rowCount, 'row(s) updated')
-    }
-  }
-}
-async function updateAuditEventsTablePrimaryKey(client: MDSPostgresClient) {
+async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
-  // Change the PK to avoid errors when two events have the same timestamp
-  const AUDIT_EVENTS_PK = csv(schema.primaryKeys[schema.AUDIT_EVENTS_TABLE])
-  await exec(`ALTER TABLE ${schema.AUDIT_EVENTS_TABLE} DROP CONSTRAINT ${schema.AUDIT_EVENTS_TABLE}_pkey`)
-  await exec(`ALTER TABLE ${schema.AUDIT_EVENTS_TABLE} ADD PRIMARY KEY (${AUDIT_EVENTS_PK})`)
-  await log.info(
-    `Migration updateAuditEventsTablePrimaryKey altered PK for "${schema.AUDITS_TABLE}" table to (${AUDIT_EVENTS_PK}).`
-  )
-}
-
-async function removeAuditVehicleIdColumnFromAuditsTable(client: MDSPostgresClient) {
-  const AUDIT_VEHICLE_ID_COL = 'audit_vehicle_id'
-  const AUDIT_DEVICE_ID_COL = 'audit_device_id'
-  // Only run if the audit_vehicle_id column has been removed from the schema
-  if (!schema.AUDITS_COLS.some(column => (column as string) === AUDIT_VEHICLE_ID_COL)) {
-    const exec = SqlExecuter(client)
-    // Make sure this migration hasn't already run
-    const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.AUDITS_TABLE}' AND column_name = '${AUDIT_VEHICLE_ID_COL}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
-    )
-    if (result.rowCount === 1) {
-      // Convert audit_vehicle_id to a uuid and overwrite audit_device_id
-      const updated = await exec(
-        `UPDATE ${schema.AUDITS_TABLE} SET ${AUDIT_DEVICE_ID_COL} = uuid(${AUDIT_VEHICLE_ID_COL})`
-      )
-      await log.info(`Migration removeAuditVehicleIdColumnFromAuditsTable updated ${updated.rowCount} row(s).`)
-      // Drop the audit_vehicle_id column
-      await exec(`ALTER TABLE ${schema.AUDITS_TABLE} DROP COLUMN IF EXISTS ${AUDIT_VEHICLE_ID_COL}`)
-      await log.info(
-        `Migration removeAuditVehicleIdColumnFromAuditsTable dropped column "${AUDIT_VEHICLE_ID_COL}" from "${schema.AUDITS_TABLE}" table.`
-      )
-      await updateAuditEventsTablePrimaryKey(client)
-    }
-  }
-}
-
-async function recreateProviderTables(client: MDSPostgresClient) {
-  const PROVIDER_TRIP_ID = 'provider_trip_id'
-  const RECREATE_TABLES = csv([schema.TRIPS_TABLE, schema.STATUS_CHANGES_TABLE])
-
-  // Make sure this migration is still required
-  if (schema.TRIPS_COLS.some(column => (column as string) === PROVIDER_TRIP_ID)) {
-    const exec = SqlExecuter(client)
-    // Make sure this migration hasn't already run
-    const result = await exec(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = '${schema.TRIPS_TABLE}' AND column_name = '${PROVIDER_TRIP_ID}' AND table_catalog = CURRENT_CATALOG AND table_schema= CURRENT_SCHEMA`
-    )
-    if (result.rowCount === 0) {
-      // Do the migration
-      await exec(`DROP TABLE IF EXISTS ${RECREATE_TABLES};`)
-      log.info('Migration recreateProviderTables complete.', RECREATE_TABLES, 'tables(s) dropped')
-      await createTables(client)
-    }
-  }
-}
-async function updateTables(client: MDSPostgresClient) {
-  // Custom migrations run first (e.g. new non-nullable columns with no default value)
-  await addTimestampColumnToAuditsTable(client)
-  await addAuditSubjectIdColumnToAuditEventsTable(client)
-  await removeAuditVehicleIdColumnFromAuditsTable(client)
-  await recreateProviderTables(client)
+  // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
+  // migrations table is created, but it is included as it provides a template for how to invoke them.
+  await doMigration(exec, 'createMigrationsTable', async () => {})
 }
 
 async function updateSchema(client: MDSPostgresClient) {
-  await validateSchema()
   await createTables(client)
-  await updateTables(client)
+  await doMigrations(client)
 }
 
 export { updateSchema, dropTables, createTables }

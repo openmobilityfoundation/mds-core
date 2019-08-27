@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-compliance",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AWS Lambda for MDS Compliance API",
   "main": "dist/index.js",
   "files": [
@@ -12,21 +12,18 @@
     "lambda:dev3-mds-compliance": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
     "lambda:ladot-prod-mds-compliance": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
     "lambda:ladot-sandbox-mds-compliance": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-compliance --zip-file fileb://dist/bundles/mds-compliance.zip",
-    "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0",
-    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
-    "watch:exec": "yarn build && ts-node"
+    "test:unit": "exit 0"
   },
   "keywords": [
     "mds"
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "^0.1.4",
-    "@mds-core/mds-api-server": "^0.1.4",
-    "@mds-core/mds-compliance": "^0.1.5"
+    "@aws-lambda/aws-serverless-express-handler": "^0.1.5",
+    "@mds-core/mds-api-server": "^0.1.5",
+    "@mds-core/mds-compliance": "^0.1.6"
   },
   "license": "Apache-2.0"
 }

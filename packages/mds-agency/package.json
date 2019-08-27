@@ -1,25 +1,25 @@
 {
   "name": "@mds-core/mds-agency",
   "description": "MDS Agency API",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-api-helpers": "^0.1.4",
-    "@mds-core/mds-api-server": "^0.1.4",
-    "@mds-core/mds-cache": "^0.1.4",
-    "@mds-core/mds-db": "^0.1.4",
-    "@mds-core/mds-logger": "^0.1.4",
-    "@mds-core/mds-providers": "^0.1.4",
-    "@mds-core/mds-stream": "^0.1.4",
-    "@mds-core/mds-types": "^0.1.1",
-    "@mds-core/mds-utils": "^0.1.4",
+    "@mds-core/mds-api-helpers": "^0.1.5",
+    "@mds-core/mds-api-server": "^0.1.5",
+    "@mds-core/mds-cache": "^0.1.5",
+    "@mds-core/mds-db": "^0.1.5",
+    "@mds-core/mds-logger": "^0.1.5",
+    "@mds-core/mds-providers": "^0.1.5",
+    "@mds-core/mds-stream": "^0.1.5",
+    "@mds-core/mds-types": "^0.1.2",
+    "@mds-core/mds-utils": "^0.1.5",
     "express": "4.17.1",
-    "ladot-service-areas": "^0.1.4",
+    "ladot-service-areas": "^0.1.5",
     "uuid": "3.3.2"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "^0.1.4"
+    "@mds-core/mds-test-data": "^0.1.5"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,6 +33,6 @@
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --recursive tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
-    "watch:exec": "yarn build && ts-node"
+    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   }
 }

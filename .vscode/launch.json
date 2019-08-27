@@ -91,6 +91,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Server: mds-policy-author",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-policy-author",
+      "env": {
+        "npm_package_name": "@mds-core/mds-policy-author"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Server: mds-provider",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
       "args": ["server.ts"],
@@ -308,6 +322,27 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Tests: mds-policy-author",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-policy-author"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Tests: mds-provider",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
@@ -346,6 +381,27 @@
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-types"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-utils",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-utils"
     }
   ]
 }
