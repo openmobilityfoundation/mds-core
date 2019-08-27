@@ -4,16 +4,13 @@ tools=$(dirname ${0})/../tools
 os=${MDS_OS:-`uname`}
 istio=${ISTIO_VERSION:-1.2.4}
 defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
-# defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio,logging}
 defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
-# defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,logging,mds}
 defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
-# defaultUninstall=${MDS_UNINSTALL:-mds,logging,istio,dashboard,helm}
 defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
 defaultForward=${MDS_FORWARD:-default}
 defaultToken=${MDS_TOKEN:-dashboard}
-defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,logging,mds}
+defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,mds}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -31,14 +28,14 @@ usage: $(basename ${0}) [commands]
 commands:
   bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                               : build project
-  install[:helm,dashboard,istio,logging,mds]          : install specified components; default: ${defaultInstall}
-  forward[:default,logging,kube-system,istio-system]  : regisgter service host names in the provided namespace(s); default: ${defaultForward}
+  install[:helm,dashboard,istio,mds]                  : install specified components; default: ${defaultInstall}
+  forward[:default,kube-system,istio-system]          : regisgter service host names in the provided namespace(s); default: ${defaultForward}
   unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   cli:[postgresql,redis]                              : create a cli console for the provided service
-  uninstall[:mds,logging,istio,dashboard,helm]        : uninstall specified components; default: ${defaultUninstall}
-  reinstall[:helm,dashboard,istio,logging,mds]        : reinstall specified components; default: ${defaultReinstall}
+  uninstall[:mds,istio,dashboard,helm]                : uninstall specified components; default: ${defaultUninstall}
+  reinstall[:helm,dashboard,istio,mds]                : reinstall specified components; default: ${defaultReinstall}
   help                                                : help message
 
 example:
@@ -166,10 +163,6 @@ installIstio() {
   }
 }
 
-installLogging() {
-  helm install --name logging --namespace logging ./charts/logging
-}
-
 installMds() {
   # todo: don't install if secret exists
   kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
@@ -192,7 +185,7 @@ testUnit() {
   # todo: make mds unit tests work
   # yarn test
 
-  for c in mds; do #logging; do
+  for c in $(find ./charts -type d -depth 1); do
     helm unittest ./charts/${c}
   done
 }
@@ -225,10 +218,6 @@ cliRedis() {
 
 uninstallMds() {
   helm delete --purge mds
-}
-
-uninstallLogging() {
-  helm delete --purge logging
 }
 
 uninstallIstio() {
