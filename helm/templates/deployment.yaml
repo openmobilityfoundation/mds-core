@@ -1,0 +1,87 @@
+{{- range $api := .Values.apis }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $api.name }}
+  labels:
+    app: {{ $api.name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $api.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $api.name }}
+    spec:
+      containers:
+      - name: user-container
+        {{- if $.Values.registry }}
+        image: {{ $.Values.registry }}/{{ $api.name }}:{{ $api.version }}
+        {{- else }}
+        image: {{ $api.name }}:{{ $api.version }}
+        imagePullPolicy: IfNotPresent
+        {{- end }}
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 128Mi
+        ports:
+        - containerPort: {{ $api.port }}
+          name: user-port
+          protocol: TCP
+        env:
+          - name: PATH_PREFIX
+            value: {{ $api.pathPrefix }}
+          {{- if $api.useDB }}
+          - name: PG_USER
+            value: {{ $.Values.postgresql.postgresqlUsername }}
+          - name: PG_NAME
+            value: {{ $.Values.postgresql.postgresqlDatabase }}
+          - name: PG_PASS
+            valueFrom:
+              secretKeyRef:
+                name: pg-pass
+                key: postgresql-password
+          - name: PG_PORT
+            value: {{ $.Values.postgresql.port | quote }}
+          - name: PG_HOST
+            {{- if $.Values.postgresql.internal }}
+            value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            {{- else }}
+            value: {{ $.Values.postgresql.host }}
+            {{- end }}
+          - name: PG_HOST_READER
+            {{- if $.Values.postgresql.internal }}
+            value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            {{- else }}
+            {{- if $.Values.postgresql.hostReader }}
+            value: {{ $.Values.postgresql.hostReader }}
+            {{- else }}
+            value: {{ $.Values.postgresql.host }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if $api.useCache }}
+          - name: REDIS_HOST
+            {{- if $.Values.redis.internal }}
+            value: mds-redis-master.{{ $.Values.namespace }}.svc.cluster.local
+            {{- else }}
+            value: {{ $.Values.redis.host }}
+            {{- end }}
+          - name: REDIS_PORT
+            value: {{ $.Values.redis.port | quote }}
+          {{- end }}
+          {{- if $api.useEvents }}
+          - name: CE_NAME
+            value: {{ $api.name }}
+          - name: SINK
+            value: http://default-broker.{{ $.Values.namespace }}.svc.cluster.local
+          {{- end }}
+{{- end }}

@@ -1,0 +1,10 @@
+suite: test deployment all registry
+templates:
+  - deployment.yaml
+tests:
+  - it: all docs
+    set:
+      registry: foo-registry
+    asserts:
+      - hasDocuments:
+          count: 7
