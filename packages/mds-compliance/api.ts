@@ -122,8 +122,7 @@ function api(app: express.Express): express.Express {
     if (!isUUID(policy_uuid)) {
       res.status(400).send({ err: 'bad_param' })
     } else {
-      const start_date = (query_end_date ? parseInt(query_end_date) : now()) - days(365)
-      const end_date = query_end_date ? parseInt(query_end_date) : now() + days(365)
+      const {start_date, end_date} = query_end_date ? {end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365)} : {end_date: now() + days(365), start_date: now() - days(365)}
       try {
         const all_policies = await db.readPolicies({ start_date, end_date })
         const policy = compliance_engine.filterPolicies(all_policies).find(p => {
