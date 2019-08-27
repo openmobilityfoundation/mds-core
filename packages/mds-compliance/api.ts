@@ -30,7 +30,7 @@ import {
   isInStatesOrEvents,
   ServerError
 } from '@mds-core/mds-utils'
-import { Policy, Geography, ComplianceResponse, Device, UUID } from '@mds-core/mds-types'
+import { Geography, Device, UUID } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName, TEST4_PROVIDER_ID } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
@@ -107,78 +107,77 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
-    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(res.locals.provider_id)) {
-      res.status(401).send({ result: 'unauthorized access' })
-    }
+    const { provider_id } = res.locals
+    const { provider_id: queried_provider_id } = req.query
+
     /* istanbul ignore next */
     async function fail(err: Error) {
       await log.error(err.stack || err)
       res.status(500).send(new ServerError())
     }
 
-    let start_date = now() - days(365)
     const { policy_uuid } = req.params
-    const { provider_id } = req.query
-    let { end_date } = req.query
+    const { end_date: query_end_date } = req.query
 
     if (!isUUID(policy_uuid)) {
       res.status(400).send({ err: 'bad_param' })
-    } else if (end_date) {
-      end_date = parseInt(end_date)
-      start_date = end_date - days(365)
-      try {
-        const policies = await db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
-        const geographies = await db.readGeographies()
-        const deviceIdsWithProvider = await db.readDeviceIds(provider_id)
-        const deviceIds = deviceIdsWithProvider.reduce((acc: UUID[], deviceId) => {
-          return [...acc, deviceId.device_id]
-        }, [])
-        const devices = await cache.readDevices(deviceIds)
-        const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
-          return device ? Object.assign(map, { [device.device_id]: device }) : map
-        }, {})
-        const events = await db.readHistoricalEvents({ provider_id, end_date })
-        const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
-        const filteredEvents = compliance_engine.filterEvents(events, end_date)
-        const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
-          compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
-        )
-        if (!results[0]) {
-          res.status(400).send({ err: 'bad_param' })
-        } else {
-          res.status(200).send(results)
-        }
-      } catch (err) {
-        if (err.message.includes('not_found')) {
-          res.status(400).send({ err: 'bad_param' })
-        }
-        await fail(err)
-      }
     } else {
-      end_date = now() + days(365)
+      const {start_date, end_date} = query_end_date ? {end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365)} : {end_date: now() + days(365), start_date: now() - days(365)}
       try {
-        const policies = await db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
-        const geographies = await db.readGeographies()
-        const deviceRecords = await db.readDeviceIds(provider_id)
-        const total = deviceRecords.length
-        log.info(`read ${total} deviceIds in /vehicles`)
-        const deviceIdSubset = deviceRecords.map((record: { device_id: UUID; provider_id: UUID }) => record.device_id)
-        const devices = await cache.readDevices(deviceIdSubset)
-        const events = await cache.readEvents(deviceIdSubset)
-        /* istanbul ignore next */
-        const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
-          return device ? Object.assign(map, { [device.device_id]: device }) : map
-        }, {})
-        log.info(`Policies: ${JSON.stringify(policies)}`)
-        const filteredEvents = compliance_engine.filterEvents(events)
-        const filteredPolicies: Policy[] = compliance_engine.filterPolicies(policies)
-        const results: (ComplianceResponse | undefined)[] = filteredPolicies.map((policy: Policy) =>
-          compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
-        )
-        if (results[0] === undefined) {
-          res.status(400).send({ err: 'bad_param' })
+        const all_policies = await db.readPolicies({ start_date, end_date })
+        const policy = compliance_engine.filterPolicies(all_policies).find(p => {
+          return p.policy_id === policy_uuid
+        })
+        if (!policy) {
+          res.status(404).send({ err: 'not found' })
+        }
+
+        if (
+          policy &&
+          ((policy.provider_ids && policy.provider_ids.includes(provider_id)) ||
+            ([TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id) &&
+              ((policy.provider_ids &&
+                policy.provider_ids.length !== 0 &&
+                policy.provider_ids.includes(queried_provider_id)) ||
+                !policy.provider_ids ||
+                policy.provider_ids.length === 0)))
+        ) {
+          const target_provider_id = [TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)
+            ? queried_provider_id
+            : provider_id
+          if (
+            compliance_engine
+              .filterPolicies(all_policies)
+              .map(p => p.policy_id)
+              .includes(policy.policy_id)
+          ) {
+            const [geographies, deviceRecords] = await Promise.all([
+              db.readGeographies(),
+              db.readDeviceIds(target_provider_id)
+            ])
+            const deviceIdSubset = deviceRecords.map(
+              (record: { device_id: UUID; provider_id: UUID }) => record.device_id
+            )
+            const devices = await cache.readDevices(deviceIdSubset)
+            const events =
+              query_end_date && end_date < now()
+                ? await db.readHistoricalEvents({ provider_id: target_provider_id, end_date })
+                : await cache.readEvents(deviceIdSubset)
+
+            const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
+              return device ? Object.assign(map, { [device.device_id]: device }) : map
+            }, {})
+
+            const filteredEvents = compliance_engine.filterEvents(events)
+            const result = compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
+            if (result === undefined) {
+              res.status(400).send({ err: 'bad_param' })
+            } else {
+              res.status(200).send(result)
+            }
+          }
         } else {
-          res.status(200).send(results)
+          res.status(401).send({ err: 'Unauthorized' })
         }
       } catch (err) {
         if (err.message.includes('not_found')) {
