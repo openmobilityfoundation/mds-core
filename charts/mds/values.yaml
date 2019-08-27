@@ -85,3 +85,5 @@ redis:
     disableCommands: []
   slave:
     disableCommands: []
+fluentd:
+  output.host:
