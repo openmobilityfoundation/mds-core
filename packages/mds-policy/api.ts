@@ -15,12 +15,12 @@
  */
 
 import express from 'express'
-import { isProviderId, providerName } from '@mds-core/mds-providers'
+// import { isProviderId, providerName } from '@mds-core/mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { isUUID, now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -33,7 +33,7 @@ function api(app: express.Express): express.Express {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
         if (res.locals.claims) {
-          const { provider_id, scope } = res.locals.claims
+          const { scope } = res.locals.claims
 
           // no test access without auth
           if (req.path.includes('/test/')) {
@@ -50,25 +50,26 @@ function api(app: express.Express): express.Express {
             }
           }
 
-          /* istanbul ignore next */
-          if (!provider_id) {
-            await log.warn('Missing provider_id in', req.originalUrl)
-            return res.status(400).send({ result: 'missing provider_id' })
-          }
+          /* TEMPORARILY REMOVING SO NON-PROVIDERS CAN ACCESS POLICY API */
+          // /* istanbul ignore next */
+          // if (!provider_id) {
+          //   await log.warn('Missing provider_id in', req.originalUrl)
+          //   return res.status(400).send({ result: 'missing provider_id' })
+          // }
 
-          /* istanbul ignore next */
-          if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
-            return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
-          }
+          // /* istanbul ignore next */
+          // if (!isUUID(provider_id)) {
+          //   await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+          //   return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
+          // }
 
-          if (!isProviderId(provider_id)) {
-            return res.status(400).send({
-              result: `invalid provider_id ${provider_id} is not a known provider`
-            })
-          }
+          // if (!isProviderId(provider_id)) {
+          //   return res.status(400).send({
+          //     result: `invalid provider_id ${provider_id} is not a known provider`
+          //   })
+          // }
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          // log.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
@@ -83,14 +84,14 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies'), async (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
-    const { start_date = now(), end_date = now() } = req.query
+    const { start_date = now(), end_date = now(), unpublished: get_unpublished = false } = req.query
     log.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
       res.status(400).send({ result: 'start_date after end_date' })
       return
     }
     try {
-      const policies = await db.readPolicies({ start_date, end_date })
+      const policies = await db.readPolicies({ start_date, end_date, get_unpublished })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
