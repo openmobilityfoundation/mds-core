@@ -316,7 +316,7 @@ async function readKeys(pattern: string) {
 }
 
 async function wipeDevice(device_id: UUID) {
-  const keys = await readKeys(`*:${device_id}:*`)
+  const keys = [`device:${device_id}:event`, `device:${device_id}:telemetry`, `device:${device_id}:device`]
   if (keys.length > 0) {
     log.info('del', ...keys)
     return (await getClient()).delAsync(...keys)
