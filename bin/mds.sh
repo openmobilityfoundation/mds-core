@@ -4,10 +4,13 @@ tools=$(dirname ${0})/../tools
 os=${MDS_OS:-`uname`}
 istio=${ISTIO_VERSION:-1.2.4}
 defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
-defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio,logging}
-defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,logging,mds}
+# defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio,logging}
+defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
+# defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,logging,mds}
+defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
-defaultUninstall=${MDS_UNINSTALL:-mds,logging,istio,dashboard,helm}
+# defaultUninstall=${MDS_UNINSTALL:-mds,logging,istio,dashboard,helm}
+defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
 defaultForward=${MDS_FORWARD:-default}
 defaultToken=${MDS_TOKEN:-dashboard}
 defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,logging,mds}
@@ -29,7 +32,8 @@ commands:
   bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                               : build project
   install[:helm,dashboard,istio,logging,mds]          : install specified components; default: ${defaultInstall}
-  forward[:default,logging,kube-system,istio-system]  : regisgter host names for services in the provided namespace(s); default: ${defaultForward}
+  forward[:default,logging,kube-system,istio-system]  : regisgter service host names in the provided namespace(s); default: ${defaultForward}
+  unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   cli:[postgresql,redis]                              : create a cli console for the provided service
@@ -97,6 +101,7 @@ installHelm() {
   helm init || usage "helm intialization failure"
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
+  helm repo add elastic https://helm.elastic.co
 
   for d in $(find ./charts -type d -depth 1); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -162,7 +167,7 @@ installIstio() {
 }
 
 installLogging() {
-  helm install --name logging ./charts/logging
+  helm install --name logging --namespace logging ./charts/logging
 }
 
 installMds() {
@@ -178,7 +183,10 @@ forward() {
   done
 }
 
-# todo: unforward
+unforward() {
+  # todo: support kill-by-service
+  sudo pkill kubefwd
+}
 
 testUnit() {
   # todo: make mds unit tests work
@@ -272,6 +280,7 @@ for arg in "$@"; do
     install:*) invoke install "$(normalize ${arg})";;
     forward) arg="${defaultForward}";&
     forward:*) forward "$(normalize ${arg})";;
+    unforward) unforward;;
     test) arg="${defaultTest}";&
     test:*) invoke test "$(normalize ${arg})";;
     token) arg="${defaultToken}";&
