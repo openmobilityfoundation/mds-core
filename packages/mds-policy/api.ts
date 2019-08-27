@@ -15,12 +15,12 @@
  */
 
 import express from 'express'
-import { isProviderId, providerName } from '@mds-core/mds-providers'
+// import { isProviderId, providerName } from '@mds-core/mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
-import { Policy, UUID, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { isUUID, now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -33,7 +33,7 @@ function api(app: express.Express): express.Express {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
         if (res.locals.claims) {
-          const { provider_id, scope } = res.locals.claims
+          const { scope } = res.locals.claims
 
           // no test access without auth
           if (req.path.includes('/test/')) {
@@ -50,25 +50,26 @@ function api(app: express.Express): express.Express {
             }
           }
 
-          /* istanbul ignore next */
-          if (!provider_id) {
-            await log.warn('Missing provider_id in', req.originalUrl)
-            return res.status(400).send({ result: 'missing provider_id' })
-          }
+          /* TEMPORARILY REMOVING SO NON-PROVIDERS CAN ACCESS POLICY API */
+          // /* istanbul ignore next */
+          // if (!provider_id) {
+          //   await log.warn('Missing provider_id in', req.originalUrl)
+          //   return res.status(400).send({ result: 'missing provider_id' })
+          // }
 
-          /* istanbul ignore next */
-          if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
-            return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
-          }
+          // /* istanbul ignore next */
+          // if (!isUUID(provider_id)) {
+          //   await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+          //   return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
+          // }
 
-          if (!isProviderId(provider_id)) {
-            return res.status(400).send({
-              result: `invalid provider_id ${provider_id} is not a known provider`
-            })
-          }
+          // if (!isProviderId(provider_id)) {
+          //   return res.status(400).send({
+          //     result: `invalid provider_id ${provider_id} is not a known provider`
+          //   })
+          // }
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          // log.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
@@ -83,16 +84,14 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies'), async (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
-    const { start_date = now(), end_date = now() } = req.query
+    const { start_date = now(), end_date = now(), unpublished: get_unpublished = false } = req.query
     log.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
       res.status(400).send({ result: 'start_date after end_date' })
       return
     }
     try {
-      const policies = await db.readPolicies({ start_date, end_date })
-      log.info('read policies (all)', policies.length)
-      // filter here.  consider filtering in db?
+      const policies = await db.readPolicies({ start_date, end_date, get_unpublished })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
@@ -146,61 +145,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  // TODO build out validation of geojson NEIL
-
-  const featureSchema = Joi.object()
-    .keys({
-      type: Joi.string()
-        .valid(['Feature'])
-        .required(),
-      properties: Joi.object().required(),
-      geometry: Joi.object().required()
-    })
-    .unknown(true) // TODO
-
-  const featureCollectionSchema = Joi.object()
-    .keys({
-      type: Joi.string()
-        .valid(['FeatureCollection'])
-        .required(),
-      features: Joi.array()
-        .min(1)
-        .items(featureSchema)
-        .required()
-    })
-    .unknown(true) // TODO
-
-  app.post(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
-    const geography = req.body
-    const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
-    const details = validation.error ? validation.error.details : null
-    if (details) {
-      log.info('questionable geojson', details)
-      res.status(422).send(details)
-      return
-    }
-
-    try {
-      await db.writeGeography(geography)
-      res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  app.put(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
-    // TODO implement updating a non-published geography
-    res.status(501)
-  })
-
-  app.delete(pathsFor('/admin/geographies/:geography_id'), (req: PolicyApiRequest, res: PolicyApiResponse) => {
-    // TODO implement deleting a non-published geography
-    res.status(501)
-  })
-
-  const DAYS_OF_WEEK = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-
   const ruleSchema = Joi.object().keys({
     name: Joi.string().required(),
     rule_id: Joi.string()
@@ -211,21 +155,23 @@ function api(app: express.Express): express.Express {
       .required(),
     rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
     geographies: Joi.array().items(Joi.string().guid()),
-    statuses: Joi.object().keys({
-      available: Joi.array(),
-      reserved: Joi.array(),
-      unavailable: Joi.array(),
-      removed: Joi.array(),
-      inactive: Joi.array(),
-      trip: Joi.array(),
-      elsewhere: Joi.array()
-    }),
+    statuses: Joi.object()
+      .keys({
+        available: Joi.array(),
+        reserved: Joi.array(),
+        unavailable: Joi.array(),
+        removed: Joi.array(),
+        inactive: Joi.array(),
+        trip: Joi.array(),
+        elsewhere: Joi.array()
+      })
+      .allow(null),
     vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
     maximum: Joi.number(),
     minimum: Joi.number(),
     start_time: Joi.string(),
     end_time: Joi.string(),
-    days: Joi.array().items(Joi.string().valid(DAYS_OF_WEEK)),
+    days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
     messages: Joi.object(),
     value_url: Joi.string().uri()
   })
@@ -258,59 +204,6 @@ function api(app: express.Express): express.Express {
     res.status(200).send(joiToJsonSchema(policySchema))
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
-    const policy = req.body
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
-
-    if (details) {
-      await log.error('questionable policy json', details)
-      res.status(422).send(details)
-      return
-    }
-    try {
-      await db.writePolicy(policy)
-      res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  // TODO publish geography
-
-  // TODO publish policy
-
-  /* istanbul ignore next */
-  app.put(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
-    // TODO implement updating a non-published policy
-    const policy = req.body
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
-
-    // TODO is basically identical to POST policy
-
-    if (details) {
-      log.info('policy JSON', details)
-      res.status(422).send(details)
-      return
-    }
-    try {
-      await db.writePolicy(policy)
-      res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  /* istanbul ignore next */
-  app.delete(pathsFor('/admin/policies/:policy_id'), (req, res) => {
-    // TODO implement deletion of a non-published policy
-    res.status(501)
-  })
-
-  /* istanbul ignore next */
   app.get(pathsFor('/test/initialize'), async (req, res) => {
     try {
       const kind = await Promise.all([db.initialize()])
@@ -318,7 +211,7 @@ function api(app: express.Express): express.Express {
         result: `Policy initialized (${kind})`
       })
     } catch (err) {
-      await log.error('initialize exception', err)
+      await log.error('initialize failed', err)
       res.status(500).send(new ServerError())
     }
   })

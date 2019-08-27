@@ -14,14 +14,10 @@
     limitations under the License.
  */
 
-// Express local
-import { ApiServer } from '@mds-core/mds-api-server'
-import { api } from '@mds-core/mds-audit'
+import {
+  AwsServerlessExpressHandler,
+  AwsServerlessExpressHandlerFunction
+} from '@aws-lambda/aws-serverless-express-handler'
+import { api as policyAuthor } from '@mds-core/mds-policy-author'
 
-const {
-  env: { npm_package_name, PORT = 4002 }
-} = process
-
-/* eslint-reason avoids import of logger */
-/* eslint-disable-next-line no-console */
-ApiServer(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
+export const handler: AwsServerlessExpressHandlerFunction = AwsServerlessExpressHandler(policyAuthor)

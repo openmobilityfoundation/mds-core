@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-logger",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Mobility Data Specification logging interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@slack/client": "5.0.2",
-    "dotenv": "8.0.0",
     "pushover-notifications": "1.2.0"
   },
   "scripts": {

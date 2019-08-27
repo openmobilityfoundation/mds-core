@@ -57,13 +57,7 @@ declare module 'redis' {
     keysAsync: (arg1: string) => Promise<string[]>
     zaddAsync: (arg1: string | number, arg2: number, arg3: string) => Promise<number>
     zrangebyscoreAsync: (key: string, min: number | string, max: number | string) => Promise<string[]>
-    georadiusAsync: (
-      key: string,
-      longitude: number,
-      latitude: number,
-      radius: number,
-      unit: string
-    ) => Promise<UUID[]>
+    georadiusAsync: (key: string, longitude: number, latitude: number, radius: number, unit: string) => Promise<UUID[]>
   }
 }
 
@@ -130,7 +124,7 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   throw new Error(`${suffix} for ${device_id} not found`)
 }
 
-/* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner.*/
+/* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner. */
 async function addGeospatialHash(device_id: UUID, coordinates: [number, number]) {
   const client = await getClient()
   const [lat, lng] = coordinates
@@ -258,15 +252,9 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   return values.filter((item: any) => item.telemetry)
 }
 
-// get the provider for a device
-async function getProviderId(device_id: UUID) {
-  return (await readDevice(device_id)).provider_id
-}
-
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
-async function updateProviderStats(suffix: string, device_id: UUID, timestamp: Timestamp | undefined | null) {
+async function updateProviderStats(suffix: string, device_id: UUID, provider_id: UUID, timestamp?: Timestamp) {
   try {
-    const provider_id = await getProviderId(device_id)
     return (await getClient()).hmsetAsync(
       `provider:${provider_id}:stats`,
       `last${capitalizeFirst(suffix)}`,
@@ -274,7 +262,7 @@ async function updateProviderStats(suffix: string, device_id: UUID, timestamp: T
     )
   } catch (err) {
     const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-    await log.warn(msg)
+    await log.info(msg)
     return Promise.resolve(msg)
   }
 }
@@ -285,7 +273,7 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
     await log.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
-  const { device_id } = item
+  const { device_id, provider_id } = item
   const key = `device:${device_id}:${suffix}`
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
@@ -304,14 +292,14 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
       // make sure the device list is updated (per-provider)
       updateVehicleList(device_id, item.timestamp),
       // update last-written values
-      updateProviderStats(suffix, device_id, item.timestamp)
+      updateProviderStats(suffix, device_id, provider_id, item.timestamp)
     ])
   }
   return Promise.all([
     // make sure the device list is updated (per-provider)
     updateVehicleList(device_id),
     // update last-written values
-    updateProviderStats(suffix, device_id, null)
+    updateProviderStats(suffix, device_id, provider_id)
   ])
 }
 
@@ -544,7 +532,7 @@ async function cleanup() {
   }
 }
 
-export default {
+export = {
   initialize,
   health,
   info,

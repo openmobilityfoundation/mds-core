@@ -29,9 +29,8 @@ import {
   SHERPA_PROVIDER_ID,
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
+import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow } from './types'
-
-require('dotenv').config()
 
 // The list of providers ids on which to report
 const reportProviders = [
@@ -78,6 +77,26 @@ async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
   }
 }
 
+function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
+  return (Object.keys(events) as VEHICLE_EVENT[]).reduce(
+    (acc: { [s in VEHICLE_STATUS]: number }, event) => {
+      const status = EVENT_STATUS_MAP[event]
+      return Object.assign(acc, {
+        [status]: acc[status] + events[event]
+      })
+    },
+    {
+      available: 0,
+      unavailable: 0,
+      reserved: 0,
+      trip: 0,
+      removed: 0,
+      inactive: 0,
+      elsewhere: 0
+    }
+  )
+}
+
 async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
   /* after 10 failed iterations, give up */
   if (iter >= 10) {
@@ -119,8 +138,18 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
         const d = new Date()
         let [starts, ends, start_sla, end_sla, telems, telem_sla] = [0, 0, 0, 0, 0, 0]
         let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
+        let status_counts = {
+          available: 0,
+          unavailable: 0,
+          reserved: 0,
+          trip: 0,
+          removed: 0,
+          inactive: 0,
+          elsewhere: 0
+        }
         if (last[provider.provider_id].event_counts_last_24h) {
           event_counts = last[provider.provider_id].event_counts_last_24h
+          status_counts = eventCountsToStatusCounts(last[provider.provider_id].event_counts_last_24h)
           starts = last[provider.provider_id].event_counts_last_24h.trip_start || 0
           ends = last[provider.provider_id].event_counts_last_24h.trip_end || 0
           telems = last[provider.provider_id].telemetry_counts_last_24h || 0
@@ -150,7 +179,14 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
           telemetry: telems,
           telemetrysla: telem_sla,
           tripstartsla: start_sla,
-          tripendsla: end_sla
+          tripendsla: end_sla,
+          available: status_counts.available,
+          unavailable: status_counts.unavailable,
+          reserved: status_counts.reserved,
+          trip: status_counts.trip,
+          removed: status_counts.removed,
+          inactive: status_counts.inactive,
+          elsewhere: status_counts.elsewhere
         }
       })
     return rows

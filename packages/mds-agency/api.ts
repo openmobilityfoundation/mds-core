@@ -41,7 +41,8 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   VEHICLE_EVENT,
-  BoundingBox
+  BoundingBox,
+  VEHICLE_REASON
 } from '@mds-core/mds-types'
 import {
   isUUID,
@@ -55,8 +56,6 @@ import {
   isInsideBoundingBox
 } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
-
-import { CacheReadDeviceResult } from '@mds-core/mds-cache/types'
 
 function api(app: express.Express): express.Express {
   /**
@@ -319,10 +318,10 @@ function api(app: express.Express): express.Express {
         service_area_id: null
       }
       try {
-        await db.writeEvent(event)
+        const recorded_event = await db.writeEvent(event)
         try {
           // writing to cache and stream is not fatal
-          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+          await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
         } catch (err) {
           await log.warn('/event exception cache/stream', err)
         }
@@ -483,7 +482,7 @@ function api(app: express.Express): express.Express {
       : rows
 
     const deviceIdSubset = deviceIdSuperset.slice(skip, skip + take).map(record => record.device_id)
-    const devices = (await cache.readDevices(deviceIdSubset)).reduce((acc: Device[], device: CacheReadDeviceResult) => {
+    const devices = (await db.readDeviceList(deviceIdSubset)).reduce((acc: Device[], device: Device) => {
       if (!device) {
         throw new Error('device in DB but not in cache')
       }
@@ -548,7 +547,7 @@ function api(app: express.Express): express.Express {
       const response = await getVehicles(skip, take, url, provider_id, req.query)
       return res.status(200).send(response)
     } catch (err) {
-      await log.error('readDeviceIds fail', err)
+      await log.error('getVehicles fail', err)
       res.status(500).send(new ServerError())
     }
   })
@@ -802,20 +801,9 @@ function api(app: express.Express): express.Express {
   }
 
   async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
-    if (!Array.isArray(telemetry)) {
-      const promises: [Promise<number>, Promise<void>, Promise<void>] = [
-        db.writeTelemetry([telemetry]),
-        cache.writeTelemetry([telemetry]),
-        stream.writeTelemetry([telemetry])
-      ]
-      return Promise.all(promises)
-    }
-    const promises: [Promise<number>, Promise<void>, Promise<void>] = [
-      db.writeTelemetry(telemetry),
-      cache.writeTelemetry(telemetry),
-      stream.writeTelemetry(telemetry)
-    ]
-    return Promise.all(promises)
+    const recorded_telemetry = await db.writeTelemetry(Array.isArray(telemetry) ? telemetry : [telemetry])
+    await Promise.all([cache.writeTelemetry(recorded_telemetry), stream.writeTelemetry(recorded_telemetry)])
+    return recorded_telemetry
   }
   /**
    * Endpoint to submit vehicle events
@@ -836,7 +824,7 @@ function api(app: express.Express): express.Express {
         device_id: req.params.device_id,
         provider_id: res.locals.provider_id,
         event_type: lower(req.body.event_type) as VEHICLE_EVENT,
-        event_type_reason: lower(req.body.event_type_reason),
+        event_type_reason: lower(req.body.event_type_reason) as VEHICLE_REASON,
         telemetry: req.body.telemetry ? { ...req.body.telemetry, provider_id: res.locals.provider_id } : null,
         timestamp: req.body.timestamp,
         trip_id: req.body.trip_id,
@@ -916,9 +904,9 @@ function api(app: express.Express): express.Express {
         event.service_area_id = getServiceArea(event)
 
         // database write is crucial; failures of cache/stream should be noted and repaired
-        await db.writeEvent(event)
+        const recorded_event = await db.writeEvent(event)
         try {
-          await Promise.all([cache.writeEvent(event), stream.writeEvent(event)])
+          await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
           await finish()
         } catch (err) {
           await log.warn('/event exception cache/stream', err)
@@ -992,24 +980,24 @@ function api(app: express.Express): express.Express {
       }
 
       if (valid.length) {
-        const counts = await writeTelemetry(valid)
+        const recorded_telemetry = await writeTelemetry(valid)
         const delta = Date.now() - start
         if (delta > 300) {
           log.info(
             name,
             'writeTelemetry',
             valid.length,
-            `(${counts[0]} unique)`,
+            `(${recorded_telemetry.length} unique)`,
             'took',
             delta,
             `ms (${Math.round((1000 * valid.length) / delta)}/s)`
           )
         }
-        if (counts[0]) {
+        if (recorded_telemetry.length) {
           res.status(201).send({
             result: `telemetry success for ${valid.length} of ${data.length}`,
             recorded: now(),
-            unique: counts[0],
+            unique: recorded_telemetry.length,
             failures
           })
         } else {
@@ -1129,9 +1117,8 @@ function api(app: express.Express): express.Express {
     validateDeviceId,
     async (req: AgencyApiRequest, res: AgencyApiResponse) => {
       const { device_id } = req.params
-      let { timestamp } = req.params
 
-      timestamp = parseInt(timestamp) || undefined
+      const timestamp = parseInt(req.params.timestamp) || undefined
 
       const { cached } = req.query
 
@@ -1236,7 +1223,9 @@ function api(app: express.Express): express.Express {
     pathsFor('/test/vehicles/:device_id/telemetry/:timestamp'),
     validateDeviceId,
     async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-      const { device_id, timestamp } = req.params
+      const { device_id } = req.params
+
+      const timestamp = parseInt(req.params.timestamp) || undefined
 
       try {
         const telemetry = await db.readTelemetry(device_id, timestamp, timestamp)

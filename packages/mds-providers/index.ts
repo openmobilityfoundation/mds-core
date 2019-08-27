@@ -24,7 +24,8 @@ export const OJO_PROVIDER_ID = '8d293326-8464-4256-8312-617ebcd0efad'
 export const TEST1_PROVIDER_ID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 export const TEST2_PROVIDER_ID = '45f37d69-73ca-4ca6-a461-e7283cffa01a'
 export const TEST3_PROVIDER_ID = 'c8051767-4b14-4794-abc1-85aad48baff1'
-export const BLUE_TEST_PROVIDER_ID = '11111111-2222-4444-8888-999999999999'
+export const TEST4_PROVIDER_ID = '11111111-2222-4444-8888-999999999999'
+export const TEST5_PROVIDER_ID = '33bbcec3-f91b-4461-bc41-61711afb9460'
 
 const PROVIDER_IDS = [
   JUMP_PROVIDER_ID,
@@ -47,7 +48,7 @@ const PROVIDER_IDS = [
   TEST1_PROVIDER_ID,
   TEST2_PROVIDER_ID,
   TEST3_PROVIDER_ID,
-  BLUE_TEST_PROVIDER_ID
+  TEST4_PROVIDER_ID
 ] as const
 
 type PROVIDER_ID = typeof PROVIDER_IDS[number]
@@ -152,8 +153,8 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
   [TEST3_PROVIDER_ID]: Object.freeze({
     provider_name: 'Test 3'
   }),
-  [BLUE_TEST_PROVIDER_ID]: Object.freeze({
-    provider_name: 'Blue*'
+  [TEST4_PROVIDER_ID]: Object.freeze({
+    provider_name: 'Test 4'
   })
 })
 
@@ -167,5 +168,5 @@ export function isProviderId(provider_id: unknown): provider_id is PROVIDER_ID {
  * @return name or provider_id substring
  */
 export function providerName(provider_id: string): string {
-  return isProviderId(provider_id) ? providers[provider_id].provider_name : provider_id.split('-')[0]
+  return isProviderId(provider_id) ? providers[provider_id].provider_name : provider_id
 }

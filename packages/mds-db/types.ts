@@ -6,12 +6,10 @@ import {
   TelemetryData,
   VEHICLE_TYPE,
   PROPULSION_TYPE,
-  VEHICLE_STATUS,
-  VEHICLE_EVENT,
-  VEHICLE_REASON
+  PROVIDER_EVENT,
+  PROVIDER_REASON
 } from '@mds-core/mds-types'
 import { Feature, FeatureCollection } from 'geojson'
-import schema from './schema'
 
 export interface ReadEventsResult {
   events: Recorded<VehicleEvent>[]
@@ -53,8 +51,8 @@ export interface StatusChange {
   vehicle_id: string
   vehicle_type: VEHICLE_TYPE
   propulsion_type: PROPULSION_TYPE[]
-  event_type: VEHICLE_STATUS
-  event_type_reason: VEHICLE_EVENT | VEHICLE_REASON
+  event_type: PROVIDER_EVENT
+  event_type_reason: PROVIDER_REASON
   event_time: Timestamp
   event_location: Feature | null
   battery_pct: number | null
@@ -108,13 +106,3 @@ export interface VehicleEventCountResult {
   count: number
   events: Recorded<VehicleEvent>[]
 }
-
-export type DEVICES_COL = typeof schema.DEVICES_COLS[number]
-export type EVENTS_COL = typeof schema.EVENTS_COLS[number]
-export type TELEMETRY_COL = typeof schema.TELEMETRY_COLS[number]
-export type TRIPS_COL = typeof schema.TRIPS_COLS[number]
-export type STATUS_CHANGES_COL = typeof schema.STATUS_CHANGES_COLS[number]
-export type AUDITS_COL = typeof schema.AUDITS_COLS[number]
-export type AUDIT_EVENTS_COL = typeof schema.AUDITS_COLS[number]
-export type POLICIES_COL = typeof schema.POLICIES_COLS[number]
-export type GEOGRAPHIES_COL = typeof schema.GEOGRAPHIES_COLS

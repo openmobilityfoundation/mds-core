@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "es2018",
     "module": "commonjs",
-    "importHelpers": true,
     "strict": true,
     "esModuleInterop": true,
     "inlineSourceMap": true,
