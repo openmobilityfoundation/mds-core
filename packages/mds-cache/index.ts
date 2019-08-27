@@ -311,10 +311,27 @@ async function writeDevice(device: Device) {
   return hwrite('device', device)
 }
 
+async function readKeys(pattern: string) {
+  return (await getClient()).keysAsync(pattern)
+}
+
+async function wipeDevice(device_id: UUID) {
+  const keys = [`device:${device_id}:event`, `device:${device_id}:telemetry`, `device:${device_id}:device`]
+  if (keys.length > 0) {
+    log.info('del', ...keys)
+    return (await getClient()).delAsync(...keys)
+  }
+  log.info('no keys found for', device_id)
+  return 0
+}
+
 async function writeEvent(event: VehicleEvent) {
   // FIXME cope with out-of-order -- check timestamp
   // log.info('redis write event', event.device_id)
   try {
+    if (event.event_type === 'deregister') {
+      return await wipeDevice(event.device_id)
+    }
     const prev_event = parseEvent((await hread('event', event.device_id)) as StringifiedEventWithTelemetry)
     if (prev_event.timestamp < event.timestamp) {
       try {
@@ -358,10 +375,6 @@ async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
       return parseEvent(e as StringifiedEventWithTelemetry)
     })
     .filter(e => !!e)
-}
-
-async function readKeys(pattern: string) {
-  return (await getClient()).keysAsync(pattern)
 }
 
 async function readAllEvents() {
@@ -428,16 +441,6 @@ async function readAllTelemetry() {
       return acc
     }
   }, [])
-}
-
-async function wipeDevice(device_id: UUID) {
-  const keys = await readKeys(`*:${device_id}:*`)
-  if (keys.length > 0) {
-    log.info('del', ...keys)
-    return (await getClient()).delAsync(...keys)
-  }
-  log.info('no keys found for', device_id)
-  return 0
 }
 
 async function readProviderStats(provider_id: UUID) {

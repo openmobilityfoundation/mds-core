@@ -889,7 +889,13 @@ function api(app: express.Express): express.Express {
 
       // TODO switch to cache for speed?
       try {
-        await db.readDevice(event.device_id, provider_id)
+        const device = await db.readDevice(event.device_id, provider_id)
+        try {
+          await cache.readDevice(event.device_id)
+        } catch (err) {
+          await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+          log.info('Re-adding previously deregistered device to cache', err)
+        }
         if (event.telemetry) {
           event.telemetry.device_id = event.device_id
         }
