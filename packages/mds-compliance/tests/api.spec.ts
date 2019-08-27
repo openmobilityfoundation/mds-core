@@ -333,7 +333,7 @@ describe('Tests Compliance API:', () => {
       request
         .get(`/snapshot/f4a07b35-98dd-4234-93c7-199ea54083c3`)
         .set('Authorization', ADMIN_AUTH)
-        .expect(400)
+        .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)

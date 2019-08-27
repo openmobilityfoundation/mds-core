@@ -116,46 +116,60 @@ function api(app: express.Express): express.Express {
       res.status(500).send(new ServerError())
     }
 
-    let start_date = now() - days(365)
     const { policy_uuid } = req.params
     const { end_date: query_end_date } = req.query
 
     if (!isUUID(policy_uuid)) {
       res.status(400).send({ err: 'bad_param' })
     } else {
-      start_date = query_end_date - days(365)
+      const start_date = (query_end_date || now()) - days(365)
       const end_date = query_end_date ? parseInt(query_end_date) : now() + days(365)
       try {
         const all_policies = await db.readPolicies({ start_date, end_date })
-        const [policy] = await db.readPolicies({ policy_id: policy_uuid, start_date, end_date })
+        const policy = compliance_engine.filterPolicies(all_policies).find(p => {
+          return p.policy_id === policy_uuid
+        })
+        if (!policy) {
+          res.status(404).send({ err: 'not found' })
+        }
+
         if (
-          (policy.provider_ids && policy.provider_ids.includes(provider_id)) ||
-          ([TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id) &&
-            ((policy.provider_ids &&
-              policy.provider_ids.length !== 0 &&
-              policy.provider_ids.includes(queried_provider_id)) ||
-              !policy.provider_ids ||
-              policy.provider_ids.length === 0))
+          policy &&
+          ((policy.provider_ids && policy.provider_ids.includes(provider_id)) ||
+            ([TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id) &&
+              ((policy.provider_ids &&
+                policy.provider_ids.length !== 0 &&
+                policy.provider_ids.includes(queried_provider_id)) ||
+                !policy.provider_ids ||
+                policy.provider_ids.length === 0)))
         ) {
-          const geographies = await db.readGeographies()
-          const deviceRecords = await db.readDeviceIds(queried_provider_id)
-          const deviceIdSubset = deviceRecords.map((record: { device_id: UUID; provider_id: UUID }) => record.device_id)
-          const devices = await cache.readDevices(deviceIdSubset)
-          const events =
-            query_end_date && end_date < now()
-              ? await db.readHistoricalEvents({ provider_id, end_date })
-              : await cache.readEvents(deviceIdSubset)
-          /* istanbul ignore next */
-          const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
-            return device ? Object.assign(map, { [device.device_id]: device }) : map
-          }, {})
-          const filteredEvents = compliance_engine.filterEvents(events)
+          const target_provider_id = [TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)
+            ? queried_provider_id
+            : provider_id
           if (
             compliance_engine
               .filterPolicies(all_policies)
               .map(p => p.policy_id)
               .includes(policy.policy_id)
           ) {
+            const [geographies, deviceRecords] = await Promise.all([
+              db.readGeographies(),
+              db.readDeviceIds(target_provider_id)
+            ])
+            const deviceIdSubset = deviceRecords.map(
+              (record: { device_id: UUID; provider_id: UUID }) => record.device_id
+            )
+            const devices = await cache.readDevices(deviceIdSubset)
+            const events =
+              query_end_date && end_date < now()
+                ? await db.readHistoricalEvents({ provider_id: target_provider_id, end_date })
+                : await cache.readEvents(deviceIdSubset)
+
+            const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
+              return device ? Object.assign(map, { [device.device_id]: device }) : map
+            }, {})
+
+            const filteredEvents = compliance_engine.filterEvents(events)
             const result = compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
             if (result === undefined) {
               res.status(400).send({ err: 'bad_param' })
