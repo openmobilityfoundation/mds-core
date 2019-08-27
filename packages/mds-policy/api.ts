@@ -15,7 +15,7 @@
  */
 
 import express from 'express'
-import { isProviderId, providerName } from '@mds-core/mds-providers'
+// import { isProviderId, providerName } from '@mds-core/mds-providers'
 import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
@@ -49,6 +49,27 @@ function api(app: express.Express): express.Express {
               return res.status(403).send({ result: `no admin access without admin:all scope (${scope})` })
             }
           }
+
+          /* TEMPORARILY REMOVING SO NON-PROVIDERS CAN ACCESS POLICY API */
+          // /* istanbul ignore next */
+          // if (!provider_id) {
+          //   await log.warn('Missing provider_id in', req.originalUrl)
+          //   return res.status(400).send({ result: 'missing provider_id' })
+          // }
+
+          // /* istanbul ignore next */
+          // if (!isUUID(provider_id)) {
+          //   await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+          //   return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
+          // }
+
+          // if (!isProviderId(provider_id)) {
+          //   return res.status(400).send({
+          //     result: `invalid provider_id ${provider_id} is not a known provider`
+          //   })
+          // }
+
+          // log.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
