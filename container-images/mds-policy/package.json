@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-policy",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AWS Lambda for MDS Policy API",
   "main": "dist/index.js",
   "files": [
@@ -22,8 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-api-server": "^0.1.4",
-    "@mds-core/mds-policy": "^0.0.5"
+    "@container-images/env-inject": "^0.1.5",
+    "@mds-core/mds-api-server": "^0.1.5",
+    "@mds-core/mds-policy": "^0.0.6"
   },
   "license": "Apache-2.0"
 }
