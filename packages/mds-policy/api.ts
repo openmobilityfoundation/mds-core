@@ -20,7 +20,7 @@ import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { isUUID, now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -33,7 +33,7 @@ function api(app: express.Express): express.Express {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
         if (res.locals.claims) {
-          const { provider_id, scope } = res.locals.claims
+          const { scope } = res.locals.claims
 
           // no test access without auth
           if (req.path.includes('/test/')) {
@@ -49,26 +49,6 @@ function api(app: express.Express): express.Express {
               return res.status(403).send({ result: `no admin access without admin:all scope (${scope})` })
             }
           }
-
-          /* istanbul ignore next */
-          if (!provider_id) {
-            await log.warn('Missing provider_id in', req.originalUrl)
-            return res.status(400).send({ result: 'missing provider_id' })
-          }
-
-          /* istanbul ignore next */
-          if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
-            return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
-          }
-
-          if (!isProviderId(provider_id)) {
-            return res.status(400).send({
-              result: `invalid provider_id ${provider_id} is not a known provider`
-            })
-          }
-
-          log.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
