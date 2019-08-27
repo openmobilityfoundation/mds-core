@@ -1,4 +1,0 @@
-brew 'kubernetes-helm'
-brew 'txn2/tap/kubefwd'
-brew 'pgcli'
-brew 'redis'
