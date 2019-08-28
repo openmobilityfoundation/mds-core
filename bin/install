@@ -2,15 +2,15 @@
 
 tools=$(dirname ${0})/../tools
 os=${MDS_OS:-`uname`}
-istio=${ISTIO_VERSION:-1.2.4}
+istio=${ISTIO_VERSION:-1.2.5}
 defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
-defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
-defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
+defaultBootstrap=${MDS_BOOTSTRAP:-helm,istio}
+defaultInstall=${MDS_INSTALL:-helm,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
-defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
+defaultUninstall=${MDS_UNINSTALL:-mds,istio,helm}
 defaultForward=${MDS_FORWARD:-default}
 defaultToken=${MDS_TOKEN:-dashboard}
-defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,mds}
+defaultReinstall=${MDS_REINSTALL:-helm,istio,mds}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -70,7 +70,7 @@ bootstrap() {
     *) usage "unsupported os: ${os}";;
   esac
 
-# todo: boostrap all-the-things
+  # todo: boostrap all-the-things
 
   for y in cypress mocha chai mochawesome; do
     # if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
@@ -99,6 +99,7 @@ installHelm() {
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
   helm repo add elastic https://helm.elastic.co
+  helm add add istio.io https://storage.googleapis.com/istio-release/releases/1.2.5/charts
 
   for d in $(find ./charts -type d -depth 1); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -148,7 +149,8 @@ installIstio() {
     kubectl create namespace istio-system
     helm template ${istioPath}/install/kubernetes/helm/istio-init \
       --name istio-init \
-      --namespace istio-system | kubectl apply -f -
+      --namespace istio-system | \
+      kubectl apply -f -
 
     # todo: fix
     # [ "$(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l)" -eq "23" ] || \
@@ -156,8 +158,8 @@ installIstio() {
 
     helm template ${istioPath}/install/kubernetes/helm/istio \
       --name istio \
-      --namespace istio-system --values \
-      ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --namespace istio-system \
+      --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
       kubectl apply -f -
     kubectl label namespaces default istio-injection=enabled
   }

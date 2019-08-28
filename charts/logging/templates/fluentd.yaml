@@ -2,7 +2,7 @@
 apiVersion: config.istio.io/v1alpha2
 kind: instance
 metadata:
-  name: newlog-fluentd
+  name: newlog
   namespace: istio-system
 spec:
   compiledTemplate: logentry
@@ -22,7 +22,7 @@ spec:
 apiVersion: config.istio.io/v1alpha2
 kind: handler
 metadata:
-  name: handler-fluentd
+  name: handler
   namespace: istio-system
 spec:
   compiledAdapter: fluentd
@@ -38,7 +38,7 @@ metadata:
 spec:
   match: "true" # match for all requests
   actions:
-   - handler: handler-fluentd
+   - handler: handler
      instances:
-     - newlog-fluentd
+     - newlog
 ---
