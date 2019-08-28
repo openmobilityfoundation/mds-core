@@ -70,7 +70,7 @@
   "scripts": {
     "build": "yarn run:concurrent build",
     "bundle": "yarn run:concurrent bundle",
-    "clean": "git clean -fdX && yarn",
+    "clean": "git clean -fdX -e '!.env' && yarn",
     "deploy": "yarn run:sequential",
     "run:concurrent": "lerna run --stream",
     "run:sequential": "lerna run --stream --concurrency 1",
