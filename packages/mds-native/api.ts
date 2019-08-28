@@ -30,22 +30,20 @@ import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers'
+import { ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
 
 import {
-  NativeApiResponse,
-  NativeApiRequest,
   NativeApiGetEventsRequest,
   NativeApiGetEventsReponse,
   NativeApiGetDeviceRequest,
   NativeApiGetDeviceResponse,
   NativeApiGetProvidersRequest,
-  NativeApiGetProvidersResponse
+  NativeApiGetProvidersResponse,
+  NativeApiCurrentVersion
 } from './types'
 
-const NATIVE_API_VERSION = '0.0.1'
-
 /* istanbul ignore next */
-const InternalServerError = async <T>(req: NativeApiRequest, res: NativeApiResponse<T>, err?: string | Error) => {
+const InternalServerError = async <T>(req: ApiRequest, res: ApiResponse<T>, err?: string | Error) => {
   // 500 Internal Server Error
   await logger.error(req.method, req.originalUrl, err)
   return res.status(500).send({ error: new ServerError(err) })
@@ -53,7 +51,7 @@ const InternalServerError = async <T>(req: NativeApiRequest, res: NativeApiRespo
 
 function api(app: express.Express): express.Express {
   // ///////////////////// begin middleware ///////////////////////
-  app.use(async (req: NativeApiRequest, res: NativeApiResponse, next: express.NextFunction) => {
+  app.use(async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     if (!(req.path.includes('/health') || req.path === '/')) {
       try {
         if (res.locals.claims) {
@@ -77,7 +75,7 @@ function api(app: express.Express): express.Express {
 
   // ///////////////////// begin test-only endpoints ///////////////////////
 
-  app.get(pathsFor('/test/initialize'), async (req: NativeApiRequest, res: NativeApiResponse) => {
+  app.get(pathsFor('/test/initialize'), async (req: ApiRequest, res: ApiResponse) => {
     try {
       const kind = await db.initialize()
       const result = `Database initialized (${kind})`
@@ -90,7 +88,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/test/shutdown'), async (req: NativeApiRequest, res: NativeApiResponse) => {
+  app.get(pathsFor('/test/shutdown'), async (req: ApiRequest, res: ApiResponse) => {
     try {
       await db.shutdown()
       const result = 'Database shutdown'
@@ -155,7 +153,7 @@ function api(app: express.Express): express.Express {
       const { cursor, limit } = getRequestParameters(req)
       const events = await db.readEventsWithTelemetry({ ...cursor, limit })
       return res.status(200).send({
-        version: NATIVE_API_VERSION,
+        version: NativeApiCurrentVersion,
         cursor: Buffer.from(
           JSON.stringify({
             ...cursor,
@@ -179,7 +177,7 @@ function api(app: express.Express): express.Express {
     try {
       if (isValidDeviceId(device_id)) {
         const device = await db.readDevice(device_id)
-        return res.status(200).send({ version: NATIVE_API_VERSION, device })
+        return res.status(200).send({ version: NativeApiCurrentVersion, device })
       }
     } catch (err) {
       if (err instanceof ValidationError) {
@@ -197,7 +195,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/providers'), async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
     res.status(200).send({
-      version: NATIVE_API_VERSION,
+      version: NativeApiCurrentVersion,
       providers: Object.values(providers)
     })
   )

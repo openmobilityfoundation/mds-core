@@ -18,11 +18,16 @@ import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
 
+// Place newer versions at the beginning of the list
+const NATIVE_API_VERSIONS = ['0.1.0'] as const
+type NATIVE_API_VERSION = typeof NATIVE_API_VERSIONS[number]
+export const [NativeApiCurrentVersion] = NATIVE_API_VERSIONS
+
 // Allow adding type definitions for Express Request objects
 export type NativeApiRequest = ApiRequest
 
 // Allow adding type definitions for Express Response objects
-export interface NativeApiResponse<T = {}> extends ApiResponse<T> {
+export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiResponse<T> {
   locals: {
     claims: ApiAuthorizerClaims
     provider_id: UUID
@@ -41,24 +46,31 @@ export interface NativeApiGetEventsRequest extends NativeApiRequest {
   >
 }
 
-export type NativeApiGetEventsReponse = NativeApiResponse<{
-  version: string
+interface NativeApiResponseBody {
+  version: NATIVE_API_VERSION
+}
+
+interface NativeApiGetEventsReponseBody extends NativeApiResponseBody {
   events: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
   cursor: string
-}>
+}
+
+export type NativeApiGetEventsReponse = NativeApiResponse<NativeApiGetEventsReponseBody>
 
 export interface NativeApiGetDeviceRequest extends NativeApiRequest {
   params: { device_id: UUID }
 }
 
-export type NativeApiGetDeviceResponse = NativeApiResponse<{
-  version: string
+interface NativeApiGetDeviceResponseBody extends NativeApiResponseBody {
   device: Device
-}>
+}
+
+export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetDeviceResponseBody>
 
 export type NativeApiGetProvidersRequest = NativeApiRequest
 
-export type NativeApiGetProvidersResponse = NativeApiResponse<{
-  version: string
+interface NativeApiGetProvidersResponseBody extends NativeApiResponseBody {
   providers: Provider[]
-}>
+}
+
+export type NativeApiGetProvidersResponse = NativeApiResponse<NativeApiGetProvidersResponseBody>
