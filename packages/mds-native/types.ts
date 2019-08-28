@@ -19,7 +19,7 @@ import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
 
 // Place newer versions at the beginning of the list
-const NATIVE_API_VERSIONS = ['0.0.1'] as const
+const NATIVE_API_VERSIONS = ['0.1.0'] as const
 type NATIVE_API_VERSION = typeof NATIVE_API_VERSIONS[number]
 export const [NativeApiCurrentVersion] = NATIVE_API_VERSIONS
 
