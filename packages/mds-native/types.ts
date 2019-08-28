@@ -18,6 +18,11 @@ import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
 
+// Place newer versions at the beginning of the list
+const NATIVE_API_VERSIONS = ['0.0.1'] as const
+type NATIVE_API_VERSION = typeof NATIVE_API_VERSIONS[number]
+export const [NativeApiCurrentVersion] = NATIVE_API_VERSIONS
+
 // Allow adding type definitions for Express Request objects
 export type NativeApiRequest = ApiRequest
 
@@ -41,24 +46,30 @@ export interface NativeApiGetEventsRequest extends NativeApiRequest {
   >
 }
 
-export type NativeApiGetEventsReponse = NativeApiResponse<{
-  version: string
+interface NativeApiGetEventsReponseBody {
+  version: NATIVE_API_VERSION
   events: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
   cursor: string
-}>
+}
+
+export type NativeApiGetEventsReponse = NativeApiResponse<NativeApiGetEventsReponseBody>
 
 export interface NativeApiGetDeviceRequest extends NativeApiRequest {
   params: { device_id: UUID }
 }
 
-export type NativeApiGetDeviceResponse = NativeApiResponse<{
-  version: string
+interface NativeApiGetDeviceResponseBody {
+  version: NATIVE_API_VERSION
   device: Device
-}>
+}
+
+export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetDeviceResponseBody>
 
 export type NativeApiGetProvidersRequest = NativeApiRequest
 
-export type NativeApiGetProvidersResponse = NativeApiResponse<{
-  version: string
+interface NativeApiGetProvidersResponseBody {
+  version: NATIVE_API_VERSION
   providers: Provider[]
-}>
+}
+
+export type NativeApiGetProvidersResponse = NativeApiResponse<NativeApiGetProvidersResponseBody>

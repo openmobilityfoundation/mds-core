@@ -39,10 +39,9 @@ import {
   NativeApiGetDeviceRequest,
   NativeApiGetDeviceResponse,
   NativeApiGetProvidersRequest,
-  NativeApiGetProvidersResponse
+  NativeApiGetProvidersResponse,
+  NativeApiCurrentVersion
 } from './types'
-
-const NATIVE_API_VERSION = '0.0.1'
 
 /* istanbul ignore next */
 const InternalServerError = async <T>(req: NativeApiRequest, res: NativeApiResponse<T>, err?: string | Error) => {
@@ -155,7 +154,7 @@ function api(app: express.Express): express.Express {
       const { cursor, limit } = getRequestParameters(req)
       const events = await db.readEventsWithTelemetry({ ...cursor, limit })
       return res.status(200).send({
-        version: NATIVE_API_VERSION,
+        version: NativeApiCurrentVersion,
         cursor: Buffer.from(
           JSON.stringify({
             ...cursor,
@@ -179,7 +178,7 @@ function api(app: express.Express): express.Express {
     try {
       if (isValidDeviceId(device_id)) {
         const device = await db.readDevice(device_id)
-        return res.status(200).send({ version: NATIVE_API_VERSION, device })
+        return res.status(200).send({ version: NativeApiCurrentVersion, device })
       }
     } catch (err) {
       if (err instanceof ValidationError) {
@@ -197,7 +196,7 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/providers'), async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
     res.status(200).send({
-      version: NATIVE_API_VERSION,
+      version: NativeApiCurrentVersion,
       providers: Object.values(providers)
     })
   )
