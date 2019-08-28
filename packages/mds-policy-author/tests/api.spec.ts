@@ -25,6 +25,7 @@
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import should from 'should'
 import supertest from 'supertest'
+import sinon from 'sinon'
 import test from 'unit.js'
 import { clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
@@ -372,6 +373,28 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot GET a single nonexistent policy', done => {
+      request
+        .get(`/admin/policies/${POLICY_UUID}blahblah`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(404)
+        .end(async err => {
+          done(err)
+        })
+    })
+
+    it('sends a 404 if no policies are found', done => {
+      const stub = sinon.stub(db, 'readPolicies')
+      stub.resolves([])
+      request
+        .get(`/admin/policies`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(502)
+        .end(async err => {
+          done(err)
+        })
+    })
+
     it('can GET all policies, unpublished, active, or whatever', done => {
       request
         .post(`/admin/policies/${SUPERSEDING_POLICY_UUID}`)
@@ -388,6 +411,18 @@ describe('Tests app', () => {
               test.assert(policies_result.body.result.length === 3)
               done(policies_err)
             })
+        })
+    })
+
+    it('has the correct error code if it cannot get all policies', done => {
+      const stub = sinon.stub(db, 'readPolicies')
+      stub.throws()
+      request
+        .get(`/admin/policies`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(502)
+        .end(async err => {
+          done(err)
         })
     })
   })

@@ -1171,7 +1171,6 @@ async function readPolicies(params?: {
   start_date?: Timestamp
   end_date?: Timestamp
   get_unpublished?: boolean
-  all?: boolean
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -1186,12 +1185,8 @@ async function readPolicies(params?: {
     conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
   }
 
-  if (params && !params.all) {
-    if (params.get_unpublished) {
-      conditions.push(`policy_json->>'publish_date' IS NULL`)
-    } else {
-      conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
-    }
+  if (params && params.get_unpublished) {
+    conditions.push(`policy_json->>'publish_date' IS NULL`)
   }
 
   if (conditions.length) {
