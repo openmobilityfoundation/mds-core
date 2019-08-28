@@ -62,7 +62,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            await logger.warn('invalid_provider_id', provider_id, req.originalUrl)
+            await logger.warn('invalid_provider_id is not a UUID', provider_id, req.originalUrl)
             return res.status(403).send({
               error: 'invalid_provider_id',
               error_description: `invalid provider_id ${provider_id} is not a UUID`
