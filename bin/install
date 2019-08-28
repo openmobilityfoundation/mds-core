@@ -28,18 +28,18 @@ usage: $(basename ${0}) [commands]
 commands:
   bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                               : build project
-  install[:helm,dashboard,istio,mds]                  : install specified components; default: ${defaultInstall}
+  install[:helm,dashboard,istio,logging,mds]          : install specified components; default: ${defaultInstall}
   forward[:default,kube-system,istio-system]          : regisgter service host names in the provided namespace(s); default: ${defaultForward}
   unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   cli:[postgresql,redis]                              : create a cli console for the provided service
-  uninstall[:mds,istio,dashboard,helm]                : uninstall specified components; default: ${defaultUninstall}
-  reinstall[:helm,dashboard,istio,mds]                : reinstall specified components; default: ${defaultReinstall}
+  uninstall[:mds,logging,istio,dashboard,helm]        : uninstall specified components; default: ${defaultUninstall}
+  reinstall[:helm,dashboard,istio,logging,mds]        : reinstall specified components; default: ${defaultReinstall}
   help                                                : help message
 
 example:
-  % ./bin/mds.sh bootstrap build install:mds forward test:integration
+  % ./bin/$(basename ${0}) bootstrap build install:mds forward test:integration
 
 applications:
   http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
@@ -73,11 +73,12 @@ bootstrap() {
 # todo: boostrap all-the-things
 
   for y in cypress mocha chai mochawesome; do
-    if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
-      yarn add -W ${y}
-    fi
+    # if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
+    $(yarn ${y} --version > /dev/null 2>&1)
+    (( $? != 0 )) && yarn add -W ${y}
   done
 
+exit
   invoke install "$(normalize ${defaultBootstrap})"
 }
 
@@ -130,8 +131,8 @@ subjects:
   name: admin-user
   namespace: kube-system
 EOF
-  kubectl port-forward $(kubectl get pods -n=kube-system |
-    grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
+  # kubectl port-forward $(kubectl get pods -n=kube-system |
+  #   grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
 }
 
 installIstio() {
@@ -161,6 +162,10 @@ installIstio() {
       kubectl apply -f -
     kubectl label namespaces default istio-injection=enabled
   }
+}
+
+installLogging() {
+  helm install --name logging ./charts/logging
 }
 
 installMds() {
@@ -218,6 +223,10 @@ cliRedis() {
 
 uninstallMds() {
   helm delete --purge mds
+}
+
+uninstallLogging() {
+  helm delete --purge logging
 }
 
 uninstallIstio() {
