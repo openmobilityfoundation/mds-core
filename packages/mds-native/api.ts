@@ -30,10 +30,9 @@ import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers'
+import { ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
 
 import {
-  NativeApiResponse,
-  NativeApiRequest,
   NativeApiGetEventsRequest,
   NativeApiGetEventsReponse,
   NativeApiGetDeviceRequest,
@@ -42,7 +41,6 @@ import {
   NativeApiGetProvidersResponse,
   NativeApiCurrentVersion
 } from './types'
-import { ApiResponse, ApiRequest } from 'packages/mds-api-server';
 
 /* istanbul ignore next */
 const InternalServerError = async <T>(req: ApiRequest, res: ApiResponse<T>, err?: string | Error) => {
