@@ -27,7 +27,7 @@ export const [NativeApiCurrentVersion] = NATIVE_API_VERSIONS
 export type NativeApiRequest = ApiRequest
 
 // Allow adding type definitions for Express Response objects
-export interface NativeApiResponse<T = {}> extends ApiResponse<T> {
+export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiResponse<T> {
   locals: {
     claims: ApiAuthorizerClaims
     provider_id: UUID
@@ -46,8 +46,11 @@ export interface NativeApiGetEventsRequest extends NativeApiRequest {
   >
 }
 
-interface NativeApiGetEventsReponseBody {
+interface NativeApiResponseBody {
   version: NATIVE_API_VERSION
+}
+
+interface NativeApiGetEventsReponseBody extends NativeApiResponseBody {
   events: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
   cursor: string
 }
@@ -58,8 +61,7 @@ export interface NativeApiGetDeviceRequest extends NativeApiRequest {
   params: { device_id: UUID }
 }
 
-interface NativeApiGetDeviceResponseBody {
-  version: NATIVE_API_VERSION
+interface NativeApiGetDeviceResponseBody extends NativeApiResponseBody {
   device: Device
 }
 
@@ -67,8 +69,7 @@ export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetDeviceRes
 
 export type NativeApiGetProvidersRequest = NativeApiRequest
 
-interface NativeApiGetProvidersResponseBody {
-  version: NATIVE_API_VERSION
+interface NativeApiGetProvidersResponseBody extends NativeApiResponseBody {
   providers: Provider[]
 }
 
