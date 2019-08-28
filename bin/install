@@ -78,7 +78,6 @@ bootstrap() {
     (( $? != 0 )) && yarn add -W ${y}
   done
 
-exit
   invoke install "$(normalize ${defaultBootstrap})"
 }
 
