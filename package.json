@@ -58,6 +58,7 @@
     "ts-node": "8.3.0",
     "tsconfig-paths": "3.8.0",
     "typescript": "3.5.3",
+    "typescript-json-schema": "0.40.0",
     "unit.js": "2.1.0",
     "uuid": "3.3.2",
     "webpack": "4.38.0",
@@ -76,6 +77,7 @@
     "run:sequential": "lerna run --stream --concurrency 1",
     "test": "check-node-version --package --print && yarn run:sequential test",
     "test:eslint": "yarn run:concurrent test:eslint",
-    "test:unit": "yarn run:sequential test:unit"
+    "test:unit": "yarn run:sequential test:unit",
+    "tjs": "typescript-json-schema --refs=false ./tsconfig.json"
   }
 }
