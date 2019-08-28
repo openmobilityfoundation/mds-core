@@ -106,7 +106,6 @@ function api(app: express.Express): express.Express {
       })
       res.status(200).send({ policies: active })
     } catch (err) {
-      await log.error('failed to read policies', err)
       res.status(404).send({
         result: 'not found'
       })
@@ -123,7 +122,6 @@ function api(app: express.Express): express.Express {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      await log.error('failed to read one policy', err)
       res.status(404).send({ result: 'not found' })
     }
   })
@@ -140,7 +138,6 @@ function api(app: express.Express): express.Express {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
