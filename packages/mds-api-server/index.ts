@@ -78,14 +78,11 @@ const MDS_ACCESS_SCOPES = ['admin:all', 'test:all'] as const
 type MDS_ACCESS_SCOPE = typeof MDS_ACCESS_SCOPES[number]
 
 export const HasAccessScope = (scopes: MDS_ACCESS_SCOPE[], claims: ApiAuthorizerClaims | null) => {
-  if (scopes.length === 0) {
-    return true
-  }
-  if (claims && claims.scope) {
+  if (scopes.length > 0 && claims && claims.scope) {
     const granted = claims.scope.split(' ')
     return scopes.some(scope => granted.includes(scope))
   }
-  return false
+  return scopes.length === 0
 }
 
 // This will generete an Express middleware function to verify that the token claims
