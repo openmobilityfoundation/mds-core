@@ -49,8 +49,10 @@ import { api } from '../api'
 
 const request = supertest(ApiServer(api))
 
-const PROVIDER_SCOPES = 'admin:all test:all'
-const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const ADMIN_SCOPE = 'admin:all'
+const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${ADMIN_SCOPE}`).toString('base64')}`
+const TEST_SCOPE = 'test:all'
+const TEST_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${TEST_SCOPE}`).toString('base64')}`
 
 const APP_JSON = 'application/json; charset=utf-8'
 
@@ -76,7 +78,7 @@ const AUDIT_START = Date.now()
 before('Initializing Database', done => {
   request
     .get('/audit/test/initialize')
-    .set('Authorization', ADMIN_AUTH)
+    .set('Authorization', TEST_AUTH)
     .expect(200)
     .end((err, result) => {
       test.value(result).hasHeader('content-type', APP_JSON)
@@ -487,13 +489,25 @@ describe('Testing API', () => {
           done(err)
         })
     })
+
+    it('Verify no test access without proper scope', done => {
+      request
+        .get('/audit/test/shutdown')
+        .set('Authorization', ADMIN_AUTH)
+        .expect(403)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          test.value(result.body).hasProperty('error')
+          done(err)
+        })
+    })
   })
 })
 
 after('Shutting down Database', done => {
   request
     .get('/audit/test/shutdown')
-    .set('Authorization', ADMIN_AUTH)
+    .set('Authorization', TEST_AUTH)
     .expect(200)
     .end((err, result) => {
       test.value(result).hasHeader('content-type', APP_JSON)

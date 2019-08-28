@@ -1,6 +1,6 @@
 import bodyParser from 'body-parser'
 import express from 'express'
-import { pathsFor } from '@mds-core/mds-utils'
+import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 
 export type ApiRequest = express.Request
@@ -71,4 +71,35 @@ export const ApiServer = (
   })
 
   return api(app)
+}
+
+// Canonical list of MDS scopes
+const MDS_ACCESS_SCOPES = ['admin:all', 'test:all'] as const
+type MDS_ACCESS_SCOPE = typeof MDS_ACCESS_SCOPES[number]
+
+export const HasAccessScope = (scopes: MDS_ACCESS_SCOPE[], claims: ApiAuthorizerClaims | null) => {
+  if (scopes.length === 0) {
+    return true
+  }
+  if (claims && claims.scope) {
+    const granted = claims.scope.split(' ')
+    return scopes.some(scope => granted.includes(scope))
+  }
+  return false
+}
+
+// This will generete an Express middleware function to verify that the token claims
+// contain one or more of the specified scopes, for example:
+// VerifyAccessScope('test:all', 'admin:all') allows access with either test:all OR admin:all
+// Express middleware can be chained to require more than one scope, for example:
+// VerifyAccessScope('test:all'), VerifyAccessScope('admin:all') requires both test:all AND admin:all
+export const VerifyAccessScope = (...scopes: MDS_ACCESS_SCOPE[]) => (
+  req: ApiRequest,
+  res: ApiResponse,
+  next: express.NextFunction
+) => {
+  if (HasAccessScope(scopes, res.locals.claims)) {
+    return next()
+  }
+  return res.status(403).send({ error: new AuthorizationError('no access without scope', { scopes }) })
 }
