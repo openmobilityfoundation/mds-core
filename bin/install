@@ -150,11 +150,11 @@ installIstio() {
     helm template ${istioPath}/install/kubernetes/helm/istio-init \
       --name istio-init \
       --namespace istio-system | kubectl apply -f -
-  
+
     # todo: fix
     # [ "$(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l)" -eq "23" ] || \
     #   usage "istio installation failure"
-  
+
     helm template ${istioPath}/install/kubernetes/helm/istio \
       --name istio \
       --namespace istio-system --values \
@@ -242,11 +242,11 @@ uninstallIstio() {
 }
 
 uninstallDashboard() {
-  kubectl delete deployment kubernetes-dashboard --namespace=kube-system 
-  kubectl delete service kubernetes-dashboard  --namespace=kube-system 
-  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system 
+  kubectl delete deployment kubernetes-dashboard --namespace=kube-system
+  kubectl delete service kubernetes-dashboard  --namespace=kube-system
+  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system
   kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system
-  kubectl delete sa kubernetes-dashboard --namespace=kube-system 
+  kubectl delete sa kubernetes-dashboard --namespace=kube-system
   kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system
   kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system
 }
