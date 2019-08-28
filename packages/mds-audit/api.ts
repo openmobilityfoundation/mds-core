@@ -43,7 +43,7 @@ import {
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import { AUDIT_EVENT_TYPES, AuditEvent, TelemetryData, Timestamp, Telemetry, AuditDetails } from '@mds-core/mds-types'
 import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
-import { VerifyAccessScope } from '@mds-core/mds-api-server'
+import { verifyAccessScope } from '@mds-core/mds-api-server'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -158,7 +158,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/test/initialize'),
-    VerifyAccessScope('test:all'),
+    verifyAccessScope('test:all'),
     async (req: AuditApiRequest, res: AuditApiResponse) => {
       try {
         const kind = await db.initialize()
@@ -176,7 +176,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/test/shutdown'),
-    VerifyAccessScope('test:all'),
+    verifyAccessScope('test:all'),
     async (req: AuditApiRequest, res: AuditApiResponse) => {
       await db.shutdown()
       await cache.shutdown()
