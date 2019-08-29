@@ -36,8 +36,6 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 
-process.env.PATH_PREFIX = '/agency'
-
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
