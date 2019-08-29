@@ -29,6 +29,7 @@ function api(app: express.Express): express.Express {
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
   app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
+    res.header('Access-Control-Allow-Origin', '*')
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
