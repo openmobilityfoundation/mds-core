@@ -38,9 +38,25 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   hosts:
-  - {{ $.Values.redis.host }}
+  - {{ .Values.redis.host }}
   ports:
-  - number: {{ $.Values.redis.port }}
+  - number: {{ .Values.redis.port }}
+    name: tcp
+    protocol: TCP
+  location: MESH_EXTERNAL
+---
+{{- end }}
+{{- if .Values.fluentd.output.host }}
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: fluentd-output
+  namespace: {{ .Values.namespace }}
+spec:
+  hosts:
+  - {{ .Values.fluentd.output.host }}
+  ports:
+  - number: {{ .Values.fluentd.output.port }}
     name: tcp
     protocol: TCP
   location: MESH_EXTERNAL

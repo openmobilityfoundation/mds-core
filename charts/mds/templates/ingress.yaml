@@ -18,6 +18,22 @@ spec:
         port:
           number: {{ $api.port }}
         host: {{ $api.name }}.{{ $.Values.namespace}}.svc.cluster.local
+    corsPolicy:
+      allowOrigin:
+      - "*"
+      allowMethods:
+      - POST
+      - GET
+      - HEAD
+      - OPTIONS
+      - PATCH
+      - PUT
+      - POST
+      allowCredentials: false
+      allowHeaders:
+      - Content-Type
+      - Authorization
+      maxAge: "10m"
 ---
 {{- end }}
 apiVersion: networking.istio.io/v1alpha3
@@ -38,12 +54,11 @@ spec:
       mode: SIMPLE
       serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
       privateKey: /etc/istio/ingressgateway-certs/tls.key
-    hosts:
-    - "*"
-  {{- end }}
+  {{- else }}
   - port:
       number: 80
       name: http
       protocol: HTTP
+  {{- end }}
     hosts:
     - "*"

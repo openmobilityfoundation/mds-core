@@ -88,3 +88,5 @@ redis:
 fluentd:
   output:
     host:
+    port:
+    scheme:
