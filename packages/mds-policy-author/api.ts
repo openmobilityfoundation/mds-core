@@ -16,10 +16,12 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
+// import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { pathsFor, ServerError, UUID_REGEX } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError, UUID_REGEX, NotFoundError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
+
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 const ruleSchema = Joi.object().keys({
@@ -155,15 +157,38 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/admin/policies'), async (req, res) => {
+    const { start_date = now(), end_date = now(), get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies', req.query, start_date, end_date)
+    if (start_date > end_date) {
+      res.status(400).send({ result: 'start_date after end_date' })
+      return
+    }
     try {
-      const policies = await db.readPolicies()
-      return res.status(200).send({ result: policies })
+      const policies = await db.readPolicies({ start_date, get_published, get_unpublished })
+      /*
+      const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
+        if (policy.prev_policies) {
+          prev_policies_acc.push(...policy.prev_policies)
+        }
+        return prev_policies_acc
+      }, [])
+      const active = policies.filter(p => {
+        // overlapping segment logic
+        const p_start_date = p.start_date
+        const p_end_date = p.end_date || Number.MAX_SAFE_INTEGER
+        return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
+      })
+      */
+      res.status(200).send({ policies })
     } catch (err) {
-      return res.status(502).send({ error: new ServerError(err) })
+      await log.error('failed to read policies', err)
+      res.status(404).send({
+        result: 'not found'
+      })
     }
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+  app.post(pathsFor('/admin/policies'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -193,12 +218,14 @@ function api(app: express.Express): express.Express {
       await db.publishPolicy(policy_id)
       return res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
     } catch (err) {
-      if (err.message.includes('geography') && err.message.includes('not_found')) {
-        const geography_id = err.message.match(UUID_REGEX)
-        return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
-      }
-      if (err.message.includes('policy') && err.message.includes('not_found')) {
-        return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+      if (err instanceof NotFoundError) {
+        if (err.message.includes('geography')) {
+          const geography_id = err.message.match(UUID_REGEX)
+          return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+        }
+        if (err.message.includes('policy')) {
+          return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+        }
       }
       if (err.message.includes('Cannot re-publish existing policy')) {
         return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
@@ -223,8 +250,8 @@ function api(app: express.Express): express.Express {
       await db.editPolicy(policy)
       return res.status(200).send({ result: `successfully edited policy ${policy}` })
     } catch (err) {
-      if (err.message.includes('not_found')) {
-        return res.status(404).send({ error: 'not_found' })
+      if (err instanceof NotFoundError) {
+        return res.status(404).send({ error: 'not found' })
       }
       if (err.message.includes('Cannot edit published policy')) {
         return res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
@@ -232,7 +259,11 @@ function api(app: express.Express): express.Express {
       /* istanbul ignore next */
       await log.error('failed to edit policy', err.stack)
       /* istanbul ignore next */
-      return res.status(500).send({ error: new ServerError(err) })
+      if (err instanceof NotFoundError) {
+        res.status(404).send({ result: 'not found' })
+      } else {
+        res.status(500).send(new ServerError(err))
+      }
     }
   })
 

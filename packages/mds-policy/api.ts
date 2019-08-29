@@ -20,7 +20,7 @@ import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError, NotFoundError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -84,14 +84,14 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies'), async (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
-    const { start_date = now(), end_date = now(), unpublished: get_unpublished = false } = req.query
+    const { start_date = now(), end_date = now() } = req.query
     log.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
       res.status(400).send({ result: 'start_date after end_date' })
       return
     }
     try {
-      const policies = await db.readPolicies({ start_date, end_date, get_unpublished })
+      const policies = await db.readPolicies({ get_published: true })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
@@ -116,15 +116,15 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
-      const policies = await db.readPolicies({ policy_id })
-      if (policies.length > 0) {
-        res.status(200).send(policies[0])
-      } else {
-        res.status(404).send({ result: 'not found' })
-      }
+      const policy = await db.readPolicy(policy_id)
+      res.status(200).send(policy)
     } catch (err) {
       await log.error('failed to read one policy', err)
-      res.status(404).send({ result: 'not found' })
+      if (err instanceof NotFoundError) {
+        res.status(404).send({ result: 'not found' })
+      } else {
+        res.status(500).send({ result: 'something else went wrong' })
+      }
     }
   })
 

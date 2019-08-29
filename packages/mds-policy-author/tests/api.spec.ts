@@ -25,9 +25,8 @@
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import should from 'should'
 import supertest from 'supertest'
-import sinon from 'sinon'
 import test from 'unit.js'
-import { clone } from '@mds-core/mds-utils'
+import { now, days, clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
@@ -36,12 +35,12 @@ import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
+  POLICY4_JSON,
   SUPERSEDING_POLICY_JSON,
-  SUPERSEDING_POLICY_UUID,
   POLICY_UUID,
   POLICY2_UUID,
-  POLICY3_UUID,
   GEOGRAPHY_UUID,
+  GEOGRAPHY2_UUID,
   PROVIDER_SCOPES,
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN
@@ -125,7 +124,7 @@ describe('Tests app', () => {
       delete bad_policy_json.rules[0].rule_type
       const bad_policy = bad_policy_json
       request
-        .post(`/admin/policies/${POLICY_UUID}`)
+        .post(`/admin/policies`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(bad_policy)
         .expect(400)
@@ -137,10 +136,10 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies cannot PUT non-existant policy', done => {
-      const policy = POLICY_JSON
+    it('verifies cannot PUT non-existent policy', done => {
+      const policy = clone(POLICY_JSON)
       request
-        .put(`/admin/policies/${POLICY_UUID}`)
+        .put(`/admin/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(policy)
         .expect(404)
@@ -153,7 +152,7 @@ describe('Tests app', () => {
     it('creates one current policy', done => {
       const policy = POLICY_JSON
       request
-        .post(`/admin/policies/${POLICY_UUID}`)
+        .post(`/admin/policies`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(policy)
         .expect(200)
@@ -166,7 +165,7 @@ describe('Tests app', () => {
     it('verifies cannot POST duplicate policy', done => {
       const policy = POLICY_JSON
       request
-        .post(`/admin/policies/${POLICY_UUID}`)
+        .post(`/admin/policies`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(policy)
         .expect(409)
@@ -203,7 +202,7 @@ describe('Tests app', () => {
     it('creates one past policy', done => {
       const policy2 = POLICY2_JSON
       request
-        .post(`/admin/policies/${POLICY_UUID}`)
+        .post(`/admin/policies`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(policy2)
         .expect(200)
@@ -217,7 +216,7 @@ describe('Tests app', () => {
       // TODO guts
       const policy3 = POLICY3_JSON
       request
-        .post(`/admin/policies/${POLICY3_UUID}`)
+        .post(`/admin/policies`)
         .set('Authorization', AUTH_NON_PROVIDER)
         .send(policy3)
         .expect(200)
@@ -307,9 +306,9 @@ describe('Tests app', () => {
         .expect(200)
         .end(async (err, result) => {
           const body = result.body
-          log('read back nonexistant policy response:', body)
+          log('read back nonexistent policy response:', body)
           test.value(result).hasHeader('content-type', APP_JSON)
-          await db.readPolicies({ policy_id: POLICY2_UUID }).should.be.rejected()
+          await db.readPolicies({ policy_id: POLICY2_UUID }).should.be.fulfilledWith([])
           done(err)
         })
     })
@@ -349,7 +348,7 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies cannot GET non-existant policy metadata', done => {
+    it('verifies cannot GET non-existent policy metadata', done => {
       request
         .get(`/admin/policies/meta/beepbapboop`)
         .set('Authorization', AUTH_NON_PROVIDER)
@@ -375,59 +374,69 @@ describe('Tests app', () => {
 
     it('cannot GET a single nonexistent policy', done => {
       request
-        .get(`/admin/policies/${POLICY_UUID}blahblah`)
+        .get(`/admin/policies/544d36c4-29f5-4088-a52f-7c9a64d5874c`)
         .set('Authorization', AUTH_ADMIN_ONLY)
         .expect(404)
         .end(async err => {
           done(err)
         })
     })
+    /*
+  it('read back one geography', async () => {
+    await db.writeGeography({ geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
+    request
+      .get(`/geographies/${GEOGRAPHY_UUID}`)
+      .set('Authorization', AUTH)
+      .expect(200)
+      .end((err, result) => {
+        const body = result.body
+        log('read back one geo response:', body)
+        test.value(result).hasHeader('content-type', APP_JSON)
+        // TODO verify contents
+        return err
+      })
+  })
+  */
 
-    it('sends a 404 if no policies are found', done => {
-      const stub = sinon.stub(db, 'readPolicies')
-      stub.resolves([])
+    it('can GET all active policies', async () => {
+      await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
+      await db.writePolicy(POLICY4_JSON)
+      await db.writePolicy(SUPERSEDING_POLICY_JSON)
+      await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
       request
-        .get(`/admin/policies`)
+        .get(`/admin/policies?start_date=${now() - days(365)}`)
         .set('Authorization', AUTH_ADMIN_ONLY)
-        .expect(502)
-        .end(async err => {
-          done(err)
-        })
-    })
-
-    it('can GET all policies, unpublished, active, or whatever', done => {
-      request
-        .post(`/admin/policies/${SUPERSEDING_POLICY_UUID}`)
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .send(SUPERSEDING_POLICY_JSON)
         .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          request
-            .get(`/admin/policies`)
-            .set('Authorization', AUTH_ADMIN_ONLY)
-            .expect(200)
-            .end(async (policies_err, policies_result) => {
-              test.assert(policies_result.body.result.length === 3)
-              done(policies_err)
-            })
+        .end(async (policies_err, policies_result) => {
+          test.assert(policies_result.body.policies.length === 4)
+          return policies_err
         })
     })
 
-    it('has the correct error code if it cannot get all policies', done => {
-      const stub = sinon.stub(db, 'readPolicies')
-      stub.throws()
+    it('can GET all published policies', done => {
       request
-        .get(`/admin/policies`)
+        .get(`/admin/policies?start_date=${now() - days(365)}&get_published=true`)
         .set('Authorization', AUTH_ADMIN_ONLY)
-        .expect(502)
-        .end(async err => {
-          done(err)
+        .expect(200)
+        .end(async (policies_err, policies_result) => {
+          test.assert(policies_result.body.policies.length === 2)
+          done(policies_err)
+        })
+    })
+
+    it('can GET all unpublished policies', done => {
+      request
+        .get(`/admin/policies?start_date=${now() - days(365)}&get_unpublished=true`)
+        .set('Authorization', AUTH_ADMIN_ONLY)
+        .expect(200)
+        .end(async (policies_err, policies_result) => {
+          test.assert(policies_result.body.policies.length === 2)
+          done(policies_err)
         })
     })
   })
 
-  describe.only('Geography endpoint tests', () => {
+  describe('Geography endpoint tests', () => {
     before(done => {
       request
         .get('/test/initialize')
@@ -511,7 +520,7 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies cannot GET non-existant geography metadata', done => {
+    it('verifies cannot GET non-existent geography metadata', done => {
       request
         .get(`/admin/geographies/meta/beepbapboop`)
         .set('Authorization', AUTH_NON_PROVIDER)
@@ -536,7 +545,7 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies cannot PUT non-existant geography', done => {
+    it('verifies cannot PUT non-existent geography', done => {
       const geography = { geography_id: POLICY_UUID, geography_json: DISTRICT_SEVEN }
       request
         .put(`/admin/geographies/${POLICY_UUID}`)
