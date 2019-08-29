@@ -47,8 +47,6 @@ import { api } from '../api'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')
 
-process.env.PATH_PREFIX = '/policy'
-
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 

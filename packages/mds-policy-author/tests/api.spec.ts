@@ -47,8 +47,6 @@ import {
 } from '@mds-core/mds-test-data'
 import { api } from '../api'
 
-process.env.PATH_PREFIX = '/policy'
-
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 

@@ -1,0 +1,30 @@
+{
+  "name": "@container-images/mds-audit",
+  "version": "0.1.6",
+  "description": "AWS Lambda for MDS Audit API",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && docker build -t mds-audit:${npm_package_version} . && docker tag mds-audit:${npm_package_version} mds-audit:latest",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && ts-node"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@container-images/env-inject": "^0.1.5",
+    "@mds-core/mds-api-server": "^0.1.5",
+    "@mds-core/mds-audit": "^0.1.17"
+  },
+  "license": "Apache-2.0"
+}

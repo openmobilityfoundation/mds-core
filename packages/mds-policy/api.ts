@@ -29,6 +29,7 @@ function api(app: express.Express): express.Express {
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
   app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
+    res.header('Access-Control-Allow-Origin', '*')
     try {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
@@ -106,7 +107,6 @@ function api(app: express.Express): express.Express {
       })
       res.status(200).send({ policies: active })
     } catch (err) {
-      await log.error('failed to read policies', err)
       res.status(404).send({
         result: 'not found'
       })
@@ -140,7 +140,6 @@ function api(app: express.Express): express.Express {
         res.status(404).send({ result: 'not found' })
       }
     } catch (err) {
-      await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
