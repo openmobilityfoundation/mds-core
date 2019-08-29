@@ -9,7 +9,8 @@ const {
   AUTH0_CLIENT_PUBLIC_KEY = '',
   AUTH0_API_IDENTIFIER = '',
   TOKEN_ISSUER = '',
-  TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id'
+  TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id',
+  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email'
 } = process.env
 
 type AuthResponseContext = Required<Omit<ApiAuthorizerClaims, 'principalId'>>
@@ -53,9 +54,14 @@ export const handler: Handler<
           issuer: TOKEN_ISSUER
         })
         if (typeof decoded === 'object') {
-          const { sub: principalId, scope, [TOKEN_PROVIDER_ID_CLAIM]: provider_id, email } = decoded as JWT
+          const {
+            sub: principalId,
+            scope,
+            [TOKEN_PROVIDER_ID_CLAIM]: provider_id,
+            [TOKEN_USER_EMAIL_CLAIM]: user_email
+          } = decoded as JWT
           console.log('Authorization Succeeded:', event.methodArn, principalId)
-          callback(null, generatePolicy(principalId, { provider_id, scope, email }))
+          callback(null, generatePolicy(principalId, { provider_id, scope, user_email }))
           return
         }
       } catch (err) {

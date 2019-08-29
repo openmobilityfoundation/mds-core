@@ -4,12 +4,15 @@ import { UUID } from '@mds-core/mds-types'
 
 export interface ApiAuthorizerClaims {
   principalId: string
-  provider_id: UUID
   scope: string
-  email: string | null
+  provider_id: UUID
+  user_email: string | null
 }
 
-const { TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id' } = process.env
+const {
+  TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id',
+  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email'
+} = process.env
 
 export type ApiAuthorizer = (req: express.Request) => ApiAuthorizerClaims | null
 
@@ -18,14 +21,20 @@ export const AuthorizationHeaderApiAuthorizer: ApiAuthorizer = req => {
     const decode = ([scheme, token]: string[]): ApiAuthorizerClaims | null => {
       const decoders: { [scheme: string]: () => ApiAuthorizerClaims } = {
         bearer: () => {
-          const { sub: principalId, [TOKEN_PROVIDER_ID_CLAIM]: provider_id, scope, email, ...claims } = jwtDecode(token)
-          return { principalId, provider_id, scope, email, ...claims }
+          const {
+            sub: principalId,
+            scope,
+            [TOKEN_PROVIDER_ID_CLAIM]: provider_id,
+            [TOKEN_USER_EMAIL_CLAIM]: user_email,
+            ...claims
+          } = jwtDecode(token)
+          return { principalId, scope, provider_id, user_email, ...claims }
         },
         basic: () => {
           const [principalId, scope] = Buffer.from(token, 'base64')
             .toString()
             .split('|')
-          return { principalId, provider_id: principalId, scope, email: null }
+          return { principalId, scope, provider_id: principalId, user_email: null }
         }
       }
       const decoder = decoders[scheme.toLowerCase()]

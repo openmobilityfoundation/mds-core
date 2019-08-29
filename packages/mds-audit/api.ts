@@ -108,8 +108,8 @@ function api(app: express.Express): express.Express {
       try {
         if (!req.path.includes('/health' || req.path === '/')) {
           // verify presence of subject_id
-          const { principalId, email } = res.locals.claims
-          const subject_id = email || principalId
+          const { principalId, user_email } = res.locals.claims
+          const subject_id = user_email || principalId
 
           /* istanbul ignore if */
           if (!subject_id) {
