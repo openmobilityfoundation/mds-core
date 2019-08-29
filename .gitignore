@@ -203,8 +203,7 @@ $RECYCLE.BIN/
 # helm
 .helmignore
 values.*.yaml
-helm/charts
-helm/tools
+values-*.yaml
 
 # cypress
 cypress/fixtures

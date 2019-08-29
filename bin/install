@@ -2,15 +2,15 @@
 
 tools=$(dirname ${0})/../tools
 os=${MDS_OS:-`uname`}
-istio=${ISTIO_VERSION:-1.2.4}
+istio=${ISTIO_VERSION:-1.2.5}
 defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
-defaultBootstrap=${MDS_BOOTSTRAP:-helm,dashboard,istio}
-defaultInstall=${MDS_INSTALL:-helm,dashboard,istio,mds}
+defaultBootstrap=${MDS_BOOTSTRAP:-helm,istio}
+defaultInstall=${MDS_INSTALL:-helm,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
-defaultUninstall=${MDS_UNINSTALL:-mds,istio,dashboard,helm}
+defaultUninstall=${MDS_UNINSTALL:-mds,istio,helm}
 defaultForward=${MDS_FORWARD:-default}
 defaultToken=${MDS_TOKEN:-dashboard}
-defaultReinstall=${MDS_REINSTALL:-helm,dashboard,istio,mds}
+defaultReinstall=${MDS_REINSTALL:-helm,istio,mds}
 OSX=Darwin
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -28,18 +28,18 @@ usage: $(basename ${0}) [commands]
 commands:
   bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                               : build project
-  install[:helm,dashboard,istio,mds]                  : install specified components; default: ${defaultInstall}
+  install[:helm,dashboard,istio,logging,mds]          : install specified components; default: ${defaultInstall}
   forward[:default,kube-system,istio-system]          : regisgter service host names in the provided namespace(s); default: ${defaultForward}
   unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   cli:[postgresql,redis]                              : create a cli console for the provided service
-  uninstall[:mds,istio,dashboard,helm]                : uninstall specified components; default: ${defaultUninstall}
-  reinstall[:helm,dashboard,istio,mds]                : reinstall specified components; default: ${defaultReinstall}
+  uninstall[:mds,logging,istio,dashboard,helm]        : uninstall specified components; default: ${defaultUninstall}
+  reinstall[:helm,dashboard,istio,logging,mds]        : reinstall specified components; default: ${defaultReinstall}
   help                                                : help message
 
 example:
-  % ./bin/mds.sh bootstrap build install:mds forward test:integration
+  % ./bin/$(basename ${0}) bootstrap build install:mds forward test:integration
 
 applications:
   http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
@@ -70,12 +70,12 @@ bootstrap() {
     *) usage "unsupported os: ${os}";;
   esac
 
-# todo: boostrap all-the-things
+  # todo: boostrap all-the-things
 
   for y in cypress mocha chai mochawesome; do
-    if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
-      yarn add -W ${y}
-    fi
+    # if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
+    $(yarn ${y} --version > /dev/null 2>&1)
+    (( $? != 0 )) && yarn add -W ${y}
   done
 
   invoke install "$(normalize ${defaultBootstrap})"
@@ -99,6 +99,7 @@ installHelm() {
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
   helm repo add elastic https://helm.elastic.co
+  helm add add istio.io https://storage.googleapis.com/istio-release/releases/1.2.5/charts
 
   for d in $(find ./charts -type d -depth 1); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -130,8 +131,8 @@ subjects:
   name: admin-user
   namespace: kube-system
 EOF
-  kubectl port-forward $(kubectl get pods -n=kube-system |
-    grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
+  # kubectl port-forward $(kubectl get pods -n=kube-system |
+  #   grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
 }
 
 installIstio() {
@@ -148,19 +149,24 @@ installIstio() {
     kubectl create namespace istio-system
     helm template ${istioPath}/install/kubernetes/helm/istio-init \
       --name istio-init \
-      --namespace istio-system | kubectl apply -f -
-  
+      --namespace istio-system | \
+      kubectl apply -f -
+
     # todo: fix
     # [ "$(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l)" -eq "23" ] || \
     #   usage "istio installation failure"
-  
+
     helm template ${istioPath}/install/kubernetes/helm/istio \
       --name istio \
-      --namespace istio-system --values \
-      ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --namespace istio-system \
+      --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
       kubectl apply -f -
     kubectl label namespaces default istio-injection=enabled
   }
+}
+
+installLogging() {
+  helm install --name logging ./charts/logging
 }
 
 installMds() {
@@ -220,6 +226,10 @@ uninstallMds() {
   helm delete --purge mds
 }
 
+uninstallLogging() {
+  helm delete --purge logging
+}
+
 uninstallIstio() {
   istioPath=${tools}/istio-${istio}
 
@@ -233,11 +243,11 @@ uninstallIstio() {
 }
 
 uninstallDashboard() {
-  kubectl delete deployment kubernetes-dashboard --namespace=kube-system 
-  kubectl delete service kubernetes-dashboard  --namespace=kube-system 
-  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system 
+  kubectl delete deployment kubernetes-dashboard --namespace=kube-system
+  kubectl delete service kubernetes-dashboard  --namespace=kube-system
+  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system
   kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system
-  kubectl delete sa kubernetes-dashboard --namespace=kube-system 
+  kubectl delete sa kubernetes-dashboard --namespace=kube-system
   kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system
   kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system
 }
