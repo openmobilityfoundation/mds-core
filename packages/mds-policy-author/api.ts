@@ -163,7 +163,8 @@ function api(app: express.Express): express.Express {
       return
     }
     try {
-      const policies = await db.readPolicies({ start_date, end_date, get_published: true })
+      // const policies = await db.readPolicies({ start_date, end_date, get_published: true })
+      const policies = await db.readPolicies()
       return res.status(200).send({ policies })
     } catch (err) {
       return res.status(502).send({ error: new ServerError(err) })

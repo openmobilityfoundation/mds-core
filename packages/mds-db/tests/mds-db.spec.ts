@@ -20,7 +20,7 @@ import {
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
-import { now, clone } from '@mds-core/mds-utils'
+import { now, clone, days } from '@mds-core/mds-utils'
 
 import { isNullOrUndefined } from 'util'
 import {
@@ -297,12 +297,18 @@ if (pg_info.database) {
         const publishedPolicies = await MDSDBPostgres.readPolicies({ get_published: true })
         assert.deepEqual(publishedPolicies.length, 1)
 
+        const publishedPoliciesWithDates = await MDSDBPostgres.readPolicies({
+          get_published: true,
+          start_date: now() - days(365),
+          end_date: now() + days(365)
+        })
+        assert.deepEqual(publishedPoliciesWithDates.length, 1)
+
         const oldPolicies = await MDSDBPostgres.readPolicies({
           start_date: START_ONE_MONTH_AGO,
           end_date: START_ONE_WEEK_AGO
         })
         assert.deepEqual(oldPolicies.length, 1)
-        console.log('future policies')
         const futurePolicies = await MDSDBPostgres.readPolicies({
           start_date: START_ONE_MONTH_FROM_NOW
         })

@@ -1198,11 +1198,19 @@ async function readPolicies(params?: {
     }
 
     if (params.start_date) {
-      conditions.push(`policy_json->>'start_date' >= '${params.start_date}'`)
+      //      conditions.push(`policy_json->>'start_date' >= '${params.start_date}'`)
+      // cast(coalesce((policy_json->>'end_date')::bigint
+      conditions.push(
+        `cast(coalesce((policy_json->>'start_date')::bigint, ${Number.MAX_SAFE_INTEGER}) as bigint) >= ${params.start_date}`
+      )
+      // cast(coalesce((policy_json->>'end_date')::bigint
     }
 
     if (params.end_date) {
-      conditions.push(`policy_json->>'end_date' <= '${params.end_date}'`)
+      // conditions.push(`policy_json->>'end_date' <= '${params.end_date}'`)
+      conditions.push(
+        `cast(coalesce((policy_json->>'end_date')::bigint, ${Number.MIN_SAFE_INTEGER}) as bigint) <= ${params.end_date}`
+      )
     }
   }
 
