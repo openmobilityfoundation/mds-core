@@ -20,9 +20,6 @@
     "joi-to-json-schema": "5.1.0",
     "uuid": "3.3.2"
   },
-  "devDependencies": {
-    "sinon": "7.0.13"
-  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

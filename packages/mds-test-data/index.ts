@@ -70,6 +70,7 @@ const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
 const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
 const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
 const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
+const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
 const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
 const PROVIDER_SCOPES = 'admin:all test:all'
@@ -145,6 +146,7 @@ const SUPERSEDING_POLICY_JSON: Policy = {
 
 const START_ONE_MONTH_AGO = now() - (now() % days(1)) - days(30)
 const START_ONE_WEEK_AGO = now() - (now() % days(1)) - days(7)
+const START_ONE_YEAR_AGO = now() - (now() % days(1)) - days(365)
 
 // in the past
 const POLICY2_JSON: Policy = {
@@ -219,6 +221,29 @@ const POLICY3_JSON: Policy = {
         'en-US': 'Remember to stay under 10 MPH on Venice Beach on weekends!',
         'es-US': '¡Recuerda permanecer menos de 10 millas por hora en Venice Beach los fines de semana!'
       }
+    }
+  ]
+}
+
+const POLICY4_JSON: Policy = {
+  // TODO guts
+  policy_id: POLICY4_UUID,
+  name: 'Speediest of Limits',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: now(),
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
     }
   ]
 }
@@ -518,14 +543,18 @@ export {
   SUPERSEDING_POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
+  POLICY4_JSON,
   POLICY_UUID,
   SUPERSEDING_POLICY_UUID,
   POLICY2_UUID,
   POLICY3_UUID,
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
+  START_YESTERDAY,
   START_ONE_MONTH_AGO,
   START_ONE_WEEK_AGO,
+  START_ONE_YEAR_AGO,
+  START_ONE_MONTH_FROM_NOW,
   PROVIDER_SCOPES,
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN,

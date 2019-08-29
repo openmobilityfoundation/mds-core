@@ -15,10 +15,11 @@
  */
 
 import express from 'express'
+// import uuid from 'uuid'
 import Joi from '@hapi/joi'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { pathsFor, ServerError, UUID_REGEX } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError, UUID_REGEX } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -155,18 +156,26 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/admin/policies'), async (req, res) => {
+    const { start_date = now(), end_date = now() } = req.query
+    log.info('read /policies', req.query, start_date, end_date)
+    if (start_date > end_date) {
+      res.status(400).send({ result: 'start_date after end_date' })
+      return
+    }
     try {
-      const policies = await db.readPolicies()
-      return res.status(200).send({ result: policies })
+      const policies = await db.readPolicies({ start_date, end_date, get_published: true })
+      return res.status(200).send({ policies })
     } catch (err) {
       return res.status(502).send({ error: new ServerError(err) })
     }
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+  app.post(pathsFor('/admin/policies'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
+
+    log.info('posting policy', policy)
 
     if (details) {
       await log.error('invalid policy json', details)
@@ -193,12 +202,12 @@ function api(app: express.Express): express.Express {
       await db.publishPolicy(policy_id)
       return res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
     } catch (err) {
-      if (err.message.includes('geography') && err.message.includes('not_found')) {
+      if (err.message.includes('geography') && err.message.includes(db.NOT_FOUND)) {
         const geography_id = err.message.match(UUID_REGEX)
-        return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+        return res.status(404).send({ error: `geography_id ${geography_id} ${db.NOT_FOUND}` })
       }
-      if (err.message.includes('policy') && err.message.includes('not_found')) {
-        return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+      if (err.message.includes('policy') && err.message.includes(db.NOT_FOUND)) {
+        return res.status(404).send({ error: `policy_id ${policy_id} ${db.NOT_FOUND}` })
       }
       if (err.message.includes('Cannot re-publish existing policy')) {
         return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
@@ -214,17 +223,21 @@ function api(app: express.Express): express.Express {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
+    log.info('putting a policy')
+    log.info(policy)
 
     if (details) {
+      log.info('details of failure', details)
       return res.status(400).send(details)
     }
 
     try {
-      await db.editPolicy(policy)
+      const result = await db.editPolicy(policy)
+      log.info('edit result', result)
       return res.status(200).send({ result: `successfully edited policy ${policy}` })
     } catch (err) {
-      if (err.message.includes('not_found')) {
-        return res.status(404).send({ error: 'not_found' })
+      if (err.message.includes(db.NOT_FOUND)) {
+        return res.status(404).send({ error: db.NOT_FOUND })
       }
       if (err.message.includes('Cannot edit published policy')) {
         return res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
@@ -260,7 +273,11 @@ function api(app: express.Express): express.Express {
       }
     } catch (err) {
       await log.error('failed to read one policy', err)
-      res.status(404).send({ result: 'not found' })
+      if (err.message.includes(db.NOT_FOUND)) {
+        res.status(404).send({ result: 'not found' })
+      } else {
+        res.status(500).send(new ServerError(err))
+      }
     }
   })
 

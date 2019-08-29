@@ -31,6 +31,7 @@ import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
+  POLICY4_JSON,
   POLICY_UUID,
   POLICY2_UUID,
   GEOGRAPHY_UUID,
@@ -145,35 +146,22 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all active policies', done => {
-    request
-      .get(`/policies`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back all policies response:', body)
-        test.value(body.policies.length).is(1) // only one should be currently valid
-        test.value(body.policies[0].policy_id).is(POLICY_UUID)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
-        done(err)
-      })
-  })
-
-  it('read back all policies', async () => {
+  it('read back all published policies, and only published policies', async () => {
+    console.log('wtf wtf')
     await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: veniceSpecialOpsZone })
     await db.writePolicy(POLICY2_JSON)
     await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)
     await db.publishPolicy(POLICY3_JSON.policy_id)
+    await db.writePolicy(POLICY4_JSON)
+
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('read back all policies response:', body)
+        console.log('read back all policies response:', body.policies)
         test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
         // TODO verify contents
@@ -188,7 +176,6 @@ describe('Tests app', () => {
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('read back all policies response:', body)
         test.value(body.policies.length).is(1) // only one
         test.value(body.policies[0].policy_id).is(POLICY2_UUID)
         test.value(result).hasHeader('content-type', APP_JSON)

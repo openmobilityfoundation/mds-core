@@ -62,6 +62,8 @@ type ClientType = 'writeable' | 'readonly'
 let writeableCachedClient: MDSPostgresClient | null = null
 let readOnlyCachedClient: MDSPostgresClient | null = null
 
+const NOT_FOUND = 'not_found'
+
 async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
   const { PG_NAME, PG_USER, PG_PASS, PG_PORT, PG_MIGRATIONS = 'false' } = env
   let PG_HOST: string | undefined
@@ -1068,9 +1070,9 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     const { rows } = await client.query(sql, values)
     if (rows.length === 0) {
       if (params && params.geography_id) {
-        throw new Error(`geography ${params.geography_id} not_found`)
+        throw new Error(`geography ${params.geography_id} ${NOT_FOUND}`)
       } else {
-        throw new Error(`geographies not_found`)
+        throw new Error(`geographies ${NOT_FOUND}`)
       }
     }
     return rows
@@ -1101,7 +1103,7 @@ async function isGeographyPublished(geography_id: UUID) {
     throw err
   })
   if (result.rows.length === 0) {
-    throw new Error(`geography_id ${geography_id} not_found`)
+    throw new Error(`geography_id ${geography_id} ${NOT_FOUND}`)
   }
   log.info('is geography published', geography_id, result.rows[0].read_only)
   return Boolean(result.rows[0].read_only)
@@ -1171,6 +1173,7 @@ async function readPolicies(params?: {
   start_date?: Timestamp
   end_date?: Timestamp
   get_unpublished?: boolean
+  get_published?: boolean
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -1181,23 +1184,48 @@ async function readPolicies(params?: {
   let sql = `select * from ${schema.TABLE.policies}`
   const conditions = []
   const vals = new SqlVals()
-  if (params && params.policy_id) {
-    conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
-  }
 
-  if (params && params.get_unpublished) {
-    conditions.push(`policy_json->>'publish_date' IS NULL`)
+  if (params) {
+    if (params.policy_id) {
+      conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
+    }
+    if (params.get_unpublished) {
+      conditions.push(`policy_json->>'publish_date' IS NULL`)
+    }
+
+    if (params.get_published) {
+      conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
+    }
+
+    if (params.start_date) {
+      conditions.push(`policy_json->>'start_date' >= '${params.start_date}'`)
+    }
+
+    if (params.end_date) {
+      conditions.push(`policy_json->>'end_date' <= '${params.end_date}'`)
+    }
   }
 
   if (conditions.length) {
     sql += ` WHERE ${conditions.join(' AND ')}`
   }
   const values = vals.values()
+  log.info('readpolicies sql', sql, values)
   const res = await client.query(sql, values)
-  if (res.rows.length === 0 && params && params.policy_id) {
-    throw new Error('policy not_found')
-  }
   return res.rows.map(row => row.policy_json)
+}
+
+async function readPolicy(policy_id: UUID): Promise<Policy> {
+  const client = await getReadOnlyClient()
+
+  const sql = `select * from ${schema.TABLE.policies} where policy_id = '${policy_id}'`
+  log.info('readPolicy', sql)
+  const res = await client.query(sql)
+  if (res.rows.length === 1) {
+    return res.rows[0].policy_json
+  }
+  await log.info(`readPolicy db failed for ${policy_id}: rows=${res.rows.length}`)
+  throw new Error(`policy_id ${policy_id} not found`)
 }
 
 async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
@@ -1231,7 +1259,10 @@ async function editPolicy(policy: Policy) {
     throw new Error('Cannot edit published policy')
   }
 
-  await readPolicies({ policy_id, get_unpublished: true })
+  const result = await readPolicies({ policy_id, get_unpublished: true })
+  if (result.length === 0) {
+    throw new Error(`${NOT_FOUND}`)
+  }
 
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.TABLE.policies} SET policy_json=$1 WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
@@ -1589,6 +1620,7 @@ export = {
   isGeographyPublished,
   editGeography,
   readPolicies,
+  readPolicy,
   writePolicy,
   editPolicy,
   deletePolicy,
@@ -1615,5 +1647,6 @@ export = {
   getEventsLast24HoursPerProvider,
   readUnprocessedStatusChangeEvents,
   readEventsWithTelemetry,
-  readTripIds
+  readTripIds,
+  NOT_FOUND
 }
