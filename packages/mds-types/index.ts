@@ -372,6 +372,7 @@ export interface BBox {
 export type BoundingBox = [[number, number], [number, number]]
 
 export interface Provider {
+  provider_id: UUID
   provider_name: string
   url?: string
   mds_api_url?: string

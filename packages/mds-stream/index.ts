@@ -114,7 +114,15 @@ const STREAM_MAXLEN: { [S in Stream]: number } = {
 
 async function getClient() {
   if (!cachedClient) {
-    const { REDIS_HOST: host = 'localhost', REDIS_PORT: port = 6379 } = process.env
+    const { REDIS_HOST, REDIS_PORT } = process.env
+    const { host = 'localhost', port = 6379 } = { host: REDIS_HOST, port: REDIS_PORT }
+    if (!REDIS_PORT) {
+      logger.info(`no redis port found, falling back to ${port}`)
+    }
+    if (!REDIS_HOST) {
+      logger.info(`no redis host found, falling back to ${host}`)
+    }
+
     logger.info(`connecting to redis on ${host}:${port}`)
     cachedClient = redis.createClient(Number(port), host)
     cachedClient.on('error', async err => {

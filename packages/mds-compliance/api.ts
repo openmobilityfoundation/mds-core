@@ -72,7 +72,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'invalid provider_id', provider_id)
+            await log.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -122,7 +122,9 @@ function api(app: express.Express): express.Express {
     if (!isUUID(policy_uuid)) {
       res.status(400).send({ err: 'bad_param' })
     } else {
-      const {start_date, end_date} = query_end_date ? {end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365)} : {end_date: now() + days(365), start_date: now() - days(365)}
+      const { start_date, end_date } = query_end_date
+        ? { end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365) }
+        : { end_date: now() + days(365), start_date: now() - days(365) }
       try {
         const all_policies = await db.readPolicies({ start_date, end_date })
         const policy = compliance_engine.filterPolicies(all_policies).find(p => {
