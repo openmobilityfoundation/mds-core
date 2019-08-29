@@ -166,6 +166,9 @@ function api(app: express.Express): express.Express {
     }
     try {
       const policies = await db.readPolicies({ start_date, get_published, get_unpublished })
+
+      // Let's not worry about filtering for just active policies at the moment.
+
       /*
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
