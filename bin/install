@@ -7,7 +7,7 @@ defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
 defaultBootstrap=${MDS_BOOTSTRAP:-helm,istio}
 defaultInstall=${MDS_INSTALL:-helm,istio,mds}
 defaultTest=${MDS_TEST:-unit,integration}
-defaultUninstall=${MDS_UNINSTALL:-mds,istio,helm}
+defaultUninstall=${MDS_UNINSTALL:-bookinfo,logging,mds,istio,helm}
 defaultForward=${MDS_FORWARD:-default}
 defaultToken=${MDS_TOKEN:-dashboard}
 defaultReinstall=${MDS_REINSTALL:-helm,istio,mds}
@@ -28,14 +28,36 @@ usage: $(basename ${0}) [commands]
 commands:
   bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
   build                                               : build project
-  install[:helm,dashboard,istio,logging,mds]          : install specified components; default: ${defaultInstall}
-  forward[:default,kube-system,istio-system]          : regisgter service host names in the provided namespace(s); default: ${defaultForward}
+  install[:{app[,{app}]}]                             : install specified applications; default: ${defaultInstall}
+    helm
+    dashboard
+    istio
+    mds
+    logging
+    bookinfo
+  forward[:{app[,{app}]}]                             : regisgter service host names in the provided namespace(s); default: ${defaultForward}
+    default
+    kube-system
+    istio-system
+    bookinfo-app
   unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
   cli:[postgresql,redis]                              : create a cli console for the provided service
-  uninstall[:mds,logging,istio,dashboard,helm]        : uninstall specified components; default: ${defaultUninstall}
-  reinstall[:helm,dashboard,istio,logging,mds]        : reinstall specified components; default: ${defaultReinstall}
+  uninstall[:{app[,{app}]}]                           : uninstall specified applications; default: ${defaultUninstall}
+    helm
+    dashboard
+    istio
+    mds
+    logging
+    bookinfo
+  reinstall[:{app[,{app}]}]                           : reinstall specified applications; default: ${defaultReinstall}
+    helm
+    dashboard
+    istio
+    mds
+    logging
+    bookinfo
   help                                                : help message
 
 example:
@@ -123,7 +145,7 @@ kind: ClusterRoleBinding
 metadata:
   name: admin-user
 roleRef:
-  apiGroup: rbac.authorization.k8s.io
+  apiGroup: rbac.authorization.k=8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
@@ -131,8 +153,6 @@ subjects:
   name: admin-user
   namespace: kube-system
 EOF
-  # kubectl port-forward $(kubectl get pods -n=kube-system |
-  #   grep kubernetes-dashboard | cut -d' ' -f1) 8443:8443 -n=kube-system &
 }
 
 installIstio() {
@@ -145,20 +165,21 @@ installIstio() {
 
   ${istioPath}/bin/istioctl verify-install || warn "istio verify installation failure"
 
-  [[ $(kubectl get namespace istio-system) ]] || {
+  [[ $(kubectl get namespace istio-system 2>/dev/null) ]] || {
     kubectl create namespace istio-system
+    # todo: make kialia|jaeger|grapha install optional
     helm template ${istioPath}/install/kubernetes/helm/istio-init \
       --name istio-init \
       --namespace istio-system | \
       kubectl apply -f -
-
-    # todo: fix
-    # [ "$(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l)" -eq "23" ] || \
-    #   usage "istio installation failure"
+    # todo: make check worok
+    # (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
+    #   echo "istio successfully installed" || usage "istio instllation failure"
 
     helm template ${istioPath}/install/kubernetes/helm/istio \
       --name istio \
       --namespace istio-system \
+      --set tracing.enabled=true \
       --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
       kubectl apply -f -
     kubectl label namespaces default istio-injection=enabled
@@ -173,6 +194,17 @@ installMds() {
   # todo: don't install if secret exists
   kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
   helm install --name mds ./charts/mds
+}
+
+installBookinfo() {
+  istioPath=${tools}/istio-${istio}
+
+  [[ $(kubectl get namespace bookinfo-app 2>/dev/null) ]] || {
+    kubectl create namespace bookinfo-app
+    kubectl label namespaces bookinfo-app istio-injection=enabled
+    kubectl apply -n bookinfo-app -f ${istioPath}/samples/bookinfo/platform/kube/bookinfo.yaml
+    kubectl apply -n bookinfo-app -f ${istioPath}/samples/bookinfo/networking/destination-rule-all.yaml
+  }
 }
 
 forward() {
@@ -220,6 +252,16 @@ cliPostgresql() {
 cliRedis() {
   # note: assumes `kubefwd svc -n default` is running
   redis-cli -u redis://mds-redis-master:6379/0
+}
+
+uninstalllNamespaces() {
+  for ns in ${@}; do
+    kubectl delete namespace ${ns}
+  done
+}
+
+uninstallBookinfo() {
+  uninstalllNamespaces bookinfo-app
 }
 
 uninstallMds() {
