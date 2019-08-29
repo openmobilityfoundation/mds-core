@@ -64,11 +64,12 @@ example:
   % ./bin/$(basename ${0}) bootstrap build install:mds forward test:integration
 
 applications:
-  http://kubernetes-dashboard                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
+  https://kubernetes-dashboard                        : kubernetes dashboard; see https://github.com/kubernetes/dashboard
   http://kibana:5601                                  : kibana; see https://www.elastic.co/products/kibana
   http://prometheus:9090                              : prometheus; see https://prometheus.io
   http://tracing                                      : jaeger; see https://www.jaegertracing.io
   http://kiali:20001                                  : kiali; see https://www.kiali.io
+  http://productpage:9080                             : bookinfo; see https://istio.io/docs/examples/bookinfo/
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
@@ -104,9 +105,9 @@ bootstrap() {
 }
 
 build()  {
-  yarn
-  yarn build
-  yarn image
+  for c in clean "" build image; do
+    yarn ${c}
+  done
 }
 
 installHelm() {
@@ -273,15 +274,17 @@ uninstallLogging() {
 }
 
 uninstallIstio() {
-  istioPath=${tools}/istio-${istio}
+  [[ $(kubectl get namespace istio-system 2>/dev/null) ]] && {
+    istioPath=${tools}/istio-${istio}
 
-  helm template ${istioPath}/install/kubernetes/helm/istio \
-    --name istio \
-    --namespace istio-system \
-    --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
-      kubectl delete -f -
-  kubectl delete namespace istio-system
-  kubectl delete -f ${istioPath}/install/kubernetes/helm/istio-init/files
+    helm template ${istioPath}/install/kubernetes/helm/istio \
+      --name istio \
+      --namespace istio-system \
+      --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+        kubectl delete -f -
+    kubectl delete namespace istio-system
+    kubectl delete -f ${istioPath}/install/kubernetes/helm/istio-init/files
+  }
 }
 
 uninstallDashboard() {
