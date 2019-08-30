@@ -14,7 +14,6 @@ spec:
     protocol: TCP
   location: MESH_EXTERNAL
 ---
-{{- end }}
 {{- if .Values.postgresql.hostReader }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
@@ -31,7 +30,9 @@ spec:
   location: MESH_EXTERNAL
 ---
 {{- end }}
-{{- if .Values.redis.host }}
+{{- end }}
+{{- if .Values.redis.internal }}
+{{- else }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
@@ -47,7 +48,8 @@ spec:
   location: MESH_EXTERNAL
 ---
 {{- end }}
-{{- if .Values.fluentd.output.host }}
+{{- if .Values.fluentbit.internal }}
+{{- else }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
@@ -55,10 +57,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:
-  - {{ .Values.fluentd.output.host }}
+  - {{ .Values.fluentbit.backend.es.host }}
   ports:
-  - number: {{ .Values.fluentd.output.port }}
-    name: tcp
-    protocol: TCP
+  - number: {{ .Values.fluentbit.backend.es.port }}
+    name: https
+    protocol: HTTPS
   location: MESH_EXTERNAL
+  resolution: DNS
 {{- end }}
