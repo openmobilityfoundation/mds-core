@@ -6,7 +6,7 @@ metadata:
   name: {{ $api.name }}
   labels:
     app: {{ $api.name }}
-  namespace: {{ $.Values.namespace }}
+  namespace: {{ $.Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -53,13 +53,13 @@ spec:
             value: {{ $.Values.postgresql.port | quote }}
           - name: PG_HOST
             {{- if $.Values.postgresql.internal }}
-            value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
             {{- else }}
             value: {{ $.Values.postgresql.host }}
             {{- end }}
           - name: PG_HOST_READER
             {{- if $.Values.postgresql.internal }}
-            value: mds-postgresql.{{ $.Values.namespace }}.svc.cluster.local
+            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
             {{- else }}
             {{- if $.Values.postgresql.hostReader }}
             value: {{ $.Values.postgresql.hostReader }}
@@ -71,7 +71,7 @@ spec:
           {{- if $api.useCache }}
           - name: REDIS_HOST
             {{- if $.Values.redis.internal }}
-            value: mds-redis-master.{{ $.Values.namespace }}.svc.cluster.local
+            value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
             {{- else }}
             value: {{ $.Values.redis.host }}
             {{- end }}
@@ -82,6 +82,6 @@ spec:
           - name: CE_NAME
             value: {{ $api.name }}
           - name: SINK
-            value: http://default-broker.{{ $.Values.namespace }}.svc.cluster.local
+            value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
           {{- end }}
 {{- end }}

@@ -1,9 +1,10 @@
-{{- if .Values.postgresql.host }}
+{{- if .Values.postgresql.internal }}
+{{- else }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: pg-rw-external
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   hosts:
   - {{ $.Values.postgresql.host }}
@@ -19,7 +20,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: pg-ro-external
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   hosts:
   - {{ $.Values.postgresql.hostReader }}
@@ -35,7 +36,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: redis-external
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   hosts:
   - {{ .Values.redis.host }}
@@ -50,8 +51,8 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: fluentd-output
-  namespace: {{ .Values.namespace }}
+  name: fluentbit-output
+  namespace: {{ .Release.Namespace }}
 spec:
   hosts:
   - {{ .Values.fluentd.output.host }}

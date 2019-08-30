@@ -8,6 +8,7 @@ dependencies:
     repository: alias:stable
     version: 6.2.1
     condition: postgresql.internal
-#  - name: fluentd
-#    version: 2.0.2
-#    repository: alias:stable
+  - name: fluent-bit
+    alias: fluentbit
+    version: 2.7.0
+    repository: alias:stable

@@ -3,7 +3,7 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ $api.name }}-hpa
-  namespace: {{ $.Values.namespace }}
+  namespace: {{ $.Release.Namespace }}
   annotations:
     metric-config.object.istio-requests-total.prometheus/per-replica: "true"
     metric-config.object.istio-requests-total.prometheus/query: |
@@ -11,14 +11,14 @@ metadata:
         rate(
           istio_requests_total{
             destination_workload="{{ $api.name }}",
-            destination_workload_namespace="{{ $.Values.namespace }}"
+            destination_workload_namespace="{{ $.Release.Namespace }}"
           }[1m]
         )
       ) /
       count(
         count(
           container_memory_usage_bytes{
-            namespace="{{ $.Values.namespace }}",
+            namespace="{{ $.Release.Namespace }}",
             pod_name=~"{{ $api.name }}.*"
           }
         ) by (pod_name)
