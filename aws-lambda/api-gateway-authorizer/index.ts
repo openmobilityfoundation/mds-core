@@ -5,12 +5,13 @@ import { verify } from 'jsonwebtoken'
 import { Handler, CustomAuthorizerResult } from 'aws-lambda'
 import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 
+// These environment variables MUST be set
 const {
-  AUTH0_CLIENT_PUBLIC_KEY = '',
-  AUTH0_API_IDENTIFIER = '',
-  TOKEN_ISSUER = '',
-  TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id',
-  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email'
+  TOKEN_PUBLIC_KEY = '', // X.509 Certificate for verifying signature
+  TOKEN_AUDIENCE = '', // Space delimited list of audiences
+  TOKEN_ISSUER = '', // Token issuer
+  TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id', // Custom provider_id claim in access token
+  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email' // Custom user_email claim in access token
 } = process.env
 
 type AuthResponseContext = Required<Omit<ApiAuthorizerClaims, 'principalId'>>
@@ -49,8 +50,8 @@ export const handler: Handler<
     const [scheme, token] = event.authorizationToken.split(' ')
     if (scheme.toLowerCase() === 'bearer' && token) {
       try {
-        const decoded = verify(token, AUTH0_CLIENT_PUBLIC_KEY.split('\\n').join('\n'), {
-          audience: AUTH0_API_IDENTIFIER,
+        const decoded = verify(token, TOKEN_PUBLIC_KEY.split('\\n').join('\n'), {
+          audience: TOKEN_AUDIENCE.split(' '),
           issuer: TOKEN_ISSUER
         })
         if (typeof decoded === 'object') {
@@ -58,10 +59,11 @@ export const handler: Handler<
             sub: principalId,
             scope,
             [TOKEN_PROVIDER_ID_CLAIM]: provider_id,
-            [TOKEN_USER_EMAIL_CLAIM]: user_email
+            [TOKEN_USER_EMAIL_CLAIM]: user_email,
+            email // Support getting email from previously issued id_tokens
           } = decoded as JWT
           console.log('Authorization Succeeded:', event.methodArn, principalId)
-          callback(null, generatePolicy(principalId, { provider_id, scope, user_email }))
+          callback(null, generatePolicy(principalId, { provider_id, scope, user_email: user_email || email }))
           return
         }
       } catch (err) {
