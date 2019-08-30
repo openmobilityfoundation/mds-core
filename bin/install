@@ -39,6 +39,7 @@ commands:
     default
     kube-system
     istio-system
+    logging
     bookinfo-app
   unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
@@ -110,6 +111,21 @@ build()  {
   done
 }
 
+beerMe() {
+  sleepTime=${1:-5}
+  cntr=0
+
+  echo -ne "waiting "
+
+  while (( cntr < ${sleepTime} )); do
+    echo -ne "\xF0\x9F\x8D\xBA "
+    sleep 3
+    cntr=$(($cntr + 3))
+  done
+
+  echo ""
+}
+
 installHelm() {
   if ! hash helm 2>/dev/null ; then
     case "${os}" in
@@ -122,7 +138,7 @@ installHelm() {
   helm repo add stable https://kubernetes-charts.storage.googleapis.com
   helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
   helm repo add elastic https://helm.elastic.co
-  helm add add istio.io https://storage.googleapis.com/istio-release/releases/1.2.5/charts
+  helm repo add istio.io https://storage.googleapis.com/istio-release/releases/1.2.5/charts
 
   for d in $(find ./charts -type d -depth 1); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -146,7 +162,7 @@ kind: ClusterRoleBinding
 metadata:
   name: admin-user
 roleRef:
-  apiGroup: rbac.authorization.k=8s.io
+  apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
@@ -173,9 +189,9 @@ installIstio() {
       --name istio-init \
       --namespace istio-system | \
       kubectl apply -f -
-    # todo: make check worok
-    # (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
-    #   echo "istio successfully installed" || usage "istio instllation failure"
+    beerMe
+    (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
+      echo "istio successfully installed" || usage "istio instllation failure"
 
     helm template ${istioPath}/install/kubernetes/helm/istio \
       --name istio \
@@ -183,7 +199,7 @@ installIstio() {
       --set tracing.enabled=true \
       --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
       kubectl apply -f -
-    kubectl label namespaces default istio-injection=enabled
+    kubectl label namespace default istio-injection=enabled --overwrite=true
   }
 }
 
@@ -199,19 +215,22 @@ installMds() {
 
 installBookinfo() {
   istioPath=${tools}/istio-${istio}
+  namespace=bookinfo-app
 
-  [[ $(kubectl get namespace bookinfo-app 2>/dev/null) ]] || {
-    kubectl create namespace bookinfo-app
-    kubectl label namespaces bookinfo-app istio-injection=enabled
-    kubectl apply -n bookinfo-app -f ${istioPath}/samples/bookinfo/platform/kube/bookinfo.yaml
-    kubectl apply -n bookinfo-app -f ${istioPath}/samples/bookinfo/networking/destination-rule-all.yaml
+  [[ $(kubectl get namespace ${namespace} 2>/dev/null) ]] || {
+    kubectl create namespace ${namespace}
+    kubectl label namespace ${namespace} istio-injection=enabled --overwrite=true
+    kubectl apply -n ${namespace} -f ${istioPath}/samples/bookinfo/platform/kube/bookinfo.yaml
+    kubectl apply -n ${namespace} -f ${istioPath}/samples/bookinfo/networking/destination-rule-all.yaml
   }
 }
 
 forward() {
   # todo: not entirely sure backgrounding is optimal
+  # todo: forward:logging(kibana),...
   for n in ${@}; do
-    sudo --background kubefwd services -n ${n}
+    echo "sudo --background kubefwd services -n ${n}"
+#    echo "sudo --background kubefwd services -n ${n}" -l app=${a}
   done
 }
 
@@ -257,7 +276,9 @@ cliRedis() {
 
 uninstalllNamespaces() {
   for ns in ${@}; do
-    kubectl delete namespace ${ns}
+    [[ $(kubectl get namespace ${1} 2>/dev/null) ]] && {
+      kubectl delete namespace ${ns}
+    }
   done
 }
 
