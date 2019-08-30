@@ -165,7 +165,7 @@ function api(app: express.Express): express.Express {
       return
     }
     try {
-      const policies = await db.readPolicies({ start_date, get_published, get_unpublished })
+      const policies = await db.readPolicies({ get_published, get_unpublished })
 
       // Let's not worry about filtering for just active policies at the moment.
 
