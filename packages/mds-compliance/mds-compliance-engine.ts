@@ -304,7 +304,15 @@ function processPolicy(
       }
       return compliance_acc
     }, [])
-    return { policy, compliance, total_violations: Object.keys(overflowVehiclesMap).length }
+
+    const overflowedVehicles = Object.keys(overflowVehiclesMap)
+
+    return {
+      policy,
+      compliance,
+      total_violations: overflowedVehicles.length,
+      vehicles_in_violation: overflowedVehicles
+    }
   }
 }
 
