@@ -8,7 +8,7 @@ import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 // These environment variables MUST be set
 const {
   TOKEN_PUBLIC_KEY = '', // X.509 Certificate for verifying signature
-  TOKEN_AUDIENCE = '', // Space delimited list of audiences
+  TOKEN_AUDIENCES = '', // Space delimited list of audiences
   TOKEN_ISSUER = '', // Token issuer
   TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id', // Custom provider_id claim in access token
   TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email' // Custom user_email claim in access token
@@ -51,7 +51,7 @@ export const handler: Handler<
     if (scheme.toLowerCase() === 'bearer' && token) {
       try {
         const decoded = verify(token, TOKEN_PUBLIC_KEY.split('\\n').join('\n'), {
-          audience: TOKEN_AUDIENCE.split(' '),
+          audience: TOKEN_AUDIENCES.split(' '),
           issuer: TOKEN_ISSUER
         })
         if (typeof decoded === 'object') {
