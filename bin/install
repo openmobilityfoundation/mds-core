@@ -37,12 +37,13 @@ commands:
     mds
     logging
     bookinfo
-  forward[:{app[,{app}]}]                             : regisgter service host names in the provided namespace(s); default: ${defaultForward}
+  forward[:{namespace[,{namespace}]}]                 : regisgter service host names in the provided namespace(s); default: ${defaultForward}
     default
     kube-system
     istio-system
     logging
     bookinfo-app
+  forward[:{namepace[:{app[,{app}]}]}                 : regisgter service host names in the provided application(s) namespace
   unforward                                           : deregisgter service host names
   test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
@@ -234,15 +235,23 @@ installBookinfo() {
 forward() {
   check ${FUNCNAME[0]}
 
-  # todo: forward:logging(kibana),...
-  for n in ${@}; do
-    echo "sudo --background kubefwd services -n ${n}"
-#    echo "sudo --background kubefwd services -n ${n}" -l app=${a}
+  for ns in ${@}; do
+    if [[ ${ns} == *":"* ]]; then
+      app=$(echo "${ns}" | cut -d ':' -f 2)
+      n=$(echo "${ns}" | cut -d ':' -f 1)
+      for a in $(echo ${app} | tr ',' ' '); do
+        sudo --background kubefwd services -n ${n} -l app=${a}
+      done
+    else
+      for n in $(echo ${ns} | tr ',' ' '); do
+        sudo --background kubefwd services -n ${n}
+      done
+    fi
   done
 }
 
 unforward() {
-  # todo: support kill-by-service
+  # todo: support kill-by-service/app
   sudo pkill kubefwd
 }
 
@@ -358,14 +367,14 @@ uninstallHelm() {
 check() {
   case "${1}" in
     build | testIntegration)
-      [ hash yarn > /dev/null 2>&1 ] || bootstrap;;
+      hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
     installDashboard | installIstio | installLogging | installMds | testUnit | \
       uninstallMds | uninstallLogging | uninstallIstio)
-      [ hash helm > /dev/null 2>&1 ] || installHelm;;
-    forward) [ hash kubefwd  > /dev/null 2>&1 ] || bootstrap;;
-    cliPostgresql) [ hash pgcli  > /dev/null 2>&1 ] || bootstrap;;
-    cliRedis) [ hash redis-cli  > /dev/null 2>&1 ] || bootstrap;;
+      hash helm > /dev/null 2>&1 || installHelm;;
+    forward) hash kubefwd  > /dev/null 2>&1 || bootstrap;;
+    cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
+    cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
   esac
 }
 
@@ -376,7 +385,7 @@ invoke() {
 }
 
 normalize() {
-  echo "$(echo ${1} | cut -d ':' -f 2 | tr ',' ' ')"
+  echo ${1} | cut -d ':' -f 2 | tr ',' ' '
 }
 
 if [[ ${#} != 0 ]]; then
@@ -385,9 +394,9 @@ if [[ ${#} != 0 ]]; then
       bootstrap) bootstrap || warn  "${arg} failure";;
       build) build || usage "${arg} failure";;
       install) arg="${defaultInstall}";&
-      install:*) invoke install "$(normalize ${arg})";;
+      install:*) echo "invoke install \"$(normalize ${arg})\"";;
       forward) arg="${defaultForward}";&
-      forward:*) forward "$(normalize ${arg})";;
+      forward:*) forward "$(echo ${arg} | cut -d ':' -f 2-)";;
       unforward) unforward;;
       test) arg="${defaultTest}";&
       test:*) invoke test "$(normalize ${arg})";;
