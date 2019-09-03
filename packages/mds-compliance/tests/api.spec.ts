@@ -200,6 +200,31 @@ const COUNT_POLICY_JSON_4: Policy = {
   ]
 }
 
+const COUNT_POLICY_JSON_5: Policy = {
+  name: 'Prohibited Dockless Zones',
+  rules: [
+    {
+      name: 'Prohibited Dockless Zones',
+      maximum: 0,
+      rule_id: '8ad39dc3-005b-4348-9d61-c830c54c161b',
+      statuses: {
+        trip: [],
+        reserved: [],
+        available: []
+      },
+      rule_type: 'count',
+      geographies: ['c0591267-bb6a-4f28-a612-ff7f4a8f8b2a'],
+      vehicle_types: ['bicycle', 'scooter']
+    }
+  ],
+  end_date: null,
+  policy_id: '25851571-b53f-4426-a033-f375be0e7957',
+  start_date: 1552678594428,
+  description:
+    'Prohibited areas for dockless vehicles within the City of Los Angeles for the LADOT Dockless On-Demand Personal Mobility Program',
+  prev_policies: null
+}
+
 const TIME_POLICY_UUID = 'a2c9a65f-fd85-463e-9564-fc95ea473f7d'
 
 const TIME_POLICY_JSON: Policy = {
@@ -1084,6 +1109,35 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end(err => {
+          done(err)
+        })
+    })
+  })
+
+  describe('Verifies max 0 count policy', () => {
+    before('Setup max 0 count policy', async () => {
+      const geography = { geography_id: 'c0591267-bb6a-4f28-a612-ff7f4a8f8b2a', geography_json: restrictedAreas }
+
+      const devices: Device[] = makeDevices(15, now())
+      const events = makeEventsWithTelemetry(devices, now() - 10, LA_BEACH, 'trip_start')
+
+      const seedData = { devices, events, telemetry: [] }
+
+      await Promise.all([db.initialize(), cache.initialize()])
+      await Promise.all([cache.seed(seedData), db.seed(seedData)])
+      await db.writeGeography(geography)
+      await db.writePolicy(COUNT_POLICY_JSON_5)
+      await db.publishPolicy(COUNT_POLICY_JSON_5.policy_id)
+    })
+
+    it('Verifies max 0 single rule policy operates as expected', done => {
+      request
+        .get(`/snapshot/${COUNT_POLICY_JSON_5.policy_id}`)
+        .set('Authorization', PROVIDER_AUTH_2)
+        .expect(200)
+        .end((err, result) => {
+          test.assert(result.body.total_violations === 15)
+          test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })
