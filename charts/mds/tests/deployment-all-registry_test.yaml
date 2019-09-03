@@ -5,6 +5,8 @@ tests:
   - it: all docs
     set:
       registry: foo-registry
+    release:
+      namespace: mds
     asserts:
       - hasDocuments:
           count: 7

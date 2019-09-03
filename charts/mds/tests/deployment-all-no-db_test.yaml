@@ -5,6 +5,8 @@ tests:
   - it: all docs
     values:
       - ./values-no-db.yaml
+    release:
+      namespace: mds
     asserts:
       - hasDocuments:
           count: 7

@@ -5,9 +5,11 @@ tests:
   - it: all docs
     values:
       - ./values-namespace.yaml
+    release:
+      namespace: mds
     asserts:
       - hasDocuments:
           count: 7
       - equal:
           path: metadata.namespace
-          value: my-namespace
+          value: mds

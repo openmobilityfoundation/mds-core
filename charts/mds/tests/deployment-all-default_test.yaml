@@ -3,6 +3,8 @@ templates:
   - deployment.yaml
 tests:
   - it: all docs
+    release:
+      namespace: mds
     asserts:
       - hasDocuments:
           count: 7

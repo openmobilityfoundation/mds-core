@@ -5,6 +5,8 @@ tests:
   - it: doc 4
     values:
       - ./values-no-events.yaml
+    release:
+      namespace: mds
     asserts:
       - isAPIVersion:
           of: apps/v1
@@ -22,7 +24,7 @@ tests:
         documentIndex: 4
       - equal:
           path: metadata.namespace
-          value: default
+          value: mds
         documentIndex: 4
       - equal:
           path: spec.replicas
@@ -126,7 +128,7 @@ tests:
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[5].value
-          value: mds-postgresql.default.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[6].name
@@ -134,7 +136,7 @@ tests:
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[6].value
-          value: mds-postgresql.default.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[7].name
@@ -142,7 +144,7 @@ tests:
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: mds-redis-master.default.svc.cluster.local
+          value: mds-redis-master.mds.svc.cluster.local
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[8].name

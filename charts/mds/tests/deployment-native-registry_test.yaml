@@ -5,6 +5,8 @@ tests:
   - it: doc 6
     set:
       registry: foo-registry
+    release:
+      namespace: mds
     asserts:
       - isAPIVersion:
           of: apps/v1
@@ -22,7 +24,7 @@ tests:
         documentIndex: 6
       - equal:
           path: metadata.namespace
-          value: default
+          value: mds
         documentIndex: 6
       - equal:
           path: spec.replicas
@@ -125,7 +127,7 @@ tests:
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[5].value
-          value: mds-postgresql.default.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[6].name
@@ -133,7 +135,7 @@ tests:
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[6].value
-          value: mds-postgresql.default.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[7].name
@@ -141,7 +143,7 @@ tests:
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: mds-redis-master.default.svc.cluster.local
+          value: mds-redis-master.mds.svc.cluster.local
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[8].name
@@ -165,5 +167,5 @@ tests:
         documentIndex: 6
       - equal:
           path: spec.template.spec.containers[0].env[10].value
-          value: http://default-broker.default.svc.cluster.local
+          value: http://default-broker.mds.svc.cluster.local
         documentIndex: 6

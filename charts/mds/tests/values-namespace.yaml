@@ -55,7 +55,7 @@ apis:
     useCache: true
     useEvents: true
     jwtAudience:
-namespace: my-namespace
+namespace: mds
 registry:
 useLatestImage: true
 jwt:

@@ -3,6 +3,8 @@ templates:
   - deployment.yaml
 tests:
   - it: doc 1
+    release:
+      namespace: mds
     values:
       - ./values-namespace.yaml
     asserts:
@@ -22,7 +24,7 @@ tests:
         documentIndex: 1
       - equal:
           path: metadata.namespace
-          value: my-namespace
+          value: mds
         documentIndex: 1
       - equal:
           path: spec.replicas
@@ -126,7 +128,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[5].value
-          value: mds-postgresql.my-namespace.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[6].name
@@ -134,7 +136,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[6].value
-          value: mds-postgresql.my-namespace.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[7].name
@@ -142,7 +144,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: mds-redis-master.my-namespace.svc.cluster.local
+          value: mds-redis-master.mds.svc.cluster.local
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[8].name
@@ -166,5 +168,5 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[10].value
-          value: http://default-broker.my-namespace.svc.cluster.local
+          value: http://default-broker.mds.svc.cluster.local
         documentIndex: 1
