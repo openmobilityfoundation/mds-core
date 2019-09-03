@@ -18,6 +18,7 @@ import { api as agency } from '@mds-core/mds-agency'
 import { api as provider } from '@mds-core/mds-provider'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
+import stream from '@mds-core/mds-stream'
 import supertest from 'supertest'
 import { now } from '@mds-core/mds-utils'
 import {
@@ -251,29 +252,11 @@ const TIME_POLICY_JSON: Policy = {
 
 const APP_JSON = 'application/json; charset=utf-8'
 describe('Tests Compliance API:', () => {
-  afterEach(done => {
-    agency_request
-      .get('/test/shutdown')
-      .set('Authorization', ADMIN_AUTH)
-      .expect(200)
-      .end(err => {
-        done(err)
-      })
+  afterEach(async () => {
+    await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
   })
 
   describe('Misc DB Tests: ', () => {
-    it('verifies unable to access test if not scoped', done => {
-      request
-        .get('/test/')
-        .set('Authorization', AUTH_ADMIN_ONLY_SCOPE)
-        .expect(403)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.string(result.body.result).contains('no test access without test:all scope')
-          done(err)
-        })
-    })
-
     it('verifies unable to access admin if not scoped', done => {
       request
         .get('/admin/')
@@ -289,46 +272,36 @@ describe('Tests Compliance API:', () => {
 
   describe('Singular Policy API Sanity Checks: ', () => {
     beforeEach(done => {
-      request
-        .get('/test/initialize')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(() => {
-          agency_request
-            .post('/vehicles')
-            .set('Authorization', ADMIN_AUTH)
-            .send(TEST_VEHICLE)
-            .expect(201)
-            .end(() => {
-              agency_request
-                .post(`/vehicles/${DEVICE_UUID}/event`)
-                .set('Authorization', ADMIN_AUTH)
-                .send({
-                  event_type: 'trip_start',
-                  trip_id: TRIP_UUID,
-                  telemetry: TEST_TELEMETRY,
-                  timestamp: testTimestamp++
-                })
-                .expect(201)
-                .end(async () => {
-                  const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
-                  await db.writeGeography(geography)
-                  await db.writePolicy(COUNT_POLICY_JSON)
-                  await db.publishPolicy(COUNT_POLICY_UUID)
-                  done()
-                })
-            })
-        })
+      Promise.all([db.initialize(), cache.initialize(), stream.initialize()]).then(() => {
+        agency_request
+          .post('/vehicles')
+          .set('Authorization', ADMIN_AUTH)
+          .send(TEST_VEHICLE)
+          .expect(201)
+          .end(() => {
+            agency_request
+              .post(`/vehicles/${DEVICE_UUID}/event`)
+              .set('Authorization', ADMIN_AUTH)
+              .send({
+                event_type: 'trip_start',
+                trip_id: TRIP_UUID,
+                telemetry: TEST_TELEMETRY,
+                timestamp: testTimestamp++
+              })
+              .expect(201)
+              .end(async () => {
+                const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+                await db.writeGeography(geography)
+                await db.writePolicy(COUNT_POLICY_JSON)
+                await db.publishPolicy(COUNT_POLICY_UUID)
+                done()
+              })
+          })
+      })
     })
 
-    afterEach(done => {
-      agency_request
-        .get('/test/shutdown')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(err => {
-          done(err)
-        })
+    afterEach(async () => {
+      await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
     })
 
     it('Verifies initial policy hit OK', done => {
@@ -373,25 +346,16 @@ describe('Tests Compliance API:', () => {
       devices.forEach(device => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
-      request
-        .get('/test/initialize')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(() => {
-          provider_request
-            .post('/test/seed')
-            .set('Authorization', PROVIDER_AUTH)
-            .send({ devices, events, telemetry })
-            .expect(201)
-            .end(async (err, result) => {
-              test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
-              await db.writeGeography(geography)
-              await db.writePolicy(COUNT_POLICY_JSON)
-              await db.publishPolicy(COUNT_POLICY_UUID)
-              done(err)
-            })
+      const seedData = { devices, events, telemetry }
+      Promise.all([db.initialize(), cache.initialize(), stream.initialize()]).then(() => {
+        Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
+          const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+          await db.writeGeography(geography)
+          await db.writePolicy(COUNT_POLICY_JSON)
+          await db.publishPolicy(COUNT_POLICY_UUID)
+          done()
         })
+      })
     })
 
     it('Verifies count in compliance', done => {
@@ -406,14 +370,8 @@ describe('Tests Compliance API:', () => {
         })
     })
 
-    afterEach(done => {
-      agency_request
-        .get('/test/shutdown')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(err => {
-          done(err)
-        })
+    afterEach(async () => {
+      await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
     })
   })
 
@@ -490,25 +448,16 @@ describe('Tests Compliance API:', () => {
       devices.forEach(device => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
-      request
-        .get('/test/initialize')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(() => {
-          provider_request
-            .post('/test/seed')
-            .set('Authorization', PROVIDER_AUTH)
-            .send({ devices, events, telemetry })
-            .expect(201)
-            .end(async (err, result) => {
-              test.value(result).hasHeader('content-type', APP_JSON)
-              const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
-              await db.writeGeography(geography)
-              await db.writePolicy(COUNT_POLICY_JSON)
-              await db.publishPolicy(COUNT_POLICY_UUID)
-              await done(err)
-            })
+      const seedData = { devices, events, telemetry }
+      Promise.all([db.initialize(), cache.initialize(), stream.initialize()]).then(() => {
+        Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
+          const geography = { geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }
+          await db.writeGeography(geography)
+          await db.writePolicy(COUNT_POLICY_JSON)
+          await db.publishPolicy(COUNT_POLICY_UUID)
+          done()
         })
+      })
     })
 
     it('Verifies violation of count compliance (over)', done => {
@@ -524,14 +473,8 @@ describe('Tests Compliance API:', () => {
         })
     })
 
-    afterEach(done => {
-      agency_request
-        .get('/test/shutdown')
-        .set('Authorization', ADMIN_AUTH)
-        .expect(200)
-        .end(err => {
-          done(err)
-        })
+    afterEach(async () => {
+      await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
     })
   })
 
