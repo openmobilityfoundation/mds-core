@@ -225,7 +225,13 @@ installIstio() {
 }
 
 installLogging() {
-  helm install --name logging --namespace logging ./charts/logging
+  check ${FUNCNAME[0]}
+
+  [[ $(kubectl get namespace logging > /dev/null 2>&1) ]] || {
+    kubectl create namespace logging
+    kubectl label namespace logging istio-injection=enabled --overwrite=true
+    helm install --name logging --namespace logging ./charts/logging
+  }
 }
 
 installMds() {
@@ -233,6 +239,8 @@ installMds() {
 
   [[ $(kubectl get namespace mds > /dev/null 2>&1) ]] || {
     kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
+    kubectl create namespace mds
+    kubectl label namespace mds istio-injection=enabled --overwrite=true
     helm install --name mds --namespace mds ./charts/mds
   }
 }
@@ -257,7 +265,7 @@ forward() {
       app=$(echo "${ns}" | cut -d '/' -f 2)
       n=$(echo "${ns}" | cut -d '/' -f 1)
       for a in $(echo ${app} | tr ',' ' '); do
-        sudo --background kubefwd services -n ${n} -l app=${a}
+        echo "sudo --background kubefwd services -n ${n} -l app=${a}"
       done
     else
       for n in $(echo ${ns} | tr ',' ' '); do
