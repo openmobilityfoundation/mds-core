@@ -1115,7 +1115,7 @@ describe('Tests Compliance API:', () => {
   })
 
   describe('Verifies max 0 count policy', () => {
-    before('boop', async () => {
+    before('Setup max 0 count policy', async () => {
       const geography = { geography_id: 'c0591267-bb6a-4f28-a612-ff7f4a8f8b2a', geography_json: restrictedAreas }
 
       const devices: Device[] = makeDevices(15, now())
