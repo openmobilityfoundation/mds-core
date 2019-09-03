@@ -76,7 +76,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_BAD_PROVIDER_ONLY)
         .send(policy)
-        .expect(403)
+        .expect(401)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)

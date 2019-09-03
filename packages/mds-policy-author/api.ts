@@ -129,7 +129,7 @@ function api(app: express.Express): express.Express {
             }
 
             if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)) {
-              return res.status(403).send({ result: `no access without correct provider_id` })
+              return res.status(401).send({ result: 'Unauthorized' })
             }
           }
         } else {
