@@ -310,21 +310,17 @@ app() {
 
 cliPostgresql() {
   check ${FUNCNAME[0]}
-
   pgcli postgres://mdsadmin@mds-postgresql:5432/mds
 }
 
 cliRedis() {
   check ${FUNCNAME[0]}
-
   redis-cli -u redis://mds-redis-master:6379/0
 }
 
 uninstalllNamespaces() {
   for ns in ${@}; do
-    [[ $(kubectl get namespace ${1} > /dev/null 2>&1) ]] && {
-      kubectl delete namespace ${ns}
-    }
+    [[ $(kubectl get namespace ${1} > /dev/null 2>&1) ]] && kubectl delete namespace ${ns}
   done
 }
 
@@ -393,7 +389,7 @@ invoke() {
 }
 
 normalize() {
-  echo ${1} | cut -d ':' -f 2 | tr ',' ' '
+  echo ${1} | cut -d ':' -f 2- | tr ',' ' '
 }
 
 if [[ ${#} != 0 ]]; then
