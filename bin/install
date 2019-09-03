@@ -1,19 +1,32 @@
 #!/usr/bin/env bash
 
-os=${MDS_OS:-`uname`}
-tools=$(dirname ${0})/../tools
-istio=${ISTIO_VERSION:-1.2.5}
-istioPath=${MDS_ISTIO_PATH:-${tools}/istio-${istio}}
-defaultToolchain=${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}
-defaultBootstrap=${MDS_BOOTSTRAP:-helm,istio}
-defaultInstall=${MDS_INSTALL:-helm,istio,mds}
-defaultTest=${MDS_TEST:-unit,integration}
-defaultUninstall=${MDS_UNINSTALL:-bookinfo,logging,mds,istio,helm}
-defaultForward=${MDS_FORWARD:-default}
-defaultToken=${MDS_TOKEN:-dashboard}
-defaultReinstall=${MDS_REINSTALL:-helm,istio,mds}
-defaultPause=${MDS_PAUSE:-5}
-OSX=Darwin
+declare -A oses=(
+  ["osx"]="Darwin")
+declare -A defaults=(
+  ["os"]="${MDS_OS:-`uname`}"
+  ["workdir"]="$(dirname ${0})/../tools"
+  ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}"
+  ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
+  ["install"]="${MDS_INSTALL:-helm,istio,mds}"
+  ["test"]="${MDS_TEST:-unit,integration}"
+  ["uninstall"]="${MDS_UNINSTALL:-bookinfo,logging,mds,istio,helm}"
+  ["forward"]="${MDS_FORWARD:-default}"
+  ["token"]="${MDS_TOKEN:-dashboard}"
+  ["reinstall"]="${MDS_REINSTALL:-helm,istio,mds}"
+  ["pause"]="${MDS_PAUSE:-5}"
+  ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${istio}}")
+declare -A repos=(
+  ["stable"]="https://kubernetes-charts.storage.googleapis.com"
+  ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
+  ["elastic"]="https://helm.elastic.co"
+  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.2.5/charts")
+declare -A apps=(
+  ["dashboard"]="https://kubernetes-dashboard"
+  ["kibana"]="http://kibana:5601"
+  ["prometheus"]="http://prometheus:9090"
+  ["jaeger"]="http://tracing"
+  ["kiali"]="http://kiali:20001"
+  ["bookinfo"]="http://productpage:9080")
 red=`tput setaf 9`
 reset=`tput sgr0`
 
@@ -28,51 +41,45 @@ usage() {
 usage: $(basename ${0}) [commands]
 
 commands:
-  bootstrap                                           : install dependencies; default: ${defaultToolchain},${defaultBootstrap}
+  bootstrap                                           : install dependencies; default: ${defaults[tools]},${defaults[bootstrap]}
   build                                               : build project
-  install[:{app[,{app}]}]                             : install specified applications; default: ${defaultInstall}
+  install[:{service[,{service}]}]                     : install specified service; default: ${defaults[install]}
+  forward[:{namespace[,{namespace}]}]                 : regisgter service host names in the provided namespace(s); default: ${defaults[forward]}
+  forward[:{namepace[/{service[,{service}]}]}         : regisgter service host names in the provided service(s) namespace
+  unforward                                           : deregisgter service host names
+  test[:unit,integration]                             : preform specified tests; default: ${defaults[test]}
+  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${defaults[token]}
+  open:[app[,{app}]]                                  : opens a browser for the provided application(s)
+  cli:[postgresql,redis]                              : create a cli console for the provided service
+  uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${defaults[uninstall]}
+  reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${defaults[reinstall]}
+  help                                                : help message
+
+where namespace in:
+    default
+    kube-system
+    istio-system
+    logging
+    bookinfo-app
+
+where service in:
     helm
     dashboard
     istio
     mds
     logging
     bookinfo
-  forward[:{namespace[,{namespace}]}]                 : regisgter service host names in the provided namespace(s); default: ${defaultForward}
-    default
-    kube-system
-    istio-system
-    logging
-    bookinfo-app
-  forward[:{namepace[:{app[,{app}]}]}                 : regisgter service host names in the provided application(s) namespace
-  unforward                                           : deregisgter service host names
-  test[:unit,integration]                             : preform specified tests; default: ${defaultTest}
-  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for osx; default: ${defaultToken}
-  open:[app[,{app}]]                                  : opens a browser for the provided application(s)
+
+where app in:
     dashboard                                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
     kibana                                            : kibana; see https://www.elastic.co/products/kibana
     prometheus                                        : prometheus; see https://prometheus.io
     jaeger                                            : jaeger; see https://www.jaegertracing.io
     kiali                                             : kiali; see https://www.kiali.io
     bookinfo                                          : bookinfo; see https://istio.io/docs/examples/bookinfo
-  cli:[postgresql,redis]                              : create a cli console for the provided service
-  uninstall[:{app[,{app}]}]                           : uninstall specified applications; default: ${defaultUninstall}
-    helm
-    dashboard
-    istio
-    mds
-    logging
-    bookinfo
-  reinstall[:{app[,{app}]}]                           : reinstall specified applications; default: ${defaultReinstall}
-    helm
-    dashboard
-    istio
-    mds
-    logging
-    bookinfo
-  help                                                : help message
 
 example:
-  % ./bin/$(basename ${0}) bootstrap build install:mds test:integration forward:kube-system:dashboard open:dashhboard
+  % ./bin/$(basename ${0}) bootstrap build install:dashboard,mds forward:kube-system/dashboard open:dashhboard test:integration
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
@@ -87,13 +94,13 @@ EOF
 }
 
 bootstrap() {
-  case "${os}" in
-    ${OSX})
+  case "${defaults[os]}" in
+    ${oses[osx]})
       if ! hash brew > /dev/null 2>&1; then
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       fi
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
-    *) usage "unsupported os: ${os}";;
+    *) usage "unsupported os: ${defaults[os]}";;
   esac
 
   # todo: boostrap all-the-things
@@ -104,7 +111,7 @@ bootstrap() {
     (( $? != 0 )) && yarn add -W ${y}
   done
 
-  invoke install "$(normalize ${defaultBootstrap})"
+  invoke install "$(normalize ${defaults[bootstrap]})"
 }
 
 build()  {
@@ -116,7 +123,7 @@ build()  {
 }
 
 pause() {
-  sleepTime=${1:-${defaultPause}}
+  sleepTime=${1:-${defaults[pause]}}
   cntr=0
 
   echo -ne "waiting "
@@ -132,17 +139,17 @@ pause() {
 
 installHelm() {
   if ! hash helm > /dev/null 2>&1 ; then
-    case "${os}" in
-      ${OSX}) brew install kubernetes-helm;;
-      *) usage "unsupported os: ${os}";;
+    case "${defaults[os]}" in
+      ${oses[osx]}) brew install kubernetes-helm;;
+      *) usage "unsupported os: ${defaults[os]}";;
     esac
   fi
 
   helm init || usage "helm intialization failure"
-  helm repo add stable https://kubernetes-charts.storage.googleapis.com
-  helm repo add banzaicloud-stable https://kubernetes-charts.banzaicloud.com
-  helm repo add elastic https://helm.elastic.co
-  helm repo add istio.io https://storage.googleapis.com/istio-release/releases/1.2.5/charts
+
+  for r in "${!repos[@]}"; do
+    helm repo add ${r} ${repos[${r}]}
+  done
 
   for d in $(find ./charts -type d -depth 1); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -157,6 +164,7 @@ installDashboard() {
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f charts/dashboard
   helm install --name dahsboard ./charts/dashboard
+  # fixme: validate 'install:dashboard' and remove
 #   cat <<EOF | kubectl apply -f - || echo "kubernetes dashboard installation failure"
 # apiVersion: v1
 # kind: ServiceAccount
@@ -182,17 +190,17 @@ installDashboard() {
 installIstio() {
   check ${FUNCNAME[0]}
 
-  if [ ! -d ${istioPath} ]; then
-    mkdir -p ${tools}
-    (cd ${tools}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${istio} sh -)
+  if [ ! -d ${defaults[istio]} ]; then
+    mkdir -p ${defaults[workdir]}
+    (cd ${defaults[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${istio} sh -)
   fi
 
-  ${istioPath}/bin/istioctl verify-install || warn "istio verify installation failure"
+  ${defaults[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
 
   [[ $(kubectl get namespace istio-system > /dev/null 2>&1) ]] || {
     kubectl create namespace istio-system
     # todo: make kialia|jaeger|grapha install optional
-    helm template ${istioPath}/install/kubernetes/helm/istio-init \
+    helm template ${defaults[istio]}/install/kubernetes/helm/istio-init \
       --name istio-init \
       --namespace istio-system | \
       kubectl apply -f -
@@ -200,25 +208,27 @@ installIstio() {
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || usage "istio instllation failure"
 
-    helm template ${istioPath}/install/kubernetes/helm/istio \
+    helm template ${defaults[istio]}/install/kubernetes/helm/istio \
       --name istio \
       --namespace istio-system \
       --set tracing.enabled=true \
-      --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --values ${defaults[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
       kubectl apply -f -
     kubectl label namespace default istio-injection=enabled --overwrite=true
   }
 }
 
 installLogging() {
-  helm install --name logging ./charts/logging
+  helm install --name logging --namespace logging ./charts/logging
 }
 
 installMds() {
   check ${FUNCNAME[0]}
-  # todo: don't create if secret exists
-  kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
-  helm install --name mds --namespace mds ./charts/mds
+
+  [[ $(kubectl get namespace mds > /dev/null 2>&1) ]] || {
+    kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
+    helm install --name mds --namespace mds ./charts/mds
+  }
 }
 
 installBookinfo() {
@@ -227,18 +237,19 @@ installBookinfo() {
   [[ $(kubectl get namespace bookinfo-app > /dev/null 2>&1) ]] || {
     kubectl create namespace bookinfo-app
     kubectl label namespace bookinfo-app istio-injection=enabled --overwrite=true
-    kubectl apply -n bookinfo-app -f ${istioPath}/samples/bookinfo/platform/kube/bookinfo.yaml
-    kubectl apply -n bookinfo-app -f ${istioPath}/samples/bookinfo/networking/destination-rule-all.yaml
+    kubectl apply -n bookinfo-app -f ${defaults[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml
+    kubectl apply -n bookinfo-app -f ${defaults[istio]}/samples/bookinfo/networking/destination-rule-all.yaml
   }
 }
 
 forward() {
   check ${FUNCNAME[0]}
 
+  # todo: cleanup
   for ns in ${@}; do
-    if [[ ${ns} == *":"* ]]; then
-      app=$(echo "${ns}" | cut -d ':' -f 2)
-      n=$(echo "${ns}" | cut -d ':' -f 1)
+    if [[ ${ns} == *"/"* ]]; then
+      app=$(echo "${ns}" | cut -d '/' -f 2)
+      n=$(echo "${ns}" | cut -d '/' -f 1)
       for a in $(echo ${app} | tr ',' ' '); do
         sudo --background kubefwd services -n ${n} -l app=${a}
       done
@@ -258,7 +269,7 @@ unforward() {
 testUnit() {
   check ${FUNCNAME[0]}
 
-  # todo: make mds unit tests work
+  # fixme: make mds unit tests work
   # yarn test
 
   for c in $(find ./charts -type d -depth 1); do
@@ -275,8 +286,8 @@ testIntegration() {
 }
 
 tokenDashboard() {
-  case "${os}" in
-    ${OSX}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+  case "${defaults[os]}" in
+    ${oses[osx]}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
       pbcopy;;
     *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
@@ -284,31 +295,28 @@ tokenDashboard() {
   esac
 }
 
-openApplication() {
+app() {
   for a in ${1}; do
-    case "${a}" in
-      dashboard) echo "open https://kubernetes-dashboard";;
-      kibana) echo "open http://kibana:5601";;
-      prometheus) echo "open http://prometheus:9090";;
-      jaeger) echo "open http://tracing";;
-      kiali) echo "open http://kiali:20001";;
-      bookinfo) echo "open http://productpage:9080";;
-      *) usage "unknown application: ${a}";;
-    esac
+    if [ ${apps[${a}]+_} ]; then
+      case "${defaults[os]}" in
+        ${oses[osx]}) echo "open ${apps[${a}]}";;
+        *) usage "unsupported os: ${defaults[os]}";;
+      esac
+    else
+      usage "unknown application: ${a}"
+    fi
   done
 }
 
 cliPostgresql() {
   check ${FUNCNAME[0]}
 
-  # note: assumes `kubefwd svc -n default` is running
   pgcli postgres://mdsadmin@mds-postgresql:5432/mds
 }
 
 cliRedis() {
   check ${FUNCNAME[0]}
 
-  # note: assumes `kubefwd svc -n default` is running
   redis-cli -u redis://mds-redis-master:6379/0
 }
 
@@ -337,13 +345,13 @@ uninstallLogging() {
 uninstallIstio() {
   [[ $(kubectl get namespace istio-system > /dev/null 2>&1) ]] && {
     check ${FUNCNAME[0]}
-    helm template ${istioPath}/install/kubernetes/helm/istio \
+    helm template ${defaults[istio]}/install/kubernetes/helm/istio \
       --name istio \
       --namespace istio-system \
-      --values ${istioPath}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --values ${defaults[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
         kubectl delete -f -
     kubectl delete namespace istio-system
-    kubectl delete -f ${istioPath}/install/kubernetes/helm/istio-init/files
+    kubectl delete -f ${defaults[istio]}/install/kubernetes/helm/istio-init/files
   }
 }
 
@@ -358,9 +366,9 @@ uninstallDashboard() {
 }
 
 uninstallHelm() {
-  case "${os}" in
-    ${OSX}) brew uninstall kubernetes-helm;;
-    *) usage "unsupported os: ${os}";;
+  case "${defaults[os]}" in
+    ${oses[osx]}) brew uninstall kubernetes-helm;;
+    *) usage "unsupported os: ${defaults[os]}";;
   esac
 }
 
@@ -393,20 +401,20 @@ if [[ ${#} != 0 ]]; then
     case "${arg}" in
       bootstrap) bootstrap || warn  "${arg} failure";;
       build) build || usage "${arg} failure";;
-      install) arg="${defaultInstall}";&
-      install:*) echo "invoke install \"$(normalize ${arg})\"";;
-      forward) arg="${defaultForward}";&
+      install) arg="${defaults[install]}";&
+      install:*) invoke install "$(normalize ${arg})";;
+      forward) arg="${defaults[forward]}";&
       forward:*) forward "$(echo ${arg} | cut -d ':' -f 2-)";;
       unforward) unforward;;
-      test) arg="${defaultTest}";&
+      test) arg="${defaults[test]}";&
       test:*) invoke test "$(normalize ${arg})";;
-      token) arg="${defaultToken}";&
+      token) arg="${defaults[token]}";&
       token:*) invoke token "$(normalize ${arg})";;
-      open:*) openApplication "$(normalize ${arg})";;
+      open:*) app "$(normalize ${arg})";;
       cli:*) invoke cli "$(normalize ${arg})";;
-      uninstall) arg="${defaultUninstall}";&
+      uninstall) arg="${defaults[uninstall]}";&
       uninstall:*) invoke uninstall "$(normalize ${arg})";;
-      reinstall) arg="${defaultReinstall}";&
+      reinstall) arg="${defaults[reinstall]}";&
       reinstall:*)
         invoke uninstall "$(normalize ${arg})"
         invoke install "$(normalize ${arg})";;
