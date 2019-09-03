@@ -4,7 +4,7 @@ declare -A oses=(
   ["osx"]="Darwin")
 declare -A defaults=(
   ["os"]="${MDS_OS:-`uname`}"
-  ["workdir"]="$(dirname ${0})/../tools"
+  ["workdir"]="/tmp/mds/tools"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-helm,istio,mds}"
@@ -14,7 +14,8 @@ declare -A defaults=(
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-helm,istio,mds}"
   ["pause"]="${MDS_PAUSE:-5}"
-  ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${istio}}")
+  ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
+  ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${defaults[istioVersion]}}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
@@ -27,10 +28,15 @@ declare -A apps=(
   ["jaeger"]="http://tracing"
   ["kiali"]="http://kiali:20001"
   ["bookinfo"]="http://productpage:9080")
+yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
 
 warn() {
+  echo "${yellow}warn: ${1}${reset}"
+}
+
+error() {
   echo "${red}warn: ${1}${reset}"
 }
 
@@ -151,11 +157,11 @@ installHelm() {
     helm repo add ${r} ${repos[${r}]}
   done
 
-  for d in $(find ./charts -type d -depth 1); do
+  for d in $(find ./charts -type d -depth 1 > /dev/null 2>&1); do
     (cd charts/$(basename ${d}); helm dependency update)
   done
 
-  helm plugin install https://github.com/lrills/helm-unittest
+  [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 }
 
 installDashboard() {
@@ -192,7 +198,7 @@ installIstio() {
 
   if [ ! -d ${defaults[istio]} ]; then
     mkdir -p ${defaults[workdir]}
-    (cd ${defaults[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${istio} sh -)
+    (cd ${defaults[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${defaults[istioVersion]} sh -)
   fi
 
   ${defaults[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
@@ -273,7 +279,7 @@ testUnit() {
   # yarn test
 
   for c in $(find ./charts -type d -depth 1); do
-    helm unittest ./charts/${c}
+    helm unittest ./charts/$(basename ${c})
   done
 }
 
@@ -391,6 +397,8 @@ invoke() {
 normalize() {
   echo ${1} | cut -d ':' -f 2- | tr ',' ' '
 }
+
+[[ ! -d ${defaults[workdir]} ]] && mkdir -p ${defaults[workdir]}
 
 if [[ ${#} != 0 ]]; then
   for arg in "${@}"; do

@@ -216,6 +216,3 @@ cypress/plugins
 cypress/screenshots
 cypress/support
 cypress/videos
-
-# tools
-tools
