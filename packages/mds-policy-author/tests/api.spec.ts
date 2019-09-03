@@ -411,6 +411,16 @@ describe('Tests app', () => {
           done(policies_err)
         })
     })
+
+    it('throws an exception if both get_unpublished and get_published are submitted', done => {
+      request
+        .get(`/policies?start_date=${now() - days(365)}&get_unpublished=true&get_published=true`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(400)
+        .end(async policies_err => {
+          done(policies_err)
+        })
+    })
   })
 
   describe('Geography endpoint tests', () => {

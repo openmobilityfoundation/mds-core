@@ -24,7 +24,8 @@ import {
   days,
   yesterday,
   csv,
-  NotFoundError
+  NotFoundError,
+  BadParamsError
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
@@ -1193,6 +1194,10 @@ async function readPolicies(params?: {
 
     if (params.get_published) {
       conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
+    }
+
+    if (params.get_unpublished && params.get_published) {
+      throw new BadParamsError('cannot have get_unpublished and get_published both be true')
     }
 
     if (params.start_date) {

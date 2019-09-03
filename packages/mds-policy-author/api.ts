@@ -20,7 +20,7 @@ import Joi from '@hapi/joi'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, ServerError, UUID_REGEX, NotFoundError, isUUID } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError, UUID_REGEX, NotFoundError, isUUID, BadParamsError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import { PolicyApiRequest, PolicyApiResponse } from './types'
@@ -172,6 +172,12 @@ function api(app: express.Express): express.Express {
       res.status(200).send({ policies })
     } catch (err) {
       await log.error('failed to read policies', err)
+      if (err instanceof BadParamsError) {
+        res.status(400).send({
+          result:
+            'Cannot set both get_unpublished and get_published to be true. If you want all policies, set both params to false or do not send them.'
+        })
+      }
       res.status(404).send({
         result: 'not found'
       })
