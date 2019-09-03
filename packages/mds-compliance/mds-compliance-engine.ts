@@ -245,7 +245,8 @@ function processPolicy(
                     match_instance: MatchedVehicle,
                     i: number
                   ) => {
-                    const maximum = rule.maximum || Number.POSITIVE_INFINITY
+                    // If the rule has a defined maximum, use it, even if 0
+                    const maximum = rule.maximum == null ? Number.POSITIVE_INFINITY : rule.maximum
                     if (maximum && i < maximum) {
                       if (overflowVehiclesMap[match_instance.device_id]) {
                         delete overflowVehiclesMap[match_instance.device_id]
@@ -304,7 +305,15 @@ function processPolicy(
       }
       return compliance_acc
     }, [])
-    return { policy, compliance, total_violations: Object.keys(overflowVehiclesMap).length }
+
+    const overflowedVehicles = Object.keys(overflowVehiclesMap)
+
+    return {
+      policy,
+      compliance,
+      total_violations: overflowedVehicles.length,
+      vehicles_in_violation: overflowedVehicles
+    }
   }
 }
 
