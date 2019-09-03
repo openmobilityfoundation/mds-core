@@ -1,0 +1,30 @@
+{
+  "name": "@container-images/mds-provider",
+  "version": "0.1.5",
+  "description": "AWS Lambda for MDS Provider API",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && docker build -t mds-provider:${npm_package_version} . && docker tag mds-provider:${npm_package_version} mds-provider:latest",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0",
+    "watch": "nodemon --watch '../../aws-lambda' --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && ts-node"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@container-images/env-inject": "^0.1.5",
+    "@mds-core/mds-api-server": "^0.1.5",
+    "@mds-core/mds-provider": "^1.0.5"
+  },
+  "license": "Apache-2.0"
+}
