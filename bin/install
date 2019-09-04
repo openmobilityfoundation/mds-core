@@ -5,7 +5,7 @@ declare -A oses=(
 declare -A defaults=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
-  ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,kubefwd,pgcli}"
+  ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-helm,istio,mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
@@ -22,12 +22,12 @@ declare -A repos=(
   ["elastic"]="https://helm.elastic.co"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.2.5/charts")
 declare -A apps=(
-  ["dashboard"]="https://kubernetes-dashboard"
-  ["kibana"]="http://kibana:5601"
-  ["prometheus"]="http://prometheus:9090"
-  ["jaeger"]="http://tracing"
-  ["kiali"]="http://kiali:20001"
-  ["bookinfo"]="http://productpage:9080")
+  ["dashboard"]="https://localhost:8443,kube-system,k8s-app,kubernetes-dashboard"
+  ["kibana"]="http://kibana:5601,logging,app"
+  ["prometheus"]="http://prometheus:9090,istio-system,app"
+  ["jaeger"]="http://tracing,istio-system,app,tracing"
+  ["kiali"]="http://kiali:20001,kube-system,app"
+  ["bookinfo"]="http://productpage:9080,booking,app")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -50,9 +50,8 @@ commands:
   bootstrap                                           : install dependencies; default: ${defaults[tools]},${defaults[bootstrap]}
   build                                               : build project
   install[:{service[,{service}]}]                     : install specified service; default: ${defaults[install]}
-  forward[:{namespace[,{namespace}]}]                 : regisgter service host names in the provided namespace(s); default: ${defaults[forward]}
-  forward[:{namepace[/{service[,{service}]}]}         : regisgter service host names in the provided service(s) namespace
-  unforward                                           : deregisgter service host names
+  forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${defaults[forward]}
+  unforward[:{app[,{app}]}]                           : deregister port-forwarding for the provided application(s)
   test[:unit,integration]                             : preform specified tests; default: ${defaults[test]}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${defaults[token]}
   open:[app[,{app}]]                                  : opens a browser for the provided application(s)
@@ -85,7 +84,7 @@ where app in:
     bookinfo                                          : bookinfo; see https://istio.io/docs/examples/bookinfo
 
 example:
-  % ./bin/$(basename ${0}) bootstrap build install:dashboard,mds forward:kube-system/dashboard open:dashhboard test:integration
+  % ./bin/$(basename ${0}) bootstrap build install:dashboard,mds forward:kube-system open:dashhboard test:integration
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
@@ -166,31 +165,11 @@ installHelm() {
 
 installDashboard() {
   check ${FUNCNAME[0]}
+  
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f charts/dashboard
   helm install --name dahsboard ./charts/dashboard
-  # fixme: validate 'install:dashboard' and remove
-#   cat <<EOF | kubectl apply -f - || echo "kubernetes dashboard installation failure"
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: admin-user
-#   namespace: kube-system
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRoleBinding
-# metadata:
-#   name: admin-user
-# roleRef:
-#   apiGroup: rbac.authorization.k8s.io
-#   kind: ClusterRole
-#   name: cluster-admin
-# subjects:
-# - kind: ServiceAccount
-#   name: admin-user
-#   namespace: kube-system
-# EOF
 }
 
 installIstio() {
@@ -256,28 +235,42 @@ installBookinfo() {
   }
 }
 
+get() {
+  v=$(echo ${1} | cut -sd ',' -f ${2})
+  [ ! -z "${v}" ] && echo ${v} || echo ${3}
+}
+
+portForward() {
+  ns=$(get ${1} 2)
+  k=$(get ${1} 3)
+  v=$(get ${1} 4 ${a})
+  app=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].metadata.name}')
+  p=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  echo "kubectl -n ${ns} port-forward ${app} ${p}:${p}"
+}
+
 forward() {
   check ${FUNCNAME[0]}
 
-  # todo: cleanup
-  for ns in ${@}; do
-    if [[ ${ns} == *"/"* ]]; then
-      app=$(echo "${ns}" | cut -d '/' -f 2)
-      n=$(echo "${ns}" | cut -d '/' -f 1)
-      for a in $(echo ${app} | tr ',' ' '); do
-        echo "sudo --background kubefwd services -n ${n} -l app=${a}"
-      done
+  for a in ${@}; do
+    if [ ${apps[${a}]+_} ]; then
+      exec $(portForward ${apps[${a}]}) &
     else
-      for n in $(echo ${ns} | tr ',' ' '); do
-        sudo --background kubefwd services -n ${n}
-      done
+      warn "unknown app: ${a}"
     fi
   done
 }
 
 unforward() {
-  # todo: support kill-by-service/app
-  sudo pkill kubefwd
+  [ ! -z "${@}" ] || ps -aef | grep -E 'kubectl.*port-forward' | grep -v grep | awk '{print $2}' | xargs kill -9
+
+  for a in ${@}; do
+    if [ ${apps[${a}]+_} ]; then
+      pkill $(portForward ${apps[${a}]})
+    else
+      warn "unknown app: ${a}"
+    fi
+  done
 }
 
 testUnit() {
@@ -313,7 +306,7 @@ app() {
   for a in ${1}; do
     if [ ${apps[${a}]+_} ]; then
       case "${defaults[os]}" in
-        ${oses[osx]}) echo "open ${apps[${a}]}";;
+        ${oses[osx]}) open $(get ${apps[${a}]} 1);;
         *) usage "unsupported os: ${defaults[os]}";;
       esac
     else
@@ -390,7 +383,7 @@ check() {
     installDashboard | installIstio | installLogging | installMds | testUnit | \
       uninstallMds | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
-    forward) hash kubefwd  > /dev/null 2>&1 || bootstrap;;
+    forward | open) ;;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
   esac
@@ -416,12 +409,15 @@ if [[ ${#} != 0 ]]; then
       install) arg="${defaults[install]}";&
       install:*) invoke install "$(normalize ${arg})";;
       forward) arg="${defaults[forward]}";&
-      forward:*) forward "$(echo ${arg} | cut -d ':' -f 2-)";;
+      # forward:*) forward "$(echo ${arg} | cut -d ':' -f 2-)";;
+      forward:*) forward "$(normalize ${arg})";;
       unforward) unforward;;
+      unforward:*) unforward "$(normalize ${arg})";;
       test) arg="${defaults[test]}";&
       test:*) invoke test "$(normalize ${arg})";;
       token) arg="${defaults[token]}";&
       token:*) invoke token "$(normalize ${arg})";;
+      open) usage "specify an application(s) to open";;
       open:*) app "$(normalize ${arg})";;
       cli:*) invoke cli "$(normalize ${arg})";;
       uninstall) arg="${defaults[uninstall]}";&
