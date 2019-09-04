@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 declare -A oses=(
-  ["osx"]="Darwin")
+  ["osx"]="Darwin"
+  ["linux"]="Linux")
 declare -A defaults=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
@@ -100,10 +101,11 @@ EOF
 
 bootstrap() {
   case "${defaults[os]}" in
-    ${oses[osx]})
+    ${oses[osx]} | ${oses[linux]})
       if ! hash brew > /dev/null 2>&1; then
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       fi
+	  #todo: consider inline brew installs, bash install hangs on linux
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
     *) usage "unsupported os: ${defaults[os]}";;
   esac
@@ -121,7 +123,7 @@ bootstrap() {
 
 build()  {
   check ${FUNCNAME[0]}
-
+  
   for c in clean "" build image; do
     yarn ${c}
   done
@@ -143,9 +145,11 @@ pause() {
 }
 
 installHelm() {
+  check ${FUNCNAME[0]}
+
   if ! hash helm > /dev/null 2>&1 ; then
     case "${defaults[os]}" in
-      ${oses[osx]}) brew install kubernetes-helm;;
+      ${oses[osx]} | ${oses[linux]}) brew install kubernetes-helm;;
       *) usage "unsupported os: ${defaults[os]}";;
     esac
   fi
@@ -155,8 +159,8 @@ installHelm() {
   for r in "${!repos[@]}"; do
     helm repo add ${r} ${repos[${r}]}
   done
-
-  for d in $(find ./charts -type d -depth 1 > /dev/null 2>&1); do
+  
+  for d in $(find ./charts -maxdepth 1 -type d); do
     (cd charts/$(basename ${d}); helm dependency update)
   done
 
