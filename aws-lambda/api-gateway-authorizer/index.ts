@@ -9,7 +9,7 @@ import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 const {
   AUTH0_PUBLIC_KEY = '', // X.509 Certificate from Auth0 for verifying JWT signature
   TOKEN_AUDIENCES = '', // Space delimited list of valid token audience (aud) values
-  TOKEN_ISSUER = '', // Valid token issuer (iss) value
+  TOKEN_ISSUERS = '', // Space delimited list of valid token issuer (iss) values
   TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id', // Custom provider_id claim in access token
   TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email' // Custom user_email claim in access token
 } = process.env
@@ -52,7 +52,7 @@ export const handler: Handler<
       try {
         const decoded = verify(token, AUTH0_PUBLIC_KEY.split('\\n').join('\n'), {
           audience: TOKEN_AUDIENCES.split(' '),
-          issuer: TOKEN_ISSUER
+          issuer: TOKEN_ISSUERS.split(' ')
         })
         if (typeof decoded === 'object') {
           const {
