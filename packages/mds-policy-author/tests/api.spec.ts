@@ -59,59 +59,13 @@ const AUTH_NON_PROVIDER = `basic ${Buffer.from(`'BOGUS_PROVIDER_ID_TO_BE_REPLACE
 const AUTH_ADMIN_ONLY = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${'admin:all'}`).toString('base64')}`
 
 describe('Tests app', () => {
-  describe('Test basic housekeeping', () => {
-    it('resets the db', done => {
-      request
-        .get('/test/initialize')
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('verifies unable to access test if not scoped', done => {
-      request
-        .get('/test/')
-        .set('Authorization', AUTH_ADMIN_ONLY)
-        .expect(403)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.string(result.body.result).contains('no test access without test:all scope')
-          done(err)
-        })
-    })
-
-    it('shuts things down', done => {
-      request
-        .get('/test/shutdown')
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-  })
-
   describe('Policy tests', () => {
-    before(done => {
-      request
-        .get('/test/initialize')
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .end(err => {
-          done(err)
-        })
+    before(async () => {
+      await db.initialize()
     })
 
-    after(done => {
-      request
-        .get('/test/shutdown')
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .end(err => {
-          done(err)
-        })
+    after(async () => {
+      await db.shutdown()
     })
 
     it('tries to post invalid policy', done => {
@@ -357,22 +311,12 @@ describe('Tests app', () => {
   })
 
   describe('Geography endpoint tests', () => {
-    before(done => {
-      request
-        .get('/test/initialize')
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .end(err => {
-          done(err)
-        })
+    before(async () => {
+      await db.initialize()
     })
 
-    after(done => {
-      request
-        .get('/test/shutdown')
-        .set('Authorization', AUTH_NON_PROVIDER)
-        .end(err => {
-          done(err)
-        })
+    after(async () => {
+      await db.shutdown()
     })
 
     it('creates one current geography', done => {

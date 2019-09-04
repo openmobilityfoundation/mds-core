@@ -16,7 +16,6 @@
 
 import express from 'express'
 import cache from '@mds-core/mds-cache'
-import stream from '@mds-core/mds-stream'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import {

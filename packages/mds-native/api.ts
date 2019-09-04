@@ -54,13 +54,7 @@ function api(app: express.Express): express.Express {
   app.use(async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     if (!(req.path.includes('/health') || req.path === '/')) {
       try {
-        if (res.locals.claims) {
-          // no test access without auth
-          const { scope = '' } = res.locals.claims
-          if (req.path.includes('/test/') && !scope.includes('test:all')) {
-            return res.status(403).send({ error: new AuthorizationError('invalid_scope', { scope }) })
-          }
-        } else {
+        if (!res.locals.claims) {
           return res.status(401).send({ error: new AuthorizationError('missing_claims') })
         }
       } catch (err) {
@@ -72,35 +66,6 @@ function api(app: express.Express): express.Express {
     next()
   })
   // ///////////////////// begin middleware ///////////////////////
-
-  // ///////////////////// begin test-only endpoints ///////////////////////
-
-  app.get(pathsFor('/test/initialize'), async (req: ApiRequest, res: ApiResponse) => {
-    try {
-      const kind = await db.initialize()
-      const result = `Database initialized (${kind})`
-      await logger.info(result)
-      // 200 OK
-      return res.status(200).send({ result })
-    } catch (err) {
-      /* istanbul ignore next */
-      return InternalServerError(req, res, err)
-    }
-  })
-
-  app.get(pathsFor('/test/shutdown'), async (req: ApiRequest, res: ApiResponse) => {
-    try {
-      await db.shutdown()
-      const result = 'Database shutdown'
-      await logger.info(result)
-      // 200 OK
-      return res.status(200).send({ result })
-    } catch (err) {
-      /* istanbul ignore next */
-      return InternalServerError(req, res, err)
-    }
-  })
-  // ///////////////////// end test-only endpoints ///////////////////////
 
   type NativeApiGetEventsCursor = Partial<{
     provider_id: UUID

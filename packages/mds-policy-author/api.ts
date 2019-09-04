@@ -109,13 +109,6 @@ function api(app: express.Express): express.Express {
         if (res.locals.claims) {
           const { scope } = res.locals.claims
 
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({ result: `no test access without test:all scope (${scope})` })
-            }
-          }
-
           // no admin access without auth
           if (req.path.includes('/admin/')) {
             if (!scope || !scope.includes('admin:all')) {
@@ -134,25 +127,6 @@ function api(app: express.Express): express.Express {
       await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
-  })
-
-  // HOUSEKEEPING
-  app.get(pathsFor('/test/initialize'), async (req, res) => {
-    try {
-      const kind = await Promise.all([db.initialize()])
-      return res.send({
-        result: `Policy initialized (${kind})`
-      })
-    } catch (err /* istanbul ignore next */) {
-      await log.error('initialize failed', err)
-      return res.status(500).send(new ServerError())
-    }
-  })
-
-  app.get(pathsFor('/test/shutdown'), async (req, res) => {
-    await Promise.all([db.shutdown()])
-    log.info('shutdown complete (in theory)')
-    return res.send({ result: 'cache/stream/db shutdown done' })
   })
 
   app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {

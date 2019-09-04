@@ -5,17 +5,10 @@
 /* eslint-disable promise/catch-or-return */
 /* eslint-disable promise/prefer-await-to-callbacks */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import {
-  PROVIDER_AUTH,
-  makeDevices,
-  makeEventsWithTelemetry,
-  makeTelemetryInArea,
-  PROVIDER_UUID
-} from '@mds-core/mds-test-data'
+import { makeDevices, makeEventsWithTelemetry, makeTelemetryInArea, PROVIDER_UUID } from '@mds-core/mds-test-data'
 
 import test from 'unit.js'
 import { api as agency } from '@mds-core/mds-agency'
-import { api as provider } from '@mds-core/mds-provider'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
 import stream from '@mds-core/mds-stream'
@@ -42,7 +35,6 @@ import { api } from '../api'
 
 const request = supertest(ApiServer(api))
 const agency_request = supertest(ApiServer(agency))
-const provider_request = supertest(ApiServer(provider))
 
 const PROVIDER_SCOPES = 'admin:all test:all'
 const PROVIDER_AUTH_2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`

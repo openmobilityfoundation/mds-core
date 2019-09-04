@@ -20,7 +20,7 @@ import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, ServerError } from '@mds-core/mds-utils'
+import { now, pathsFor } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -35,13 +35,6 @@ function api(app: express.Express): express.Express {
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
         if (res.locals.claims) {
           const { scope } = res.locals.claims
-
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({ result: `no test access without test:all scope (${scope})` })
-            }
-          }
 
           // no admin access without auth
           if (req.path.includes('/admin/')) {
@@ -200,24 +193,6 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/schema/policy'), (req, res) => {
     res.status(200).send(joiToJsonSchema(policySchema))
-  })
-
-  app.get(pathsFor('/test/initialize'), async (req, res) => {
-    try {
-      const kind = await Promise.all([db.initialize()])
-      res.send({
-        result: `Policy initialized (${kind})`
-      })
-    } catch (err) {
-      await log.error('initialize failed', err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  app.get(pathsFor('/test/shutdown'), async (req, res) => {
-    await Promise.all([db.shutdown()])
-    log.info('shutdown complete (in theory)')
-    res.send({ result: 'cache/stream/db shutdown done' })
   })
 
   return app

@@ -150,14 +150,8 @@ before(done => {
   })
 })
 
-after(done => {
-  request
-    .get('/test/shutdown')
-    .set('Authorization', AUTH)
-    .expect(200)
-    .end(err => {
-      done(err)
-    })
+after(async () => {
+  await Promise.all([db.shutdown(), cache.shutdown()])
 })
 
 describe('Tests API', () => {
