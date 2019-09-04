@@ -59,11 +59,10 @@ export const handler: Handler<
             sub: principalId,
             scope,
             [TOKEN_PROVIDER_ID_CLAIM]: provider_id,
-            [TOKEN_USER_EMAIL_CLAIM]: user_email,
-            email // Support getting email from previously issued id_tokens
+            [TOKEN_USER_EMAIL_CLAIM]: user_email
           } = decoded as JWT
           console.log('Authorization Succeeded:', event.methodArn, principalId)
-          callback(null, generatePolicy(principalId, { provider_id, scope, user_email: user_email || email }))
+          callback(null, generatePolicy(principalId, { provider_id, scope, user_email }))
           return
         }
       } catch (err) {

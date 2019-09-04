@@ -26,10 +26,9 @@ export const AuthorizationHeaderApiAuthorizer: ApiAuthorizer = req => {
           scope,
           [TOKEN_PROVIDER_ID_CLAIM]: provider_id,
           [TOKEN_USER_EMAIL_CLAIM]: user_email,
-          email,
           ...claims
         } = decode(token)
-        return { principalId, scope, provider_id, user_email: user_email || email, ...claims }
+        return { principalId, scope, provider_id, user_email, ...claims }
       },
       basic: () => {
         const [principalId, scope] = Buffer.from(token, 'base64')
