@@ -20,7 +20,7 @@ import Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
 import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, NotFoundError } from '@mds-core/mds-utils'
+import { now, pathsFor, NotFoundError, isUUID } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -108,6 +108,9 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
+    if (!isUUID(policy_id)) {
+      res.status(400).send({ error: 'bad_param' })
+    }
     try {
       const policy = await db.readPolicy(policy_id)
       res.status(200).send(policy)
@@ -124,6 +127,9 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/geographies/:geography_id'), async (req, res) => {
     log.info('read geo', JSON.stringify(req.params))
     const { geography_id } = req.params
+    if (!isUUID(geography_id)) {
+      res.status(400).send({ error: 'bad_param' })
+    }
     log.info('read geo', geography_id)
     try {
       const geographies = await db.readGeographies({ geography_id })
