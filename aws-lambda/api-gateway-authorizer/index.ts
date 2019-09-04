@@ -58,8 +58,8 @@ export const handler: Handler<
           const {
             sub: principalId,
             scope,
-            [TOKEN_PROVIDER_ID_CLAIM]: provider_id,
-            [TOKEN_USER_EMAIL_CLAIM]: user_email
+            [TOKEN_PROVIDER_ID_CLAIM]: provider_id = null,
+            [TOKEN_USER_EMAIL_CLAIM]: user_email = null
           } = decoded as JWT
           console.log('Authorization Succeeded:', event.methodArn, principalId)
           callback(null, generatePolicy(principalId, { provider_id, scope, user_email }))
