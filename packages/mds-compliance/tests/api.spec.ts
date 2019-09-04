@@ -549,7 +549,7 @@ describe('Tests Compliance API:', () => {
         request
           .get(`/snapshot/${TIME_POLICY_UUID}`)
           .set('Authorization', ADMIN_AUTH)
-          .expect(400)
+          .expect(404)
           .end(err => {
             done(err)
           })

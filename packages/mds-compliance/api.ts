@@ -103,7 +103,7 @@ function api(app: express.Express): express.Express {
         ? { end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365) }
         : { end_date: now() + days(365), start_date: now() - days(365) }
       try {
-        const all_policies = await db.readPolicies({ start_date, end_date })
+        const all_policies = await db.readPolicies({ start_date })
         const policy = compliance_engine.filterPolicies(all_policies).find(p => {
           return p.policy_id === policy_uuid
         })
