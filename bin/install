@@ -27,7 +27,14 @@ declare -A apps=(
   ["prometheus"]="http://prometheus:9090,istio-system,app"
   ["jaeger"]="http://tracing,istio-system,app,tracing"
   ["kiali"]="http://kiali:20001,kube-system,app"
-  ["bookinfo"]="http://productpage:9080,booking,app")
+  ["bookinfo"]="http://productpage:9080,booking,app"
+  ["mds-agency"]="https://localhost:4001/agency,mds,app"
+  ["mds-audit"]="https://localhost:4002/audit,mds,app"
+  ["mds-compliance"]="https://localhost:4004/compliance,mds,app"
+  ["mds-daily"]="https://localhost:4005/daily,mds,app"
+  ["mds-native"]="https://localhost:4006/native,mds,app"
+  ["mds-policy"]="https://localhost:4003/provider,mds,app"
+  ["mds-provider"]="https://localhost:4000/provider,mds,app")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -119,7 +126,7 @@ bootstrap() {
   invoke install "$(normalize ${defaults[bootstrap]})"
 }
 
-build()  {
+build() {
   check ${FUNCNAME[0]}
 
   for c in clean "" build image; do
@@ -156,7 +163,7 @@ installHelm() {
     helm repo add ${r} ${repos[${r}]}
   done
 
-  for d in $(find ./charts -type d -depth 1 > /dev/null 2>&1); do
+  for d in $(find ./charts -type d -depth 1); do
     (cd charts/$(basename ${d}); helm dependency update)
   done
 
@@ -165,7 +172,7 @@ installHelm() {
 
 installDashboard() {
   check ${FUNCNAME[0]}
-  
+
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f charts/dashboard
@@ -409,7 +416,6 @@ if [[ ${#} != 0 ]]; then
       install) arg="${defaults[install]}";&
       install:*) invoke install "$(normalize ${arg})";;
       forward) arg="${defaults[forward]}";&
-      # forward:*) forward "$(echo ${arg} | cut -d ':' -f 2-)";;
       forward:*) forward "$(normalize ${arg})";;
       unforward) unforward;;
       unforward:*) unforward "$(normalize ${arg})";;
