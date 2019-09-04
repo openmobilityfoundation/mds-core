@@ -20,7 +20,15 @@ import {
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
-import { now, clone } from '@mds-core/mds-utils'
+import { now, clone, NotFoundError } from '@mds-core/mds-utils'
+/*
+import {
+  START_ONE_MONTH_AGO,
+  START_YESTERDAY,
+  START_ONE_WEEK_AGO,
+  START_ONE_MONTH_FROM_NOW
+} from 'packages/mds-test-data/dist'
+*/
 
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
@@ -265,20 +273,36 @@ if (pg_info.database) {
         await MDSDBPostgres.writePolicy(POLICY_JSON)
         assert(!(await MDSDBPostgres.isPolicyPublished(policy_id)))
         await MDSDBPostgres.deletePolicy(policy_id)
-        await MDSDBPostgres.readPolicies({ policy_id }).should.be.rejected()
+        const policy_result = await MDSDBPostgres.readPolicies({ policy_id })
+        assert.deepEqual(policy_result, [])
       })
 
       it('can write, read, and publish a Policy', async () => {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writePolicy(POLICY_JSON)
-
         await MDSDBPostgres.writePolicy(POLICY2_JSON)
+        await MDSDBPostgres.writePolicy(POLICY3_JSON)
+
         await MDSDBPostgres.writeGeography(LAGeography)
         await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
-        const publishedPolicies = await MDSDBPostgres.readPolicies()
-        assert.deepEqual(publishedPolicies.length, 1)
+
+        // Read all policies, no matter whether published or not.
+        const policies = await MDSDBPostgres.readPolicies()
+        assert.deepEqual(policies.length, 3)
         const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true })
-        assert.deepEqual(unpublishedPolicies.length, 1)
+        assert.deepEqual(unpublishedPolicies.length, 2)
+        const publishedPolicies = await MDSDBPostgres.readPolicies({ get_published: true })
+        assert.deepEqual(publishedPolicies.length, 1)
+      })
+
+      it('can read a single Policy', async () => {
+        const policy = await MDSDBPostgres.readPolicy(POLICY_JSON.policy_id)
+        assert.deepEqual(policy.policy_id, POLICY_JSON.policy_id)
+        assert.deepEqual(policy.name, POLICY_JSON.name)
+      })
+
+      it('cannot find a nonexistent Policy', async () => {
+        await MDSDBPostgres.readPolicy('incrediblefailure').should.be.rejected()
       })
 
       it('can tell a Policy is published', async () => {
@@ -301,6 +325,12 @@ if (pg_info.database) {
         publishedPolicy.name = 'a shiny new name'
         await MDSDBPostgres.editPolicy(publishedPolicy).should.be.rejected()
         await MDSDBPostgres.deletePolicy(publishedPolicy.policy_id).should.be.rejected()
+      })
+
+      it('will throw an error if attempting to edit a nonexistent Policy', async () => {
+        const policy = clone(POLICY2_JSON)
+        policy.policy_id = '28218022-d333-41be-bda5-1dc4288516d2'
+        await MDSDBPostgres.editPolicy(policy).should.be.rejectedWith(NotFoundError)
       })
     })
 
