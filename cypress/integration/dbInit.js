@@ -3,7 +3,7 @@ var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456
 describe('dbInit', function() {
   it('successfully initializes', function() {
     cy.request({
-      url: 'http://mds-agency/agency/test/initialize',
+      url: 'http://localhost:4001/agency/test/initialize',
       auth: {
         bearer: "." + Base64.encode("{\"scope\": \"admin:all test:all\"}") + ".",
       },
