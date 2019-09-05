@@ -169,7 +169,7 @@ installHelm() {
     helm repo add ${r} ${repos[${r}]}
   done
 
-  for d in $(find ./charts ! -path ./charts -maxdepth 1 -type d); do
+  for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
     (cd charts/$(basename ${d}); helm dependency update)
   done
 
