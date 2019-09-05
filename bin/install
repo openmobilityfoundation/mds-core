@@ -24,19 +24,19 @@ declare -A repos=(
   ["elastic"]="https://helm.elastic.co"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.2.5/charts")
 declare -A apps=(
-  ["mds-agency"]="https://localhost:4001/agency,mds,app"
-  ["mds-audit"]="https://localhost:4002/audit,mds,app"
-  ["mds-compliance"]="https://localhost:4004/compliance,mds,app"
-  ["mds-daily"]="https://localhost:4005/daily,mds,app"
-  ["mds-native"]="https://localhost:4006/native,mds,app"
-  ["mds-policy"]="https://localhost:4003/provider,mds,app"
-  ["mds-provider"]="https://localhost:4000/provider,mds,app"
-  ["dashboard"]="https://localhost:8443,kube-system,k8s-app,kubernetes-dashboard"
-  ["kibana"]="http://localhost:5601,logging,app"
-  ["prometheus"]="http://localhost:9090,istio-system,app"
-  ["jaeger"]="http://localhost,istio-system,app,tracing"
-  ["kiali"]="http://localhost:20001,kube-system,app"
-  ["bookinfo"]="http://localhost:9080,booking,app")
+  ["mds-agency"]="https://localhost:[port]/agency,mds,app"
+  ["mds-audit"]="https://localhost:[port]/audit,mds,app"
+  ["mds-compliance"]="https://localhost:[port]/compliance,mds,app"
+  ["mds-daily"]="https://localhost:[port]/daily,mds,app"
+  ["mds-native"]="https://localhost:[port]/native,mds,app"
+  ["mds-policy"]="https://localhost:[port]/provider,mds,app"
+  ["mds-provider"]="https://localhost:[port]/provider,mds,app"
+  ["dashboard"]="https://localhost:[port],kube-system,k8s-app,kubernetes-dashboard"
+  ["kibana"]="http://localhost:[port],logging,app"
+  ["prometheus"]="http://localhost:[port],istio-system,app"
+  ["jaeger"]="http://localhost:[port],istio-system,app,tracing"
+  ["kiali"]="http://localhost:[port],kube-system,app"
+  ["bookinfo"]="http://localhost:[port],booking,app")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -260,12 +260,14 @@ get() {
 }
 
 portForward() {
-  ns=$(get ${1} 2)
-  k=$(get ${1} 3)
-  v=$(get ${1} 4 ${a})
-  app=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].metadata.name}')
+  app=${apps[${1}]}
+  ns=$(get ${app} 2)
+  k=$(get ${app} 3)
+  v=$(get ${app} 4 ${1})
+  a=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].metadata.name}')
   p=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
-  echo "kubectl -n ${ns} port-forward ${app} ${p}:${p}"
+
+  echo "kubectl -n ${ns} port-forward ${a} ${p}:${p}"
 }
 
 forward() {
@@ -273,7 +275,7 @@ forward() {
 
   for a in ${@}; do
     if [ ${apps[${a}]+_} ]; then
-      exec $(portForward ${apps[${a}]}) &
+      exec $(portForward ${a}) &
     else
       warn "unknown app: ${a}"
     fi
@@ -285,7 +287,7 @@ unforward() {
 
   for a in ${@}; do
     if [ ${apps[${a}]+_} ]; then
-      pkill $(portForward ${apps[${a}]})
+      pkill $(portForward ${a})
     else
       warn "unknown app: ${a}"
     fi
@@ -295,8 +297,7 @@ unforward() {
 testUnit() {
   check ${FUNCNAME[0]}
 
-  # fixme: make mds unit tests work
-  # yarn test
+  yarn test
 
   for c in $(find ./charts -type d -depth 1); do
     helm unittest ./charts/$(basename ${c})
@@ -321,11 +322,22 @@ tokenDashboard() {
   esac
 }
 
+getApp() {
+  a=${apps[${1}]}
+  u=$(get ${a} 1)
+  ns=$(get ${a} 2)
+  k=$(get ${a} 3)
+  v=$(get ${a} 4 ${1})
+  p=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+
+  echo ${u/\[port\]/${p}}
+}
+
 app() {
   for a in ${1}; do
     if [ ${apps[${a}]+_} ]; then
       case "${defaults[os]}" in
-        ${oses[osx]}) open $(get ${apps[${a}]} 1);;
+        ${oses[osx]}) open $(getApp ${a});;
         *) usage "unsupported os: ${defaults[os]}";;
       esac
     else
