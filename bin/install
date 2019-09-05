@@ -132,9 +132,10 @@ bootstrap() {
 build() {
   check ${FUNCNAME[0]}
 
-  for c in clean "" build image; do
-    yarn ${c}
-  done
+  yarn clean
+  yarn
+  yarn build --ignore=@aws-lambda/*
+  yarn image
 }
 
 pause() {
