@@ -130,7 +130,7 @@ bootstrap() {
 
 build() {
   check ${FUNCNAME[0]}
-  
+
   for c in clean "" build image; do
     yarn ${c}
   done
@@ -166,7 +166,7 @@ installHelm() {
   for r in "${!repos[@]}"; do
     helm repo add ${r} ${repos[${r}]}
   done
-  
+
   for d in $(find ./charts -maxdepth 1 -type d); do
     (cd charts/$(basename ${d}); helm dependency update)
   done
@@ -228,9 +228,9 @@ installMds() {
   check ${FUNCNAME[0]}
 
   [[ $(kubectl get namespace mds > /dev/null 2>&1) ]] || {
-    kubectl create secret generic pg-pass --from-literal 'postgresql-password=Password123#'
     kubectl create namespace mds
     kubectl label namespace mds istio-injection=enabled --overwrite=true
+    kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
     helm install --name mds --namespace mds ./charts/mds
   }
 }

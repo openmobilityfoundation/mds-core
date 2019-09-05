@@ -85,12 +85,13 @@ redis:
   slave:
     disableCommands: []
 fluentbit:
+  enabled: false
   backend:
     type: es
     es:
-      host:
-      port:
-      scheme:
+      host: localhost
+      port: 65535
+      scheme: http
       # Elastic Index Name
       index: kubernetes_cluster
       type: flb_type

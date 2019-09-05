@@ -12,3 +12,4 @@ dependencies:
     alias: fluentbit
     version: 2.7.0
     repository: alias:stable
+    condition: fluentbit.enabled
