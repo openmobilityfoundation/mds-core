@@ -23,19 +23,19 @@ declare -A repos=(
   ["elastic"]="https://helm.elastic.co"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.2.5/charts")
 declare -A apps=(
-  ["dashboard"]="https://localhost:8443,kube-system,k8s-app,kubernetes-dashboard"
-  ["kibana"]="http://kibana:5601,logging,app"
-  ["prometheus"]="http://prometheus:9090,istio-system,app"
-  ["jaeger"]="http://tracing,istio-system,app,tracing"
-  ["kiali"]="http://kiali:20001,kube-system,app"
-  ["bookinfo"]="http://productpage:9080,booking,app"
   ["mds-agency"]="https://localhost:4001/agency,mds,app"
   ["mds-audit"]="https://localhost:4002/audit,mds,app"
   ["mds-compliance"]="https://localhost:4004/compliance,mds,app"
   ["mds-daily"]="https://localhost:4005/daily,mds,app"
   ["mds-native"]="https://localhost:4006/native,mds,app"
   ["mds-policy"]="https://localhost:4003/provider,mds,app"
-  ["mds-provider"]="https://localhost:4000/provider,mds,app")
+  ["mds-provider"]="https://localhost:4000/provider,mds,app"
+  ["dashboard"]="https://localhost:8443,kube-system,k8s-app,kubernetes-dashboard"
+  ["kibana"]="http://kibana:5601,logging,app"
+  ["prometheus"]="http://prometheus:9090,istio-system,app"
+  ["jaeger"]="http://tracing,istio-system,app,tracing"
+  ["kiali"]="http://kiali:20001,kube-system,app"
+  ["bookinfo"]="http://productpage:9080,booking,app")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -69,30 +69,38 @@ commands:
   help                                                : help message
 
 where namespace in:
-    default
-    kube-system
-    istio-system
-    logging
-    bookinfo-app
+  mds
+  default
+  kube-system
+  istio-system
+  logging
+  bookinfo-app
 
 where service in:
-    helm
-    dashboard
-    istio
-    mds
-    logging
-    bookinfo
+  helm
+  dashboard
+  istio
+  mds
+  logging
+  bookinfo
 
 where app in:
-    dashboard                                         : kubernetes dashboard; see https://github.com/kubernetes/dashboard
-    kibana                                            : kibana; see https://www.elastic.co/products/kibana
-    prometheus                                        : prometheus; see https://prometheus.io
-    jaeger                                            : jaeger; see https://www.jaegertracing.io
-    kiali                                             : kiali; see https://www.kiali.io
-    bookinfo                                          : bookinfo; see https://istio.io/docs/examples/bookinfo
+  mds-agency
+  mds-audit
+  mds-compliance
+  mds-daily
+  mds-native
+  mds-policy
+  mds-provider
+  dashboard                                           : kubernetes dashboard; see https://github.com/kubernetes/dashboard
+  kibana                                              : kibana; see https://www.elastic.co/products/kibana
+  prometheus                                          : prometheus; see https://prometheus.io
+  jaeger                                              : jaeger; see https://www.jaegertracing.io
+  kiali                                               : kiali; see https://www.kiali.io
+  bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
 
 example:
-  % ./bin/$(basename ${0}) bootstrap build install:dashboard,mds forward:kube-system open:dashhboard test:integration
+  % ./bin/$(basename ${0}) bootstrap build install:mds forward:mds-agency test:integration
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
@@ -167,7 +175,7 @@ installHelm() {
     helm repo add ${r} ${repos[${r}]}
   done
 
-  for d in $(find ./charts -maxdepth 1 -type d); do
+  for d in $(find ./charts ! -path ./charts -maxdepth 1 -type d); do
     (cd charts/$(basename ${d}); helm dependency update)
   done
 
@@ -393,7 +401,7 @@ check() {
     installHelm | installBookinfo) ;;
     installDashboard | installIstio | installLogging | installMds | testUnit | \
       uninstallMds | uninstallLogging | uninstallIstio)
-      hash helm > /dev/null 2>&1 || installHelm;;
+      hash helm > /dev/null 2>&1 || echo installHelm;;
     forward | open) ;;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
