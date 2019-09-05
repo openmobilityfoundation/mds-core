@@ -15,9 +15,7 @@ import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
-const PROVIDER_SCOPES = 'admin:all test:all'
 const PROVIDER_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|`).toString('base64')}`
-const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const APP_JSON = 'application/json; charset=utf-8'
 
 const provider_id = PROVIDER_UUID
@@ -25,15 +23,8 @@ const device_id = uuid()
 
 const request = supertest(ApiServer(api))
 
-before('Initializing Database', done => {
-  request
-    .get('/native/test/initialize')
-    .set('Authorization', ADMIN_AUTH)
-    .expect(200)
-    .end((err, result) => {
-      test.value(result).hasHeader('content-type', APP_JSON)
-      done(err)
-    })
+before('Initializing Database', async () => {
+  await db.initialize()
 })
 
 describe('Verify API', () => {
@@ -63,17 +54,6 @@ describe('Verify API', () => {
         recorded: timestamp
       }).then(() => done())
     })
-  })
-
-  it('Verifies unable to access test if not scoped', done => {
-    request
-      .get('/test/')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(403)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
   })
 
   it('Get events (no authorization)', done => {
@@ -200,13 +180,6 @@ describe('Verify API', () => {
   })
 })
 
-after('Shutting down Database', done => {
-  request
-    .get('/native/test/shutdown')
-    .set('Authorization', ADMIN_AUTH)
-    .expect(200)
-    .end((err, result) => {
-      test.value(result).hasHeader('content-type', APP_JSON)
-      done(err)
-    })
+after('Shutting down Database', async () => {
+  await db.shutdown()
 })

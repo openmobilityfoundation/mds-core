@@ -18,11 +18,9 @@ import express from 'express'
 
 import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-cache'
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 
-import { makeTelemetry, makeEvents, makeDevices } from '@mds-core/mds-test-data'
-import { isUUID, now, pathsFor, round, routeDistance } from '@mds-core/mds-utils'
+import { isUUID, pathsFor, round, routeDistance } from '@mds-core/mds-utils'
 import { Telemetry } from '@mds-core/mds-types'
 import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from '@mds-core/mds-db/types'
 import { asJsonApiLinks, asPagingParams } from '@mds-core/mds-api-helpers'
@@ -42,15 +40,7 @@ function api(app: express.Express): express.Express {
     try {
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
-          const { provider_id, scope } = res.locals.claims
-
-          // no test access without auth
-          if (req.path.includes('/test/') && !(scope || '').includes('test:all')) {
-            /* istanbul ignore next */
-            return res.status(403).send({
-              result: 'no test access'
-            })
-          }
+          const { provider_id } = res.locals.claims
 
           /* istanbul ignore next */
           if (!provider_id) {
@@ -83,77 +73,6 @@ function api(app: express.Express): express.Express {
   })
 
   // / //////////////////////// basic gets /////////////////////////////////
-
-  app.get(pathsFor('/test/initialize'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    logger.info('get /test/initialize')
-
-    // nuke it all
-    await Promise.all([cache.initialize(), db.initialize()])
-    logger.info('got /test/initialize')
-    res.status(201).send({
-      result: 'Initialized'
-    })
-  })
-
-  // get => random data
-  app.get(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // create seed data
-    try {
-      logger.info('/test/seed', JSON.stringify(req.query))
-      const { n, num } = req.query
-
-      const count = parseInt(n) || parseInt(num) || 10000
-      const timestamp = now()
-      const devices = makeDevices(count, timestamp)
-      const events = makeEvents(devices, timestamp)
-      const telemetry = makeTelemetry(devices, timestamp)
-
-      const data = {
-        devices,
-        events,
-        telemetry
-      }
-
-      await Promise.all([cache.seed(data), db.seed(data)])
-      logger.info('/test/seed success')
-      res.status(201).send({
-        result: `Seeded ${count} devices/events/telemetry`
-      })
-    } catch (err) /* istanbul ignore next */ {
-      const desc = err instanceof Error ? err.message : err
-      const stack = err instanceof Error ? err.stack : desc
-      await logger.error('/test/seed failure:', desc, stack || JSON.stringify(err))
-      res.status(500).send({
-        result: `Failed to seed: ${desc}`
-      })
-    }
-  })
-
-  // post => populate from body
-  app.post(pathsFor('/test/seed'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    // create seed data
-    try {
-      await Promise.all([cache.seed(req.body), db.seed(req.body)])
-      logger.info('/test/seed success')
-      res.status(201).send({
-        result: `Seeded devices/events/telemetry`
-      })
-    } catch (err) /* istanbul ignore next */ {
-      const desc = err instanceof Error ? err.message : err
-      const stack = err instanceof Error ? err.stack : desc
-      await logger.error('/test/seed failure:', desc, stack || JSON.stringify(err))
-      res.status(500).send({
-        result: `Failed to seed: ${desc}`
-      })
-    }
-  })
-
-  app.get(pathsFor('/test/shutdown'), async (req: ProviderApiRequest, res: ProviderApiResponse) => {
-    await Promise.all([db.shutdown(), cache.shutdown()])
-    res.send({
-      result: 'shutdown done'
-    })
-  })
 
   // / /////////////////////// trips /////////////////////////////////
 

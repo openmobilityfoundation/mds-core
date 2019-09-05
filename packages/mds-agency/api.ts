@@ -68,15 +68,6 @@ function api(app: express.Express): express.Express {
         if (res.locals.claims) {
           const { provider_id, scope } = res.locals.claims
 
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({
-                result: `no test access without test:all scope (${scope})`
-              })
-            }
-          }
-
           // no admin access without auth
           if (req.path.includes('/admin/')) {
             if (!scope || !scope.includes('admin:all')) {
@@ -1075,74 +1066,6 @@ function api(app: express.Express): express.Express {
 
   // /////////////////// end Agency candidate endpoints ////////////////////
 
-  // ///////////////////// begin test-only endpoints ///////////////////////
-
-  app.get(pathsFor('/test/initialize'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    try {
-      const kind = await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
-      res.send({
-        result: `Database initialized (${kind})`
-      })
-    } catch (err) {
-      /* istanbul ignore next */
-      await log.error('initialize failed', err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  app.get(pathsFor('/test/shutdown'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    try {
-      await Promise.all([cache.shutdown(), stream.shutdown(), db.shutdown()])
-      await log.info('shutdown complete (in theory)')
-      res.send({
-        result: 'cache/stream/db shutdown done'
-      })
-    } catch (err) {
-      await log.error('shutdown failed', err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  app.get(pathsFor('/test/reset'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-    try {
-      await cache.reset()
-      res.send({
-        result: 'cache reset done'
-      })
-    } catch (err) {
-      await log.error('cache reset failed', err)
-      res.status(500).send(new ServerError())
-    }
-  })
-
-  // read-back for test purposes
-  app.get(
-    pathsFor('/test/vehicles/:device_id/event/:timestamp'),
-    validateDeviceId,
-    async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-      const { device_id } = req.params
-
-      const timestamp = parseInt(req.params.timestamp) || undefined
-
-      const { cached } = req.query
-
-      try {
-        if (cached) {
-          await log.info('ohai event cached')
-          const event = await cache.readEvent(device_id)
-          res.status(200).send(event)
-        } else {
-          await log.info('ohai event db')
-          const event = await db.readEvent(device_id, timestamp)
-          res.status(200).send(event)
-        }
-      } catch (err) {
-        await log.error('readEvent failed', err)
-        res.status(500).send(new ServerError())
-      }
-    }
-  )
-
   app.get(pathsFor('/admin/cache/info'), async (req: AgencyApiRequest, res: AgencyApiResponse) => {
     const details = await cache.info()
     await log.warn('cache', details)
@@ -1221,31 +1144,6 @@ function api(app: express.Express): express.Express {
       })
     }
   })
-
-  // read-back for test purposes
-  app.get(
-    pathsFor('/test/vehicles/:device_id/telemetry/:timestamp'),
-    validateDeviceId,
-    async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-      const { device_id } = req.params
-
-      const timestamp = parseInt(req.params.timestamp) || undefined
-
-      try {
-        const telemetry = await db.readTelemetry(device_id, timestamp, timestamp)
-        if (Array.isArray(telemetry) && telemetry.length > 0) {
-          res.send(telemetry[0])
-        } else {
-          res.status(404).send({
-            result: 'not found'
-          })
-        }
-      } catch (err) {
-        await log.info('test read telemetry error', err)
-        res.status(500).send(new ServerError())
-      }
-    }
-  )
 
   return app
 }

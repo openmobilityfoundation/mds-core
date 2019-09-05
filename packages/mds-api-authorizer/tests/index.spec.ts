@@ -1,9 +1,9 @@
 import test from 'unit.js'
-import { PROVIDER_UUID, PROVIDER_AUTH } from '@mds-core/mds-test-data'
+import { PROVIDER_UUID } from '@mds-core/mds-test-data'
 import express from 'express'
 import { AuthorizationHeaderApiAuthorizer } from '../index'
 
-const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_SCOPES = 'admin:all'
 const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Test API Authorizer', () => {
@@ -30,11 +30,11 @@ describe('Test API Authorizer', () => {
 
   it('Bearer Authorizaton', done => {
     const authorizer = AuthorizationHeaderApiAuthorizer({
-      headers: { authorization: PROVIDER_AUTH }
+      headers: { authorization: ADMIN_AUTH }
     } as express.Request)
     test
       .object(authorizer)
-      .hasProperty('principalId', '18RcuARKC5RPt9faN7EQ5wcE5oRceo0t@clients')
+      .hasProperty('principalId', 'c8051767-4b14-4794-abc1-85aad48baff1')
       .hasProperty('scope', PROVIDER_SCOPES)
     done()
   })

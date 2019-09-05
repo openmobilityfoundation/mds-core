@@ -16,7 +16,6 @@
 
 import express from 'express'
 import cache from '@mds-core/mds-cache'
-import stream from '@mds-core/mds-stream'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import {
@@ -43,15 +42,6 @@ function api(app: express.Express): express.Express {
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
           const { provider_id, scope } = res.locals.claims
-
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({
-                result: `no test access without test:all scope (${scope})`
-              })
-            }
-          }
 
           // no admin access without auth
           if (req.path.includes('/admin/')) {
@@ -91,19 +81,6 @@ function api(app: express.Express): express.Express {
       await log.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
-  })
-
-  app.get(pathsFor('/test/initialize'), async (req, res) => {
-    try {
-      const kind = await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
-      res.send({
-        result: `Database initialized (${kind})`
-      })
-    } catch (err) {
-      /* istanbul ignore next */
-      await log.error('initialize failed', err)
-      res.status(500).send('Server Error')
-    }
   })
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
