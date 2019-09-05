@@ -68,14 +68,6 @@ commands:
   reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${defaults[reinstall]}
   help                                                : help message
 
-where namespace in:
-  mds
-  default
-  kube-system
-  istio-system
-  logging
-  bookinfo-app
-
 where service in:
   helm
   dashboard
@@ -399,9 +391,10 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
-    installDashboard | installIstio | installLogging | installMds | testUnit | \
-      uninstallMds | uninstallLogging | uninstallIstio)
-      hash helm > /dev/null 2>&1 || echo installHelm;;
+    installDashboard | installLogging | installMds) installHelm;;
+    installIstio | testUnit | \
+      uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
+      hash helm > /dev/null 2>&1 || nstallHelm;;
     forward | open) ;;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
@@ -419,35 +412,32 @@ normalize() {
 }
 
 [[ ! -d ${defaults[workdir]} ]] && mkdir -p ${defaults[workdir]}
+[[ ${#} == 0 ]] && usage
 
-if [[ ${#} != 0 ]]; then
-  for arg in "${@}"; do
-    case "${arg}" in
-      bootstrap) bootstrap || warn  "${arg} failure";;
-      build) build || usage "${arg} failure";;
-      install) arg="${defaults[install]}";&
-      install:*) invoke install "$(normalize ${arg})";;
-      forward) arg="${defaults[forward]}";&
-      forward:*) forward "$(normalize ${arg})";;
-      unforward) unforward;;
-      unforward:*) unforward "$(normalize ${arg})";;
-      test) arg="${defaults[test]}";&
-      test:*) invoke test "$(normalize ${arg})";;
-      token) arg="${defaults[token]}";&
-      token:*) invoke token "$(normalize ${arg})";;
-      open) usage "specify an application(s) to open";;
-      open:*) app "$(normalize ${arg})";;
-      cli:*) invoke cli "$(normalize ${arg})";;
-      uninstall) arg="${defaults[uninstall]}";&
-      uninstall:*) invoke uninstall "$(normalize ${arg})";;
-      reinstall) arg="${defaults[reinstall]}";&
-      reinstall:*)
-        invoke uninstall "$(normalize ${arg})"
-        invoke install "$(normalize ${arg})";;
-      help) usage;;
-      *) usage "unknown command: ${arg}"
-    esac
-  done
-else
-  usage
-fi
+for arg in "${@}"; do
+  case "${arg}" in
+    bootstrap) bootstrap || warn  "${arg} failure";;
+    build) build || usage "${arg} failure";;
+    install) arg="${defaults[install]}";&
+    install:*) invoke install "$(normalize ${arg})";;
+    forward) arg="${defaults[forward]}";&
+    forward:*) forward "$(normalize ${arg})";;
+    unforward) unforward;;
+    unforward:*) unforward "$(normalize ${arg})";;
+    test) arg="${defaults[test]}";&
+    test:*) invoke test "$(normalize ${arg})";;
+    token) arg="${defaults[token]}";&
+    token:*) invoke token "$(normalize ${arg})";;
+    open) usage "specify an application(s) to open";;
+    open:*) app "$(normalize ${arg})";;
+    cli:*) invoke cli "$(normalize ${arg})";;
+    uninstall) arg="${defaults[uninstall]}";&
+    uninstall:*) invoke uninstall "$(normalize ${arg})";;
+    reinstall) arg="${defaults[reinstall]}";&
+    reinstall:*)
+    invoke uninstall "$(normalize ${arg})"
+    invoke install "$(normalize ${arg})";;
+    help) usage;;
+    *) usage "unknown command: ${arg}"
+  esac
+done
