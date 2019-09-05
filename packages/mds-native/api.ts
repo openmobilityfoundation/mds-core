@@ -160,7 +160,7 @@ function api(app: express.Express): express.Express {
             last_id: events.length === 0 ? cursor.last_id : events[events.length - 1].id
           })
         ).toString('base64'),
-        events: events.map(({ service_area_id, ...event }) => event)
+        events: events.map(({ id, service_area_id, ...event }) => event)
       })
     } catch (err) {
       if (err instanceof ValidationError) {
@@ -176,7 +176,7 @@ function api(app: express.Express): express.Express {
     const { device_id } = req.params
     try {
       if (isValidDeviceId(device_id)) {
-        const device = await db.readDevice(device_id)
+        const { id, ...device } = await db.readDevice(device_id)
         return res.status(200).send({ version: NativeApiCurrentVersion, device })
       }
     } catch (err) {

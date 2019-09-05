@@ -51,7 +51,7 @@ interface NativeApiResponseBody {
 }
 
 interface NativeApiGetEventsReponseBody extends NativeApiResponseBody {
-  events: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
+  events: Omit<Recorded<VehicleEvent>, 'id' | 'service_area_id'>[]
   cursor: string
 }
 
@@ -62,7 +62,7 @@ export interface NativeApiGetDeviceRequest extends NativeApiRequest {
 }
 
 interface NativeApiGetDeviceResponseBody extends NativeApiResponseBody {
-  device: Device
+  device: Omit<Recorded<Device>, 'id'>
 }
 
 export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetDeviceResponseBody>
