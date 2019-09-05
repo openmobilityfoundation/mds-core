@@ -16,7 +16,8 @@ declare -A defaults=(
   ["reinstall"]="${MDS_REINSTALL:-helm,istio,mds}"
   ["pause"]="${MDS_PAUSE:-5}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
-  ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${defaults[istioVersion]}}")
+  ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${defaults[istioVersion]}}"
+  ["values"]="${MDS_VALUES:-values.yaml}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
@@ -31,11 +32,11 @@ declare -A apps=(
   ["mds-policy"]="https://localhost:4003/provider,mds,app"
   ["mds-provider"]="https://localhost:4000/provider,mds,app"
   ["dashboard"]="https://localhost:8443,kube-system,k8s-app,kubernetes-dashboard"
-  ["kibana"]="http://kibana:5601,logging,app"
-  ["prometheus"]="http://prometheus:9090,istio-system,app"
-  ["jaeger"]="http://tracing,istio-system,app,tracing"
-  ["kiali"]="http://kiali:20001,kube-system,app"
-  ["bookinfo"]="http://productpage:9080,booking,app")
+  ["kibana"]="http://localhost:5601,logging,app"
+  ["prometheus"]="http://localhost:9090,istio-system,app"
+  ["jaeger"]="http://localhost,istio-system,app,tracing"
+  ["kiali"]="http://localhost:20001,kube-system,app"
+  ["bookinfo"]="http://localhost:9080,booking,app")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -174,13 +175,19 @@ installHelm() {
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 }
 
+values() {
+  f=$([[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1})
+
+  echo $([ -f ${f} ] && echo "--values ${f}" || echo "")
+}
+
 installDashboard() {
   check ${FUNCNAME[0]}
 
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f charts/dashboard
-  helm install --name dahsboard ./charts/dashboard
+  helm install --name dahsboard $(values ${defaults[values]} ./charts/dashboard) ./charts/dashboard
 }
 
 installIstio() {
@@ -220,7 +227,7 @@ installLogging() {
   [[ $(kubectl get namespace logging > /dev/null 2>&1) ]] || {
     kubectl create namespace logging
     kubectl label namespace logging istio-injection=enabled --overwrite=true
-    helm install --name logging --namespace logging ./charts/logging
+    helm install --name logging --namespace logging $(values ${defaults[values]} ./charts/logging) ./charts/logging
   }
 }
 
@@ -231,7 +238,7 @@ installMds() {
     kubectl create namespace mds
     kubectl label namespace mds istio-injection=enabled --overwrite=true
     kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
-    helm install --name mds --namespace mds ./charts/mds
+    helm install --name mds --namespace mds $(values ${defaults[values]} ./charts/mds) ./charts/mds
   }
 }
 
