@@ -14,7 +14,7 @@ declare -A defaults=(
   ["forward"]="${MDS_FORWARD:-default}"
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-helm,istio,mds}"
-  ["pause"]="${MDS_PAUSE:-5}"
+  ["pause"]="${MDS_PAUSE:-10}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${defaults[istioVersion]}}"
   ["values"]="${MDS_VALUES:-values.yaml}")
@@ -208,6 +208,7 @@ installIstio() {
       --name istio-init \
       --namespace istio-system | \
       kubectl apply -f -
+    # todo: should query pod status
     pause
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || usage "istio instllation failure"

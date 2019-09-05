@@ -1,5 +1,4 @@
-{{- if .Values.postgresql.internal }}
-{{- else }}
+{{- if (eq .Values.postgresql.internal false) }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
@@ -31,8 +30,7 @@ spec:
 ---
 {{- end }}
 {{- end }}
-{{- if .Values.redis.internal }}
-{{- else }}
+{{- if (eq .Values.redis.internal false) }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
@@ -48,8 +46,7 @@ spec:
   location: MESH_EXTERNAL
 ---
 {{- end }}
-{{- if .Values.fluentbit.internal }}
-{{- else }}
+{{- if (eq .Values.fluentbit.enabled true ) }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
