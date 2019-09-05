@@ -92,7 +92,7 @@ where app in:
   bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
 
 example:
-  % ./bin/$(basename ${0}) bootstrap build install:mds forward:mds-agency test:integration
+  % ./bin/$(basename ${0}) bootstrap build install:mds forward:mds-agency test:integration unforward:mds-agency
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
