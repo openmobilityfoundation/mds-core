@@ -1,4 +1,3 @@
-import uuid from 'uuid'
 import {
   Audit,
   AuditEvent,
@@ -13,8 +12,7 @@ import {
   DeviceID,
   Rule,
   GeographyMetadata,
-  PolicyMetadata,
-  PartialBy
+  PolicyMetadata
 } from '@mds-core/mds-types'
 import {
   convertTelemetryToTelemetryRecord,
@@ -1227,15 +1225,9 @@ async function readPolicy(policy_id: UUID): Promise<Policy> {
   throw new NotFoundError(`policy_id ${policy_id} not found`)
 }
 
-async function writePolicy(policy: PartialBy<Policy, 'policy_id'>): Promise<Recorded<Policy>> {
+async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
   // validate TODO
   const client = await getWriteableClient()
-
-  if (!isUUID(policy.policy_id)) {
-    /* eslint-disable-next-line no-param-reassign */
-    policy.policy_id = uuid.v4()
-  }
-
   const sql = `INSERT INTO ${schema.TABLE.policies} (${cols_sql(schema.TABLE_COLUMNS.policies)}) VALUES (${vals_sql(
     schema.TABLE_COLUMNS.policies
   )}) RETURNING *`

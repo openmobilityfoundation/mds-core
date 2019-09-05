@@ -247,6 +247,28 @@ const POLICY4_JSON: Policy = {
   ]
 }
 
+const POLICY_JSON_MISSING_POLICY_ID = {
+  // TODO guts
+  name: 'I have no identity woe is me',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: now(),
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
 function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
   let i = 0
   const serviceAreaKeys = Object.keys(serviceAreaMap)
@@ -543,6 +565,7 @@ export {
   POLICY2_JSON,
   POLICY3_JSON,
   POLICY4_JSON,
+  POLICY_JSON_MISSING_POLICY_ID,
   POLICY_UUID,
   SUPERSEDING_POLICY_UUID,
   POLICY2_UUID,

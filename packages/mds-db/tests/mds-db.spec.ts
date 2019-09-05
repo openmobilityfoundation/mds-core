@@ -15,13 +15,12 @@ import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
-  POLICY4_JSON,
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
-import { now, clone, isUUID, NotFoundError } from '@mds-core/mds-utils'
+import { now, clone, NotFoundError } from '@mds-core/mds-utils'
 /*
 import {
   START_ONE_MONTH_AGO,
@@ -294,12 +293,6 @@ if (pg_info.database) {
         assert.deepEqual(unpublishedPolicies.length, 2)
         const publishedPolicies = await MDSDBPostgres.readPolicies({ get_published: true })
         assert.deepEqual(publishedPolicies.length, 1)
-      })
-
-      it('generates a policy_id if none was submitted', async () => {
-        delete POLICY4_JSON.policy_id
-        const policy = await MDSDBPostgres.writePolicy(POLICY4_JSON)
-        assert(isUUID(policy.policy_id))
       })
 
       it('can read a single Policy', async () => {

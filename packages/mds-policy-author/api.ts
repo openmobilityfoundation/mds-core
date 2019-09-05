@@ -16,6 +16,7 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
+import uuid from 'uuid'
 // import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
@@ -188,6 +189,10 @@ function api(app: express.Express): express.Express {
 
   app.post(pathsFor('/policies'), async (req, res) => {
     const policy = req.body
+    if (!isUUID(policy.policy_id)) {
+      /* eslint-disable-next-line no-param-reassign */
+      policy.policy_id = uuid.v4()
+    }
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
@@ -198,7 +203,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writePolicy(policy)
-      return res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+      return res.status(200).send({ result: policy.policy_id })
     } catch (err) {
       if (err.code === '23505') {
         return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
