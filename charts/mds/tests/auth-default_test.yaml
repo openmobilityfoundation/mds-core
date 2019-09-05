@@ -1,0 +1,10 @@
+suite: test authetication default
+templates:
+  - auth.yaml
+tests:
+  - it: doc 0
+    release:
+      namespace: mds
+    asserts:
+      - hasDocuments:
+          count: 0
