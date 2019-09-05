@@ -1,0 +1,10 @@
+suite: test certificate management default
+templates:
+  - cert-manager.yaml
+tests:
+  - it: doc 0
+    release:
+      namespace: mds
+    asserts:
+      - hasDocuments:
+          count: 0

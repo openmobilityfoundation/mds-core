@@ -3,7 +3,7 @@ apis:
     pathPrefix: /provider
     port: 4000
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
@@ -11,7 +11,7 @@ apis:
     pathPrefix: /agency
     port: 4001
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
@@ -19,7 +19,7 @@ apis:
     pathPrefix: /audit
     port: 4002
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
@@ -27,7 +27,7 @@ apis:
     pathPrefix: /policy
     port: 4003
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
@@ -35,7 +35,7 @@ apis:
     pathPrefix: /compliance
     port: 4004
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
@@ -43,7 +43,7 @@ apis:
     pathPrefix: /daily
     port: 4005
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
@@ -51,13 +51,14 @@ apis:
     pathPrefix: /native
     port: 4006
     version: latest
-    useDB: false
+    useDB: true
     useCache: true
     useEvents: true
     jwtAudience:
-namespace: default
 registry:
 useLatestImage: true
+tls:
+  enabled: false
 jwt:
   issuer:
   enabled: false
@@ -66,7 +67,7 @@ postgresql:
   host:
   hostReader:
   port: 5432
-  existingSecret: postgresql-password
+  existingSecret: pg-pass
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
   image:
@@ -77,6 +78,28 @@ redis:
   host:
   port: 6379
   usePassword: false
-  image:
-    repository: redis
-    tag: 5
+  cluster:
+    enabled: false
+  master:
+    disableCommands: []
+  slave:
+    disableCommands: []
+fluentbit:
+  enabled: false
+  backend:
+    type: es
+    es:
+      host: localhost
+      port: 65535
+      scheme: http
+      index: kubernetes_cluster
+      type: flb_type
+      logstash_prefix: kubernetes_cluster
+      replace_dots: "On"
+      time_key: "@timestamp"
+      http_user:
+      http_passwd:
+      tls: "on"
+      tls_verify: "off"
+      tls_ca: ""
+      tls_debug: 4

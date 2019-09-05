@@ -4,7 +4,7 @@ templates:
 tests:
   - it: doc 2
     values:
-      - ./values-no-db.yaml
+      - ./deployment-values-no-db.yaml
     release:
       namespace: mds
     asserts:

@@ -55,7 +55,6 @@ apis:
     useCache: false
     useEvents: true
     jwtAudience:
-namespace: default
 registry:
 useLatestImage: true
 jwt:
@@ -66,16 +65,39 @@ postgresql:
   host:
   hostReader:
   port: 5432
-  existingSecret: postgresql-password
+  existingSecret: pg-pass
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
-  repository: postgres
-  tag: 10
+  image:
+    repository: postgres
+    tag: 10
 redis:
   internal: true
   host:
   port: 6379
   usePassword: false
-  image:
-    repository: redis
-    tag: 5
+  cluster:
+    enabled: false
+  master:
+    disableCommands: []
+  slave:
+    disableCommands: []
+fluentbit:
+  enabled: false
+  backend:
+    type: es
+    es:
+      host: localhost
+      port: 65535
+      scheme: http
+      index: kubernetes_cluster
+      type: flb_type
+      logstash_prefix: kubernetes_cluster
+      replace_dots: "On"
+      time_key: "@timestamp"
+      http_user:
+      http_passwd:
+      tls: "on"
+      tls_verify: "off"
+      tls_ca: ""
+      tls_debug: 4

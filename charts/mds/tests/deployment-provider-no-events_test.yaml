@@ -4,7 +4,7 @@ templates:
 tests:
   - it: doc 0
     values:
-      - ./values-no-events.yaml
+      - ./deployment-values-no-events.yaml
     release:
       namespace: mds
     asserts:

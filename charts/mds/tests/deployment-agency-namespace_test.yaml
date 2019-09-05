@@ -6,7 +6,7 @@ tests:
     release:
       namespace: mds
     values:
-      - ./values-namespace.yaml
+      - ./deployment-values-namespace.yaml
     asserts:
       - isAPIVersion:
           of: apps/v1
