@@ -36,7 +36,7 @@ import { api } from '../api'
 const request = supertest(ApiServer(api))
 const agency_request = supertest(ApiServer(agency))
 
-const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_SCOPES = 'admin:all'
 const PROVIDER_AUTH_2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const PROVIDER_AUTH_5 = `basic ${Buffer.from(`${TEST5_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
@@ -66,7 +66,7 @@ const TEST_TELEMETRY = {
 
 process.env.TIMEZONE = 'America/Los_Angeles'
 const ADMIN_AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
+const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
   provider_id: TEST1_PROVIDER_ID,
@@ -251,7 +251,7 @@ describe('Tests Compliance API:', () => {
     it('verifies unable to access admin if not scoped', done => {
       request
         .get('/admin/')
-        .set('Authorization', AUTH_TEST_ONLY_SCOPE)
+        .set('Authorization', AUTH_NO_SCOPE)
         .expect(403)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)

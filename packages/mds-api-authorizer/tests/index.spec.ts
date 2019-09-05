@@ -3,7 +3,7 @@ import { PROVIDER_UUID, PROVIDER_AUTH } from '@mds-core/mds-test-data'
 import express from 'express'
 import { AuthorizationHeaderApiAuthorizer } from '../index'
 
-const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_SCOPES = 'admin:all'
 const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Test API Authorizer', () => {

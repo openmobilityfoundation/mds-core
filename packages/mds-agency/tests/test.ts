@@ -57,7 +57,7 @@ function now(): Timestamp {
 const APP_JSON = 'application/json; charset=utf-8'
 
 const LA_CITY_BOUNDARY = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
-const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_SCOPES = 'admin:all'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const TEST_TELEMETRY = {
@@ -119,7 +119,7 @@ const AUTH_GARBAGE_PROVIDER = `basic ${Buffer.from(`tinylittleinvalidteapot|${PR
 const AUTH_UNKNOWN_UUID_PROVIDER = `basic ${Buffer.from(
   `c8f984c5-62a5-4453-b1f7-3b7704a95cfe|${PROVIDER_SCOPES}`
 ).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
+const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 
 before(async () => {
   await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
@@ -157,7 +157,7 @@ describe('Tests API', () => {
   it('verifies unable to access admin if not scoped', done => {
     request
       .get('/admin/')
-      .set('Authorization', AUTH_TEST_ONLY_SCOPE)
+      .set('Authorization', AUTH_NO_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
