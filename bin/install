@@ -110,10 +110,9 @@ EOF
 bootstrap() {
   case "${defaults[os]}" in
     ${oses[osx]} | ${oses[linux]})
-      if ! hash brew > /dev/null 2>&1; then
+      hash brew > /dev/null 2>&1 || \
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-      fi
-	  #todo: consider inline brew installs, bash install hangs on linux
+      #todo: consider inline brew installs, bash install hangs on linux
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
     *) usage "unsupported os: ${defaults[os]}";;
   esac
@@ -121,9 +120,7 @@ bootstrap() {
   # todo: boostrap all-the-things
 
   for y in cypress mocha chai mochawesome; do
-    # if [ $(yarn ${y} --version > /dev/null 2>&1) ]; then
-    $(yarn ${y} --version > /dev/null 2>&1)
-    (( $? != 0 )) && yarn add -W ${y}
+    yarn ${y} --version > /dev/null 2>&1 || yarn add -W ${y}
   done
 
   invoke install "$(normalize ${defaults[bootstrap]})"
@@ -155,25 +152,22 @@ pause() {
 
 helmDependenciesUpdate() {
   for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
-    (cd charts/$(basename ${d}); helm dependency update)
+    (cd charts/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
   done
 }
 
 installHelm() {
   check ${FUNCNAME[0]}
 
-  if ! hash helm > /dev/null 2>&1 ; then
+  hash helm > /dev/null 2>&1 ||
     case "${defaults[os]}" in
       ${oses[osx]} | ${oses[linux]}) brew install kubernetes-helm;;
       *) usage "unsupported os: ${defaults[os]}";;
     esac
-  fi
 
   helm init || usage "helm intialization failure"
-
   pause 5
   helmDependenciesUpdate
-  pause 5
 
   for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -207,7 +201,7 @@ installIstio() {
 
   ${defaults[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
 
-  [[ $(kubectl get namespace istio-system > /dev/null 2>&1) ]] || {
+  kubectl get namespace istio-system > /dev/null 2>&1 || {
     kubectl create namespace istio-system
     # todo: make kialia|jaeger|grapha install optional
     helm template ${defaults[istio]}/install/kubernetes/helm/istio-init \
@@ -219,7 +213,7 @@ installIstio() {
     pause 10
 
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
-      echo "istio successfully installed" || usage "istio instllation failure"
+      echo "istio successfully installed" || echo "istio instllation failure"
 
     helm template ${defaults[istio]}/install/kubernetes/helm/istio \
       --name istio \
@@ -234,7 +228,7 @@ installIstio() {
 installLogging() {
   check ${FUNCNAME[0]}
 
-  [[ $(kubectl get namespace logging > /dev/null 2>&1) ]] || {
+  kubectl get namespace logging > /dev/null 2>&1 || {
     kubectl create namespace logging
     kubectl label namespace logging istio-injection=enabled --overwrite=true
     helm install --name logging --namespace logging $(values ${defaults[values]} ./charts/logging) ./charts/logging
@@ -244,7 +238,7 @@ installLogging() {
 installMds() {
   check ${FUNCNAME[0]}
 
-  [[ $(kubectl get namespace mds > /dev/null 2>&1) ]] || {
+  kubectl get namespace mds > /dev/null 2>&1 || {
     kubectl create namespace mds
     kubectl label namespace mds istio-injection=enabled --overwrite=true
     kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
@@ -255,7 +249,7 @@ installMds() {
 installBookinfo() {
   check ${FUNCNAME[0]}
 
-  [[ $(kubectl get namespace bookinfo-app > /dev/null 2>&1) ]] || {
+  kubectl get namespace bookinfo-app > /dev/null 2>&1 || {
     kubectl create namespace bookinfo-app
     kubectl label namespace bookinfo-app istio-injection=enabled --overwrite=true
     kubectl apply -n bookinfo-app -f ${defaults[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml
@@ -367,7 +361,7 @@ cliRedis() {
 
 uninstalllNamespaces() {
   for ns in ${@}; do
-    [[ $(kubectl get namespace ${1} > /dev/null 2>&1) ]] && kubectl delete namespace ${ns}
+    kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns}
   done
 }
 
@@ -378,6 +372,9 @@ uninstallBookinfo() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds
+  uninstalllNamespaces mds
+  kubectl get secrets pg-pass --namespace mds && kubectl delete secret pg-pass --namespace mds
+  uninstalllNamespaces mds
 }
 
 uninstallLogging() {
@@ -386,7 +383,7 @@ uninstallLogging() {
 }
 
 uninstallIstio() {
-  [[ $(kubectl get namespace istio-system > /dev/null 2>&1) ]] && {
+  kubectl get namespace istio-system > /dev/null 2>&1 && {
     check ${FUNCNAME[0]}
     helm template ${defaults[istio]}/install/kubernetes/helm/istio \
       --name istio \
@@ -394,7 +391,8 @@ uninstallIstio() {
       --values ${defaults[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
         kubectl delete -f -
     kubectl delete namespace istio-system
-    kubectl delete -f ${defaults[istio]}/install/kubernetes/helm/istio-init/files
+    kubectl delete -f ${defaults[istio]}/install/kubernetes/helm/istio-init/files > /dev/null
+    [ -d ${defaults[istio]} ] && /bin/rm -rf ${defaults[istio]}
   }
 }
 
