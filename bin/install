@@ -59,9 +59,9 @@ commands:
   bootstrap                                           : install dependencies; default: ${defaults[tools]},${defaults[bootstrap]}
   build                                               : build project
   install[:{service[,{service}]}]                     : install specified service; default: ${defaults[install]}
+  test[:unit,integration]                             : preform specified tests; default: ${defaults[test]}
   forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${defaults[forward]}
   unforward[:{app[,{app}]}]                           : deregister port-forwarding for the provided application(s)
-  test[:unit,integration]                             : preform specified tests; default: ${defaults[test]}
   token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${defaults[token]}
   open:[app[,{app}]]                                  : opens a browser for the provided application(s)
   cli:[postgresql,redis]                              : create a cli console for the provided service
@@ -263,6 +263,24 @@ installBookinfo() {
   }
 }
 
+testUnit() {
+  check ${FUNCNAME[0]}
+
+  yarn test
+
+  for c in $(find ./charts -type d -depth 1); do
+    helm unittest ./charts/$(basename ${c})
+  done
+}
+
+testIntegration() {
+  check ${FUNCNAME[0]}
+
+  # todo: provide [ ui | cli ] option
+  # yarn cypress open
+  yarn cypress run
+}
+
 get() {
   v=$(echo ${1} | cut -sd ',' -f ${2})
   [ ! -z "${v}" ] && echo ${v} || echo ${3}
@@ -301,24 +319,6 @@ unforward() {
       warn "unknown app: ${a}"
     fi
   done
-}
-
-testUnit() {
-  check ${FUNCNAME[0]}
-
-  yarn test
-
-  for c in $(find ./charts -type d -depth 1); do
-    helm unittest ./charts/$(basename ${c})
-  done
-}
-
-testIntegration() {
-  check ${FUNCNAME[0]}
-
-  # todo: provide [ ui | cli ] option
-  # yarn cypress open
-  yarn cypress run
 }
 
 tokenDashboard() {
@@ -451,12 +451,12 @@ for arg in "${@}"; do
     build) build || usage "${arg} failure";;
     install) arg="${defaults[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
+    test) arg="${defaults[test]}";&
+    test:*) invoke test "$(normalize ${arg})";;
     forward) arg="${defaults[forward]}";&
     forward:*) forward "$(normalize ${arg})";;
     unforward) unforward;;
     unforward:*) unforward "$(normalize ${arg})";;
-    test) arg="${defaults[test]}";&
-    test:*) invoke test "$(normalize ${arg})";;
     token) arg="${defaults[token]}";&
     token:*) invoke token "$(normalize ${arg})";;
     open) usage "specify an application(s) to open";;
