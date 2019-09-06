@@ -14,7 +14,7 @@ declare -A defaults=(
   ["forward"]="${MDS_FORWARD:-default}"
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-helm,istio,mds}"
-  ["pause"]="${MDS_PAUSE:-10}"
+  ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${defaults[istioVersion]}}"
   ["values"]="${MDS_VALUES:-values.yaml}")
@@ -153,6 +153,12 @@ pause() {
   echo ""
 }
 
+helmDependenciesUpdate() {
+  for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
+    (cd charts/$(basename ${d}); helm dependency update)
+  done
+}
+
 installHelm() {
   check ${FUNCNAME[0]}
 
@@ -165,9 +171,9 @@ installHelm() {
 
   helm init || usage "helm intialization failure"
 
-  for r in "${!repos[@]}"; do
-    helm repo add ${r} ${repos[${r}]}
-  done
+  pause 5
+  helmDependenciesUpdate
+  pause 5
 
   for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
     (cd charts/$(basename ${d}); helm dependency update)
@@ -208,8 +214,10 @@ installIstio() {
       --name istio-init \
       --namespace istio-system | \
       kubectl apply -f -
+
     # todo: should query pod status
-    pause
+    pause 10
+
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || usage "istio instllation failure"
 
@@ -412,10 +420,12 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
-    installDashboard | installLogging | installMds) installHelm;;
+    installDashboard | installLogging | installMds)
+      hash helm > /dev/null 2>&1 || installHelm
+      helmDependenciesUpdate;;
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
-      hash helm > /dev/null 2>&1 || nstallHelm;;
+      hash helm > /dev/null 2>&1 || installHelm;;
     forward | open) ;;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
