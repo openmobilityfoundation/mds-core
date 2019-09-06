@@ -76,11 +76,17 @@ cronjobs:
     - name: CLIENT_ID
       value: client-id-stub
     - name: CLIENT_SECRET
-      value: client-secret-stub
+      valueFrom:
+        secretKeyRef:
+          name: client-pass
+          key: client-pass
     - name: GOOGLE_CLIENT_EMAIL
       value: google-client-email-stub
     - name: GOOGLE_PRIVATE_KEY
-      value: google-private-key-stub
+      valueFrom:
+        secretKeyRef:
+          name: google-key
+          key: google-key
     restartPolicy: OnFailure
 postgresql:
   internal: true

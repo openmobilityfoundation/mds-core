@@ -52,8 +52,11 @@ tests:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[3].name
           value: CLIENT_SECRET
       - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[3].value
-          value: client-secret-stub
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
+          value: client-pass
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
+          value: client-pass
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[4].name
           value: GOOGLE_CLIENT_EMAIL
@@ -64,8 +67,11 @@ tests:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[5].name
           value: GOOGLE_PRIVATE_KEY
       - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].env[5].value
-          value: google-private-key-stub
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.key
+          value: google-key
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.name
+          value: google-key
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].restartPolicy
           value: OnFailure
