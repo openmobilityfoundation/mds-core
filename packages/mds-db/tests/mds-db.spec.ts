@@ -334,6 +334,40 @@ if (pg_info.database) {
       })
     })
 
+    describe('unit test PolicyMetadata functions', () => {
+      before(async () => {
+        await setFreshDB()
+      })
+
+      after(async () => {
+        await MDSDBPostgres.shutdown()
+      })
+
+      it('.readPolicyMetadatas', async () => {
+        await MDSDBPostgres.writePolicy(POLICY_JSON)
+        await MDSDBPostgres.writePolicy(POLICY2_JSON)
+        await MDSDBPostgres.writePolicy(POLICY3_JSON)
+
+        await MDSDBPostgres.writePolicyMetadata(POLICY_JSON.policy_id, {
+          policy_id: POLICY_JSON.policy_id,
+          policy_metadata: { name: 'policy_json' }
+        })
+        await MDSDBPostgres.writePolicyMetadata(POLICY2_JSON.policy_id, {
+          policy_id: POLICY2_JSON.policy_id,
+          policy_metadata: { name: 'policy2_json' }
+        })
+        await MDSDBPostgres.writePolicyMetadata(POLICY3_JSON.policy_id, {
+          policy_id: POLICY3_JSON.policy_id,
+          policy_metadata: { name: 'policy3_json' }
+        })
+
+        const noParamsResult = await MDSDBPostgres.readPolicyMetadatas()
+        assert.deepEqual(noParamsResult.length, 3)
+        const withStartDateResult = await MDSDBPostgres.readPolicyMetadatas({ start_date: now() })
+        assert.deepEqual(withStartDateResult.length, 1)
+      })
+    })
+
     describe('unit test geography functions', () => {
       before(async () => {
         await setFreshDB()
@@ -415,30 +449,32 @@ if (pg_info.database) {
       })
     })
 
-    // describe('Geography metadata', () => {
-    //   before(async () => {
-    //     await setFreshDB()
-    //   })
+    describe('Geography metadata', () => {
+      before(async () => {
+        await setFreshDB()
+      })
 
-    //   after(async () => {
-    //     await MDSDBPostgres.shutdown()
-    //   })
+      after(async () => {
+        await MDSDBPostgres.shutdown()
+      })
 
-    //   it('should write a GeographyMetadata only if there is a Geography in the DB', async () => {
-    //     const geographyMetadata: GeographyMetadata = {
-    //       geography_id: GEOGRAPHY_UUID,
-    //       geography_metadata: { foo: 'afoo' }
-    //     }
-    //     try {
-    //       await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
-    //       throw new Error('Should have thrown')
-    //     } catch (err) {
-    //       await MDSDBPostgres.writeGeography(LAGeography)
-    //       await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
-    //       const geographyMetadataResult = await MDSDBPostgres.readGeographyMetadata(GEOGRAPHY_UUID)
-    //       assert.deepEqual(geographyMetadataResult, geographyMetadata)
-    //     }
-    //   })
-    // })
+      it('should write a GeographyMetadata only if there is a Geography in the DB', async () => {
+        const geographyMetadata = {
+          geography_id: GEOGRAPHY_UUID,
+          geography_metadata: { foo: 'afoo' }
+        }
+        try {
+          await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
+          throw new Error('Should have thrown')
+        } catch (err) {
+          await MDSDBPostgres.writeGeography(LAGeography)
+          await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
+          const geographyMetadataResult = await MDSDBPostgres.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+          console.log('goegraphy')
+          console.log(geographyMetadataResult)
+          assert.deepEqual(geographyMetadataResult, geographyMetadata)
+        }
+      })
+    })
   })
 }

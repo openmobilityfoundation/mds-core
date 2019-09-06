@@ -43,8 +43,10 @@ import {
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
-  DISTRICT_SEVEN
+  DISTRICT_SEVEN,
+  POLICY3_UUID
 } from '@mds-core/mds-test-data'
+import { ConsoleLogger } from '@slack/logger'
 import { api } from '../api'
 
 /* eslint-disable-next-line no-console */
@@ -300,10 +302,10 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies POSTing policy metadata', done => {
+    it('verifies PUTing policy metadata', done => {
       const metadata = { some_arbitrary_thing: 'boop' }
       request
-        .post(`/policies/meta/${POLICY_UUID}`)
+        .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(metadata)
         .expect(200)
@@ -313,13 +315,13 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies GETing policy metadata', done => {
+    it('verifies GETing policy metadata when given a policy_id', done => {
       request
-        .get(`/policies/meta/${POLICY_UUID}`)
+        .get(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.some_arbitrary_thing === 'boop')
+          test.assert(result.body.policy_metadata.some_arbitrary_thing === 'boop')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -327,7 +329,7 @@ describe('Tests app', () => {
 
     it('verifies cannot GET non-existent policy metadata', done => {
       request
-        .get(`/policies/meta/beepbapboop`)
+        .get(`/policies/beepbapboop/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(404)
         .end((err, result) => {
@@ -335,6 +337,15 @@ describe('Tests app', () => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
+    })
+
+    it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
+      const result = await request
+        .get(`/policies/meta?start_date=${now() - days(365)}`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(200)
+      test.assert(result.body.metadata.length === 1)
+      test.value(result).hasHeader('content-type', APP_JSON)
     })
 
     it('can GET a single policy', done => {

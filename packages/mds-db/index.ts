@@ -1082,6 +1082,23 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
   }
 }
 
+async function readGeographyMetadatas(params?: {
+  geography_id?: UUID
+  get_read_only?: boolean
+}): Promise<GeographyMetadata[]> {
+  const geographies = await readGeographies(params)
+  const geography_ids = geographies.map(geography => {
+    return `'${geography.geography_id}'`
+  })
+  const sql = `select * from ${schema.TABLE.geography_metadata} where geography_id in (${geography_ids.join(',')})`
+
+  const client = await getReadOnlyClient()
+  const res = await client.query(sql)
+  return res.rows.map(row => {
+    return { geography_id: row.geography_id, geography_metadata: row.geography_metadata }
+  })
+}
+
 async function writeGeography(geography: Geography): Promise<Recorded<Geography>> {
   // validate TODO
   // write
@@ -1151,9 +1168,9 @@ async function writeGeographyMetadata(geography_id: UUID, metadata: GeographyMet
   return { ...metadata, ...recorded_metadata }
 }
 
-async function readGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
+async function readSingleGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
   const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
+  const sql = `SELECT geography_id, geography_metadata FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
   try {
     const result = await client.query(sql)
     if (result.rows.length === 0) {
@@ -1211,6 +1228,40 @@ async function readPolicies(params?: {
   const values = vals.values()
   const res = await client.query(sql, values)
   return res.rows.map(row => row.policy_json)
+}
+
+async function readPolicyMetadatas(params?: {
+  policy_id?: UUID
+  name?: string
+  description?: string
+  start_date?: Timestamp
+  get_unpublished?: boolean
+  get_published?: boolean
+}): Promise<PolicyMetadata[]> {
+  const policies = await readPolicies(params)
+  const policy_ids = policies.map(policy => {
+    return `'${policy.policy_id}'`
+  })
+  const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id in (${policy_ids.join(',')})`
+
+  const client = await getReadOnlyClient()
+  const res = await client.query(sql)
+  return res.rows.map(row => {
+    return { policy_id: row.policy_id, policy_metadata: row.policy_metadata }
+  })
+}
+
+async function readSinglePolicyMetadata(policy_id: UUID): Promise<PolicyMetadata> {
+  const client = await getReadOnlyClient()
+
+  const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id = '${policy_id}'`
+  const res = await client.query(sql)
+  if (res.rows.length === 1) {
+    const { policy_metadata } = res.rows[0]
+    return { policy_id, policy_metadata }
+  }
+  await log.info(`readSinglePolicyMetadata db failed for ${policy_id}: rows=${res.rows.length}`)
+  throw new NotFoundError(`metadata for policy_id ${policy_id} not found`)
 }
 
 async function readPolicy(policy_id: UUID): Promise<Policy> {
@@ -1340,21 +1391,6 @@ async function writePolicyMetadata(policy_id: UUID, metadata: PolicyMetadata) {
   return {
     ...metadata,
     ...recorded_metadata
-  }
-}
-
-async function readPolicyMetadata(policy_id: UUID): Promise<PolicyMetadata> {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.policy_metadata} WHERE policy_id = '${policy_id}'`
-  try {
-    const result = await client.query(sql)
-    if (result.rows.length === 0) {
-      throw new Error(`Metadata for ${policy_id} not found`)
-    }
-    return result.rows[0]
-  } catch (err) {
-    await log.error(err)
-    throw err
   }
 }
 
@@ -1625,9 +1661,11 @@ export = {
   editPolicy,
   deletePolicy,
   writeGeographyMetadata,
-  readGeographyMetadata,
+  readSingleGeographyMetadata,
+  readGeographyMetadatas,
   writePolicyMetadata,
-  readPolicyMetadata,
+  readPolicyMetadatas,
+  readSinglePolicyMetadata,
   publishPolicy,
   isPolicyPublished,
   readRule,

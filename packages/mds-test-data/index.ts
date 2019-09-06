@@ -100,7 +100,7 @@ const START_YESTERDAY = now() - (now() % days(1))
 
 const POLICY_JSON: Policy = {
   // TODO guts
-  name: 'LADOT Mobility Caps',
+  name: 'Policy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: POLICY_UUID,
   start_date: START_YESTERDAY,
@@ -123,7 +123,7 @@ const POLICY_JSON: Policy = {
 
 const SUPERSEDING_POLICY_JSON: Policy = {
   // TODO guts
-  name: 'LADOT Mobility Caps',
+  name: 'Supersedes Policy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: SUPERSEDING_POLICY_UUID,
   start_date: START_YESTERDAY,
@@ -150,7 +150,7 @@ const START_ONE_WEEK_AGO = now() - (now() % days(1)) - days(7)
 // in the past
 const POLICY2_JSON: Policy = {
   // TODO guts
-  name: 'Idle Times',
+  name: 'Policy 2',
   description: 'LADOT Idle Time Limitations',
   policy_id: POLICY2_UUID,
   start_date: START_ONE_MONTH_AGO,
@@ -187,8 +187,8 @@ const START_ONE_MONTH_FROM_NOW = now() - (now() % days(1)) + days(30)
 const POLICY3_JSON: Policy = {
   // TODO guts
   policy_id: POLICY3_UUID,
-  name: 'Speed Limits',
-  description: 'LADOT Pilot Speed Limit Limitations',
+  name: 'Policy 3',
+  description: 'LADOT Pilot Speed Limit Limitations From the Future',
   start_date: START_ONE_MONTH_FROM_NOW,
   end_date: null,
   prev_policies: null,
@@ -227,7 +227,7 @@ const POLICY3_JSON: Policy = {
 const POLICY4_JSON: Policy = {
   // TODO guts
   policy_id: POLICY4_UUID,
-  name: 'Speediest of Limits',
+  name: 'Policy 4',
   description: 'LADOT Pilot Speed Limit Limitations',
   start_date: now(),
   end_date: null,

@@ -151,7 +151,7 @@ function api(app: express.Express): express.Express {
       return
     }
     try {
-      const policies = await db.readPolicies({ get_published, get_unpublished })
+      const policies = await db.readPolicies({ start_date, get_published, get_unpublished })
 
       // Let's not worry about filtering for just active policies at the moment.
 
@@ -183,8 +183,6 @@ function api(app: express.Express): express.Express {
       })
     }
   })
-
-  //  app.get(pathsFor('/policies/meta'), async (req, res) => {})
 
   app.post(pathsFor('/policies'), async (req, res) => {
     const policy = req.body
@@ -278,6 +276,31 @@ function api(app: express.Express): express.Express {
     }
   })
 
+  app.get(pathsFor('/policies/meta/'), async (req, res) => {
+    const { start_date = now(), end_date = now(), get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies/meta', req.query, start_date, end_date)
+    if (start_date > end_date) {
+      res.status(400).send({ result: 'start_date after end_date' })
+      return
+    }
+    try {
+      const metadata = await db.readPolicyMetadatas({ start_date, get_published, get_unpublished })
+
+      res.status(200).send({ metadata })
+    } catch (err) {
+      await log.error('failed to read policies', err)
+      if (err instanceof BadParamsError) {
+        res.status(400).send({
+          result:
+            'Cannot set both get_unpublished and get_published to be true. If you want all policy metadata, set both params to false or do not send them.'
+        })
+      }
+      res.status(404).send({
+        result: 'not found'
+      })
+    }
+  })
+
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
@@ -293,18 +316,18 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
+  app.get(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
     const { policy_id } = req.params
     try {
-      const { policy_metadata } = await db.readPolicyMetadata(policy_id)
-      return res.status(200).send(policy_metadata)
+      const result = await db.readSinglePolicyMetadata(policy_id)
+      return res.status(200).send(result)
     } catch (err) {
-      await log.error('failed to read geography metadata', err.stack)
+      await log.error('failed to read policy metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
     }
   })
 
-  app.post(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
+  app.put(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
     const policy_metadata = req.body
     const { policy_id } = req.params
     try {
