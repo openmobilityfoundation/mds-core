@@ -151,8 +151,8 @@ pause() {
 }
 
 helmDependenciesUpdate() {
-  for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
-    (cd charts/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
+  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
+    (cd helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
   done
 }
 
@@ -169,8 +169,8 @@ installHelm() {
   pause 5
   helmDependenciesUpdate
 
-  for d in $(find ./charts -mindepth 1 -maxdepth 1 -type d); do
-    (cd charts/$(basename ${d}); helm dependency update)
+  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
+    (cd helm/$(basename ${d}); helm dependency update)
   done
 
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
@@ -187,8 +187,8 @@ installDashboard() {
 
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
-  kubectl apply -f charts/dashboard
-  helm install --name dahsboard $(values ${defaults[values]} ./charts/dashboard) ./charts/dashboard
+  kubectl apply -f helm/dashboard
+  helm install --name dahsboard $(values ${defaults[values]} ./helm/dashboard) ./helm/dashboard
 }
 
 installIstio() {
@@ -231,7 +231,7 @@ installLogging() {
   kubectl get namespace logging > /dev/null 2>&1 || {
     kubectl create namespace logging
     kubectl label namespace logging istio-injection=enabled --overwrite=true
-    helm install --name logging --namespace logging $(values ${defaults[values]} ./charts/logging) ./charts/logging
+    helm install --name logging --namespace logging $(values ${defaults[values]} ./helm/logging) ./helm/logging
   }
 }
 
@@ -242,7 +242,7 @@ installMds() {
     kubectl create namespace mds
     kubectl label namespace mds istio-injection=enabled --overwrite=true
     kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
-    helm install --name mds --namespace mds $(values ${defaults[values]} ./charts/mds) ./charts/mds
+    helm install --name mds --namespace mds $(values ${defaults[values]} ./helm/mds) ./helm/mds
   }
 }
 
@@ -262,8 +262,8 @@ testUnit() {
 
   yarn test
 
-  for c in $(find ./charts -type d -depth 1); do
-    helm unittest ./charts/$(basename ${c})
+  for c in $(find ./helm -type d -depth 1); do
+    helm unittest ./helm/$(basename ${c})
   done
 }
 
