@@ -1,24 +1,21 @@
-{{- if (eq .Values.cronjob.enabled true) }}
+{{- range $job := .Values.cronjobs }}
+{{- if (eq $job.enabled true) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: hello
+  name: {{ $job.name }}
   namespace: {{ $.Release.Namespace }}
 spec:
-  schedule: "*/1 * * * *"
+  schedule: {{ $job.schedule }}
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: hello
-            image: busybox
+          - name: {{ $job.name }}
+            image: {{ $job.image }}
             env:
-            - name: FOO
-              value: bar
-            args:
-            - /bin/sh
-            - -c
-            - date; echo Hello from the Kubernetes cluster
-          restartPolicy: OnFailure
+{{ toYaml $job.env | indent 12 }}
+          restartPolicy: {{ $job.restartPolicy }}
+{{- end }}
 {{- end }}
