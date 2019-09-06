@@ -421,8 +421,7 @@ check() {
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
     installDashboard | installLogging | installMds)
-      hash helm > /dev/null 2>&1 || installHelm
-      helmDependenciesUpdate;;
+      hash helm > /dev/null 2>&1 && helmDependenciesUpdate || installHelm;;
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
