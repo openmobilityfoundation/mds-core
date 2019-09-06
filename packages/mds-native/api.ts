@@ -35,8 +35,8 @@ import { ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
 import {
   NativeApiGetEventsRequest,
   NativeApiGetEventsReponse,
-  NativeApiGetDeviceRequest,
-  NativeApiGetDeviceResponse,
+  NativeApiGetVehiclesRequest,
+  NativeApiGetVehiclesResponse,
   NativeApiGetProvidersRequest,
   NativeApiGetProvidersResponse,
   NativeApiCurrentVersion
@@ -125,7 +125,7 @@ function api(app: express.Express): express.Express {
             last_id: events.length === 0 ? cursor.last_id : events[events.length - 1].id
           })
         ).toString('base64'),
-        events: events.map(({ service_area_id, ...event }) => event)
+        events: events.map(({ id, service_area_id, ...event }) => event)
       })
     } catch (err) {
       if (err instanceof ValidationError) {
@@ -137,26 +137,29 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/devices/:device_id'), async (req: NativeApiGetDeviceRequest, res: NativeApiGetDeviceResponse) => {
-    const { device_id } = req.params
-    try {
-      if (isValidDeviceId(device_id)) {
-        const device = await db.readDevice(device_id)
-        return res.status(200).send({ version: NativeApiCurrentVersion, device })
+  app.get(
+    pathsFor('/vehicles/:device_id'),
+    async (req: NativeApiGetVehiclesRequest, res: NativeApiGetVehiclesResponse) => {
+      const { device_id } = req.params
+      try {
+        if (isValidDeviceId(device_id)) {
+          const { id, ...vehicle } = await db.readDevice(device_id)
+          return res.status(200).send({ version: NativeApiCurrentVersion, vehicle })
+        }
+      } catch (err) {
+        if (err instanceof ValidationError) {
+          // 400 Bad Request
+          return res.status(400).send({ error: err })
+        }
+        if (err instanceof Error && err.message.includes('not found')) {
+          // 404 Not Found
+          return res.status(404).send({ error: new NotFoundError('device_id_not_found', { device_id }) })
+        }
+        /* istanbul ignore next */
+        return InternalServerError(req, res, err)
       }
-    } catch (err) {
-      if (err instanceof ValidationError) {
-        // 400 Bad Request
-        return res.status(400).send({ error: err })
-      }
-      if (err instanceof Error && err.message.includes('not found')) {
-        // 404 Not Found
-        return res.status(404).send({ error: new NotFoundError('device_id_not_found', { device_id }) })
-      }
-      /* istanbul ignore next */
-      return InternalServerError(req, res, err)
     }
-  })
+  )
 
   app.get(pathsFor('/providers'), async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
     res.status(200).send({

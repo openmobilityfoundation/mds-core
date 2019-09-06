@@ -129,23 +129,23 @@ describe('Verify API', () => {
       })
   })
 
-  it('Get Device', done => {
+  it('Get Vehicle', done => {
     request
-      .get(`/native/devices/${device_id}`)
+      .get(`/native/vehicles/${device_id}`)
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('version')
-        test.object(result.body).hasProperty('device')
-        test.object(result.body.device).hasProperty('device_id', device_id)
+        test.object(result.body).hasProperty('vehicle')
+        test.object(result.body.vehicle).hasProperty('device_id', device_id)
         done(err)
       })
   })
 
-  it('Get Device (not found)', done => {
+  it('Get Vehicle (not found)', done => {
     request
-      .get(`/native/devices/${uuid()}`)
+      .get(`/native/vehicles/${uuid()}`)
       .set('Authorization', PROVIDER_AUTH)
       .expect(404)
       .end((err, result) => {
@@ -154,9 +154,9 @@ describe('Verify API', () => {
       })
   })
 
-  it('Get Device (bad request)', done => {
+  it('Get Vehicle (bad request)', done => {
     request
-      .get(`/native/devices/invalid-device-id`)
+      .get(`/native/vehicles/invalid-device-id`)
       .set('Authorization', PROVIDER_AUTH)
       .expect(400)
       .end((err, result) => {
