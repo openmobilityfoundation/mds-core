@@ -1,8 +1,10 @@
-suite: test cronjob
+suite: test cronjob enabled
 templates:
   - cronjob.yaml
 tests:
   - it: all
+    values:
+      - ./cronjob-values.yaml
     release:
       namespace: mds
     asserts:
@@ -27,6 +29,12 @@ tests:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].image
           value: busybox
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[0].name
+          value: FOO
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env[0].value
+          value: bar
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].args[0]
           value: /bin/sh

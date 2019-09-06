@@ -63,7 +63,7 @@ jwt:
   issuer:
   enabled: false
 cronjob:
-  enabled: false
+  enabled: true
 postgresql:
   internal: true
   host:

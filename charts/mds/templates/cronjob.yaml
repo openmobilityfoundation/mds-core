@@ -1,3 +1,4 @@
+{{- if (eq .Values.cronjob.enabled true) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -12,8 +13,12 @@ spec:
           containers:
           - name: hello
             image: busybox
+            env:
+            - name: FOO
+              value: bar
             args:
             - /bin/sh
             - -c
             - date; echo Hello from the Kubernetes cluster
           restartPolicy: OnFailure
+{{- end }}
