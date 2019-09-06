@@ -28,7 +28,6 @@ spec:
       - OPTIONS
       - PATCH
       - PUT
-      - POST
       allowCredentials: false
       allowHeaders:
       - Content-Type
