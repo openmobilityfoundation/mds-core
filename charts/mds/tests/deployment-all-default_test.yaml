@@ -2,7 +2,7 @@ suite: test deployment all default
 templates:
   - deployment.yaml
 tests:
-  - it: all docs
+  - it: all
     release:
       namespace: mds
     asserts:

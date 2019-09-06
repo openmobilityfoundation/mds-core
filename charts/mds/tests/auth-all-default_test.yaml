@@ -1,6 +1,6 @@
-suite: test certificate management default
+suite: test authetication default
 templates:
-  - cert-manager.yaml
+  - auth.yaml
 tests:
   - it: all
     release:

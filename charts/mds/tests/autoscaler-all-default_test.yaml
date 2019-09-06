@@ -1,10 +1,10 @@
-suite: test authetication default
+suite: test autoscaler
 templates:
-  - auth.yaml
+  - autoscaler.yaml
 tests:
-  - it: doc 0
+  - it: all
     release:
       namespace: mds
     asserts:
       - hasDocuments:
-          count: 0
+          count: 7
