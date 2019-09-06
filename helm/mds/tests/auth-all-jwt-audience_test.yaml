@@ -3,10 +3,10 @@ templates:
   - auth.yaml
 tests:
   - it: doc 0
-    values:
-      - ./auth-values-jwt-audience.yaml
     release:
       namespace: mds
+    values:
+      - ./auth-values-jwt-audience.yaml
     asserts:
       - hasDocuments:
           count: 7

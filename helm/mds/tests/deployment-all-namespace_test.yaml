@@ -3,10 +3,10 @@ templates:
   - deployment.yaml
 tests:
   - it: all docs
-    values:
-      - ./deployment-values-namespace.yaml
     release:
       namespace: mds
+    values:
+      - ./deployment-values-namespace.yaml
     asserts:
       - hasDocuments:
           count: 7

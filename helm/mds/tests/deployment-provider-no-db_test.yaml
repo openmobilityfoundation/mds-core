@@ -3,10 +3,10 @@ templates:
   - deployment.yaml
 tests:
   - it: doc 0
-    values:
-      - ./deployment-values-no-db.yaml
     release:
       namespace: mds
+    values:
+      - ./deployment-values-no-db.yaml
     asserts:
       - isAPIVersion:
           of: apps/v1

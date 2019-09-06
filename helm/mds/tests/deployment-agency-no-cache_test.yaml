@@ -3,10 +3,10 @@ templates:
   - deployment.yaml
 tests:
   - it: doc 1
-    values:
-      - ./deployment-values-no-cache.yaml
     release:
       namespace: mds
+    values:
+      - ./deployment-values-no-cache.yaml
     asserts:
       - isAPIVersion:
           of: apps/v1

@@ -62,8 +62,26 @@ tls:
 jwt:
   issuer:
   enabled: false
-cronjob:
-  enabled: true
+cronjobs:
+  - name: metrics-sheet
+    enabled: true
+    schedule: |-
+      "*/1 * * * *"
+    image: busybox
+    env:
+    - name: AUDIENCE
+      value: audience-stub
+    - name: AUTH0_DOMAIN
+      value: auth0-domain-stub
+    - name: CLIENT_ID
+      value: client-id-stub
+    - name: CLIENT_SECRET
+      value: client-secret-stub
+    - name: GOOGLE_CLIENT_EMAIL
+      value: google-client-email-stub
+    - name: GOOGLE_PRIVATE_KEY
+      value: google-private-key-stub
+    restartPolicy: OnFailure
 postgresql:
   internal: true
   host:

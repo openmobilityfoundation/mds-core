@@ -3,10 +3,10 @@ templates:
   - egress.yaml
 tests:
   - it: all
-    values:
-      - ./egress-values-redis.yaml
     release:
       namespace: mds
+    values:
+      - ./egress-values-redis.yaml
     asserts:
       - hasDocuments:
           count: 1

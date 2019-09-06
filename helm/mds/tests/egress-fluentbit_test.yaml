@@ -3,10 +3,10 @@ templates:
   - egress.yaml
 tests:
   - it: all
-    values:
-      - ./egress-values-fluentbit.yaml
     release:
       namespace: mds
+    values:
+      - ./egress-values-fluentbit.yaml
     asserts:
       - hasDocuments:
           count: 1

@@ -3,10 +3,10 @@ templates:
   - egress.yaml
 tests:
   - it: all
-    values:
-      - ./egress-values-postgresql-host-reader.yaml
     release:
       namespace: mds
+    values:
+      - ./egress-values-postgresql-host-reader.yaml
     asserts:
       - hasDocuments:
           count: 2

@@ -3,10 +3,10 @@ templates:
   - deployment.yaml
 tests:
   - it: doc 3
-    values:
-      - ./deployment-values-namespace.yaml
     release:
       namespace: mds
+    values:
+      - ./deployment-values-namespace.yaml
     asserts:
       - isAPIVersion:
           of: apps/v1

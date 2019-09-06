@@ -63,24 +63,6 @@ jwt:
   issuer:
   enabled: false
 cronjobs:
-  - name: metrics-sheet
-    enabled: false
-    schedule: "*/1 * * * *"
-    image: busybox
-    restartPolicy: OnFailure
-    env:
-    - name: AUDIENCE
-      value: audience
-    - name: AUTH0_DOMAIN
-      value: auth0-domain
-    - name: CLIENT_ID
-      value: client-id
-    - name: CLIENT_SECRET
-      value: client-secret
-    - name: GOOGLE_CLIENT_EMAIL
-      value: google-client-email
-    - name: GOOGLE_PRIVATE_KEY
-      value: google-private-key
 postgresql:
   internal: true
   host:
