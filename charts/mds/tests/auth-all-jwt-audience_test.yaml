@@ -1,10 +1,10 @@
-suite: test deployment all no-cache
+suite: test authetication jwt audience
 templates:
-  - deployment.yaml
+  - auth.yaml
 tests:
-  - it: all docs
+  - it: doc 0
     values:
-      - ./deployment-values-no-cache.yaml
+      - ./auth-values-jwt-audience.yaml
     release:
       namespace: mds
     asserts:
