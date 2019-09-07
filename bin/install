@@ -210,7 +210,7 @@ installIstio() {
       kubectl apply -f -
 
     # todo: should query pod status
-    pause 10
+    pause 7
 
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio instllation failure"
