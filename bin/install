@@ -17,8 +17,8 @@ declare -A configs=(
   ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
-  ["values"]="${MDS_VALUES:-values.yaml}"
-  ["sets"]="${MDS_SETS:-}")
+  ["values"]="${MDS_VALUES:-}"
+  ["set"]="${MDS_SET:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
@@ -181,8 +181,7 @@ installHelm() {
 }
 
 values() {
-  v=$([[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1})
-  echo $([ -f ${v} ] && echo "--values ${v}" || echo "")
+  [[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1}
 }
 
 installDashboard() {
@@ -191,8 +190,8 @@ installDashboard() {
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f helm/dashboard
-  helm install --name dahsboard $(values ${configs[values]} ./helm/dashboard) ${configs[sets]:+--set ${configs[sets]}}
-    ./helm/dashboard
+  helm install --name dahsboard ${configs[values]:+--values $(values ${configs[values]} ./helm/dashboard)} \
+      ${configs[set]:+--set ${configs[set]}} ./helm/dashboard
 }
 
 installIstio() {
@@ -235,11 +234,15 @@ installLogging() {
   kubectl get namespace logging > /dev/null 2>&1 || {
     kubectl create namespace logging
     kubectl label namespace logging istio-injection=enabled --overwrite=true
-    helm install --name logging --namespace logging $(values ${configs[values]} ./helm/logging) \
-      ${configs[sets]:+--set ${configs[sets]}} ./helm/logging
+    helm install --name logging --namespace logging \
+      ${configs[values]:+--values $(values ${configs[values]} ./helm/logging)} \
+      ${configs[set]:+--set ${configs[set]}} ./helm/logging
   }
 }
 
+foo() {
+  echo doink
+}
 installMds() {
   check ${FUNCNAME[0]}
 
@@ -247,8 +250,9 @@ installMds() {
     kubectl create namespace mds
     kubectl label namespace mds istio-injection=enabled --overwrite=true
     kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
-    helm install --name mds --namespace mds $(values ${configs[values]} ./helm/mds) \
-      ${configs[sets]:+--set ${configs[sets]}} ./helm/mds
+    helm install --name mds --namespace mds \
+      ${configs[values]:+--values $(values ${configs[values]} ./helm/mds)} \
+      ${configs[set]:+--set ${configs[set]}} ./helm/mds
   }
 }
 
