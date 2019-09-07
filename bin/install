@@ -3,21 +3,22 @@
 declare -A oses=(
   ["osx"]="Darwin"
   ["linux"]="Linux")
-declare -A defaults=(
+declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
-  ["install"]="${MDS_INSTALL:-helm,istio,mds}"
+  ["install"]="${MDS_INSTALL:-mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
   ["uninstall"]="${MDS_UNINSTALL:-bookinfo,logging,mds,istio,helm}"
   ["forward"]="${MDS_FORWARD:-default}"
   ["token"]="${MDS_TOKEN:-dashboard}"
-  ["reinstall"]="${MDS_REINSTALL:-helm,istio,mds}"
+  ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
-  ["istio"]="${MDS_ISTIO_PATH:-${defaults[workdir]}/istio-${defaults[istioVersion]}}"
-  ["values"]="${MDS_VALUES:-values.yaml}")
+  ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
+  ["values"]="${MDS_VALUES:-values.yaml}"
+  ["sets"]="${MDS_SETS:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
@@ -53,21 +54,24 @@ usage() {
   [ "${1}" ] && warn "${1}"
 
   cat << EOF
-usage: $(basename ${0}) [commands]
+usage: $(basename ${0}) [--options] [commands]
 
 commands:
-  bootstrap                                           : install dependencies; default: ${defaults[tools]},${defaults[bootstrap]}
+  bootstrap                                           : install dependencies; default: ${configs[tools]},${configs[bootstrap]}
   build                                               : build project
-  install[:{service[,{service}]}]                     : install specified service; default: ${defaults[install]}
-  test[:unit,integration]                             : preform specified tests; default: ${defaults[test]}
-  forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${defaults[forward]}
+  install[:{service[,{service}]}]                     : install specified service; default: ${configs[install]}
+  test[:unit,integration]                             : preform specified tests; default: ${configs[test]}
+  forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${configs[forward]}
   unforward[:{app[,{app}]}]                           : deregister port-forwarding for the provided application(s)
-  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${defaults[token]}
+  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${configs[token]}
   open:[app[,{app}]]                                  : opens a browser for the provided application(s)
   cli:[postgresql,redis]                              : create a cli console for the provided service
-  uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${defaults[uninstall]}
-  reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${defaults[reinstall]}
+  uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${configs[uninstall]}
+  reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${configs[reinstall]}
   help                                                : help message
+
+options:
+  --set:{key}={value}[,{key}={value}]                 : overrides default configuration for the remainder of the argument processing
 
 where service in:
   helm
@@ -108,13 +112,13 @@ EOF
 }
 
 bootstrap() {
-  case "${defaults[os]}" in
+  case "${configs[os]}" in
     ${oses[osx]} | ${oses[linux]})
       hash brew > /dev/null 2>&1 || \
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       #todo: consider inline brew installs, bash install hangs on linux
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
-    *) usage "unsupported os: ${defaults[os]}";;
+    *) usage "unsupported os: ${configs[os]}";;
   esac
 
   # todo: boostrap all-the-things
@@ -123,7 +127,7 @@ bootstrap() {
     yarn ${y} --version > /dev/null 2>&1 || yarn add -W ${y}
   done
 
-  invoke install "$(normalize ${defaults[bootstrap]})"
+  invoke install "$(normalize ${configs[bootstrap]})"
 }
 
 build() {
@@ -136,7 +140,7 @@ build() {
 }
 
 pause() {
-  sleepTime=${1:-${defaults[pause]}}
+  sleepTime=${1:-${configs[pause]}}
   cntr=0
 
   echo -ne "waiting "
@@ -150,7 +154,7 @@ pause() {
   echo ""
 }
 
-helmDependenciesUpdate() {
+updateHelmDependencies() {
   for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
     (cd helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
   done
@@ -160,9 +164,9 @@ installHelm() {
   check ${FUNCNAME[0]}
 
   hash helm > /dev/null 2>&1 ||
-    case "${defaults[os]}" in
+    case "${configs[os]}" in
       ${oses[osx]} | ${oses[linux]}) brew install kubernetes-helm;;
-      *) usage "unsupported os: ${defaults[os]}";;
+      *) usage "unsupported os: ${configs[os]}";;
     esac
 
   helm init || usage "helm intialization failure"
@@ -177,9 +181,8 @@ installHelm() {
 }
 
 values() {
-  f=$([[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1})
-
-  echo $([ -f ${f} ] && echo "--values ${f}" || echo "")
+  v=$([[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1})
+  echo $([ -f ${v} ] && echo "--values ${v}" || echo "")
 }
 
 installDashboard() {
@@ -188,23 +191,24 @@ installDashboard() {
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f helm/dashboard
-  helm install --name dahsboard $(values ${defaults[values]} ./helm/dashboard) ./helm/dashboard
+  helm install --name dahsboard $(values ${configs[values]} ./helm/dashboard) ${configs[sets]:+--set ${configs[sets]}}
+    ./helm/dashboard
 }
 
 installIstio() {
   check ${FUNCNAME[0]}
 
-  if [ ! -d ${defaults[istio]} ]; then
-    mkdir -p ${defaults[workdir]}
-    (cd ${defaults[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${defaults[istioVersion]} sh -)
+  if [ ! -d ${configs[istio]} ]; then
+    mkdir -p ${configs[workdir]}
+    (cd ${configs[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${configs[istioVersion]} sh -)
   fi
 
-  ${defaults[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
+  ${configs[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
 
   kubectl get namespace istio-system > /dev/null 2>&1 || {
     kubectl create namespace istio-system
     # todo: make kialia|jaeger|grapha install optional
-    helm template ${defaults[istio]}/install/kubernetes/helm/istio-init \
+    helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
       --name istio-init \
       --namespace istio-system | \
       kubectl apply -f -
@@ -215,11 +219,11 @@ installIstio() {
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio instllation failure"
 
-    helm template ${defaults[istio]}/install/kubernetes/helm/istio \
+    helm template ${configs[istio]}/install/kubernetes/helm/istio \
       --name istio \
       --namespace istio-system \
       --set tracing.enabled=true \
-      --values ${defaults[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
       kubectl apply -f -
     kubectl label namespace default istio-injection=enabled --overwrite=true
   }
@@ -231,7 +235,8 @@ installLogging() {
   kubectl get namespace logging > /dev/null 2>&1 || {
     kubectl create namespace logging
     kubectl label namespace logging istio-injection=enabled --overwrite=true
-    helm install --name logging --namespace logging $(values ${defaults[values]} ./helm/logging) ./helm/logging
+    helm install --name logging --namespace logging $(values ${configs[values]} ./helm/logging) \
+      ${configs[sets]:+--set ${configs[sets]}} ./helm/logging
   }
 }
 
@@ -242,7 +247,8 @@ installMds() {
     kubectl create namespace mds
     kubectl label namespace mds istio-injection=enabled --overwrite=true
     kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
-    helm install --name mds --namespace mds $(values ${defaults[values]} ./helm/mds) ./helm/mds
+    echo "helm install --name mds --namespace mds $(values ${configs[values]} ./helm/mds) \
+      ${configs[sets]:+--set ${configs[sets]}} ./helm/mds"
   }
 }
 
@@ -252,8 +258,8 @@ installBookinfo() {
   kubectl get namespace bookinfo-app > /dev/null 2>&1 || {
     kubectl create namespace bookinfo-app
     kubectl label namespace bookinfo-app istio-injection=enabled --overwrite=true
-    kubectl apply -n bookinfo-app -f ${defaults[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml
-    kubectl apply -n bookinfo-app -f ${defaults[istio]}/samples/bookinfo/networking/destination-rule-all.yaml
+    kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml
+    kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/networking/destination-rule-all.yaml
   }
 }
 
@@ -316,7 +322,7 @@ unforward() {
 }
 
 tokenDashboard() {
-  case "${defaults[os]}" in
+  case "${configs[os]}" in
     ${oses[osx]}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
       pbcopy;;
@@ -339,9 +345,9 @@ getApp() {
 app() {
   for a in ${1}; do
     if [ ${apps[${a}]+_} ]; then
-      case "${defaults[os]}" in
+      case "${configs[os]}" in
         ${oses[osx]}) open $(getApp ${a});;
-        *) usage "unsupported os: ${defaults[os]}";;
+        *) usage "unsupported os: ${configs[os]}";;
       esac
     else
       usage "unknown application: ${a}"
@@ -385,14 +391,14 @@ uninstallLogging() {
 uninstallIstio() {
   kubectl get namespace istio-system > /dev/null 2>&1 && {
     check ${FUNCNAME[0]}
-    helm template ${defaults[istio]}/install/kubernetes/helm/istio \
+    helm template ${configs[istio]}/install/kubernetes/helm/istio \
       --name istio \
       --namespace istio-system \
-      --values ${defaults[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
         kubectl delete -f -
     kubectl delete namespace istio-system
-    kubectl delete -f ${defaults[istio]}/install/kubernetes/helm/istio-init/files > /dev/null
-    [ -d ${defaults[istio]} ] && /bin/rm -rf ${defaults[istio]}
+    kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files > /dev/null
+    [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
   }
 }
 
@@ -407,9 +413,9 @@ uninstallDashboard() {
 }
 
 uninstallHelm() {
-  case "${defaults[os]}" in
+  case "${configs[os]}" in
     ${oses[osx]}) brew uninstall kubernetes-helm;;
-    *) usage "unsupported os: ${defaults[os]}";;
+    *) usage "unsupported os: ${configs[os]}";;
   esac
 }
 
@@ -419,7 +425,8 @@ check() {
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
     installDashboard | installLogging | installMds)
-      hash helm > /dev/null 2>&1 && helmDependenciesUpdate || installHelm;;
+      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
+      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
@@ -439,33 +446,42 @@ normalize() {
   echo ${1} | cut -d ':' -f 2- | tr ',' ' '
 }
 
-[[ ! -d ${defaults[workdir]} ]] && mkdir -p ${defaults[workdir]}
+config() {
+  if [[ ${1} == *"="* ]]; then
+    configs[$(echo ${1} | cut -d '=' -f 1)]=$(echo ${1} | cut -d '=' -f 2-)
+  else
+    configs[${1}]=
+  fi
+}
+
+[[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
 [[ ${#} == 0 ]] && usage
 
 for arg in "${@}"; do
   case "${arg}" in
     bootstrap) bootstrap || warn  "${arg} failure";;
     build) build || usage "${arg} failure";;
-    install) arg="${defaults[install]}";&
+    install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
-    test) arg="${defaults[test]}";&
+    test) arg="${configs[test]}";&
     test:*) invoke test "$(normalize ${arg})";;
-    forward) arg="${defaults[forward]}";&
+    forward) arg="${configs[forward]}";&
     forward:*) forward "$(normalize ${arg})";;
     unforward) unforward;;
     unforward:*) unforward "$(normalize ${arg})";;
-    token) arg="${defaults[token]}";&
+    token) arg="${configs[token]}";&
     token:*) invoke token "$(normalize ${arg})";;
     open) usage "specify an application(s) to open";;
     open:*) app "$(normalize ${arg})";;
     cli:*) invoke cli "$(normalize ${arg})";;
-    uninstall) arg="${defaults[uninstall]}";&
+    uninstall) arg="${configs[uninstall]}";&
     uninstall:*) invoke uninstall "$(normalize ${arg})";;
-    reinstall) arg="${defaults[reinstall]}";&
+    reinstall) arg="${configs[reinstall]}";&
     reinstall:*)
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     help) usage;;
+    --set:*) config "$(echo ${arg} | cut -d ':' -f 2-)";;
     *) usage "unknown command: ${arg}"
   esac
 done
