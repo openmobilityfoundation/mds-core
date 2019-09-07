@@ -343,28 +343,29 @@ if (pg_info.database) {
         await MDSDBPostgres.shutdown()
       })
 
-      it('.readPolicyMetadatas', async () => {
+      it('.readBulkPolicyMetadata', async () => {
         await MDSDBPostgres.writePolicy(POLICY_JSON)
         await MDSDBPostgres.writePolicy(POLICY2_JSON)
         await MDSDBPostgres.writePolicy(POLICY3_JSON)
 
-        await MDSDBPostgres.writePolicyMetadata(POLICY_JSON.policy_id, {
+        await MDSDBPostgres.writePolicyMetadata({
           policy_id: POLICY_JSON.policy_id,
           policy_metadata: { name: 'policy_json' }
         })
-        await MDSDBPostgres.writePolicyMetadata(POLICY2_JSON.policy_id, {
+        await MDSDBPostgres.writePolicyMetadata({
           policy_id: POLICY2_JSON.policy_id,
           policy_metadata: { name: 'policy2_json' }
         })
-        await MDSDBPostgres.writePolicyMetadata(POLICY3_JSON.policy_id, {
+        await MDSDBPostgres.writePolicyMetadata({
           policy_id: POLICY3_JSON.policy_id,
           policy_metadata: { name: 'policy3_json' }
         })
 
-        const noParamsResult = await MDSDBPostgres.readPolicyMetadatas()
+        const noParamsResult = await MDSDBPostgres.readBulkPolicyMetadata()
         assert.deepEqual(noParamsResult.length, 3)
-        const withStartDateResult = await MDSDBPostgres.readPolicyMetadatas({ start_date: now() })
+        const withStartDateResult = await MDSDBPostgres.readBulkPolicyMetadata({ start_date: now() })
         assert.deepEqual(withStartDateResult.length, 1)
+        assert.deepEqual(withStartDateResult[0].policy_metadata.name, 'policy3_json')
       })
     })
 
@@ -381,7 +382,8 @@ if (pg_info.database) {
         await MDSDBPostgres.writeGeography(LAGeography)
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
-        await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id }).should.be.rejected()
+        const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
+        assert.deepEqual(result.length, 0)
       })
 
       it('can write, read, and publish a Geography', async () => {
@@ -391,7 +393,8 @@ if (pg_info.database) {
         assert.deepEqual(result[0].geography_json, LAGeography.geography_json)
         assert.deepEqual(result[0].geography_id, LAGeography.geography_id)
 
-        await MDSDBPostgres.readGeographies({ get_read_only: true }).should.be.rejected()
+        const noGeos = await MDSDBPostgres.readGeographies({ get_read_only: true })
+        assert.deepEqual(noGeos.length, 0)
 
         await MDSDBPostgres.publishGeography(LAGeography.geography_id)
         const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
@@ -464,16 +467,23 @@ if (pg_info.database) {
           geography_metadata: { foo: 'afoo' }
         }
         try {
-          await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
+          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
           throw new Error('Should have thrown')
         } catch (err) {
           await MDSDBPostgres.writeGeography(LAGeography)
-          await MDSDBPostgres.writeGeographyMetadata(GEOGRAPHY_UUID, geographyMetadata)
+          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
           const geographyMetadataResult = await MDSDBPostgres.readSingleGeographyMetadata(GEOGRAPHY_UUID)
-          console.log('goegraphy')
-          console.log(geographyMetadataResult)
           assert.deepEqual(geographyMetadataResult, geographyMetadata)
         }
+      })
+
+      it('can do bulk GeographyMetadata reads', async () => {
+        const all = await MDSDBPostgres.readBulkGeographyMetadata()
+        assert.deepEqual(all.length, 1)
+        const readOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_read_only: true })
+        assert.deepEqual(readOnlyResult.length, 0)
+        const notReadOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_read_only: false })
+        assert.deepEqual(notReadOnlyResult.length, 1)
       })
     })
   })

@@ -307,7 +307,7 @@ describe('Tests app', () => {
       request
         .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
-        .send(metadata)
+        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
         .expect(200)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -344,7 +344,7 @@ describe('Tests app', () => {
         .get(`/policies/meta?start_date=${now() - days(365)}`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
-      test.assert(result.body.metadata.length === 1)
+      test.assert(result.body.length === 1)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
 
@@ -483,12 +483,12 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies POSTing geography metadata', done => {
+    it('verifies PUTing geography metadata', done => {
       const metadata = { some_arbitrary_thing: 'boop' }
       request
-        .post(`/geographies/meta/${GEOGRAPHY_UUID}`)
+        .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
-        .send(metadata)
+        .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
         .expect(200)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -498,11 +498,11 @@ describe('Tests app', () => {
 
     it('verifies GETing geography metadata', done => {
       request
-        .get(`/geographies/meta/${GEOGRAPHY_UUID}`)
+        .get(`/geographies/${GEOGRAPHY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.some_arbitrary_thing === 'boop')
+          test.assert(result.body.geography_metadata.some_arbitrary_thing === 'boop')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -510,7 +510,7 @@ describe('Tests app', () => {
 
     it('verifies cannot GET non-existent geography metadata', done => {
       request
-        .get(`/geographies/meta/beepbapboop`)
+        .get(`/geographies/beepbapboop/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(404)
         .end((err, result) => {
@@ -570,6 +570,18 @@ describe('Tests app', () => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
+    })
+
+    it('can do bulk geography metadata reads', async () => {
+      await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
+      await db.writeGeographyMetadata({ geography_id: GEOGRAPHY2_UUID, geography_metadata: { earth: 'isround' } })
+
+      const result = await request
+        .get(`/geographies/meta?get_read_only=true`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(200)
+      test.assert(result.body.length === 1)
+      test.value(result).hasHeader('content-type', APP_JSON)
     })
   })
 })

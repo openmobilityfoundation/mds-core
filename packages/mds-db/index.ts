@@ -1068,21 +1068,18 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     // TODO insufficiently general
     // TODO add 'count'
     const { rows } = await client.query(sql, values)
-    if (rows.length === 0) {
-      if (params && params.geography_id) {
-        throw new NotFoundError(`geography ${params.geography_id}`)
-      } else {
-        throw new NotFoundError(`geographies not found`)
-      }
-    }
-    return rows
+    return rows.map(row => {
+      /* eslint-disable-next-line @typescript-eslint/no-implicit-any */
+      delete row.id
+      return row
+    })
   } catch (err) {
     await log.error('readGeographies', err)
     throw err
   }
 }
 
-async function readGeographyMetadatas(params?: {
+async function readBulkGeographyMetadata(params?: {
   geography_id?: UUID
   get_read_only?: boolean
 }): Promise<GeographyMetadata[]> {
@@ -1090,6 +1087,10 @@ async function readGeographyMetadatas(params?: {
   const geography_ids = geographies.map(geography => {
     return `'${geography.geography_id}'`
   })
+
+  if (geography_ids.length === 0) {
+    return []
+  }
   const sql = `select * from ${schema.TABLE.geography_metadata} where geography_id in (${geography_ids.join(',')})`
 
   const client = await getReadOnlyClient()
@@ -1156,27 +1157,30 @@ async function publishGeography(geography_id: UUID) {
   return geography_id
 }
 
-async function writeGeographyMetadata(geography_id: UUID, metadata: GeographyMetadata) {
+async function writeGeographyMetadata(geography_metadata: GeographyMetadata) {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.geography_metadata} (${cols_sql(
     schema.TABLE_COLUMNS.geography_metadata
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.geography_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, { geography_id, geography_metadata: metadata })
+  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, {
+    geography_id: geography_metadata.geography_id,
+    geography_metadata: geography_metadata.geography_metadata
+  })
   const {
     rows: [recorded_metadata]
   }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
-  return { ...metadata, ...recorded_metadata }
+  return { ...geography_metadata, ...recorded_metadata }
 }
 
 async function readSingleGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
   const client = await getReadOnlyClient()
-  const sql = `SELECT geography_id, geography_metadata FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
+  const sql = `SELECT * FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
   try {
     const result = await client.query(sql)
     if (result.rows.length === 0) {
       throw new Error(`Metadata for ${geography_id} not found`)
     }
-    return result.rows[0]
+    return { geography_id, geography_metadata: result.rows[0].geography_metadata }
   } catch (err) {
     await log.error(err)
     throw err
@@ -1230,7 +1234,7 @@ async function readPolicies(params?: {
   return res.rows.map(row => row.policy_json)
 }
 
-async function readPolicyMetadatas(params?: {
+async function readBulkPolicyMetadata(params?: {
   policy_id?: UUID
   name?: string
   description?: string
@@ -1242,6 +1246,10 @@ async function readPolicyMetadatas(params?: {
   const policy_ids = policies.map(policy => {
     return `'${policy.policy_id}'`
   })
+
+  if (policy_ids.length === 0) {
+    return []
+  }
   const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id in (${policy_ids.join(',')})`
 
   const client = await getReadOnlyClient()
@@ -1379,17 +1387,20 @@ async function publishPolicy(policy_id: UUID) {
   }
 }
 
-async function writePolicyMetadata(policy_id: UUID, metadata: PolicyMetadata) {
+async function writePolicyMetadata(policy_metadata: PolicyMetadata) {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.policy_metadata} (${cols_sql(
     schema.TABLE_COLUMNS.policy_metadata
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.policy_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, { policy_id, policy_metadata: metadata })
+  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, {
+    policy_id: policy_metadata.policy_id,
+    policy_metadata: policy_metadata.policy_metadata
+  })
   const {
     rows: [recorded_metadata]
   }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
   return {
-    ...metadata,
+    ...policy_metadata,
     ...recorded_metadata
   }
 }
@@ -1662,9 +1673,9 @@ export = {
   deletePolicy,
   writeGeographyMetadata,
   readSingleGeographyMetadata,
-  readGeographyMetadatas,
+  readBulkGeographyMetadata,
   writePolicyMetadata,
-  readPolicyMetadatas,
+  readBulkPolicyMetadata,
   readSinglePolicyMetadata,
   publishPolicy,
   isPolicyPublished,

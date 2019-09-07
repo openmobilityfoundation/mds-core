@@ -274,6 +274,7 @@
       "request": "launch",
       "name": "Tests: mds-db",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "runtimeArgs": ["--harmony"],
       "args": [
         "-r",
         "ts-node/register",
