@@ -258,7 +258,6 @@ installMds() {
     kubectl create namespace mds ${configs[dryrun]:+--dry-run}
     kubectl label namespace mds istio-injection=enabled --overwrite=true \
       ${configs[dryrun]:+--dry-run}
-    # kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
     helm install ./helm/mds --name mds --namespace mds \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
