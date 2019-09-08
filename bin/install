@@ -102,9 +102,7 @@ example:
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
   bash 4.x                                            : see https://www.gnu.org/software/bash/
-  homebrew                                            : see https://brew.sh
   yarn                                                : see https://yarnpkg.com/en/
-  nvm                                                 : see https://nvm.sh
   lerna                                               : see https://lerna.js.org
 EOF
 
@@ -244,16 +242,16 @@ foo() {
   echo doink
 }
 installMds() {
-  check ${FUNCNAME[0]}
+  # check ${FUNCNAME[0]}
 
-  kubectl get namespace mds > /dev/null 2>&1 || {
-    kubectl create namespace mds
-    kubectl label namespace mds istio-injection=enabled --overwrite=true
-    kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
+  # kubectl get namespace mds > /dev/null 2>&1 || {
+  #   kubectl create namespace mds
+  #   kubectl label namespace mds istio-injection=enabled --overwrite=true
+    # kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
     helm install --name mds --namespace mds \
       ${configs[values]:+--values $(values ${configs[values]} ./helm/mds)} \
-      ${configs[set]:+--set ${configs[set]}} ./helm/mds
-  }
+      ${configs[set]:+--set ${configs[set]}} ./helm/mds --dry-run --debug
+  # }
 }
 
 installBookinfo() {
@@ -425,6 +423,11 @@ uninstallHelm() {
 
 check() {
   case "${1}" in
+    $(basename ${0}))
+      for t in kubectl yarn lerna; do
+        hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
+      done
+      [[ "${BASH_VERSION}" == 3* ]] | usage "install: bash 4.x+";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
@@ -458,8 +461,9 @@ config() {
   fi
 }
 
-[[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
 [[ ${#} == 0 ]] && usage
+[[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
+check $(basename ${0})
 
 for arg in "${@}"; do
   case "${arg}" in
