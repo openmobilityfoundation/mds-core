@@ -17,8 +17,8 @@ declare -A configs=(
   ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
-  ["values"]="${MDS_VALUES:---values $(dirname ${0})/secrets.yaml}"
-  ["sets"]="${MDS_SETS:---set secrets.pg-pass.postgresql-password=\"$(echo Password123# | base64)\"}"
+  ["values"]="${MDS_VALUES:-$(dirname ${0})/mds-secrets.yaml}"
+  ["sets"]="${MDS_SETS:-secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -117,7 +117,7 @@ bootstrap() {
     ${oses[osx]} | ${oses[linux]})
       hash brew > /dev/null 2>&1 || \
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-      #todo: consider inline brew installs, bash install hangs on linux
+      # todo: consider inlining brew installs as 'brew install bash' hands on linux
       brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
     *) usage "unsupported os: ${configs[os]}";;
   esac
@@ -127,6 +127,7 @@ bootstrap() {
   for y in cypress mocha chai mochawesome; do
     yarn ${y} --version > /dev/null 2>&1 || yarn add -W ${y}
   done
+  unset y
 
   invoke install "$(normalize ${configs[bootstrap]})"
 }
@@ -158,7 +159,7 @@ pause() {
 updateHelmDependencies() {
   for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
     (cd helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
-  done
+  done; unset d
 }
 
 installHelm() {
@@ -181,8 +182,12 @@ installHelm() {
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 }
 
-values() {
-  [[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1}
+helmOptions() {
+  for v in ${@}; do
+    [ -z ${t+x} ] && t=${v} || opts+="--${t} ${v} "
+  done; unset v; unset t
+
+  [ ! -z ${opts+x} ] && echo ${opts}
 }
 
 installDashboard() {
@@ -192,9 +197,10 @@ installDashboard() {
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml \
     ${configs[dryrun]:+--dry-run}
   kubectl apply -f helm/dashboard ${configs[dryrun]:+--dry-run}
-  helm install --name dahsboard ${configs[values]:+--values $(values ${configs[values]} ./helm/dashboard)} \
-      ${configs[sets]:+${configs[sets]}} \
-      ./helm/dashboard ${configs[dryrun]:+--dry-run}
+  helm install ./helm/dashboard --name dahsboard \
+    ${configs[values]:+$(helmOptions values ${configs[values]})} \
+    ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+    ${configs[dryrun]:+--dry-run}
 }
 
 installIstio() {
@@ -238,10 +244,10 @@ installLogging() {
     kubectl create namespace logging ${configs[dryrun]:+--dry-run}
     kubectl label namespace logging istio-injection=enabled --overwrite=true \
       ${configs[dryrun]:+--dry-run}
-    helm install --name logging --namespace logging \
-      ${configs[values]:+--values $(values ${configs[values]} ./helm/logging)} \
-      ${configs[sets]:+${configs[sets]}} \
-      ./helm/logging ${configs[dryrun]:+--dry-run}
+    helm install ./helm/logging --name logging --namespace logging \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[dryrun]:+--dry-run}
   }
 }
 
@@ -253,10 +259,10 @@ installMds() {
     kubectl label namespace mds istio-injection=enabled --overwrite=true \
       ${configs[dryrun]:+--dry-run}
     # kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
-    helm install --name mds --namespace mds \
-      ${configs[values]:+--values $(values ${configs[values]} ./helm/mds)} \
-      ${configs[sets]:+${configs[sets]}} \
-      ./helm/mds ${configs[dryrun]:+--dry-run --debug}
+    helm install ./helm/mds --name mds --namespace mds \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[dryrun]:+--dry-run --debug}
   }
 }
 
@@ -281,7 +287,7 @@ testUnit() {
 
   for c in $(find ./helm -type d -depth 1); do
     helm unittest ./helm/$(basename ${c})
-  done
+  done; unset c
 }
 
 testIntegration() {
@@ -317,7 +323,7 @@ forward() {
     else
       warn "unknown app: ${a}"
     fi
-  done
+  done; unset a
 }
 
 unforward() {
@@ -329,7 +335,7 @@ unforward() {
     else
       warn "unknown app: ${a}"
     fi
-  done
+  done; unset a
 }
 
 tokenDashboard() {
@@ -363,7 +369,7 @@ app() {
     else
       usage "unknown application: ${a}"
     fi
-  done
+  done; unset a
 }
 
 cliPostgresql() {
@@ -380,7 +386,7 @@ uninstalllNamespaces() {
   for ns in ${@}; do
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
-  done
+  done; unset ns
 }
 
 uninstallBookinfo() {
@@ -438,7 +444,8 @@ check() {
     $(basename ${0}))
       for t in kubectl yarn lerna; do
         hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
-      done
+      done; unset t
+      unset t
       [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]] && usage "install: bash 4.x+";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
@@ -456,9 +463,9 @@ check() {
 }
 
 invoke() {
-  for arg in ${2}; do
-    ${1}${arg^} || warn "${1} error: ${arg}"
-  done
+  for a in ${2}; do
+    ${1}${a^} || warn "${1} error: ${a}"
+  done; unset a
 }
 
 normalize() {
@@ -507,4 +514,4 @@ for arg in "${@}"; do
     --set:* | set:*) sets "$(echo ${arg} | cut -d ':' -f 2-)";;
     *) usage "unknown command: ${arg}"
   esac
-done
+done; unset arg
