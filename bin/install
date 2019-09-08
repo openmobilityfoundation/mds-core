@@ -17,8 +17,8 @@ declare -A configs=(
   ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
-  ["values"]="${MDS_VALUES:-}"
-  ["sets"]="${MDS_SET:---set postgresql-password=\"$(echo Password123# | base64)\"}")
+  ["values"]="${MDS_VALUES:---values $(dirname ${0})/secrets.yaml}"
+  ["sets"]="${MDS_SET:---set secrets.pg-pass.postgresql-password=\"$(echo Password123# | base64)\"}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
