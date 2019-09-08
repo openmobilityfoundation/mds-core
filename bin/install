@@ -71,8 +71,9 @@ commands:
   help                                                : help message
 
 options:
-  --set:{key}={value}[,{key}={value}]                 : overrides default configuration for the remainder of the argument processing
-  --set:{key}+={value}                                : append default configuration for the remainder of the argument processing
+  --set:{key}={value}[,{key}={value}]                 : set configuration value by key
+  --set:{key}+={value}                                : append configuration value by key
+  --set:{key}=                                        : clears configuration value by key
 
 where service in:
   helm
