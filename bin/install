@@ -179,7 +179,7 @@ installHelm() {
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 }
 
-values() {
+Xvalues() {
   [[ "${1}" == /* ]] && echo ${1} || echo ${2}/${1}
 }
 
@@ -189,8 +189,9 @@ installDashboard() {
   kubectl apply -f \
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f helm/dashboard
-  helm install --name dahsboard ${configs[values]:+--values $(values ${configs[values]} ./helm/dashboard)} \
-      ${configs[sets]:+--set ${configs[sets]}} ./helm/dashboard
+  helm install --name dahsboard ${configs[values]:+--values $(Xvalues ${configs[values]} ./helm/dashboard)} \
+      ${configs[sets]:+${configs[sets]}} \
+      ./helm/dashboard
 }
 
 installIstio() {
@@ -234,22 +235,24 @@ installLogging() {
     kubectl create namespace logging
     kubectl label namespace logging istio-injection=enabled --overwrite=true
     helm install --name logging --namespace logging \
-      ${configs[values]:+--values $(values ${configs[values]} ./helm/logging)} \
-      ${configs[sets]:+--set ${configs[sets]}} ./helm/logging
+      ${configs[values]:+--values $(Xvalues ${configs[values]} ./helm/logging)} \
+      ${configs[sets]:+${configs[sets]}} \
+      ./helm/logging
   }
 }
 
 installMds() {
-  # check ${FUNCNAME[0]}
+  check ${FUNCNAME[0]}
 
-  # kubectl get namespace mds > /dev/null 2>&1 || {
-  #   kubectl create namespace mds
-  #   kubectl label namespace mds istio-injection=enabled --overwrite=true
+  kubectl get namespace mds > /dev/null 2>&1 || {
+    kubectl create namespace mds
+    kubectl label namespace mds istio-injection=enabled --overwrite=true
     # kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
     helm install --name mds --namespace mds \
-      ${configs[values]:+--values $(values ${configs[values]} ./helm/mds)} \
-      ${configs[sets]:+--set ${configs[sets]}} ./helm/mds --dry-run --debug
-  # }
+      ${configs[values]:+--values $(Xvalues ${configs[values]} ./helm/mds)} \
+      ${configs[sets]:+${configs[sets]}} \
+      ./helm/mds
+  }
 }
 
 installBookinfo() {
@@ -451,22 +454,15 @@ normalize() {
   echo ${1} | cut -d ':' -f 2- | tr ',' ' '
 }
 
-config() {
-  echo "config: >$1<"
-  if [[ ${1} == *"+="* ]]; then
-    echo tam
-    echo "k: $(echo ${1} | cut -d '=' -f 1 | cut -d '+' -f 1)"
-    echo "v: $(echo ${1} | cut -d '=' -f 2-)"
-    configs[$(echo ${1} | cut -d '=' -f 1 | cut -d '+' -f 1)]+=" --set $(echo ${1} | cut -d '=' -f 2-)"
-  elif [[ ${1} == *"="* ]]; then
-    echo autumn
-    configs[$(echo ${1} | cut -d '=' -f 1)]=$(echo ${1} | cut -d '=' -f 2-)
+sets() {
+  if [[ ${1} == *"="* ]]; then
+    k=$(echo ${1} | cut -d '=' -f 1)
+    v=$(echo ${1} | cut -d '=' -f 2-)
+
+    [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
   else
-    echo trey
     configs[${1}]=
   fi
-  echo "configs[sets]: >${configs[sets]}<"
-  exit
 }
 
 [[ ${#} == 0 ]] && usage
@@ -497,7 +493,7 @@ for arg in "${@}"; do
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     help) usage;;
-    --set:*) config "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --set:*) sets "$(echo ${arg} | cut -d ':' -f 2-)";;
     *) usage "unknown command: ${arg}"
   esac
 done
