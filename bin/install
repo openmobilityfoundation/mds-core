@@ -378,7 +378,8 @@ cliRedis() {
 
 uninstalllNamespaces() {
   for ns in ${@}; do
-    kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns}
+    kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
+      ${configs[dryrun]:+--dry-run}
   done
 }
 
@@ -388,15 +389,16 @@ uninstallBookinfo() {
 
 uninstallMds() {
   check ${FUNCNAME[0]}
-  helm delete --purge mds
+  helm delete --purge mds ${configs[dryrun]:+--dry-run}
   uninstalllNamespaces mds
-  kubectl get secrets pg-pass --namespace mds && kubectl delete secret pg-pass --namespace mds
+  kubectl get secrets pg-pass --namespace mds && kubectl delete secret pg-pass --namespace mds \
+    ${configs[dryrun]:+--dry-run}
   uninstalllNamespaces mds
 }
 
 uninstallLogging() {
   check ${FUNCNAME[0]}
-  helm delete --purge logging
+  helm delete --purge logging ${configs[dryrun]:+--dry-run}
 }
 
 uninstallIstio() {
@@ -406,21 +408,22 @@ uninstallIstio() {
       --name istio \
       --namespace istio-system \
       --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
-        kubectl delete -f -
-    kubectl delete namespace istio-system
-    kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files > /dev/null
+        kubectl delete -f - ${configs[dryrun]:+--dry-run}
+    kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
+    kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
+      ${configs[dryrun]:+--dry-run} > /dev/null
     [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
   }
 }
 
 uninstallDashboard() {
-  kubectl delete deployment kubernetes-dashboard --namespace=kube-system
-  kubectl delete service kubernetes-dashboard  --namespace=kube-system
-  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system
-  kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system
-  kubectl delete sa kubernetes-dashboard --namespace=kube-system
-  kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system
-  kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system
+  kubectl delete deployment kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete service kubernetes-dashboard  --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete sa kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system ${configs[dryrun]:+--dry-run}
 }
 
 uninstallHelm() {
