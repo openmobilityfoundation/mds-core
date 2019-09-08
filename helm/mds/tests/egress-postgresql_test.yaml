@@ -5,8 +5,12 @@ tests:
   - it: all
     release:
       namespace: mds
-    values:
-      - ./egress-values-postgresql.yaml
+    # values:
+    #   - ./egress-values-postgresql.yaml
+    set:
+      postgresql:
+        internal: false
+        host: postgresql-host
     asserts:
       - hasDocuments:
           count: 1

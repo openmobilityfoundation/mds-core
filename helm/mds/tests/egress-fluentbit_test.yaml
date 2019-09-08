@@ -5,8 +5,9 @@ tests:
   - it: all
     release:
       namespace: mds
-    values:
-      - ./egress-values-fluentbit.yaml
+    set:
+      fluentbit:
+        enabled: true
     asserts:
       - hasDocuments:
           count: 1

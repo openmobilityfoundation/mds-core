@@ -5,8 +5,11 @@ tests:
   - it: all
     release:
       namespace: mds
-    values:
-      - ./egress-values-postgresql-host-reader.yaml
+    set:
+      postgresql:
+        internal: false
+        host: postgresql-host
+        hostReader: postgresql-host-reader
     asserts:
       - hasDocuments:
           count: 2

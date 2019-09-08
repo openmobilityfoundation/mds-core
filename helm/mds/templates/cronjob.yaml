@@ -1,5 +1,5 @@
-{{- range $job := .Values.cronjobs }}
-{{- if (eq $job.enabled true) }}
+{{- range $jobId, $job := .Values.cronjobs }}
+{{- if $job.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -17,5 +17,6 @@ spec:
             env:
 {{ toYaml $job.env | indent 12 -}}
           restartPolicy: {{ $job.restartPolicy }}
+---
 {{- end }}
 {{- end }}

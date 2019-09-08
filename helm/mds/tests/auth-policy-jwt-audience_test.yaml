@@ -5,8 +5,24 @@ tests:
   - it: doc 3
     release:
       namespace: mds
-    values:
-      - ./auth-values-jwt-audience.yaml
+    set:
+      apis:
+        - jwtAudience: provider
+        - jwtAudience: agency
+        - jwtAudience: audit
+        - name: mds-policy
+          pathPrefix: /policy
+          port: 4003
+          version: latest
+          useDB: true
+          useCache: true
+          useEvents: true
+          jwtAudience: policy
+        - jwtAudience: compliance
+        - jwtAudience: daily
+        - jwtAudience: native
+      jwt:
+        issuer: my-issuer
     asserts:
       - isAPIVersion:
           of: authentication.istio.io/v1alpha1

@@ -5,8 +5,10 @@ tests:
   - it: doc 0
     release:
       namespace: mds
-    values:
-      - ./cert-manager-values-enabled.yaml
+    set:
+      tls:
+        enabled: true
+        domain: tls-domain
     asserts:
       - hasDocuments:
           count: 1

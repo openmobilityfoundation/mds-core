@@ -5,8 +5,10 @@ tests:
   - it: all
     release:
       namespace: mds
-    values:
-      - ./egress-values-redis.yaml
+    set:
+      redis:
+        internal: false
+        host: redis-host
     asserts:
       - hasDocuments:
           count: 1

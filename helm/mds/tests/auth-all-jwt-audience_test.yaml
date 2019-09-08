@@ -5,8 +5,17 @@ tests:
   - it: doc 0
     release:
       namespace: mds
-    values:
-      - ./auth-values-jwt-audience.yaml
+    set:
+      apis:
+        - jwtAudience: provider
+        - jwtAudience: agency
+        - jwtAudience: audit
+        - jwtAudience: policy
+        - jwtAudience: compliance
+        - jwtAudience: daily
+        - jwtAudience: native
+      jwt:
+        issuer: my-issuer
     asserts:
       - hasDocuments:
           count: 7
