@@ -18,7 +18,7 @@ declare -A configs=(
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
   ["values"]="${MDS_VALUES:-}"
-  ["set"]="${MDS_SET:-}")
+  ["sets"]="${MDS_SET:---set postgresql-password=\"$(echo Password123# | base64)\"}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
@@ -72,6 +72,7 @@ commands:
 
 options:
   --set:{key}={value}[,{key}={value}]                 : overrides default configuration for the remainder of the argument processing
+  --set:{key}+={value}                                : append default configuration for the remainder of the argument processing
 
 where service in:
   helm
@@ -189,7 +190,7 @@ installDashboard() {
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   kubectl apply -f helm/dashboard
   helm install --name dahsboard ${configs[values]:+--values $(values ${configs[values]} ./helm/dashboard)} \
-      ${configs[set]:+--set ${configs[set]}} ./helm/dashboard
+      ${configs[sets]:+--set ${configs[sets]}} ./helm/dashboard
 }
 
 installIstio() {
@@ -234,13 +235,10 @@ installLogging() {
     kubectl label namespace logging istio-injection=enabled --overwrite=true
     helm install --name logging --namespace logging \
       ${configs[values]:+--values $(values ${configs[values]} ./helm/logging)} \
-      ${configs[set]:+--set ${configs[set]}} ./helm/logging
+      ${configs[sets]:+--set ${configs[sets]}} ./helm/logging
   }
 }
 
-foo() {
-  echo doink
-}
 installMds() {
   # check ${FUNCNAME[0]}
 
@@ -250,7 +248,7 @@ installMds() {
     # kubectl create secret generic pg-pass --namespace mds --from-literal 'postgresql-password=Password123#'
     helm install --name mds --namespace mds \
       ${configs[values]:+--values $(values ${configs[values]} ./helm/mds)} \
-      ${configs[set]:+--set ${configs[set]}} ./helm/mds --dry-run --debug
+      ${configs[sets]:+--set ${configs[sets]}} ./helm/mds --dry-run --debug
   # }
 }
 
@@ -427,7 +425,7 @@ check() {
       for t in kubectl yarn lerna; do
         hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
       done
-      [[ "${BASH_VERSION}" == 3* ]] | usage "install: bash 4.x+";;
+      [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]] && usage "install: bash 4.x+";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
@@ -454,11 +452,21 @@ normalize() {
 }
 
 config() {
-  if [[ ${1} == *"="* ]]; then
+  echo "config: >$1<"
+  if [[ ${1} == *"+="* ]]; then
+    echo tam
+    echo "k: $(echo ${1} | cut -d '=' -f 1 | cut -d '+' -f 1)"
+    echo "v: $(echo ${1} | cut -d '=' -f 2-)"
+    configs[$(echo ${1} | cut -d '=' -f 1 | cut -d '+' -f 1)]+=" --set $(echo ${1} | cut -d '=' -f 2-)"
+  elif [[ ${1} == *"="* ]]; then
+    echo autumn
     configs[$(echo ${1} | cut -d '=' -f 1)]=$(echo ${1} | cut -d '=' -f 2-)
   else
+    echo trey
     configs[${1}]=
   fi
+  echo "configs[sets]: >${configs[sets]}<"
+  exit
 }
 
 [[ ${#} == 0 ]] && usage
