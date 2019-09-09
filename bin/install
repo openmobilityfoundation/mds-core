@@ -18,7 +18,7 @@ declare -A configs=(
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-}" #$(dirname ${0})/mds-secrets.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
@@ -226,8 +226,8 @@ installIstio() {
       --namespace istio-system | \
       kubectl apply -f - ${configs[dryrun]:+--dry-run}
 
-    # todo: should query pod status
-    pause 7
+    # todo: query pod status
+    pause 5
 
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio instllation failure"
@@ -317,13 +317,15 @@ portForward() {
   fv=$(get ${fa} 4 ${1})
   fp=$(get ${fa} 5 -1)
 
-  a=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
-  # todo: if fp=-1 && kube-get-port | p=fp
-  p=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
 
-  kubectl -n ${fns} port-forward ${a} ${p}:${p} &
+  [ ${fp} -eq -1 ] && {
+    fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  }
+
+  kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} &
   pause 3
-  unset fa fns fk fv a p
+  unset fa fns fk fv fa fp
 }
 
 forward() {
@@ -368,9 +370,10 @@ getApp() {
   gv=$(get ${ga} 4 ${1})
   gp=$(get ${ga} 5 -1)
 
-  # todo: if gp == -1 && kube-get-port || $gp
-  gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
-    -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  [ ${gp} -eq -1 ] && {
+    gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+      -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  }
 
   echo ${gu/\[port\]/${gp}}
   unset ga gu gns gks gv gp
@@ -478,19 +481,21 @@ check() {
     app:*)
       aa=${1##*:}
       if [ ${apps[${aa}]+_} ]; then
-        echo "1: ${aa}"
         ga=${apps[${aa}]}
-        echo "ga: $ga"
+        gns=$(get ${ga} 2)
+        gk=$(get ${ga} 3)
+        gv=$(get ${ga} 4 ${1})
         gp=$(get ${ga} 5 -1)
-        echo "gp: $gp"
-        [[ ${gp} -eq -1 ]] && echo FETCH-PORT
-        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${1##*:}
+
+        [ ${gp} -eq -1 ] && {
+          gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+            -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+        }
+
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
         unset ga gp
-        exit
       fi
       unset aa;;
-      # (( $(ps -aef | grep "$(portForward ${1##*:})" | grep -v grep | wc -l) == 1 )) || \
-      #   forward ${1##*:};;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
   esac
