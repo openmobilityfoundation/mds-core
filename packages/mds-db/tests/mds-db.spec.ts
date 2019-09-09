@@ -15,6 +15,7 @@ import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
+  POLICY5_JSON,
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
@@ -325,6 +326,10 @@ if (pg_info.database) {
         publishedPolicy.name = 'a shiny new name'
         await MDSDBPostgres.editPolicy(publishedPolicy).should.be.rejected()
         await MDSDBPostgres.deletePolicy(publishedPolicy.policy_id).should.be.rejected()
+      })
+
+      it('cannot publish a policy with a nonexistent geography', async () => {
+        // TODO
       })
 
       it('will throw an error if attempting to edit a nonexistent Policy', async () => {

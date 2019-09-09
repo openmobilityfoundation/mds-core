@@ -195,7 +195,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writePolicy(policy)
-      return res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+      return res.status(201).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
     } catch (err) {
       if (err.code === '23505') {
         return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })

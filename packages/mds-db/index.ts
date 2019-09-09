@@ -1068,8 +1068,9 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     // TODO insufficiently general
     // TODO add 'count'
     const { rows } = await client.query(sql, values)
+
     return rows.map(row => {
-      /* eslint-disable-next-line @typescript-eslint/no-implicit-any */
+      /* eslint-disable-next-line no-param-reassign */
       delete row.id
       return row
     })
@@ -1152,6 +1153,10 @@ async function deleteGeography(geography_id: UUID) {
 
 async function publishGeography(geography_id: UUID) {
   const client = await getWriteableClient()
+  const geography = (await readGeographies({ geography_id }))[0]
+  if (!geography) {
+    throw new NotFoundError('cannot publish nonexistent geography')
+  }
   const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
   await client.query(sql)
   return geography_id
@@ -1357,11 +1362,6 @@ async function publishPolicy(policy_id: UUID) {
       })
     })
 
-    await Promise.all(
-      geographies.map(geography_id => {
-        return readGeographies({ geography_id })
-      })
-    )
     const publishPolicySQL = `UPDATE ${
       schema.TABLE.policies
     } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
