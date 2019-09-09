@@ -20,3 +20,4 @@ spec:
 ---
 {{- end }}
 {{- end }}
+# todo: inline secrets

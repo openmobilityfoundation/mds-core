@@ -95,4 +95,4 @@ metadata:
 type: Opaque
 data:
   postgresql-password: {{ $.Values.pgPass | b64enc }}
-{{- end}}}
+{{- end}}
