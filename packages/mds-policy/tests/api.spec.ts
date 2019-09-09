@@ -26,14 +26,11 @@ import test from 'unit.js'
 import { now, days } from '@mds-core/mds-utils'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { Policy } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
-  POLICY4_JSON,
-  SUPERSEDING_POLICY_JSON,
   POLICY_UUID,
   POLICY2_UUID,
   GEOGRAPHY_UUID,
@@ -57,17 +54,14 @@ const APP_JSON = 'application/json; charset=utf-8'
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Tests app', () => {
-  it('resets the db', done => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    request
-      .get('/test/initialize')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+  before('Initialize the DB', async () => {
+    await db.initialize()
   })
+
+  after('Shutdown the DB', async () => {
+    await db.shutdown()
+  })
+
   it('reads the Policy schema', done => {
     request
       .get('/schema/policy')
@@ -108,11 +102,22 @@ describe('Tests app', () => {
       })
   })
 
+  it('tries to read non-existant policy', done => {
+    request
+      .get('/policies/notarealgeography')
+      .set('Authorization', AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result.body.result === 'not found')
+        done(err)
+      })
+  })
+
   it('tries to read non-existant geography', done => {
     request
       .get('/geographies/notarealgeography')
       .set('Authorization', AUTH)
-      .expect(404)
+      .expect(400)
       .end((err, result) => {
         test.value(result.body.result === 'not found')
         done(err)
@@ -135,7 +140,7 @@ describe('Tests app', () => {
       })
   })
 
-  it('reads back all active policies', done => {
+  it('read back all active policies', done => {
     request
       .get(`/policies`)
       .set('Authorization', AUTH)
@@ -151,32 +156,22 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all published policies and no superseded ones', async () => {
+  it('read back all policies', async () => {
     await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: veniceSpecialOpsZone })
     await db.writePolicy(POLICY2_JSON)
     await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)
     await db.publishPolicy(POLICY3_JSON.policy_id)
-    await db.writePolicy(POLICY4_JSON)
-    await db.writePolicy(SUPERSEDING_POLICY_JSON)
-    await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('read back all published policies response:', body)
+        log('read back all policies response:', body)
         test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
-        const isSupersededPolicyPresent = body.policies.some((policy: Policy) => {
-          return policy.policy_id === POLICY_JSON.policy_id
-        })
-        const isSupersedingPolicyPresent = body.policies.some((policy: Policy) => {
-          return policy.policy_id === SUPERSEDING_POLICY_JSON.policy_id
-        })
-        test.value(isSupersededPolicyPresent).is(false)
-        test.value(isSupersedingPolicyPresent).is(true)
+        // TODO verify contents
         return err
       })
   })
@@ -211,7 +206,7 @@ describe('Tests app', () => {
       })
   })
 
-  it('cannot GET a nonexistant policy', done => {
+  it('read back a nonexistant policy', done => {
     request
       .get(`/policies/${GEOGRAPHY_UUID}`) // obvs not a policy
       .set('Authorization', AUTH)
@@ -232,17 +227,6 @@ describe('Tests app', () => {
       .end((err, result) => {
         const body = result.body
         log('read back nonexistant geography response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('shuts down the db', done => {
-    request
-      .get('/test/shutdown')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })

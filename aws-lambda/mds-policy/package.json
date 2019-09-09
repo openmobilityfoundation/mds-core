@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "lambda:dev3-mds-policy": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
+    "lambda:develop-mds-policy": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
     "lambda:ladot-prod-mds-policy": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
     "lambda:ladot-sandbox-mds-policy": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-policy --zip-file fileb://dist/bundles/mds-policy.zip",
     "test": "yarn test:eslint && yarn test:unit",

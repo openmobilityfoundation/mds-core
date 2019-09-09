@@ -162,7 +162,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-agency",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/agency"
       }
     },
     {
@@ -214,7 +215,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-audit",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/audit"
       }
     },
     {
@@ -240,7 +242,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-compliance",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/compliance"
       }
     },
     {
@@ -266,7 +269,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-daily",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/daily"
       }
     },
     {
@@ -345,7 +349,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-native",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/native"
       }
     },
     {
@@ -371,7 +376,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-policy",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/policy"
       }
     },
     {
@@ -397,7 +403,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-policy-author",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/policy-author"
       }
     },
     {
@@ -423,7 +430,8 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-provider",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/provider"
       }
     },
     {

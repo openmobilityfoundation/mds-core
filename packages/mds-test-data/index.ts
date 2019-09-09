@@ -75,7 +75,7 @@ const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
 const POLICY5_UUID = 'e5ddf6ec-8b45-42ec-a1b5-b72e24644e1c'
 const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
-const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_SCOPES = 'admin:all'
 
 // for test purposes
 const PROVIDER_AUTH =
