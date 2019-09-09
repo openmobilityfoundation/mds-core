@@ -580,7 +580,7 @@ describe('Tests app', () => {
         .get(`/geographies/meta?get_read_only=false`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
-      test.assert(result.body.length === 1)
+      test.assert(result.body.length === 2)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
   })
