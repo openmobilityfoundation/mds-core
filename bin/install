@@ -17,8 +17,10 @@ declare -A configs=(
   ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
-  ["values"]="${MDS_VALUES:-$(dirname ${0})/mds-secrets.yaml}"
-  ["sets"]="${MDS_SETS:-secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
+  ["values"]="${MDS_VALUES:-}"
+  ["mds-values"]="${MDS_MDS_VALUES:-$(dirname ${0})/mds-secrets.yaml}"
+  ["sets"]="${MDS_SETS:-}"
+  ["mds-sets"]="${MDS_MDS_SETS:-secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -34,6 +36,7 @@ declare -A apps=(
   ["mds-policy"]="https://localhost:[port]/provider,mds,app"
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
   ["dashboard"]="https://localhost:[port],kube-system,k8s-app,kubernetes-dashboard"
+  ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
   ["jaeger"]="http://localhost:[port],istio-system,app,tracing"
@@ -93,6 +96,7 @@ where app in:
   mds-policy
   mds-provider
   dashboard                                           : kubernetes dashboard; see https://github.com/kubernetes/dashboard
+  grafana                                             : grafana; see: https://grafana.com
   kibana                                              : kibana; see https://www.elastic.co/products/kibana
   prometheus                                          : prometheus; see https://prometheus.io
   jaeger                                              : jaeger; see https://www.jaegertracing.io
@@ -177,7 +181,7 @@ installHelm() {
 
   for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
     (cd helm/$(basename ${d}); helm dependency update)
-  done
+  done; unset d
 
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 }
@@ -185,9 +189,10 @@ installHelm() {
 helmOptions() {
   for v in ${@}; do
     [ -z ${t+x} ] && t=${v} || opts+="--${t} ${v} "
-  done; unset v; unset t
+  done; unset v t
 
   [ ! -z ${opts+x} ] && echo ${opts}
+  unset opts
 }
 
 installDashboard() {
@@ -260,7 +265,9 @@ installMds() {
       ${configs[dryrun]:+--dry-run}
     helm install ./helm/mds --name mds --namespace mds \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[mds-values]:+$(helmOptions values ${configs[mds-values]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[mds-sets]:+$(helmOptions set ${configs[mds-sets]})} \
       ${configs[dryrun]:+--dry-run --debug}
   }
 }
@@ -300,41 +307,45 @@ testIntegration() {
 get() {
   v=$(echo ${1} | cut -sd ',' -f ${2})
   [ ! -z "${v}" ] && echo ${v} || echo ${3}
+  unset v
 }
 
 portForward() {
-  app=${apps[${1}]}
-  ns=$(get ${app} 2)
-  k=$(get ${app} 3)
-  v=$(get ${app} 4 ${1})
-  a=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].metadata.name}')
-  p=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  fa=${apps[${1}]}
+  fns=$(get ${fa} 2)
+  fk=$(get ${fa} 3)
+  fv=$(get ${fa} 4 ${1})
 
-  echo "kubectl -n ${ns} port-forward ${a} ${p}:${p}"
+  a=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
+  p=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+
+  echo "kubectl -n ${fns} port-forward ${a} ${p}:${p}"
+  unset fa fns fk fv a p
 }
 
 forward() {
   check ${FUNCNAME[0]}
 
-  for a in ${@}; do
-    if [ ${apps[${a}]+_} ]; then
-      exec $(portForward ${a}) &
+  for fa in ${@}; do
+    if [ ${apps[${fa}]+_} ]; then
+      exec $(portForward ${fa}) &
+      pause 3
     else
-      warn "unknown app: ${a}"
+      warn "unknown app: ${fa}"
     fi
-  done; unset a
+  done; unset fa
 }
 
 unforward() {
-  [ ! -z "${@}" ] || ps -aef | grep -E 'kubectl.*port-forward' | grep -v grep | awk '{print $2}' | xargs kill -9
+  [ ! -z "${@}" ] || ps -ef | grep -E 'kubectl.*port-forward' | grep -v grep | awk '{print $2}' | xargs kill -9
 
-  for a in ${@}; do
-    if [ ${apps[${a}]+_} ]; then
-      pkill $(portForward ${a})
+  for ua in ${@}; do
+    if [ ${apps[${ua}]+_} ]; then
+      ps -ef | grep -E 'kubectl.*port-forward' | grep ${ua} | grep -v grep | awk '{print $2}' | xargs kill -9
     else
-      warn "unknown app: ${a}"
+      warn "unknown app: ${ua}"
     fi
-  done; unset a
+  done; unset ua
 }
 
 tokenDashboard() {
@@ -348,19 +359,22 @@ tokenDashboard() {
 }
 
 getApp() {
-  a=${apps[${1}]}
-  u=$(get ${a} 1)
-  ns=$(get ${a} 2)
-  k=$(get ${a} 3)
-  v=$(get ${a} 4 ${1})
-  p=$(kubectl -n ${ns} get pod -l ${k}=${v} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  ga=${apps[${1}]}
+  gu=$(get ${ga} 1)
+  gns=$(get ${ga} 2)
+  gk=$(get ${ga} 3)
+  gv=$(get ${ga} 4 ${1})
+  gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+    -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
 
-  echo ${u/\[port\]/${p}}
+  echo ${gu/\[port\]/${gp}}
+  unset ga gu gns gks gv gp
 }
 
 app() {
   for a in ${1}; do
     if [ ${apps[${a}]+_} ]; then
+      check ${FUNCNAME[0]}:${a}
       case "${configs[os]}" in
         ${oses[osx]}) open $(getApp ${a});;
         *) usage "unsupported os: ${configs[os]}";;
@@ -441,11 +455,11 @@ uninstallHelm() {
 check() {
   case "${1}" in
     $(basename ${0}))
+      [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]] && usage "install: bash 4.x+"
       for t in kubectl yarn lerna; do
         hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
       done; unset t
-      unset t
-      [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]] && usage "install: bash 4.x+";;
+      kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
@@ -455,7 +469,10 @@ check() {
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
-    forward | open) ;;
+    forward) ;;
+    app:*)
+      (( $(ps -aef | grep "$(portForward ${1##*:})" | grep -v grep | wc -l) == 1 )) || \
+        forward ${1##*:};;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
   esac
@@ -477,6 +494,7 @@ sets() {
     v=$(echo ${1} | cut -d '=' -f 2-)
 
     [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
+    unset k v
   else
     configs[${1}]=
   fi
