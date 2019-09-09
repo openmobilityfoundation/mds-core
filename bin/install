@@ -484,7 +484,7 @@ check() {
         ga=${apps[${aa}]}
         gns=$(get ${ga} 2)
         gk=$(get ${ga} 3)
-        gv=$(get ${ga} 4 ${1})
+        gv=$(get ${ga} 4 ${aa})
         gp=$(get ${ga} 5 -1)
 
         [ ${gp} -eq -1 ] && {
