@@ -20,7 +20,7 @@ declare -A configs=(
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}" #$(dirname ${0})/mds-secrets.yaml}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-secrets.pg-pass.enabled=true secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
+  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -476,9 +476,21 @@ check() {
       hash helm > /dev/null 2>&1 || installHelm;;
     forward) ;;
     app:*)
-      # todo: curl check
-      (( $(ps -aef | grep "$(portForward ${1##*:})" | grep -v grep | wc -l) == 1 )) || \
-        forward ${1##*:};;
+      aa=${1##*:}
+      if [ ${apps[${aa}]+_} ]; then
+        echo "1: ${aa}"
+        ga=${apps[${aa}]}
+        echo "ga: $ga"
+        gp=$(get ${ga} 5 -1)
+        echo "gp: $gp"
+        [[ ${gp} -eq -1 ]] && echo FETCH-PORT
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${1##*:}
+        unset ga gp
+        exit
+      fi
+      unset aa;;
+      # (( $(ps -aef | grep "$(portForward ${1##*:})" | grep -v grep | wc -l) == 1 )) || \
+      #   forward ${1##*:};;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
   esac
