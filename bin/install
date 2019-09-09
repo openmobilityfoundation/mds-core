@@ -18,9 +18,9 @@ declare -A configs=(
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
   ["values"]="${MDS_VALUES:-}"
-  ["mds-values"]="${MDS_MDS_VALUES:-$(dirname ${0})/mds-secrets.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-}" #$(dirname ${0})/mds-secrets.yaml}"
   ["sets"]="${MDS_SETS:-}"
-  ["mds-sets"]="${MDS_MDS_SETS:-secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
+  ["sets-mds"]="${MDS_SETS_MDS:-secrets.pg-pass.enabled=true secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -40,7 +40,7 @@ declare -A apps=(
   ["kibana"]="http://localhost:[port],logging,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
   ["jaeger"]="http://localhost:[port],istio-system,app,tracing"
-  ["kiali"]="http://localhost:[port],kube-system,app"
+  ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
   ["bookinfo"]="http://localhost:[port],booking,app")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
@@ -265,9 +265,9 @@ installMds() {
       ${configs[dryrun]:+--dry-run}
     helm install ./helm/mds --name mds --namespace mds \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
-      ${configs[mds-values]:+$(helmOptions values ${configs[mds-values]})} \
+      ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-      ${configs[mds-sets]:+$(helmOptions set ${configs[mds-sets]})} \
+      ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
   }
 }
@@ -315,11 +315,14 @@ portForward() {
   fns=$(get ${fa} 2)
   fk=$(get ${fa} 3)
   fv=$(get ${fa} 4 ${1})
+  fp=$(get ${fa} 5 -1)
 
   a=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
+  # todo: if fp=-1 && kube-get-port | p=fp
   p=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
 
-  echo "kubectl -n ${fns} port-forward ${a} ${p}:${p}"
+  kubectl -n ${fns} port-forward ${a} ${p}:${p} &
+  pause 3
   unset fa fns fk fv a p
 }
 
@@ -328,8 +331,7 @@ forward() {
 
   for fa in ${@}; do
     if [ ${apps[${fa}]+_} ]; then
-      exec $(portForward ${fa}) &
-      pause 3
+      portForward ${fa}
     else
       warn "unknown app: ${fa}"
     fi
@@ -364,6 +366,9 @@ getApp() {
   gns=$(get ${ga} 2)
   gk=$(get ${ga} 3)
   gv=$(get ${ga} 4 ${1})
+  gp=$(get ${ga} 5 -1)
+
+  # todo: if gp == -1 && kube-get-port || $gp
   gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
     -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
 
@@ -471,6 +476,7 @@ check() {
       hash helm > /dev/null 2>&1 || installHelm;;
     forward) ;;
     app:*)
+      # todo: curl check
       (( $(ps -aef | grep "$(portForward ${1##*:})" | grep -v grep | wc -l) == 1 )) || \
         forward ${1##*:};;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;

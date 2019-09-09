@@ -64,6 +64,11 @@ jwt:
   enabled: false
 cronjobs:
 secrets:
+  pg-pass:
+    name: pg-pass
+    enabled: false
+    data:
+      postgresql-password:
 postgresql:
   internal: true
   host:
