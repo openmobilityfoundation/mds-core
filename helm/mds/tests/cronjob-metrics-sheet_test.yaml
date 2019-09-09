@@ -6,36 +6,15 @@ tests:
     release:
       namespace: mds
     set:
-      cronjobs:
-        metrics-sheet:
-          name: metrics-sheet
-          enabled: true
-          schedule: |-
-            "*/1 * * * *"
-          image: busybox
-          env:
-          - name: AUDIENCE
-            value: audience-stub
-          - name: AUTH0_DOMAIN
-            value: auth0-domain-stub
-          - name: CLIENT_ID
-            value: client-id-stub
-          - name: CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: metrics-sheet
-                key: CLIENT_SECRET
-          - name: GOOGLE_CLIENT_EMAIL
-            value: google-client-email-stub
-          - name: GOOGLE_PRIVATE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: metrics-sheet
-                key: GOOGLE_PRIVATE_KEY
-          restartPolicy: OnFailure
+      audience: audience-stub
+      auth0Domain: auth0Domain-stub
+      clientId: clientId-stub
+      googleClientEmail: googleClientEmail-stub
+      clientSecret: clientSecret-stub
+      googlePrivateKey: googlePrivateKey-stub
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
       - isAPIVersion:
           of: batch/v1beta1
       - isKind:
@@ -67,13 +46,13 @@ tests:
           value: AUTH0_DOMAIN
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[1].value
-          value: auth0-domain-stub
+          value: auth0Domain-stub
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[2].name
           value: CLIENT_ID
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[2].value
-          value: client-id-stub
+          value: clientId-stub
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[3].name
           value: CLIENT_SECRET
@@ -88,7 +67,7 @@ tests:
           value: GOOGLE_CLIENT_EMAIL
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[4].value
-          value: google-client-email-stub
+          value: googleClientEmail-stub
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].env[5].name
           value: GOOGLE_PRIVATE_KEY
@@ -101,3 +80,29 @@ tests:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].restartPolicy
           value: OnFailure
+      - isAPIVersion:
+          of: v1
+        documentIndex: 1
+      - isKind:
+          of: Secret
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: metrics-sheet
+        documentIndex: 1
+      - equal:
+          path: metadata.namespace
+          value: mds
+        documentIndex: 1
+      - equal:
+          path: type
+          value: Opaque
+        documentIndex: 1
+      - equal:
+          path: data.CLIENT_SECRET
+          value: Y2xpZW50U2VjcmV0LXN0dWI=
+        documentIndex: 1
+      - equal:
+          path: data.GOOGLE_PRIVATE_KEY
+          value: Z29vZ2xlUHJpdmF0ZUtleS1zdHVi
+        documentIndex: 1

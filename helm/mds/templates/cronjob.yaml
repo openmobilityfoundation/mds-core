@@ -1,23 +1,47 @@
-{{- range $jobId, $job := .Values.cronjobs }}
-{{- if $job.enabled }}
+# todo: revist values names once we register more then one cronjob concurrently
+{{- if and $.Values.audience $.Values.auth0Domain $.Values.clientId $.Values.googleClientEmail $.Values.clientSecret $.Values.googlePrivateKey }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: {{ $job.name }}
+  name: metrics-sheet
   namespace: {{ $.Release.Namespace }}
 spec:
-  schedule: {{ $job.schedule }}
+  schedule: "*/1 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: {{ $job.name }}
-            image: {{ $job.image }}
+          - name: metrics-sheet
+            image: busybox
             env:
-{{ toYaml $job.env | indent 12 -}}
-          restartPolicy: {{ $job.restartPolicy }}
+            - name: AUDIENCE
+              value: {{ $.Values.audience }}
+            - name: AUTH0_DOMAIN
+              value: {{ $.Values.auth0Domain }}
+            - name: CLIENT_ID
+              value: {{ $.Values.clientId }}
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: metrics-sheet
+                  key: CLIENT_SECRET
+            - name: GOOGLE_CLIENT_EMAIL
+              value: {{ $.Values.googleClientEmail }}
+            - name: GOOGLE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: metrics-sheet
+                  key: GOOGLE_PRIVATE_KEY
+            restartPolicy: OnFailure
 ---
-{{- end }}
-{{- end }}
-# todo: inline secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: metrics-sheet
+  namespace: {{ $.Release.Namespace }}
+type: Opaque
+data:
+  CLIENT_SECRET: {{ $.Values.clientSecret | b64enc }}
+  GOOGLE_PRIVATE_KEY: {{ $.Values.googlePrivateKey | b64enc }}
+{{- end}}
