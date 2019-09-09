@@ -67,7 +67,7 @@ describe('Verify API', () => {
 
   it('Get events', done => {
     request
-      .get('/events')
+      .get('/native/events')
       .set('Authorization', PROVIDER_AUTH)
       .expect(200)
       .end((err1, result1) => {
@@ -81,7 +81,7 @@ describe('Verify API', () => {
           done(err1)
         } else {
           request
-            .get(`/events/${result1.body.cursor}`)
+            .get(`/native/events/${result1.body.cursor}`)
             .set('Authorization', PROVIDER_AUTH)
             .expect(200)
             .end((err2, result2) => {
@@ -94,7 +94,7 @@ describe('Verify API', () => {
                 done(err2)
               } else {
                 request
-                  .get(`/events/${result1.body.cursor}?provider_id=invalid-filter-with-cursor`)
+                  .get(`/native/events/${result1.body.cursor}?provider_id=invalid-filter-with-cursor`)
                   .set('Authorization', PROVIDER_AUTH)
                   .expect(400)
                   .end(err3 => {
