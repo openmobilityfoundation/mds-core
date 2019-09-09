@@ -43,10 +43,8 @@ import {
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
-  DISTRICT_SEVEN,
-  POLICY3_UUID
+  DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
-import { ConsoleLogger } from '@slack/logger'
 import { api } from '../api'
 
 /* eslint-disable-next-line no-console */
