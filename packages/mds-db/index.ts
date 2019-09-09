@@ -25,7 +25,8 @@ import {
   yesterday,
   csv,
   NotFoundError,
-  BadParamsError
+  BadParamsError,
+  AlreadyPublishedError
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
@@ -1317,7 +1318,7 @@ async function editPolicy(policy: Policy) {
   const { policy_id } = policy
 
   if (await isPolicyPublished(policy_id)) {
-    throw new Error('Cannot edit published policy')
+    throw new AlreadyPublishedError('Cannot edit published policy')
   }
 
   const result = await readPolicies({ policy_id, get_unpublished: true })
@@ -1346,7 +1347,7 @@ async function publishPolicy(policy_id: UUID) {
   try {
     const client = await getWriteableClient()
     if (await isPolicyPublished(policy_id)) {
-      throw new Error('Cannot re-publish existing policy')
+      throw new AlreadyPublishedError('Cannot re-publish existing policy')
     }
 
     const policy = (await readPolicies({ policy_id, get_unpublished: true }))[0]
@@ -1355,18 +1356,11 @@ async function publishPolicy(policy_id: UUID) {
     }
 
     const geographies: UUID[] = []
-    log.info('about to publish some fine geographies')
+    log.info('about to publish associated geographies')
     policy.rules.forEach(rule => {
       rule.geographies.forEach(geography_id => {
         geographies.push(geography_id)
       })
-    })
-
-    const publishPolicySQL = `UPDATE ${
-      schema.TABLE.policies
-    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
-    await client.query(publishPolicySQL).catch(err => {
-      throw err
     })
     await Promise.all(
       geographies.map(geography_id => {
@@ -1380,6 +1374,14 @@ async function publishPolicy(policy_id: UUID) {
         log.info('published geography', geography_id, ispublished)
       })
     )
+
+    // Only publish the policy if the geographies are successfully published first
+    const publishPolicySQL = `UPDATE ${
+      schema.TABLE.policies
+    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
+    await client.query(publishPolicySQL).catch(err => {
+      throw err
+    })
     return policy_id
   } catch (err) {
     await log.error(err)

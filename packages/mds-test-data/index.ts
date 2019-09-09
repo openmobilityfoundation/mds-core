@@ -66,7 +66,7 @@ import { DISTRICT_SEVEN } from './district-seven'
 
 const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
-const GEOGRAPHY3_UUID = '991d4062-6e5e-4ac1-bcd1-1a3bd6d7f63c'
+const NONEXISTENT_GEOGRAPHY_UUID = '991d4062-6e5e-4ac1-bcd1-1a3bd6d7f63c'
 
 const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
 const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
@@ -263,7 +263,7 @@ const POLICY5_JSON: Policy = {
       rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
       rule_type: 'speed',
       rule_units: 'mph',
-      geographies: [GEOGRAPHY3_UUID],
+      geographies: [NONEXISTENT_GEOGRAPHY_UUID],
       statuses: { trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 25

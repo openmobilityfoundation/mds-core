@@ -19,7 +19,16 @@ import Joi from '@hapi/joi'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, ServerError, UUID_REGEX, NotFoundError, isUUID, BadParamsError } from '@mds-core/mds-utils'
+import {
+  now,
+  pathsFor,
+  ServerError,
+  UUID_REGEX,
+  NotFoundError,
+  isUUID,
+  BadParamsError,
+  AlreadyPublishedError
+} from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import { PolicyApiRequest, PolicyApiResponse } from './types'
@@ -222,7 +231,7 @@ function api(app: express.Express): express.Express {
           return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
         }
       }
-      if (err.message.includes('Cannot re-publish existing policy')) {
+      if (err instanceof AlreadyPublishedError) {
         return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
       }
       /* istanbul ignore next */
@@ -248,7 +257,7 @@ function api(app: express.Express): express.Express {
       if (err instanceof NotFoundError) {
         return res.status(404).send({ error: 'not found' })
       }
-      if (err.message.includes('Cannot edit published policy')) {
+      if (err instanceof AlreadyPublishedError) {
         return res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
       }
       /* istanbul ignore next */
@@ -339,7 +348,9 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/geographies/meta/'), async (req, res) => {
-    const { geography_id = null, get_read_only = false } = req.query
+    const { geography_id = null } = req.query
+    const get_read_only = req.query === 'true'
+
     log.info('read /geographies/meta', req.query)
     try {
       const metadata = await db.readBulkGeographyMetadata({ geography_id, get_read_only })
@@ -369,7 +380,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/geographies/:geography_id'), async (req, res) => {
+  app.post(pathsFor('/geographies/'), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null

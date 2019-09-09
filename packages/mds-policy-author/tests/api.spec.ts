@@ -134,7 +134,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -184,7 +184,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy2)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -198,7 +198,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy3)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -230,7 +230,7 @@ describe('Tests app', () => {
     it('creates one current geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
         .expect(200)
@@ -268,7 +268,7 @@ describe('Tests app', () => {
       const policy = clone(POLICY_JSON)
       policy.name = 'an even shinier new name'
       request
-        .put(`/policies/${POLICY_UUID}`)
+        .put(`/policies/${POLICY_JSON.policy_id}`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy)
         .expect(409)
@@ -446,7 +446,7 @@ describe('Tests app', () => {
     it('creates one current geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
         .expect(200)
@@ -549,7 +549,7 @@ describe('Tests app', () => {
     it('verifies cannot POST invalid geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
         .expect(400)
@@ -562,7 +562,7 @@ describe('Tests app', () => {
     it('cannot POST duplicate geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
         .expect(409)
@@ -577,7 +577,7 @@ describe('Tests app', () => {
       await db.writeGeographyMetadata({ geography_id: GEOGRAPHY2_UUID, geography_metadata: { earth: 'isround' } })
 
       const result = await request
-        .get(`/geographies/meta?get_read_only=true`)
+        .get(`/geographies/meta?get_read_only=false`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
       test.assert(result.body.length === 1)

@@ -328,10 +328,6 @@ if (pg_info.database) {
         await MDSDBPostgres.deletePolicy(publishedPolicy.policy_id).should.be.rejected()
       })
 
-      it('cannot publish a policy with a nonexistent geography', async () => {
-        // TODO
-      })
-
       it('will throw an error if attempting to edit a nonexistent Policy', async () => {
         const policy = clone(POLICY2_JSON)
         policy.policy_id = '28218022-d333-41be-bda5-1dc4288516d2'
