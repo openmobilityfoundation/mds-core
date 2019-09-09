@@ -58,7 +58,7 @@ describe('Verify API', () => {
 
   it('Get events (no authorization)', done => {
     request
-      .get('/native/events')
+      .get('/events')
       .expect(401)
       .end(err => {
         done(err)
