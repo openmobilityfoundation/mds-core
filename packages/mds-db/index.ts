@@ -30,6 +30,7 @@ import {
 import log from '@mds-core/mds-logger'
 
 import { QueryResult } from 'pg'
+import { VEHICLE_EVENT } from 'packages/mds-types/dist'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
@@ -663,7 +664,7 @@ async function getNumEventsLast24HoursByProvider(
 async function getTripEventsLast24HoursByProvider(
   start = yesterday(),
   stop = now()
-): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VehicleEvent; recorded: number; timestamp: number }[]> {
+): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VEHICLE_EVENT; recorded: number; timestamp: number }[]> {
   const sql = `select provider_id, trip_id, event_type, recorded, timestamp from ${schema.TABLE.events} where trip_id is not null and recorded > ${start} and recorded < ${stop} order by "timestamp"`
   return makeReadOnlyQuery(sql)
 }
@@ -1377,7 +1378,7 @@ async function readRule(rule_id: UUID): Promise<Rule> {
 
 async function readUnprocessedStatusChangeEvents(
   before: Recorded<VehicleEvent> | null,
-  take: number = 1000
+  take = 1000
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()

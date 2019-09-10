@@ -15,7 +15,7 @@
     "@mds-core/mds-utils": "^0.1.5",
     "express": "4.17.1",
     "ladot-service-areas": "^0.1.5",
-    "uuid": "3.3.2"
+    "uuid": "3.3.3"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "^0.1.5"

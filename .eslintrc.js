@@ -23,12 +23,6 @@ module.exports = {
     '@typescript-eslint/no-floating-promises': 'error',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-object-literal-type-assertion': [
-      'error',
-      {
-        allowAsParameter: true // Allow type assertion in call and new expression, default false
-      }
-    ],
     '@typescript-eslint/no-parameter-properties': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
     'array-callback-return': 'off',
@@ -37,6 +31,7 @@ module.exports = {
     'import/no-extraneous-dependencies': 'off',
     'import/no-unresolved': 'off',
     'import/prefer-default-export': 'off',
+    'max-classes-per-file': 'off',
     'no-console': 'warn',
     'no-plusplus': 'off',
     'no-restricted-syntax': 'off',
