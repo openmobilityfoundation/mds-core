@@ -258,7 +258,7 @@ installLogging() {
 
 installMds() {
   check ${FUNCNAME[0]}
-
+  installFallbackCert
   kubectl get namespace mds > /dev/null 2>&1 || {
     kubectl create namespace mds ${configs[dryrun]:+--dry-run}
     kubectl label namespace mds istio-injection=enabled --overwrite=true \
@@ -270,6 +270,16 @@ installMds() {
       ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
   }
+}
+
+installFallbackCert() {
+  TMPCERT=`mktemp /tmp/k8s-fallback-cert.XXXXXX` || exit 1
+  openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+    -keyout ${TMPCERT}.key -out ${TMPCERT}.crt \
+    -subj "/CN=${INGRESS_DOMAIN}/O=${INGRESS_DOMAIN}"
+  kubectl -n istio-system create secret tls gateway-fallback \
+    --key ${TMPCERT}.key --cert ${TMPCERT}.crt
+  rm ${TMPCERT} ${TMPCERT}.key ${TMPCERT}.crt
 }
 
 installBookinfo() {
