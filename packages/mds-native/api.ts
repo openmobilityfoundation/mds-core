@@ -96,7 +96,9 @@ function api(app: express.Express): express.Express {
         throw new ValidationError('invalid_cursor', { cursor })
       }
     } else {
-      const { provider_id, device_id, start_time, end_time } = filters
+      const { provider_id, device_id,  start_time: queried_start_time, end_time: queried_end_time } = filters
+      const start_time = queried_start_time ? Number(queried_start_time) : queried_start_time
+      const end_time = queried_end_time ? Number(queried_end_time) : queried_end_time
       isValidProviderId(provider_id, { required: false })
       isValidDeviceId(device_id, { required: false })
       isValidTimestamp(start_time, { required: false })
