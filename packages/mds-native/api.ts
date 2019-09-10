@@ -84,17 +84,14 @@ function api(app: express.Express): express.Express {
       params: { cursor },
       query: { limit: query_limit, ...filters }
     } = req
-    const limit = numericQueryStringParam(query_limit)
+    const limit = numericQueryStringParam(query_limit) || 1000
     isValidNumber(limit, { required: false, min: 1, max: 1000, property: 'limit' })
     if (cursor) {
       if (Object.keys(filters).length > 0) {
         throw new ValidationError('unexpected_filters', { cursor, filters })
       }
       try {
-        return {
-          cursor: JSON.parse(Buffer.from(cursor, 'base64').toString('ascii')),
-          limit: Number(limit)
-        }
+        return { cursor: JSON.parse(Buffer.from(cursor, 'base64').toString('ascii')), limit }
       } catch (err) {
         throw new ValidationError('invalid_cursor', { cursor })
       }
@@ -106,7 +103,7 @@ function api(app: express.Express): express.Express {
       isValidDeviceId(device_id, { required: false })
       isValidTimestamp(start_time, { required: false })
       isValidTimestamp(end_time, { required: false })
-      return { cursor: { provider_id, device_id, start_time, end_time }, limit: Number(limit) }
+      return { cursor: { provider_id, device_id, start_time, end_time }, limit }
     }
   }
 
