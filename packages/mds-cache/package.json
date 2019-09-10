@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-cache",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Mobility Data Specification cache interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,9 +14,9 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-logger": "0.1.7",
-    "@mds-core/mds-types": "0.1.4",
-    "@mds-core/mds-utils": "0.1.7",
+    "@mds-core/mds-logger": "0.1.8",
+    "@mds-core/mds-types": "0.1.5",
+    "@mds-core/mds-utils": "0.1.8",
     "bluebird": "3.5.5",
     "flat": "4.1.0",
     "redis": "2.8.0"

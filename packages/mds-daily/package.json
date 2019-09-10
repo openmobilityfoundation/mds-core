@@ -1,24 +1,24 @@
 {
   "name": "@mds-core/mds-daily",
   "description": "MDS Daily Reporting API",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-api-server": "0.1.7",
-    "@mds-core/mds-cache": "0.1.7",
-    "@mds-core/mds-db": "0.1.7",
-    "@mds-core/mds-logger": "0.1.7",
-    "@mds-core/mds-providers": "0.1.7",
-    "@mds-core/mds-stream": "0.1.7",
-    "@mds-core/mds-types": "0.1.4",
-    "@mds-core/mds-utils": "0.1.7",
+    "@mds-core/mds-api-server": "0.1.8",
+    "@mds-core/mds-cache": "0.1.8",
+    "@mds-core/mds-db": "0.1.8",
+    "@mds-core/mds-logger": "0.1.8",
+    "@mds-core/mds-providers": "0.1.8",
+    "@mds-core/mds-stream": "0.1.8",
+    "@mds-core/mds-types": "0.1.5",
+    "@mds-core/mds-utils": "0.1.8",
     "express": "4.17.1",
-    "ladot-service-areas": "0.1.7",
+    "ladot-service-areas": "0.1.8",
     "uuid": "3.3.3"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.7"
+    "@mds-core/mds-test-data": "0.1.8"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
