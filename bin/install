@@ -37,6 +37,8 @@ declare -A apps=(
   ["mds-native"]="https://localhost:[port]/native,mds,app"
   ["mds-policy"]="https://localhost:[port]/provider,mds,app"
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
+  ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
+  ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
   ["dashboard"]="https://localhost:[port],kube-system,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
@@ -97,6 +99,8 @@ where app in:
   mds-native
   mds-policy
   mds-provider
+  mds-postgresql
+  mds-redis-headless
   dashboard                                           : kubernetes dashboard; see https://github.com/kubernetes/dashboard
   grafana                                             : grafana; see: https://grafana.com
   kibana                                              : kibana; see https://www.elastic.co/products/kibana
@@ -112,7 +116,6 @@ pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
   bash 4.x                                            : see https://www.gnu.org/software/bash/
   yarn                                                : see https://yarnpkg.com/en/
-  lerna                                               : see https://lerna.js.org
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -130,7 +133,7 @@ bootstrap() {
 
   # todo: boostrap all-the-things
 
-  for y in cypress mocha chai mochawesome; do
+  for y in lerna cypress mocha chai mochawesome; do
     yarn ${y} --version > /dev/null 2>&1 || yarn add -W ${y}
   done
   unset y
@@ -418,12 +421,12 @@ app() {
 
 cliPostgresql() {
   check ${FUNCNAME[0]}
-  pgcli postgres://mdsadmin@mds-postgresql:5432/mds
+  pgcli postgres://mdsadmin@localhost:5432/mds
 }
 
 cliRedis() {
   check ${FUNCNAME[0]}
-  redis-cli -u redis://mds-redis-master:6379/0
+  redis-cli -u redis://localhost:6379/0
 }
 
 uninstalllNamespaces() {
