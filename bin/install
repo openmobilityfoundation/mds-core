@@ -18,9 +18,11 @@ declare -A configs=(
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-}" #$(dirname ${0})/mds-secrets.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-secrets.pg-pass.enabled=true secrets.pg-pass.data.postgresql-password=$(echo Password123# | base64)}"
+  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
+  ["setfiles"]="${MDS_SET_FILES:-}"
+  ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A repos=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -75,9 +77,9 @@ commands:
   help                                                : help message
 
 options:
-  --set:{key}={value}[,{key}={value}]                 : set configuration value by key
-  --set:{key}+={value}                                : append configuration value by key
-  --set:{key}=                                        : clears configuration value by key
+  --configure:{key}={value}[,{key}={value}]           : set configuration value by key
+  --configure:{key}+={value}                          : append configuration value by key
+  --configure:{key}=                                  : clears configuration value by key
 
 where service in:
   helm
@@ -204,6 +206,7 @@ installDashboard() {
   kubectl apply -f helm/dashboard ${configs[dryrun]:+--dry-run}
   helm install ./helm/dashboard --name dahsboard \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
+    ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
     ${configs[dryrun]:+--dry-run}
 }
@@ -226,8 +229,8 @@ installIstio() {
       --namespace istio-system | \
       kubectl apply -f - ${configs[dryrun]:+--dry-run}
 
-    # todo: should query pod status
-    pause 7
+    # todo: query pod status
+    pause 5
 
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio instllation failure"
@@ -251,6 +254,7 @@ installLogging() {
       ${configs[dryrun]:+--dry-run}
     helm install ./helm/logging --name logging --namespace logging \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
       ${configs[dryrun]:+--dry-run}
   }
@@ -268,6 +272,8 @@ installMds() {
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
       ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
   }
 }
@@ -327,13 +333,15 @@ portForward() {
   fv=$(get ${fa} 4 ${1})
   fp=$(get ${fa} 5 -1)
 
-  a=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
-  # todo: if fp=-1 && kube-get-port | p=fp
-  p=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
 
-  kubectl -n ${fns} port-forward ${a} ${p}:${p} &
+  [ ${fp} -eq -1 ] && {
+    fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  }
+
+  kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} > /dev/null 2>&1 &
   pause 3
-  unset fa fns fk fv a p
+  unset fa fns fk fv fa fp
 }
 
 forward() {
@@ -378,9 +386,10 @@ getApp() {
   gv=$(get ${ga} 4 ${1})
   gp=$(get ${ga} 5 -1)
 
-  # todo: if gp == -1 && kube-get-port || $gp
-  gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
-    -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  [ ${gp} -eq -1 ] && {
+    gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+      -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  }
 
   echo ${gu/\[port\]/${gp}}
   unset ga gu gns gks gv gp
@@ -424,9 +433,6 @@ uninstallBookinfo() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstalllNamespaces mds
-  kubectl get secrets pg-pass --namespace mds && kubectl delete secret pg-pass --namespace mds \
-    ${configs[dryrun]:+--dry-run}
   uninstalllNamespaces mds
 }
 
@@ -486,9 +492,23 @@ check() {
       hash helm > /dev/null 2>&1 || installHelm;;
     forward) ;;
     app:*)
-      # todo: curl check
-      (( $(ps -aef | grep "$(portForward ${1##*:})" | grep -v grep | wc -l) == 1 )) || \
-        forward ${1##*:};;
+      aa=${1##*:}
+      if [ ${apps[${aa}]+_} ]; then
+        ga=${apps[${aa}]}
+        gns=$(get ${ga} 2)
+        gk=$(get ${ga} 3)
+        gv=$(get ${ga} 4 ${aa})
+        gp=$(get ${ga} 5 -1)
+
+        [ ${gp} -eq -1 ] && {
+          gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+            -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+        }
+
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
+        unset ga gp
+      fi
+      unset aa;;
     cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
     cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
   esac
@@ -504,7 +524,7 @@ normalize() {
   echo ${1} | cut -d ':' -f 2- | tr ',' ' '
 }
 
-sets() {
+configure() {
   if [[ ${1} == *"="* ]]; then
     k=$(echo ${1} | cut -d '=' -f 1)
     v=$(echo ${1} | cut -d '=' -f 2-)
@@ -544,7 +564,7 @@ for arg in "${@}"; do
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     help) usage;;
-    --set:* | set:*) sets "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --configure:* | configure:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg

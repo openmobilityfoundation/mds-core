@@ -85,3 +85,14 @@ spec:
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
           {{- end }}
 {{- end }}
+{{- if $.Values.pgPass }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-pass
+  namespace: {{ $.Release.Namespace }}
+type: Opaque
+data:
+  postgresql-password: {{ $.Values.pgPass | b64enc }}
+{{- end}}
