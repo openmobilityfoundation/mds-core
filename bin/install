@@ -329,7 +329,7 @@ portForward() {
     fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
   }
 
-  kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} &
+  kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} > /dev/null 2>&1 &
   pause 3
   unset fa fns fk fv fa fp
 }
