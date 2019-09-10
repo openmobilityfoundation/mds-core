@@ -10,8 +10,7 @@ spec:
   targets:
   - name: {{ $api.name }}
   peers:
-  - mtls:
-      mode: PERMISSIVE
+  - mtls: {}
   origins:
   - jwt:
       audiences:
