@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-test-data",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Mobility Data Specification test data generator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,10 +14,10 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-logger": "^0.1.5",
-    "@mds-core/mds-types": "^0.1.2",
-    "@mds-core/mds-utils": "^0.1.5",
-    "ladot-service-areas": "^0.1.5",
+    "@mds-core/mds-logger": "0.1.6",
+    "@mds-core/mds-types": "0.1.3",
+    "@mds-core/mds-utils": "0.1.6",
+    "ladot-service-areas": "0.1.6",
     "uuid4": "1.1.4"
   },
   "scripts": {
