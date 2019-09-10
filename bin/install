@@ -361,7 +361,14 @@ unforward() {
 
   for ua in ${@}; do
     if [ ${apps[${ua}]+_} ]; then
-      ps -ef | grep -E 'kubectl.*port-forward' | grep ${ua} | grep -v grep | awk '{print $2}' | xargs kill -9
+      fa=${apps[${ua}]}
+      fns=$(get ${fa} 2)
+      fk=$(get ${fa} 3)
+      fv=$(get ${fa} 4 ${1})
+      fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
+
+      ps -ef | grep -E 'kubectl.*port-forward' | grep ${fa} | grep -v grep | awk '{print $2}' | xargs kill -9
+      unset fa fns fk fv
     else
       warn "unknown app: ${ua}"
     fi
