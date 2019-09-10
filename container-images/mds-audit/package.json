@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-audit",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "AWS Lambda for MDS Audit API",
   "main": "dist/index.js",
   "files": [
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.6",
-    "@mds-core/mds-api-server": "0.1.6",
-    "@mds-core/mds-audit": "0.1.18"
+    "@container-images/env-inject": "0.1.7",
+    "@mds-core/mds-api-server": "0.1.7",
+    "@mds-core/mds-audit": "0.1.19"
   },
   "license": "Apache-2.0"
 }

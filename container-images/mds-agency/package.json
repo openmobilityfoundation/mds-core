@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-agency",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "AWS Lambda for MDS Agency API",
   "main": "dist/index.js",
   "files": [
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.6",
-    "@mds-core/mds-agency": "0.0.8",
-    "@mds-core/mds-api-server": "0.1.6"
+    "@container-images/env-inject": "0.1.7",
+    "@mds-core/mds-agency": "0.0.9",
+    "@mds-core/mds-api-server": "0.1.7"
   },
   "license": "Apache-2.0"
 }
