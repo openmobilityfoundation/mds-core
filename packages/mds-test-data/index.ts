@@ -360,10 +360,10 @@ function makeTelemetryStream(origin: Telemetry, steps: number) {
   }
 
   const stream: Telemetry[] = []
-  let t = Object.assign({}, origin) as Telemetry & { gps: { heading: number } }
+  let t = { ...origin } as Telemetry & { gps: { heading: number } }
   Object.assign(t.gps, origin.gps)
   range(steps).map(() => {
-    t = Object.assign({}, t)
+    t = { ...t }
     // move 50m in whatever the bearing is
     t.gps = addDistanceBearing(t.gps, 50, t.gps.heading)
     // turn 5º

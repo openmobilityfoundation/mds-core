@@ -23,7 +23,7 @@
   "author": "City of Los Angeles.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@hapi/joi": "15.1.0",
+    "@hapi/joi": "15.1.1",
     "@mds-core/mds-api-server": "^0.1.5",
     "@mds-core/mds-cache": "^0.1.5",
     "@mds-core/mds-db": "^0.1.5",
@@ -35,7 +35,7 @@
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.26",
     "uuid4": "1.1.4",
-    "yargs": "13.3.0"
+    "yargs": "14.0.0"
   },
   "devDependencies": {
     "@mds-core/mds-agency": "^0.0.7",

@@ -32,8 +32,8 @@
     "express": "4.17.1",
     "ladot-service-areas": "^0.1.5",
     "url": "0.11.0",
-    "uuid": "3.3.2",
-    "yargs": "13.3.0"
+    "uuid": "3.3.3",
+    "yargs": "14.0.0"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "^0.1.5"

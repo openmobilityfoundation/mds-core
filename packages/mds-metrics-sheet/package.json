@@ -19,7 +19,7 @@
     "@mds-core/mds-logger": "^0.1.5",
     "@mds-core/mds-providers": "^0.1.5",
     "@mds-core/mds-types": "^0.1.2",
-    "google-spreadsheet": "2.0.7",
+    "google-spreadsheet": "2.0.8",
     "request": "2.88.0",
     "request-promise": "4.2.4"
   }

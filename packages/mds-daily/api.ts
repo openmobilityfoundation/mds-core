@@ -28,7 +28,8 @@ import {
   TripsStats,
   VEHICLE_EVENTS,
   VEHICLE_STATUSES,
-  EVENT_STATUS_MAP
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import {
   isUUID,
@@ -327,7 +328,7 @@ function api(app: express.Express): express.Express {
         rows.reduce(
           (
             acc: {
-              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VehicleEvent } }
+              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VEHICLE_EVENT } }
             },
             row
           ) => {
