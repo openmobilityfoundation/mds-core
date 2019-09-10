@@ -1,7 +1,7 @@
 {
   "name": "@mds-core/mds-policy-author",
   "description": "MDS Policy Author API",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "private": true,
   "licence": "Apache-2.0",
   "engineStrict": true,
@@ -10,25 +10,25 @@
     "npm": ">= 6.8.0"
   },
   "dependencies": {
-    "@hapi/joi": "15.1.0",
-    "@mds-core/mds-api-server": "^0.1.5",
-    "@mds-core/mds-db": "^0.1.5",
-    "@mds-core/mds-logger": "^0.1.5",
-    "@mds-core/mds-providers": "^0.1.5",
-    "@mds-core/mds-utils": "^0.1.5",
+    "@hapi/joi": "15.1.1",
+    "@mds-core/mds-api-server": "0.1.8",
+    "@mds-core/mds-db": "0.1.8",
+    "@mds-core/mds-logger": "0.1.8",
+    "@mds-core/mds-providers": "0.1.8",
+    "@mds-core/mds-utils": "0.1.8",
     "express": "4.17.1",
     "joi-to-json-schema": "5.1.0",
-    "uuid": "3.3.2"
+    "uuid": "3.3.3"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "PATH_PREFIX=/policy yarn watch server",
+    "start": "PATH_PREFIX=/policy-author yarn watch server",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --timeout 4000 --project ../../tsconfig.json --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --timeout 4000 --project ../../tsconfig.json --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && ts-node"
   }

@@ -123,10 +123,7 @@ describe('Testing API Server', () => {
   it('verifies scope access', done => {
     test.value(hasAccessScope([], null)).is(true)
     test.value(hasAccessScope(['admin:all'], null)).is(false)
-    test.value(hasAccessScope(['admin:all'], { scope: 'test:all' } as ApiAuthorizerClaims)).is(false)
-    test
-      .value(hasAccessScope(['admin:all'], { scope: ['test:all', 'admin:all'].join(' ') } as ApiAuthorizerClaims))
-      .is(true)
+    test.value(hasAccessScope(['admin:all'], { scope: 'admin:all' } as ApiAuthorizerClaims)).is(true)
     done()
   })
 })

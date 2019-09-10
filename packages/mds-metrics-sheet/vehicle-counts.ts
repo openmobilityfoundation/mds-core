@@ -53,21 +53,17 @@ const creds = {
 
 async function appendSheet(sheetName: string, rows: ({ date: string; name: string } & unknown)[]) {
   const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID)
-  try {
-    await promisify(doc.useServiceAccountAuth)(creds)
-    const info = await promisify(doc.getInfo)()
-    log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
-    const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
-    log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
-    if (sheet.title === sheetName) {
-      const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
-      log.info(`Wrote ${inserted.length} rows.`)
-      return await Promise.all(inserted)
-    }
-    log.info('Wrong sheet!')
-  } catch (error) {
-    throw error
+  await promisify(doc.useServiceAccountAuth)(creds)
+  const info = await promisify(doc.getInfo)()
+  log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
+  const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
+  log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
+  if (sheet.title === sheetName) {
+    const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
+    log.info(`Wrote ${inserted.length} rows.`)
+    return Promise.all(inserted)
   }
+  log.info('Wrong sheet!')
 }
 
 async function getProviderMetrics(iter: number): Promise<({ date: string; name: string } & unknown)[]> {
