@@ -323,6 +323,7 @@ export interface ComplianceResponse {
   policy: Policy
   compliance: Compliance[]
   total_violations: number
+  vehicles_in_violation: UUID[]
 }
 
 // We don't put the publish_date into the geography_json column
@@ -372,6 +373,7 @@ export interface BBox {
 export type BoundingBox = [[number, number], [number, number]]
 
 export interface Provider {
+  provider_id: UUID
   provider_name: string
   url?: string
   mds_api_url?: string

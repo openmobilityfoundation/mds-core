@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/api-gateway-authorizer",
-  "version": "0.1.5",
+  "version": "0.1.8",
   "description": "Authorizer for API Gateway",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,6 +10,9 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "lambda:ladot-prod-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
+    "lambda:ladot-sandbox-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
+    "lambda:develop-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
@@ -19,12 +22,12 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-api-authorizer": "^0.1.5",
+    "@mds-core/mds-api-authorizer": "0.1.8",
     "jsonwebtoken": "8.5.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "8.10.31",
-    "@types/jsonwebtoken": "8.3.2"
+    "@types/jsonwebtoken": "8.3.3"
   },
   "license": "Apache-2.0"
 }

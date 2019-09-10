@@ -23,11 +23,14 @@ import {
   seconds,
   days,
   yesterday,
-  csv
+  csv,
+  NotFoundError,
+  BadParamsError
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import { QueryResult } from 'pg'
+import { VEHICLE_EVENT } from 'packages/mds-types/dist'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
@@ -661,7 +664,7 @@ async function getNumEventsLast24HoursByProvider(
 async function getTripEventsLast24HoursByProvider(
   start = yesterday(),
   stop = now()
-): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VehicleEvent; recorded: number; timestamp: number }[]> {
+): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VEHICLE_EVENT; recorded: number; timestamp: number }[]> {
   const sql = `select provider_id, trip_id, event_type, recorded, timestamp from ${schema.TABLE.events} where trip_id is not null and recorded > ${start} and recorded < ${stop} order by "timestamp"`
   return makeReadOnlyQuery(sql)
 }
@@ -1068,9 +1071,9 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     const { rows } = await client.query(sql, values)
     if (rows.length === 0) {
       if (params && params.geography_id) {
-        throw new Error(`geography ${params.geography_id} not_found`)
+        throw new NotFoundError(`geography ${params.geography_id}`)
       } else {
-        throw new Error(`geographies not_found`)
+        throw new NotFoundError(`geographies not found`)
       }
     }
     return rows
@@ -1101,7 +1104,7 @@ async function isGeographyPublished(geography_id: UUID) {
     throw err
   })
   if (result.rows.length === 0) {
-    throw new Error(`geography_id ${geography_id} not_found`)
+    throw new NotFoundError(`geography_id ${geography_id} not found`)
   }
   log.info('is geography published', geography_id, result.rows[0].read_only)
   return Boolean(result.rows[0].read_only)
@@ -1169,8 +1172,8 @@ async function readPolicies(params?: {
   name?: string
   description?: string
   start_date?: Timestamp
-  end_date?: Timestamp
   get_unpublished?: boolean
+  get_published?: boolean
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -1181,14 +1184,26 @@ async function readPolicies(params?: {
   let sql = `select * from ${schema.TABLE.policies}`
   const conditions = []
   const vals = new SqlVals()
-  if (params && params.policy_id) {
-    conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
-  }
+  if (params) {
+    if (params.policy_id) {
+      conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
+    }
 
-  if (params && params.get_unpublished) {
-    conditions.push(`policy_json->>'publish_date' IS NULL`)
-  } else {
-    conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
+    if (params.get_unpublished) {
+      conditions.push(`policy_json->>'publish_date' IS NULL`)
+    }
+
+    if (params.get_published) {
+      conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
+    }
+
+    if (params.get_unpublished && params.get_published) {
+      throw new BadParamsError('cannot have get_unpublished and get_published both be true')
+    }
+
+    if (params.start_date) {
+      conditions.push(`policy_json->>'start_date' >= '${params.start_date}'`)
+    }
   }
 
   if (conditions.length) {
@@ -1196,10 +1211,19 @@ async function readPolicies(params?: {
   }
   const values = vals.values()
   const res = await client.query(sql, values)
-  if (res.rows.length === 0) {
-    throw new Error('policy not_found')
-  }
   return res.rows.map(row => row.policy_json)
+}
+
+async function readPolicy(policy_id: UUID): Promise<Policy> {
+  const client = await getReadOnlyClient()
+
+  const sql = `select * from ${schema.TABLE.policies} where policy_id = '${policy_id}'`
+  const res = await client.query(sql)
+  if (res.rows.length === 1) {
+    return res.rows[0].policy_json
+  }
+  await log.info(`readPolicy db failed for ${policy_id}: rows=${res.rows.length}`)
+  throw new NotFoundError(`policy_id ${policy_id} not found`)
 }
 
 async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
@@ -1233,7 +1257,10 @@ async function editPolicy(policy: Policy) {
     throw new Error('Cannot edit published policy')
   }
 
-  await readPolicies({ policy_id, get_unpublished: true })
+  const result = await readPolicies({ policy_id, get_unpublished: true })
+  if (result.length === 0) {
+    throw new NotFoundError(`no policy of id ${policy_id} was found`)
+  }
 
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.TABLE.policies} SET policy_json=$1 WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
@@ -1260,6 +1287,9 @@ async function publishPolicy(policy_id: UUID) {
     }
 
     const policy = (await readPolicies({ policy_id, get_unpublished: true }))[0]
+    if (!policy) {
+      throw new NotFoundError('cannot publish nonexistent policy')
+    }
 
     const geographies: UUID[] = []
     log.info('about to publish some fine geographies')
@@ -1348,7 +1378,7 @@ async function readRule(rule_id: UUID): Promise<Rule> {
 
 async function readUnprocessedStatusChangeEvents(
   before: Recorded<VehicleEvent> | null,
-  take: number = 1000
+  take = 1000
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
@@ -1592,6 +1622,7 @@ export = {
   editGeography,
   readPolicies,
   writePolicy,
+  readPolicy,
   editPolicy,
   deletePolicy,
   writeGeographyMetadata,

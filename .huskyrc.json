@@ -1,6 +1,5 @@
 {
   "hooks": {
-    "pre-commit": "yarn run husky-talisman -- pre-commit",
-    "pre-push": "yarn run husky-talisman -- pre-push"
+    "pre-commit": "pre-commit"
   }
 }

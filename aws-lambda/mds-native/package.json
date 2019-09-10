@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-native",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "AWS Lambda for MDS Native API",
   "main": "dist/index.js",
   "files": [
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "lambda:dev3-mds-native": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
+    "lambda:develop-mds-native": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
     "lambda:ladot-prod-mds-native": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
     "lambda:ladot-sandbox-mds-native": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-native --zip-file fileb://dist/bundles/mds-native.zip",
     "test": "yarn test:eslint && yarn test:unit",
@@ -21,9 +21,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "^0.1.5",
-    "@mds-core/mds-api-server": "^0.1.5",
-    "@mds-core/mds-native": "^0.0.3"
+    "@aws-lambda/aws-serverless-express-handler": "0.1.8",
+    "@mds-core/mds-api-server": "0.1.8",
+    "@mds-core/mds-native": "0.0.6"
   },
   "license": "Apache-2.0"
 }

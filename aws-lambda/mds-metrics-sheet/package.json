@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-metrics-sheet",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "description": "AWS Lambda for MDS Metrics Sheet",
   "main": "dist/index.js",
   "files": [
@@ -9,8 +9,8 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "lambda:dev3-metrics-sheet": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-metrics-sheet --zip-file fileb://dist/bundles/metrics-log.zip",
-    "lambda:dev3-metrics-sheet-geo": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-metrics-sheet-geo --zip-file fileb://dist/bundles/vehicle-counts.zip",
+    "lambda:develop-metrics-sheet": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-metrics-sheet --zip-file fileb://dist/bundles/metrics-log.zip",
+    "lambda:develop-metrics-sheet-geo": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-metrics-sheet-geo --zip-file fileb://dist/bundles/vehicle-counts.zip",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
@@ -20,7 +20,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-metrics-sheet": "^0.0.6"
+    "@mds-core/mds-metrics-sheet": "0.0.9"
   },
   "license": "Apache-2.0"
 }

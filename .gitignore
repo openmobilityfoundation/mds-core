@@ -69,7 +69,10 @@ tsconfig.tsbuildinfo
 
 # dotenv environment variables file
 .env
-.env.test
+
+
+
+.env.*
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -200,3 +203,18 @@ $RECYCLE.BIN/
 
 # End of https://www.gitignore.io/api/osx,node,windows,serverless,sublimetext,visualstudiocode
 
+# helm
+.helmignore
+values.*.yaml
+helm/charts
+helm/tools
+
+# cypress
+cypress/fixtures
+cypress/plugins
+cypress/screenshots
+cypress/support
+cypress/videos
+
+# tools
+tools

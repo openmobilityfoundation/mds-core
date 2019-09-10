@@ -19,7 +19,6 @@ import express from 'express'
 import log from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
-import stream from '@mds-core/mds-stream'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
 import areas from 'ladot-service-areas'
 import {
@@ -29,7 +28,8 @@ import {
   TripsStats,
   VEHICLE_EVENTS,
   VEHICLE_STATUSES,
-  EVENT_STATUS_MAP
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import {
   isUUID,
@@ -60,15 +60,6 @@ function api(app: express.Express): express.Express {
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
           const { provider_id, scope } = res.locals.claims
-
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({
-                result: `no test access without test:all scope (${scope})`
-              })
-            }
-          }
 
           // no admin access without auth
           if (req.path.includes('/admin/')) {
@@ -109,14 +100,6 @@ function api(app: express.Express): express.Express {
   // / ////////// gets ////////////////
 
   // ///////////////////// begin daily endpoints ///////////////////////
-
-  app.get(pathsFor('/test/shutdown'), async (req: DailyApiRequest, res: DailyApiResponse) => {
-    await Promise.all([cache.shutdown(), stream.shutdown(), db.shutdown()])
-    log.info('shutdown complete (in theory)')
-    res.send({
-      result: 'cache/stream/db shutdown done'
-    })
-  })
 
   const RIGHT_OF_WAY_STATUSES: string[] = [
     VEHICLE_STATUSES.available,
@@ -345,7 +328,7 @@ function api(app: express.Express): express.Express {
         rows.reduce(
           (
             acc: {
-              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VehicleEvent } }
+              [s: string]: { provider_id: UUID; trip_id: UUID; eventTypes: { [t: number]: VEHICLE_EVENT } }
             },
             row
           ) => {

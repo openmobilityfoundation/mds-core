@@ -48,3 +48,10 @@ export class ValidationError extends BaseError {
     super(ValidationError.name, reason(error))
   }
 }
+
+/* istanbul ignore next */
+export class BadParamsError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(ValidationError.name, reason(error))
+  }
+}

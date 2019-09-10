@@ -47,12 +47,7 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
 import { api } from '../api'
 
-process.env.PATH_PREFIX = '/audit'
-
 const request = supertest(ApiServer(api))
-
-const PROVIDER_SCOPES = 'admin:all test:all'
-const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 const APP_JSON = 'application/json; charset=utf-8'
 
@@ -75,15 +70,8 @@ const telemetry = (): {} => ({
 
 const AUDIT_START = Date.now()
 
-before('Initializing Database', done => {
-  request
-    .get('/audit/test/initialize')
-    .set('Authorization', ADMIN_AUTH)
-    .expect(200)
-    .end((err, result) => {
-      test.value(result).hasHeader('content-type', APP_JSON)
-      done(err)
-    })
+before('Initializing Database', async () => {
+  await Promise.all([db.initialize(), cache.initialize()])
 })
 
 describe('Testing API', () => {
@@ -492,13 +480,6 @@ describe('Testing API', () => {
   })
 })
 
-after('Shutting down Database', done => {
-  request
-    .get('/audit/test/shutdown')
-    .set('Authorization', ADMIN_AUTH)
-    .expect(200)
-    .end((err, result) => {
-      test.value(result).hasHeader('content-type', APP_JSON)
-      done(err)
-    })
+after('Shutting down Database/Cache', async () => {
+  await Promise.all([db.shutdown(), cache.shutdown()])
 })

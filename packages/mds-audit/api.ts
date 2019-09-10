@@ -17,8 +17,6 @@
 import express from 'express'
 import uuid from 'uuid'
 import log from '@mds-core/mds-logger'
-import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-cache'
 import urls from 'url'
 import {
   pathsFor,
@@ -107,19 +105,8 @@ function api(app: express.Express): express.Express {
       try {
         if (!req.path.includes('/health' || req.path === '/')) {
           // verify presence of subject_id
-          const { principalId, email, scope } = res.locals.claims
-          const subject_id = email || principalId
-
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            /* istanbul ignore if */
-            if (!scope || !scope.includes('test:all')) {
-              // 403 Forbidden
-              return res
-                .status(403)
-                .send({ error: new AuthorizationError('no test access without test:all scope', { scope }) })
-            }
-          }
+          const { principalId, user_email } = res.locals.claims
+          const subject_id = user_email || principalId
 
           /* istanbul ignore if */
           if (!subject_id) {
@@ -163,33 +150,6 @@ function api(app: express.Express): express.Express {
       }
     }
   })
-
-  // ///////////////////// begin test-only endpoints ///////////////////////
-
-  app.get(pathsFor('/test/initialize'), async (req: AuditApiRequest, res: AuditApiResponse) => {
-    try {
-      const kind = await db.initialize()
-      const result = `Database initialized (${kind})`
-      await log.info(result)
-      // 200 OK
-      res.status(200).send({ result })
-    } catch (err) /* istanbul ignore next */ {
-      // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-      res.status(500).send({ error: new ServerError(err) })
-    }
-  })
-
-  app.get(pathsFor('/test/shutdown'), async (req: AuditApiRequest, res: AuditApiResponse) => {
-    await db.shutdown()
-    await cache.shutdown()
-    await log.info('shutdown complete (in theory)')
-    // 200 OK
-    res.status(200).send({
-      result: 'db shutdown'
-    })
-  })
-  // ///////////////////// end test-only endpoints ///////////////////////
 
   // /////////////////// begin audit-only endpoints //////////////////////
 

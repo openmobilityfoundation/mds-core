@@ -1,0 +1,25 @@
+{
+  "name": "@container-images/mds-metrics-sheet",
+  "version": "0.1.9",
+  "description": "AWS Lambda for MDS Metrics Sheet",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && docker build -t mds-metrics-sheet:${npm_package_version} . && docker tag mds-metrics-sheet:${npm_package_version} mds-metrics-sheet:latest",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@mds-core/mds-metrics-sheet": "0.0.9"
+  },
+  "license": "Apache-2.0"
+}

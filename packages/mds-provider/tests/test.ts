@@ -26,11 +26,11 @@ import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHIC
 import { PROVIDER_UUID, PROVIDER_AUTH, makeTelemetryStream, makeTelemetry, makeDevices } from '@mds-core/mds-test-data'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
+import cache from '@mds-core/mds-cache'
+import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
-
-process.env.PATH_PREFIX = '/provider'
 
 const APP_JSON = 'application/json; charset=utf-8'
 
@@ -154,59 +154,18 @@ const test_data = {
 }
 
 describe('Tests app', () => {
-  it('initializes the db and cache', done => {
-    request
-      .get('/test/initialize')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(201)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+  before('initializes the db and cache', async () => {
+    await Promise.all([db.initialize(), cache.initialize()])
   })
 
-  it('verifies that it can create random seed data', done => {
-    request
-      .get('/test/seed?n=10')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(201)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+  after('Shuts down the db and cache', async () => {
+    await Promise.all([db.shutdown(), cache.shutdown()])
   })
 
-  it('initializes the db and cache (2nd pass)', done => {
-    request
-      .get('/test/initialize')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(201)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('verifies that it can post specific seed data', done => {
-    request
-      .post('/test/seed')
-      .set('Authorization', PROVIDER_AUTH)
-      .send(test_data)
-      .expect(201)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('verifies event processing', done => {
-    ProviderEventProcessor({ interval: 0 }).then(
-      processed => {
-        test.value(processed).is(3)
-        done()
-      },
-      err => done(err)
-    )
+  it('verifies event processing', async () => {
+    await Promise.all([db.seed(test_data), cache.seed(test_data)])
+    const processed = await ProviderEventProcessor({ interval: 0 })
+    test.value(processed).is(3)
   })
 
   it('tries to get trips without authorization', done => {
@@ -310,28 +269,6 @@ describe('Tests app', () => {
       .get(`/status_changes?device_id=notavalidUUID`)
       .set('Authorization', PROVIDER_AUTH)
       .expect(400)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('initializes the db and cache (final)', done => {
-    request
-      .get('/test/initialize')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(201)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('shuts down the db', done => {
-    request
-      .get('/test/shutdown')
-      .set('Authorization', PROVIDER_AUTH)
-      .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)

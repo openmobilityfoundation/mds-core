@@ -1,7 +1,7 @@
 {
   "name": "@mds-core/mds-provider",
   "description": "MDS Provider implementation to pair with MDS Agency",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -11,31 +11,31 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "yarn watch server",
+    "start": "PATH_PREFIX=/provider yarn watch server",
     "stream": "yarn watch stream",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 85 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --recursive tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 85 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   },
   "dependencies": {
-    "@mds-core/mds-api-helpers": "^0.1.5",
-    "@mds-core/mds-api-server": "^0.1.5",
-    "@mds-core/mds-cache": "^0.1.5",
-    "@mds-core/mds-db": "^0.1.5",
-    "@mds-core/mds-logger": "^0.1.5",
-    "@mds-core/mds-providers": "^0.1.5",
-    "@mds-core/mds-stream": "^0.1.5",
-    "@mds-core/mds-types": "^0.1.2",
-    "@mds-core/mds-utils": "^0.1.5",
+    "@mds-core/mds-api-helpers": "0.1.8",
+    "@mds-core/mds-api-server": "0.1.8",
+    "@mds-core/mds-cache": "0.1.8",
+    "@mds-core/mds-db": "0.1.8",
+    "@mds-core/mds-logger": "0.1.8",
+    "@mds-core/mds-providers": "0.1.8",
+    "@mds-core/mds-stream": "0.1.8",
+    "@mds-core/mds-types": "0.1.5",
+    "@mds-core/mds-utils": "0.1.8",
     "express": "4.17.1",
-    "ladot-service-areas": "^0.1.5",
+    "ladot-service-areas": "0.1.8",
     "url": "0.11.0",
-    "uuid": "3.3.2",
-    "yargs": "13.3.0"
+    "uuid": "3.3.3",
+    "yargs": "14.0.0"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "^0.1.5"
+    "@mds-core/mds-test-data": "0.1.8"
   }
 }

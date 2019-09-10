@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-compliance",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "description": "MDS Compliance Tool",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,10 +9,10 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "yarn watch server",
+    "start": "PATH_PREFIX=/compliance yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --recursive tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/compliance DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   },
@@ -23,24 +23,24 @@
   "author": "City of Los Angeles.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@hapi/joi": "15.1.0",
-    "@mds-core/mds-api-server": "^0.1.5",
-    "@mds-core/mds-cache": "^0.1.5",
-    "@mds-core/mds-db": "^0.1.5",
-    "@mds-core/mds-logger": "^0.1.5",
-    "@mds-core/mds-stream": "^0.1.5",
-    "@mds-core/mds-types": "^0.1.2",
-    "@mds-core/mds-utils": "^0.1.5",
+    "@hapi/joi": "15.1.1",
+    "@mds-core/mds-api-server": "0.1.8",
+    "@mds-core/mds-cache": "0.1.8",
+    "@mds-core/mds-db": "0.1.8",
+    "@mds-core/mds-logger": "0.1.8",
+    "@mds-core/mds-stream": "0.1.8",
+    "@mds-core/mds-types": "0.1.5",
+    "@mds-core/mds-utils": "0.1.8",
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.26",
     "uuid4": "1.1.4",
-    "yargs": "13.3.0"
+    "yargs": "14.0.0"
   },
   "devDependencies": {
-    "@mds-core/mds-agency": "^0.0.7",
-    "@mds-core/mds-policy": "^0.0.6",
-    "@mds-core/mds-provider": "^1.0.5",
-    "@mds-core/mds-test-data": "^0.1.5"
+    "@mds-core/mds-agency": "0.0.10",
+    "@mds-core/mds-policy": "0.0.9",
+    "@mds-core/mds-provider": "1.0.8",
+    "@mds-core/mds-test-data": "0.1.8"
   }
 }

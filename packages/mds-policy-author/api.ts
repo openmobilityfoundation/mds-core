@@ -16,10 +16,13 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
+// import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { pathsFor, ServerError, UUID_REGEX } from '@mds-core/mds-utils'
+import { now, pathsFor, ServerError, UUID_REGEX, NotFoundError, isUUID, BadParamsError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
+
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 const ruleSchema = Joi.object().keys({
@@ -102,28 +105,33 @@ function api(app: express.Express): express.Express {
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
    */
   app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
+    res.header('Access-Control-Allow-Origin', '*')
     try {
       // TODO verify presence of agency_id
       if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
         if (res.locals.claims) {
-          const { scope } = res.locals.claims
-
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({ result: `no test access without test:all scope (${scope})` })
-            }
-          }
-
-          // no admin access without auth
-          if (req.path.includes('/admin/')) {
-            if (!scope || !scope.includes('admin:all')) {
-              /* istanbul ignore next */
-              return res.status(403).send({ result: `no admin access without admin:all scope (${scope})` })
-            }
-          }
+          const { provider_id } = res.locals.claims
 
           // TODO alter authorization code to look for an agency_id
+
+          if (provider_id) {
+            if (!isUUID(provider_id)) {
+              await log.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
+              return res.status(400).send({
+                result: `invalid provider_id ${provider_id} is not a UUID`
+              })
+            }
+
+            if (!isProviderId(provider_id)) {
+              return res.status(400).send({
+                result: `invalid provider_id ${provider_id} is not a known provider`
+              })
+            }
+
+            if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)) {
+              return res.status(401).send({ result: 'Unauthorized' })
+            }
+          }
         } else {
           return res.status(401).send('Unauthorized')
         }
@@ -135,26 +143,50 @@ function api(app: express.Express): express.Express {
     next()
   })
 
-  // HOUSEKEEPING
-  app.get(pathsFor('/test/initialize'), async (req, res) => {
+  app.get(pathsFor('/policies'), async (req, res) => {
+    const { start_date = now(), end_date = now(), get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies', req.query, start_date, end_date)
+    if (start_date > end_date) {
+      res.status(400).send({ result: 'start_date after end_date' })
+      return
+    }
     try {
-      const kind = await Promise.all([db.initialize()])
-      return res.send({
-        result: `Policy initialized (${kind})`
+      const policies = await db.readPolicies({ get_published, get_unpublished })
+
+      // Let's not worry about filtering for just active policies at the moment.
+
+      /*
+      const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
+        if (policy.prev_policies) {
+          prev_policies_acc.push(...policy.prev_policies)
+        }
+        return prev_policies_acc
+      }, [])
+      const active = policies.filter(p => {
+        // overlapping segment logic
+        const p_start_date = p.start_date
+        const p_end_date = p.end_date || Number.MAX_SAFE_INTEGER
+        return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
       })
-    } catch (err /* istanbul ignore next */) {
-      await log.error('initialize failed', err)
-      return res.status(500).send(new ServerError())
+      */
+      res.status(200).send({ policies })
+    } catch (err) {
+      await log.error('failed to read policies', err)
+      if (err instanceof BadParamsError) {
+        res.status(400).send({
+          result:
+            'Cannot set both get_unpublished and get_published to be true. If you want all policies, set both params to false or do not send them.'
+        })
+      }
+      res.status(404).send({
+        result: 'not found'
+      })
     }
   })
 
-  app.get(pathsFor('/test/shutdown'), async (req, res) => {
-    await Promise.all([db.shutdown()])
-    log.info('shutdown complete (in theory)')
-    return res.send({ result: 'cache/stream/db shutdown done' })
-  })
+  //  app.get(pathsFor('/policies/meta'), async (req, res) => {})
 
-  app.post(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+  app.post(pathsFor('/policies'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -178,18 +210,20 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/admin/policies/:policy_id/publish'), async (req, res) => {
+  app.post(pathsFor('/policies/:policy_id/publish'), async (req, res) => {
     const { policy_id } = req.params
     try {
       await db.publishPolicy(policy_id)
       return res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
     } catch (err) {
-      if (err.message.includes('geography') && err.message.includes('not_found')) {
-        const geography_id = err.message.match(UUID_REGEX)
-        return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
-      }
-      if (err.message.includes('policy') && err.message.includes('not_found')) {
-        return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+      if (err instanceof NotFoundError) {
+        if (err.message.includes('geography')) {
+          const geography_id = err.message.match(UUID_REGEX)
+          return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+        }
+        if (err.message.includes('policy')) {
+          return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+        }
       }
       if (err.message.includes('Cannot re-publish existing policy')) {
         return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
@@ -201,7 +235,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.put(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+  app.put(pathsFor('/policies/:policy_id'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -214,8 +248,8 @@ function api(app: express.Express): express.Express {
       await db.editPolicy(policy)
       return res.status(200).send({ result: `successfully edited policy ${policy}` })
     } catch (err) {
-      if (err.message.includes('not_found')) {
-        return res.status(404).send({ error: 'not_found' })
+      if (err instanceof NotFoundError) {
+        return res.status(404).send({ error: 'not found' })
       }
       if (err.message.includes('Cannot edit published policy')) {
         return res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
@@ -223,11 +257,15 @@ function api(app: express.Express): express.Express {
       /* istanbul ignore next */
       await log.error('failed to edit policy', err.stack)
       /* istanbul ignore next */
-      return res.status(500).send({ error: new ServerError(err) })
+      if (err instanceof NotFoundError) {
+        res.status(404).send({ result: 'not found' })
+      } else {
+        res.status(500).send(new ServerError(err))
+      }
     }
   })
 
-  app.delete(pathsFor('/admin/policies/:policy_id'), async (req, res) => {
+  app.delete(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
       await db.deletePolicy(policy_id)
@@ -240,7 +278,22 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/admin/policies/meta/:policy_id'), async (req, res) => {
+  app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
+    const { policy_id } = req.params
+    try {
+      const policies = await db.readPolicies({ policy_id })
+      if (policies.length > 0) {
+        res.status(200).send(policies[0])
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      await log.error('failed to read one policy', err)
+      res.status(404).send({ result: 'not found' })
+    }
+  })
+
+  app.get(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
       const { policy_metadata } = await db.readPolicyMetadata(policy_id)
@@ -251,7 +304,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/admin/policies/meta/:policy_id'), async (req, res) => {
+  app.post(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
     const policy_metadata = req.body
     const { policy_id } = req.params
     try {
@@ -263,7 +316,24 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
+  app.get(pathsFor('/geographies/:geography_id'), async (req, res) => {
+    log.info('read geo', JSON.stringify(req.params))
+    const { geography_id } = req.params
+    log.info('read geo', geography_id)
+    try {
+      const geographies = await db.readGeographies({ geography_id })
+      if (geographies.length > 0) {
+        res.status(200).send({ geography: geographies[0] })
+      } else {
+        res.status(404).send({ result: 'not found' })
+      }
+    } catch (err) {
+      await log.error('failed to read geography', err.stack)
+      res.status(404).send({ result: 'not found' })
+    }
+  })
+
+  app.post(pathsFor('/geographies/:geography_id'), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null
@@ -287,7 +357,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.put(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
+  app.put(pathsFor('/geographies/:geography_id'), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null
@@ -304,7 +374,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.delete(pathsFor('/admin/geographies/:geography_id'), async (req, res) => {
+  app.delete(pathsFor('/geographies/:geography_id'), async (req, res) => {
     const { geography_id } = req.params
     try {
       await db.deleteGeography(geography_id)
@@ -315,7 +385,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/admin/geographies/meta/:geography_id'), async (req, res) => {
+  app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
     const { geography_id } = req.params
     try {
       const { geography_metadata } = await db.readGeographyMetadata(geography_id)
@@ -326,7 +396,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/admin/geographies/meta/:geography_id'), async (req, res) => {
+  app.post(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
     const geography_metadata = req.body
     const { geography_id } = req.params
     try {
