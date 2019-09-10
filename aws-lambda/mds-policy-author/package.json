@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-policy-author",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "AWS Lambda for MDS policy-author API",
   "main": "dist/index.js",
   "files": [
@@ -21,9 +21,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "0.1.8",
-    "@mds-core/mds-api-server": "0.1.8",
-    "@mds-core/mds-policy-author": "0.0.5"
+    "@aws-lambda/aws-serverless-express-handler": "0.1.9",
+    "@mds-core/mds-api-server": "0.1.9",
+    "@mds-core/mds-policy-author": "0.0.6"
   },
   "license": "Apache-2.0"
 }

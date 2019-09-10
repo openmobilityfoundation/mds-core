@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-daily",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "MDS daily-reports prototype",
   "main": "dist/index.js",
   "files": [
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.8",
-    "@mds-core/mds-api-server": "0.1.8",
-    "@mds-core/mds-daily": "0.0.9"
+    "@container-images/env-inject": "0.1.9",
+    "@mds-core/mds-api-server": "0.1.9",
+    "@mds-core/mds-daily": "0.0.10"
   },
   "license": "Apache-2.0"
 }
