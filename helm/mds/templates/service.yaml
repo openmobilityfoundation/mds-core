@@ -12,5 +12,4 @@ spec:
   -
     name: http-{{ $api.name }}
     port: {{ $api.port }}
-    targetPort: {{ $api.port }}
 {{- end }}
