@@ -29,8 +29,6 @@ export type VEHICLE_TYPE = keyof typeof VEHICLE_TYPES
 export const RULE_TYPES = Enum('count', 'speed', 'time')
 export type RULE_TYPE = keyof typeof RULE_TYPES
 
-export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
-
 export const RULE_UNIT_MAP = {
   minutes: 60,
   hours: 60 * 60

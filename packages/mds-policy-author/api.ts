@@ -188,11 +188,8 @@ function api(app: express.Express): express.Express {
   //  app.get(pathsFor('/policies/meta'), async (req, res) => {})
 
   app.post(pathsFor('/policies'), async (req, res) => {
-    const policy = req.body
-    if (!isUUID(policy.policy_id)) {
-      /* eslint-disable-next-line no-param-reassign */
-      policy.policy_id = uuid.v4()
-    }
+    const policy = { policy_id: uuid(), ...req.body }
+
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 
