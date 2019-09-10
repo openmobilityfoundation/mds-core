@@ -41,7 +41,7 @@ declare -A apps=(
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
-  ["jaeger"]="http://localhost:[port],istio-system,app,tracing"
+  ["jaeger"]="http://localhost:[port],istio-system,app,jaeger,16686"
   ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
   ["bookinfo"]="http://localhost:[port],booking,app")
 yellow=`tput setaf 3`
@@ -67,10 +67,10 @@ commands:
   build                                               : build project
   install[:{service[,{service}]}]                     : install specified service; default: ${configs[install]}
   test[:unit,integration]                             : preform specified tests; default: ${configs[test]}
+  open:[app[,{app}]]                                  : opens a browser for the provided application(s)
+  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${configs[token]}
   forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${configs[forward]}
   unforward[:{app[,{app}]}]                           : deregister port-forwarding for the provided application(s)
-  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${configs[token]}
-  open:[app[,{app}]]                                  : opens a browser for the provided application(s)
   cli:[postgresql,redis]                              : create a cli console for the provided service
   uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${configs[uninstall]}
   reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${configs[reinstall]}
