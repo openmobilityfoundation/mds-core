@@ -483,6 +483,24 @@ uninstallHelm() {
   esac
 }
 
+getPort() {
+  if [ ${apps[$1]+_} ]; then
+    ga=${apps[${1}]}
+    gns=$(get ${ga} 2)
+    gk=$(get ${ga} 3)
+    gv=$(get ${ga} 4 ${aa})
+    gp=$(get ${ga} 5 -1)
+
+    [ ${gp} -eq -1 ] && {
+      gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+        -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+    }
+    p=gp
+  fi; unset ga gns gk gv
+
+  echo ${gp:-}
+}
+
 check() {
   case "${1}" in
     $(basename ${0}))
@@ -503,24 +521,33 @@ check() {
     forward) ;;
     app:*)
       aa=${1##*:}
-      if [ ${apps[${aa}]+_} ]; then
-        ga=${apps[${aa}]}
-        gns=$(get ${ga} 2)
-        gk=$(get ${ga} 3)
-        gv=$(get ${ga} 4 ${aa})
-        gp=$(get ${ga} 5 -1)
+      gp=$(getPort ${aa})
 
-        [ ${gp} -eq -1 ] && {
-          gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
-            -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
-        }
-
+      if [ ${#gp} -ge 1 ]; then
         echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
-        unset ga gp
       fi
-      unset aa;;
-    cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
-    cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
+
+      unset gp aa;;
+    cliPostgresql)
+      hash pgcli > /dev/null 2>&1 || bootstrap
+
+      gp=$(getPort mds-postgresql)
+
+      if [ ${#gp} -ge 1 ]; then
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
+      fi
+
+      unset gp;;
+    cliRedis)
+      hash redis-cli > /dev/null 2>&1 || bootstrap
+
+      gp=$(getPort mds-redis)
+
+      if [ ${#gp} -ge 1 ]; then
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
+      fi
+
+      unset gp;;
   esac
 }
 
