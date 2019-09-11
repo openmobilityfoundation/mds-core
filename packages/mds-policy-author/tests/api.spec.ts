@@ -27,7 +27,7 @@ import should from 'should'
 import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
-import { now, days, clone } from '@mds-core/mds-utils'
+import { now, days, clone, isUUID } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST3_PROVIDER_ID } from '@mds-core/mds-providers'
@@ -37,6 +37,7 @@ import {
   POLICY2_JSON,
   POLICY3_JSON,
   POLICY4_JSON,
+  POLICY_JSON_MISSING_POLICY_ID,
   SUPERSEDING_POLICY_JSON,
   POLICY_UUID,
   POLICY2_UUID,
@@ -419,6 +420,19 @@ describe('Tests app', () => {
         .expect(400)
         .end(async policies_err => {
           done(policies_err)
+        })
+    })
+
+    it('generates a UUID for a policy that has no UUID', done => {
+      request
+        .post(`/policies`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .send(POLICY_JSON_MISSING_POLICY_ID)
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          test.assert(isUUID(result.body.result))
+          done(err)
         })
     })
   })

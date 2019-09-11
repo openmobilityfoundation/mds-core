@@ -444,7 +444,7 @@ function api(app: express.Express): express.Express {
     vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
   }> {
     function fmt(query: { skip: number; take: number }): string {
-      const flat: {[key: string]: number} = { ...reqQuery, ...query }
+      const flat: { [key: string]: number } = { ...reqQuery, ...query }
       let s = `${url}?`
       s += Object.keys(flat)
         .map(key => `${key}=${flat[key]}`)
