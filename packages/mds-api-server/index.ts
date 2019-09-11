@@ -74,29 +74,48 @@ export const ApiServer = (
 }
 
 // Canonical list of MDS scopes
-const MDS_ACCESS_SCOPES = ['admin:all'] as const
-type MDS_ACCESS_SCOPE = typeof MDS_ACCESS_SCOPES[number]
+const AccessTokenScopes = ['admin:all'] as const
+type AccessTokenScope = typeof AccessTokenScopes[number]
+type AccessTokenScopeClause<TAccessTokenScope extends string> = TAccessTokenScope[]
 
-export const hasAccessScope = (scopes: MDS_ACCESS_SCOPE[], claims: ApiAuthorizerClaims | null) => {
-  if (scopes.length > 0 && claims && claims.scope) {
-    const granted = claims.scope.split(' ')
-    return scopes.some(scope => granted.includes(scope))
+export const verifyAccessTokenScopeClaim = <TAccessTokenScope extends string = AccessTokenScope>(
+  claims: ApiAuthorizerClaims | null,
+  ...clauses: AccessTokenScopeClause<TAccessTokenScope>[]
+) => {
+  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false') {
+    return true
   }
-  return scopes.length === 0
+  if (claims && claims.scope) {
+    const granted = claims.scope.split(' ')
+    return clauses.every(scopes => scopes.some(scope => granted.includes(scope)))
+  }
+  return clauses.reduce((count, clause) => count + clause.length, 0) === 0
 }
 
-// This will generete an Express middleware function to verify that the token claims
-// contain one or more of the specified scopes, for example:
-// verifyAccessScope('admin:all') allows access with admin:all
-// Express middleware can be chained to require more than one scope, for example:
-// verifyAccessScope('foo:all'), verifyAccessScope('bar:all') requires both foo:all AND bar:all
-export const verifyAccessScope = (...scopes: MDS_ACCESS_SCOPE[]) => (
+// This function will generete Express middleware  to verify that the token claims
+// satisfy the specified scope expression.
+//
+// Examples:
+//
+// verifyAccessTokenScope(['scope:1'])
+// - allows access to tokens containing scope:1
+//
+// verifyAccessTokenScope(['scope:1', 'scope:2'])
+// - allows access to tokens containing (scope:1 OR scope:2)
+//
+// verifyAccessTokenScope(['scope:1'], ['scope:2'])
+// - allows access to tokens containing (scope:1 AND scope:2)
+//
+// verifyAccessTokenScope(['scope:1', 'scope:2'], ['scope:3', 'scope:4'])
+// - allows access to tokens containing (scope:1 OR scope:2) AND (scope:3 OR scope:4)
+//
+export const verifyAccessTokenScope = (...clauses: AccessTokenScope[][]) => (
   req: ApiRequest,
   res: ApiResponse,
   next: express.NextFunction
 ) => {
-  if (hasAccessScope(scopes, res.locals.claims)) {
+  if (verifyAccessTokenScopeClaim(res.locals.claims, ...clauses)) {
     return next()
   }
-  return res.status(403).send({ error: new AuthorizationError('no access without scope', { scopes }) })
+  return res.status(403).send({ error: new AuthorizationError('no access without scope', { scopes: clauses }) })
 }
