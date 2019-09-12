@@ -17,8 +17,10 @@ spec:
   - match:
     - uri:
         prefix: {{ $api.pathPrefix }}
+      {{- if $.Values.tls.enabled }}
       scheme:
         exact: https
+      {{- end }}
     route:
     - destination:
         port:
