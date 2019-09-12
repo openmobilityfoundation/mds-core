@@ -18,8 +18,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { ApiServer, verifyAccessTokenScopeClaim } from '@mds-core/mds-api-server'
-import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ApiServer, checkScopeClaim } from '../index'
 
 const request = supertest(ApiServer(app => app))
 
@@ -123,82 +122,122 @@ describe('Testing API Server', () => {
   type TestAccessScopes = 'scope:1' | 'scope:2' | 'scope:3' | 'scope:4'
 
   it('verifies access token scope enforcement', done => {
-    // No claims / No scopes
-    test.value(verifyAccessTokenScopeClaim<TestAccessScopes>(null)).is(true)
+    // No Scopes
+    test.value(checkScopeClaim<TestAccessScopes>(check => check())).is(true)
 
-    test.value(verifyAccessTokenScopeClaim<TestAccessScopes>(null, [])).is(true)
+    // Single Scope
+    test.value(checkScopeClaim<TestAccessScopes>(check => check('scope:1'), { scope: 'scope:1' })).is(true)
 
-    // No claims / Single scope
-    test.value(verifyAccessTokenScopeClaim<TestAccessScopes>(null, ['scope:1'])).is(false)
+    test.value(checkScopeClaim<TestAccessScopes>(check => check('scope:2'), { scope: 'scope:1' })).is(false)
 
-    test.value(verifyAccessTokenScopeClaim<TestAccessScopes>(null, [], [], ['scope:1'])).is(false)
-
-    // Single Required scope
-    test
-      .value(verifyAccessTokenScopeClaim<TestAccessScopes>({ scope: 'scope:1' } as ApiAuthorizerClaims, ['scope:1']))
-      .is(true)
-
-    test
-      .value(verifyAccessTokenScopeClaim<TestAccessScopes>({ scope: 'scope:2' } as ApiAuthorizerClaims, ['scope:1']))
-      .is(false)
-
-    // Multiple Scopes OR
+    // Multiple Scopes ALL
     test
       .value(
-        verifyAccessTokenScopeClaim<TestAccessScopes>({ scope: 'scope:1' } as ApiAuthorizerClaims, [
-          'scope:1',
-          'scope:2'
-        ])
+        checkScopeClaim<TestAccessScopes>(check => check('scope:1') && check('scope:2'), {
+          scope: 'scope:1 scope:2'
+        })
       )
       .is(true)
 
     test
       .value(
-        verifyAccessTokenScopeClaim<TestAccessScopes>({ scope: 'scope:3' } as ApiAuthorizerClaims, [
-          'scope:1',
-          'scope:2'
-        ])
+        checkScopeClaim<TestAccessScopes>(check => check('scope:1') && check('scope:2'), {
+          scope: 'scope:1'
+        })
       )
       .is(false)
 
-    // Multiple Scopes AND
+    // Multiple Scopes ANY
     test
       .value(
-        verifyAccessTokenScopeClaim<TestAccessScopes>(
-          { scope: 'scope:1 scope:2' } as ApiAuthorizerClaims,
-          ['scope:2'],
-          ['scope:1']
+        checkScopeClaim<TestAccessScopes>(check => check('scope:1') || check('scope:2'), {
+          scope: 'scope:1'
+        })
+      )
+      .is(true)
+
+    test
+      .value(
+        checkScopeClaim<TestAccessScopes>(check => check('scope:1') || check('scope:2'), {
+          scope: 'scope:3'
+        })
+      )
+      .is(false)
+
+    // Multiple Scopes compound expressions
+    test
+      .value(
+        checkScopeClaim<TestAccessScopes>(
+          check => (check('scope:1') || check('scope:2')) && check('scope:3') && check('scope:4'),
+          {
+            scope: 'scope:1 scope:3 scope:4'
+          }
         )
       )
       .is(true)
 
     test
       .value(
-        verifyAccessTokenScopeClaim<TestAccessScopes>(
-          { scope: 'scope:1' } as ApiAuthorizerClaims,
-          ['scope:2'],
-          ['scope:1']
+        checkScopeClaim<TestAccessScopes>(
+          check => (check('scope:1') || check('scope:2')) && check('scope:3') && check('scope:4'),
+          {
+            scope: 'scope:3 scope:4'
+          }
         )
       )
       .is(false)
 
-    // Multiple Scopes AND/OR
     test
       .value(
-        verifyAccessTokenScopeClaim<TestAccessScopes>(
-          { scope: 'scope:1 scope:2' } as ApiAuthorizerClaims,
-          ['scope:1'],
-          ['scope:2', 'scope:3']
+        checkScopeClaim<TestAccessScopes>(
+          check => (check('scope:1') || check('scope:2')) && check('scope:3') && check('scope:4'),
+          {
+            scope: 'scope:1 scope:3'
+          }
+        )
+      )
+      .is(false)
+
+    test
+      .value(
+        checkScopeClaim<TestAccessScopes>(
+          check => check('scope:1') || check('scope:2') || (check('scope:3') && check('scope:4')),
+          {
+            scope: 'scope:1 scope:3 scope:4'
+          }
         )
       )
       .is(true)
 
     test
       .value(
-        verifyAccessTokenScopeClaim<TestAccessScopes>(
-          { scope: 'scope:1 scope:4' } as ApiAuthorizerClaims,
-          ['scope:1'],
-          ['scope:2', 'scope:3']
+        checkScopeClaim<TestAccessScopes>(
+          check => check('scope:1') || check('scope:2') || (check('scope:3') && check('scope:4')),
+          {
+            scope: 'scope:3 scope:4'
+          }
+        )
+      )
+      .is(true)
+
+    test
+      .value(
+        checkScopeClaim<TestAccessScopes>(
+          check => check('scope:1') || check('scope:2') || (check('scope:3') && check('scope:4')),
+          {
+            scope: 'scope:2'
+          }
+        )
+      )
+      .is(true)
+
+    test
+      .value(
+        checkScopeClaim<TestAccessScopes>(
+          check => check('scope:1') || check('scope:2') || (check('scope:3') && check('scope:4')),
+          {
+            scope: 'scope:3'
+          }
         )
       )
       .is(false)
@@ -208,7 +247,7 @@ describe('Testing API Server', () => {
 
   it('verifies access token scope bypass', done => {
     process.env.VERIFY_ACCESS_TOKEN_SCOPE = 'false'
-    test.value(verifyAccessTokenScopeClaim<TestAccessScopes>(null, ['scope:1'])).is(true)
+    test.value(checkScopeClaim<TestAccessScopes>(check => check('scope:1'))).is(true)
     done()
   })
 })

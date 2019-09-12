@@ -66,7 +66,6 @@ const TEST_TELEMETRY = {
 
 process.env.TIMEZONE = 'America/Los_Angeles'
 const ADMIN_AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 const TEST_VEHICLE = {
   device_id: DEVICE_UUID,
   provider_id: TEST1_PROVIDER_ID,
@@ -245,20 +244,6 @@ const APP_JSON = 'application/json; charset=utf-8'
 describe('Tests Compliance API:', () => {
   afterEach(async () => {
     await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
-  })
-
-  describe('Misc DB Tests: ', () => {
-    it('verifies unable to access admin if not scoped', done => {
-      request
-        .get('/admin/')
-        .set('Authorization', AUTH_NO_SCOPE)
-        .expect(403)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.string(result.body.result).contains('no admin access without admin:all scope')
-          done(err)
-        })
-    })
   })
 
   describe('Singular Policy API Sanity Checks: ', () => {
