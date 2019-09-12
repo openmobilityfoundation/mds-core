@@ -557,8 +557,7 @@ check() {
     installSimulator)
       [ ! "${configs[simulatorRepository]}" ] && usage "unspecified simulator repository";;
     forward) ;;
-    app:*)
-      forwardIfNeeded ${1##*:};;
+    app:*) forwardIfNeeded ${1##*:};;
     cliPostgresql)
       hash pgcli > /dev/null 2>&1 || bootstrap
       forwardIfNeeded mds-postgresql;;
