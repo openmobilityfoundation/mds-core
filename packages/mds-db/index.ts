@@ -12,7 +12,8 @@ import {
   DeviceID,
   Rule,
   GeographyMetadata,
-  PolicyMetadata
+  PolicyMetadata,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import {
   convertTelemetryToTelemetryRecord,
@@ -664,7 +665,7 @@ async function getNumEventsLast24HoursByProvider(
 async function getTripEventsLast24HoursByProvider(
   start = yesterday(),
   stop = now()
-): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VehicleEvent; recorded: number; timestamp: number }[]> {
+): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VEHICLE_EVENT; recorded: number; timestamp: number }[]> {
   const sql = `select provider_id, trip_id, event_type, recorded, timestamp from ${schema.TABLE.events} where trip_id is not null and recorded > ${start} and recorded < ${stop} order by "timestamp"`
   return makeReadOnlyQuery(sql)
 }
@@ -1043,7 +1044,22 @@ async function getLatestTripTime(): Promise<number> {
   return getLatestTime(schema.TABLE.trips, 'trip_end')
 }
 
-async function readGeographies(params?: { geography_id?: UUID; get_read_only?: boolean }): Promise<Geography[]> {
+async function readSingleGeography(geography_id: UUID): Promise<Geography> {
+  try {
+    const client = await getReadOnlyClient()
+
+    const sql = `select * from ${schema.TABLE.geographies} where geography_id = '${geography_id}'`
+    const { rows } = await client.query(sql)
+
+    const { id, ...geography } = rows[0]
+    return geography
+  } catch (err) {
+    await log.error('readSingleGeography', err)
+    throw new NotFoundError(`could not find geography ${geography_id}`)
+  }
+}
+
+async function readGeographies(params?: { get_read_only?: boolean }): Promise<Geography[]> {
   // use params to filter
   // query on ids
   // return geographies
@@ -1053,9 +1069,6 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     let sql = `select * from ${schema.TABLE.geographies}`
     const conditions = []
     const vals = new SqlVals()
-    if (params && params.geography_id) {
-      conditions.push(`geography_id = ${vals.add(params.geography_id)}`)
-    }
 
     if (params && params.get_read_only) {
       conditions.push(`read_only IS TRUE`)
@@ -1071,9 +1084,8 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     const { rows } = await client.query(sql, values)
 
     return rows.map(row => {
-      /* eslint-disable-next-line no-param-reassign */
-      delete row.id
-      return row
+      const { id, ...geography } = row
+      return geography
     })
   } catch (err) {
     await log.error('readGeographies', err)
@@ -1081,10 +1093,7 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
   }
 }
 
-async function readBulkGeographyMetadata(params?: {
-  geography_id?: UUID
-  get_read_only?: boolean
-}): Promise<GeographyMetadata[]> {
+async function readBulkGeographyMetadata(params?: { get_read_only?: boolean }): Promise<GeographyMetadata[]> {
   const geographies = await readGeographies(params)
   const geography_ids = geographies.map(geography => {
     return `'${geography.geography_id}'`
@@ -1153,14 +1162,19 @@ async function deleteGeography(geography_id: UUID) {
 }
 
 async function publishGeography(geography_id: UUID) {
-  const client = await getWriteableClient()
-  const geography = (await readGeographies({ geography_id }))[0]
-  if (!geography) {
-    throw new NotFoundError('cannot publish nonexistent geography')
+  try {
+    const client = await getWriteableClient()
+    const geography = await readSingleGeography(geography_id)
+    if (!geography) {
+      throw new NotFoundError('cannot publish nonexistent geography')
+    }
+    const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
+    await client.query(sql)
+    return geography_id
+  } catch (err) {
+    await log.error(err)
+    throw err
   }
-  const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
-  await client.query(sql)
-  return geography_id
 }
 
 async function writeGeographyMetadata(geography_metadata: GeographyMetadata) {
@@ -1426,7 +1440,7 @@ async function readRule(rule_id: UUID): Promise<Rule> {
 
 async function readUnprocessedStatusChangeEvents(
   before: Recorded<VehicleEvent> | null,
-  take: number = 1000
+  take = 1000
 ): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
@@ -1675,6 +1689,7 @@ export = {
   deletePolicy,
   writeGeographyMetadata,
   readSingleGeographyMetadata,
+  readSingleGeography,
   readBulkGeographyMetadata,
   writePolicyMetadata,
   readBulkPolicyMetadata,

@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-compliance",
-  "version": "0.1.5",
+  "version": "0.1.9",
   "description": "AWS Lambda for MDS Compliance API",
   "main": "dist/index.js",
   "files": [
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "^0.1.5",
-    "@mds-core/mds-api-server": "^0.1.5",
-    "@mds-core/mds-compliance": "^0.1.6"
+    "@container-images/env-inject": "0.1.9",
+    "@mds-core/mds-api-server": "0.1.9",
+    "@mds-core/mds-compliance": "0.1.10"
   },
   "license": "Apache-2.0"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-utils",
-  "version": "0.1.5",
+  "version": "0.1.9",
   "description": "Mobility Data Specification utility functions",
   "keywords": [
     "mds",
@@ -9,8 +9,8 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@hapi/joi": "15.1.0",
-    "@mds-core/mds-types": "^0.1.2",
+    "@hapi/joi": "15.1.1",
+    "@mds-core/mds-types": "0.1.6",
     "circle-to-polygon": "1.0.2",
     "point-in-polygon": "1.0.1"
   },

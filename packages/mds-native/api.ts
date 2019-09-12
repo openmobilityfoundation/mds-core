@@ -75,41 +75,35 @@ function api(app: express.Express): express.Express {
     last_id: number
   }>
 
+  const numericQueryStringParam = (param: string | undefined): number | undefined => (param ? Number(param) : undefined)
+
   const getRequestParameters = (
     req: NativeApiGetEventsRequest
   ): { cursor: NativeApiGetEventsCursor; limit: number } => {
     const {
       params: { cursor },
-      query: { limit = 1000, ...filters }
+      query: { limit: query_limit, ...filters }
     } = req
+    const limit = numericQueryStringParam(query_limit) || 1000
     isValidNumber(limit, { required: false, min: 1, max: 1000, property: 'limit' })
     if (cursor) {
       if (Object.keys(filters).length > 0) {
         throw new ValidationError('unexpected_filters', { cursor, filters })
       }
       try {
-        return {
-          cursor: JSON.parse(Buffer.from(cursor, 'base64').toString('ascii')),
-          limit: Number(limit)
-        }
+        return { cursor: JSON.parse(Buffer.from(cursor, 'base64').toString('ascii')), limit }
       } catch (err) {
         throw new ValidationError('invalid_cursor', { cursor })
       }
     } else {
-      const { provider_id, device_id, start_time, end_time } = filters
+      const { provider_id, device_id, start_time: query_start_time, end_time: query_end_time } = filters
+      const start_time = numericQueryStringParam(query_start_time)
+      const end_time = numericQueryStringParam(query_end_time)
       isValidProviderId(provider_id, { required: false })
       isValidDeviceId(device_id, { required: false })
       isValidTimestamp(start_time, { required: false })
       isValidTimestamp(end_time, { required: false })
-      return {
-        cursor: {
-          provider_id,
-          device_id,
-          start_time: start_time ? Number(start_time) : undefined,
-          end_time: end_time ? Number(end_time) : undefined
-        },
-        limit: Number(limit)
-      }
+      return { cursor: { provider_id, device_id, start_time, end_time }, limit }
     }
   }
 

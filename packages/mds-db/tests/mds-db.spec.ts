@@ -382,16 +382,15 @@ if (pg_info.database) {
         await MDSDBPostgres.writeGeography(LAGeography)
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
-        const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
-        assert.deepEqual(result.length, 0)
+        await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
       })
 
       it('can write, read, and publish a Geography', async () => {
         await MDSDBPostgres.initialize()
         await MDSDBPostgres.writeGeography(LAGeography)
-        const result = await MDSDBPostgres.readGeographies({ geography_id: LAGeography.geography_id })
-        assert.deepEqual(result[0].geography_json, LAGeography.geography_json)
-        assert.deepEqual(result[0].geography_id, LAGeography.geography_id)
+        const result = await MDSDBPostgres.readSingleGeography(LAGeography.geography_id)
+        assert.deepEqual(result.geography_json, LAGeography.geography_json)
+        assert.deepEqual(result.geography_id, LAGeography.geography_id)
 
         const noGeos = await MDSDBPostgres.readGeographies({ get_read_only: true })
         assert.deepEqual(noGeos.length, 0)
@@ -414,7 +413,7 @@ if (pg_info.database) {
         const numFeatures = geography_json.features.length
         geography_json.features = []
         await MDSDBPostgres.editGeography({ geography_id: DistrictSeven.geography_id, geography_json })
-        const result = (await MDSDBPostgres.readGeographies({ geography_id: GEOGRAPHY2_UUID }))[0]
+        const result = await MDSDBPostgres.readSingleGeography(GEOGRAPHY2_UUID)
         assert.notEqual(result.geography_json.features.length, numFeatures)
         assert.equal(result.geography_json.features.length, 0)
       })
