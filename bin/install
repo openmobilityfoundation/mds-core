@@ -294,10 +294,9 @@ installFallbackCert() {
 }
 
 installSimulator() {
-  check ${FUNCNAME[0]}
-
   if [[ ! -d ${configs[simulator]} ]]; then
-    [ ! "${configs[simulatorRepository]}" ] && usage "unspecified simulator repository"
+    check ${FUNCNAME[0]}
+
     mkdir -p ${configs[workdir]}
     (cd ${configs[workdir]};
       git clone ${configs[simulatorRepository]} ${configs[simulator]};
@@ -306,11 +305,11 @@ installSimulator() {
       git checkout -b feature-intall-helm;
       git pull origin feature-intall-helm)
 
-  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
-    cd ${configs[simulator]}; \
-    pip install -r requirements.txt; \
-    docker build -t trackgen .;
-    helm install ./helm --name trackgen)
+    (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
+      cd ${configs[simulator]}; \
+      pip install -r requirements.txt; \
+      docker build -t trackgen .;
+      helm install ./helm --name trackgen)
   fi
 }
 
@@ -362,9 +361,8 @@ portForward() {
 
   fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
 
-  [ ${fp} -eq -1 ] && {
+  [ ${fp} -eq -1 ] && \
     fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
-  }
 
   kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} > /dev/null 2>&1 &
   pause 3
@@ -375,11 +373,7 @@ forward() {
   check ${FUNCNAME[0]}
 
   for fa in ${@}; do
-    if [ ${apps[${fa}]+_} ]; then
-      portForward ${fa}
-    else
-      warn "unknown app: ${fa}"
-    fi
+    [ ${apps[${fa}]+_} ] && portForward ${fa} || warn "unknown app: ${fa}"
   done; unset fa
 }
 
@@ -517,21 +511,30 @@ uninstallHelm() {
 }
 
 getPort() {
-  if [ ${apps[$1]+_} ]; then
+  if [ ${apps[${1}]+_} ]; then
     ga=${apps[${1}]}
     gns=$(get ${ga} 2)
     gk=$(get ${ga} 3)
-    gv=$(get ${ga} 4 ${aa})
+    gv=$(get ${ga} 4 ${1})
     gp=$(get ${ga} 5 -1)
 
     [ ${gp} -eq -1 ] && {
       gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
         -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
     }
-    p=gp
   fi; unset ga gns gk gv
 
   echo ${gp:-}
+}
+
+forwardIfNeeded() {
+  gp=$(getPort ${1})
+
+  if [ ${#gp} -ge 1 ]; then
+    echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${1}
+  fi
+
+  unset gp
 }
 
 check() {
@@ -551,36 +554,17 @@ check() {
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
+    installSimulator)
+      [ ! "${configs[simulatorRepository]}" ] && usage "unspecified simulator repository";;
     forward) ;;
     app:*)
-      aa=${1##*:}
-      gp=$(getPort ${aa})
-
-      if [ ${#gp} -ge 1 ]; then
-        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
-      fi
-
-      unset gp aa;;
+      forwardIfNeeded ${1##*:};;
     cliPostgresql)
       hash pgcli > /dev/null 2>&1 || bootstrap
-
-      gp=$(getPort mds-postgresql)
-
-      if [ ${#gp} -ge 1 ]; then
-        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
-      fi
-
-      unset gp;;
+      forwardIfNeeded mds-postgresql;;
     cliRedis)
       hash redis-cli > /dev/null 2>&1 || bootstrap
-
-      gp=$(getPort mds-redis)
-
-      if [ ${#gp} -ge 1 ]; then
-        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
-      fi
-
-      unset gp;;
+      forwardIfNeeded mds-redis;;
   esac
 }
 
