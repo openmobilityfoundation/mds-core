@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-
-
 declare -A oses=(
   ["osx"]="Darwin"
   ["linux"]="Linux")
@@ -39,6 +37,8 @@ declare -A apps=(
   ["mds-native"]="https://localhost:[port]/native,mds,app"
   ["mds-policy"]="https://localhost:[port]/provider,mds,app"
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
+  ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
+  ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
   ["dashboard"]="https://localhost:[port],kube-system,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
@@ -99,6 +99,8 @@ where app in:
   mds-native
   mds-policy
   mds-provider
+  mds-postgresql
+  mds-redis-headless
   dashboard                                           : kubernetes dashboard; see https://github.com/kubernetes/dashboard
   grafana                                             : grafana; see: https://grafana.com
   kibana                                              : kibana; see https://www.elastic.co/products/kibana
@@ -114,7 +116,6 @@ pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
   bash 4.x                                            : see https://www.gnu.org/software/bash/
   yarn                                                : see https://yarnpkg.com/en/
-  lerna                                               : see https://lerna.js.org
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
@@ -132,7 +133,7 @@ bootstrap() {
 
   # todo: boostrap all-the-things
 
-  for y in cypress mocha chai mochawesome; do
+  for y in lerna cypress mocha chai mochawesome; do
     yarn ${y} --version > /dev/null 2>&1 || yarn add -W ${y}
   done
   unset y
@@ -307,7 +308,8 @@ installBookinfo() {
 testUnit() {
   check ${FUNCNAME[0]}
 
-  yarn test
+# todo: enable when tests don't block
+#  yarn test
 
   for c in $(find ./helm -type d -depth 1); do
     helm unittest ./helm/$(basename ${c})
@@ -420,12 +422,12 @@ app() {
 
 cliPostgresql() {
   check ${FUNCNAME[0]}
-  pgcli postgres://mdsadmin@mds-postgresql:5432/mds
+  pgcli postgres://mdsadmin@localhost:5432/mds
 }
 
 cliRedis() {
   check ${FUNCNAME[0]}
-  redis-cli -u redis://mds-redis-master:6379/0
+  redis-cli -u redis://localhost:6379/0
 }
 
 uninstalllNamespaces() {
@@ -482,6 +484,24 @@ uninstallHelm() {
   esac
 }
 
+getPort() {
+  if [ ${apps[$1]+_} ]; then
+    ga=${apps[${1}]}
+    gns=$(get ${ga} 2)
+    gk=$(get ${ga} 3)
+    gv=$(get ${ga} 4 ${aa})
+    gp=$(get ${ga} 5 -1)
+
+    [ ${gp} -eq -1 ] && {
+      gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+        -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+    }
+    p=gp
+  fi; unset ga gns gk gv
+
+  echo ${gp:-}
+}
+
 check() {
   case "${1}" in
     $(basename ${0}))
@@ -502,24 +522,33 @@ check() {
     forward) ;;
     app:*)
       aa=${1##*:}
-      if [ ${apps[${aa}]+_} ]; then
-        ga=${apps[${aa}]}
-        gns=$(get ${ga} 2)
-        gk=$(get ${ga} 3)
-        gv=$(get ${ga} 4 ${aa})
-        gp=$(get ${ga} 5 -1)
+      gp=$(getPort ${aa})
 
-        [ ${gp} -eq -1 ] && {
-          gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
-            -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
-        }
-
+      if [ ${#gp} -ge 1 ]; then
         echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
-        unset ga gp
       fi
-      unset aa;;
-    cliPostgresql) hash pgcli  > /dev/null 2>&1 || bootstrap;;
-    cliRedis) hash redis-cli  > /dev/null 2>&1 || bootstrap;;
+
+      unset gp aa;;
+    cliPostgresql)
+      hash pgcli > /dev/null 2>&1 || bootstrap
+
+      gp=$(getPort mds-postgresql)
+
+      if [ ${#gp} -ge 1 ]; then
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
+      fi
+
+      unset gp;;
+    cliRedis)
+      hash redis-cli > /dev/null 2>&1 || bootstrap
+
+      gp=$(getPort mds-redis)
+
+      if [ ${#gp} -ge 1 ]; then
+        echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${aa}
+      fi
+
+      unset gp;;
   esac
 }
 

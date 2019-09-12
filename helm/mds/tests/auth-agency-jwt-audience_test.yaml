@@ -42,9 +42,8 @@ tests:
           path: spec.targets[0].name
           value: mds-agency
         documentIndex: 1
-      - equal:
-          path: spec.peers[0].mtls.mode
-          value: PERMISSIVE
+      - isEmpty:
+          path: spec.peers[0].mtls
         documentIndex: 1
       - equal:
           path: spec.origins[0].jwt.audiences[0]
