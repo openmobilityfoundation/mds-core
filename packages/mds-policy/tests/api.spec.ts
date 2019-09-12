@@ -26,11 +26,14 @@ import test from 'unit.js'
 import { now, days } from '@mds-core/mds-utils'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import { Policy } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
   POLICY_JSON,
   POLICY2_JSON,
   POLICY3_JSON,
+  POLICY4_JSON,
+  SUPERSEDING_POLICY_JSON,
   POLICY_UUID,
   POLICY2_UUID,
   GEOGRAPHY_UUID,
@@ -140,7 +143,7 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all active policies', done => {
+  it('reads back all active policies', done => {
     request
       .get(`/policies`)
       .set('Authorization', AUTH)
@@ -156,22 +159,32 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back all policies', async () => {
+  it('read back all published policies and no superseded ones', async () => {
     await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: veniceSpecialOpsZone })
     await db.writePolicy(POLICY2_JSON)
     await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)
     await db.publishPolicy(POLICY3_JSON.policy_id)
+    await db.writePolicy(POLICY4_JSON)
+    await db.writePolicy(SUPERSEDING_POLICY_JSON)
+    await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
     request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
         const body = result.body
-        log('read back all policies response:', body)
+        log('read back all published policies response:', body)
         test.value(body.policies.length).is(3)
         test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
+        const isSupersededPolicyPresent = body.policies.some((policy: Policy) => {
+          return policy.policy_id === POLICY_JSON.policy_id
+        })
+        const isSupersedingPolicyPresent = body.policies.some((policy: Policy) => {
+          return policy.policy_id === SUPERSEDING_POLICY_JSON.policy_id
+        })
+        test.value(isSupersededPolicyPresent).is(false)
+        test.value(isSupersedingPolicyPresent).is(true)
         return err
       })
   })
@@ -206,7 +219,7 @@ describe('Tests app', () => {
       })
   })
 
-  it('read back a nonexistant policy', done => {
+  it('cannot GET a nonexistant policy', done => {
     request
       .get(`/policies/${GEOGRAPHY_UUID}`) // obvs not a policy
       .set('Authorization', AUTH)

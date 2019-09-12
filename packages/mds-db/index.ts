@@ -12,7 +12,8 @@ import {
   DeviceID,
   Rule,
   GeographyMetadata,
-  PolicyMetadata
+  PolicyMetadata,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import {
   convertTelemetryToTelemetryRecord,
@@ -30,7 +31,6 @@ import {
 import log from '@mds-core/mds-logger'
 
 import { QueryResult } from 'pg'
-import { VEHICLE_EVENT } from 'packages/mds-types/dist'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
