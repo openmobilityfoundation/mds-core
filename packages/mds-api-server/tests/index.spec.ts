@@ -122,15 +122,12 @@ describe('Testing API Server', () => {
   type TestAccessScopes = 'scope:1' | 'scope:2' | 'scope:3' | 'scope:4'
 
   it('verifies access token scope enforcement', done => {
-    // No Scopes
-    test.value(checkScopeClaim<TestAccessScopes>(check => check())).is(true)
-
     // Single Scope
     test.value(checkScopeClaim<TestAccessScopes>(check => check('scope:1'), { scope: 'scope:1' })).is(true)
 
     test.value(checkScopeClaim<TestAccessScopes>(check => check('scope:2'), { scope: 'scope:1' })).is(false)
 
-    // Multiple Scopes ALL
+    // All scopes
     test
       .value(
         checkScopeClaim<TestAccessScopes>(check => check('scope:1') && check('scope:2'), {
@@ -147,7 +144,7 @@ describe('Testing API Server', () => {
       )
       .is(false)
 
-    // Multiple Scopes ANY
+    // Any scope
     test
       .value(
         checkScopeClaim<TestAccessScopes>(check => check('scope:1') || check('scope:2'), {
@@ -164,7 +161,7 @@ describe('Testing API Server', () => {
       )
       .is(false)
 
-    // Multiple Scopes compound expressions
+    // Scope expressions
     test
       .value(
         checkScopeClaim<TestAccessScopes>(

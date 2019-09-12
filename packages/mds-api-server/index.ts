@@ -74,11 +74,34 @@ export const ApiServer = (
 }
 
 // Canonical list of MDS scopes
-const AccessTokenScopes = ['admin:all'] as const
+const AccessTokenScopes = [
+  'admin:all',
+  'audits:delete',
+  'audits:read',
+  'audits:write',
+  'compliance:read',
+  'compliance:read:provider',
+  'events:read',
+  'events:write:provider',
+  'geographies:delete',
+  'geographies:read',
+  'geographies:write',
+  'policies:delete',
+  'policies:publish',
+  'policies:read',
+  'policies:write',
+  'providers:read',
+  'status_changes:read',
+  'telemetry:write:provider',
+  'trips:read',
+  'vehicles:read',
+  'vehicles:read:provider',
+  'vehicles:write:provider'
+] as const
 type AccessTokenScope = typeof AccessTokenScopes[number]
 
 type ScopeValidator<TAccessTokenScope extends string = AccessTokenScope> = (
-  check: (scope?: TAccessTokenScope) => boolean
+  check: (scope: TAccessTokenScope) => boolean
 ) => boolean
 
 export const checkScopeClaim = <TAccessTokenScope extends string = AccessTokenScope>(
