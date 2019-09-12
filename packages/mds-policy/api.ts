@@ -132,12 +132,8 @@ function api(app: express.Express): express.Express {
     }
     log.info('read geo', geography_id)
     try {
-      const geographies = await db.readGeographies({ geography_id })
-      if (geographies.length > 0) {
-        res.status(200).send({ geography: geographies[0] })
-      } else {
-        res.status(404).send({ result: 'not found' })
-      }
+      const geography = await db.readSingleGeography(geography_id)
+      res.status(200).send({ geography })
     } catch (err) {
       res.status(404).send({ result: 'not found' })
     }

@@ -468,6 +468,16 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot GET a nonexistent geography', done => {
+      request
+        .get(`/geographies/${POLICY_UUID}`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(404)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('verifies updating one geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: DISTRICT_SEVEN }
       request

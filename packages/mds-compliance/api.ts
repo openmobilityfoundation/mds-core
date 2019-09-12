@@ -23,7 +23,6 @@ import {
   now,
   days,
   pathsFor,
-  head,
   getPolygon,
   pointInShape,
   isInStatesOrEvents,
@@ -187,12 +186,12 @@ function api(app: express.Express): express.Express {
         return [...acc, geo]
       }, [])
       const geographies = (await Promise.all(
-        geography_ids.reduce((acc: Promise<Geography[]>[], geography_id) => {
-          const geography = db.readGeographies({ geography_id })
+        geography_ids.reduce((acc: Promise<Geography>[], geography_id) => {
+          const geography = db.readSingleGeography(geography_id)
           return [...acc, geography]
         }, [])
       )).reduce((acc: Geography[], geos) => {
-        return [...acc, head(geos)]
+        return [...acc, geos]
       }, [])
 
       const polys = geographies.reduce((acc: (Geometry | FeatureCollection)[], geography) => {

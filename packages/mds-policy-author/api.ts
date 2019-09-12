@@ -363,12 +363,11 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/geographies/meta/'), async (req, res) => {
-    const { geography_id = null } = req.query
     const get_read_only = req.query === 'true'
 
     log.info('read /geographies/meta', req.query)
     try {
-      const metadata = await db.readBulkGeographyMetadata({ geography_id, get_read_only })
+      const metadata = await db.readBulkGeographyMetadata({ get_read_only })
       res.status(200).send(metadata)
     } catch (err) {
       await log.error('failed to read geography metadata', err)
@@ -383,12 +382,8 @@ function api(app: express.Express): express.Express {
     const { geography_id } = req.params
     log.info('read geo', geography_id)
     try {
-      const geographies = await db.readSingleGeography(geography_id)
-      if (geographies.length > 0) {
-        res.status(200).send({ geography: geographies[0] })
-      } else {
-        res.status(404).send({ result: 'not found' })
-      }
+      const geography = await db.readSingleGeography(geography_id)
+      res.status(200).send({ geography })
     } catch (err) {
       await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
