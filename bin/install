@@ -7,6 +7,7 @@ declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
+  ["simulatorRepository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
@@ -17,6 +18,7 @@ declare -A configs=(
   ["pause"]="${MDS_PAUSE:-3}"
   ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
+  ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["sets"]="${MDS_SETS:-}"
@@ -180,7 +182,7 @@ installHelm() {
       *) usage "unsupported os: ${configs[os]}";;
     esac
 
-  helm init || usage "helm intialization failure"
+  helm init --upgrade || usage "helm intialization failure"
   pause 5
   helmDependenciesUpdate
 
@@ -291,6 +293,27 @@ installFallbackCert() {
   rm ${TMPCERT} ${TMPCERT}.key ${TMPCERT}.crt
 }
 
+installSimulator() {
+  check ${FUNCNAME[0]}
+
+  if [[ ! -d ${configs[simulator]} ]]; then
+    [ ! "${configs[simulatorRepository]}" ] && usage "unspecified simulator repository"
+    mkdir -p ${configs[workdir]}
+    (cd ${configs[workdir]};
+      git clone ${configs[simulatorRepository]} ${configs[simulator]};
+      cd ${configs[simulator]};
+      # todo: remove branch once merged
+      git checkout -b feature-intall-helm;
+      git pull origin feature-intall-helm)
+
+  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
+    cd ${configs[simulator]}; \
+    pip install -r requirements.txt; \
+    docker build -t trackgen .;
+    helm install ./helm --name trackgen)
+  fi
+}
+
 installBookinfo() {
   check ${FUNCNAME[0]}
 
@@ -371,7 +394,7 @@ unforward() {
       fv=$(get ${fa} 4 ${1})
       fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
 
-      ps -ef | grep -E 'kubectl.*port-forward' | grep ${fa} | grep -v grep | awk '{print $2}' | xargs kill -9
+      ps -ef | grep -E 'kubectl.*port-forward' | grep ${ua} | grep -v grep | awk '{print $2}' | xargs kill -9
       unset fa fns fk fv
     else
       warn "unknown app: ${ua}"
@@ -441,6 +464,14 @@ uninstallBookinfo() {
   uninstalllNamespaces bookinfo-app
 }
 
+uninstallSimulator() {
+  check ${FUNCNAME[0]}
+
+  if [ -d ${configs[simulator]} ]; then
+    (cd ${configs[simulator]} helm delete --purge trackgen)
+  fi
+}
+
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
@@ -477,9 +508,10 @@ uninstallDashboard() {
   kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system ${configs[dryrun]:+--dry-run}
 }
 
+#todo: purge
 uninstallHelm() {
   case "${configs[os]}" in
-    ${oses[osx]}) brew uninstall kubernetes-helm;;
+    ${oses[osx]}) ;; #brew uninstall kubernetes-helm;;
     *) usage "unsupported os: ${configs[os]}";;
   esac
 }
