@@ -302,11 +302,11 @@ installSimulator() {
       git clone ${configs[simulatorRepository]} ${configs[simulator]};
       cd ${configs[simulator]};
       # todo: remove branch once merged
-      git checkout -b feature-intall-helm;
-      git pull origin feature-intall-helm)
+      git checkout -b feature-intall-helm)
 
     (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
       cd ${configs[simulator]}; \
+      git pull origin feature-intall-helm; \
       pip install -r requirements.txt; \
       docker build -t trackgen .;
       helm install ./helm --name trackgen)
