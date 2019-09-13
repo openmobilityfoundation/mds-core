@@ -6,10 +6,12 @@ import { ScopeValidator, validateScopes } from '@mds-core/mds-api-scopes'
 
 export type ApiRequest = express.Request
 
+export interface ApiResponseLocals {
+  claims: ApiAuthorizerClaims | null
+}
+
 export interface ApiResponse<T = unknown> extends express.Response {
-  locals: {
-    claims: ApiAuthorizerClaims | null
-  }
+  locals: ApiResponseLocals
   status: (code: number) => ApiResponse<T | { error: Error }>
   send: (body: T) => ApiResponse<T | { error: Error }>
 }
