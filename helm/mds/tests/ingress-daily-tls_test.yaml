@@ -5,6 +5,9 @@ tests:
   - it: doc 5
     release:
       namespace: mds
+    set:
+      tls:
+        enabled: true
     asserts:
       - isAPIVersion:
           of: networking.istio.io/v1alpha3
@@ -20,9 +23,8 @@ tests:
           path: metadata.namespace
           value: mds
         documentIndex: 5
-      - equal:
+      - isNull:
           path: spec.hosts[0]
-          value: "*"
         documentIndex: 5
       - equal:
           path: spec.gateways[0]
@@ -31,6 +33,10 @@ tests:
       - equal:
           path: spec.http[0].match[0].uri.prefix
           value: /daily
+        documentIndex: 5
+      - equal:
+          path: spec.http[0].match[0].scheme.exact
+          value: https
         documentIndex: 5
       - equal:
           path: spec.http[0].route[0].destination.port.number
