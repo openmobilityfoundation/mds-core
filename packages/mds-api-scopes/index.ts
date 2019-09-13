@@ -23,7 +23,7 @@ const AccessTokenScopes = [
   'vehicles:read:provider',
   'vehicles:write:provider'
 ] as const
-type AccessTokenScope = typeof AccessTokenScopes[number]
+export type AccessTokenScope = typeof AccessTokenScopes[number]
 
 export type ScopeValidator<TAccessTokenScope extends string = AccessTokenScope> = (
   check: (scope: TAccessTokenScope) => boolean

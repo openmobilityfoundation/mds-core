@@ -2,12 +2,13 @@ import bodyParser from 'body-parser'
 import express from 'express'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
-import { ScopeValidator, validateScopes } from '@mds-core/mds-api-scopes'
+import { ScopeValidator, validateScopes, AccessTokenScope } from '@mds-core/mds-api-scopes'
 
 export type ApiRequest = express.Request
 
 export interface ApiResponseLocals {
   claims: ApiAuthorizerClaims | null
+  scopes: AccessTokenScope[]
 }
 
 export interface ApiResponse<T = unknown> extends express.Response {
@@ -48,7 +49,9 @@ export const ApiServer = (
     if (maintenance) {
       return res.status(503).send(about())
     }
-    res.locals.claims = authorizer(req)
+    const claims = authorizer(req)
+    res.locals.claims = claims
+    res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
     next()
   })
 
@@ -82,14 +85,9 @@ export const checkScope = (validator: ScopeValidator) => (
   res: ApiResponse,
   next: express.NextFunction
 ) => {
-  const { claims } = res.locals
-  if (
-    process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' ||
-    validateScopes(validator, claims && claims.scope ? claims.scope.split(' ') : [])
-  ) {
-    return next()
+  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validateScopes(validator, res.locals.scopes)) {
+    next()
+  } else {
+    res.status(403).send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
   }
-  return res
-    .status(403)
-    .send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
 }
