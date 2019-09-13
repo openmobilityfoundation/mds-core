@@ -204,7 +204,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writePolicy(policy)
-      return res.status(201).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+      return res.status(201).send({ policy })
     } catch (err) {
       if (err.code === '23505') {
         return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
@@ -400,7 +400,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writeGeography(geography)
-      return res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
+      return res.status(201).send({ geography })
     } catch (err) {
       if (err.code === '23505') {
         return res
@@ -445,8 +445,8 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
     const { geography_id } = req.params
     try {
-      const result = await db.readSingleGeographyMetadata(geography_id)
-      return res.status(200).send(result)
+      const geography_metadata = await db.readSingleGeographyMetadata(geography_id)
+      return res.status(201).send(geography_metadata)
     } catch (err) {
       await log.error('failed to read geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })

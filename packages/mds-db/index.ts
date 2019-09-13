@@ -1370,7 +1370,6 @@ async function publishPolicy(policy_id: UUID) {
     }
 
     const geographies: UUID[] = []
-    log.info('about to publish associated geographies')
     policy.rules.forEach(rule => {
       rule.geographies.forEach(geography_id => {
         geographies.push(geography_id)
@@ -1414,7 +1413,21 @@ async function writePolicyMetadata(policy_metadata: PolicyMetadata) {
   })
   const {
     rows: [recorded_metadata]
-  }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
+  }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql, values)
+  return {
+    ...policy_metadata,
+    ...recorded_metadata
+  }
+}
+
+async function updatePolicyMetadata(policy_metadata: PolicyMetadata) {
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${schema.TABLE.policy_metadata}
+    SET policy_metadata = '${JSON.stringify(policy_metadata.policy_metadata)}'
+    WHERE policy_id = '${policy_metadata.policy_id}'`
+  const {
+    rows: [recorded_metadata]
+  }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql)
   return {
     ...policy_metadata,
     ...recorded_metadata
@@ -1692,6 +1705,7 @@ export = {
   readSingleGeography,
   readBulkGeographyMetadata,
   writePolicyMetadata,
+  updatePolicyMetadata,
   readBulkPolicyMetadata,
   readSinglePolicyMetadata,
   publishPolicy,
