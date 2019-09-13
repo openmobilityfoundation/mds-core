@@ -2,13 +2,17 @@ import bodyParser from 'body-parser'
 import express from 'express'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ScopeValidator, validateScopes, AccessTokenScope } from '@mds-core/mds-api-scopes'
 
 export type ApiRequest = express.Request
 
+export interface ApiResponseLocals {
+  claims: ApiAuthorizerClaims | null
+  scopes: AccessTokenScope[]
+}
+
 export interface ApiResponse<T = unknown> extends express.Response {
-  locals: {
-    claims: ApiAuthorizerClaims | null
-  }
+  locals: ApiResponseLocals
   status: (code: number) => ApiResponse<T | { error: Error }>
   send: (body: T) => ApiResponse<T | { error: Error }>
 }
@@ -45,7 +49,9 @@ export const ApiServer = (
     if (maintenance) {
       return res.status(503).send(about())
     }
-    res.locals.claims = authorizer(req)
+    const claims = authorizer(req)
+    res.locals.claims = claims
+    res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
     next()
   })
 
@@ -73,30 +79,15 @@ export const ApiServer = (
   return api(app)
 }
 
-// Canonical list of MDS scopes
-const MDS_ACCESS_SCOPES = ['admin:all'] as const
-type MDS_ACCESS_SCOPE = typeof MDS_ACCESS_SCOPES[number]
-
-export const hasAccessScope = (scopes: MDS_ACCESS_SCOPE[], claims: ApiAuthorizerClaims | null) => {
-  if (scopes.length > 0 && claims && claims.scope) {
-    const granted = claims.scope.split(' ')
-    return scopes.some(scope => granted.includes(scope))
-  }
-  return scopes.length === 0
-}
-
-// This will generete an Express middleware function to verify that the token claims
-// contain one or more of the specified scopes, for example:
-// verifyAccessScope('admin:all') allows access with admin:all
-// Express middleware can be chained to require more than one scope, for example:
-// verifyAccessScope('foo:all'), verifyAccessScope('bar:all') requires both foo:all AND bar:all
-export const verifyAccessScope = (...scopes: MDS_ACCESS_SCOPE[]) => (
+/* istanbul ignore next */
+export const checkScope = (validator: ScopeValidator) => (
   req: ApiRequest,
   res: ApiResponse,
   next: express.NextFunction
 ) => {
-  if (hasAccessScope(scopes, res.locals.claims)) {
-    return next()
+  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validateScopes(validator, res.locals.scopes)) {
+    next()
+  } else {
+    res.status(403).send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
   }
-  return res.status(403).send({ error: new AuthorizationError('no access without scope', { scopes }) })
 }

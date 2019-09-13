@@ -100,32 +100,28 @@ function api(app: express.Express): express.Express {
       res.header('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, DELETE')
       res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
       // 200 OK
-      res.sendStatus(200)
-    } else {
-      try {
-        if (!req.path.includes('/health' || req.path === '/')) {
-          // verify presence of subject_id
-          const { principalId, user_email } = res.locals.claims
-          const subject_id = user_email || principalId
+      return res.sendStatus(200)
+    }
+    if (!(req.path.includes('/health') || req.path === '/')) {
+      if (res.locals.claims) {
+        // verify presence of subject_id
+        const { principalId, user_email } = res.locals.claims
+        const subject_id = user_email || principalId
 
-          /* istanbul ignore if */
-          if (!subject_id) {
-            await log.warn('Missing subject_id in', req.originalUrl)
-            // 403 Forbidden
-            return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
-          }
-
+        /* istanbul ignore if */
+        if (subject_id) {
           // stash audit_subject_id and timestamp (for recording db writes)
           res.locals.audit_subject_id = subject_id
           res.locals.recorded = Date.now()
-
           log.info(subject_id, req.method, req.originalUrl)
+          return next()
         }
-      } catch (err) /* istanbul ignore next */ {
-        await log.error(req.originalUrl, 'request validation fail:', err.stack)
       }
-      next()
+      await log.warn('Missing subject_id', req.method, req.originalUrl)
+      // 403 Forbidden
+      return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
     }
+    next()
   })
 
   /**
