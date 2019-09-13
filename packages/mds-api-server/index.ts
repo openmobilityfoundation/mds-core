@@ -2,6 +2,7 @@ import bodyParser from 'body-parser'
 import express from 'express'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ScopeValidator, validateScopes } from '@mds-core/mds-api-scopes'
 
 export type ApiRequest = express.Request
 
@@ -73,54 +74,17 @@ export const ApiServer = (
   return api(app)
 }
 
-// Canonical list of MDS scopes
-const AccessTokenScopes = [
-  'admin:all',
-  'audits:delete',
-  'audits:read',
-  'audits:write',
-  'compliance:read',
-  'compliance:read:provider',
-  'events:read',
-  'events:write:provider',
-  'geographies:delete',
-  'geographies:read',
-  'geographies:write',
-  'policies:delete',
-  'policies:publish',
-  'policies:read',
-  'policies:write',
-  'providers:read',
-  'status_changes:read',
-  'telemetry:write:provider',
-  'trips:read',
-  'vehicles:read',
-  'vehicles:read:provider',
-  'vehicles:write:provider'
-] as const
-type AccessTokenScope = typeof AccessTokenScopes[number]
-
-type ScopeValidator<TAccessTokenScope extends string = AccessTokenScope> = (
-  check: (scope: TAccessTokenScope) => boolean
-) => boolean
-
-export const checkScopeClaim = <TAccessTokenScope extends string = AccessTokenScope>(
-  validator: ScopeValidator<TAccessTokenScope>,
-  claims: Pick<ApiAuthorizerClaims, 'scope'> | null = null
-): boolean => {
-  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE !== 'false') {
-    const granted = claims && claims.scope ? claims.scope.split(' ') : []
-    return validator(scope => !scope || granted.includes(scope))
-  }
-  return true
-}
-
+/* istanbul ignore next */
 export const checkScope = (validator: ScopeValidator) => (
   req: ApiRequest,
   res: ApiResponse,
   next: express.NextFunction
 ) => {
-  if (checkScopeClaim(validator, res.locals.claims)) {
+  const { claims } = res.locals
+  if (
+    process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' ||
+    validateScopes(validator, claims && claims.scope ? claims.scope.split(' ') : [])
+  ) {
     return next()
   }
   return res
