@@ -1421,16 +1421,22 @@ async function writePolicyMetadata(policy_metadata: PolicyMetadata) {
 }
 
 async function updatePolicyMetadata(policy_metadata: PolicyMetadata) {
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.policy_metadata}
-    SET policy_metadata = '${JSON.stringify(policy_metadata.policy_metadata)}'
-    WHERE policy_id = '${policy_metadata.policy_id}'`
-  const {
-    rows: [recorded_metadata]
-  }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql)
-  return {
-    ...policy_metadata,
-    ...recorded_metadata
+  try {
+    await readSinglePolicyMetadata(policy_metadata.policy_id)
+    const client = await getWriteableClient()
+    const sql = `UPDATE ${schema.TABLE.policy_metadata}
+      SET policy_metadata = '${JSON.stringify(policy_metadata.policy_metadata)}'
+      WHERE policy_id = '${policy_metadata.policy_id}'`
+    const {
+      rows: [recorded_metadata]
+    }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql)
+    return {
+      ...policy_metadata,
+      ...recorded_metadata
+    }
+  } catch (err) {
+    await log.error(err)
+    throw err
   }
 }
 

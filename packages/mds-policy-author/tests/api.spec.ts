@@ -231,7 +231,7 @@ describe('Tests app', () => {
         .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           const body = result.body
           log('create one geo response:', body)
@@ -300,13 +300,13 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies PUTing policy metadata', done => {
+    it('verifies PUTing policy metadata to create', done => {
       const metadata = { some_arbitrary_thing: 'boop' }
       request
         .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -447,7 +447,7 @@ describe('Tests app', () => {
         .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           const body = result.body
           log('create one geo response:', body)
@@ -484,7 +484,7 @@ describe('Tests app', () => {
         .put(`/geographies/${GEOGRAPHY_UUID}`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)

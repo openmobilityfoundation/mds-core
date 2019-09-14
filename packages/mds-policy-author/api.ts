@@ -324,21 +324,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
-    const { policy_id } = req.params
-    try {
-      const policies = await db.readPolicies({ policy_id })
-      if (policies.length > 0) {
-        res.status(200).send(policies[0])
-      } else {
-        res.status(404).send({ result: 'not found' })
-      }
-    } catch (err) {
-      await log.error('failed to read one policy', err)
-      res.status(404).send({ result: 'not found' })
-    }
-  })
-
   app.get(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
     const { policy_id } = req.params
     try {
@@ -352,13 +337,21 @@ function api(app: express.Express): express.Express {
 
   app.put(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
     const policy_metadata = req.body
-    const { policy_id } = req.params
     try {
-      await db.writePolicyMetadata(policy_metadata)
-      return res.status(200).send({ result: `successfully wrote policy metadata of id ${policy_id}` })
-    } catch (err) {
-      await log.error('failed to write policy metadata', err.stack)
-      return res.status(404).send({ result: 'not found' })
+      await db.updatePolicyMetadata(policy_metadata)
+      return res.status(201).send({ policy_metadata })
+    } catch (updateErr) {
+      if (updateErr instanceof NotFoundError) {
+        try {
+          await db.writePolicyMetadata(policy_metadata)
+          return res.status(201).send({ policy_metadata })
+        } catch (writeErr) {
+          await log.error('failed to write policy metadata', writeErr.stack)
+          return res.status(500).send(new ServerError())
+        }
+      } else {
+        return res.status(500).send(new ServerError())
+      }
     }
   })
 
@@ -424,7 +417,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.editGeography(geography)
-      return res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
+      return res.status(201).send({ geography })
     } catch (err) {
       await log.error('failed to write geography', err.stack)
       return res.status(404).send({ result: 'not found' })
@@ -446,7 +439,7 @@ function api(app: express.Express): express.Express {
     const { geography_id } = req.params
     try {
       const geography_metadata = await db.readSingleGeographyMetadata(geography_id)
-      return res.status(201).send(geography_metadata)
+      return res.status(200).send(geography_metadata)
     } catch (err) {
       await log.error('failed to read geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
@@ -458,7 +451,7 @@ function api(app: express.Express): express.Express {
     const { geography_id } = req.params
     try {
       await db.writeGeographyMetadata(geography_metadata)
-      return res.status(200).send({ result: `successfully wrote geography metadata of id ${geography_id}` })
+      return res.status(201).send({ result: `successfully wrote geography metadata of id ${geography_id}` })
     } catch (err) {
       await log.error('failed to write geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
