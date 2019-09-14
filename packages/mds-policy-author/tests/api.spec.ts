@@ -394,7 +394,7 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.policies.length === 4)
+          test.assert(policies_result.body.length === 4)
           return policies_err
         })
     })
@@ -405,7 +405,7 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.policies.length === 2)
+          test.assert(policies_result.body.length === 2)
           done(policies_err)
         })
     })
@@ -416,7 +416,7 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.policies.length === 2)
+          test.assert(policies_result.body.length === 2)
           done(policies_err)
         })
     })
@@ -462,7 +462,7 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.geography.geography_id === GEOGRAPHY_UUID)
+          test.assert(result.body.geography_id === GEOGRAPHY_UUID)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

@@ -177,7 +177,7 @@ function api(app: express.Express): express.Express {
         return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
       })
       */
-      res.status(200).send({ policies })
+      res.status(200).send(policies)
     } catch (err) {
       await log.error('failed to read policies', err)
       if (err instanceof BadParamsError) {
@@ -204,7 +204,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writePolicy(policy)
-      return res.status(201).send({ policy })
+      return res.status(201).send(policy)
     } catch (err) {
       if (err.code === '23505') {
         return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
@@ -220,7 +220,7 @@ function api(app: express.Express): express.Express {
     const { policy_id } = req.params
     try {
       await db.publishPolicy(policy_id)
-      return res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
+      return res.status(200).send({ result: `successfully published policy of id ${policy_id}` })
     } catch (err) {
       if (err instanceof NotFoundError) {
         if (err.message.includes('geography')) {
@@ -339,12 +339,12 @@ function api(app: express.Express): express.Express {
     const policy_metadata = req.body
     try {
       await db.updatePolicyMetadata(policy_metadata)
-      return res.status(201).send({ policy_metadata })
+      return res.status(201).send(policy_metadata)
     } catch (updateErr) {
       if (updateErr instanceof NotFoundError) {
         try {
           await db.writePolicyMetadata(policy_metadata)
-          return res.status(201).send({ policy_metadata })
+          return res.status(201).send(policy_metadata)
         } catch (writeErr) {
           await log.error('failed to write policy metadata', writeErr.stack)
           return res.status(500).send(new ServerError())
@@ -376,7 +376,7 @@ function api(app: express.Express): express.Express {
     log.info('read geo', geography_id)
     try {
       const geography = await db.readSingleGeography(geography_id)
-      res.status(200).send({ geography })
+      res.status(200).send(geography)
     } catch (err) {
       await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
@@ -393,7 +393,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writeGeography(geography)
-      return res.status(201).send({ geography })
+      return res.status(201).send(geography)
     } catch (err) {
       if (err.code === '23505') {
         return res
@@ -417,7 +417,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.editGeography(geography)
-      return res.status(201).send({ geography })
+      return res.status(201).send(geography)
     } catch (err) {
       await log.error('failed to write geography', err.stack)
       return res.status(404).send({ result: 'not found' })
@@ -448,10 +448,9 @@ function api(app: express.Express): express.Express {
 
   app.put(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
     const geography_metadata = req.body
-    const { geography_id } = req.params
     try {
       await db.writeGeographyMetadata(geography_metadata)
-      return res.status(201).send({ result: `successfully wrote geography metadata of id ${geography_id}` })
+      return res.status(201).send(geography_metadata)
     } catch (err) {
       await log.error('failed to write geography metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
