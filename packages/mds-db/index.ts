@@ -1195,15 +1195,25 @@ async function writeGeographyMetadata(geography_metadata: GeographyMetadata) {
 async function readSingleGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
   const client = await getReadOnlyClient()
   const sql = `SELECT * FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
-  try {
-    const result = await client.query(sql)
-    if (result.rows.length === 0) {
-      throw new Error(`Metadata for ${geography_id} not found`)
-    }
-    return { geography_id, geography_metadata: result.rows[0].geography_metadata }
-  } catch (err) {
-    await log.error(err)
-    throw err
+  const result = await client.query(sql)
+  if (result.rows.length === 0) {
+    throw new NotFoundError(`Metadata for ${geography_id} not found`)
+  }
+  return { geography_id, geography_metadata: result.rows[0].geography_metadata }
+}
+
+async function updateGeographyMetadata(geography_metadata: GeographyMetadata) {
+  await readSingleGeographyMetadata(geography_metadata.geography_id)
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${schema.TABLE.geography_metadata}
+    SET geography_metadata = '${JSON.stringify(geography_metadata.geography_metadata)}'
+    WHERE geography_id = '${geography_metadata.geography_id}'`
+  const {
+    rows: [recorded_metadata]
+  }: { rows: Recorded<GeographyMetadata>[] } = await client.query(sql)
+  return {
+    ...geography_metadata,
+    ...recorded_metadata
   }
 }
 
@@ -1707,6 +1717,7 @@ export = {
   editPolicy,
   deletePolicy,
   writeGeographyMetadata,
+  updateGeographyMetadata,
   readSingleGeographyMetadata,
   readSingleGeography,
   readBulkGeographyMetadata,

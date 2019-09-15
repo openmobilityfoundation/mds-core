@@ -339,7 +339,7 @@ function api(app: express.Express): express.Express {
     const policy_metadata = req.body
     try {
       await db.updatePolicyMetadata(policy_metadata)
-      return res.status(201).send(policy_metadata)
+      return res.status(200).send(policy_metadata)
     } catch (updateErr) {
       if (updateErr instanceof NotFoundError) {
         try {
@@ -449,11 +449,26 @@ function api(app: express.Express): express.Express {
   app.put(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
     const geography_metadata = req.body
     try {
-      await db.writeGeographyMetadata(geography_metadata)
-      return res.status(201).send(geography_metadata)
-    } catch (err) {
-      await log.error('failed to write geography metadata', err.stack)
-      return res.status(404).send({ result: 'not found' })
+      await db.updateGeographyMetadata(geography_metadata)
+      return res.status(200).send(geography_metadata)
+    } catch (updateErr) {
+      if (updateErr instanceof NotFoundError) {
+        try {
+          await db.writeGeographyMetadata(geography_metadata)
+          return res.status(201).send(geography_metadata)
+        } catch (writeErr) {
+          await log.error('failed to write geography metadata', writeErr.stack)
+          //return res.status(500).send(new ServerError())
+console.log('updateer')
+console.log(writeErr.stack)
+          return res.status(500).send(writeErr)
+        }
+      } else {
+//        return res.status(500).send(new ServerError())
+console.log('updateer')
+console.log(updateErr.stack)
+          return res.status(500).send(updateErr)
+      }
     }
   })
   return app

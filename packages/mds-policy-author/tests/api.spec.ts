@@ -300,17 +300,26 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies PUTing policy metadata to create', done => {
+    it('verifies PUTing policy metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
-      request
+      await request
         .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
         .expect(201)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      const result = await db.readSinglePolicyMetadata(POLICY_UUID)
+      test.assert(result.policy_metadata.some_arbitrary_thing === 'boop')
+    })
+
+    it('verifies PUTing policy metadata to edit', async () => {
+      const metadata = { some_arbitrary_thing: 'beep' }
+      await request
+        .put(`/policies/${POLICY_UUID}/meta`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
+        .expect(200)
+      const result = await db.readSinglePolicyMetadata(POLICY_UUID)
+      test.assert(result.policy_metadata.some_arbitrary_thing === 'beep')
     })
 
     it('verifies GETing policy metadata when given a policy_id', done => {
@@ -319,7 +328,7 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.policy_metadata.some_arbitrary_thing === 'boop')
+          test.assert(result.body.policy_metadata.some_arbitrary_thing === 'beep')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -491,17 +500,26 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies PUTing geography metadata', done => {
+    it('verifies PUTing geography metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
-      request
+      await request
+        .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
+        .expect(201)
+      const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+      test.assert(result.geography_metadata.some_arbitrary_thing === 'boop')
+    })
+
+    it('verifies PUTing geography metadata to edit', async () => {
+      const metadata = { some_arbitrary_thing: 'beep' }
+      await request
         .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
         .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+      test.assert(result.geography_metadata.some_arbitrary_thing === 'beep')
     })
 
     it('verifies GETing geography metadata', done => {
@@ -510,7 +528,7 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.geography_metadata.some_arbitrary_thing === 'boop')
+          test.assert(result.body.geography_metadata.some_arbitrary_thing === 'beep')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
