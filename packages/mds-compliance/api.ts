@@ -40,16 +40,7 @@ function api(app: express.Express): express.Express {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
-          const { provider_id, scope } = res.locals.claims
-
-          // no admin access without auth
-          if (req.path.includes('/admin/')) {
-            if (!scope || !scope.includes('admin:all')) {
-              return res.status(403).send({
-                result: `no admin access without admin:all scope (${scope})`
-              })
-            }
-          }
+          const { provider_id } = res.locals.claims
 
           /* istanbul ignore next */
           if (!provider_id) {
