@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@aws-lambda/*": ["aws-lambda/*/index.ts"],
+      "@container-images/*": ["container-images/*/index.ts"],
       "@mds-core/*": ["packages/*/index.ts"],
       "*": ["@types/*", "*"]
     }

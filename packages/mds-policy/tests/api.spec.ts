@@ -54,17 +54,14 @@ const APP_JSON = 'application/json; charset=utf-8'
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Tests app', () => {
-  it('resets the db', done => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    request
-      .get('/test/initialize')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+  before('Initialize the DB', async () => {
+    await db.initialize()
   })
+
+  after('Shutdown the DB', async () => {
+    await db.shutdown()
+  })
+
   it('reads the Policy schema', done => {
     request
       .get('/schema/policy')
@@ -109,7 +106,7 @@ describe('Tests app', () => {
     request
       .get('/policies/notarealgeography')
       .set('Authorization', AUTH)
-      .expect(404)
+      .expect(400)
       .end((err, result) => {
         test.value(result.body.result === 'not found')
         done(err)
@@ -120,7 +117,7 @@ describe('Tests app', () => {
     request
       .get('/geographies/notarealgeography')
       .set('Authorization', AUTH)
-      .expect(404)
+      .expect(400)
       .end((err, result) => {
         test.value(result.body.result === 'not found')
         done(err)
@@ -230,17 +227,6 @@ describe('Tests app', () => {
       .end((err, result) => {
         const body = result.body
         log('read back nonexistant geography response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
-  it('shuts down the db', done => {
-    request
-      .get('/test/shutdown')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })

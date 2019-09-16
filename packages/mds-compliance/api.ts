@@ -16,7 +16,6 @@
 
 import express from 'express'
 import cache from '@mds-core/mds-cache'
-import stream from '@mds-core/mds-stream'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import {
@@ -43,15 +42,6 @@ function api(app: express.Express): express.Express {
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
           const { provider_id, scope } = res.locals.claims
-
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({
-                result: `no test access without test:all scope (${scope})`
-              })
-            }
-          }
 
           // no admin access without auth
           if (req.path.includes('/admin/')) {
@@ -93,19 +83,6 @@ function api(app: express.Express): express.Express {
     next()
   })
 
-  app.get(pathsFor('/test/initialize'), async (req, res) => {
-    try {
-      const kind = await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
-      res.send({
-        result: `Database initialized (${kind})`
-      })
-    } catch (err) {
-      /* istanbul ignore next */
-      await log.error('initialize failed', err)
-      res.status(500).send('Server Error')
-    }
-  })
-
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
     const { provider_id } = res.locals
     const { provider_id: queried_provider_id } = req.query
@@ -113,25 +90,25 @@ function api(app: express.Express): express.Express {
     /* istanbul ignore next */
     async function fail(err: Error) {
       await log.error(err.stack || err)
-      res.status(500).send(new ServerError())
+      return res.status(500).send(new ServerError())
     }
 
     const { policy_uuid } = req.params
     const { end_date: query_end_date } = req.query
 
     if (!isUUID(policy_uuid)) {
-      res.status(400).send({ err: 'bad_param' })
+      return res.status(400).send({ err: 'bad_param' })
     } else {
       const { start_date, end_date } = query_end_date
         ? { end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365) }
         : { end_date: now() + days(365), start_date: now() - days(365) }
       try {
-        const all_policies = await db.readPolicies({ start_date, end_date })
+        const all_policies = await db.readPolicies({ start_date })
         const policy = compliance_engine.filterPolicies(all_policies).find(p => {
           return p.policy_id === policy_uuid
         })
         if (!policy) {
-          res.status(404).send({ err: 'not found' })
+          return res.status(404).send({ err: 'not found' })
         }
 
         if (
@@ -173,17 +150,17 @@ function api(app: express.Express): express.Express {
             const filteredEvents = compliance_engine.filterEvents(events)
             const result = compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
             if (result === undefined) {
-              res.status(400).send({ err: 'bad_param' })
+              return res.status(400).send({ err: 'bad_param' })
             } else {
-              res.status(200).send(result)
+              return res.status(200).send(result)
             }
           }
         } else {
-          res.status(401).send({ err: 'Unauthorized' })
+          return res.status(401).send({ err: 'Unauthorized' })
         }
       } catch (err) {
         if (err.message.includes('not_found')) {
-          res.status(400).send({ err: 'bad_param' })
+          return res.status(400).send({ err: 'bad_param' })
         }
         await fail(err)
       }
@@ -192,16 +169,16 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
     if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(res.locals.provider_id)) {
-      res.status(401).send({ result: 'unauthorized access' })
+      return res.status(401).send({ result: 'unauthorized access' })
     }
 
-    async function fail(err: Error): Promise<void> {
+    async function fail(err: Error) {
       await log.error(err.stack || err)
       if (err.message.includes('invalid rule_id')) {
-        res.status(404).send(err.message)
+        return res.status(404).send(err.message)
       } else {
         /* istanbul ignore next */
-        res
+        return res
           .status(500)
           .send({ error: 'server_error', error_description: 'an internal server error has occurred and been logged' })
       }
@@ -241,7 +218,7 @@ function api(app: express.Express): express.Express {
         )
       }, 0)
 
-      res.status(200).send({ count })
+      return res.status(200).send({ count })
     } catch (err) {
       await fail(err)
     }
