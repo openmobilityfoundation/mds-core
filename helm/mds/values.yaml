@@ -52,9 +52,10 @@ registry:
 useLatestImage: true
 tls:
   enabled: false
-  production: false
   domain:
-  email:
+  letsencrypt:
+    enabled: false
+    production: false
 jwt:
   issuer:
   enabled: false
