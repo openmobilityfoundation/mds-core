@@ -3,6 +3,7 @@ const AccessTokenScopes = [
   'admin:all',
   'audits:delete',
   'audits:read',
+  'audits:vehicles:read',
   'audits:write',
   'compliance:read',
   'compliance:read:provider',

@@ -112,6 +112,19 @@ const fixtures: {
   }
 ]
 
+// This is sometimes useful for displaying the mapping between Agency Events/Reasons and Provider Status Changes
+// Note that console.table requires Node v10 "nvm use 10"
+// console.table(
+//   fixtures.reduce<{ [x: string]: string }>((mapping, { agency, provider }) => {
+//     return {
+//       ...mapping,
+//       [agency.event_type_reason
+//         ? `${agency.event_type}/${agency.event_type_reason}`
+//         : agency.event_type]: `${provider.event_type}/${provider.event_type_reason}`
+//     }
+//   }, {})
+// )
+
 describe('Testing Mapping of Agency Events to Provider Status Changes', () => {
   for (const { agency, provider } of fixtures) {
     it(`Testing ${agency.event_type}${
