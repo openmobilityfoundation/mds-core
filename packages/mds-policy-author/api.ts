@@ -458,16 +458,10 @@ function api(app: express.Express): express.Express {
           return res.status(201).send(geography_metadata)
         } catch (writeErr) {
           await log.error('failed to write geography metadata', writeErr.stack)
-          //return res.status(500).send(new ServerError())
-console.log('updateer')
-console.log(writeErr.stack)
-          return res.status(500).send(writeErr)
+          return res.status(500).send(new ServerError())
         }
       } else {
-//        return res.status(500).send(new ServerError())
-console.log('updateer')
-console.log(updateErr.stack)
-          return res.status(500).send(updateErr)
+        return res.status(500).send(new ServerError())
       }
     }
   })
