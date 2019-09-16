@@ -11,4 +11,8 @@
 - [ ] Audit
 - [ ] Policy
 - [ ] Compliance
+- [ ] Daily
+- [ ] Native
+- [ ] Policy Author
+
 

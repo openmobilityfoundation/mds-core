@@ -51,21 +51,21 @@ interface NativeApiResponseBody {
 }
 
 interface NativeApiGetEventsReponseBody extends NativeApiResponseBody {
-  events: Omit<Recorded<VehicleEvent>, 'service_area_id'>[]
+  events: Omit<Recorded<VehicleEvent>, 'id' | 'service_area_id'>[]
   cursor: string
 }
 
 export type NativeApiGetEventsReponse = NativeApiResponse<NativeApiGetEventsReponseBody>
 
-export interface NativeApiGetDeviceRequest extends NativeApiRequest {
+export interface NativeApiGetVehiclesRequest extends NativeApiRequest {
   params: { device_id: UUID }
 }
 
-interface NativeApiGetDeviceResponseBody extends NativeApiResponseBody {
-  device: Device
+interface NativeApiGetVehiclesResponseBody extends NativeApiResponseBody {
+  vehicle: Omit<Recorded<Device>, 'id'>
 }
 
-export type NativeApiGetDeviceResponse = NativeApiResponse<NativeApiGetDeviceResponseBody>
+export type NativeApiGetVehiclesResponse = NativeApiResponse<NativeApiGetVehiclesResponseBody>
 
 export type NativeApiGetProvidersRequest = NativeApiRequest
 

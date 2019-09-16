@@ -72,7 +72,7 @@ spec:
       name: https-default
     tls:
       mode: SIMPLE
-      credentialName: ingress-cert-staging
+      credentialName: ingress-cert
       privateKey: sds
       serverCertificate: sds
     hosts:
@@ -86,7 +86,7 @@ metadata:
 spec:
   secretName: ingress-cert
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-{{ .Values.tls.production | ternary "prod" "staging" }}
     kind: ClusterIssuer
   commonName: {{ .Values.tls.domain }}
   dnsNames:

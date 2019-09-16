@@ -19,7 +19,6 @@ import express from 'express'
 import log from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
-import stream from '@mds-core/mds-stream'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
 import areas from 'ladot-service-areas'
 import {
@@ -61,15 +60,6 @@ function api(app: express.Express): express.Express {
         if (res.locals.claims) {
           const { provider_id, scope } = res.locals.claims
 
-          // no test access without auth
-          if (req.path.includes('/test/')) {
-            if (!scope || !scope.includes('test:all')) {
-              return res.status(403).send({
-                result: `no test access without test:all scope (${scope})`
-              })
-            }
-          }
-
           // no admin access without auth
           if (req.path.includes('/admin/')) {
             if (!scope || !scope.includes('admin:all')) {
@@ -109,14 +99,6 @@ function api(app: express.Express): express.Express {
   // / ////////// gets ////////////////
 
   // ///////////////////// begin daily endpoints ///////////////////////
-
-  app.get(pathsFor('/test/shutdown'), async (req: DailyApiRequest, res: DailyApiResponse) => {
-    await Promise.all([cache.shutdown(), stream.shutdown(), db.shutdown()])
-    log.info('shutdown complete (in theory)')
-    res.send({
-      result: 'cache/stream/db shutdown done'
-    })
-  })
 
   const RIGHT_OF_WAY_STATUSES: string[] = [
     VEHICLE_STATUSES.available,

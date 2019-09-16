@@ -39,6 +39,7 @@ import {
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
+import stream from '@mds-core/mds-stream'
 import { makeDevices, makeEvents } from '@mds-core/mds-test-data'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
@@ -56,7 +57,7 @@ function now(): Timestamp {
 const APP_JSON = 'application/json; charset=utf-8'
 
 const LA_CITY_BOUNDARY = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
-const PROVIDER_SCOPES = 'admin:all test:all'
+const PROVIDER_SCOPES = 'admin:all'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const TEST_TELEMETRY = {
@@ -118,31 +119,17 @@ const AUTH_GARBAGE_PROVIDER = `basic ${Buffer.from(`tinylittleinvalidteapot|${PR
 const AUTH_UNKNOWN_UUID_PROVIDER = `basic ${Buffer.from(
   `c8f984c5-62a5-4453-b1f7-3b7704a95cfe|${PROVIDER_SCOPES}`
 ).toString('base64')}`
-const AUTH_ADMIN_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|admin:all`).toString('base64')}`
-const AUTH_TEST_ONLY_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|test:all`).toString('base64')}`
+const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 
-after(done => {
-  request
-    .get('/test/shutdown')
-    .set('Authorization', AUTH)
-    .expect(200)
-    .end(err => {
-      done(err)
-    })
+before(async () => {
+  await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
+})
+
+after(async () => {
+  await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
 })
 
 describe('Tests API', () => {
-  it('resets the db and cache', done => {
-    request
-      .get('/test/initialize')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-
   it('verifies non-uuid provider_id is rejected', done => {
     request
       .get('/devices')
@@ -167,22 +154,10 @@ describe('Tests API', () => {
       })
   })
 
-  it('verifies unable to access test if not scoped', done => {
-    request
-      .get('/test/')
-      .set('Authorization', AUTH_ADMIN_ONLY_SCOPE)
-      .expect(403)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.result).contains('no test access without test:all scope')
-        done(err)
-      })
-  })
-
   it('verifies unable to access admin if not scoped', done => {
     request
       .get('/admin/')
-      .set('Authorization', AUTH_TEST_ONLY_SCOPE)
+      .set('Authorization', AUTH_NO_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -564,17 +539,10 @@ describe('Tests API', () => {
       })
   })
 
-  it('resets the cache', done => {
-    request
-      .get('/test/reset')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.result).contains('cache reset done')
-        done(err)
-      })
+  it('resets the cache', async () => {
+    await cache.reset()
   })
+
   it('refreshes the cache', done => {
     request
       .get('/admin/cache/refresh')
@@ -585,15 +553,9 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('shuts down the db to verify that it will come back up', done => {
-    request
-      .get('/test/shutdown')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+
+  it('shuts down the db to verify that it will come back up', async () => {
+    await db.shutdown()
   })
 
   it('verifies service_start success', done => {
@@ -659,21 +621,10 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('verifies read-back of post device status deregister success (db)', done => {
-    request
-      .get(`/test/vehicles/${DEVICE_UUID}/event/${test_event.timestamp}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        if (err) {
-          log('deregister readback event error', err)
-        } else {
-          // log('--- deregister readback event success', result.body)
-          test.object(result.body).match((obj: VehicleEvent) => obj.event_type === VEHICLE_EVENTS.deregister)
-          test.object(result.body).match((obj: VehicleEvent) => obj.device_id === DEVICE_UUID)
-        }
-        done(err)
-      })
+  it('verifies read-back of post device status deregister success (db)', async () => {
+    const event = await db.readEvent(DEVICE_UUID, test_event.timestamp)
+    test.assert(event.event_type === VEHICLE_EVENTS.deregister)
+    test.assert(event.device_id === DEVICE_UUID)
   })
 
   it('verifies post device status bogus event', done => {
@@ -903,21 +854,13 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('verifies post trip end readback telemetry', done => {
-    request
-      .get(`/test/vehicles/${TEST_TELEMETRY.device_id}/telemetry/${TEST_TELEMETRY.timestamp}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        if (err) {
-          log('telemetry err', err)
-        } else {
-          log('telemetry result', result.body)
-          test.value(result.body.device_id).is(TEST_TELEMETRY.device_id)
-        }
-        done(err)
-      })
+
+  it('verifies post trip end readback telemetry', async () => {
+    const { device_id, timestamp } = TEST_TELEMETRY
+    const [telemetry] = await db.readTelemetry(device_id, timestamp, timestamp)
+    test.value(telemetry.device_id).is(TEST_TELEMETRY.device_id)
   })
+
   it('verifies post reserve success', done => {
     request
       .post(`/vehicles/${DEVICE_UUID}/event`)
@@ -1160,46 +1103,17 @@ describe('Tests API', () => {
   })
 
   // read back posted event (cache should not work; it should only have latest)
-  it('verifies late-event read-back of service_end (rebalance) success (db)', done => {
-    request
-      .get(`/test/vehicles/${DEVICE_UUID}/event/${lateTimestamp}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        if (err) {
-          log('rebalance readback event error', err)
-        } else {
-          log('--- service_end (rebalance)', result.body)
-          test.object(result.body).match((obj: VehicleEvent) => obj.event_type_reason === 'rebalance')
-        }
-        done(err)
-      })
+  it('verifies late-event read-back of service_end (rebalance) success (db)', async () => {
+    const timestamp = lateTimestamp
+
+    const event = await db.readEvent(DEVICE_UUID, timestamp)
+    test.object(event).match((obj: VehicleEvent) => obj.event_type_reason === 'rebalance')
   })
 
   // make sure we read back the latest event, not the past event
-  it('verifies out-of-order event reads back latest (cache)', done => {
-    request
-      .get(`/test/vehicles/${DEVICE_UUID}/event/0?cached=true`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        // test for trip_enter TODO
-        log(result.body)
-        test.string(result.body.event_type).contains('cancel_reservation')
-        done(err)
-      })
-  })
-  // make sure we read back the latest event, not the past event
-  it('verifies out-of-order event reads back latest (db)', done => {
-    request
-      .get(`/test/vehicles/${DEVICE_UUID}/event/0`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        log(result.body)
-        test.string(result.body.event_type).contains('cancel_reservation')
-        done(err)
-      })
+  it('verifies out-of-order event reads back latest (cache)', async () => {
+    const event = await db.readEvent(DEVICE_UUID, 0)
+    test.assert(event.event_type === 'cancel_reservation')
   })
 
   const WEIRD_UUID = '034e1c90-9f84-4292-a750-e8f395e4869d'
@@ -1257,33 +1171,15 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('verifies read-back posted telemetry', done => {
-    request
-      .get(`/test/vehicles/${TEST_TELEMETRY.device_id}/telemetry/${TEST_TELEMETRY.timestamp}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        if (err) {
-          log('telemetry err', err)
-        } else {
-          log('telemetry result', result.body)
-          test.value(result.body.device_id).is(TEST_TELEMETRY.device_id)
-        }
-        done(err)
-      })
+  it('verifies read-back posted telemetry', async () => {
+    const { device_id, timestamp } = TEST_TELEMETRY
+    const [telemetry] = await db.readTelemetry(device_id, timestamp, timestamp)
+    test.value(telemetry.device_id).is(TEST_TELEMETRY.device_id)
   })
-  it('verifies fail read-back telemetry with bad timestamp', done => {
-    request
-      .get(`/test/vehicles/${TEST_TELEMETRY.device_id}/telemetry/${TEST_TELEMETRY.timestamp + 1}`)
-      .set('Authorization', AUTH)
-      .expect(404)
-      .end(err => {
-        // the 404 is the important thing
-        if (err) {
-          log('telemetry err', err)
-        }
-        done(err)
-      })
+  it('verifies fail read-back telemetry with bad timestamp', async () => {
+    const { device_id } = TEST_TELEMETRY
+    const [telemetry] = await db.readTelemetry(device_id, 0, 0)
+    test.assert(!telemetry)
   })
 
   it('verifies post telemetry with bad device_id', done => {
@@ -1566,35 +1462,15 @@ describe('Tests API', () => {
         done(err)
       })
   })
-
-  it('shuts down the db', done => {
-    request
-      .get('/test/shutdown')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
 })
 
-describe('Tests pagination', () => {
-  before(done => {
+describe('Tests pagination', async () => {
+  before(async () => {
     const devices = makeDevices(100, now())
     const events = makeEvents(devices, now())
-    request
-      .get('/test/initialize')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end(() => {
-        const seedData = { devices, events, telemetry: [] }
-        Promise.all([db.initialize(), cache.initialize()]).then(() => {
-          Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
-            done()
-          })
-        })
-      })
+    const seedData = { devices, events, telemetry: [] }
+    await Promise.all([db.initialize(), cache.initialize()])
+    await Promise.all([cache.seed(seedData), db.seed(seedData)])
   })
 
   it('verifies paging links when read back all devices from db', done => {

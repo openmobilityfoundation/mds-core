@@ -10,8 +10,9 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "lambda:ladot-production-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-production-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
+    "lambda:ladot-prod-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
     "lambda:ladot-sandbox-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
+    "lambda:develop-mds-api-gateway-authorizer": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-mds-api-gateway-authorizer --zip-file fileb://dist/bundles/api-gateway-authorizer.zip",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
