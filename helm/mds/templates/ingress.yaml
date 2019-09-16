@@ -86,7 +86,7 @@ metadata:
 spec:
   secretName: ingress-cert
   issuerRef:
-    name: letsencrypt-staging
+    name: letsencrypt-{{ .Values.tls.production | ternary "prod" "staging" }}
     kind: ClusterIssuer
   commonName: {{ .Values.tls.domain }}
   dnsNames:
