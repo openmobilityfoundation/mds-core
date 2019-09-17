@@ -210,7 +210,7 @@ installDashboard() {
     https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml \
     ${configs[dryrun]:+--dry-run}
   kubectl apply -f helm/dashboard ${configs[dryrun]:+--dry-run}
-  helm install ./helm/dashboard --name dahsboard \
+  helm install ./helm/dashboard --name dashboard \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -415,8 +415,9 @@ getApp() {
   gp=$(get ${ga} 5 -1)
 
   [ ${gp} -eq -1 ] && {
-    gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
-      -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+    (( $(kubectl -n kube-system get pod -l k8s-app=kubernetes-dashboard | wc -l) == 1 )) &&
+      gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+        -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
   }
 
   echo ${gu/\[port\]/${gp}}
@@ -493,6 +494,7 @@ uninstallIstio() {
 }
 
 uninstallDashboard() {
+  unforward dashboard
   kubectl delete deployment kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete service kubernetes-dashboard  --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
@@ -500,6 +502,7 @@ uninstallDashboard() {
   kubectl delete sa kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  helm del --purge dashboard
 }
 
 #todo: purge
@@ -519,8 +522,9 @@ getPort() {
     gp=$(get ${ga} 5 -1)
 
     [ ${gp} -eq -1 ] && {
-      gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
-        -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+      (( $(kubectl -n kube-system get pod -l k8s-app=kubernetes-dashboard | wc -l) == 1 )) &&
+        gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+          -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
     }
   fi; unset ga gns gk gv
 
