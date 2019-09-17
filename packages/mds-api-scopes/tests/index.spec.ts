@@ -17,14 +17,14 @@
  */
 
 import test from 'unit.js'
-import { validateScopes, ScopeDescriptions, AccessTokenScopes } from '../index'
+import { validateScopes, ScopeDescriptions } from '../index'
 
 type TestAccessScopes = 'scope:1' | 'scope:2' | 'scope:3' | 'scope:4'
 
 describe('Testing API Scope Enforcement', () => {
   before(done => {
     // eslint-disable-next-line no-console
-    AccessTokenScopes.forEach(scope => console.log(`\t`, scope, '=', ScopeDescriptions[scope]))
+    console.table(ScopeDescriptions)
     done()
   })
 

@@ -2,6 +2,7 @@ import {
   VehicleEvent,
   PROVIDER_REASONS,
   VEHICLE_EVENTS,
+  EVENT_STATUS_MAP,
   PROVIDER_EVENTS,
   VEHICLE_REASONS,
   VEHICLE_EVENT
@@ -114,14 +115,15 @@ const fixtures: {
 
 describe('Testing Mapping of Agency Events to Provider Status Changes', () => {
   before(done => {
-    fixtures.forEach(({ agency, provider }) =>
-      // eslint-disable-next-line no-console
-      console.log(
-        `\t`,
-        agency.event_type_reason ? `${agency.event_type}/${agency.event_type_reason}` : agency.event_type,
-        '=>',
-        `${provider.event_type}/${provider.event_type_reason}`
-      )
+    // eslint-disable-next-line no-console
+    console.table(
+      fixtures.map(({ agency, provider }) => ({
+        'Agency Event': agency.event_type,
+        'Agency Reason': agency.event_type_reason || '',
+        'Agency Status': EVENT_STATUS_MAP[agency.event_type],
+        'Provider Event': provider.event_type,
+        'Provider Reason': provider.event_type_reason
+      }))
     )
     done()
     /* eslint-enable no-console */
