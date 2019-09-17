@@ -76,7 +76,7 @@ tests:
         documentIndex: 7
       - equal:
           path: spec.servers[1].tls.credentialName
-          value: ingress-cert-staging
+          value: ingress-cert
         documentIndex: 7
       - equal:
           path: spec.servers[1].tls.privateKey

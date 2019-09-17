@@ -20,7 +20,8 @@ declare -A configs=(
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-}"
+  # todo: enable migration
+  ["values-mds"]="${MDS_VALUES_MDS:-}" #"./bin/values-agency.yaml}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
   ["setfiles"]="${MDS_SET_FILES:-}"
@@ -238,7 +239,7 @@ installIstio() {
     pause 5
 
     (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
-      echo "istio successfully installed" || echo "istio instllation failure"
+      echo "istio successfully installed" || echo "istio installation failure"
 
     helm template ${configs[istio]}/install/kubernetes/helm/istio \
       --name istio \
@@ -267,7 +268,8 @@ installLogging() {
 
 installMds() {
   check ${FUNCNAME[0]}
-  installFallbackCert
+  # todo: require ${INGRESS_DOMAIN}
+  # installFallbackCert
   kubectl get namespace mds > /dev/null 2>&1 || {
     kubectl create namespace mds ${configs[dryrun]:+--dry-run}
     kubectl label namespace mds istio-injection=enabled --overwrite=true \
@@ -299,15 +301,12 @@ installSimulator() {
   if [[ ! -d ${configs[simulator]} ]]; then
     mkdir -p ${configs[workdir]}
     (cd ${configs[workdir]};
-      git clone ${configs[simulatorRepository]} ${configs[simulator]};
-      cd ${configs[simulator]};
-      # todo: remove branch once merged
-      git checkout -b feature-intall-helm)
+      git clone ${configs[simulatorRepository]} ${configs[simulator]})
   fi
 
   (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
     cd ${configs[simulator]}; \
-    git pull origin feature-intall-helm; \
+    git pull; \
     pip install -r requirements.txt; \
     docker build -t trackgen .;
     helm install ./helm --name trackgen)
@@ -488,7 +487,7 @@ uninstallIstio() {
     kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
     kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
       ${configs[dryrun]:+--dry-run} > /dev/null
-    [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
+#    [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
   }
 }
 

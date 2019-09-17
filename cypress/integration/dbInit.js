@@ -3,7 +3,7 @@ var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456
 describe('dbInit', function() {
   it('successfully initializes', function() {
     cy.request({
-      url: 'http://localhost/agency/test/initialize',
+      url: 'http://localhost/agency',
       auth: {
         bearer: "." + Base64.encode("{\"scope\": \"admin:all test:all\"}") + ".",
       },
@@ -11,7 +11,8 @@ describe('dbInit', function() {
     .then((resp) => {
       expect(resp.status).to.eq(200)
       expect(resp.headers['content-type']).to.eq('application/json; charset=utf-8');
-      expect(resp.body).to.deep.eq({"result":"Database initialized (postgres,,)"});
+      expect(resp.headers['server']).to.eq('istio-envoy');
+      expect(resp.body).to.deep.eq({"name":"@container-images/mds-agency","version":"0.1.5","build":{"date":"2019-09-16T21:20:47.694Z","branch":"alex/helm","commit":"2596a84"},"node":"8.16.1","status":"Running"});
     })
   })
 })
