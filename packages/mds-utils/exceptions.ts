@@ -52,6 +52,12 @@ export class ValidationError extends BaseError {
 /* istanbul ignore next */
 export class BadParamsError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(ValidationError.name, reason(error))
+    super(BadParamsError.name, reason(error))
+  }
+}
+
+export class AlreadyPublishedError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super(AlreadyPublishedError.name, reason(error))
   }
 }
