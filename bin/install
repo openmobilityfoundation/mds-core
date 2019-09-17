@@ -285,7 +285,6 @@ installMds() {
   }
 }
 
-# fixme: ?is this function in use?
 installFallbackCert() {
   TMPCERT=$(mktemp /tmp/k8s-fallback-cert.XXXXXX) || exit 1
   openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
