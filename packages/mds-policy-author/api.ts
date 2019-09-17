@@ -20,7 +20,6 @@ import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId }
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
-  now,
   pathsFor,
   ServerError,
   UUID_REGEX,
@@ -152,14 +151,11 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies'), async (req, res) => {
-    const { start_date = now(), end_date = now(), get_published = null, get_unpublished = null } = req.query
-    log.info('read /policies', req.query, start_date, end_date)
-    if (start_date > end_date) {
-      res.status(400).send({ result: 'start_date after end_date' })
-      return
-    }
+    const { get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies', req.query)
+
     try {
-      const policies = await db.readPolicies({ start_date, get_published, get_unpublished })
+      const policies = await db.readPolicies({ get_published, get_unpublished })
 
       // Let's not worry about filtering for just active policies at the moment.
 
@@ -285,14 +281,10 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies/meta/'), async (req, res) => {
-    const { start_date = now(), end_date = now(), get_published = null, get_unpublished = null } = req.query
-    log.info('read /policies/meta', req.query, start_date, end_date)
-    if (start_date > end_date) {
-      res.status(400).send({ result: 'start_date after end_date' })
-      return
-    }
+    const { get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies/meta', req.query)
     try {
-      const metadata = await db.readBulkPolicyMetadata({ start_date, get_published, get_unpublished })
+      const metadata = await db.readBulkPolicyMetadata({ get_published, get_unpublished })
 
       res.status(200).send(metadata)
     } catch (err) {
