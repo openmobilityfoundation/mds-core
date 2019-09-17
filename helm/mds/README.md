@@ -154,49 +154,16 @@ kubectl create secret generic registry-login \
 At this point, you should be able to deploy an MDS cluster from this directory noting that if you're using a custom values file, you'll need to add the argument `--values=...` to this command, if you're using a custom namespace, you'll want to add the `--namespace=...` argument, etc.:
 
 ```bash
-helm install --name mds ./helm
-
-# prometheus
-kubectl port-forward $(kubectl get pods -n=istio-system | \
-  grep prometheus | cut -d' ' -f1) 9090:9090 -n=istio-system &
+helm install ./helm/mds --name mds --namespace mds
 ```
 
-## Dashboards
-
-* [prometheus](htttp://localhost:9090)
-* (optional) [dashboard](https://localhost:8443)
-
-## Development (work in progress)
-
-### Helm
-
-The following [helm sub-commands](https://helm.sh/docs/helm/) ease chart development:
-
-```bash
-# materialize the specified template
-helm template --set [KEY]=[VLAUE] ... -x templates/[TEMPLATE] --debug ./helm
-# largely the same as 'helm template'
-helm install --set [KEY]=[VALUE] ... --dry-run --debug ./helm
-# checks the chart for well-formedness
-helm lint --set [KEY]=[VALUE] ... --debug ./helm
-```
-
-### Helm tests
+## Helm tests
 
 ```bash
 helm unittest ./helm
 ```
 
-### Database/PostgreSQL
-
-```bash
-sudo kubefwd svc -n default &
-pgcli postgres://mdsadmin@mds-postgresql:5432/mds
-```
-
-## Cleanup
-
-### Uninstall MDS
+## Uninstall MDS
 
 ```bash
 helm delete --purge mds
