@@ -122,7 +122,7 @@ function api(app: express.Express): express.Express {
       // 403 Forbidden
       return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
     }
-    next()
+    return next()
   })
 
   /**
@@ -135,16 +135,15 @@ function api(app: express.Express): express.Express {
         res.locals.audit_trip_id = audit_trip_id
         res.locals.audit = await readAudit(audit_trip_id)
       }
-      next()
+      return next()
     } catch (err) /* istanbul ignore next */ {
       if (err instanceof ValidationError) {
         // 400 Bad Request
-        res.status(400).send({ error: err })
-      } else {
-        // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-        res.status(500).send({ error: new ServerError(err) })
+        return res.status(400).send({ error: err })
       }
+      // 500 Internal Server Error
+      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+      return res.status(500).send({ error: new ServerError(err) })
     }
   })
 
@@ -210,7 +209,7 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            res.status(200).send({
+            return res.status(200).send({
               provider_id,
               provider_name,
               provider_vehicle_id,
@@ -219,17 +218,16 @@ function api(app: express.Express): express.Express {
           }
         } else {
           // 409 Conflict
-          res.status(409).send({ error: new ConflictError('audit_trip_id_already_exists', { audit_trip_id }) })
+          return res.status(409).send({ error: new ConflictError('audit_trip_id_already_exists', { audit_trip_id }) })
         }
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -267,21 +265,20 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            res.status(200).send({})
+            return res.status(200).send({})
           }
         } else {
           // 404 Not Found
-          res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
+          return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
         }
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -314,21 +311,20 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            res.status(200).send({})
+            return res.status(200).send({})
           }
         } else {
           // 404 Not Found
-          res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
+          return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
         }
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -381,21 +377,20 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            res.status(200).send({})
+            return res.status(200).send({})
           }
         } else {
           // 404 Not Found
-          res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
+          return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
         }
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -432,21 +427,20 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            res.status(200).send({})
+            return res.status(200).send({})
           }
         } else {
           // 404 Not Found
-          res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
+          return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
         }
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -509,7 +503,7 @@ function api(app: express.Express): express.Express {
               const deviceEvents = await readEvents(device.device_id, start_time, end_time)
               const deviceTelemetry = await readTelemetry(device.device_id, start_time, end_time)
 
-              res.status(200).send({
+              return res.status(200).send({
                 ...audit,
                 provider_vehicle_id: device.vehicle_id,
                 events: auditEvents.map(withGpsProperty),
@@ -519,29 +513,25 @@ function api(app: express.Express): express.Express {
                   telemetry: deviceTelemetry
                 }
               })
-            } else {
-              res.status(200).send({
-                ...audit,
-                events: auditEvents.map(withGpsProperty),
-                provider: { device, events: [], telemetry: [] }
-              })
             }
-          } else {
-            res.status(200).send({ ...audit, events: auditEvents.map(withGpsProperty), provider: null })
+            return res.status(200).send({
+              ...audit,
+              events: auditEvents.map(withGpsProperty),
+              provider: { device, events: [], telemetry: [] }
+            })
           }
-        } else {
-          // 404 Not Found
-          res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
+          return res.status(200).send({ ...audit, events: auditEvents.map(withGpsProperty), provider: null })
         }
+        // 404 Not Found
+        return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -556,20 +546,18 @@ function api(app: express.Express): express.Express {
           // Delete the audit
           await deleteAudit(audit_trip_id)
           // 200 OK
-          res.status(200).send({})
-        } else {
-          // 404 Not Found
-          res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
+          return res.status(200).send({})
         }
+        // 404 Not Found
+        return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
       } catch (err) /* istanbul ignore next */ {
         if (err instanceof ValidationError) {
           // 400 Bad Request
-          res.status(400).send({ error: err })
-        } else {
-          // 500 Internal Server Error
-          await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-          res.status(500).send({ error: new ServerError(err) })
+          return res.status(400).send({ error: err })
         }
+        // 500 Internal Server Error
+        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -598,11 +586,11 @@ function api(app: express.Express): express.Express {
         const { count, audits } = await readAudits(query)
 
         // 200 OK
-        res.status(200).send({ count, audits, links: asJsonApiLinks(req, skip, take, count) })
+        return res.status(200).send({ count, audits, links: asJsonApiLinks(req, skip, take, count) })
       } catch (err) /* istanbul ignore next */ {
         // 500 Internal Server Error
         await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
-        res.status(500).send({ error: new ServerError(err) })
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
   )
@@ -621,10 +609,10 @@ function api(app: express.Express): express.Express {
 
     try {
       const response = await getVehicles(skip, take, url, provider_id, req.query, bbox)
-      res.status(200).send(response)
+      return res.status(200).send(response)
     } catch (err) {
       await log.error('getVehicles fail', err)
-      res.status(500).send({
+      return res.status(500).send({
         error: 'server_error',
         error_description: 'an internal server error has occurred and been logged'
       })
