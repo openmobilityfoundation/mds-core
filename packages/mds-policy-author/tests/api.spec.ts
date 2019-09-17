@@ -27,7 +27,7 @@ import should from 'should'
 import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
-import { now, days, clone } from '@mds-core/mds-utils'
+import { clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST3_PROVIDER_ID } from '@mds-core/mds-providers'
@@ -348,7 +348,7 @@ describe('Tests app', () => {
 
     it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
       const result = await request
-        .get(`/policies/meta?start_date=${now() - days(365)}`)
+        .get(`/policies/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
       test.assert(result.body.length === 1)
@@ -399,7 +399,7 @@ describe('Tests app', () => {
       await db.writePolicy(SUPERSEDING_POLICY_JSON)
       await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
       request
-        .get(`/policies?start_date=${now() - days(365)}`)
+        .get(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
@@ -410,7 +410,7 @@ describe('Tests app', () => {
 
     it('can GET all published policies', done => {
       request
-        .get(`/policies?start_date=${now() - days(365)}&get_published=true`)
+        .get(`/policies?get_published=true`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
@@ -421,7 +421,7 @@ describe('Tests app', () => {
 
     it('can GET all unpublished policies', done => {
       request
-        .get(`/policies?start_date=${now() - days(365)}&get_unpublished=true`)
+        .get(`/policies?get_unpublished=true`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
@@ -432,7 +432,7 @@ describe('Tests app', () => {
 
     it('throws an exception if both get_unpublished and get_published are submitted', done => {
       request
-        .get(`/policies?start_date=${now() - days(365)}&get_unpublished=true&get_published=true`)
+        .get(`/policies?get_unpublished=true&get_published=true`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(400)
         .end(async policies_err => {
