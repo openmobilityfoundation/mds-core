@@ -21,14 +21,6 @@ import {
   DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
 import { now, clone, NotFoundError } from '@mds-core/mds-utils'
-/*
-import {
-  START_ONE_MONTH_AGO,
-  START_YESTERDAY,
-  START_ONE_WEEK_AGO,
-  START_ONE_MONTH_FROM_NOW
-} from 'packages/mds-test-data/dist'
-*/
 
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
