@@ -55,3 +55,9 @@ export class BadParamsError extends BaseError {
     super('BadParamsError', reason(error))
   }
 }
+
+export class AlreadyPublishedError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('AlreadyPublishedError', reason(error))
+  }
+}
