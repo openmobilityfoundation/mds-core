@@ -18,7 +18,6 @@ import GoogleSpreadsheet from 'google-spreadsheet'
 
 import { promisify } from 'util'
 import requestPromise from 'request-promise'
-import { get } from 'lodash'
 import log from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
@@ -133,7 +132,7 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
         const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
         const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
         const d = new Date()
-        let [starts, ends, start_sla, end_sla, telems, telem_sla] = [0, 0, 0, 0, 0, 0]
+        let [enters, leaves, starts, ends, start_sla, end_sla, telems, telem_sla] = [0, 0, 0, 0, 0, 0, 0, 0]
         let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
         let status_counts = {
           available: 0,
@@ -150,6 +149,8 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
           status_counts = eventCountsToStatusCounts(event_counts_last_24h)
           starts = event_counts_last_24h.trip_start || 0
           ends = event_counts_last_24h.trip_end || 0
+          enters = event_counts_last_24h.trip_enter || 0
+          leaves = event_counts_last_24h.trip_leave || 0
           telems = last[provider.provider_id].telemetry_counts_last_24h || 0
           telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
           start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
@@ -172,8 +173,8 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
           providerdropoff: event_counts.provider_drop_off || 0,
           tripstart: starts,
           tripend: ends,
-          tripenter: get(event_counts_last_24h, 'trip_enter', 0),
-          tripleave: get(event_counts_last_24h, 'trip_leave', 0),
+          tripenter: enters,
+          tripleave: leaves,
           telemetry: telems,
           telemetrysla: telem_sla,
           tripstartsla: start_sla,

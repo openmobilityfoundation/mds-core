@@ -19,9 +19,7 @@
     "@mds-core/mds-logger": "0.1.9",
     "@mds-core/mds-providers": "0.1.9",
     "@mds-core/mds-types": "0.1.6",
-    "@types/lodash": "4.14.138",
     "google-spreadsheet": "2.0.8",
-    "lodash": "4.17.15",
     "request": "2.88.0",
     "request-promise": "4.2.4"
   }
