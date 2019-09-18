@@ -67,6 +67,10 @@ spec:
             value: {{ $.Values.postgresql.host }}
             {{- end }}
             {{- end }}
+          {{- if $api.migration }}
+          - name: PG_MIGRATIONS
+            value: {{ $api.migration }}
+          {{- end }}
           {{- end }}
           {{- if $api.useCache }}
           - name: REDIS_HOST

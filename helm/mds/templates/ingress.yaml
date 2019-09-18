@@ -67,7 +67,6 @@ spec:
   selector:
     istio: ingressgateway # use Istio default gateway implementation
   servers:
-  {{- if .Values.tls.enabled }}
   - port:
       number: 443
       name: https
@@ -76,12 +75,10 @@ spec:
       mode: SIMPLE
       serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
       privateKey: /etc/istio/ingressgateway-certs/tls.key
-  {{- else }}
   - port:
       number: 80
       name: http
       protocol: HTTP
-  {{- end }}
     hosts:
     - "*"
 {{- end }}

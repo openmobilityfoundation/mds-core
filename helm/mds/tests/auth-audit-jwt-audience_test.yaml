@@ -7,22 +7,20 @@ tests:
       namespace: mds
     set:
       apis:
-        - jwtAudience: provider
-        - jwtAudience: agency
+        - name: mds-provider
+        - name: mds-agency
         - name: mds-audit
           pathPrefix: /audit
-          port: 4002
-          version: latest
-          useDB: true
-          useCache: true
-          useEvents: true
-          jwtAudience: audit
-        - jwtAudience: policy
-        - jwtAudience: compliance
-        - jwtAudience: daily
-        - jwtAudience: native
+        - name: mds-policy
+        - name: mds-compliance
+        - name: mds-daily
+        - name: mds-native
       jwt:
         issuer: my-issuer
+        enabled: true
+        audiences:
+          - audience-1
+          - audience-2
     asserts:
       - isAPIVersion:
           of: authentication.istio.io/v1alpha1
@@ -47,7 +45,11 @@ tests:
         documentIndex: 2
       - equal:
           path: spec.origins[0].jwt.audiences[0]
-          value: "audit"
+          value: audience-1
+        documentIndex: 2
+      - equal:
+          path: spec.origins[0].jwt.audiences[1]
+          value: audience-2
         documentIndex: 2
       - equal:
           path: spec.origins[0].jwt.issuer
