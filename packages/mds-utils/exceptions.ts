@@ -10,42 +10,55 @@ const reason = (error?: Error | string) => (error instanceof Error ? error.messa
 /* istanbul ignore next */
 export class ServerError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(ServerError.name, reason(error))
+    super('ServerError', reason(error))
   }
 }
 
 /* istanbul ignore next */
 export class NotFoundError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(NotFoundError.name, reason(error))
+    super('NotFoundError', reason(error))
   }
 }
 
 /* istanbul ignore next */
 export class ConflictError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(ConflictError.name, reason(error))
+    super('ConflictError', reason(error))
   }
 }
 
 /* istanbul ignore next */
 export class AuthorizationError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(AuthorizationError.name, reason(error))
+    super('AuthorizationError', reason(error))
   }
 }
 
 /* istanbul ignore next */
 export class RuntimeError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(RuntimeError.name, reason(error))
+    super('RuntimeError', reason(error))
   }
 }
 
 /* istanbul ignore next */
 export class ValidationError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super(ValidationError.name, reason(error))
+    super('ValidationError', reason(error))
+  }
+}
+
+/* istanbul ignore next */
+export class BadParamsError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('BadParamsError', reason(error))
+  }
+}
+
+export class AlreadyPublishedError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('AlreadyPublishedError', reason(error))
   }
 }
 

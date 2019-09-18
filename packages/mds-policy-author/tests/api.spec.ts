@@ -27,7 +27,7 @@ import should from 'should'
 import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
-import { now, days, clone } from '@mds-core/mds-utils'
+import { clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST3_PROVIDER_ID } from '@mds-core/mds-providers'
@@ -132,7 +132,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -182,7 +182,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy2)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -196,7 +196,7 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy3)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
@@ -228,10 +228,10 @@ describe('Tests app', () => {
     it('creates one current geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           const body = result.body
           log('create one geo response:', body)
@@ -266,7 +266,7 @@ describe('Tests app', () => {
       const policy = clone(POLICY_JSON)
       policy.name = 'an even shinier new name'
       request
-        .put(`/policies/${POLICY_UUID}`)
+        .put(`/policies/${POLICY_JSON.policy_id}`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(policy)
         .expect(409)
@@ -300,26 +300,35 @@ describe('Tests app', () => {
         })
     })
 
-    it('verifies POSTing policy metadata', done => {
+    it('verifies PUTing policy metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
-      request
-        .post(`/policies/meta/${POLICY_UUID}`)
+      await request
+        .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
-        .send(metadata)
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
+        .expect(201)
+      const result = await db.readSinglePolicyMetadata(POLICY_UUID)
+      test.assert(result.policy_metadata.some_arbitrary_thing === 'boop')
     })
 
-    it('verifies GETing policy metadata', done => {
+    it('verifies PUTing policy metadata to edit', async () => {
+      const metadata = { some_arbitrary_thing: 'beep' }
+      await request
+        .put(`/policies/${POLICY_UUID}/meta`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
+        .expect(200)
+      const result = await db.readSinglePolicyMetadata(POLICY_UUID)
+      test.assert(result.policy_metadata.some_arbitrary_thing === 'beep')
+    })
+
+    it('verifies GETing policy metadata when given a policy_id', done => {
       request
-        .get(`/policies/meta/${POLICY_UUID}`)
+        .get(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.some_arbitrary_thing === 'boop')
+          test.assert(result.body.policy_metadata.some_arbitrary_thing === 'beep')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -327,7 +336,7 @@ describe('Tests app', () => {
 
     it('verifies cannot GET non-existent policy metadata', done => {
       request
-        .get(`/policies/meta/beepbapboop`)
+        .get(`/policies/beepbapboop/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(404)
         .end((err, result) => {
@@ -335,6 +344,15 @@ describe('Tests app', () => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
+    })
+
+    it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
+      const result = await request
+        .get(`/policies/meta`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(200)
+      test.assert(result.body.length === 1)
+      test.value(result).hasHeader('content-type', APP_JSON)
     })
 
     it('can GET a single policy', done => {
@@ -381,40 +399,50 @@ describe('Tests app', () => {
       await db.writePolicy(SUPERSEDING_POLICY_JSON)
       await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
       request
-        .get(`/policies?start_date=${now() - days(365)}`)
+        .get(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.policies.length === 4)
+          test.assert(policies_result.body.length === 4)
           return policies_err
         })
+    })
+  })
+
+  describe('Geography endpoint tests', () => {
+    before(async () => {
+      await db.initialize()
+    })
+
+    after(async () => {
+      await db.shutdown()
     })
 
     it('can GET all published policies', done => {
       request
-        .get(`/policies?start_date=${now() - days(365)}&get_published=true`)
+        .get(`/policies?get_published=true`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.policies.length === 2)
+          test.assert(policies_result.body.length === 2)
           done(policies_err)
         })
     })
 
     it('can GET all unpublished policies', done => {
       request
-        .get(`/policies?start_date=${now() - days(365)}&get_unpublished=true`)
+        .get(`/policies?get_unpublished=true`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.policies.length === 2)
+          test.assert(policies_result.body.length === 2)
           done(policies_err)
         })
     })
 
     it('throws an exception if both get_unpublished and get_published are submitted', done => {
       request
-        .get(`/policies?start_date=${now() - days(365)}&get_unpublished=true&get_published=true`)
+        .get(`/policies?get_unpublished=true&get_published=true`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(400)
         .end(async policies_err => {
@@ -435,10 +463,10 @@ describe('Tests app', () => {
     it('creates one current geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           const body = result.body
           log('create one geo response:', body)
@@ -453,8 +481,18 @@ describe('Tests app', () => {
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.geography.geography_id === GEOGRAPHY_UUID)
+          test.assert(result.body.geography_id === GEOGRAPHY_UUID)
           test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('cannot GET a nonexistent geography', done => {
+      request
+        .get(`/geographies/${POLICY_UUID}`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(404)
+        .end(err => {
           done(err)
         })
     })
@@ -465,33 +503,42 @@ describe('Tests app', () => {
         .put(`/geographies/${GEOGRAPHY_UUID}`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })
 
-    it('verifies POSTing geography metadata', done => {
+    it('verifies PUTing geography metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
-      request
-        .post(`/geographies/meta/${GEOGRAPHY_UUID}`)
+      await request
+        .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
-        .send(metadata)
+        .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
+        .expect(201)
+      const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+      test.assert(result.geography_metadata.some_arbitrary_thing === 'boop')
+    })
+
+    it('verifies PUTing geography metadata to edit', async () => {
+      const metadata = { some_arbitrary_thing: 'beep' }
+      await request
+        .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
         .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+      test.assert(result.geography_metadata.some_arbitrary_thing === 'beep')
     })
 
     it('verifies GETing geography metadata', done => {
       request
-        .get(`/geographies/meta/${GEOGRAPHY_UUID}`)
+        .get(`/geographies/${GEOGRAPHY_UUID}/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.some_arbitrary_thing === 'boop')
+          test.assert(result.body.geography_metadata.some_arbitrary_thing === 'beep')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -499,7 +546,7 @@ describe('Tests app', () => {
 
     it('verifies cannot GET non-existent geography metadata', done => {
       request
-        .get(`/geographies/meta/beepbapboop`)
+        .get(`/geographies/beepbapboop/meta`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .expect(404)
         .end((err, result) => {
@@ -538,7 +585,7 @@ describe('Tests app', () => {
     it('verifies cannot POST invalid geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
         .expect(400)
@@ -551,7 +598,7 @@ describe('Tests app', () => {
     it('cannot POST duplicate geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
-        .post(`/geographies/${GEOGRAPHY_UUID}`)
+        .post(`/geographies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(geography)
         .expect(409)
@@ -559,6 +606,18 @@ describe('Tests app', () => {
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
+    })
+
+    it('can do bulk geography metadata reads', async () => {
+      await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
+      await db.writeGeographyMetadata({ geography_id: GEOGRAPHY2_UUID, geography_metadata: { earth: 'isround' } })
+
+      const result = await request
+        .get(`/geographies/meta?get_read_only=false`)
+        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .expect(200)
+      test.assert(result.body.length === 2)
+      test.value(result).hasHeader('content-type', APP_JSON)
     })
   })
 })

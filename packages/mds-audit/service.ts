@@ -158,7 +158,7 @@ export async function getVehicles(
   bbox: BoundingBox
 ) {
   function fmt(query: { skip: number; take: number }): string {
-    const flat = Object.assign({}, reqQuery, query)
+    const flat: { [key: string]: number } = { ...reqQuery, ...query }
     let s = `${url}?`
     s += Object.keys(flat)
       .map(key => `${key}=${flat[key]}`)

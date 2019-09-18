@@ -16,11 +16,18 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
-// import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, ServerError, UUID_REGEX, NotFoundError, isUUID, BadParamsError } from '@mds-core/mds-utils'
+import {
+  pathsFor,
+  ServerError,
+  UUID_REGEX,
+  NotFoundError,
+  isUUID,
+  BadParamsError,
+  AlreadyPublishedError
+} from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import { PolicyApiRequest, PolicyApiResponse } from './types'
@@ -144,12 +151,9 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies'), async (req, res) => {
-    const { start_date = now(), end_date = now(), get_published = null, get_unpublished = null } = req.query
-    log.info('read /policies', req.query, start_date, end_date)
-    if (start_date > end_date) {
-      res.status(400).send({ result: 'start_date after end_date' })
-      return
-    }
+    const { get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies', req.query)
+
     try {
       const policies = await db.readPolicies({ get_published, get_unpublished })
 
@@ -169,7 +173,7 @@ function api(app: express.Express): express.Express {
         return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
       })
       */
-      res.status(200).send({ policies })
+      res.status(200).send(policies)
     } catch (err) {
       await log.error('failed to read policies', err)
       if (err instanceof BadParamsError) {
@@ -184,8 +188,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  //  app.get(pathsFor('/policies/meta'), async (req, res) => {})
-
   app.post(pathsFor('/policies'), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
@@ -198,7 +200,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writePolicy(policy)
-      return res.status(200).send({ result: `successfully wrote policy of id ${policy.policy_id}` })
+      return res.status(201).send(policy)
     } catch (err) {
       if (err.code === '23505') {
         return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
@@ -214,7 +216,7 @@ function api(app: express.Express): express.Express {
     const { policy_id } = req.params
     try {
       await db.publishPolicy(policy_id)
-      return res.status(200).send({ result: `successfully wrote policy of id ${policy_id}` })
+      return res.status(200).send({ result: `successfully published policy of id ${policy_id}` })
     } catch (err) {
       if (err instanceof NotFoundError) {
         if (err.message.includes('geography')) {
@@ -225,7 +227,7 @@ function api(app: express.Express): express.Express {
           return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
         }
       }
-      if (err.message.includes('Cannot re-publish existing policy')) {
+      if (err instanceof AlreadyPublishedError) {
         return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
       }
       /* istanbul ignore next */
@@ -251,7 +253,7 @@ function api(app: express.Express): express.Express {
       if (err instanceof NotFoundError) {
         return res.status(404).send({ error: 'not found' })
       }
-      if (err.message.includes('Cannot edit published policy')) {
+      if (err instanceof AlreadyPublishedError) {
         return res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
       }
       /* istanbul ignore next */
@@ -278,6 +280,27 @@ function api(app: express.Express): express.Express {
     }
   })
 
+  app.get(pathsFor('/policies/meta/'), async (req, res) => {
+    const { get_published = null, get_unpublished = null } = req.query
+    log.info('read /policies/meta', req.query)
+    try {
+      const metadata = await db.readBulkPolicyMetadata({ get_published, get_unpublished })
+
+      res.status(200).send(metadata)
+    } catch (err) {
+      await log.error('failed to read policies', err)
+      if (err instanceof BadParamsError) {
+        res.status(400).send({
+          result:
+            'Cannot set both get_unpublished and get_published to be true. If you want all policy metadata, set both params to false or do not send them.'
+        })
+      }
+      res.status(404).send({
+        result: 'not found'
+      })
+    }
+  })
+
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
     const { policy_id } = req.params
     try {
@@ -293,26 +316,49 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
+  app.get(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
     const { policy_id } = req.params
     try {
-      const { policy_metadata } = await db.readPolicyMetadata(policy_id)
-      return res.status(200).send(policy_metadata)
+      const result = await db.readSinglePolicyMetadata(policy_id)
+      return res.status(200).send(result)
     } catch (err) {
-      await log.error('failed to read geography metadata', err.stack)
+      await log.error('failed to read policy metadata', err.stack)
       return res.status(404).send({ result: 'not found' })
     }
   })
 
-  app.post(pathsFor('/policies/meta/:policy_id'), async (req, res) => {
+  app.put(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
     const policy_metadata = req.body
-    const { policy_id } = req.params
     try {
-      await db.writePolicyMetadata(policy_id, policy_metadata)
-      return res.status(200).send({ result: `successfully wrote policy metadata of id ${policy_id}` })
+      await db.updatePolicyMetadata(policy_metadata)
+      return res.status(200).send(policy_metadata)
+    } catch (updateErr) {
+      if (updateErr instanceof NotFoundError) {
+        try {
+          await db.writePolicyMetadata(policy_metadata)
+          return res.status(201).send(policy_metadata)
+        } catch (writeErr) {
+          await log.error('failed to write policy metadata', writeErr.stack)
+          return res.status(500).send(new ServerError())
+        }
+      } else {
+        return res.status(500).send(new ServerError())
+      }
+    }
+  })
+
+  app.get(pathsFor('/geographies/meta/'), async (req, res) => {
+    const get_read_only = req.query === 'true'
+
+    log.info('read /geographies/meta', req.query)
+    try {
+      const metadata = await db.readBulkGeographyMetadata({ get_read_only })
+      res.status(200).send(metadata)
     } catch (err) {
-      await log.error('failed to write geography metadata', err.stack)
-      return res.status(404).send({ result: 'not found' })
+      await log.error('failed to read geography metadata', err)
+      res.status(404).send({
+        result: 'not found'
+      })
     }
   })
 
@@ -321,19 +367,15 @@ function api(app: express.Express): express.Express {
     const { geography_id } = req.params
     log.info('read geo', geography_id)
     try {
-      const geographies = await db.readGeographies({ geography_id })
-      if (geographies.length > 0) {
-        res.status(200).send({ geography: geographies[0] })
-      } else {
-        res.status(404).send({ result: 'not found' })
-      }
+      const geography = await db.readSingleGeography(geography_id)
+      res.status(200).send(geography)
     } catch (err) {
       await log.error('failed to read geography', err.stack)
       res.status(404).send({ result: 'not found' })
     }
   })
 
-  app.post(pathsFor('/geographies/:geography_id'), async (req, res) => {
+  app.post(pathsFor('/geographies/'), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null
@@ -343,7 +385,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.writeGeography(geography)
-      return res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
+      return res.status(201).send(geography)
     } catch (err) {
       if (err.code === '23505') {
         return res
@@ -367,7 +409,7 @@ function api(app: express.Express): express.Express {
 
     try {
       await db.editGeography(geography)
-      return res.status(200).send({ result: `Successfully wrote geography of id ${geography.geography_id}` })
+      return res.status(201).send(geography)
     } catch (err) {
       await log.error('failed to write geography', err.stack)
       return res.status(404).send({ result: 'not found' })
@@ -385,10 +427,10 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
+  app.get(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
     const { geography_id } = req.params
     try {
-      const { geography_metadata } = await db.readGeographyMetadata(geography_id)
+      const geography_metadata = await db.readSingleGeographyMetadata(geography_id)
       return res.status(200).send(geography_metadata)
     } catch (err) {
       await log.error('failed to read geography metadata', err.stack)
@@ -396,15 +438,23 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/geographies/meta/:geography_id'), async (req, res) => {
+  app.put(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
     const geography_metadata = req.body
-    const { geography_id } = req.params
     try {
-      await db.writeGeographyMetadata(geography_id, geography_metadata)
-      return res.status(200).send({ result: `successfully wrote geography metadata of id ${geography_id}` })
-    } catch (err) {
-      await log.error('failed to write geography metadata', err.stack)
-      return res.status(404).send({ result: 'not found' })
+      await db.updateGeographyMetadata(geography_metadata)
+      return res.status(200).send(geography_metadata)
+    } catch (updateErr) {
+      if (updateErr instanceof NotFoundError) {
+        try {
+          await db.writeGeographyMetadata(geography_metadata)
+          return res.status(201).send(geography_metadata)
+        } catch (writeErr) {
+          await log.error('failed to write geography metadata', writeErr.stack)
+          return res.status(500).send(new ServerError())
+        }
+      } else {
+        return res.status(500).send(new ServerError())
+      }
     }
   })
   return app

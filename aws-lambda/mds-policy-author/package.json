@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-policy-author",
-  "version": "0.1.5",
+  "version": "0.1.9",
   "description": "AWS Lambda for MDS policy-author API",
   "main": "dist/index.js",
   "files": [
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "lambda:dev3-mds-policy-author": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name dev3-mds-policy-author --zip-file fileb://dist/bundles/mds-policy-author.zip",
+    "lambda:develop-mds-policy-author": "yarn bundle && aws lambda update-function-code --region us-east-2 --function-name develop-mds-policy-author --zip-file fileb://dist/bundles/mds-policy-author.zip",
     "lambda:ladot-prod-mds-policy-author": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-prod-mds-policy-author --zip-file fileb://dist/bundles/mds-policy-author.zip",
     "lambda:ladot-sandbox-mds-policy-author": "yarn bundle && aws lambda update-function-code --region us-west-2 --function-name ladot-sandbox-mds-policy-author --zip-file fileb://dist/bundles/mds-policy-author.zip",
     "test": "yarn test:eslint && yarn test:unit",
@@ -21,9 +21,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "^0.1.5",
-    "@mds-core/mds-api-server": "^0.1.5",
-    "@mds-core/mds-policy-author": "^0.0.2"
+    "@aws-lambda/aws-serverless-express-handler": "0.1.9",
+    "@mds-core/mds-api-server": "0.1.9",
+    "@mds-core/mds-policy-author": "0.0.6"
   },
   "license": "Apache-2.0"
 }

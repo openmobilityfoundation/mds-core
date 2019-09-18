@@ -18,8 +18,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { ApiServer, hasAccessScope } from '@mds-core/mds-api-server'
-import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ApiServer } from '../index'
 
 const request = supertest(ApiServer(app => app))
 

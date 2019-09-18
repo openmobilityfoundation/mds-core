@@ -9,19 +9,22 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
 import { ApiServer } from '@mds-core/mds-api-server'
+import { AccessTokenScope } from '@mds-core/mds-api-scopes'
 import { PROVIDER_UUID } from '@mds-core/mds-test-data'
 import { providers } from '@mds-core/mds-providers'
 import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
-const PROVIDER_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|`).toString('base64')}`
 const APP_JSON = 'application/json; charset=utf-8'
 
 const provider_id = PROVIDER_UUID
 const device_id = uuid()
 
 const request = supertest(ApiServer(api))
+
+const SCOPED_AUTH = (...scopes: AccessTokenScope[]) =>
+  `basic ${Buffer.from(`${PROVIDER_UUID}|${scopes.join(' ')}`).toString('base64')}`
 
 before('Initializing Database', async () => {
   await db.initialize()
@@ -56,19 +59,31 @@ describe('Verify API', () => {
     })
   })
 
-  it('Get events (no authorization)', done => {
+  it('Get Events (no authorization)', done => {
     request
       .get('/native/events')
       .expect(401)
-      .end(err => {
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
   })
 
-  it('Get events', done => {
+  it('Get Events (no scope)', done => {
     request
       .get('/native/events')
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH())
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('Get Events', done => {
+    request
+      .get('/native/events')
+      .set('Authorization', SCOPED_AUTH('events:read'))
       .expect(200)
       .end((err1, result1) => {
         test.value(result1).hasHeader('content-type', APP_JSON)
@@ -82,7 +97,7 @@ describe('Verify API', () => {
         } else {
           request
             .get(`/native/events/${result1.body.cursor}`)
-            .set('Authorization', PROVIDER_AUTH)
+            .set('Authorization', SCOPED_AUTH('events:read'))
             .expect(200)
             .end((err2, result2) => {
               test.value(result2).hasHeader('content-type', APP_JSON)
@@ -95,7 +110,7 @@ describe('Verify API', () => {
               } else {
                 request
                   .get(`/native/events/${result1.body.cursor}?provider_id=invalid-filter-with-cursor`)
-                  .set('Authorization', PROVIDER_AUTH)
+                  .set('Authorization', SCOPED_AUTH('events:read'))
                   .expect(400)
                   .end(err3 => {
                     test.value(result2).hasHeader('content-type', APP_JSON)
@@ -107,10 +122,10 @@ describe('Verify API', () => {
       })
   })
 
-  it('Get events (Bad Request)', done => {
+  it('Get Events (Bad Request)', done => {
     request
       .get('/native/events?provider_id=invalid-provider-id')
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH('events:read'))
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -118,11 +133,32 @@ describe('Verify API', () => {
       })
   })
 
-  it('Get events (Bad Cursor)', done => {
+  it('Get Events (Bad Cursor)', done => {
     request
       .get('/native/events/invalid-cursor')
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH('events:read'))
       .expect(400)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('Get Vehicle (no authorization)', done => {
+    request
+      .get(`/native/vehicles/${device_id}`)
+      .expect(401)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('Get Vehicle (no scope)', done => {
+    request
+      .get(`/native/vehicles/${device_id}`)
+      .set('Authorization', SCOPED_AUTH())
+      .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -132,7 +168,7 @@ describe('Verify API', () => {
   it('Get Vehicle', done => {
     request
       .get(`/native/vehicles/${device_id}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH('vehicles:read'))
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -146,7 +182,7 @@ describe('Verify API', () => {
   it('Get Vehicle (not found)', done => {
     request
       .get(`/native/vehicles/${uuid()}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH('vehicles:read'))
       .expect(404)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -157,8 +193,29 @@ describe('Verify API', () => {
   it('Get Vehicle (bad request)', done => {
     request
       .get(`/native/vehicles/invalid-device-id`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH('vehicles:read'))
       .expect(400)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('Get Providers (no authorization)', done => {
+    request
+      .get(`/native/providers`)
+      .expect(401)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('Get Providers (no scope)', done => {
+    request
+      .get(`/native/providers`)
+      .set('Authorization', SCOPED_AUTH())
+      .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -168,7 +225,7 @@ describe('Verify API', () => {
   it('Get Providers', done => {
     request
       .get(`/native/providers`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH('providers:read'))
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)

@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/aws-utils",
-  "version": "0.1.5",
+  "version": "0.1.9",
   "description": "MDS AWS utility functions",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "utils"
   ],
   "dependencies": {
-    "aws-sdk": "2.501.0"
+    "aws-sdk": "2.525.0"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
