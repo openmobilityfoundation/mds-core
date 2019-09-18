@@ -18,6 +18,7 @@ import GoogleSpreadsheet from 'google-spreadsheet'
 
 import { promisify } from 'util'
 import requestPromise from 'request-promise'
+import { get } from 'lodash'
 import log from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
@@ -143,11 +144,12 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
           inactive: 0,
           elsewhere: 0
         }
-        if (last[provider.provider_id].event_counts_last_24h) {
-          event_counts = last[provider.provider_id].event_counts_last_24h
-          status_counts = eventCountsToStatusCounts(last[provider.provider_id].event_counts_last_24h)
-          starts = last[provider.provider_id].event_counts_last_24h.trip_start || 0
-          ends = last[provider.provider_id].event_counts_last_24h.trip_end || 0
+        const { event_counts_last_24h } = last[provider.provider_id]
+        if (event_counts_last_24h) {
+          event_counts = event_counts_last_24h
+          status_counts = eventCountsToStatusCounts(event_counts_last_24h)
+          starts = event_counts_last_24h.trip_start || 0
+          ends = event_counts_last_24h.trip_end || 0
           telems = last[provider.provider_id].telemetry_counts_last_24h || 0
           telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
           start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
@@ -170,8 +172,8 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
           providerdropoff: event_counts.provider_drop_off || 0,
           tripstart: starts,
           tripend: ends,
-          tripenter: last[provider.provider_id].event_counts_last_24h.trip_enter || 0,
-          tripleave: last[provider.provider_id].event_counts_last_24h.trip_leave || 0,
+          tripenter: get(event_counts_last_24h, 'trip_enter', 0),
+          tripleave: get(event_counts_last_24h, 'trip_leave', 0),
           telemetry: telems,
           telemetrysla: telem_sla,
           tripstartsla: start_sla,
