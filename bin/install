@@ -20,8 +20,8 @@ declare -A configs=(
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
-  ["ingress-gateway-key"]="${MDS_INGRESS_GATEWAY_KEY:-}"
-  ["ingress-gateway-certificate"]="${MDS_INGRESS_GATEWAY_CERTIFICATE:-}"
+  ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
+  ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency.yaml}"
   ["sets"]="${MDS_SETS:-}"
@@ -304,21 +304,12 @@ installFallbackCertificate() {
 }
 
 installIngressGatewayCertificate() {
-  if [[ ${configs[ingress-gateway-key]+_} && ${#configs[ingress-gateway-key]} -ge 1 &&
-      ${configs[ingress-gateway-certificate]+_} && ${#configs[ingress-gateway-certificate]} -ge 1 ]]; then
-    gh=$(kubectl get service -n istio-system -l app=istio-ingressgateway \
-      -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' \
-      ${configs[dryrun]:+--dry-run})
-
-    if [[ ${#gh} -ge 1 ]]; then
-      kubectl create -n istio-system secret tls istio-ingressgateway-certs \
-        --key ${gh}/3_application/private/${configs[ingress-gateway-key]} \
-        --cert ${gh}/certs/${configs[ingress-gateway-certificate]} \
-        ${configs[dryrun]:+--dry-run}
-      unset gh
-    else
-      warn "unable to determine istio-ingressgateway"
-    fi
+  if [[ ${configs[ingress-gateway-key-path]+_} && ${#configs[ingress-gateway-key-path]} -ge 1 &&
+      ${configs[ingress-gateway-certificate-path]+_} && ${#configs[ingress-gateway-certificate-path]} -ge 1 ]]; then
+    kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+      --key ${configs[ingress-gateway-key-path]} \
+      --cert ${configs[ingress-gateway-certificate-path]} \
+      ${configs[dryrun]:+--dry-run}
   else
     warn "ingress gateway key an certificate is unspecified"
   fi
@@ -621,11 +612,15 @@ normalize() {
 
 configure() {
   if [[ ${1} == *"="* ]]; then
-    k=$(echo ${1} | cut -d '=' -f 1)
-    v=$(echo ${1} | cut -d '=' -f 2-)
+    for c in $(echo ${1} | tr ',' ' '); do
+      k=$(echo ${c} | cut -d '=' -f 1)
+      v=$(echo ${c} | cut -d '=' -f 2-)
+      echo "configure[$k]:$v"
 
-    [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
-    unset k v
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
+
+      unset c k v
+    done
   else
     configs[${1}]=
   fi
@@ -659,7 +654,7 @@ for arg in "${@}"; do
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     help) usage;;
-    --configure:* | configure:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
