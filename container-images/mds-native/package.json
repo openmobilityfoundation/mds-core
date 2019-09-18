@@ -1,7 +1,7 @@
 {
   "name": "@container-images/mds-native",
   "version": "0.0.7",
-  "description": "AWS Lambda for MDS Native API",
+  "description": "Docker Image for MDS Native API",
   "main": "dist/index.js",
   "files": [
     "dist/"

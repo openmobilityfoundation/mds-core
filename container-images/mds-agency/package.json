@@ -1,7 +1,7 @@
 {
   "name": "@container-images/mds-agency",
   "version": "0.1.9",
-  "description": "AWS Lambda for MDS Agency API",
+  "description": "Docker Image for MDS Agency API",
   "main": "dist/index.js",
   "files": [
     "dist/"

@@ -1,7 +1,7 @@
 {
   "name": "@container-images/mds-compliance",
   "version": "0.1.9",
-  "description": "AWS Lambda for MDS Compliance API",
+  "description": "Docker Image for MDS Compliance API",
   "main": "dist/index.js",
   "files": [
     "dist/"
