@@ -10,6 +10,9 @@ metadata:
     release: {{ .Release.Name }}
     istio: grafana
 data:
+{{- if .Values.plugins }}
+  plugins: {{ join "," .Values.plugins }}
+{{- end }}
 {{- if .Values.datasources }}
   {{- range $key, $value := .Values.datasources }}
   {{ $key }}: |
