@@ -34,7 +34,7 @@ export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiR
 
 export interface NativeApiGetEventsRequest extends NativeApiRequest {
   params: {
-    cursor?: string
+    cursor: string
   }
   // Query string parameters always come in as strings
   query: Partial<
