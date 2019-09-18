@@ -7,7 +7,7 @@ declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
-  ["simulatorRepository"]="${MDS_SIMULATOR_REPOSITORY:-}"
+  ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
@@ -16,12 +16,14 @@ declare -A configs=(
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
-  ["istioVersion"]="${MDS_ISTIO_VERSION:-1.2.5}"
-  ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istioVersion]}}"
+  ["istio-version"]="${MDS_ISTIO_VERSION:-1.2.5}"
+  ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
+  ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
+  ["ingress-gateway-key"]="${MDS_INGRESS_GATEWAY_KEY:-}"
+  ["ingress-gateway-certificate"]="${MDS_INGRESS_GATEWAY_CERTIFICATE:-}"
   ["values"]="${MDS_VALUES:-}"
-  # todo: enable migration
-  ["values-mds"]="${MDS_VALUES_MDS:-}" #"./bin/values-agency.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency.yaml}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
   ["setfiles"]="${MDS_SET_FILES:-}"
@@ -222,7 +224,7 @@ installIstio() {
 
   if [ ! -d ${configs[istio]} ]; then
     mkdir -p ${configs[workdir]}
-    (cd ${configs[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${configs[istioVersion]} sh -)
+    (cd ${configs[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${configs[istio-version]} sh -)
   fi
 
   ${configs[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
@@ -286,13 +288,38 @@ installMds() {
 }
 
 installFallbackCert() {
-  TMPCERT=$(mktemp /tmp/k8s-fallback-cert.XXXXXX) || exit 1
-  openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
-    -keyout ${TMPCERT}.key -out ${TMPCERT}.crt \
-    -subj "/CN=${INGRESS_DOMAIN:-FIX-ME}/O=${INGRESS_DOMAIN:-FIX-ME}"
-  kubectl -n istio-system create secret tls gateway-fallback \
-    --key ${TMPCERT}.key --cert ${TMPCERT}.crt
-  rm ${TMPCERT} ${TMPCERT}.key ${TMPCERT}.crt
+  if [[ ${configs[ingress-domain]+_} && ${#configs[ingress-domain]} -ge 1 ]]; then
+    TMPCERT=$(mktemp /tmp/k8s-fallback-cert.XXXXXX) || exit 1
+    openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+      -keyout ${TMPCERT}.key -out ${TMPCERT}.crt \
+      -subj "/CN=${configs[ingress-domain]}/O=${configs[ingress-domain]}"
+    kubectl -n istio-system create secret tls gateway-fallback \
+      --key ${TMPCERT}.key --cert ${TMPCERT}.crt
+    /bin/rm -rf ${TMPCERT} ${TMPCERT}.key ${TMPCERT}.crt
+  else
+    warn "ingress-domain is unspecified"
+  fi
+}
+
+installIngressGatewayCertificate() {
+  if [[ ${configs[ingress-gateway-key]+_} && ${#configs[ingress-gateway-key]} -ge 1 &&
+      ${configs[ingress-gateway-certificate]+_} && ${#configs[ingress-gateway-certificate]} -ge 1 ]]; then
+    gh=$(kubectl get service -n istio-system -l app=istio-ingressgateway \
+      -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' \
+      ${configs[dryrun]:+--dry-run})
+
+    if [[ ${#gh} -ge 1 ]]; then
+      echo "kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+        --key ${gh}/3_application/private/${configs[ingress-gateway-key]} \
+        --cert ${gh}/certs/${configs[ingress-gateway-certificate]} \
+        ${configs[dryrun]:+--dry-run}"
+      unset gh
+    else
+      warn "unable to determine istio-ingressgateway"
+    fi
+  else
+    warn "ingress gateway key an certificate is unspecified"
+  fi
 }
 
 installSimulator() {
@@ -301,7 +328,7 @@ installSimulator() {
   if [[ ! -d ${configs[simulator]} ]]; then
     mkdir -p ${configs[workdir]}
     (cd ${configs[workdir]};
-      git clone ${configs[simulatorRepository]} ${configs[simulator]})
+      git clone ${configs[simulator-repository]} ${configs[simulator]})
   fi
 
   (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
@@ -499,7 +526,7 @@ uninstallIstio() {
 uninstallDashboard() {
   unforward dashboard
   kubectl delete deployment kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete service kubernetes-dashboard  --namespace=kube-system ${configs[dryrun]:+--dry-run}
+  kubectl delete service kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
   kubectl delete sa kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
@@ -568,7 +595,7 @@ check() {
       uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
     installSimulator)
-      [ ! "${configs[simulatorRepository]}" ] && usage "unspecified simulator repository";;
+      [ ! "${configs[simulator-repository]}" ] && usage "unspecified simulator repository";;
     forward) ;;
     app:*) forwardIfNeeded ${1##*:};;
     cliPostgresql)
