@@ -309,10 +309,10 @@ installIngressGatewayCertificate() {
       ${configs[dryrun]:+--dry-run})
 
     if [[ ${#gh} -ge 1 ]]; then
-      echo "kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+      kubectl create -n istio-system secret tls istio-ingressgateway-certs \
         --key ${gh}/3_application/private/${configs[ingress-gateway-key]} \
         --cert ${gh}/certs/${configs[ingress-gateway-certificate]} \
-        ${configs[dryrun]:+--dry-run}"
+        ${configs[dryrun]:+--dry-run}
       unset gh
     else
       warn "unable to determine istio-ingressgateway"
