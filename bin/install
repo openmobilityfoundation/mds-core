@@ -96,6 +96,7 @@ where service in:
   fallbackCertificate
   ingressGatewayCertificate
   logging
+  metrics
   bookinfo
 
 where app in:
@@ -263,6 +264,19 @@ installLogging() {
     kubectl label namespace logging istio-injection=enabled --overwrite=true \
       ${configs[dryrun]:+--dry-run}
     helm install ./helm/logging --name logging --namespace logging \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[dryrun]:+--dry-run}
+  }
+}
+
+installMetrics() {
+  check ${FUNCNAME[0]}
+
+  kubectl get namespace metrics > /dev/null 2>&1 || {
+    kubectl create namespace metrics ${configs[dryrun]:+--dry-run}
+    helm install ./helm/metrics --name metrics --namespace metrics \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -496,6 +510,11 @@ uninstallMds() {
   uninstalllNamespaces mds
 }
 
+uninstallMetrics() {
+  check ${FUNCNAME[0]}
+  helm delete --purge metrics ${configs[dryrun]:+--dry-run}
+}
+
 uninstallLogging() {
   check ${FUNCNAME[0]}
   helm delete --purge logging ${configs[dryrun]:+--dry-run}
@@ -581,11 +600,11 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
-    installDashboard | installLogging | installMds)
+    installDashboard | installLogging | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
     installIstio | testUnit | \
-      uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
+      uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
     installSimulator)
       [ ! "${configs[simulator-repository]}" ] && usage "unspecified simulator repository";;
