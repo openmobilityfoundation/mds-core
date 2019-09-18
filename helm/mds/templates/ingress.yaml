@@ -75,6 +75,8 @@ spec:
       mode: SIMPLE
       serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
       privateKey: /etc/istio/ingressgateway-certs/tls.key
+    hosts:
+    - "*"
   - port:
       number: 80
       name: http
