@@ -93,6 +93,8 @@ where service in:
   dashboard
   istio
   mds
+  fallbackCertificate
+  ingressGatewayCertificate
   logging
   bookinfo
 
@@ -271,7 +273,7 @@ installLogging() {
 installMds() {
   check ${FUNCNAME[0]}
 
-  installFallbackCert
+  installFallbackCertificate
   kubectl get namespace mds > /dev/null 2>&1 || {
     kubectl create namespace mds ${configs[dryrun]:+--dry-run}
     kubectl label namespace mds istio-injection=enabled --overwrite=true \
@@ -287,7 +289,7 @@ installMds() {
   }
 }
 
-installFallbackCert() {
+installFallbackCertificate() {
   if [[ ${configs[ingress-domain]+_} && ${#configs[ingress-domain]} -ge 1 ]]; then
     TMPCERT=$(mktemp /tmp/k8s-fallback-cert.XXXXXX) || exit 1
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
