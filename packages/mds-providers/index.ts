@@ -19,8 +19,7 @@ export const BOLT_PROVIDER_ID = '3291c288-c9c8-42f1-bc3e-8502b077cd7f'
 export const CLEVR_PROVIDER_ID = 'daecbe87-a9f2-4a5a-b5df-8e3e14180513'
 export const SHERPA_PROVIDER_ID = '3c95765d-4da6-41c6-b61e-1954472ec6c9'
 export const OJO_PROVIDER_ID = '8d293326-8464-4256-8312-617ebcd0efad'
-export const LADOT_PROVIDER_ID = 'f4da1257-e20d-4fd3-98ec-37fe8cb9d98d'
-export const LADOT_PROVIDER_ID2 = '33bbcec3-f91b-4461-bc41-61711afb9460'
+export const LADOT_PROVIDER_ID = '33bbcec3-f91b-4461-bc41-61711afb9460'
 
 // PROVIDER_ID values for testing
 export const TEST1_PROVIDER_ID = '5f7114d1-4091-46ee-b492-e55875f7de00'
@@ -48,7 +47,6 @@ const PROVIDER_IDS = [
   SHERPA_PROVIDER_ID,
   OJO_PROVIDER_ID,
   LADOT_PROVIDER_ID,
-  LADOT_PROVIDER_ID2,
   TEST1_PROVIDER_ID,
   TEST2_PROVIDER_ID,
   TEST3_PROVIDER_ID,
@@ -168,11 +166,8 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
   }),
   [LADOT_PROVIDER_ID]: Object.freeze({
     provider_id: LADOT_PROVIDER_ID,
-    provider_name: 'LADOT'
-  }),
-  [LADOT_PROVIDER_ID2]: Object.freeze({
-    provider_id: LADOT_PROVIDER_ID2,
-    provider_name: 'LADOT'
+    provider_name: 'LADOT',
+    url: 'https://ladot.io'
   }),
   [TEST1_PROVIDER_ID]: Object.freeze({
     provider_id: TEST1_PROVIDER_ID,
