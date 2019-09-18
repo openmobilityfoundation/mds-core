@@ -358,13 +358,16 @@ portForward() {
   fv=$(get ${fa} 4 ${1})
   fp=$(get ${fa} 5 -1)
 
-  fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
+  (( $(kubectl -n ${fns} get pod -l ${fk}=${fv} | wc -l) == 2 )) && {
+    fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
 
-  [ ${fp} -eq -1 ] && \
-    fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+    [ ${fp} -eq "-1" ] && \
+      fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
 
-  kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} > /dev/null 2>&1 &
-  pause 3
+    kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} > /dev/null 2>&1 &
+    pause 3
+  }
+
   unset fa fns fk fv fa fp
 }
 
@@ -414,7 +417,7 @@ getApp() {
   gp=$(get ${ga} 5 -1)
 
   [ ${gp} -eq -1 ] && {
-    (( $(kubectl -n kube-system get pod -l k8s-app=kubernetes-dashboard | wc -l) == 1 )) &&
+    (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
       gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
         -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
   }
@@ -427,6 +430,7 @@ app() {
   for a in ${1}; do
     if [ ${apps[${a}]+_} ]; then
       check ${FUNCNAME[0]}:${a}
+
       case "${configs[os]}" in
         ${oses[osx]}) open $(getApp ${a});;
         *) usage "unsupported os: ${configs[os]}";;
@@ -488,7 +492,7 @@ uninstallIstio() {
     kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
     kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
       ${configs[dryrun]:+--dry-run} > /dev/null
-#    [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
+    [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
   }
 }
 
@@ -533,6 +537,12 @@ getPort() {
 forwardIfNeeded() {
   gp=$(getPort ${1})
 
+  if [ ${gp} -eq "-1" ]; then
+    hash install${1^} > /dev/null 2>&1 && invoke install ${1}
+    pause 3
+    gp=$(getPort ${1})
+  fi
+
   if [ ${#gp} -ge 1 ]; then
     echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${1}
   fi
@@ -571,9 +581,9 @@ check() {
 }
 
 invoke() {
-  for a in ${2}; do
-    ${1}${a^} || warn "${1} error: ${a}"
-  done; unset a
+  for ia in ${2}; do
+    ${1}${ia^} || warn "${1} error: ${ia}"
+  done; unset ia
 }
 
 normalize() {
