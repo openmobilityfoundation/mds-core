@@ -407,16 +407,6 @@ describe('Tests app', () => {
           return policies_err
         })
     })
-  })
-
-  describe('Geography endpoint tests', () => {
-    before(async () => {
-      await db.initialize()
-    })
-
-    after(async () => {
-      await db.shutdown()
-    })
 
     it('can GET all published policies', done => {
       request
