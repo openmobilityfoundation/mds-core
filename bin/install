@@ -70,8 +70,6 @@ yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
 
-echo "$configs[os]"
-exit
 warn() {
   echo "${yellow}warn: ${1}${reset}"
 }
