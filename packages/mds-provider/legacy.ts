@@ -125,7 +125,7 @@ async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderAp
         const asStatusChangesStart = now()
         const readEventsDuration = readEventsEnd - readEventsStart
         const readEventsMsg = `/status_changes ${stringifiedQuery} read ${events.length} of ${count} in ${readEventsDuration} ms`
-        if (readEventsDuration < seconds(10)) {
+        if (readEventsDuration < seconds(15)) {
           logger.info(readEventsMsg)
         } else {
           logger.warn(readEventsMsg)
@@ -136,7 +136,7 @@ async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderAp
             const asStatusChangesEnd = now()
             const asStatusChangesDuration = asStatusChangesEnd - asStatusChangesStart
             const asStatusChangesMsg = `/status_changes ${stringifiedQuery} returned ${status_changes.length} in ${asStatusChangesDuration} ms`
-            if (asStatusChangesDuration < seconds(10)) {
+            if (asStatusChangesDuration < seconds(15)) {
               logger.info(asStatusChangesMsg)
             } else {
               logger.warn(asStatusChangesMsg)
