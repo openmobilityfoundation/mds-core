@@ -49,16 +49,16 @@ const creds = {
   private_key: process.env.GOOGLE_PRIVATE_KEY ? process.env.GOOGLE_PRIVATE_KEY.split('\\n').join('\n') : null
 }
 
-function sum(arr: number[]) {
+export function sum(arr: number[]) {
   return arr.reduce((total, amount) => total + (amount || 0))
 }
 
 // Round percent to two decimals
-function percent(a: number, total: number) {
+export function percent(a: number, total: number) {
   return Math.round(((total - a) / total) * 10000) / 10000
 }
 
-function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
+export function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
   return (Object.keys(events) as VEHICLE_EVENT[]).reduce(
     (acc: { [s in VEHICLE_STATUS]: number }, event) => {
       const status = EVENT_STATUS_MAP[event]
@@ -78,7 +78,7 @@ function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
   )
 }
 
-const mapProviderToPayload = (provider: VehicleCountRow, last: LastDayStatsResponse) => {
+export const mapProviderToPayload = (provider: VehicleCountRow, last: LastDayStatsResponse) => {
   const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
   const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
   const d = new Date()
@@ -93,7 +93,9 @@ const mapProviderToPayload = (provider: VehicleCountRow, last: LastDayStatsRespo
     inactive: 0,
     elsewhere: 0
   }
-  const { event_counts_last_24h } = last[provider.provider_id]
+  const { event_counts_last_24h, late_event_counts_last_24h, late_telemetry_counts_last_24h } = last[
+    provider.provider_id
+  ]
   if (event_counts_last_24h) {
     event_counts = event_counts_last_24h
     status_counts = eventCountsToStatusCounts(event_counts_last_24h)
@@ -102,9 +104,13 @@ const mapProviderToPayload = (provider: VehicleCountRow, last: LastDayStatsRespo
     enters = event_counts_last_24h.trip_enter || 0
     leaves = event_counts_last_24h.trip_leave || 0
     telems = last[provider.provider_id].telemetry_counts_last_24h || 0
-    telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
-    start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
-    end_sla = ends ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_end, ends) : 0
+    if (late_telemetry_counts_last_24h) {
+      telem_sla = telems ? percent(late_telemetry_counts_last_24h, telems) : 0
+    }
+    if (late_event_counts_last_24h) {
+      start_sla = starts ? percent(late_event_counts_last_24h.trip_start, starts) : 0
+      end_sla = ends ? percent(late_event_counts_last_24h.trip_end, ends) : 0
+    }
   }
   return {
     date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
@@ -201,5 +207,3 @@ export const MetricsLogHandler = async () => {
     await log.error('MetricsLogHandler', err)
   }
 }
-
-export { mapProviderToPayload }
