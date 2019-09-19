@@ -1,6 +1,6 @@
 import { UUID, VEHICLE_STATUS, VEHICLE_EVENT } from '@mds-core/mds-types'
 
-interface VehicleCountRow {
+export interface VehicleCountRow {
   provider_id: UUID
   provider: string
   count: number

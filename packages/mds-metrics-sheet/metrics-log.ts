@@ -30,7 +30,7 @@ import {
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
 import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
-import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow } from './types'
+import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow, VehicleCountRow } from './types'
 
 // The list of providers ids on which to report
 const reportProviders = [
@@ -58,21 +58,6 @@ function percent(a: number, total: number) {
   return Math.round(((total - a) / total) * 10000) / 10000
 }
 
-async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
-  const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID)
-  await promisify(doc.useServiceAccountAuth)(creds)
-  const info = await promisify(doc.getInfo)()
-  log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
-  const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
-  log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
-  if (sheet.title === sheetName) {
-    const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
-    log.info(`Wrote ${inserted.length} rows.`)
-    return Promise.all(inserted)
-  }
-  log.info('Wrong sheet!')
-}
-
 function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
   return (Object.keys(events) as VEHICLE_EVENT[]).reduce(
     (acc: { [s in VEHICLE_STATUS]: number }, event) => {
@@ -91,6 +76,78 @@ function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number }) {
       elsewhere: 0
     }
   )
+}
+
+const mapProviderToPayload = (provider: VehicleCountRow, last: LastDayStatsResponse) => {
+  const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
+  const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
+  const d = new Date()
+  let [enters, leaves, starts, ends, start_sla, end_sla, telems, telem_sla] = [0, 0, 0, 0, 0, 0, 0, 0]
+  let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
+  let status_counts = {
+    available: 0,
+    unavailable: 0,
+    reserved: 0,
+    trip: 0,
+    removed: 0,
+    inactive: 0,
+    elsewhere: 0
+  }
+  const { event_counts_last_24h } = last[provider.provider_id]
+  if (event_counts_last_24h) {
+    event_counts = event_counts_last_24h
+    status_counts = eventCountsToStatusCounts(event_counts_last_24h)
+    starts = event_counts_last_24h.trip_start || 0
+    ends = event_counts_last_24h.trip_end || 0
+    enters = event_counts_last_24h.trip_enter || 0
+    leaves = event_counts_last_24h.trip_leave || 0
+    telems = last[provider.provider_id].telemetry_counts_last_24h || 0
+    telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
+    start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
+    end_sla = ends ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_end, ends) : 0
+  }
+  return {
+    date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
+    name: provider.provider,
+    registered: provider.count || 0,
+    deployed:
+      sum([provider.status.available, provider.status.unavailable, provider.status.trip, provider.status.reserved]) ||
+      0,
+    validtrips: 'tbd', // Placeholder for next day valid trip analysis
+    trips: last[provider.provider_id].trips_last_24h || 0,
+    servicestart: event_counts.service_start || 0,
+    providerdropoff: event_counts.provider_drop_off || 0,
+    tripstart: starts,
+    tripend: ends,
+    tripenter: enters,
+    tripleave: leaves,
+    telemetry: telems,
+    telemetrysla: telem_sla,
+    tripstartsla: start_sla,
+    tripendsla: end_sla,
+    available: status_counts.available,
+    unavailable: status_counts.unavailable,
+    reserved: status_counts.reserved,
+    trip: status_counts.trip,
+    removed: status_counts.removed,
+    inactive: status_counts.inactive,
+    elsewhere: status_counts.elsewhere
+  }
+}
+
+async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
+  const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID)
+  await promisify(doc.useServiceAccountAuth)(creds)
+  const info = await promisify(doc.getInfo)()
+  log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
+  const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
+  log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
+  if (sheet.title === sheetName) {
+    const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
+    log.info(`Wrote ${inserted.length} rows.`)
+    return Promise.all(inserted)
+  }
+  log.info('Wrong sheet!')
 }
 
 async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
@@ -128,66 +185,7 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
 
     const rows: MetricsSheetRow[] = counts
       .filter(p => reportProviders.includes(p.provider_id))
-      .map(provider => {
-        const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
-        const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
-        const d = new Date()
-        let [enters, leaves, starts, ends, start_sla, end_sla, telems, telem_sla] = [0, 0, 0, 0, 0, 0, 0, 0]
-        let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
-        let status_counts = {
-          available: 0,
-          unavailable: 0,
-          reserved: 0,
-          trip: 0,
-          removed: 0,
-          inactive: 0,
-          elsewhere: 0
-        }
-        const { event_counts_last_24h } = last[provider.provider_id]
-        if (event_counts_last_24h) {
-          event_counts = event_counts_last_24h
-          status_counts = eventCountsToStatusCounts(event_counts_last_24h)
-          starts = event_counts_last_24h.trip_start || 0
-          ends = event_counts_last_24h.trip_end || 0
-          enters = event_counts_last_24h.trip_enter || 0
-          leaves = event_counts_last_24h.trip_leave || 0
-          telems = last[provider.provider_id].telemetry_counts_last_24h || 0
-          telem_sla = telems ? percent(last[provider.provider_id].late_telemetry_counts_last_24h, telems) : 0
-          start_sla = starts ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_start, starts) : 0
-          end_sla = ends ? percent(last[provider.provider_id].late_event_counts_last_24h.trip_end, ends) : 0
-        }
-        return {
-          date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
-          name: provider.provider,
-          registered: provider.count || 0,
-          deployed:
-            sum([
-              provider.status.available,
-              provider.status.unavailable,
-              provider.status.trip,
-              provider.status.reserved
-            ]) || 0,
-          validtrips: 'tbd', // Placeholder for next day valid trip analysis
-          trips: last[provider.provider_id].trips_last_24h || 0,
-          servicestart: event_counts.service_start || 0,
-          providerdropoff: event_counts.provider_drop_off || 0,
-          tripstart: starts,
-          tripend: ends,
-          tripenter: enters,
-          tripleave: leaves,
-          telemetry: telems,
-          telemetrysla: telem_sla,
-          tripstartsla: start_sla,
-          tripendsla: end_sla,
-          available: status_counts.available,
-          unavailable: status_counts.unavailable,
-          reserved: status_counts.reserved,
-          trip: status_counts.trip,
-          removed: status_counts.removed,
-          inactive: status_counts.inactive,
-          elsewhere: status_counts.elsewhere
-        }
-      })
+      .map(provider => mapProviderToPayload(provider, last))
     return rows
   } catch (err) {
     await log.error('getProviderMetrics', err)
@@ -203,3 +201,5 @@ export const MetricsLogHandler = async () => {
     await log.error('MetricsLogHandler', err)
   }
 }
+
+export { mapProviderToPayload }
