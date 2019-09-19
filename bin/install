@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 
+osx=Darwin
+linux=Linux
+
+if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
+  case ${MDS_OS:-$(uname)} in
+    ${osx} | ${linux})
+     hash brew > /dev/null 2>&1 || \
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+      brew install bash
+      exec ${0} ${@} &
+      exit;;
+    *) usage "unsupported os: $(uname)";;
+  esac
+fi
+
 declare -A oses=(
-  ["osx"]="Darwin"
-  ["linux"]="Linux")
+  ["osx"]="${osx}"
+  ["linux"]="${linux}")
 declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
@@ -20,8 +35,8 @@ declare -A configs=(
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
-  ["ingress-gateway-key"]="${MDS_INGRESS_GATEWAY_KEY:-}"
-  ["ingress-gateway-certificate"]="${MDS_INGRESS_GATEWAY_CERTIFICATE:-}"
+  ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
+  ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency.yaml}"
   ["sets"]="${MDS_SETS:-}"
@@ -44,7 +59,7 @@ declare -A apps=(
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
   ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
-  ["dashboard"]="https://localhost:[port],kube-system,k8s-app,kubernetes-dashboard"
+  ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
@@ -55,6 +70,8 @@ yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
 
+echo "$configs[os]"
+exit
 warn() {
   echo "${yellow}warn: ${1}${reset}"
 }
@@ -96,6 +113,7 @@ where service in:
   fallbackCertificate
   ingressGatewayCertificate
   logging
+  metrics
   bookinfo
 
 where app in:
@@ -210,11 +228,7 @@ helmOptions() {
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  kubectl apply -f \
-    https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml \
-    ${configs[dryrun]:+--dry-run}
-  kubectl apply -f helm/dashboard ${configs[dryrun]:+--dry-run}
-  helm install ./helm/dashboard --name dashboard \
+  helm install ./helm/dashboard --name dashboard --namespace dashboard \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -270,6 +284,19 @@ installLogging() {
   }
 }
 
+installMetrics() {
+  check ${FUNCNAME[0]}
+
+  kubectl get namespace metrics > /dev/null 2>&1 || {
+    kubectl create namespace metrics ${configs[dryrun]:+--dry-run}
+    helm install ./helm/metrics --name metrics --namespace metrics \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[dryrun]:+--dry-run}
+  }
+}
+
 installMds() {
   check ${FUNCNAME[0]}
 
@@ -304,21 +331,12 @@ installFallbackCertificate() {
 }
 
 installIngressGatewayCertificate() {
-  if [[ ${configs[ingress-gateway-key]+_} && ${#configs[ingress-gateway-key]} -ge 1 &&
-      ${configs[ingress-gateway-certificate]+_} && ${#configs[ingress-gateway-certificate]} -ge 1 ]]; then
-    gh=$(kubectl get service -n istio-system -l app=istio-ingressgateway \
-      -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' \
-      ${configs[dryrun]:+--dry-run})
-
-    if [[ ${#gh} -ge 1 ]]; then
-      kubectl create -n istio-system secret tls istio-ingressgateway-certs \
-        --key ${gh}/3_application/private/${configs[ingress-gateway-key]} \
-        --cert ${gh}/certs/${configs[ingress-gateway-certificate]} \
-        ${configs[dryrun]:+--dry-run}
-      unset gh
-    else
-      warn "unable to determine istio-ingressgateway"
-    fi
+  if [[ ${configs[ingress-gateway-key-path]+_} && ${#configs[ingress-gateway-key-path]} -ge 1 &&
+      ${configs[ingress-gateway-certificate-path]+_} && ${#configs[ingress-gateway-certificate-path]} -ge 1 ]]; then
+    kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+      --key ${configs[ingress-gateway-key-path]} \
+      --cert ${configs[ingress-gateway-certificate-path]} \
+      ${configs[dryrun]:+--dry-run}
   else
     warn "ingress gateway key an certificate is unspecified"
   fi
@@ -413,14 +431,7 @@ unforward() {
 
   for ua in ${@}; do
     if [ ${apps[${ua}]+_} ]; then
-      fa=${apps[${ua}]}
-      fns=$(get ${fa} 2)
-      fk=$(get ${fa} 3)
-      fv=$(get ${fa} 4 ${1})
-      fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
-
       ps -ef | grep -E 'kubectl.*port-forward' | grep ${ua} | grep -v grep | awk '{print $2}' | xargs kill -9
-      unset fa fns fk fv
     else
       warn "unknown app: ${ua}"
     fi
@@ -429,10 +440,10 @@ unforward() {
 
 tokenDashboard() {
   case "${configs[os]}" in
-    ${oses[osx]}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+    ${oses[osx]}) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
       pbcopy;;
-    *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+    *) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
   esac
 }
@@ -480,7 +491,7 @@ cliRedis() {
   redis-cli -u redis://localhost:6379/0
 }
 
-uninstalllNamespaces() {
+uninstallNamespaces() {
   for ns in ${@}; do
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
@@ -488,7 +499,7 @@ uninstalllNamespaces() {
 }
 
 uninstallBookinfo() {
-  uninstalllNamespaces bookinfo-app
+  uninstallNamespaces bookinfo-app
 }
 
 uninstallSimulator() {
@@ -502,7 +513,12 @@ uninstallSimulator() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstalllNamespaces mds
+  uninstallNamespaces mds
+}
+
+uninstallMetrics() {
+  check ${FUNCNAME[0]}
+  helm delete --purge metrics ${configs[dryrun]:+--dry-run}
 }
 
 uninstallLogging() {
@@ -527,14 +543,11 @@ uninstallIstio() {
 
 uninstallDashboard() {
   unforward dashboard
-  kubectl delete deployment kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete service kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete sa kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  helm del --purge dashboard
+  helm delete --purge dashboard
+  uninstallNamespaces dashboard
+  kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
+  kubectl get namespace dashboard > /dev/null 2>&1 && kubectl delete namespace dashboard \
+    ${configs[dryrun]:+--dry-run}
 }
 
 #todo: purge
@@ -582,19 +595,18 @@ forwardIfNeeded() {
 check() {
   case "${1}" in
     $(basename ${0}))
-      [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]] && usage "install: bash 4.x+"
-      for t in kubectl yarn lerna; do
+      for t in kubectl yarn; do
         hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
       done; unset t
       kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
-    installDashboard | installLogging | installMds)
+    installDashboard | installLogging | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
     installIstio | testUnit | \
-      uninstallDashboard | uninstallMds | uninstallLogging | uninstallIstio)
+      uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
     installSimulator)
       [ ! "${configs[simulator-repository]}" ] && usage "unspecified simulator repository";;
@@ -621,11 +633,15 @@ normalize() {
 
 configure() {
   if [[ ${1} == *"="* ]]; then
-    k=$(echo ${1} | cut -d '=' -f 1)
-    v=$(echo ${1} | cut -d '=' -f 2-)
+    for c in $(echo ${1} | tr ',' ' '); do
+      k=$(echo ${c} | cut -d '=' -f 1)
+      v=$(echo ${c} | cut -d '=' -f 2-)
+      echo "configure[$k]:$v"
 
-    [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
-    unset k v
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
+
+      unset c k v
+    done
   else
     configs[${1}]=
   fi
@@ -659,7 +675,7 @@ for arg in "${@}"; do
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     help) usage;;
-    --configure:* | configure:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
