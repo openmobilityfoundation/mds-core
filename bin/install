@@ -44,7 +44,7 @@ declare -A apps=(
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
   ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
-  ["dashboard"]="https://localhost:[port],kube-system,k8s-app,kubernetes-dashboard"
+  ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
@@ -211,11 +211,7 @@ helmOptions() {
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  kubectl apply -f \
-    https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml \
-    ${configs[dryrun]:+--dry-run}
-  kubectl apply -f helm/dashboard ${configs[dryrun]:+--dry-run}
-  helm install ./helm/dashboard --name dashboard \
+  helm install ./helm/dashboard --name dashboard --namespace dashboard \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -418,14 +414,7 @@ unforward() {
 
   for ua in ${@}; do
     if [ ${apps[${ua}]+_} ]; then
-      fa=${apps[${ua}]}
-      fns=$(get ${fa} 2)
-      fk=$(get ${fa} 3)
-      fv=$(get ${fa} 4 ${1})
-      fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
-
       ps -ef | grep -E 'kubectl.*port-forward' | grep ${ua} | grep -v grep | awk '{print $2}' | xargs kill -9
-      unset fa fns fk fv
     else
       warn "unknown app: ${ua}"
     fi
@@ -434,10 +423,10 @@ unforward() {
 
 tokenDashboard() {
   case "${configs[os]}" in
-    ${oses[osx]}) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+    ${oses[osx]}) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
       pbcopy;;
-    *) kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | \
+    *) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
   esac
 }
@@ -485,7 +474,7 @@ cliRedis() {
   redis-cli -u redis://localhost:6379/0
 }
 
-uninstalllNamespaces() {
+uninstallNamespaces() {
   for ns in ${@}; do
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
@@ -493,7 +482,7 @@ uninstalllNamespaces() {
 }
 
 uninstallBookinfo() {
-  uninstalllNamespaces bookinfo-app
+  uninstallNamespaces bookinfo-app
 }
 
 uninstallSimulator() {
@@ -507,7 +496,7 @@ uninstallSimulator() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstalllNamespaces mds
+  uninstallNamespaces mds
 }
 
 uninstallMetrics() {
@@ -537,14 +526,11 @@ uninstallIstio() {
 
 uninstallDashboard() {
   unforward dashboard
-  kubectl delete deployment kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete service kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete role kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete rolebinding kubernetes-dashboard-minimal --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete sa kubernetes-dashboard --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete secret kubernetes-dashboard-certs --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  kubectl delete secret kubernetes-dashboard-key-holder --namespace=kube-system ${configs[dryrun]:+--dry-run}
-  helm del --purge dashboard
+  helm delete --purge dashboard
+  uninstallNamespaces dashboard
+  kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
+  kubectl get namespace dashboard > /dev/null 2>&1 && kubectl delete namespace dashboard \
+    ${configs[dryrun]:+--dry-run}
 }
 
 #todo: purge
