@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 
+osx=Darwin
+linux=Linux
+
+if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
+  case ${MDS_OS:-$(uname)} in
+    ${osx} | ${linux})
+     hash brew > /dev/null 2>&1 || \
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+      brew install bash
+      exec ${0} ${@} &
+      exit;;
+    *) usage "unsupported os: $(uname)";;
+  esac
+fi
+
 declare -A oses=(
-  ["osx"]="Darwin"
-  ["linux"]="Linux")
+  ["osx"]="${osx}"
+  ["linux"]="${linux}")
 declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
@@ -55,6 +70,8 @@ yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
 
+echo "$configs[os]"
+exit
 warn() {
   echo "${yellow}warn: ${1}${reset}"
 }
@@ -578,8 +595,7 @@ forwardIfNeeded() {
 check() {
   case "${1}" in
     $(basename ${0}))
-      [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]] && usage "install: bash 4.x+"
-      for t in kubectl yarn lerna; do
+      for t in kubectl yarn; do
         hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
       done; unset t
       kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;

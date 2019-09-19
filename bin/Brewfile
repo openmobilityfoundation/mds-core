@@ -1,6 +1,5 @@
 brew 'kubernetes-helm'
 brew 'pgcli'
 brew 'redis'
-brew 'bash'
 brew 'python'
 brew 'git'
