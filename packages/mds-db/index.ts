@@ -379,7 +379,6 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   await logSql(countSql, countVals)
 
   const res = await client.query(countSql, countVals)
-  // log.warn(JSON.stringify(res))
   const count = parseInt(res.rows[0].count)
   let selectSql = `SELECT * FROM ${schema.TABLE.events} ${filter} ORDER BY recorded`
   if (typeof skip === 'number' && skip >= 0) {
@@ -430,7 +429,6 @@ async function readEventsForStatusChanges(params: ReadEventsQueryParams): Promis
   await logSql(countSql, countVals)
 
   const res = await client.query(countSql, countVals)
-  // log.warn(JSON.stringify(res))
   const count = parseInt(res.rows[0].count)
 
   let selectSql = `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${schema.TABLE.events} ${filter} ORDER BY recorded`
