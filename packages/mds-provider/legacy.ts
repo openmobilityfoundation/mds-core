@@ -7,15 +7,7 @@ import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { isUUID, now, seconds, round } from '@mds-core/mds-utils'
 import { ReadEventsResult, StatusChange, Trip } from '@mds-core/mds-db/types'
-import {
-  VehicleEvent,
-  VEHICLE_TYPE,
-  PROPULSION_TYPE,
-  Telemetry,
-  UUID,
-  Device,
-  VEHICLE_EVENTS
-} from '@mds-core/mds-types'
+import { VehicleEvent, Telemetry, UUID, Device, VEHICLE_EVENTS, Recorded } from '@mds-core/mds-types'
 import { providerName } from '@mds-core/mds-providers'
 import { Feature, FeatureCollection } from 'geojson'
 import { asStatusChangeEvent } from './utils'
@@ -43,40 +35,36 @@ async function getDevice(device_id: UUID): Promise<Device> {
   return db.readDevice(device_id)
 }
 
-async function eventAsStatusChange(event: VehicleEvent): Promise<StatusChange> {
-  const telemetry_timestamp = event.telemetry_timestamp || event.timestamp
-  const [device, telemetry] = await Promise.all([
-    getDevice(event.device_id),
-    db.readTelemetry(event.device_id, telemetry_timestamp, telemetry_timestamp)
-  ])
-  const event2 = asStatusChangeEvent(event)
-  if (!event2.event_type_reason) {
-    throw new Error(
-      `invalid empty provider event_type_reason for agency event ${event.event_type}/${event.event_type_reason}` +
-        `and provider event_type ${event2.event_type}`
-    )
-  }
-  const hasTelemetry: boolean = telemetry.length > 0
-  return {
-    provider_id: device.provider_id,
-    provider_name: providerName(device.provider_id),
-    device_id: event.device_id,
-    vehicle_id: device.vehicle_id,
-    vehicle_type: device.type as VEHICLE_TYPE,
-    propulsion_type: device.propulsion as PROPULSION_TYPE[],
-    event_type: event2.event_type,
-    event_type_reason: event2.event_type_reason,
-    event_time: event.timestamp,
-    event_location: hasTelemetry ? asPoint(telemetry[0]) : null,
-    battery_pct: hasTelemetry ? telemetry[0].charge || null : null,
-    associated_trip: event.trip_id || null,
-    recorded: event.recorded
-  }
-}
-
 async function eventsAsStatusChanges(events: VehicleEvent[]): Promise<StatusChange[]> {
-  const result = await Promise.all(events.map(event => eventAsStatusChange(event)))
-  return result
+  const deviceIds = [...new Set(events.map(event => event.device_id))]
+  const devices = await db.readDeviceList(deviceIds)
+  const device_map: { [device_id: string]: Recorded<Device> } = devices.reduce((map, device) => {
+    return { ...map, [device.device_id]: device }
+  }, {})
+  return events.map(event => {
+    const event2 = asStatusChangeEvent(event)
+    if (!event2.event_type_reason) {
+      throw new Error(
+        `invalid empty provider event_type_reason for agency event ${event.event_type}/${event.event_type_reason}` +
+          `and provider event_type ${event2.event_type}`
+      )
+    }
+    return {
+      provider_id: event.provider_id,
+      provider_name: providerName(event.provider_id),
+      device_id: event.device_id,
+      vehicle_id: device_map[event.device_id].vehicle_id,
+      vehicle_type: device_map[event.device_id].type,
+      propulsion_type: device_map[event.device_id].propulsion,
+      event_type: event2.event_type,
+      event_type_reason: event2.event_type_reason,
+      event_time: event.timestamp,
+      event_location: event.telemetry ? asPoint(event.telemetry) : null,
+      battery_pct: event.telemetry ? event.telemetry.charge || null : null,
+      associated_trip: event.trip_id || null,
+      recorded: event.recorded
+    }
+  })
 }
 
 async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderApiResponse) {
@@ -118,7 +106,7 @@ async function getEventsAsStatusChanges(req: ProviderApiRequest, res: ProviderAp
 
     // read events
     const readEventsStart = now()
-    db.readEvents(params)
+    db.readEventsForStatusChanges(params)
       .then((result: ReadEventsResult) => {
         const { count, events } = result
         const readEventsEnd = now()
@@ -188,8 +176,8 @@ async function asEventTrip(trip_id: UUID, trip_start: VehicleEvent, trip_end: Ve
     provider_name: providerName(device.provider_id),
     device_id: device.device_id,
     vehicle_id: device.vehicle_id,
-    vehicle_type: device.type as VEHICLE_TYPE,
-    propulsion_type: device.propulsion as PROPULSION_TYPE[],
+    vehicle_type: device.type,
+    propulsion_type: device.propulsion,
     provider_trip_id: trip_id,
     trip_duration: trip_end.timestamp - trip_start.timestamp,
     trip_distance: 0, // TODO
