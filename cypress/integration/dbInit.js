@@ -12,7 +12,7 @@ describe('dbInit', function() {
       expect(resp.status).to.eq(200)
       expect(resp.headers['content-type']).to.eq('application/json; charset=utf-8');
       expect(resp.headers['server']).to.eq('istio-envoy');
-      expect(resp.body).to.deep.eq({"name":"@container-images/mds-agency","version":"0.1.5","build":{"date":"2019-09-16T21:20:47.694Z","branch":"alex/helm","commit":"2596a84"},"node":"8.16.1","status":"Running"});
+      expect(resp.body).to.deep.eq({"name":"@container-images/mds-agency","version":"0.1.9","build":{"date":"2019-09-20T00:15:25.778Z","branch":"alex/helm","commit":"76ad82f"},"node":"8.16.1","status":"Running"});
     })
   })
 })

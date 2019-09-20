@@ -31,24 +31,25 @@ declare -A configs=(
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
-  ["istio-version"]="${MDS_ISTIO_VERSION:-1.2.5}"
+  ["istio-version"]="${MDS_ISTIO_VERSION:-1.2.6}" #3.0}" # fixme: 1.3.0 istio-system pods stop at INIT at times
+  ["istio-profile"]="${MDS_ISTIO_PROFILE:--istio-sds-auth}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency-migration.yaml}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
-declare -A repos=(
+declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
+  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.3.0/charts"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
-  ["elastic"]="https://helm.elastic.co"
-  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.2.5/charts")
+  ["elastic"]="https://helm.elastic.co")
 declare -A apps=(
   ["mds-agency"]="https://localhost:[port]/agency,mds,app"
   ["mds-audit"]="https://localhost:[port]/audit,mds,app"
@@ -204,7 +205,12 @@ installHelm() {
 
   helm init --upgrade || usage "helm intialization failure"
   pause 5
-  helmDependenciesUpdate
+
+  for r in "${!helmRepositories[@]}"; do
+    helm repo add ${r} ${helmRepositories[${r}]}
+  done; unset r
+
+  updateHelmDependencies
 
   for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
     (cd helm/$(basename ${d}); helm dependency update)
@@ -240,30 +246,38 @@ installIstio() {
     (cd ${configs[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${configs[istio-version]} sh -)
   fi
 
-  ${configs[istio]}/bin/istioctl verify-install || warn "istio verify installation failure"
-
   kubectl get namespace istio-system > /dev/null 2>&1 || {
-    kubectl create namespace istio-system ${configs[dryrun]:+--dry-run}
-    # todo: make kialia|jaeger|grapha install optional
-    helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
-      --name istio-init \
-      --namespace istio-system | \
-      kubectl apply -f - ${configs[dryrun]:+--dry-run}
+    ${configs[istio]}/bin/istioctl verify-install || error "istio verify installation failure"
 
+    kubectl create namespace istio-system ${configs[dryrun]:+--dry-run}
+    pause 2
+    helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
+      --name istio-init --namespace istio-system | \
+      kubectl apply -f - ${configs[dryrun]:+--dry-run}
     # todo: query pod status
     pause 5
 
-    (( $(kubectl -n istio-sytem get crds | grep "istio.io" | wc -l) == 23 )) && \
+    (( $(kubectl get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio installation failure"
 
+# --set grafana.enabled=false --set kiali.enabled= false --set istio-egressgateway=false \
     helm template ${configs[istio]}/install/kubernetes/helm/istio \
-      --name istio \
-      --namespace istio-system \
-      --set tracing.enabled=true \
-      --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+      --name istio --namespace istio-system \
+      --values ${configs[istio]}/install/kubernetes/helm/istio/values${configs[istio-profile]}.yaml | \
       kubectl apply -f - ${configs[dryrun]:+--dry-run}
-    kubectl label namespace default istio-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
+    labelNamespaceIstioInjection default
+
+    # todo: purge, varies based on profile install
+    # (( $(kubectl get services -n istio-system | wc -l) == 9 )) && \
+    #   echo "istio services are available" || echo "istio services failure"
+    # (( $(kubectl get pods -n istio-system | wc -l) == 15 )) && \
+    #   echo "istio pods are available" || echo "istio pods failure"
   }
+}
+
+labelNamespaceIstioInjection() {
+  kubectl get namespace ${1} > /dev/null 2>&1 && \
+    kubectl label namespace ${1} istio-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
 }
 
 installLogging() {
@@ -271,8 +285,7 @@ installLogging() {
 
   kubectl get namespace logging > /dev/null 2>&1 || {
     kubectl create namespace logging ${configs[dryrun]:+--dry-run}
-    kubectl label namespace logging istio-injection=enabled --overwrite=true \
-      ${configs[dryrun]:+--dry-run}
+    labelNamespaceIstioInjection logging
     helm install ./helm/logging --name logging --namespace logging \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
@@ -300,8 +313,7 @@ installMds() {
   installFallbackCertificate
   kubectl get namespace mds > /dev/null 2>&1 || {
     kubectl create namespace mds ${configs[dryrun]:+--dry-run}
-    kubectl label namespace mds istio-injection=enabled --overwrite=true \
-      ${configs[dryrun]:+--dry-run}
+    labelNamespaceIstioInjection mds
     helm install ./helm/mds --name mds --namespace mds \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
@@ -310,6 +322,7 @@ installMds() {
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
       ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
+    pause 12
   }
 }
 
@@ -361,8 +374,7 @@ installBookinfo() {
 
   kubectl get namespace bookinfo-app > /dev/null 2>&1 || {
     kubectl create namespace bookinfo-app ${configs[dryrun]:+--dry-run}
-    kubectl label namespace bookinfo-app istio-injection=enabled --overwrite=true \
-      ${configs[dryrun]:+--dry-run}
+    labelNamespaceIstioInjection bookinfo-app
     kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml \
       ${configs[dryrun]:+--dry-run}
     kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/networking/destination-rule-all.yaml \
@@ -534,8 +546,8 @@ uninstallIstio() {
     kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
     kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
       ${configs[dryrun]:+--dry-run} > /dev/null
-    [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
   }
+  [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
 }
 
 uninstallDashboard() {
