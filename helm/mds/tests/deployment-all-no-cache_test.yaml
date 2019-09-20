@@ -9,4 +9,4 @@ tests:
       - ./deployment-values-no-cache.yaml
     asserts:
       - hasDocuments:
-          count: 7
+          count: 8

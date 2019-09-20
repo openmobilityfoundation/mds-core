@@ -9,4 +9,4 @@ tests:
       - ./deployment-values-no-db.yaml
     asserts:
       - hasDocuments:
-          count: 7
+          count: 8

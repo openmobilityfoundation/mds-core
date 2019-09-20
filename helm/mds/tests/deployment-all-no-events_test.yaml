@@ -9,4 +9,4 @@ tests:
       - ./deployment-values-no-events.yaml
     asserts:
       - hasDocuments:
-          count: 7
+          count: 8

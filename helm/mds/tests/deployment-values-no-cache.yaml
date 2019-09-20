@@ -55,6 +55,14 @@ apis:
     migration: false
     useCache: false
     useEvents: true
+  - name: mds-policy-author
+    pathPrefix: /policy-author
+    port: 4007
+    version: latest
+    useDB: true
+    migration: false
+    useCache: false
+    useEvents: true
 registry:
 useLatestImage: true
 jwt:
