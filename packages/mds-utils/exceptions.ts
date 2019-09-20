@@ -64,7 +64,7 @@ export class AlreadyPublishedError extends BaseError {
 }
 
 /* istanbul ignore next */
-export class DataReaderError extends BaseError {
+export class DataIntegrityError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
     super('DataReaderError', reason(error))
   }

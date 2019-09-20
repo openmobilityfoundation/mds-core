@@ -1,6 +1,6 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
 import { Client as PostgresClient, types as PostgresTypes, QueryResultRow, QueryResult } from 'pg'
-import { csv, DataReaderError } from '@mds-core/mds-utils'
+import { csv, DataIntegrityError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import schema from './schema'
 
@@ -78,7 +78,7 @@ export class MDSPostgresClient extends PostgresClient {
   public async selectOne<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
     const rows = await this.select<R>(command, values)
     if (rows.length !== 1) {
-      throw new DataReaderError(`Expected exactly one matching row: actual=${rows.length}`)
+      throw new DataIntegrityError(`Expected exactly one matching row: actual=${rows.length}`)
     }
     return rows[0]
   }
@@ -89,7 +89,7 @@ export class MDSPostgresClient extends PostgresClient {
   public async selectOneOrNull<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
     const rows = await this.select<R>(command, values)
     if (rows.length > 1) {
-      throw new DataReaderError(`Expected at most one matching row: actual=${rows.length}`)
+      throw new DataIntegrityError(`Expected at most one matching row: actual=${rows.length}`)
     }
     return rows.length === 0 ? null : rows[0]
   }
@@ -99,7 +99,7 @@ export class MDSPostgresClient extends PostgresClient {
   public async selectFirst<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
     const rows = await this.select<R>(command, values)
     if (rows.length === 0) {
-      throw new DataReaderError(`Expected at least one matching row: actual=${rows.length}`)
+      throw new DataIntegrityError(`Expected at least one matching row: actual=${rows.length}`)
     }
     return rows[0]
   }
