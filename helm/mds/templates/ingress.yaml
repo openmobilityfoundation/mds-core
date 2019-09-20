@@ -54,9 +54,11 @@ spec:
   issuerRef:
     name: letsencrypt-{{ .Values.tls.letsencrypt.production | ternary "prod" "staging" }}
     kind: ClusterIssuer
+  {{- if .Values.tls.domain }}
   commonName: {{ .Values.tls.domain }}
   dnsNames:
   - {{ .Values.tls.domain }}
+  {{- end }}
 {{- else }}
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway

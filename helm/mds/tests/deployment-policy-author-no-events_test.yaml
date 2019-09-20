@@ -2,7 +2,7 @@ suite: test deployment policy-author no-events
 templates:
   - deployment.yaml
 tests:
-  - it: doc 6
+  - it: doc 7
     release:
       namespace: mds
     values:

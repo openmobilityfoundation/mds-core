@@ -59,10 +59,10 @@ apis:
     pathPrefix: /policy-author
     port: 4007
     version: latest
-    useDB: false
+    useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
 registry:
 useLatestImage: true
 tls:
