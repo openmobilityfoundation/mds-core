@@ -775,29 +775,28 @@ async function readAudits(query: ReadAuditsQueryParams) {
     ...(end_time ? [`timestamp <= ${vals.add(end_time)}`] : [])
   ]
 
-  try {
-    const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-    const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.audits} ${filter}`
-    const countVals = vals.values()
-    const { count } = await client.selectOne<{ count: number }>(countSql, countVals)
-    await logSql(countSql, countVals)
-    if (count === 0) {
-      return {
-        count,
-        audits: []
-      }
-    }
-    const selectSql = `SELECT * FROM ${schema.TABLE.audits} ${filter} ORDER BY "timestamp" DESC${
-      typeof skip === 'number' && skip >= 0 ? ` OFFSET ${vals.add(skip)}` : ''
-    }${typeof take === 'number' && take >= 0 ? ` LIMIT ${vals.add(take)}` : ''}`
-    const selectVals = vals.values()
+  const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const { count } = await client.selectOne<{ count: number }>(
+    `SELECT COUNT(*) FROM ${schema.TABLE.audits} ${filter}`,
+    vals.values()
+  )
+
+  if (count === 0) {
     return {
       count,
-      audits: await client.select<Recorded<Audit>>(selectSql, selectVals)
+      audits: []
     }
-  } catch (err) {
-    await log.error('readAudits error', err.stack || err)
-    throw err
+  }
+
+  return {
+    count,
+    audits: await client.select<Recorded<Audit>>(
+      `SELECT * FROM ${schema.TABLE.audits} ${filter} ORDER BY "timestamp" DESC${
+        typeof skip === 'number' && skip >= 0 ? ` OFFSET ${vals.add(skip)}` : ''
+      }${typeof take === 'number' && take >= 0 ? ` LIMIT ${vals.add(take)}` : ''}`,
+      vals.values()
+    )
   }
 }
 
