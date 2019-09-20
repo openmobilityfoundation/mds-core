@@ -1,10 +1,29 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
-import { Client as PostgresClient, types as PostgresTypes } from 'pg'
-import { csv } from '@mds-core/mds-utils'
+import { Client as PostgresClient, types as PostgresTypes, QueryResultRow, QueryResult } from 'pg'
+import { csv, DataReaderError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import schema from './schema'
 
 const pgDebug = process.env.PG_DEBUG === 'true'
+
+// logging specific to sql debugging.  can be turned on/off using PG_DEBUG env var.
+export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
+  if (!pgDebug) {
+    return
+  }
+  let out: unknown[]
+  if (typeof values === 'undefined') {
+    out = []
+  } else if (typeof values !== 'string') {
+    out = values.map(val => {
+      return String(val)
+    })
+  } else {
+    out = values
+  }
+
+  log.info('sql>', sql, out)
+}
 
 export interface PGInfo {
   user?: string
@@ -45,6 +64,42 @@ export class MDSPostgresClient extends PostgresClient {
 
   public setConnected(connected: boolean) {
     this.connected = connected
+  }
+
+  public reader<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    const query = async () => {
+      await logSql(command, values)
+      const result: QueryResult<R> = await this.query(command, values)
+      return result.rows
+    }
+    return {
+      selectAll: async () => query(),
+      selectOne: async () => {
+        const rows = await query()
+        if (rows.length !== 1) {
+          throw new DataReaderError(`Expected exactly one matching row: actual=${rows.length}`)
+        }
+        return rows[0]
+      },
+      selectOneOrNull: async () => {
+        const rows = await query()
+        if (rows.length > 1) {
+          throw new DataReaderError(`Expected at most one matching row: actual=${rows.length}`)
+        }
+        return rows.length === 0 ? null : rows[0]
+      },
+      selectFirst: async () => {
+        const rows = await query()
+        if (rows.length === 0) {
+          throw new DataReaderError(`Expected at least one matching row: actual=${rows.length}`)
+        }
+        return rows[0]
+      },
+      selectFirstOrNull: async () => {
+        const rows = await query()
+        return rows.length === 0 ? null : rows[0]
+      }
+    }
   }
 }
 
@@ -140,25 +195,6 @@ export function to_sql(value: DBValueType | undefined | object) {
     throw new Error(`can't render object to sql: ${JSON.stringify(value)}`)
   }
   return 'null'
-}
-
-// logging specific to sql debugging.  can be turned on/off using PG_DEBUG env var.
-export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
-  if (!pgDebug) {
-    return
-  }
-  let out: unknown[]
-  if (typeof values === 'undefined') {
-    out = []
-  } else if (typeof values !== 'string') {
-    out = values.map(val => {
-      return String(val)
-    })
-  } else {
-    out = values
-  }
-
-  log.info('sql>', sql, out)
 }
 
 export class SqlVals {

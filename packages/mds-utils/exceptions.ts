@@ -56,8 +56,16 @@ export class BadParamsError extends BaseError {
   }
 }
 
+/* istanbul ignore next */
 export class AlreadyPublishedError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
     super('AlreadyPublishedError', reason(error))
+  }
+}
+
+/* istanbul ignore next */
+export class DataReaderError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('DataReaderError', reason(error))
   }
 }

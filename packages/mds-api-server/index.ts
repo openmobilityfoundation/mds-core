@@ -88,6 +88,8 @@ export const checkScope = (validator: ScopeValidator) => (
   if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validateScopes(validator, res.locals.scopes)) {
     next()
   } else {
-    res.status(403).send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
+    res
+      .status(403)
+      .send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims || {} }) })
   }
 }

@@ -67,13 +67,7 @@ let writeableCachedClient: MDSPostgresClient | null = null
 let readOnlyCachedClient: MDSPostgresClient | null = null
 
 async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
-  const { PG_NAME, PG_USER, PG_PASS, PG_PORT, PG_MIGRATIONS = 'false' } = env
-  let PG_HOST: string | undefined
-  if (useWriteable) {
-    ;({ PG_HOST } = env)
-  } else {
-    PG_HOST = env.PG_HOST_READER || env.PG_HOST
-  }
+  const { PG_HOST, PG_HOST_READER, PG_NAME, PG_USER, PG_PASS, PG_PORT, PG_MIGRATIONS = 'false' } = env
 
   const client_type: ClientType = useWriteable ? 'writeable' : 'readonly'
 
@@ -81,7 +75,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     client_type,
     database: PG_NAME,
     user: PG_USER,
-    host: PG_HOST || 'localhost',
+    host: useWriteable ? PG_HOST : PG_HOST_READER || PG_HOST || 'localhost',
     port: Number(PG_PORT) || 5432
   }
 
@@ -759,16 +753,11 @@ async function shutdown(): Promise<void> {
 
 async function readAudit(audit_trip_id: UUID) {
   const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.audits} WHERE deleted IS NULL AND audit_trip_id=$1`
-  const values = [audit_trip_id]
-  await logSql(sql, values)
-  const result = await client.query(sql, values)
-  if (result.rows.length === 1) {
-    return result.rows[0]
-  }
-  const error = `readAudit db failed for ${audit_trip_id}: rows=${result.rows.length}`
-  await log.warn(error)
-  throw new Error(error)
+  return client
+    .reader<Recorded<Audit>>(`SELECT * FROM ${schema.TABLE.audits} WHERE deleted IS NULL AND audit_trip_id=$1`, [
+      audit_trip_id
+    ])
+    .selectOne()
 }
 
 async function readAudits(query: ReadAuditsQueryParams) {
@@ -791,9 +780,8 @@ async function readAudits(query: ReadAuditsQueryParams) {
     const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
     const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.audits} ${filter}`
     const countVals = vals.values()
+    const { count } = await client.reader<{ count: number }>(countSql, countVals).selectOne()
     await logSql(countSql, countVals)
-    const countResult = await client.query(countSql, countVals)
-    const count = parseInt(countResult.rows[0].count)
     if (count === 0) {
       return {
         count,
@@ -804,11 +792,9 @@ async function readAudits(query: ReadAuditsQueryParams) {
       typeof skip === 'number' && skip >= 0 ? ` OFFSET ${vals.add(skip)}` : ''
     }${typeof take === 'number' && take >= 0 ? ` LIMIT ${vals.add(take)}` : ''}`
     const selectVals = vals.values()
-    await logSql(selectSql, selectVals)
-    const selectResult = await client.query(selectSql, selectVals)
     return {
       count,
-      audits: selectResult.rows
+      audits: await client.reader<Recorded<Audit>>(selectSql, selectVals).selectAll()
     }
   } catch (err) {
     await log.error('readAudits error', err.stack || err)
@@ -839,21 +825,15 @@ async function deleteAudit(audit_trip_id: UUID) {
   return result.rowCount
 }
 
-async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<AuditEvent>[]> {
-  try {
-    const client = await getReadOnlyClient()
-    const vals = new SqlVals()
-    const sql = `SELECT * FROM ${schema.TABLE.audit_events} WHERE audit_trip_id=${vals.add(
-      audit_trip_id
-    )} ORDER BY "timestamp"`
-    const sqlVals = vals.values()
-    await logSql(sql, sqlVals)
-    const result = await client.query(sql, sqlVals)
-    return result.rows
-  } catch (err) {
-    await log.error('readAuditEvents error', err.stack || err)
-    throw err
-  }
+async function readAuditEvents(audit_trip_id: UUID) {
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  return client
+    .reader<Recorded<AuditEvent>>(
+      `SELECT * FROM ${schema.TABLE.audit_events} WHERE audit_trip_id=${vals.add(audit_trip_id)} ORDER BY "timestamp"`,
+      vals.values()
+    )
+    .selectAll()
 }
 
 async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded<AuditEvent>> {
