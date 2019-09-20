@@ -69,7 +69,7 @@ spec:
             {{- end }}
           {{- if $api.migration }}
           - name: PG_MIGRATIONS
-            value: {{ $api.migration }}
+            value: {{ $api.migration | quote }}
           {{- end }}
           {{- end }}
           {{- if $api.useCache }}
