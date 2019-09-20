@@ -753,11 +753,10 @@ async function shutdown(): Promise<void> {
 
 async function readAudit(audit_trip_id: UUID) {
   const client = await getReadOnlyClient()
-  return client
-    .reader<Recorded<Audit>>(`SELECT * FROM ${schema.TABLE.audits} WHERE deleted IS NULL AND audit_trip_id=$1`, [
-      audit_trip_id
-    ])
-    .selectOne()
+  return client.selectOne<Recorded<Audit>>(
+    `SELECT * FROM ${schema.TABLE.audits} WHERE deleted IS NULL AND audit_trip_id=$1`,
+    [audit_trip_id]
+  )
 }
 
 async function readAudits(query: ReadAuditsQueryParams) {
@@ -780,7 +779,7 @@ async function readAudits(query: ReadAuditsQueryParams) {
     const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
     const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.audits} ${filter}`
     const countVals = vals.values()
-    const { count } = await client.reader<{ count: number }>(countSql, countVals).selectOne()
+    const { count } = await client.selectOne<{ count: number }>(countSql, countVals)
     await logSql(countSql, countVals)
     if (count === 0) {
       return {
@@ -794,7 +793,7 @@ async function readAudits(query: ReadAuditsQueryParams) {
     const selectVals = vals.values()
     return {
       count,
-      audits: await client.reader<Recorded<Audit>>(selectSql, selectVals).selectAll()
+      audits: await client.select<Recorded<Audit>>(selectSql, selectVals)
     }
   } catch (err) {
     await log.error('readAudits error', err.stack || err)
@@ -828,12 +827,10 @@ async function deleteAudit(audit_trip_id: UUID) {
 async function readAuditEvents(audit_trip_id: UUID) {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
-  return client
-    .reader<Recorded<AuditEvent>>(
-      `SELECT * FROM ${schema.TABLE.audit_events} WHERE audit_trip_id=${vals.add(audit_trip_id)} ORDER BY "timestamp"`,
-      vals.values()
-    )
-    .selectAll()
+  return client.select<Recorded<AuditEvent>>(
+    `SELECT * FROM ${schema.TABLE.audit_events} WHERE audit_trip_id=${vals.add(audit_trip_id)} ORDER BY "timestamp"`,
+    vals.values()
+  )
 }
 
 async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded<AuditEvent>> {

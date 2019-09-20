@@ -66,40 +66,49 @@ export class MDSPostgresClient extends PostgresClient {
     this.connected = connected
   }
 
-  public reader<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
-    const query = async () => {
-      await logSql(command, values)
-      const result: QueryResult<R> = await this.query(command, values)
-      return result.rows
+  // Runs a query and returns the selected rows as an array of objects of type R.
+  public async select<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    await logSql(command, values)
+    const result: QueryResult<R> = await this.query(command, values)
+    return result.rows
+  }
+
+  // Runs a query and returns a single selected row as an object of type R. An exception
+  // is thrown if there are no selected rows or more than one selected row.
+  public async selectOne<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    const rows = await this.select<R>(command, values)
+    if (rows.length !== 1) {
+      throw new DataReaderError(`Expected exactly one matching row: actual=${rows.length}`)
     }
-    return {
-      selectAll: async () => query(),
-      selectOne: async () => {
-        const rows = await query()
-        if (rows.length !== 1) {
-          throw new DataReaderError(`Expected exactly one matching row: actual=${rows.length}`)
-        }
-        return rows[0]
-      },
-      selectOneOrNull: async () => {
-        const rows = await query()
-        if (rows.length > 1) {
-          throw new DataReaderError(`Expected at most one matching row: actual=${rows.length}`)
-        }
-        return rows.length === 0 ? null : rows[0]
-      },
-      selectFirst: async () => {
-        const rows = await query()
-        if (rows.length === 0) {
-          throw new DataReaderError(`Expected at least one matching row: actual=${rows.length}`)
-        }
-        return rows[0]
-      },
-      selectFirstOrNull: async () => {
-        const rows = await query()
-        return rows.length === 0 ? null : rows[0]
-      }
+    return rows[0]
+  }
+
+  // Runs a query and returns a single selected row as an object of type R. An exception
+  // is thrown if there is more than one selected row. null is returned if there are no
+  // selected rows.
+  public async selectOneOrNull<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    const rows = await this.select<R>(command, values)
+    if (rows.length > 1) {
+      throw new DataReaderError(`Expected at most one matching row: actual=${rows.length}`)
     }
+    return rows.length === 0 ? null : rows[0]
+  }
+
+  // Runs a query and returns the first selected row as an object of type R. An exception
+  // is thrown if there are no selected rows.
+  public async selectFirst<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    const rows = await this.select<R>(command, values)
+    if (rows.length === 0) {
+      throw new DataReaderError(`Expected at least one matching row: actual=${rows.length}`)
+    }
+    return rows[0]
+  }
+
+  // Runs a query and returns the first selected row as an object of type R. null is returned
+  // if there are no selected rows.
+  public async selectFirstOrNull<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    const rows = await this.select<R>(command, values)
+    return rows.length === 0 ? null : rows[0]
   }
 }
 
