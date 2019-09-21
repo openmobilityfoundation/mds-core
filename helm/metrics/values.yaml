@@ -18,7 +18,7 @@ galley:
 # addon grafana configuration
 #
 grafana:
-  enabled: false
+  enabled: true
 
 #
 # addon prometheus configuration

@@ -36,6 +36,7 @@ spec:
       - OPTIONS
       - PATCH
       - PUT
+      - DELETE
       allowCredentials: false
       allowHeaders:
       - Content-Type

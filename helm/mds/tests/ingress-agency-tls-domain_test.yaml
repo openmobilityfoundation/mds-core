@@ -73,6 +73,10 @@ tests:
           value: PUT
         documentIndex: 1
       - equal:
+          path: spec.http[0].corsPolicy.allowMethods[6]
+          value: DELETE 
+        documentIndex: 1
+      - equal:
           path: spec.http[0].corsPolicy.allowCredentials
           value: false
         documentIndex: 1
