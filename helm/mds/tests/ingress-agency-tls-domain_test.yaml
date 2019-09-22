@@ -74,7 +74,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.http[0].corsPolicy.allowMethods[6]
-          value: DELETE 
+          value: DELETE
         documentIndex: 1
       - equal:
           path: spec.http[0].corsPolicy.allowCredentials
