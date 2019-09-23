@@ -1,13 +1,6 @@
 import express from 'express'
 
-import {
-  isUUID,
-  isPct,
-  isTimestamp,
-  isFloat,
-  pointInShape,
-  isInsideBoundingBox
-} from '@mds-core/mds-utils'
+import { isUUID, isPct, isTimestamp, isFloat, pointInShape, isInsideBoundingBox } from '@mds-core/mds-utils'
 import areas from 'ladot-service-areas'
 import stream from '@mds-core/mds-stream'
 import {
@@ -23,7 +16,7 @@ import {
   VEHICLE_REASONS,
   PROPULSION_TYPES,
   EVENT_STATUS_MAP,
-  BoundingBox,
+  BoundingBox
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
@@ -186,7 +179,6 @@ export async function getVehicles(
     vehicles: devices
   }
 }
-
 
 const usBounds = {
   latMax: 49.45,

@@ -2,9 +2,7 @@ import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import log from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
-import {
-  ServerError,
-} from '@mds-core/mds-utils'
+import { ServerError } from '@mds-core/mds-utils'
 import { refresh } from './utils'
 
 export const getCacheInfo = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
@@ -13,7 +11,7 @@ export const getCacheInfo = async (req: AgencyApiRequest, res: AgencyApiResponse
   res.send(details)
 }
 
-export const wipeDevice =     async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const wipeDevice = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
     const { device_id } = req.params
     await log.info('about to wipe', device_id)
