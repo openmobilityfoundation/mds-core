@@ -21,4 +21,4 @@ const {
 
 /* eslint-reason avoids import of logger */
 /* eslint-disable-next-line no-console */
-ApiServer(api, { useCors: true }).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
+ApiServer(api, { handleCors: true }).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))

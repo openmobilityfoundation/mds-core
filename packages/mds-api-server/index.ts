@@ -41,7 +41,7 @@ const about = () => {
 
 interface ApiServerOptions {
   authorizer: ApiAuthorizer
-  useCors: boolean
+  handleCors: boolean
 }
 
 export const ApiServer = (
@@ -49,9 +49,9 @@ export const ApiServer = (
   options: Partial<ApiServerOptions> = {},
   app: express.Express = express()
 ): express.Express => {
-  const { authorizer, useCors } = {
+  const { authorizer, handleCors } = {
     authorizer: AuthorizationHeaderApiAuthorizer,
-    useCors: false,
+    handleCors: false,
     ...options
   }
 
@@ -62,9 +62,17 @@ export const ApiServer = (
   app.use(bodyParser.json({ limit: '5mb' }))
 
   // Enable CORS
-  if (useCors) {
-    app.use(cors())
-  }
+  app.use(
+    handleCors
+      ? cors() // Server handles CORS
+      : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+          // Gateway handles CORS pre-flight
+          if (req.method !== 'OPTIONS') {
+            res.header('Access-Control-Allow-Origin', '*')
+          }
+          next()
+        }
+  )
 
   // Authorizer
   app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
