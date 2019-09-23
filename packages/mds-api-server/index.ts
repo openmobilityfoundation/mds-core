@@ -39,11 +39,22 @@ const about = () => {
   }
 }
 
+interface ApiServerOptions {
+  authorizer: ApiAuthorizer
+  useCors: boolean
+}
+
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
-  authorizer: ApiAuthorizer = AuthorizationHeaderApiAuthorizer,
+  options: Partial<ApiServerOptions> = {},
   app: express.Express = express()
 ): express.Express => {
+  const { authorizer, useCors } = {
+    authorizer: AuthorizationHeaderApiAuthorizer,
+    useCors: false,
+    ...options
+  }
+
   // Disable x-powered-by header
   app.disable('x-powered-by')
 
@@ -51,7 +62,9 @@ export const ApiServer = (
   app.use(bodyParser.json({ limit: '5mb' }))
 
   // Enable CORS
-  app.use(cors())
+  if (useCors) {
+    app.use(cors())
+  }
 
   // Authorizer
   app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
