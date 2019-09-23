@@ -17,12 +17,7 @@
 import express from 'express'
 
 import log from '@mds-core/mds-logger'
-import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-cache'
 import { isProviderId } from '@mds-core/mds-providers'
-import {
-  UUID,
-} from '@mds-core/mds-types'
 import {
   isUUID,
   pathsFor,
@@ -32,6 +27,7 @@ import { checkScope } from '@mds-core/mds-api-server'
 import { getAllServiceAreas, getServiceAreaById, registerVehicle, getVehicleById, getVehiclesByProvider, updateVehicle, submitVehicleEvent, submitVehicleTelemetry } from './request-handlers'
 import { readAllVehicleIds } from './agency-candidate-request-handlers'
 import { getCacheInfo, wipeDevice, refreshCache } from './sandbox-admin-request-handlers'
+import { validateDeviceId } from './utils'
 
 function api(app: express.Express): express.Express {
   /**
@@ -71,32 +67,6 @@ function api(app: express.Express): express.Express {
     }
     next()
   })
-
-  /**
-   * for some functions we will want to validate the :device_id param
-   */
-  async function validateDeviceId(req: express.Request, res: express.Response, next: Function) {
-    const { device_id } = req.params
-
-    /* istanbul ignore if This is never called with no device_id parameter */
-    if (!device_id) {
-      await log.warn('agency: missing device_id', req.originalUrl)
-      res.status(400).send({
-        error: 'missing_param',
-        error_description: 'missing device_id'
-      })
-      return
-    }
-    if (device_id && !isUUID(device_id)) {
-      await log.warn('agency: bogus device_id', device_id, req.originalUrl)
-      res.status(400).send({
-        error: 'bad_param',
-        error_description: `invalid device_id ${device_id} is not a UUID`
-      })
-      return
-    }
-    next()
-  }
 
   // / ////////// gets ////////////////
 
