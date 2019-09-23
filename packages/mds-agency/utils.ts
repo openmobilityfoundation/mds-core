@@ -1,25 +1,21 @@
+import express from 'express'
+
 import {
   isUUID,
   isPct,
   isTimestamp,
   isFloat,
   pointInShape,
-  now,
-  pathsFor,
-  ServerError,
   isInsideBoundingBox
 } from '@mds-core/mds-utils'
 import areas from 'ladot-service-areas'
 import stream from '@mds-core/mds-stream'
 import {
   UUID,
-  Recorded,
   Device,
   VehicleEvent,
   Telemetry,
   ErrorObject,
-  Timestamp,
-  DeviceID,
   isEnum,
   VEHICLE_EVENTS,
   VEHICLE_TYPES,
@@ -27,10 +23,7 @@ import {
   VEHICLE_REASONS,
   PROPULSION_TYPES,
   EVENT_STATUS_MAP,
-  VEHICLE_STATUS,
-  VEHICLE_EVENT,
   BoundingBox,
-  VEHICLE_REASON
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
@@ -424,4 +417,30 @@ export async function refresh(device_id: UUID, provider_id: UUID): Promise<strin
     await log.info('no telemetry for', device_id, err)
   }
   return 'done'
+}
+
+/**
+ * for some functions we will want to validate the :device_id param
+ */
+export async function validateDeviceId(req: express.Request, res: express.Response, next: Function) {
+  const { device_id } = req.params
+
+  /* istanbul ignore if This is never called with no device_id parameter */
+  if (!device_id) {
+    await log.warn('agency: missing device_id', req.originalUrl)
+    res.status(400).send({
+      error: 'missing_param',
+      error_description: 'missing device_id'
+    })
+    return
+  }
+  if (device_id && !isUUID(device_id)) {
+    await log.warn('agency: bogus device_id', device_id, req.originalUrl)
+    res.status(400).send({
+      error: 'bad_param',
+      error_description: `invalid device_id ${device_id} is not a UUID`
+    })
+    return
+  }
+  next()
 }
