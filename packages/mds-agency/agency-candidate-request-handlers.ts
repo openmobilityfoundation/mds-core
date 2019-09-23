@@ -1,8 +1,6 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import log from '@mds-core/mds-logger'
-import {
-  isUUID,
-} from '@mds-core/mds-utils'
+import { isUUID } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
 import { providerName } from '@mds-core/mds-providers'
 

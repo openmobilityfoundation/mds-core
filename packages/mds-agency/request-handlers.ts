@@ -1,23 +1,12 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import areas from 'ladot-service-areas'
 import log from '@mds-core/mds-logger'
-import {
-  isUUID,
-  isPct,
-  isTimestamp,
-  isFloat,
-  pointInShape,
-  now,
-  pathsFor,
-  ServerError,
-  isInsideBoundingBox
-} from '@mds-core/mds-utils'
+import { isUUID, now, ServerError } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
-import { providerName, isProviderId } from '@mds-core/mds-providers'
+import { providerName } from '@mds-core/mds-providers'
 import {
-  UUID,
   Recorded,
   Device,
   VehicleEvent,
@@ -25,20 +14,15 @@ import {
   ErrorObject,
   Timestamp,
   DeviceID,
-  isEnum,
   VEHICLE_EVENTS,
-  VEHICLE_TYPES,
   VEHICLE_STATUSES,
-  VEHICLE_REASONS,
-  PROPULSION_TYPES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   VEHICLE_EVENT,
-  BoundingBox,
   VEHICLE_REASON
 } from '@mds-core/mds-types'
-import { badDevice, getVehicles, lower, writeTelemetry, badEvent, badTelemetry, getServiceArea } from './utils'
 import urls from 'url'
+import { badDevice, getVehicles, lower, writeTelemetry, badEvent, badTelemetry, getServiceArea } from './utils'
 
 export const getAllServiceAreas = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
