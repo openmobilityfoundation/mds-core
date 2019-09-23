@@ -14,7 +14,6 @@ import {
   ErrorObject,
   Timestamp,
   DeviceID,
-  VEHICLE_EVENTS,
   VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
@@ -22,7 +21,16 @@ import {
   VEHICLE_REASON
 } from '@mds-core/mds-types'
 import urls from 'url'
-import { badDevice, getVehicles, lower, writeTelemetry, badEvent, badTelemetry, getServiceArea } from './utils'
+import {
+  badDevice,
+  getVehicles,
+  lower,
+  writeTelemetry,
+  badEvent,
+  badTelemetry,
+  getServiceArea,
+  writeRegisterEvent
+} from './utils'
 
 export const getAllServiceAreas = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
@@ -90,33 +98,6 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
     return res.status(400).send(failure)
   }
 
-  async function writeRegisterEvent() {
-    const event: VehicleEvent = {
-      device_id: device.device_id,
-      provider_id: device.provider_id,
-      event_type: VEHICLE_EVENTS.register,
-      event_type_reason: null,
-      telemetry: null,
-      timestamp: recorded,
-      trip_id: null,
-      recorded,
-      telemetry_timestamp: undefined,
-      service_area_id: null
-    }
-    try {
-      const recorded_event = await db.writeEvent(event)
-      try {
-        // writing to cache and stream is not fatal
-        await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
-      } catch (err) {
-        await log.warn('/event exception cache/stream', err)
-      }
-    } catch (err) {
-      await log.error('writeRegisterEvent failure', err)
-      throw new Error('writeEvent exception db')
-    }
-  }
-
   // writing to the DB is the crucial part.  other failures should be noted as bugs but tolerated
   // and fixed later.
   try {
@@ -128,7 +109,7 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
     }
     await log.info('new', providerName(res.locals.provider_id), 'vehicle added', device)
     try {
-      await writeRegisterEvent()
+      await writeRegisterEvent(device, recorded)
     } catch (err) {
       await log.error('writeRegisterEvent failure', err)
     }

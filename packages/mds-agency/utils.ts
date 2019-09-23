@@ -436,3 +436,30 @@ export async function validateDeviceId(req: express.Request, res: express.Respon
   }
   next()
 }
+
+export async function writeRegisterEvent(device: Device, recorded: number) {
+  const event: VehicleEvent = {
+    device_id: device.device_id,
+    provider_id: device.provider_id,
+    event_type: VEHICLE_EVENTS.register,
+    event_type_reason: null,
+    telemetry: null,
+    timestamp: recorded,
+    trip_id: null,
+    recorded,
+    telemetry_timestamp: undefined,
+    service_area_id: null
+  }
+  try {
+    const recorded_event = await db.writeEvent(event)
+    try {
+      // writing to cache and stream is not fatal
+      await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
+    } catch (err) {
+      await log.warn('/event exception cache/stream', err)
+    }
+  } catch (err) {
+    await log.error('writeRegisterEvent failure', err)
+    throw new Error('writeEvent exception db')
+  }
+}
