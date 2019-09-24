@@ -67,10 +67,14 @@ export class MDSPostgresClient extends PostgresClient {
   }
 
   // Runs a query and returns the selected rows as an array of objects of type R.
-  public async select<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+  private async select<R extends QueryResultRow>(command: string, values: (string | number)[]) {
     await logSql(command, values)
     const result: QueryResult<R> = await this.query(command, values)
     return result.rows
+  }
+
+  public async selectAll<R extends QueryResultRow>(command: string, values: (string | number)[] = []) {
+    return this.select<R>(command, values)
   }
 
   // Runs a query and returns a single selected row as an object of type R. An exception

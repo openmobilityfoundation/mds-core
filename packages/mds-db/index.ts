@@ -791,7 +791,7 @@ async function readAudits(query: ReadAuditsQueryParams) {
 
   return {
     count,
-    audits: await client.select<Recorded<Audit>>(
+    audits: await client.selectAll<Recorded<Audit>>(
       `SELECT * FROM ${schema.TABLE.audits} ${filter} ORDER BY "timestamp" DESC${
         typeof skip === 'number' && skip >= 0 ? ` OFFSET ${vals.add(skip)}` : ''
       }${typeof take === 'number' && take >= 0 ? ` LIMIT ${vals.add(take)}` : ''}`,
@@ -826,7 +826,7 @@ async function deleteAudit(audit_trip_id: UUID) {
 async function readAuditEvents(audit_trip_id: UUID) {
   const client = await getReadOnlyClient()
   const vals = new SqlVals()
-  return client.select<Recorded<AuditEvent>>(
+  return client.selectAll<Recorded<AuditEvent>>(
     `SELECT * FROM ${schema.TABLE.audit_events} WHERE audit_trip_id=${vals.add(audit_trip_id)} ORDER BY "timestamp"`,
     vals.values()
   )
