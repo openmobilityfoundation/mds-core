@@ -63,6 +63,7 @@ apis:
     migration: false
     useCache: true
     useEvents: true
+timezone: America/Los_Angeles
 registry:
 useLatestImage: true
 tls:

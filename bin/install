@@ -142,6 +142,7 @@ where app in:
   mds-native
   mds-policy
   mds-provider
+  mds-policy-author
   mds-postgresql
   mds-redis-headless
   dashboard                                           : kubernetes dashboard; see https://github.com/kubernetes/dashboard
