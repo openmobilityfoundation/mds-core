@@ -16,11 +16,16 @@ import {
   VEHICLE_REASONS,
   PROPULSION_TYPES,
   EVENT_STATUS_MAP,
-  BoundingBox
+  BoundingBox,
+  Timestamp,
+  Recorded,
+  VEHICLE_STATUS,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
+import { AgencyApiResponse } from './types'
 
 export function badDevice(device: Device): Partial<{ error: string; error_description: string }> | boolean {
   if (!device.device_id) {
@@ -462,4 +467,36 @@ export async function writeRegisterEvent(device: Device, recorded: number) {
     await log.error('writeRegisterEvent failure', err)
     throw new Error('writeEvent exception db')
   }
+}
+
+export function finishGetVehicleById(
+  device: Device,
+  provider_id: UUID,
+  res: AgencyApiResponse,
+  event?: VehicleEvent,
+  telemetry?: Recorded<Telemetry> | Telemetry
+): void {
+  if (device.provider_id !== provider_id) {
+    res.status(404).send({
+      error: 'not_found'
+    })
+    return
+  }
+  const composite: Partial<Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }> = {
+    ...device
+  }
+
+  if (event) {
+    composite.prev_event = event.event_type
+    composite.updated = event.timestamp
+    composite.status = (EVENT_STATUS_MAP[event.event_type as VEHICLE_EVENT] || 'unknown') as VEHICLE_STATUS
+  } else {
+    composite.status = VEHICLE_STATUSES.removed
+  }
+  if (telemetry) {
+    if (telemetry.gps) {
+      composite.gps = telemetry.gps
+    }
+  }
+  res.send(composite)
 }

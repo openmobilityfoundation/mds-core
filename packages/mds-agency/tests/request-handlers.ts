@@ -7,7 +7,7 @@ import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
 import { AgencyApiRequest, AgencyApiResponse } from '../types'
-import { getAllServiceAreas, getServiceAreaById, registerVehicle } from '../request-handlers'
+import { getAllServiceAreas, getServiceAreaById, registerVehicle, getVehicleById } from '../request-handlers'
 import * as utils from '../utils'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -252,5 +252,34 @@ describe('Agency API request handlers', () => {
       assert.equal(sendHandler.called, true)
       Sinon.restore()
     })
+  })
+
+  describe('Get vehicle by id', () => {
+    /*
+    it('Fails to read device from db (no cache)', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(db, 'readDevice', Sinon.fake.rejects('it-broke'))
+      Sinon.replace(db, 'readEvent', Sinon.fake.resolves('it-worked'))
+      Sinon.replace(db, 'readTelemetry', Sinon.fake.resolves('it-worked'))
+      await getVehicleById(
+        {
+          params: { device_id },
+          query: { cached: false }
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(500), true)
+      assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
+    */
   })
 })
