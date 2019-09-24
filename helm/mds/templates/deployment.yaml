@@ -39,6 +39,8 @@ spec:
         env:
           - name: PATH_PREFIX
             value: {{ $api.pathPrefix }}
+          - name: TIMEZONE
+            value: America/Los_Angeles
           {{- if $api.useDB }}
           - name: PG_USER
             value: {{ $.Values.postgresql.postgresqlUsername }}
