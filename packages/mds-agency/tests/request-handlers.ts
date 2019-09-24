@@ -7,7 +7,13 @@ import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
 import { AgencyApiRequest, AgencyApiResponse } from '../types'
-import { getAllServiceAreas, getServiceAreaById, registerVehicle, getVehicleById } from '../request-handlers'
+import {
+  getAllServiceAreas,
+  getServiceAreaById,
+  registerVehicle,
+  getVehicleById,
+  getVehiclesByProvider
+} from '../request-handlers'
 import * as utils from '../utils'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -309,6 +315,56 @@ describe('Agency API request handlers', () => {
       )
       assert.equal(statusHandler.calledWith(200), true)
       assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
+  })
+
+  describe('Get vehicles by provider', () => {
+    it('Handles failure to get vehicles by provider', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
+      await getVehiclesByProvider(
+        {
+          params: { device_id },
+          query: { cached: false },
+          get: Sinon.fake.returns('foo') as any
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(500), true)
+      assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
+
+    it('Gets vehicles by provider', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(utils, 'getVehicles', Sinon.fake.resolves('it-worked'))
+      await getVehiclesByProvider(
+        {
+          params: { device_id },
+          query: { cached: false },
+          get: Sinon.fake.returns('foo') as any
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(200), true)
+      assert.equal(sendHandler.calledWith('it-worked'), true)
       Sinon.restore()
     })
   })
