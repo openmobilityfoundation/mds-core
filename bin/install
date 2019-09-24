@@ -37,6 +37,7 @@ declare -A os=(
 declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
+  ["brew"]="${MDS_BREW:-yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
@@ -155,14 +156,13 @@ example:
 
 pre-requisites:
   docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
-  yarn                                                : see https://yarnpkg.com/en/
 EOF
 
   [ "${1}" ] && exit 1 || exit 0
 }
 
 bootstrap() {
-  for l in yarn nvm kubernetes-helm pgcli redis python git; do
+  for l in ${configs[brew]}; do
     lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
 
     hash ${lc} > /dev/null 2>&1 || {
