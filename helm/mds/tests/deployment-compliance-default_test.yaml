@@ -38,7 +38,7 @@ tests:
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].name
-          value: user-container
+          value: mds-compliance
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].image
