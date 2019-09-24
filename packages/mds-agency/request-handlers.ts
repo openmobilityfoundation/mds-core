@@ -27,7 +27,8 @@ import {
   badTelemetry,
   getServiceArea,
   writeRegisterEvent,
-  finishGetVehicleById
+  readPayload,
+  computeCompositeVehicleData
 } from './utils'
 
 export const getAllServiceAreas = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
@@ -136,46 +137,16 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
   const { provider_id } = res.locals
 
   log.info(`/vehicles/${device_id}`, cached)
-  if (cached) {
-    try {
-      const device = await cache.readDevice(device_id)
-      const event = await cache.readEvent(device_id).catch(async err => {
-        await log.warn(err)
-        return undefined
-      })
-      const telemetry = await cache.readTelemetry(device_id).catch(async err => {
-        await log.warn(err)
-        return undefined
-      })
-      if (device) return finishGetVehicleById(device, provider_id, res, event, telemetry)
-    } catch (err) {
-      await log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`)
-      await log.error(err)
-      res.status(404).send({
-        error: 'not_found'
-      })
-    }
-  } else {
-    // TODO what is going on here?
-    // Why do we have try/catch and .catch()?
-    try {
-      const device = await db.readDevice(device_id).catch(async err => {
-        await log.error(err)
-        res.status(404).send({
-          error: 'not_found'
-        })
-      })
-      const event = await db.readEvent(device_id).catch(async err => {
-        await log.warn(err)
-        return undefined
-      })
-      const telemetry = await db.readTelemetry(device_id)
-      if (device) return finishGetVehicleById(device, provider_id, res, event, telemetry[0])
-    } catch (err) {
-      await log.error(err)
-      res.status(500).send(new ServerError())
-    }
+  const store = cached ? cache : db
+  const payload = await readPayload(store, device_id)
+  if (!payload.device || payload.device.provider_id !== provider_id) {
+    res.status(404).send({
+      error: 'not_found'
+    })
+    return
   }
+  const compositeData = computeCompositeVehicleData(payload)
+  res.status(200).send(compositeData)
 }
 
 export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
