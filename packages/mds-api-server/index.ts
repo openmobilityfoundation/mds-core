@@ -1,5 +1,6 @@
 import bodyParser from 'body-parser'
 import express from 'express'
+import cors from 'cors'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { ScopeValidator, validateScopes, AccessTokenScope } from '@mds-core/mds-api-scopes'
@@ -38,11 +39,41 @@ const about = () => {
   }
 }
 
+interface ApiServerOptions {
+  authorizer: ApiAuthorizer
+  handleCors: boolean
+}
+
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
-  authorizer: ApiAuthorizer = AuthorizationHeaderApiAuthorizer,
+  options: Partial<ApiServerOptions> = {},
   app: express.Express = express()
 ): express.Express => {
+  const { authorizer, handleCors } = {
+    authorizer: AuthorizationHeaderApiAuthorizer,
+    handleCors: false,
+    ...options
+  }
+
+  // Disable x-powered-by header
+  app.disable('x-powered-by')
+
+  // Parse JSON body
+  app.use(bodyParser.json({ limit: '5mb' }))
+
+  // Enable CORS
+  app.use(
+    handleCors
+      ? cors() // Server handles CORS
+      : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+          // Gateway handles CORS pre-flight
+          if (req.method !== 'OPTIONS') {
+            res.header('Access-Control-Allow-Origin', '*')
+          }
+          next()
+        }
+  )
+
   // Authorizer
   app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     const { MAINTENANCE: maintenance } = process.env
@@ -54,12 +85,6 @@ export const ApiServer = (
     res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
     next()
   })
-
-  // Disable x-powered-by header
-  app.disable('x-powered-by')
-
-  // Parse JSON bodiy
-  app.use(bodyParser.json({ limit: '5mb' }))
 
   app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
     // 200 OK

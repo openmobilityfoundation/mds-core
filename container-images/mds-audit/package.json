@@ -1,7 +1,7 @@
 {
   "name": "@container-images/mds-audit",
   "version": "0.1.10",
-  "description": "AWS Lambda for MDS Audit API",
+  "description": "Docker Image for MDS Audit API",
   "main": "dist/index.js",
   "files": [
     "dist/"
