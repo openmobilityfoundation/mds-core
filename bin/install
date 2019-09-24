@@ -3,11 +3,27 @@
 osx=Darwin
 linux=Linux
 
+hash brew > /dev/null 2>&1 || {
+  case "${MDS_OS:-$(uname)}" in
+    ${osx})
+      hash brew > /dev/null 2>&1 || \
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)";;
+    ${linux})
+      mkdir -p ~/.linuxbrew/bin
+      hash git > /dev/null 2>&1 || (apt-get update; apt-get install -y git)
+      git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
+      ln -s ~/.linuxbrew/Homebrew/bin/brew ~/.linuxbrew/bin
+      [ $(grep -Fxq "eval \$(~/.linuxbrew/bin/brew shellenv)" ~/.bashrc; echo $?) == "1" ] && \
+        echo "eval \$(~/.linuxbrew/bin/brew shellenv)" >> ~/.bashrc
+      hash curl > /dev/null 2>&1 || (apt-get update; apt-get install -y curl)
+      eval $(~/.linuxbrew/bin/brew shellenv);;
+    *) usage "unsupported os: $(uname)";;
+  esac
+}
+
 if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
-  case ${MDS_OS:-$(uname)} in
+  case "${MDS_OS:-$(uname)}" in
     ${osx} | ${linux})
-     hash brew > /dev/null 2>&1 || \
-        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       brew install bash
       exec ${0} ${@} &
       exit;;
@@ -15,7 +31,7 @@ if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
   esac
 fi
 
-declare -A oses=(
+declare -A os=(
   ["osx"]="${osx}"
   ["linux"]="${linux}")
 declare -A configs=(
@@ -91,7 +107,7 @@ commands:
   install[:{service[,{service}]}]                     : install specified service; default: ${configs[install]}
   test[:unit,integration]                             : preform specified tests; default: ${configs[test]}
   open:[app[,{app}]]                                  : opens a browser for the provided application(s)
-  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${oses[osx]}; default: ${configs[token]}
+  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${os[osx]}; default: ${configs[token]}
   forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${configs[forward]}
   unforward[:{app[,{app}]}]                           : deregister port-forwarding for the provided application(s)
   cli:[postgresql,redis]                              : create a cli console for the provided service
@@ -107,6 +123,7 @@ options:
 where service in:
   helm
   dashboard
+  kiali
   istio
   mds
   fallbackCertificate
@@ -145,21 +162,30 @@ EOF
 }
 
 bootstrap() {
-  case "${configs[os]}" in
-    ${oses[osx]} | ${oses[linux]})
-      hash brew > /dev/null 2>&1 || \
-        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-      # todo: consider inlining brew installs as 'brew install bash' hands on linux
-      brew bundle --file=$(dirname ${0})/Brewfile || usage "brew bundle failed";;
-    *) usage "unsupported os: ${configs[os]}";;
-  esac
+  for l in yarn nvm kubernetes-helm pgcli redis python git; do
+    lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
 
-  # todo: boostrap all-the-things
+    hash ${lc} > /dev/null 2>&1 || {
+      brew install ${l}
 
-  for y in lerna cypress mocha chai mochawesome; do
-    yarn ${y} --version > /dev/null 2>&1 || yarn add -W ${y}
-  done
-  unset y
+      if [ "${l}" == "nvm" ]; then
+        [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
+        [ $(grep -Fxq "export NMV_DIR=\"${HOME}\"" ~/.bashrc; echo $?) == "1" ] && \
+          echo "export NMV_DIR=\"${HOME}\"" >> ~/.bashrc
+        [ $(grep -Fxq "eval sh \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
+              echo "eval sh \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
+        sh $(brew --prefix nvm)/nvm.sh
+        nvm install node
+        nvm use node
+        nvm install 8.10.0
+        nvm alias default 8.10.0
+      fi
+    }
+  done; unset l
+
+  for p in lerna cypress mocha chai mochawesome; do
+    yarn ${p} --version > /dev/null 2>&1 || yarn add -W ${p}
+  done; unset p
 
   invoke install "$(normalize ${configs[bootstrap]})"
 }
@@ -199,7 +225,7 @@ installHelm() {
 
   hash helm > /dev/null 2>&1 ||
     case "${configs[os]}" in
-      ${oses[osx]} | ${oses[linux]}) brew install kubernetes-helm;;
+      ${os[osx]} | ${os[linux]}) brew install kubernetes-helm;;
       *) usage "unsupported os: ${configs[os]}";;
     esac
 
@@ -260,18 +286,11 @@ installIstio() {
     (( $(kubectl get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio installation failure"
 
-# --set grafana.enabled=false --set kiali.enabled= false --set istio-egressgateway=false \
     helm template ${configs[istio]}/install/kubernetes/helm/istio \
       --name istio --namespace istio-system \
       --values ${configs[istio]}/install/kubernetes/helm/istio/values${configs[istio-profile]}.yaml | \
       kubectl apply -f - ${configs[dryrun]:+--dry-run}
     labelNamespaceIstioInjection default
-
-    # todo: purge, varies based on profile install
-    # (( $(kubectl get services -n istio-system | wc -l) == 9 )) && \
-    #   echo "istio services are available" || echo "istio services failure"
-    # (( $(kubectl get pods -n istio-system | wc -l) == 15 )) && \
-    #   echo "istio pods are available" || echo "istio pods failure"
   }
 }
 
@@ -449,7 +468,7 @@ unforward() {
 
 tokenDashboard() {
   case "${configs[os]}" in
-    ${oses[osx]}) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
+    ${os[osx]}) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
       pbcopy;;
     *) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
@@ -481,7 +500,7 @@ app() {
       check ${FUNCNAME[0]}:${a}
 
       case "${configs[os]}" in
-        ${oses[osx]}) open $(getApp ${a});;
+        ${os[osx]}) open $(getApp ${a});;
         *) usage "unsupported os: ${configs[os]}";;
       esac
     else
@@ -528,11 +547,21 @@ uninstallMds() {
 uninstallMetrics() {
   check ${FUNCNAME[0]}
   helm delete --purge metrics ${configs[dryrun]:+--dry-run}
+  uninstallNamespaces metrics
 }
 
 uninstallLogging() {
   check ${FUNCNAME[0]}
   helm delete --purge logging ${configs[dryrun]:+--dry-run}
+}
+
+uninstallKiali() {
+  unforward kiali
+  helm delete --purge kiali
+  uninstallNamespaces kiali
+  # kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
+  kubectl get namespace kiali > /dev/null 2>&1 && kubectl delete namespace kiali \
+    ${configs[dryrun]:+--dry-run}
 }
 
 uninstallIstio() {
@@ -562,7 +591,7 @@ uninstallDashboard() {
 #todo: purge
 uninstallHelm() {
   case "${configs[os]}" in
-    ${oses[osx]}) ;; #brew uninstall kubernetes-helm;;
+    ${os[osx]}) ;; #brew uninstall kubernetes-helm;;
     *) usage "unsupported os: ${configs[os]}";;
   esac
 }
@@ -604,9 +633,9 @@ forwardIfNeeded() {
 check() {
   case "${1}" in
     $(basename ${0}))
-      for t in kubectl yarn; do
-        hash ${t} > /dev/null 2>&1 || usage "install: ${t}"
-      done; unset t
+      for d in docker kubectl; do
+        hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
+      done; unset d
       kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;

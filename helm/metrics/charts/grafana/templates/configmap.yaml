@@ -13,6 +13,12 @@ data:
 {{- if .Values.plugins }}
   plugins: {{ join "," .Values.plugins }}
 {{- end }}
+{{- range $key, $value := index .Values "grafana.ini" }}
+    [{{ $key }}]
+    {{- range $elem, $elemVal := $value }}
+    {{ $elem }} = {{ $elemVal }}
+    {{- end }}
+{{- end }}
 {{- if .Values.datasources }}
   {{- range $key, $value := .Values.datasources }}
   {{ $key }}: |
