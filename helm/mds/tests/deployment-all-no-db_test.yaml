@@ -1,0 +1,12 @@
+suite: test deployment all no-db
+templates:
+  - deployment.yaml
+tests:
+  - it: all docs
+    release:
+      namespace: mds
+    values:
+      - ./deployment-values-no-db.yaml
+    asserts:
+      - hasDocuments:
+          count: 8

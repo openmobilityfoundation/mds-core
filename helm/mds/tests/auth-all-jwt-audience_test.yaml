@@ -1,0 +1,25 @@
+suite: test authetication jwt audience
+templates:
+  - auth.yaml
+tests:
+  - it: doc 0
+    release:
+      namespace: mds
+    set:
+      apis:
+        - name: mds-provider
+        - name: mds-agency
+        - name: mds-audit
+        - name: mds-policy
+        - name: mds-compliance
+        - name: mds-daily
+        - name: mds-native
+      jwt:
+        issuer: my-issuer
+        enabled: true
+        audiences:
+          - audience-1
+          - audience-2
+    asserts:
+      - hasDocuments:
+          count: 7

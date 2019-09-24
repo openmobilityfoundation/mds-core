@@ -112,6 +112,36 @@ lerna run prettier
 * Select any one of the files in a package's test folder
 * Press `F5`
 
+### [Kubernetes](https://kubernetes.io)/[Istio](https://istio.io)
+
+MDS can be provisioned to a Kubernetes cluster as follows:
+
+* Install and configure [Docker Desktop](https://download.docker.com/mac/stable/Docker.dmg)
+  * `preferences / advanced`: cpus:6, memory:8G, swap:1G
+  * `preferences / kubernetes`: enabled kubernetes
+* Add `kubectl` to your PATH environment, e.g. for OSX:
+  * `export PATH=/Applications/Docker.app/Contents/Resources/bin:${PATH}`
+* Configure active kubernetes cluster
+  * `kubectl config set-context docker-desktop`
+
+Lastly, build and deploy MDS to your kubernetes cluster:
+
+```bash
+./bin/install bootstrap build install:mds test:integration
+```
+
+To cleanup the MDS cluster consider:
+
+```bash
+./bin/install uninstall
+```
+
+For a complete listing of available operations consider:
+
+```bash
+./bin/install
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md)

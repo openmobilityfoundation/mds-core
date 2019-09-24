@@ -1,0 +1,10 @@
+suite: test cronjob default
+templates:
+  - cronjob.yaml
+tests:
+  - it: all
+    release:
+      namespace: mds
+    asserts:
+      - hasDocuments:
+          count: 0
