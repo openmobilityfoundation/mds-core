@@ -7,16 +7,13 @@ import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
 import { providerName } from '@mds-core/mds-providers'
 import {
-  Recorded,
   Device,
   VehicleEvent,
   Telemetry,
   ErrorObject,
-  Timestamp,
   DeviceID,
   VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
-  VEHICLE_STATUS,
   VEHICLE_EVENT,
   VEHICLE_REASON
 } from '@mds-core/mds-types'
@@ -29,7 +26,8 @@ import {
   badEvent,
   badTelemetry,
   getServiceArea,
-  writeRegisterEvent
+  writeRegisterEvent,
+  finishGetVehicleById
 } from './utils'
 
 export const getAllServiceAreas = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
@@ -137,34 +135,6 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
 
   const { provider_id } = res.locals
 
-  function finish(device: Device, event?: VehicleEvent, telemetry?: Recorded<Telemetry> | Telemetry): void {
-    if (device.provider_id !== provider_id) {
-      res.status(404).send({
-        error: 'not_found'
-      })
-      return
-    }
-    const composite: Partial<
-      Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }
-    > = {
-      ...device
-    }
-
-    if (event) {
-      composite.prev_event = event.event_type
-      composite.updated = event.timestamp
-      composite.status = (EVENT_STATUS_MAP[event.event_type as VEHICLE_EVENT] || 'unknown') as VEHICLE_STATUS
-    } else {
-      composite.status = VEHICLE_STATUSES.removed
-    }
-    if (telemetry) {
-      if (telemetry.gps) {
-        composite.gps = telemetry.gps
-      }
-    }
-    res.send(composite)
-  }
-
   log.info(`/vehicles/${device_id}`, cached)
   if (cached) {
     try {
@@ -177,7 +147,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
         await log.warn(err)
         return undefined
       })
-      if (device) return finish(device, event, telemetry)
+      if (device) return finishGetVehicleById(device, provider_id, res, event, telemetry)
     } catch (err) {
       await log.warn(providerName(res.locals.provider_id), `fail GET /vehicles/${device_id}`)
       await log.error(err)
@@ -186,6 +156,8 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
       })
     }
   } else {
+    // TODO what is going on here?
+    // Why do we have try/catch and .catch()?
     try {
       const device = await db.readDevice(device_id).catch(async err => {
         await log.error(err)
@@ -198,7 +170,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
         return undefined
       })
       const telemetry = await db.readTelemetry(device_id)
-      if (device) return finish(device, event, telemetry[0])
+      if (device) return finishGetVehicleById(device, provider_id, res, event, telemetry[0])
     } catch (err) {
       await log.error(err)
       res.status(500).send(new ServerError())
