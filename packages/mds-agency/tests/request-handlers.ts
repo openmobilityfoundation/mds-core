@@ -255,8 +255,7 @@ describe('Agency API request handlers', () => {
   })
 
   describe('Get vehicle by id', () => {
-    /*
-    it('Fails to read device from db (no cache)', async () => {
+    it('Fails to read device', async () => {
       const provider_id = uuid()
       const device_id = uuid()
       const res: AgencyApiResponse = {} as AgencyApiResponse
@@ -276,10 +275,41 @@ describe('Agency API request handlers', () => {
         } as AgencyApiRequest,
         res
       )
-      assert.equal(statusHandler.calledWith(500), true)
+      assert.equal(statusHandler.calledWith(404), true)
       assert.equal(sendHandler.called, true)
       Sinon.restore()
     })
-    */
+
+    it('Reads device data and returns composite', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(
+        db,
+        'readDevice',
+        Sinon.fake.resolves({
+          provider_id
+        })
+      )
+      Sinon.replace(db, 'readEvent', Sinon.fake.resolves({}))
+      Sinon.replace(db, 'readTelemetry', Sinon.fake.resolves({}))
+      Sinon.replace(utils, 'computeCompositeVehicleData', Sinon.fake.resolves('it-worked'))
+      await getVehicleById(
+        {
+          params: { device_id },
+          query: { cached: false }
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(200), true)
+      assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
   })
 })

@@ -25,7 +25,8 @@ import {
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
-import { AgencyApiResponse } from './types'
+import { isArray } from 'util'
+import { VehiclePayload, TelemetryResult } from './types'
 
 export function badDevice(device: Device): Partial<{ error: string; error_description: string }> | boolean {
   if (!device.device_id) {
@@ -469,19 +470,9 @@ export async function writeRegisterEvent(device: Device, recorded: number) {
   }
 }
 
-export function finishGetVehicleById(
-  device: Device,
-  provider_id: UUID,
-  res: AgencyApiResponse,
-  event?: VehicleEvent,
-  telemetry?: Recorded<Telemetry> | Telemetry
-): void {
-  if (device.provider_id !== provider_id) {
-    res.status(404).send({
-      error: 'not_found'
-    })
-    return
-  }
+export function computeCompositeVehicleData(payload: VehiclePayload) {
+  const { device, event, telemetry } = payload
+
   const composite: Partial<Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }> = {
     ...device
   }
@@ -498,5 +489,25 @@ export function finishGetVehicleById(
       composite.gps = telemetry.gps
     }
   }
-  res.send(composite)
+  return composite
+}
+
+const normalizeTelemetry = (telemetry: TelemetryResult) => {
+  if (isArray(telemetry)) {
+    return telemetry[0]
+  }
+  return telemetry
+}
+
+export const readPayload = async (store: typeof cache | typeof db, device_id: UUID): Promise<VehiclePayload> => {
+  const payload: VehiclePayload = {}
+  try {
+    payload.device = await store.readDevice(device_id)
+    payload.event = await store.readEvent(device_id)
+    payload.telemetry = normalizeTelemetry(await store.readTelemetry(device_id))
+  } catch (err) {
+    // TODO figure out how to handle failure(s)
+    await log.error(err)
+  }
+  return payload
 }
