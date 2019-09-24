@@ -1,7 +1,7 @@
 {
-  "name": "@container-images/mds-compliance",
+  "name": "@container-images/mds-policy-author",
   "version": "0.1.9",
-  "description": "Docker Image for MDS Compliance API",
+  "description": "Docker Image for MDS policy-author API",
   "main": "dist/index.js",
   "files": [
     "dist/"
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && docker build -t mds-compliance:${npm_package_version} . && docker tag mds-compliance:${npm_package_version} mds-compliance:latest",
+    "image": "yarn bundle && docker build -t mds-policy-author:${npm_package_version} . && docker tag mds-policy-author:${npm_package_version} mds-policy-author:latest",
     "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
@@ -24,7 +24,7 @@
   "dependencies": {
     "@container-images/env-inject": "0.1.9",
     "@mds-core/mds-api-server": "0.1.9",
-    "@mds-core/mds-compliance": "0.1.10"
+    "@mds-core/mds-policy-author": "0.0.6"
   },
   "license": "Apache-2.0"
 }
