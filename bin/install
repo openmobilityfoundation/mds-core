@@ -75,6 +75,7 @@ declare -A apps=(
   ["mds-native"]="https://localhost:[port]/native,mds,app"
   ["mds-policy"]="https://localhost:[port]/provider,mds,app"
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
+  ["mds-policy-author"]="https://localhost:[port]/provider,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
   ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
   ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
