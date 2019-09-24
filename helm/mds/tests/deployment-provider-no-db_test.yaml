@@ -88,33 +88,41 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: REDIS_HOST
+          value: TIMEZONE
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[1].value
-          value: mds-redis-master.mds.svc.cluster.local
+          value: America/Los_Angeles
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[2].name
-          value: REDIS_PORT
+          value: REDIS_HOST
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[2].value
-          value: "6379"
+          value: mds-redis-master.mds.svc.cluster.local
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[3].name
-          value: CE_NAME
+          value: REDIS_PORT
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[3].value
-          value: mds-provider
+          value: "6379"
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[4].name
-          value: SINK
+          value: CE_NAME
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[4].value
+          value: mds-provider
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[5].name
+          value: SINK
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[5].value
           value: http://default-broker.mds.svc.cluster.local
         documentIndex: 0

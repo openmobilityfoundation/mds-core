@@ -88,51 +88,51 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[1].name
-          value: PG_USER
+          value: TIMEZONE
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[1].value
-          value: mdsadmin
+          value: America/Los_Angeles
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[2].name
-          value: PG_NAME
+          value: PG_USER
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[2].value
-          value: mds
+          value: mdsadmin
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[3].name
-          value: PG_PASS
+          value: PG_NAME
         documentIndex: 0
       - equal:
-          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name
-          value: pg-pass
-        documentIndex: 0
-      - equal:
-          path: spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key
-          value: postgresql-password
+          path: spec.template.spec.containers[0].env[3].value
+          value: mds
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[4].name
-          value: PG_PORT
+          value: PG_PASS
         documentIndex: 0
       - equal:
-          path: spec.template.spec.containers[0].env[4].value
-          value: "5432"
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
+          value: pg-pass
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
+          value: postgresql-password
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[5].name
-          value: PG_HOST
+          value: PG_PORT
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[5].value
-          value: mds-postgresql.mds.svc.cluster.local
+          value: "5432"
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[6].name
-          value: PG_HOST_READER
+          value: PG_HOST
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[6].value
@@ -140,17 +140,25 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[7].name
-          value: REDIS_HOST
+          value: PG_HOST_READER
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: mds-redis-master.mds.svc.cluster.local
+          value: mds-postgresql.mds.svc.cluster.local
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[8].name
-          value: REDIS_PORT
+          value: REDIS_HOST
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[8].value
+          value: mds-redis-master.mds.svc.cluster.local
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: REDIS_PORT
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[9].value
           value: "6379"
         documentIndex: 0
