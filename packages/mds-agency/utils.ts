@@ -503,10 +503,17 @@ export const readPayload = async (store: typeof cache | typeof db, device_id: UU
   const payload: VehiclePayload = {}
   try {
     payload.device = await store.readDevice(device_id)
+  } catch (err) {
+    await log.error(err)
+  }
+  try {
     payload.event = await store.readEvent(device_id)
+  } catch (err) {
+    await log.error(err)
+  }
+  try {
     payload.telemetry = normalizeTelemetry(await store.readTelemetry(device_id))
   } catch (err) {
-    // TODO figure out how to handle failure(s)
     await log.error(err)
   }
   return payload
