@@ -1,7 +1,7 @@
 {
   "name": "@container-images/mds-metrics-sheet",
   "version": "0.1.10",
-  "description": "AWS Lambda for MDS Metrics Sheet",
+  "description": "Docker Image for MDS Metrics Sheet",
   "main": "dist/index.js",
   "files": [
     "dist/"
