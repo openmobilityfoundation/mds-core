@@ -40,7 +40,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].name
-          value: user-container
+          value: mds-agency
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].image

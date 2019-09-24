@@ -18,7 +18,7 @@ spec:
         app: {{ $api.name }}
     spec:
       containers:
-      - name: user-container
+      - name: {{ $api.name }}
         {{- if $.Values.registry }}
         image: {{ $.Values.registry }}/{{ $api.name }}:{{ $api.version }}
         {{- else }}

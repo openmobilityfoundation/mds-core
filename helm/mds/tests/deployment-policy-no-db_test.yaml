@@ -40,7 +40,7 @@ tests:
         documentIndex: 3
       - equal:
           path: spec.template.spec.containers[0].name
-          value: user-container
+          value: mds-policy
         documentIndex: 3
       - equal:
           path: spec.template.spec.containers[0].image

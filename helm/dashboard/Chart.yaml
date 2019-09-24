@@ -1,7 +1,0 @@
-apiVersion: v1
-name: dashboard
-version: 1.10.1
-keywords:
-  - dashboard
-sources:
-  - https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml

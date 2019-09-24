@@ -38,7 +38,7 @@ tests:
         documentIndex: 5
       - equal:
           path: spec.template.spec.containers[0].name
-          value: user-container
+          value: mds-daily
         documentIndex: 5
       - equal:
           path: spec.template.spec.containers[0].image
