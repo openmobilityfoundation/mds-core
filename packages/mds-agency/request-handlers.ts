@@ -15,7 +15,8 @@ import {
   VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_EVENT,
-  VEHICLE_REASON
+  VEHICLE_REASON,
+  UUID
 } from '@mds-core/mds-types'
 import urls from 'url'
 import {
@@ -173,6 +174,31 @@ export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyAp
   }
 }
 
+export async function updateVehicleFail(
+  req: AgencyApiRequest,
+  res: AgencyApiResponse,
+  provider_id: UUID,
+  device_id: UUID,
+  err: Error | string
+) {
+  if (String(err).includes('not found')) {
+    res.status(404).send({
+      error: 'not_found'
+    })
+  } else if (String(err).includes('invalid')) {
+    res.status(400).send({
+      error: 'invalid_data'
+    })
+  } else if (!provider_id) {
+    res.status(404).send({
+      error: 'not_found'
+    })
+  } else {
+    await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
+    res.status(500).send(new ServerError())
+  }
+}
+
 export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   const { device_id } = req.params
 
@@ -184,32 +210,13 @@ export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiRespons
 
   const { provider_id } = res.locals
 
-  async function fail(err: Error | string) {
-    /* istanbul ignore else cannot easily test server failure */
-    if (String(err).includes('not found')) {
-      res.status(404).send({
-        error: 'not_found'
-      })
-    } else if (String(err).includes('invalid')) {
-      res.status(400).send({
-        error: 'invalid_data'
-      })
-    } else if (!provider_id) {
-      res.status(404).send({
-        error: 'not_found'
-      })
-    } else {
-      await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
-      res.status(500).send(new ServerError())
-    }
-  }
-
   try {
     const tempDevice = await db.readDevice(device_id, provider_id)
     if (tempDevice.provider_id !== provider_id) {
-      await fail('not found')
+      await updateVehicleFail(req, res, provider_id, device_id, 'not found')
     } else {
       const device = await db.updateDevice(device_id, provider_id, update)
+      // TODO should we warn instead of fail if the cache/stream doesn't work?
       await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
       return res.status(201).send({
         result: 'success',
@@ -217,7 +224,7 @@ export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiRespons
       })
     }
   } catch (err) {
-    await fail(err)
+    await updateVehicleFail(req, res, provider_id, device_id, 'not found')
   }
 }
 

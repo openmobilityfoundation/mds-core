@@ -12,7 +12,9 @@ import {
   getServiceAreaById,
   registerVehicle,
   getVehicleById,
-  getVehiclesByProvider
+  getVehiclesByProvider,
+  updateVehicleFail,
+  updateVehicle
 } from '../request-handlers'
 import * as utils from '../utils'
 
@@ -365,6 +367,238 @@ describe('Agency API request handlers', () => {
       )
       assert.equal(statusHandler.calledWith(200), true)
       assert.equal(sendHandler.calledWith('it-worked'), true)
+      Sinon.restore()
+    })
+  })
+
+  describe('Update vehicle', () => {
+    describe('Failure handler helper', () => {
+      it('Fails to find data', async () => {
+        const provider_id = uuid()
+        const device_id = uuid()
+        const res: AgencyApiResponse = {} as AgencyApiResponse
+        const sendHandler = Sinon.fake.returns('asdf')
+        const statusHandler = Sinon.fake.returns({
+          send: sendHandler
+        } as any)
+        res.status = statusHandler
+        res.locals = { provider_id } as any
+        Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
+        await updateVehicleFail(
+          {
+            params: { device_id },
+            query: { cached: false },
+            get: Sinon.fake.returns('foo') as any
+          } as AgencyApiRequest,
+          res,
+          provider_id,
+          device_id,
+          'not found'
+        )
+        assert.equal(statusHandler.calledWith(404), true)
+        assert.equal(
+          sendHandler.calledWith({
+            error: 'not_found'
+          }),
+          true
+        )
+        Sinon.restore()
+      })
+
+      it('Handles invalid data', async () => {
+        const provider_id = uuid()
+        const device_id = uuid()
+        const res: AgencyApiResponse = {} as AgencyApiResponse
+        const sendHandler = Sinon.fake.returns('asdf')
+        const statusHandler = Sinon.fake.returns({
+          send: sendHandler
+        } as any)
+        res.status = statusHandler
+        res.locals = { provider_id } as any
+        Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
+        await updateVehicleFail(
+          {
+            params: { device_id },
+            query: { cached: false },
+            get: Sinon.fake.returns('foo') as any
+          } as AgencyApiRequest,
+          res,
+          provider_id,
+          device_id,
+          'invalid'
+        )
+        assert.equal(statusHandler.calledWith(400), true)
+        assert.equal(
+          sendHandler.calledWith({
+            error: 'invalid_data'
+          }),
+          true
+        )
+        Sinon.restore()
+      })
+
+      it('404s with no provider_id', async () => {
+        const provider_id = ''
+        const device_id = uuid()
+        const res: AgencyApiResponse = {} as AgencyApiResponse
+        const sendHandler = Sinon.fake.returns('asdf')
+        const statusHandler = Sinon.fake.returns({
+          send: sendHandler
+        } as any)
+        res.status = statusHandler
+        res.locals = { provider_id } as any
+        Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
+        await updateVehicleFail(
+          {
+            params: { device_id },
+            query: { cached: false },
+            get: Sinon.fake.returns('foo') as any
+          } as AgencyApiRequest,
+          res,
+          provider_id,
+          device_id,
+          'not found'
+        )
+        assert.equal(statusHandler.calledWith(404), true)
+        assert.equal(
+          sendHandler.calledWith({
+            error: 'not_found'
+          }),
+          true
+        )
+        Sinon.restore()
+      })
+
+      it('handles misc error', async () => {
+        const provider_id = uuid()
+        const device_id = uuid()
+        const res: AgencyApiResponse = {} as AgencyApiResponse
+        const sendHandler = Sinon.fake.returns('asdf')
+        const statusHandler = Sinon.fake.returns({
+          send: sendHandler
+        } as any)
+        res.status = statusHandler
+        res.locals = { provider_id } as any
+        Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
+        await updateVehicleFail(
+          {
+            params: { device_id },
+            query: { cached: false },
+            get: Sinon.fake.returns('foo') as any
+          } as AgencyApiRequest,
+          res,
+          provider_id,
+          device_id,
+          'misc-error'
+        )
+        assert.equal(statusHandler.calledWith(500), true)
+        assert.equal(sendHandler.called, true)
+        Sinon.restore()
+      })
+    })
+
+    it('Handles failure to update vehicle', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
+      await getVehiclesByProvider(
+        {
+          params: { device_id },
+          query: { cached: false },
+          get: Sinon.fake.returns('foo') as any
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(500), true)
+      assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
+
+    it('Fails to read vehicle', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const vehicle_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(db, 'readDevice', Sinon.fake.rejects('it-broke'))
+      await updateVehicle(
+        {
+          params: { device_id },
+          query: { cached: false },
+          get: Sinon.fake.returns('foo') as any,
+          body: { vehicle_id }
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(404), true)
+      assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
+
+    it('Handles mismatched provider', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const vehicle_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(db, 'readDevice', Sinon.fake.resolves({ provider_id: 'not-your-provider' }))
+      await updateVehicle(
+        {
+          params: { device_id },
+          query: { cached: false },
+          get: Sinon.fake.returns('foo') as any,
+          body: { vehicle_id }
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(404), true)
+      assert.equal(sendHandler.called, true)
+      Sinon.restore()
+    })
+
+    it('Updates vehicle successfully', async () => {
+      const provider_id = uuid()
+      const device_id = uuid()
+      const vehicle_id = uuid()
+      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const sendHandler = Sinon.fake.returns('asdf')
+      const statusHandler = Sinon.fake.returns({
+        send: sendHandler
+      } as any)
+      res.status = statusHandler
+      res.locals = { provider_id } as any
+      Sinon.replace(db, 'readDevice', Sinon.fake.resolves({ provider_id }))
+      Sinon.replace(db, 'updateDevice', Sinon.fake.resolves({ provider_id }))
+      Sinon.replace(cache, 'writeDevice', Sinon.fake.resolves({ provider_id }))
+      Sinon.replace(stream, 'writeDevice', Sinon.fake.resolves({ provider_id }))
+      await updateVehicle(
+        {
+          params: { device_id },
+          query: { cached: false },
+          get: Sinon.fake.returns('foo') as any,
+          body: { vehicle_id }
+        } as AgencyApiRequest,
+        res
+      )
+      assert.equal(statusHandler.calledWith(201), true)
+      assert.equal(sendHandler.called, true)
       Sinon.restore()
     })
   })
