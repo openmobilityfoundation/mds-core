@@ -358,9 +358,8 @@ installMds() {
 }
 
 installMetricsAdapter() {
-  kubectl get namespace metrics-adapter > /dev/null 2>&1 || {
-    helm install --name metrics-adapter --namespace metrics-adapter banzaicloud-stable/kube-metrics-adapter
-  }
+  helm status kube-metrics-adapter > /dev/null 2>&1 ||
+    helm install --name kube-metrics-adapter --namespace kube-system banzaicloud-stable/kube-metrics-adapter
 }
 
 installFallbackCertificate() {
@@ -539,8 +538,8 @@ cliRedis() {
 
 uninstallNamespace() {
   for ns in ${@}; do
-    echo "kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
-      ${configs[dryrun]:+--dry-run}"
+    kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
+      ${configs[dryrun]:+--dry-run}
   done; unset ns
 }
 
@@ -565,7 +564,7 @@ uninstallIngressGatewayCertificate() {
 }
 
 uninstallMetricsAdapter() {
-  helm delete --purge metrics-adapter
+  helm status kube-metrics-adapter > /dev/null 2>&1 && helm delete --purge kube-metrics-adapter
 }
 
 uninstallMds() {
