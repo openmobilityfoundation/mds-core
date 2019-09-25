@@ -586,7 +586,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(pathsFor('/vehicles'), checkScope(check => check('audits:vehicles:read')), async (req, res) => {
-    const { skip, take } = asPagingParams(req.query)
+    const { skip, take } = { skip: 0, take: 10000 }
     const bbox = JSON.parse(req.query.bbox)
 
     const url = urls.format({
