@@ -499,7 +499,7 @@ const normalizeTelemetry = (telemetry: TelemetryResult) => {
   return telemetry
 }
 
-export const readPayload = async (store: typeof cache | typeof db, device_id: UUID): Promise<VehiclePayload> => {
+export async function readPayload(store: typeof cache | typeof db, device_id: UUID): Promise<VehiclePayload> {
   const payload: VehiclePayload = {}
   try {
     payload.device = await store.readDevice(device_id)
