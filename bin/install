@@ -556,11 +556,13 @@ uninstallSimulator() {
 }
 
 uninstallFallbackCertificate() {
-  echo tbd
+  kubectl get secret gateway-fallback > /dev/null 2>&1 &&
+    kubectl delete secret gateway-fallback
 }
 
 uninstallIngressGatewayCertificate() {
-  echo tbd
+  kubectl get secret istio-ingressgateway-certs > /dev/null 2>&1 &&
+    kubectl delete secret istio-ingressgateway-certs
 }
 
 uninstallMetricsAdapter() {
