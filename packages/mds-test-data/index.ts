@@ -57,7 +57,7 @@ import {
   LIME_PROVIDER_ID,
   BIRD_PROVIDER_ID,
   TEST1_PROVIDER_ID,
-  TEST3_PROVIDER_ID,
+  MOCHA1_PROVIDER_ID,
   providerName
 } from '@mds-core/mds-providers'
 
@@ -72,7 +72,6 @@ const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
 const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
 const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
 const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
-const POLICY_JSON_MISSING_POLICY_ID_UUID = 'e5ddf6ec-8b45-42ec-a1b5-b72e24644e1c'
 const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
 const PROVIDER_SCOPES = 'admin:all'
@@ -556,7 +555,7 @@ function makeTrip(device: Device): Trip {
 
 export {
   BAD_PROVIDER_UUID,
-  TEST3_PROVIDER_ID as PROVIDER_UUID,
+  MOCHA1_PROVIDER_ID as PROVIDER_UUID,
   PROVIDER_AUTH,
   COMPLIANCE_AUTH,
   JUMP_TEST_DEVICE_1,

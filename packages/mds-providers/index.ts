@@ -19,14 +19,23 @@ export const BOLT_PROVIDER_ID = '3291c288-c9c8-42f1-bc3e-8502b077cd7f'
 export const CLEVR_PROVIDER_ID = 'daecbe87-a9f2-4a5a-b5df-8e3e14180513'
 export const SHERPA_LA_PROVIDER_ID = '3c95765d-4da6-41c6-b61e-1954472ec6c9'
 export const OJO_ELECTRIC_PROVIDER_ID = '8d293326-8464-4256-8312-617ebcd0efad'
-export const LADOT_PROVIDER_ID = '33bbcec3-f91b-4461-bc41-61711afb9460'
-export const BLUE_SYSTEMS_PROVIDER_ID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 
-// PROVIDER_ID values for testing
-export const TEST1_PROVIDER_ID = '0e9c4027-7fbd-4c29-a24b-c38239e9ab88'
+// Additional provider IDs in use (should be registered)
+export const LADOT_PROVIDER_ID = '33bbcec3-f91b-4461-bc41-61711afb9460'
+export const BLUE_SYSTEMS_PROVIDER_ID = '5674ea42-a2ab-42e0-b9fd-cbade6cb2561'
+export const TEST1_PROVIDER_ID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 export const TEST2_PROVIDER_ID = '45f37d69-73ca-4ca6-a461-e7283cffa01a'
-export const TEST3_PROVIDER_ID = 'c8051767-4b14-4794-abc1-85aad48baff1'
-export const TEST4_PROVIDER_ID = '8e09c43f-b442-425a-896d-ffd94eee8079'
+export const DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID = '11111111-2222-4444-8888-999999999999' // To be removed
+
+// Mocha testing PROVIDER_ID values
+export const MOCHA1_PROVIDER_ID = 'c8051767-4b14-4794-abc1-85aad48baff1'
+export const MOCHA2_PROVIDER_ID = '8e09c43f-b442-425a-896d-ffd94eee8079'
+export const MOCHA3_PROVIDER_ID = '396dc84c-a6fc-4672-867a-494d34299624'
+
+// Support PROVIDER_ID values (Reserved for support use)
+export const SUPPORT1_PROVIDER_ID = '09828cf3-9b85-449b-bc8f-d3aaef5c3448'
+export const SUPPORT2_PROVIDER_ID = 'fa5f6ce0-c038-4027-9c2c-a693f1ed7533'
+export const SUPPORT3_PROVIDER_ID = '9944b4cd-58a3-4969-a6d4-c131ff0b2111'
 
 const PROVIDER_IDS = [
   JUMP_PROVIDER_ID,
@@ -50,8 +59,13 @@ const PROVIDER_IDS = [
   LADOT_PROVIDER_ID,
   TEST1_PROVIDER_ID,
   TEST2_PROVIDER_ID,
-  TEST3_PROVIDER_ID,
-  TEST4_PROVIDER_ID
+  MOCHA1_PROVIDER_ID,
+  MOCHA2_PROVIDER_ID,
+  MOCHA3_PROVIDER_ID,
+  SUPPORT1_PROVIDER_ID,
+  SUPPORT2_PROVIDER_ID,
+  SUPPORT3_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID
 ] as const
 
 type PROVIDER_ID = typeof PROVIDER_IDS[number]
@@ -182,13 +196,34 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
     provider_id: TEST2_PROVIDER_ID,
     provider_name: 'Test 2'
   }),
-  [TEST3_PROVIDER_ID]: Object.freeze({
-    provider_id: TEST3_PROVIDER_ID,
-    provider_name: 'Test 3'
+  [MOCHA1_PROVIDER_ID]: Object.freeze({
+    provider_id: MOCHA1_PROVIDER_ID,
+    provider_name: 'Mocha 1'
   }),
-  [TEST4_PROVIDER_ID]: Object.freeze({
-    provider_id: TEST4_PROVIDER_ID,
-    provider_name: 'Test 4'
+  [MOCHA2_PROVIDER_ID]: Object.freeze({
+    provider_id: MOCHA2_PROVIDER_ID,
+    provider_name: 'Mocha 2'
+  }),
+  [MOCHA3_PROVIDER_ID]: Object.freeze({
+    provider_id: MOCHA3_PROVIDER_ID,
+    provider_name: 'Mocha 3'
+  }),
+  [SUPPORT1_PROVIDER_ID]: Object.freeze({
+    provider_id: SUPPORT1_PROVIDER_ID,
+    provider_name: 'Support 1'
+  }),
+  [SUPPORT2_PROVIDER_ID]: Object.freeze({
+    provider_id: SUPPORT2_PROVIDER_ID,
+    provider_name: 'Support 2'
+  }),
+  [SUPPORT3_PROVIDER_ID]: Object.freeze({
+    provider_id: SUPPORT3_PROVIDER_ID,
+    provider_name: 'Support 3'
+  }),
+  [DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID]: Object.freeze({
+    provider_id: BLUE_SYSTEMS_PROVIDER_ID,
+    provider_name: 'Blue Systems',
+    url: 'https://www.bluesystems.ai'
   })
 })
 
