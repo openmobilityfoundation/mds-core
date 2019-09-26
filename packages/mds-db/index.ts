@@ -267,7 +267,7 @@ async function readDevice(
   throw new Error(`device_id ${device_id} not found`)
 }
 
-async function readDeviceList(device_ids: UUID[]) {
+async function readDeviceList(device_ids: UUID[]): Promise<Recorded<Device>[]> {
   if (device_ids.length === 0) {
     return []
   }
@@ -379,7 +379,6 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   await logSql(countSql, countVals)
 
   const res = await client.query(countSql, countVals)
-  // log.warn(JSON.stringify(res))
   const count = parseInt(res.rows[0].count)
   let selectSql = `SELECT * FROM ${schema.TABLE.events} ${filter} ORDER BY recorded`
   if (typeof skip === 'number' && skip >= 0) {
@@ -395,6 +394,67 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   const events = res2.rows
   return {
     events,
+    count
+  }
+}
+async function readEventsForStatusChanges(params: ReadEventsQueryParams): Promise<ReadEventsResult> {
+  const { skip, take, start_time, end_time, start_recorded, end_recorded, device_id, trip_id } = params
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const conditions = []
+
+  if (start_time) {
+    conditions.push(`"timestamp" >= ${vals.add(start_time)}`)
+  }
+  if (end_time) {
+    conditions.push(`"timestamp" <= ${vals.add(end_time)}`)
+  }
+  if (start_recorded) {
+    conditions.push(`recorded >= ${vals.add(start_recorded)}`)
+  }
+  if (end_recorded) {
+    conditions.push(`recorded <= ${vals.add(end_recorded)}`)
+  }
+  if (device_id) {
+    conditions.push(`device_id = ${vals.add(device_id)}`)
+  }
+  if (trip_id) {
+    conditions.push(`trip_id = ${vals.add(trip_id)}`)
+  }
+
+  const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.events} ${filter}`
+  const countVals = vals.values()
+
+  await logSql(countSql, countVals)
+
+  const res = await client.query(countSql, countVals)
+  const count = parseInt(res.rows[0].count)
+
+  let selectSql = `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${schema.TABLE.events} ${filter} ORDER BY recorded`
+  if (typeof skip === 'number' && skip >= 0) {
+    selectSql += ` OFFSET ${vals.add(skip)}`
+  }
+  if (typeof take === 'number' && take >= 0) {
+    selectSql += ` LIMIT ${vals.add(take)}`
+  }
+  selectSql += `) AS E LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp ORDER BY recorded`
+  const selectVals = vals.values()
+  await logSql(selectSql, selectVals)
+  const res2 = await client.query(selectSql, selectVals)
+  return {
+    events: res2.rows.map(
+      ({ lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
+        ...event,
+        telemetry: telemetry_timestamp
+          ? {
+              timestamp: telemetry_timestamp,
+              gps: { lat, lng, speed, heading, accuracy, altitude },
+              charge
+            }
+          : null
+      })
+    ),
     count
   }
 }
@@ -1490,11 +1550,11 @@ async function readUnprocessedStatusChangeEvents(
   }
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng FROM (SELECT * FROM ${schema.TABLE.events} E ${where} ORDER BY E.id LIMIT ${vals.add(
-      take
-    )}) AS E LEFT JOIN ${
+    `SELECT E.*, T.lat, T.lng, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
+      schema.TABLE.events
+    } E ${where} ORDER BY E.id LIMIT ${vals.add(take)}) AS E LEFT JOIN ${
       schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
+    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp`,
     vals.values()
   )
 
@@ -1569,12 +1629,12 @@ async function readEventsWithTelemetry({
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge FROM (SELECT * FROM ${
+    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
       schema.TABLE.events
     }${where} ORDER BY id LIMIT ${vals.add(limit)}
     ) AS E LEFT JOIN ${
       schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ORDER BY id`,
+    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp ORDER BY id`,
     vals.values()
   )
 
@@ -1744,5 +1804,6 @@ export = {
   getEventsLast24HoursPerProvider,
   readUnprocessedStatusChangeEvents,
   readEventsWithTelemetry,
-  readTripIds
+  readTripIds,
+  readEventsForStatusChanges
 }

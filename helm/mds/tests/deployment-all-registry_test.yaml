@@ -1,0 +1,12 @@
+suite: test deployment all registry
+templates:
+  - deployment.yaml
+tests:
+  - it: all docs
+    set:
+      registry: foo-registry
+    release:
+      namespace: mds
+    asserts:
+      - hasDocuments:
+          count: 8

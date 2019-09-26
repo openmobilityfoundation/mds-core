@@ -93,16 +93,6 @@ function api(app: express.Express): express.Express {
    * NOTE that audit will be city-facing only, not Providers.
    */
   app.use(async (req: AuditApiRequest, res: AuditApiResponse, next) => {
-    // CORS, because we are webby, not machine-to-machine
-    res.header('Access-Control-Allow-Origin', '*')
-
-    /* istanbul ignore if */
-    if (req.method === 'OPTIONS') {
-      res.header('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, DELETE')
-      res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
-      // 200 OK
-      return res.sendStatus(200)
-    }
     if (!(req.path.includes('/health') || req.path === '/')) {
       if (res.locals.claims) {
         // verify presence of subject_id
@@ -596,7 +586,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(pathsFor('/vehicles'), checkScope(check => check('audits:vehicles:read')), async (req, res) => {
-    const { skip, take } = asPagingParams(req.query)
+    const { skip, take } = { skip: 0, take: 10000 }
     const bbox = JSON.parse(req.query.bbox)
 
     const url = urls.format({

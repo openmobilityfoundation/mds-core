@@ -540,39 +540,6 @@ describe('Testing API', () => {
           done(err)
         })
     })
-
-    it('Verifies proper pagination when getting vehicles inside of a bounding box', done => {
-      const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
-      request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}&skip=2&take=5`)
-        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.assert(result.body.vehicles.length === 5)
-          result.body.vehicles.forEach((device: Device & { updated?: Timestamp | null; telemetry: Telemetry }) => {
-            test.assert(typeof device.telemetry.gps.lat === 'number')
-            test.assert(typeof device.telemetry.gps.lng === 'number')
-            test.assert(typeof device.updated === 'number')
-          })
-          test.string(result.body.links.next).contains('http', 'skip=7&take=5')
-          done(err)
-        })
-    })
-
-    it('Verifies cannot read past the end when getting vehicles inside of a bounding box', done => {
-      const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
-      request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}&skip=10&take=5`)
-        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.assert(result.body.vehicles.length === 0)
-          test.string(result.body.links.last).contains('http', 'skip=10&take=5')
-          done(err)
-        })
-    })
   })
 })
 
