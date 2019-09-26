@@ -75,11 +75,11 @@ declare -A apps=(
   ["mds-compliance"]="https://localhost:[port]/compliance,mds,app"
   ["mds-daily"]="https://localhost:[port]/daily,mds,app"
   ["mds-native"]="https://localhost:[port]/native,mds,app"
-  ["mds-policy"]="https://localhost:[port]/provider,mds,app"
+  ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
-  ["mds-policy-author"]="https://localhost:[port]/provider,mds,app"
-  ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
-  ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
+  ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
+  ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
+  ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
   ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
@@ -636,7 +636,7 @@ getPort() {
     gp=$(get ${ga} 5 -1)
 
     [ ${gp} -eq -1 ] && {
-      (( $(kubectl -n kube-system get pod -l k8s-app=kubernetes-dashboard | wc -l) == 1 )) &&
+      (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
         gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
           -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
     }
