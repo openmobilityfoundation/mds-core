@@ -61,6 +61,8 @@ declare -A configs=(
   ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
+  ["namespace"]="${MDS_NAMESPACE:-default}"
+  ["namespace-mds"]="${MDS_NAMESPACE_MDS}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -73,11 +75,11 @@ declare -A apps=(
   ["mds-compliance"]="https://localhost:[port]/compliance,mds,app"
   ["mds-daily"]="https://localhost:[port]/daily,mds,app"
   ["mds-native"]="https://localhost:[port]/native,mds,app"
-  ["mds-policy"]="https://localhost:[port]/provider,mds,app"
+  ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-provider"]="https://localhost:[port]/provider,mds,app"
-  ["mds-policy-author"]="https://localhost:[port]/provider,mds,app"
-  ["mds-postgresql"]="https://localhost:[port]/provider,mds,app,postgresql"
-  ["mds-redis"]="https://localhost:[port]/provider,mds,app,redis"
+  ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
+  ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
+  ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
   ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],logging,app"
@@ -128,8 +130,9 @@ where service in:
   kiali
   istio
   mds
-  fallbackCertificate
-  ingressGatewayCertificate
+  fallbackCertificate                                 : requires ingress domain; eg: -c:ingress-domain=[DOMAIN]
+  ingressGatewayCertificate                           : requires certificate path; eg: -c:ingress-gateway-key-path=[KEY-PATH],ingress-gateway-certificate-path=[CERT-PATH]
+  metricsAdapter
   logging
   metrics
   bookinfo
@@ -170,13 +173,14 @@ bootstrap() {
     hash ${lc} > /dev/null 2>&1 || {
       brew install ${l}
 
+      # todo: unable to detect nvm install via subshell given it is an alias
       if [ "${l}" == "nvm" ]; then
         [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
-        [ $(grep -Fxq "export NMV_DIR=\"${HOME}\"" ~/.bashrc; echo $?) == "1" ] && \
-          echo "export NMV_DIR=\"${HOME}\"" >> ~/.bashrc
-        [ $(grep -Fxq "eval sh \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
-              echo "eval sh \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
-        sh $(brew --prefix nvm)/nvm.sh
+        [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
+          echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
+        [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
+              echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
+        . $(brew --prefix nvm)/nvm.sh
         nvm install node
         nvm use node
         nvm install 8.10.0
@@ -266,6 +270,12 @@ installDashboard() {
     ${configs[dryrun]:+--dry-run}
 }
 
+installNamespace() {
+  for ns in ${@}; do
+    kubectl get namespace ${ns} > /dev/null 2>&1 || kubectl create namespace ${ns} ${configs[dryrun]:+--dry-run}
+  done; unset ns
+}
+
 installIstio() {
   check ${FUNCNAME[0]}
 
@@ -277,7 +287,7 @@ installIstio() {
   kubectl get namespace istio-system > /dev/null 2>&1 || {
     ${configs[istio]}/bin/istioctl verify-install || error "istio verify installation failure"
 
-    kubectl create namespace istio-system ${configs[dryrun]:+--dry-run}
+    installNamespace istio-system
     pause 2
     helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
       --name istio-init --namespace istio-system | \
@@ -305,7 +315,7 @@ installLogging() {
   check ${FUNCNAME[0]}
 
   kubectl get namespace logging > /dev/null 2>&1 || {
-    kubectl create namespace logging ${configs[dryrun]:+--dry-run}
+    installNamespace logging
     labelNamespaceIstioInjection logging
     helm install ./helm/logging --name logging --namespace logging \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
@@ -319,7 +329,7 @@ installMetrics() {
   check ${FUNCNAME[0]}
 
   kubectl get namespace metrics > /dev/null 2>&1 || {
-    kubectl create namespace metrics ${configs[dryrun]:+--dry-run}
+    installNamespace metrics
     helm install ./helm/metrics --name metrics --namespace metrics \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
@@ -332,10 +342,10 @@ installMds() {
   check ${FUNCNAME[0]}
 
   installFallbackCertificate
-  kubectl get namespace mds > /dev/null 2>&1 || {
-    kubectl create namespace mds ${configs[dryrun]:+--dry-run}
-    labelNamespaceIstioInjection mds
-    helm install ./helm/mds --name mds --namespace mds \
+  kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-mds]:-mds}
+    labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
+    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -345,6 +355,11 @@ installMds() {
       ${configs[dryrun]:+--dry-run --debug}
     pause 12
   }
+}
+
+installMetricsAdapter() {
+  helm status kube-metrics-adapter > /dev/null 2>&1 ||
+    helm install --name kube-metrics-adapter --namespace kube-system banzaicloud-stable/kube-metrics-adapter
 }
 
 installFallbackCertificate() {
@@ -394,7 +409,7 @@ installBookinfo() {
   check ${FUNCNAME[0]}
 
   kubectl get namespace bookinfo-app > /dev/null 2>&1 || {
-    kubectl create namespace bookinfo-app ${configs[dryrun]:+--dry-run}
+    installNamespace bookinfo-app
     labelNamespaceIstioInjection bookinfo-app
     kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml \
       ${configs[dryrun]:+--dry-run}
@@ -521,7 +536,7 @@ cliRedis() {
   redis-cli -u redis://localhost:6379/0
 }
 
-uninstallNamespaces() {
+uninstallNamespace() {
   for ns in ${@}; do
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
@@ -529,7 +544,7 @@ uninstallNamespaces() {
 }
 
 uninstallBookinfo() {
-  uninstallNamespaces bookinfo-app
+  uninstallNamespace bookinfo-app
 }
 
 uninstallSimulator() {
@@ -540,16 +555,30 @@ uninstallSimulator() {
   [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
 }
 
+uninstallFallbackCertificate() {
+  kubectl get secret gateway-fallback > /dev/null 2>&1 &&
+    kubectl delete secret gateway-fallback
+}
+
+uninstallIngressGatewayCertificate() {
+  kubectl get secret istio-ingressgateway-certs > /dev/null 2>&1 &&
+    kubectl delete secret istio-ingressgateway-certs
+}
+
+uninstallMetricsAdapter() {
+  helm status kube-metrics-adapter > /dev/null 2>&1 && helm delete --purge kube-metrics-adapter
+}
+
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstallNamespaces mds
+  uninstallNamespace ${configs[namespace-mds]:-mds}
 }
 
 uninstallMetrics() {
   check ${FUNCNAME[0]}
   helm delete --purge metrics ${configs[dryrun]:+--dry-run}
-  uninstallNamespaces metrics
+  uninstallNamespace metrics
 }
 
 uninstallLogging() {
@@ -560,7 +589,7 @@ uninstallLogging() {
 uninstallKiali() {
   unforward kiali
   helm delete --purge kiali
-  uninstallNamespaces kiali
+  uninstallNamespace kiali
   # kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
   kubectl get namespace kiali > /dev/null 2>&1 && kubectl delete namespace kiali \
     ${configs[dryrun]:+--dry-run}
@@ -584,7 +613,7 @@ uninstallIstio() {
 uninstallDashboard() {
   unforward dashboard
   helm delete --purge dashboard
-  uninstallNamespaces dashboard
+  uninstallNamespace dashboard
   kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
   kubectl get namespace dashboard > /dev/null 2>&1 && kubectl delete namespace dashboard \
     ${configs[dryrun]:+--dry-run}
@@ -607,7 +636,7 @@ getPort() {
     gp=$(get ${ga} 5 -1)
 
     [ ${gp} -eq -1 ] && {
-      (( $(kubectl -n kube-system get pod -l k8s-app=kubernetes-dashboard | wc -l) == 1 )) &&
+      (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
         gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
           -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
     }
@@ -668,7 +697,7 @@ invoke() {
 }
 
 normalize() {
-  echo ${1} | cut -d ':' -f 2- | tr ',' ' '
+  echo ${1} | cut -d ${2:-:} -f 2- | tr ',' ' '
 }
 
 configure() {
@@ -695,6 +724,7 @@ for arg in "${@}"; do
   case "${arg}" in
     bootstrap) bootstrap || warn  "${arg} failure";;
     build) build || usage "${arg} failure";;
+    install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
     test) arg="${configs[test]}";&
@@ -708,6 +738,7 @@ for arg in "${@}"; do
     open) usage "specify an application(s) to open";;
     open:*) app "$(normalize ${arg})";;
     cli:*) invoke cli "$(normalize ${arg})";;
+    uninstall:namespace=*) uninstallNamespace "$(normalize ${arg} =)";;
     uninstall) arg="${configs[uninstall]}";&
     uninstall:*) invoke uninstall "$(normalize ${arg})";;
     reinstall) arg="${configs[reinstall]}";&
