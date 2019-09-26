@@ -1,5 +1,5 @@
 {{- if .Values.jwt.enabled }}
-{{- range $api := .Values.apis }}
+{{- range $key, $api := .Values.apis }}
 ---
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy

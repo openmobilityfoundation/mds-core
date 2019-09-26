@@ -1,4 +1,4 @@
-{{- range $api := .Values.apis }}
+{{- range $key, $api := .Values.apis }}
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:

@@ -1,4 +1,4 @@
-{{- range $api := .Values.apis }}
+{{- range $key, $api := .Values.apis }}
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:

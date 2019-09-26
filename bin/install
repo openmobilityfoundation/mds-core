@@ -56,9 +56,9 @@ declare -A configs=(
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency-migration.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
+  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
