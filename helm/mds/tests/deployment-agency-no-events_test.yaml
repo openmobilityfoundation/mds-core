@@ -162,3 +162,7 @@ tests:
           path: spec.template.spec.containers[0].env[9].value
           value: "6379"
         documentIndex: 0
+      # fixme: test non-existence
+      # - isNull:
+      #     path: spec.template.spec.containers[0].env[10]
+      #   documentIndex: 1

@@ -108,7 +108,7 @@ tests:
         documentIndex: 5
       - equal:
           path: spec.template.spec.containers[0].env[3].value
-          value: "6379"
+          value: '6379'
         documentIndex: 5
       - equal:
           path: spec.template.spec.containers[0].env[4].name
@@ -125,4 +125,4 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[5].value
           value: http://default-broker.mds.svc.cluster.local
-        1documentIndex: 5
+        documentIndex: 5
