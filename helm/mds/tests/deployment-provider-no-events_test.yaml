@@ -5,8 +5,8 @@ tests:
   - it: doc 7
     release:
       namespace: mds
-    values:
-      - ./deployment-values-no-events.yaml
+    set:
+      apis.mds-provider.useEvents: false
     asserts:
       - isAPIVersion:
           of: apps/v1

@@ -5,8 +5,8 @@ tests:
   - it: doc 6
     release:
       namespace: mds
-    values:
-      - ./deployment-values-no-db.yaml
+    set:
+      apis.mds-policy-author.useDB: false
     asserts:
       - isAPIVersion:
           of: apps/v1

@@ -5,8 +5,8 @@ tests:
   - it: doc 3
     release:
       namespace: mds
-    values:
-      - ./deployment-values-no-db.yaml
+    set:
+      apis.mds-daily.useDB: false
     asserts:
       - isAPIVersion:
           of: apps/v1

@@ -5,8 +5,8 @@ tests:
   - it: doc 5
     release:
       namespace: mds
-    values:
-      - ./deployment-values-no-cache.yaml
+    set:
+      apis.mds-policy.useCache: false
     asserts:
       - isAPIVersion:
           of: apps/v1
