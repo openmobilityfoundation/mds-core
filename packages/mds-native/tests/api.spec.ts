@@ -9,8 +9,7 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { AccessTokenScope } from '@mds-core/mds-api-scopes'
-import { PROVIDER_UUID } from '@mds-core/mds-test-data'
+import { PROVIDER_UUID, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { providers } from '@mds-core/mds-providers'
 import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
@@ -22,9 +21,10 @@ const provider_id = PROVIDER_UUID
 const device_id = uuid()
 
 const request = supertest(ApiServer(api))
-
-const SCOPED_AUTH = (...scopes: AccessTokenScope[]) =>
-  `basic ${Buffer.from(`${PROVIDER_UUID}|${scopes.join(' ')}`).toString('base64')}`
+const EMPTY_SCOPE = SCOPED_AUTH([], '')
+const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
+const VEHICLES_READ_SCOPE = SCOPED_AUTH(['vehicles:read'])
+const PROVIDERS_READ_SCOPE = SCOPED_AUTH(['providers:read'])
 
 before('Initializing Database', async () => {
   await db.initialize()
@@ -72,7 +72,7 @@ describe('Verify API', () => {
   it('Get Events (no scope)', done => {
     request
       .get('/native/events')
-      .set('Authorization', SCOPED_AUTH())
+      .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -83,7 +83,7 @@ describe('Verify API', () => {
   it('Get Events', done => {
     request
       .get('/native/events')
-      .set('Authorization', SCOPED_AUTH('events:read'))
+      .set('Authorization', EVENTS_READ_SCOPE)
       .expect(200)
       .end((err1, result1) => {
         test.value(result1).hasHeader('content-type', APP_JSON)
@@ -97,7 +97,7 @@ describe('Verify API', () => {
         } else {
           request
             .get(`/native/events/${result1.body.cursor}`)
-            .set('Authorization', SCOPED_AUTH('events:read'))
+            .set('Authorization', EVENTS_READ_SCOPE)
             .expect(200)
             .end((err2, result2) => {
               test.value(result2).hasHeader('content-type', APP_JSON)
@@ -110,7 +110,7 @@ describe('Verify API', () => {
               } else {
                 request
                   .get(`/native/events/${result1.body.cursor}?provider_id=invalid-filter-with-cursor`)
-                  .set('Authorization', SCOPED_AUTH('events:read'))
+                  .set('Authorization', EVENTS_READ_SCOPE)
                   .expect(400)
                   .end(err3 => {
                     test.value(result2).hasHeader('content-type', APP_JSON)
@@ -125,7 +125,7 @@ describe('Verify API', () => {
   it('Get Events (Bad Request)', done => {
     request
       .get('/native/events?provider_id=invalid-provider-id')
-      .set('Authorization', SCOPED_AUTH('events:read'))
+      .set('Authorization', EVENTS_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -136,7 +136,7 @@ describe('Verify API', () => {
   it('Get Events (Bad Cursor)', done => {
     request
       .get('/native/events/invalid-cursor')
-      .set('Authorization', SCOPED_AUTH('events:read'))
+      .set('Authorization', EVENTS_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -157,7 +157,7 @@ describe('Verify API', () => {
   it('Get Vehicle (no scope)', done => {
     request
       .get(`/native/vehicles/${device_id}`)
-      .set('Authorization', SCOPED_AUTH())
+      .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -168,7 +168,7 @@ describe('Verify API', () => {
   it('Get Vehicle', done => {
     request
       .get(`/native/vehicles/${device_id}`)
-      .set('Authorization', SCOPED_AUTH('vehicles:read'))
+      .set('Authorization', VEHICLES_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -182,7 +182,7 @@ describe('Verify API', () => {
   it('Get Vehicle (not found)', done => {
     request
       .get(`/native/vehicles/${uuid()}`)
-      .set('Authorization', SCOPED_AUTH('vehicles:read'))
+      .set('Authorization', VEHICLES_READ_SCOPE)
       .expect(404)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -193,7 +193,7 @@ describe('Verify API', () => {
   it('Get Vehicle (bad request)', done => {
     request
       .get(`/native/vehicles/invalid-device-id`)
-      .set('Authorization', SCOPED_AUTH('vehicles:read'))
+      .set('Authorization', VEHICLES_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -214,7 +214,7 @@ describe('Verify API', () => {
   it('Get Providers (no scope)', done => {
     request
       .get(`/native/providers`)
-      .set('Authorization', SCOPED_AUTH())
+      .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -225,7 +225,7 @@ describe('Verify API', () => {
   it('Get Providers', done => {
     request
       .get(`/native/providers`)
-      .set('Authorization', SCOPED_AUTH('providers:read'))
+      .set('Authorization', PROVIDERS_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
