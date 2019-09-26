@@ -29,7 +29,7 @@ import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import uuidv4 from 'uuid/v4'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST5_PROVIDER_ID } from '@mds-core/mds-providers'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -38,7 +38,7 @@ const agency_request = supertest(ApiServer(agency))
 
 const PROVIDER_SCOPES = 'admin:all'
 const PROVIDER_AUTH_2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const PROVIDER_AUTH_5 = `basic ${Buffer.from(`${TEST5_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const PROVIDER_AUTH_5 = `basic ${Buffer.from(`${TEST4_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
