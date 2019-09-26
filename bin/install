@@ -62,7 +62,9 @@ declare -A configs=(
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
-  ["namespace-mds"]="${MDS_NAMESPACE_MDS}"
+  ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
+  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
+  ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
@@ -315,9 +317,9 @@ installLogging() {
   check ${FUNCNAME[0]}
 
   kubectl get namespace logging > /dev/null 2>&1 || {
-    installNamespace logging
-    labelNamespaceIstioInjection logging
-    helm install ./helm/logging --name logging --namespace logging \
+    installNamespace ${configs[namespace-logging]}
+    labelNamespaceIstioInjection ${configs[namespace-logging]}
+    helm install ./helm/logging --name logging --namespace ${configs[namespace-logging]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -342,10 +344,10 @@ installMds() {
   check ${FUNCNAME[0]}
 
   installFallbackCertificate
-  kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
-    installNamespace ${configs[namespace-mds]:-mds}
-    labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
-    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
+  kubectl get namespace ${configs[namespace-mds]} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-mds]}
+    labelNamespaceIstioInjection ${configs[namespace-mds]}
+    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -359,7 +361,8 @@ installMds() {
 
 installMetricsAdapter() {
   helm status kube-metrics-adapter > /dev/null 2>&1 ||
-    helm install --name kube-metrics-adapter --namespace kube-system banzaicloud-stable/kube-metrics-adapter
+    helm install --name kube-metrics-adapter --namespace ${configs[namespace-metrics-adapter]} \
+      banzaicloud-stable/kube-metrics-adapter
 }
 
 installFallbackCertificate() {
@@ -572,7 +575,7 @@ uninstallMetricsAdapter() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstallNamespace ${configs[namespace-mds]:-mds}
+  uninstallNamespace ${configs[namespace-mds]}
 }
 
 uninstallMetrics() {

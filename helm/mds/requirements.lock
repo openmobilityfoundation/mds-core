@@ -5,8 +5,5 @@ dependencies:
 - name: postgresql
   repository: https://kubernetes-charts.storage.googleapis.com
   version: 6.2.1
-- name: fluent-bit
-  repository: https://kubernetes-charts.storage.googleapis.com
-  version: 2.7.0
-digest: sha256:0122acb53348481d776250a4e51b0320e6002463276b0611dd3e76a75523c649
-generated: "2019-09-05T12:52:35.64059-07:00"
+digest: sha256:46befe87aa04bda44a3441c3307d2441cc29d2cb611f180a59778520c316f46f
+generated: "2019-09-26T14:22:40.927008-07:00"
