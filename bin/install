@@ -63,7 +63,8 @@ declare -A configs=(
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
   ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
-  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
+  # todo: consider changing to ns:util
+  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-logging}"
   ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A helmRepositories=(
@@ -316,9 +317,9 @@ labelNamespaceIstioInjection() {
 installLogging() {
   check ${FUNCNAME[0]}
 
-  kubectl get namespace logging > /dev/null 2>&1 || {
+  kubectl get namespace ${configs[namespace-logging]} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-logging]}
-    labelNamespaceIstioInjection ${configs[namespace-logging]}
+    # labelNamespaceIstioInjection ${configs[namespace-logging]}
     helm install ./helm/logging --name logging --namespace ${configs[namespace-logging]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
@@ -360,6 +361,8 @@ installMds() {
 }
 
 installMetricsAdapter() {
+  check ${FUNCNAME[0]}
+
   helm status kube-metrics-adapter > /dev/null 2>&1 ||
     helm install --name kube-metrics-adapter --namespace ${configs[namespace-metrics-adapter]} \
       banzaicloud-stable/kube-metrics-adapter
@@ -570,6 +573,7 @@ uninstallIngressGatewayCertificate() {
 
 uninstallMetricsAdapter() {
   helm status kube-metrics-adapter > /dev/null 2>&1 && helm delete --purge kube-metrics-adapter
+  uninstallNamespace ${configs[namespace-metrics-adapter]}
 }
 
 uninstallMds() {
@@ -587,6 +591,7 @@ uninstallMetrics() {
 uninstallLogging() {
   check ${FUNCNAME[0]}
   helm delete --purge logging ${configs[dryrun]:+--dry-run}
+  uninstallNamespace ${configs[namespace-logging]}
 }
 
 uninstallKiali() {
@@ -674,9 +679,11 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
-    installDashboard | installLogging | installMetrics | installMds)
+    installDashboard | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
+    installLogging | installMetricsAdpater)
+      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm;;
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
