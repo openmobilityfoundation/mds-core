@@ -27,7 +27,7 @@ spec:
           - containerPort: 2020
         env:
         - name: FLUENT_ELASTICSEARCH_HOST
-          value: "elasticsearch-client"
+          value: "elasticsearch-master.logging"
         - name: FLUENT_ELASTICSEARCH_PORT
           value: "9200"
         volumeMounts:

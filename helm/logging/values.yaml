@@ -1,11 +1,7 @@
 elasticsearch:
   enabled: true
-  master:
-    persistence:
-      enabled: false
-  data:
-    persistence:
-      enabled: false
+  persistence:
+    enabled: false
   replicas: 1
   minimumMasterNodes: 1
   resources:
