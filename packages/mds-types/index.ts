@@ -280,6 +280,7 @@ export interface Policy {
   publish_date?: Timestamp
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PolicyMetadata {
   policy_id: UUID
   policy_metadata: Record<string, any>
@@ -334,7 +335,7 @@ export interface Geography {
   geography_json: FeatureCollection
   read_only?: boolean
   previous_geography_ids?: UUID[]
-  name?: string
+  name: string
 }
 
 export interface GeographyMetadata {
