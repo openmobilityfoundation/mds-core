@@ -12,7 +12,8 @@ import {
   DeviceID,
   Rule,
   GeographyMetadata,
-  PolicyMetadata
+  PolicyMetadata,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import {
   convertTelemetryToTelemetryRecord,
@@ -25,12 +26,12 @@ import {
   yesterday,
   csv,
   NotFoundError,
-  BadParamsError
+  BadParamsError,
+  AlreadyPublishedError
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import { QueryResult } from 'pg'
-import { VEHICLE_EVENT } from 'packages/mds-types/dist'
 import { dropTables, updateSchema } from './migration'
 import {
   ReadEventsResult,
@@ -266,7 +267,7 @@ async function readDevice(
   throw new Error(`device_id ${device_id} not found`)
 }
 
-async function readDeviceList(device_ids: UUID[]) {
+async function readDeviceList(device_ids: UUID[]): Promise<Recorded<Device>[]> {
   if (device_ids.length === 0) {
     return []
   }
@@ -378,7 +379,6 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   await logSql(countSql, countVals)
 
   const res = await client.query(countSql, countVals)
-  // log.warn(JSON.stringify(res))
   const count = parseInt(res.rows[0].count)
   let selectSql = `SELECT * FROM ${schema.TABLE.events} ${filter} ORDER BY recorded`
   if (typeof skip === 'number' && skip >= 0) {
@@ -394,6 +394,67 @@ async function readEvents(params: ReadEventsQueryParams): Promise<ReadEventsResu
   const events = res2.rows
   return {
     events,
+    count
+  }
+}
+async function readEventsForStatusChanges(params: ReadEventsQueryParams): Promise<ReadEventsResult> {
+  const { skip, take, start_time, end_time, start_recorded, end_recorded, device_id, trip_id } = params
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const conditions = []
+
+  if (start_time) {
+    conditions.push(`"timestamp" >= ${vals.add(start_time)}`)
+  }
+  if (end_time) {
+    conditions.push(`"timestamp" <= ${vals.add(end_time)}`)
+  }
+  if (start_recorded) {
+    conditions.push(`recorded >= ${vals.add(start_recorded)}`)
+  }
+  if (end_recorded) {
+    conditions.push(`recorded <= ${vals.add(end_recorded)}`)
+  }
+  if (device_id) {
+    conditions.push(`device_id = ${vals.add(device_id)}`)
+  }
+  if (trip_id) {
+    conditions.push(`trip_id = ${vals.add(trip_id)}`)
+  }
+
+  const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.events} ${filter}`
+  const countVals = vals.values()
+
+  await logSql(countSql, countVals)
+
+  const res = await client.query(countSql, countVals)
+  const count = parseInt(res.rows[0].count)
+
+  let selectSql = `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${schema.TABLE.events} ${filter} ORDER BY recorded`
+  if (typeof skip === 'number' && skip >= 0) {
+    selectSql += ` OFFSET ${vals.add(skip)}`
+  }
+  if (typeof take === 'number' && take >= 0) {
+    selectSql += ` LIMIT ${vals.add(take)}`
+  }
+  selectSql += `) AS E LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp ORDER BY recorded`
+  const selectVals = vals.values()
+  await logSql(selectSql, selectVals)
+  const res2 = await client.query(selectSql, selectVals)
+  return {
+    events: res2.rows.map(
+      ({ lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
+        ...event,
+        telemetry: telemetry_timestamp
+          ? {
+              timestamp: telemetry_timestamp,
+              gps: { lat, lng, speed, heading, accuracy, altitude },
+              charge
+            }
+          : null
+      })
+    ),
     count
   }
 }
@@ -1043,7 +1104,22 @@ async function getLatestTripTime(): Promise<number> {
   return getLatestTime(schema.TABLE.trips, 'trip_end')
 }
 
-async function readGeographies(params?: { geography_id?: UUID; get_read_only?: boolean }): Promise<Geography[]> {
+async function readSingleGeography(geography_id: UUID): Promise<Geography> {
+  try {
+    const client = await getReadOnlyClient()
+
+    const sql = `select * from ${schema.TABLE.geographies} where geography_id = '${geography_id}'`
+    const { rows } = await client.query(sql)
+
+    const { id, ...geography } = rows[0]
+    return geography
+  } catch (err) {
+    await log.error('readSingleGeography', err)
+    throw new NotFoundError(`could not find geography ${geography_id}`)
+  }
+}
+
+async function readGeographies(params?: { get_read_only?: boolean }): Promise<Geography[]> {
   // use params to filter
   // query on ids
   // return geographies
@@ -1053,9 +1129,6 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     let sql = `select * from ${schema.TABLE.geographies}`
     const conditions = []
     const vals = new SqlVals()
-    if (params && params.geography_id) {
-      conditions.push(`geography_id = ${vals.add(params.geography_id)}`)
-    }
 
     if (params && params.get_read_only) {
       conditions.push(`read_only IS TRUE`)
@@ -1069,18 +1142,33 @@ async function readGeographies(params?: { geography_id?: UUID; get_read_only?: b
     // TODO insufficiently general
     // TODO add 'count'
     const { rows } = await client.query(sql, values)
-    if (rows.length === 0) {
-      if (params && params.geography_id) {
-        throw new NotFoundError(`geography ${params.geography_id}`)
-      } else {
-        throw new NotFoundError(`geographies not found`)
-      }
-    }
-    return rows
+
+    return rows.map(row => {
+      const { id, ...geography } = row
+      return geography
+    })
   } catch (err) {
     await log.error('readGeographies', err)
     throw err
   }
+}
+
+async function readBulkGeographyMetadata(params?: { get_read_only?: boolean }): Promise<GeographyMetadata[]> {
+  const geographies = await readGeographies(params)
+  const geography_ids = geographies.map(geography => {
+    return `'${geography.geography_id}'`
+  })
+
+  if (geography_ids.length === 0) {
+    return []
+  }
+  const sql = `select * from ${schema.TABLE.geography_metadata} where geography_id in (${geography_ids.join(',')})`
+
+  const client = await getReadOnlyClient()
+  const res = await client.query(sql)
+  return res.rows.map(row => {
+    return { geography_id: row.geography_id, geography_metadata: row.geography_metadata }
+  })
 }
 
 async function writeGeography(geography: Geography): Promise<Recorded<Geography>> {
@@ -1134,36 +1222,58 @@ async function deleteGeography(geography_id: UUID) {
 }
 
 async function publishGeography(geography_id: UUID) {
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
-  await client.query(sql)
-  return geography_id
+  try {
+    const client = await getWriteableClient()
+    const geography = await readSingleGeography(geography_id)
+    if (!geography) {
+      throw new NotFoundError('cannot publish nonexistent geography')
+    }
+    const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
+    await client.query(sql)
+    return geography_id
+  } catch (err) {
+    await log.error(err)
+    throw err
+  }
 }
 
-async function writeGeographyMetadata(geography_id: UUID, metadata: GeographyMetadata) {
+async function writeGeographyMetadata(geography_metadata: GeographyMetadata) {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.geography_metadata} (${cols_sql(
     schema.TABLE_COLUMNS.geography_metadata
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.geography_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, { geography_id, geography_metadata: metadata })
+  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, {
+    geography_id: geography_metadata.geography_id,
+    geography_metadata: geography_metadata.geography_metadata
+  })
   const {
     rows: [recorded_metadata]
   }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
-  return { ...metadata, ...recorded_metadata }
+  return { ...geography_metadata, ...recorded_metadata }
 }
 
-async function readGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
+async function readSingleGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
   const client = await getReadOnlyClient()
   const sql = `SELECT * FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
-  try {
-    const result = await client.query(sql)
-    if (result.rows.length === 0) {
-      throw new Error(`Metadata for ${geography_id} not found`)
-    }
-    return result.rows[0]
-  } catch (err) {
-    await log.error(err)
-    throw err
+  const result = await client.query(sql)
+  if (result.rows.length === 0) {
+    throw new NotFoundError(`Metadata for ${geography_id} not found`)
+  }
+  return { geography_id, geography_metadata: result.rows[0].geography_metadata }
+}
+
+async function updateGeographyMetadata(geography_metadata: GeographyMetadata) {
+  await readSingleGeographyMetadata(geography_metadata.geography_id)
+  const client = await getWriteableClient()
+  const sql = `UPDATE ${schema.TABLE.geography_metadata}
+    SET geography_metadata = '${JSON.stringify(geography_metadata.geography_metadata)}'
+    WHERE geography_id = '${geography_metadata.geography_id}'`
+  const {
+    rows: [recorded_metadata]
+  }: { rows: Recorded<GeographyMetadata>[] } = await client.query(sql)
+  return {
+    ...geography_metadata,
+    ...recorded_metadata
   }
 }
 
@@ -1214,6 +1324,44 @@ async function readPolicies(params?: {
   return res.rows.map(row => row.policy_json)
 }
 
+async function readBulkPolicyMetadata(params?: {
+  policy_id?: UUID
+  name?: string
+  description?: string
+  start_date?: Timestamp
+  get_unpublished?: boolean
+  get_published?: boolean
+}): Promise<PolicyMetadata[]> {
+  const policies = await readPolicies(params)
+  const policy_ids = policies.map(policy => {
+    return `'${policy.policy_id}'`
+  })
+
+  if (policy_ids.length === 0) {
+    return []
+  }
+  const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id in (${policy_ids.join(',')})`
+
+  const client = await getReadOnlyClient()
+  const res = await client.query(sql)
+  return res.rows.map(row => {
+    return { policy_id: row.policy_id, policy_metadata: row.policy_metadata }
+  })
+}
+
+async function readSinglePolicyMetadata(policy_id: UUID): Promise<PolicyMetadata> {
+  const client = await getReadOnlyClient()
+
+  const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id = '${policy_id}'`
+  const res = await client.query(sql)
+  if (res.rows.length === 1) {
+    const { policy_metadata } = res.rows[0]
+    return { policy_id, policy_metadata }
+  }
+  await log.info(`readSinglePolicyMetadata db failed for ${policy_id}: rows=${res.rows.length}`)
+  throw new NotFoundError(`metadata for policy_id ${policy_id} not found`)
+}
+
 async function readPolicy(policy_id: UUID): Promise<Policy> {
   const client = await getReadOnlyClient()
 
@@ -1254,7 +1402,7 @@ async function editPolicy(policy: Policy) {
   const { policy_id } = policy
 
   if (await isPolicyPublished(policy_id)) {
-    throw new Error('Cannot edit published policy')
+    throw new AlreadyPublishedError('Cannot edit published policy')
   }
 
   const result = await readPolicies({ policy_id, get_unpublished: true })
@@ -1283,7 +1431,7 @@ async function publishPolicy(policy_id: UUID) {
   try {
     const client = await getWriteableClient()
     if (await isPolicyPublished(policy_id)) {
-      throw new Error('Cannot re-publish existing policy')
+      throw new AlreadyPublishedError('Cannot re-publish existing policy')
     }
 
     const policy = (await readPolicies({ policy_id, get_unpublished: true }))[0]
@@ -1292,23 +1440,10 @@ async function publishPolicy(policy_id: UUID) {
     }
 
     const geographies: UUID[] = []
-    log.info('about to publish some fine geographies')
     policy.rules.forEach(rule => {
       rule.geographies.forEach(geography_id => {
         geographies.push(geography_id)
       })
-    })
-
-    await Promise.all(
-      geographies.map(geography_id => {
-        return readGeographies({ geography_id })
-      })
-    )
-    const publishPolicySQL = `UPDATE ${
-      schema.TABLE.policies
-    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
-    await client.query(publishPolicySQL).catch(err => {
-      throw err
     })
     await Promise.all(
       geographies.map(geography_id => {
@@ -1322,6 +1457,14 @@ async function publishPolicy(policy_id: UUID) {
         log.info('published geography', geography_id, ispublished)
       })
     )
+
+    // Only publish the policy if the geographies are successfully published first
+    const publishPolicySQL = `UPDATE ${
+      schema.TABLE.policies
+    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
+    await client.query(publishPolicySQL).catch(err => {
+      throw err
+    })
     return policy_id
   } catch (err) {
     await log.error(err)
@@ -1329,30 +1472,38 @@ async function publishPolicy(policy_id: UUID) {
   }
 }
 
-async function writePolicyMetadata(policy_id: UUID, metadata: PolicyMetadata) {
+async function writePolicyMetadata(policy_metadata: PolicyMetadata) {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.policy_metadata} (${cols_sql(
     schema.TABLE_COLUMNS.policy_metadata
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.policy_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, { policy_id, policy_metadata: metadata })
+  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, {
+    policy_id: policy_metadata.policy_id,
+    policy_metadata: policy_metadata.policy_metadata
+  })
   const {
     rows: [recorded_metadata]
-  }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
+  }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql, values)
   return {
-    ...metadata,
+    ...policy_metadata,
     ...recorded_metadata
   }
 }
 
-async function readPolicyMetadata(policy_id: UUID): Promise<PolicyMetadata> {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.policy_metadata} WHERE policy_id = '${policy_id}'`
+async function updatePolicyMetadata(policy_metadata: PolicyMetadata) {
   try {
-    const result = await client.query(sql)
-    if (result.rows.length === 0) {
-      throw new Error(`Metadata for ${policy_id} not found`)
+    await readSinglePolicyMetadata(policy_metadata.policy_id)
+    const client = await getWriteableClient()
+    const sql = `UPDATE ${schema.TABLE.policy_metadata}
+      SET policy_metadata = '${JSON.stringify(policy_metadata.policy_metadata)}'
+      WHERE policy_id = '${policy_metadata.policy_id}'`
+    const {
+      rows: [recorded_metadata]
+    }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql)
+    return {
+      ...policy_metadata,
+      ...recorded_metadata
     }
-    return result.rows[0]
   } catch (err) {
     await log.error(err)
     throw err
@@ -1399,11 +1550,11 @@ async function readUnprocessedStatusChangeEvents(
   }
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng FROM (SELECT * FROM ${schema.TABLE.events} E ${where} ORDER BY E.id LIMIT ${vals.add(
-      take
-    )}) AS E LEFT JOIN ${
+    `SELECT E.*, T.lat, T.lng, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
+      schema.TABLE.events
+    } E ${where} ORDER BY E.id LIMIT ${vals.add(take)}) AS E LEFT JOIN ${
       schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp`,
+    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp`,
     vals.values()
   )
 
@@ -1478,12 +1629,12 @@ async function readEventsWithTelemetry({
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge FROM (SELECT * FROM ${
+    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
       schema.TABLE.events
     }${where} ORDER BY id LIMIT ${vals.add(limit)}
     ) AS E LEFT JOIN ${
       schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND E.telemetry_timestamp = T.timestamp ORDER BY id`,
+    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp ORDER BY id`,
     vals.values()
   )
 
@@ -1626,9 +1777,14 @@ export = {
   editPolicy,
   deletePolicy,
   writeGeographyMetadata,
-  readGeographyMetadata,
+  updateGeographyMetadata,
+  readSingleGeographyMetadata,
+  readSingleGeography,
+  readBulkGeographyMetadata,
   writePolicyMetadata,
-  readPolicyMetadata,
+  updatePolicyMetadata,
+  readBulkPolicyMetadata,
+  readSinglePolicyMetadata,
   publishPolicy,
   isPolicyPublished,
   readRule,
@@ -1648,5 +1804,6 @@ export = {
   getEventsLast24HoursPerProvider,
   readUnprocessedStatusChangeEvents,
   readEventsWithTelemetry,
-  readTripIds
+  readTripIds,
+  readEventsForStatusChanges
 }

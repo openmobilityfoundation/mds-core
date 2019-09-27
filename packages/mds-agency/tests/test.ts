@@ -157,12 +157,12 @@ describe('Tests API', () => {
 
   it('verifies unable to access admin if not scoped', done => {
     request
-      .get('/admin/')
+      .get('/admin/cache/info')
       .set('Authorization', AUTH_NO_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.result).contains('no admin access without admin:all scope')
+        test.string(result.body.error.reason).is('no access without scope')
         done(err)
       })
   })

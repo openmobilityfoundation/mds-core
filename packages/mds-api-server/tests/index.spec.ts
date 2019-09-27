@@ -18,8 +18,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { ApiServer, hasAccessScope } from '@mds-core/mds-api-server'
-import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ApiServer } from '../index'
 
 const request = supertest(ApiServer(app => app))
 
@@ -118,12 +117,5 @@ describe('Testing API Server', () => {
       .end(err => {
         done(err)
       })
-  })
-
-  it('verifies scope access', done => {
-    test.value(hasAccessScope([], null)).is(true)
-    test.value(hasAccessScope(['admin:all'], null)).is(false)
-    test.value(hasAccessScope(['admin:all'], { scope: 'admin:all' } as ApiAuthorizerClaims)).is(true)
-    done()
   })
 })

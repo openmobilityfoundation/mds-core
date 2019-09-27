@@ -16,7 +16,8 @@
       "cwd": "${workspaceFolder}/packages/mds-agency",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-agency"
+        "npm_package_name": "@mds-core/mds-agency",
+        "PATH_PREFIX": "/agency"
       }
     },
     {
@@ -31,7 +32,8 @@
       "cwd": "${workspaceFolder}/packages/mds-audit",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-audit"
+        "npm_package_name": "@mds-core/mds-audit",
+        "PATH_PREFIX": "/audit"
       }
     },
     {
@@ -46,7 +48,8 @@
       "cwd": "${workspaceFolder}/packages/mds-daily",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-daily"
+        "npm_package_name": "@mds-core/mds-daily",
+        "PATH_PREFIX": "/daily"
       }
     },
     {
@@ -61,7 +64,8 @@
       "cwd": "${workspaceFolder}/packages/mds-compliance",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-compliance"
+        "npm_package_name": "@mds-core/mds-compliance",
+        "PATH_PREFIX": "/compliance"
       }
     },
     {
@@ -76,7 +80,8 @@
       "cwd": "${workspaceFolder}/packages/mds-native",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-native"
+        "npm_package_name": "@mds-core/mds-native",
+        "PATH_PREFIX": "/native"
       }
     },
     {
@@ -91,7 +96,8 @@
       "cwd": "${workspaceFolder}/packages/mds-policy",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-policy"
+        "npm_package_name": "@mds-core/mds-policy",
+        "PATH_PREFIX": "/policy"
       }
     },
     {
@@ -106,7 +112,8 @@
       "cwd": "${workspaceFolder}/packages/mds-policy-author",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-policy-author"
+        "npm_package_name": "@mds-core/mds-policy-author",
+        "PATH_PREFIX": "/policy-author"
       }
     },
     {
@@ -121,7 +128,8 @@
       "cwd": "${workspaceFolder}/packages/mds-provider",
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-provider"
+        "npm_package_name": "@mds-core/mds-provider",
+        "PATH_PREFIX": "/provider"
       }
     },
     {
@@ -189,6 +197,62 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-api-authorizer",
       "env": {
+        "DOTENV_CONFIG_PATH": "../../.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-api-scopes",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-api-scopes",
+      "env": {
+        "npm_package_name": "mds-api-server",
+        "npm_package_version": "0.0.0",
+        "DOTENV_CONFIG_PATH": "../../.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-api-server",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-api-server",
+      "env": {
+        "npm_package_name": "mds-api-server",
+        "npm_package_version": "0.0.0",
         "DOTENV_CONFIG_PATH": "../../.env"
       }
     },

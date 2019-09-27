@@ -25,6 +25,7 @@ import { Telemetry } from '@mds-core/mds-types'
 import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from '@mds-core/mds-db/types'
 import { asJsonApiLinks, asPagingParams } from '@mds-core/mds-api-helpers'
 import { Feature, FeatureCollection } from 'geojson'
+import { checkScope } from '@mds-core/mds-api-server'
 import { ProviderApiRequest, ProviderApiResponse, PROVIDER_VERSION } from './types'
 import { getEventsAsStatusChanges, getEventsAsTrips } from './legacy'
 
@@ -69,7 +70,7 @@ function api(app: express.Express): express.Express {
       const stack = err instanceof Error ? err.stack : desc
       await logger.error(req.originalUrl, 'request validation fail:', desc, stack || JSON.stringify(err))
     }
-    next()
+    return next()
   })
 
   // / //////////////////////// basic gets /////////////////////////////////
@@ -127,6 +128,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/trips'),
+    checkScope(check => check('trips:read')),
     PROVIDER_MODERN
       ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
@@ -160,7 +162,7 @@ function api(app: express.Express): express.Express {
               take
             })
 
-            res.status(200).send({
+            return res.status(200).send({
               version: PROVIDER_VERSION,
               data: {
                 trips: await Promise.all(trips.map(asTrip))
@@ -172,7 +174,7 @@ function api(app: express.Express): express.Express {
             const desc = err instanceof Error ? err.message : err
             const stack = err instanceof Error ? err.stack : desc
             await logger.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
-            res.status(500).send({ error: new Error(desc) })
+            return res.status(500).send({ error: new Error(desc) })
           }
         }
       : getEventsAsTrips
@@ -184,6 +186,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/status_changes'),
+    checkScope(check => check('status_changes:read')),
     PROVIDER_MODERN
       ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
@@ -214,7 +217,7 @@ function api(app: express.Express): express.Express {
               take
             })
 
-            res.status(200).send({
+            return res.status(200).send({
               version: PROVIDER_VERSION,
               data: {
                 status_changes: status_changes.map(asStatusChange)
@@ -226,7 +229,7 @@ function api(app: express.Express): express.Express {
             const desc = err instanceof Error ? err.message : err
             const stack = err instanceof Error ? err.stack : desc
             await logger.error(`fail ${req.method} ${req.originalUrl}`, desc, stack || JSON.stringify(err))
-            res.status(500).send({ error: new Error(desc) })
+            return res.status(500).send({ error: new Error(desc) })
           }
         }
       : getEventsAsStatusChanges
