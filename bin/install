@@ -556,8 +556,7 @@ uninstallBookinfo() {
 uninstallSimulator() {
   check ${FUNCNAME[0]}
 
-  (( $(kubectl get pod -l app=trackgen | wc -l) == 2 )) &&
-    (cd ${configs[simulator]} helm delete --purge trackgen)
+  (( $(kubectl get pod -l app=trackgen | wc -l) == 2 )) && helm delete --purge trackgen
   [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
 }
 
