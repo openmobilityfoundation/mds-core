@@ -63,8 +63,7 @@ declare -A configs=(
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
   ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
-  # todo: consider changing to ns:util
-  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-logging}"
+  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
   ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A helmRepositories=(
