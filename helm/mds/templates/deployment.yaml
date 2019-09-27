@@ -90,6 +90,9 @@ spec:
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
           {{- end }}
+          {{- if $api.env }}
+{{ toYaml $api.env | indent 10 }}
+          {{- end }}
 {{- end }}
 {{- if $.Values.pgPass }}
 ---
