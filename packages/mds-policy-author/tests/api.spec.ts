@@ -446,10 +446,11 @@ describe('Tests app', () => {
         .post(`/policies`)
         .set('Authorization', AUTH_PROVIDER_ONLY)
         .send(POLICY_JSON_MISSING_POLICY_ID)
-        .expect(200)
+        .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
-          test.assert(isUUID(result.body.result))
+          console.log(result.body)
+          test.assert(isUUID(result.body.policy_id))
           done(err)
         })
     })
