@@ -209,8 +209,8 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
     provider_name: 'Support 3'
   }),
   [DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID]: Object.freeze({
-    provider_id: BLUE_SYSTEMS_PROVIDER_ID,
-    provider_name: 'Blue Systems',
+    provider_id: DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID,
+    provider_name: 'Blue Systems (DEPRECATED)',
     url: 'https://www.bluesystems.ai'
   })
 })
