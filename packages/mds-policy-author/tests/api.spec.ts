@@ -30,7 +30,7 @@ import db from '@mds-core/mds-db'
 import { clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID, TEST3_PROVIDER_ID } from '@mds-core/mds-providers'
+import { TEST1_PROVIDER_ID, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 
 import {
   POLICY_JSON,
@@ -58,7 +58,7 @@ const APP_JSON = 'application/json; charset=utf-8'
 // change the auth token/authing system so it uses agency_id instead of provider_id
 const AUTH_NON_PROVIDER = `basic ${Buffer.from(`'BOGUS_PROVIDER_ID_TO_BE_REPLACED'`).toString('base64')}`
 const AUTH_PROVIDER_ONLY = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
-const AUTH_BAD_PROVIDER_ONLY = `basic ${Buffer.from(`${TEST3_PROVIDER_ID}`).toString('base64')}`
+const AUTH_BAD_PROVIDER_ONLY = `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}`).toString('base64')}`
 
 describe('Tests app', () => {
   describe('Policy tests', () => {

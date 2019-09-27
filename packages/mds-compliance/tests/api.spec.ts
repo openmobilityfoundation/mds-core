@@ -5,7 +5,7 @@
 /* eslint-disable promise/catch-or-return */
 /* eslint-disable promise/prefer-await-to-callbacks */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { makeDevices, makeEventsWithTelemetry, makeTelemetryInArea, PROVIDER_UUID } from '@mds-core/mds-test-data'
+import { makeDevices, makeEventsWithTelemetry, makeTelemetryInArea } from '@mds-core/mds-test-data'
 
 import test from 'unit.js'
 import { api as agency } from '@mds-core/mds-agency'
@@ -27,9 +27,9 @@ import {
 } from '@mds-core/mds-types'
 import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
-import uuidv4 from 'uuid/v4'
+import uuid from 'uuid'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST5_PROVIDER_ID } from '@mds-core/mds-providers'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 
@@ -37,8 +37,8 @@ const request = supertest(ApiServer(api))
 const agency_request = supertest(ApiServer(agency))
 
 const PROVIDER_SCOPES = 'admin:all'
-const PROVIDER_AUTH_2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const PROVIDER_AUTH_5 = `basic ${Buffer.from(`${TEST5_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const TEST2_PROVIDER_AUTH = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const MOCHA_PROVIDER_AUTH = `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
@@ -674,10 +674,10 @@ describe('Tests Compliance API:', () => {
       const veniceSpecOpsPointIds: UUID[] = []
       const geographies: Geography[] = veniceSpecialOpsZone.features.map((feature: Feature) => {
         if (feature.geometry.type === 'Point') {
-          const uuid = uuidv4()
-          veniceSpecOpsPointIds.push(uuid)
+          const geography_id = uuid()
+          veniceSpecOpsPointIds.push(geography_id)
           return {
-            geography_id: uuid,
+            geography_id,
             geography_json: feature.geometry
           }
         }
@@ -892,7 +892,7 @@ describe('Tests Compliance API:', () => {
 
   describe('Count Compliant Test: ', () => {
     before(async () => {
-      const devices: Device[] = makeDevices(7, now(), PROVIDER_UUID)
+      const devices: Device[] = makeDevices(7, now(), MOCHA_PROVIDER_ID)
       const events = makeEventsWithTelemetry(devices, now() - 100000, CITY_OF_LA, 'trip_end')
       const telemetry: Telemetry[] = []
       devices.forEach(device => {
@@ -912,7 +912,7 @@ describe('Tests Compliance API:', () => {
     it("Verifies scoped provider can access policy's compliance", done => {
       request
         .get(`/snapshot/${COUNT_POLICY_UUID}`)
-        .set('Authorization', PROVIDER_AUTH_2)
+        .set('Authorization', TEST2_PROVIDER_AUTH)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.total_violations === 0)
@@ -924,7 +924,7 @@ describe('Tests Compliance API:', () => {
     it("Verifies non-scoped provider cannot access policy's compliance", done => {
       request
         .get(`/snapshot/${COUNT_POLICY_UUID}`)
-        .set('Authorization', PROVIDER_AUTH_5)
+        .set('Authorization', MOCHA_PROVIDER_AUTH)
         .expect(401)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -956,7 +956,7 @@ describe('Tests Compliance API:', () => {
     it('Verifies max 0 single rule policy operates as expected', done => {
       request
         .get(`/snapshot/${COUNT_POLICY_JSON_5.policy_id}`)
-        .set('Authorization', PROVIDER_AUTH_2)
+        .set('Authorization', TEST2_PROVIDER_AUTH)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.total_violations === 15)
