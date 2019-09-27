@@ -10,21 +10,20 @@ import test from 'unit.js'
 import db from '@mds-core/mds-db'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { AccessTokenScope } from '@mds-core/mds-api-scopes'
-import { PROVIDER_UUID } from '@mds-core/mds-test-data'
-import { providers } from '@mds-core/mds-providers'
+import { providers, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const provider_id = PROVIDER_UUID
+const provider_id = MOCHA_PROVIDER_ID
 const device_id = uuid()
 
 const request = supertest(ApiServer(api))
 
 const SCOPED_AUTH = (...scopes: AccessTokenScope[]) =>
-  `basic ${Buffer.from(`${PROVIDER_UUID}|${scopes.join(' ')}`).toString('base64')}`
+  `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${scopes.join(' ')}`).toString('base64')}`
 
 before('Initializing Database', async () => {
   await db.initialize()

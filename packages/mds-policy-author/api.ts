@@ -16,7 +16,13 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
+import {
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  BLUE_SYSTEMS_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID,
+  isProviderId
+} from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
@@ -107,6 +113,13 @@ const featureCollectionSchema = Joi.object()
   })
   .unknown(true) // TODO
 
+const AllowedProviderIDs = [
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  BLUE_SYSTEMS_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID
+]
+
 function api(app: express.Express): express.Express {
   /**
    * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
@@ -135,7 +148,7 @@ function api(app: express.Express): express.Express {
               })
             }
 
-            if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)) {
+            if (!AllowedProviderIDs.includes(provider_id)) {
               return res.status(401).send({ result: 'Unauthorized' })
             }
           }
