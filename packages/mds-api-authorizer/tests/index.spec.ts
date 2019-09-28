@@ -1,10 +1,10 @@
 import test from 'unit.js'
-import { PROVIDER_UUID } from '@mds-core/mds-test-data'
+import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import express from 'express'
 import { AuthorizationHeaderApiAuthorizer } from '../index'
 
 const PROVIDER_SCOPES = 'admin:all'
-const ADMIN_AUTH = `basic ${Buffer.from(`${PROVIDER_UUID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const ADMIN_AUTH = `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
 describe('Test API Authorizer', () => {
   it('No Authorizaton', done => {
@@ -23,7 +23,7 @@ describe('Test API Authorizer', () => {
     const authorizer = AuthorizationHeaderApiAuthorizer({ headers: { authorization: ADMIN_AUTH } } as express.Request)
     test
       .object(authorizer)
-      .hasProperty('principalId', PROVIDER_UUID)
+      .hasProperty('principalId', MOCHA_PROVIDER_ID)
       .hasProperty('scope', PROVIDER_SCOPES)
     done()
   })

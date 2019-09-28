@@ -31,19 +31,14 @@ import {
   PROPULSION_TYPES,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
-import {
-  PROVIDER_UUID,
-  makeEventsWithTelemetry,
-  makeDevices,
-  makeTelemetryInArea,
-  SCOPED_AUTH
-} from '@mds-core/mds-test-data'
+import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { now, rangeRandomInt } from '@mds-core/mds-utils'
 import cache from '@mds-core/mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
 import { ApiServer } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
+import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 
 const request = supertest(ApiServer(api))
@@ -53,7 +48,7 @@ const APP_JSON = 'application/json; charset=utf-8'
 const audit_trip_id = uuid()
 const audit_trip_id_2 = uuid()
 const audit_device_id: string = uuid()
-const provider_id = PROVIDER_UUID
+const provider_id = MOCHA_PROVIDER_ID
 const provider_device_id = uuid()
 const provider_vehicle_id = 'test-vehicle'
 
@@ -502,9 +497,9 @@ describe('Testing API', () => {
   )
   describe('Tests retreiving vehicles inside of bbox', () => {
     before(done => {
-      const devices_a = makeDevices(10, now(), PROVIDER_UUID)
+      const devices_a = makeDevices(10, now(), MOCHA_PROVIDER_ID)
       const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
-      const devices_b = makeDevices(10, now(), PROVIDER_UUID)
+      const devices_b = makeDevices(10, now(), MOCHA_PROVIDER_ID)
       const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
       const telemetry_a = devices_a.map(device =>
         makeTelemetryInArea(device, now(), SAN_FERNANDO_VALLEY, rangeRandomInt(10))

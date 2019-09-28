@@ -9,22 +9,22 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { PROVIDER_UUID, SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { providers } from '@mds-core/mds-providers'
+import { SCOPED_AUTH } from '@mds-core/mds-test-data'
+import { providers, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const provider_id = PROVIDER_UUID
+const provider_id = MOCHA_PROVIDER_ID
 const device_id = uuid()
 
 const request = supertest(ApiServer(api))
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
-const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
-const VEHICLES_READ_SCOPE = SCOPED_AUTH(['vehicles:read'])
-const PROVIDERS_READ_SCOPE = SCOPED_AUTH(['providers:read'])
+const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'], MOCHA_PROVIDER_ID)
+const VEHICLES_READ_SCOPE = SCOPED_AUTH(['vehicles:read'], MOCHA_PROVIDER_ID)
+const PROVIDERS_READ_SCOPE = SCOPED_AUTH(['providers:read'], MOCHA_PROVIDER_ID)
 
 before('Initializing Database', async () => {
   await db.initialize()

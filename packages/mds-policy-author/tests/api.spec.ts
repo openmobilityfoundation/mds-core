@@ -30,7 +30,6 @@ import db from '@mds-core/mds-db'
 import { clone } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
-
 import {
   POLICY_JSON,
   POLICY2_JSON,

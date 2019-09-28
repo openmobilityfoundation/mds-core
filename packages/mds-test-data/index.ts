@@ -49,7 +49,7 @@ import {
 
 import { serviceAreaMap } from 'ladot-service-areas'
 
-import uuid4 from 'uuid'
+import uuid from 'uuid'
 
 import log from '@mds-core/mds-logger'
 
@@ -58,7 +58,6 @@ import {
   LIME_PROVIDER_ID,
   BIRD_PROVIDER_ID,
   TEST1_PROVIDER_ID,
-  TEST3_PROVIDER_ID,
   providerName
 } from '@mds-core/mds-providers'
 
@@ -440,7 +439,7 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
   const devices = []
   for (let i = 0; i < count; i += 1) {
     // make a rando vehicle
-    const device_id = uuid4()
+    const device_id = uuid()
     const coin = rangeRandomInt(2)
     let type
     let propulsion: PROPULSION_TYPE[]
@@ -510,7 +509,7 @@ function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
     event_type_reason,
     event_location: null,
     battery_pct: rangeRandomInt(1, 100),
-    associated_trip: uuid4(),
+    associated_trip: uuid(),
     event_time: timestamp,
     vehicle_type: device.type,
     propulsion_type: device.propulsion,
@@ -526,7 +525,7 @@ function makeTrip(device: Device): Trip {
     vehicle_id: device.vehicle_id,
     vehicle_type: device.type,
     propulsion_type: device.propulsion,
-    provider_trip_id: uuid4(),
+    provider_trip_id: uuid(),
     trip_duration: rangeRandomInt(5),
     trip_distance: rangeRandomInt(5),
     route: {
@@ -559,7 +558,6 @@ const SCOPED_AUTH = (scopes: AccessTokenScope[], provider_id = TEST1_PROVIDER_ID
 
 export {
   BAD_PROVIDER_UUID,
-  TEST3_PROVIDER_ID as PROVIDER_UUID,
   PROVIDER_AUTH,
   COMPLIANCE_AUTH,
   JUMP_TEST_DEVICE_1,

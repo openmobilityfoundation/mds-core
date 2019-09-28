@@ -23,12 +23,13 @@
 import supertest from 'supertest'
 import { now } from '@mds-core/mds-utils'
 import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
-import { PROVIDER_UUID, makeTelemetryStream, makeTelemetry, makeDevices, SCOPED_AUTH } from '@mds-core/mds-test-data'
+import { makeTelemetryStream, makeTelemetry, makeDevices, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
+import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
 
@@ -53,7 +54,7 @@ const DEVICE_VIN2 = 'test-vin-2'
 
 const TEST_DEVICE: Device = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   vehicle_id: DEVICE_VIN,
   type: VEHICLE_TYPES.bicycle,
   propulsion: [PROPULSION_TYPES.human],
@@ -65,7 +66,7 @@ const TEST_DEVICE: Device = {
 
 const TEST_DEVICE2: Device = {
   device_id: DEVICE_UUID2,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   vehicle_id: DEVICE_VIN2,
   type: VEHICLE_TYPES.scooter,
   propulsion: [PROPULSION_TYPES.electric],
@@ -77,7 +78,7 @@ const TEST_DEVICE2: Device = {
 
 const BASE_TELEMETRY: Telemetry = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   gps: {
     lat: 37.3382,
     lng: -121.8863,
@@ -92,7 +93,7 @@ const BASE_TELEMETRY: Telemetry = {
 
 const BASE_TELEMETRY2: Telemetry = {
   device_id: DEVICE_UUID2,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   gps: {
     lat: 36.3382,
     lng: -122.8863,
@@ -113,7 +114,7 @@ const end_telemetry = trip_telemetry[trip_telemetry.length - 1]
 
 const test_trip_start: VehicleEvent = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   event_type: 'trip_start',
   timestamp: start_telemetry.timestamp + 60 * 60,
   telemetry: start_telemetry,
@@ -124,7 +125,7 @@ const test_trip_start: VehicleEvent = {
 
 const test_trip_end: VehicleEvent = {
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   event_type: 'trip_end',
   timestamp: end_telemetry.timestamp + 60 * 60,
   telemetry: end_telemetry,
@@ -138,7 +139,7 @@ test_timestamp += 600
 const test_deregister: VehicleEvent = {
   trip_id: null,
   device_id: DEVICE_UUID,
-  provider_id: PROVIDER_UUID,
+  provider_id: MOCHA_PROVIDER_ID,
   event_type: VEHICLE_EVENTS.deregister,
   timestamp: test_timestamp,
   recorded: now()
