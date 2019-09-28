@@ -39,6 +39,7 @@ declare -A configs=(
   ["workdir"]="/tmp/mds/tools"
   ["brew"]="${MDS_BREW:-yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
+  ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
@@ -203,6 +204,13 @@ build() {
   yarn
   yarn build --ignore=@aws-lambda/*
   yarn image
+
+  if [ "${configs[image-repository]}" ]; then
+    for i in $(docker images --filter "reference=mds*latest" | grep mds | tr -s ' ' | cut -d ' ' -f 1,2 | tr ' ' ':'); do
+      docker tag ${i} ${configs[image-repository]}/${i}
+      docker push ${configs[image-repository]}/${i}
+    done; unset i
+  fi
 }
 
 pause() {
@@ -391,18 +399,20 @@ installIngressGatewayCertificate() {
 installSimulator() {
   check ${FUNCNAME[0]}
 
-  if [[ ! -d ${configs[simulator]} ]]; then
-    mkdir -p ${configs[workdir]}
-    (cd ${configs[workdir]};
-      git clone ${configs[simulator-repository]} ${configs[simulator]})
-  fi
+  if [ "${configs[simulator-repository]}" ]; then
+    if [[ ! -d ${configs[simulator]} ]]; then
+      mkdir -p ${configs[workdir]}
+      (cd ${configs[workdir]};
+        git clone ${configs[simulator-repository]} ${configs[simulator]})
+    fi
 
-  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
-    cd ${configs[simulator]}; \
-    git pull; \
-    pip install -r requirements.txt; \
-    docker build -t trackgen .;
-    helm install ./helm --name trackgen)
+    (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
+      cd ${configs[simulator]}; \
+      git pull; \
+      pip install -r requirements.txt; \
+      docker build -t trackgen .;
+      helm install ./helm --name trackgen)
+  fi
 }
 
 installBookinfo() {
