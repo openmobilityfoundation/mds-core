@@ -30,8 +30,6 @@ import db from '@mds-core/mds-db'
 import { clone, isUUID } from '@mds-core/mds-utils'
 import { Policy } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
-
 import {
   POLICY_JSON,
   POLICY2_JSON,
@@ -44,7 +42,8 @@ import {
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
   LA_CITY_BOUNDARY,
-  DISTRICT_SEVEN
+  DISTRICT_SEVEN,
+  SCOPED_AUTH
 } from '@mds-core/mds-test-data'
 import { api } from '../api'
 
@@ -54,12 +53,12 @@ const log = console.log.bind(console)
 const request = supertest(ApiServer(api))
 
 const APP_JSON = 'application/json; charset=utf-8'
-
-// TODO
-// change the auth token/authing system so it uses agency_id instead of provider_id
-const AUTH_NON_PROVIDER = `basic ${Buffer.from(`'BOGUS_PROVIDER_ID_TO_BE_REPLACED'`).toString('base64')}`
-const AUTH_PROVIDER_ONLY = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
-const AUTH_BAD_PROVIDER_ONLY = `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}`).toString('base64')}`
+const EMPTY_SCOPE = SCOPED_AUTH([], '')
+const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
+const POLICIES_WRITE_SCOPE = SCOPED_AUTH(['policies:write'])
+const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
+const POLICIES_PUBLISH_SCOPE = SCOPED_AUTH(['policies:publish'])
+const POLICIES_DELETE_SCOPE = SCOPED_AUTH(['policies:delete'])
 
 describe('Tests app', () => {
   describe('Policy tests', () => {
@@ -71,28 +70,26 @@ describe('Tests app', () => {
       await db.shutdown()
     })
 
-    it('does not authenticate a provider who is not approved', done => {
+    it('cannot create one current policy (no authorization)', done => {
       const policy = POLICY_JSON
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_BAD_PROVIDER_ONLY)
+        .set('Authorization', EMPTY_SCOPE)
         .send(policy)
-        .expect(401)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
+        .expect(403)
+        .end(err => {
           done(err)
         })
     })
 
-    it('does not authenticate a provider_id that is invalid', done => {
+    it('cannot create one current policy (wrong authorization)', done => {
       const policy = POLICY_JSON
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_NON_PROVIDER)
+        .set('Authorization', EVENTS_READ_SCOPE)
         .send(policy)
-        .expect(400)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
+        .expect(403)
+        .end(err => {
           done(err)
         })
     })
@@ -103,7 +100,7 @@ describe('Tests app', () => {
       const bad_policy = bad_policy_json
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(bad_policy)
         .expect(400)
         .end((err, result) => {
@@ -114,11 +111,37 @@ describe('Tests app', () => {
         })
     })
 
+    it('verifies cannot PUT policy (no auth)', done => {
+      const policy = clone(POLICY_JSON)
+      request
+        .put(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send(policy)
+        .expect(403)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot PUT policy (wrong auth)', done => {
+      const policy = clone(POLICY_JSON)
+      request
+        .put(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send(policy)
+        .expect(403)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
     it('verifies cannot PUT non-existent policy', done => {
       const policy = clone(POLICY_JSON)
       request
         .put(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(404)
         .end((err, result) => {
@@ -131,7 +154,7 @@ describe('Tests app', () => {
       const policy = POLICY_JSON
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(201)
         .end((err, result) => {
@@ -144,7 +167,7 @@ describe('Tests app', () => {
       const policy = POLICY_JSON
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(409)
         .end((err, result) => {
@@ -159,7 +182,7 @@ describe('Tests app', () => {
       const bad_policy = bad_policy_json
       await request
         .put(`/policies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(bad_policy)
         .expect(400)
     })
@@ -169,7 +192,7 @@ describe('Tests app', () => {
       policy.name = 'a shiny new name'
       await request
         .put(`/policies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(200)
 
@@ -181,7 +204,7 @@ describe('Tests app', () => {
       const policy2 = POLICY2_JSON
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy2)
         .expect(201)
         .end((err, result) => {
@@ -195,7 +218,7 @@ describe('Tests app', () => {
       const policy3 = POLICY3_JSON
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy3)
         .expect(201)
         .end((err, result) => {
@@ -204,10 +227,30 @@ describe('Tests app', () => {
         })
     })
 
+    it('verifies cannot publish a policy (no auth)', done => {
+      request
+        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('verifies cannot publish a policy (wrong auth)', done => {
+      request
+        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('verifies cannot publish a policy with missing geographies', done => {
       request
         .post(`/policies/${POLICY_JSON.policy_id}/publish`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -218,7 +261,7 @@ describe('Tests app', () => {
     it('verifies cannot publish a policy that was never POSTed', done => {
       request
         .post(`/policies/${GEOGRAPHY_UUID}/publish`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -230,7 +273,7 @@ describe('Tests app', () => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
         .post(`/geographies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(201)
         .end((err, result) => {
@@ -244,7 +287,7 @@ describe('Tests app', () => {
     it('can publish a policy', done => {
       request
         .post(`/policies/${POLICY_JSON.policy_id}/publish`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(200)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -255,10 +298,36 @@ describe('Tests app', () => {
     it('cannot double-publish a policy', done => {
       request
         .post(`/policies/${POLICY_JSON.policy_id}/publish`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(409)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('cannot edit a published policy (no auth)', done => {
+      const policy = clone(POLICY_JSON)
+      policy.name = 'an even shinier new name'
+      request
+        .put(`/policies/${POLICY_JSON.policy_id}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send(policy)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot edit a published policy (wrong auth)', done => {
+      const policy = clone(POLICY_JSON)
+      policy.name = 'an even shinier new name'
+      request
+        .put(`/policies/${POLICY_JSON.policy_id}`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send(policy)
+        .expect(403)
+        .end(err => {
           done(err)
         })
     })
@@ -268,7 +337,7 @@ describe('Tests app', () => {
       policy.name = 'an even shinier new name'
       request
         .put(`/policies/${POLICY_JSON.policy_id}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(409)
         .end((err, result) => {
@@ -277,10 +346,30 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot delete an unpublished policy (no auth)', done => {
+      request
+        .delete(`/policies/${POLICY2_UUID}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(async err => {
+          done(err)
+        })
+    })
+
+    it('cannot delete an unpublished policy (wrong auth)', done => {
+      request
+        .delete(`/policies/${POLICY2_UUID}`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(async err => {
+          done(err)
+        })
+    })
+
     it('can delete an unpublished policy', done => {
       request
         .delete(`/policies/${POLICY2_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_DELETE_SCOPE)
         .expect(200)
         .end(async (err, result) => {
           const body = result.body
@@ -294,18 +383,36 @@ describe('Tests app', () => {
     it('cannot delete a published policy', done => {
       request
         .delete(`/policies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_DELETE_SCOPE)
         .expect(404)
         .end(err => {
           done(err)
         })
     })
 
+    it('cannot PUTing policy metadata to create (no auth)', async () => {
+      const metadata = { some_arbitrary_thing: 'boop' }
+      await request
+        .put(`/policies/${POLICY_UUID}/meta`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
+        .expect(403)
+    })
+
+    it('cannot PUTing policy metadata to create (wrong auth)', async () => {
+      const metadata = { some_arbitrary_thing: 'boop' }
+      await request
+        .put(`/policies/${POLICY_UUID}/meta`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
+        .expect(403)
+    })
+
     it('verifies PUTing policy metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
       await request
         .put(`/policies/${POLICY_UUID}/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
         .expect(201)
       const result = await db.readSinglePolicyMetadata(POLICY_UUID)
@@ -316,17 +423,37 @@ describe('Tests app', () => {
       const metadata = { some_arbitrary_thing: 'beep' }
       await request
         .put(`/policies/${POLICY_UUID}/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
         .expect(200)
       const result = await db.readSinglePolicyMetadata(POLICY_UUID)
       test.assert(result.policy_metadata.some_arbitrary_thing === 'beep')
     })
 
+    it('cannot GET policy metadata (no auth)', done => {
+      request
+        .get(`/policies/${POLICY_UUID}/meta`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot GET policy metadata (wrong auth)', done => {
+      request
+        .get(`/policies/${POLICY_UUID}/meta`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('verifies GETing policy metadata when given a policy_id', done => {
       request
         .get(`/policies/${POLICY_UUID}/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.policy_metadata.some_arbitrary_thing === 'beep')
@@ -338,7 +465,7 @@ describe('Tests app', () => {
     it('verifies cannot GET non-existent policy metadata', done => {
       request
         .get(`/policies/beepbapboop/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(404)
         .end((err, result) => {
           test.assert(result.body.result === 'not found')
@@ -347,19 +474,53 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot GET policy metadata (no auth)', async () => {
+      await request
+        .get(`/policies/meta`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+    })
+
+    it('cannot GET policy metadata (wrong auth)', async () => {
+      await request
+        .get(`/policies/meta`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+    })
+
     it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
       const result = await request
         .get(`/policies/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
       test.assert(result.body.length === 1)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
 
+    it('cannot GET a single policy (no auth)', done => {
+      request
+        .get(`/policies/${POLICY_UUID}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(async err => {
+          done(err)
+        })
+    })
+
+    it('cannot GET a single policy (wrong auth)', done => {
+      request
+        .get(`/policies/${POLICY_UUID}`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(async err => {
+          done(err)
+        })
+    })
+
     it('can GET a single policy', done => {
       request
         .get(`/policies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end(async (err, result) => {
           test.assert(result.body.policy_id === POLICY_UUID)
@@ -371,7 +532,7 @@ describe('Tests app', () => {
     it('cannot GET a single nonexistent policy', done => {
       request
         .get(`/policies/544d36c4-29f5-4088-a52f-7c9a64d5874c`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(404)
         .end(async err => {
           done(err)
@@ -394,6 +555,20 @@ describe('Tests app', () => {
   })
   */
 
+    it('cannot GET all active policies (no auth)', async () => {
+      await request
+        .get(`/policies`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+    })
+
+    it('cannot GET all active policies (wrong auth)', async () => {
+      await request
+        .get(`/policies`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+    })
+
     it('can GET all active policies', async () => {
       await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
       await db.writePolicy(POLICY4_JSON)
@@ -401,7 +576,7 @@ describe('Tests app', () => {
       await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
       request
         .get(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end(async (policies_err, policies_result) => {
           test.assert(policies_result.body.length === 4)
@@ -412,7 +587,7 @@ describe('Tests app', () => {
     it('can GET all published policies', done => {
       request
         .get(`/policies?get_published=true`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end(async (policies_err, policies_result) => {
           test.assert(policies_result.body.length === 2)
@@ -423,7 +598,7 @@ describe('Tests app', () => {
     it('can GET all unpublished policies', done => {
       request
         .get(`/policies?get_unpublished=true`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end(async (policies_err, policies_result) => {
           test.assert(policies_result.body.length === 2)
@@ -434,7 +609,7 @@ describe('Tests app', () => {
     it('throws an exception if both get_unpublished and get_published are submitted', done => {
       request
         .get(`/policies?get_unpublished=true&get_published=true`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(400)
         .end(async policies_err => {
           done(policies_err)
@@ -444,7 +619,7 @@ describe('Tests app', () => {
     it('generates a UUID for a policy that has no UUID', done => {
       request
         .post(`/policies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(POLICY_JSON_MISSING_POLICY_ID)
         .expect(201)
         .end((err, result) => {
@@ -464,11 +639,35 @@ describe('Tests app', () => {
       await db.shutdown()
     })
 
+    it('cannot POST one current geography (no auth)', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
+      request
+        .post(`/geographies`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send(geography)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot POST one current geography (wrong auth)', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
+      request
+        .post(`/geographies`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send(geography)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('creates one current geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
         .post(`/geographies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(201)
         .end((err, result) => {
@@ -479,10 +678,30 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot GETs one current geography (no auth)', done => {
+      request
+        .get(`/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot GETs one current geography (wrong auth)', done => {
+      request
+        .get(`/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('GETs one current geography', done => {
       request
         .get(`/geographies/${GEOGRAPHY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.geography_id === GEOGRAPHY_UUID)
@@ -494,8 +713,32 @@ describe('Tests app', () => {
     it('cannot GET a nonexistent geography', done => {
       request
         .get(`/geographies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(404)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot update one geography (no auth)', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: DISTRICT_SEVEN }
+      request
+        .put(`/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send(geography)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot update one geography (wrong auth)', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: DISTRICT_SEVEN }
+      request
+        .put(`/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send(geography)
+        .expect(403)
         .end(err => {
           done(err)
         })
@@ -505,7 +748,7 @@ describe('Tests app', () => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: DISTRICT_SEVEN }
       request
         .put(`/geographies/${GEOGRAPHY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(201)
         .end((err, result) => {
@@ -514,11 +757,29 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot PUT geography metadata to create (no auth)', async () => {
+      const metadata = { some_arbitrary_thing: 'boop' }
+      await request
+        .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
+        .expect(403)
+    })
+
+    it('cannot PUT geography metadata to create (wrong auth)', async () => {
+      const metadata = { some_arbitrary_thing: 'boop' }
+      await request
+        .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
+        .expect(403)
+    })
+
     it('verifies PUTing geography metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
       await request
         .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
         .expect(201)
       const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
@@ -529,17 +790,37 @@ describe('Tests app', () => {
       const metadata = { some_arbitrary_thing: 'beep' }
       await request
         .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send({ geography_id: GEOGRAPHY_UUID, geography_metadata: metadata })
         .expect(200)
       const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
       test.assert(result.geography_metadata.some_arbitrary_thing === 'beep')
     })
 
+    it('cannot GET geography metadata (no auth)', done => {
+      request
+        .get(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot GET geography metadata (wrong auth)', done => {
+      request
+        .get(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('verifies GETing geography metadata', done => {
       request
         .get(`/geographies/${GEOGRAPHY_UUID}/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end((err, result) => {
           test.assert(result.body.geography_metadata.some_arbitrary_thing === 'beep')
@@ -551,7 +832,7 @@ describe('Tests app', () => {
     it('verifies cannot GET non-existent geography metadata', done => {
       request
         .get(`/geographies/beepbapboop/meta`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(404)
         .end((err, result) => {
           test.assert(result.body.result === 'not found')
@@ -560,11 +841,35 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot PUT geography (no auth)', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
+      request
+        .put(`/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .send(geography)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot PUT geography (wrong auth)', done => {
+      const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
+      request
+        .put(`/geographies/${GEOGRAPHY_UUID}`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .send(geography)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('verifies cannot PUT bad geography', done => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
       request
         .put(`/geographies/${GEOGRAPHY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(400)
         .end((err, result) => {
@@ -577,7 +882,7 @@ describe('Tests app', () => {
       const geography = { geography_id: POLICY_UUID, geography_json: DISTRICT_SEVEN }
       request
         .put(`/geographies/${POLICY_UUID}`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(404)
         .end((err, result) => {
@@ -590,7 +895,7 @@ describe('Tests app', () => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: 'garbage_json' }
       request
         .post(`/geographies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(400)
         .end((err, result) => {
@@ -603,7 +908,7 @@ describe('Tests app', () => {
       const geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       request
         .post(`/geographies`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(geography)
         .expect(409)
         .end((err, result) => {
@@ -612,13 +917,27 @@ describe('Tests app', () => {
         })
     })
 
+    it('cannot do bulk geography metadata reads (no auth)', async () => {
+      await request
+        .get(`/geographies/meta?get_read_only=false`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+    })
+
+    it('cannot do bulk geography metadata reads (wrong auth)', async () => {
+      await request
+        .get(`/geographies/meta?get_read_only=false`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+    })
+
     it('can do bulk geography metadata reads', async () => {
       await db.writeGeography({ geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
       await db.writeGeographyMetadata({ geography_id: GEOGRAPHY2_UUID, geography_metadata: { earth: 'isround' } })
 
       const result = await request
         .get(`/geographies/meta?get_read_only=false`)
-        .set('Authorization', AUTH_PROVIDER_ONLY)
+        .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
       test.assert(result.body.length === 2)
       test.value(result).hasHeader('content-type', APP_JSON)

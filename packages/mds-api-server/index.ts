@@ -3,7 +3,8 @@ import express from 'express'
 import cors from 'cors'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
-import { ScopeValidator, validateScopes, AccessTokenScope } from '@mds-core/mds-api-scopes'
+import { validateScopes } from '@mds-core/mds-api-scopes'
+import { ScopeValidator, AccessTokenScope } from '@mds-core/mds-types'
 
 export type ApiRequest = express.Request
 
