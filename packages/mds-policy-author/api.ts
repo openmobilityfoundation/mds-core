@@ -16,13 +16,6 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
-import {
-  TEST1_PROVIDER_ID,
-  TEST2_PROVIDER_ID,
-  BLUE_SYSTEMS_PROVIDER_ID,
-  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID,
-  isProviderId
-} from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
@@ -30,13 +23,12 @@ import {
   ServerError,
   UUID_REGEX,
   NotFoundError,
-  isUUID,
   BadParamsError,
   AlreadyPublishedError
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
-import { PolicyApiRequest, PolicyApiResponse } from './types'
+import { checkScope } from '@mds-core/mds-api-server'
 
 const ruleSchema = Joi.object().keys({
   name: Joi.string().required(),
@@ -113,57 +105,8 @@ const featureCollectionSchema = Joi.object()
   })
   .unknown(true) // TODO
 
-const AllowedProviderIDs = [
-  TEST1_PROVIDER_ID,
-  TEST2_PROVIDER_ID,
-  BLUE_SYSTEMS_PROVIDER_ID,
-  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID
-]
-
 function api(app: express.Express): express.Express {
-  /**
-   * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
-   */
-  app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
-    res.header('Access-Control-Allow-Origin', '*')
-    try {
-      // TODO verify presence of agency_id
-      if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
-        if (res.locals.claims) {
-          const { provider_id } = res.locals.claims
-
-          // TODO alter authorization code to look for an agency_id
-
-          if (provider_id) {
-            if (!isUUID(provider_id)) {
-              await log.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
-              return res.status(400).send({
-                result: `invalid provider_id ${provider_id} is not a UUID`
-              })
-            }
-
-            if (!isProviderId(provider_id)) {
-              return res.status(400).send({
-                result: `invalid provider_id ${provider_id} is not a known provider`
-              })
-            }
-
-            if (!AllowedProviderIDs.includes(provider_id)) {
-              return res.status(401).send({ result: 'Unauthorized' })
-            }
-          }
-        } else {
-          return res.status(401).send('Unauthorized')
-        }
-      }
-    } catch (err) {
-      /* istanbul ignore next */
-      await log.error(req.originalUrl, 'request validation fail:', err.stack)
-    }
-    next()
-  })
-
-  app.get(pathsFor('/policies'), async (req, res) => {
+  app.get(pathsFor('/policies'), checkScope(check => check('policies:read')), async (req, res) => {
     const { get_published = null, get_unpublished = null } = req.query
     log.info('read /policies', req.query)
 
@@ -201,7 +144,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/policies'), async (req, res) => {
+  app.post(pathsFor('/policies'), checkScope(check => check('policies:write')), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -225,32 +168,36 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/policies/:policy_id/publish'), async (req, res) => {
-    const { policy_id } = req.params
-    try {
-      await db.publishPolicy(policy_id)
-      return res.status(200).send({ result: `successfully published policy of id ${policy_id}` })
-    } catch (err) {
-      if (err instanceof NotFoundError) {
-        if (err.message.includes('geography')) {
-          const geography_id = err.message.match(UUID_REGEX)
-          return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+  app.post(
+    pathsFor('/policies/:policy_id/publish'),
+    checkScope(check => check('policies:publish')),
+    async (req, res) => {
+      const { policy_id } = req.params
+      try {
+        await db.publishPolicy(policy_id)
+        return res.status(200).send({ result: `successfully published policy of id ${policy_id}` })
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          if (err.message.includes('geography')) {
+            const geography_id = err.message.match(UUID_REGEX)
+            return res.status(404).send({ error: `geography_id ${geography_id} not_found` })
+          }
+          if (err.message.includes('policy')) {
+            return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+          }
         }
-        if (err.message.includes('policy')) {
-          return res.status(404).send({ error: `policy_id ${policy_id} not_found` })
+        if (err instanceof AlreadyPublishedError) {
+          return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
         }
+        /* istanbul ignore next */
+        await log.error('failed to publish policy', err.stack)
+        /* istanbul ignore next */
+        return res.status(404).send({ result: 'not found' })
       }
-      if (err instanceof AlreadyPublishedError) {
-        return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
-      }
-      /* istanbul ignore next */
-      await log.error('failed to publish policy', err.stack)
-      /* istanbul ignore next */
-      return res.status(404).send({ result: 'not found' })
     }
-  })
+  )
 
-  app.put(pathsFor('/policies/:policy_id'), async (req, res) => {
+  app.put(pathsFor('/policies/:policy_id'), checkScope(check => check('policies:write')), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -280,7 +227,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.delete(pathsFor('/policies/:policy_id'), async (req, res) => {
+  app.delete(pathsFor('/policies/:policy_id'), checkScope(check => check('policies:delete')), async (req, res) => {
     const { policy_id } = req.params
     try {
       await db.deletePolicy(policy_id)
@@ -293,7 +240,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/policies/meta/'), async (req, res) => {
+  app.get(pathsFor('/policies/meta/'), checkScope(check => check('policies:read')), async (req, res) => {
     const { get_published = null, get_unpublished = null } = req.query
     log.info('read /policies/meta', req.query)
     try {
@@ -314,7 +261,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
+  app.get(pathsFor('/policies/:policy_id'), checkScope(check => check('policies:read')), async (req, res) => {
     const { policy_id } = req.params
     try {
       const policies = await db.readPolicies({ policy_id })
@@ -329,7 +276,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
+  app.get(pathsFor('/policies/:policy_id/meta'), checkScope(check => check('policies:read')), async (req, res) => {
     const { policy_id } = req.params
     try {
       const result = await db.readSinglePolicyMetadata(policy_id)
@@ -340,7 +287,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.put(pathsFor('/policies/:policy_id/meta'), async (req, res) => {
+  app.put(pathsFor('/policies/:policy_id/meta'), checkScope(check => check('policies:write')), async (req, res) => {
     const policy_metadata = req.body
     try {
       await db.updatePolicyMetadata(policy_metadata)
@@ -360,7 +307,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/geographies/meta/'), async (req, res) => {
+  app.get(pathsFor('/geographies/meta/'), checkScope(check => check('policies:read')), async (req, res) => {
     const get_read_only = req.query === 'true'
 
     log.info('read /geographies/meta', req.query)
@@ -375,7 +322,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/geographies/:geography_id'), async (req, res) => {
+  app.get(pathsFor('/geographies/:geography_id'), checkScope(check => check('policies:read')), async (req, res) => {
     log.info('read geo', JSON.stringify(req.params))
     const { geography_id } = req.params
     log.info('read geo', geography_id)
@@ -388,7 +335,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/geographies/'), async (req, res) => {
+  app.post(pathsFor('/geographies/'), checkScope(check => check('policies:write')), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null
@@ -412,7 +359,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.put(pathsFor('/geographies/:geography_id'), async (req, res) => {
+  app.put(pathsFor('/geographies/:geography_id'), checkScope(check => check('policies:write')), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
     const details = validation.error ? validation.error.details : null
@@ -429,47 +376,59 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.delete(pathsFor('/geographies/:geography_id'), async (req, res) => {
-    const { geography_id } = req.params
-    try {
-      await db.deleteGeography(geography_id)
-      return res.status(200).send({ result: `Successfully deleted geography of id ${geography_id}` })
-    } catch (err) {
-      await log.error('failed to delete geography', err.stack)
-      return res.status(404).send({ result: 'geography either not found or already published' })
-    }
-  })
-
-  app.get(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
-    const { geography_id } = req.params
-    try {
-      const geography_metadata = await db.readSingleGeographyMetadata(geography_id)
-      return res.status(200).send(geography_metadata)
-    } catch (err) {
-      await log.error('failed to read geography metadata', err.stack)
-      return res.status(404).send({ result: 'not found' })
-    }
-  })
-
-  app.put(pathsFor('/geographies/:geography_id/meta'), async (req, res) => {
-    const geography_metadata = req.body
-    try {
-      await db.updateGeographyMetadata(geography_metadata)
-      return res.status(200).send(geography_metadata)
-    } catch (updateErr) {
-      if (updateErr instanceof NotFoundError) {
-        try {
-          await db.writeGeographyMetadata(geography_metadata)
-          return res.status(201).send(geography_metadata)
-        } catch (writeErr) {
-          await log.error('failed to write geography metadata', writeErr.stack)
-          return res.status(500).send(new ServerError())
-        }
-      } else {
-        return res.status(500).send(new ServerError())
+  app.delete(
+    pathsFor('/geographies/:geography_id'),
+    checkScope(check => check('policies:delete')),
+    async (req, res) => {
+      const { geography_id } = req.params
+      try {
+        await db.deleteGeography(geography_id)
+        return res.status(200).send({ result: `Successfully deleted geography of id ${geography_id}` })
+      } catch (err) {
+        await log.error('failed to delete geography', err.stack)
+        return res.status(404).send({ result: 'geography either not found or already published' })
       }
     }
-  })
+  )
+
+  app.get(
+    pathsFor('/geographies/:geography_id/meta'),
+    checkScope(check => check('policies:read')),
+    async (req, res) => {
+      const { geography_id } = req.params
+      try {
+        const geography_metadata = await db.readSingleGeographyMetadata(geography_id)
+        return res.status(200).send(geography_metadata)
+      } catch (err) {
+        await log.error('failed to read geography metadata', err.stack)
+        return res.status(404).send({ result: 'not found' })
+      }
+    }
+  )
+
+  app.put(
+    pathsFor('/geographies/:geography_id/meta'),
+    checkScope(check => check('policies:write')),
+    async (req, res) => {
+      const geography_metadata = req.body
+      try {
+        await db.updateGeographyMetadata(geography_metadata)
+        return res.status(200).send(geography_metadata)
+      } catch (updateErr) {
+        if (updateErr instanceof NotFoundError) {
+          try {
+            await db.writeGeographyMetadata(geography_metadata)
+            return res.status(201).send(geography_metadata)
+          } catch (writeErr) {
+            await log.error('failed to write geography metadata', writeErr.stack)
+            return res.status(500).send(new ServerError())
+          }
+        } else {
+          return res.status(500).send(new ServerError())
+        }
+      }
+    }
+  )
   return app
 }
 
