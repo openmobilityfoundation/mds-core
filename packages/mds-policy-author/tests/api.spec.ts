@@ -449,7 +449,6 @@ describe('Tests app', () => {
         .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
-          console.log(result.body)
           test.assert(isUUID(result.body.policy_id))
           done(err)
         })
