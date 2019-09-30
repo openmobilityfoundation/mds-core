@@ -206,7 +206,7 @@ build() {
   yarn image
 
   if [ "${configs[image-repository]}" ]; then
-    for i in $(docker images --filter "reference=mds*latest" | grep mds | tr -s ' ' | cut -d ' ' -f 1,2 | tr ' ' ':'); do
+    for i in $(docker images --filter "reference=mds*latest" --format '{{ .Repository}}:{{ .Tag}}'); do
       docker tag ${i} ${configs[image-repository]}/${i}
       docker push ${configs[image-repository]}/${i}
     done; unset i
