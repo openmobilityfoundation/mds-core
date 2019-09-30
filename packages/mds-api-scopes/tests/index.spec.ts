@@ -17,7 +17,8 @@
  */
 
 import test from 'unit.js'
-import { validateScopes, ScopeDescriptions } from '../index'
+import { ScopeDescriptions } from '@mds-core/mds-types'
+import { validateScopes } from '../index'
 
 type TestAccessScopes = 'scope:1' | 'scope:2' | 'scope:3' | 'scope:4'
 

@@ -859,9 +859,11 @@ describe('Tests Compliance API:', () => {
       Promise.all([db.initialize(), cache.initialize()]).then(() => {
         Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
           db.writePolicy(COUNT_POLICY_JSON).then(() => {
-            db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(() => {
-              done()
-            })
+            db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary }).then(
+              () => {
+                done()
+              }
+            )
           })
         })
       })
@@ -939,7 +941,11 @@ describe('Tests Compliance API:', () => {
 
   describe('Verifies max 0 count policy', () => {
     before('Setup max 0 count policy', async () => {
-      const geography = { name: 'la', geography_id: 'c0591267-bb6a-4f28-a612-ff7f4a8f8b2a', geography_json: restrictedAreas }
+      const geography = {
+        name: 'la',
+        geography_id: 'c0591267-bb6a-4f28-a612-ff7f4a8f8b2a',
+        geography_json: restrictedAreas
+      }
 
       const devices: Device[] = makeDevices(15, now())
       const events = makeEventsWithTelemetry(devices, now() - 10, LA_BEACH, 'trip_start')

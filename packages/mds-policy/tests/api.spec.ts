@@ -160,7 +160,11 @@ describe('Tests app', () => {
   })
 
   it('read back all published policies and no superseded ones', async () => {
-    await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY2_UUID, geography_json: veniceSpecialOpsZone })
+    await db.writeGeography({
+      name: 'Los Angeles',
+      geography_id: GEOGRAPHY2_UUID,
+      geography_json: veniceSpecialOpsZone
+    })
     await db.writePolicy(POLICY2_JSON)
     await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)

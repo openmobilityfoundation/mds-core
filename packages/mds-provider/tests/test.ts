@@ -23,10 +23,9 @@
 import supertest from 'supertest'
 import { now } from '@mds-core/mds-utils'
 import { Device, Telemetry, VehicleEvent, VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
-import { makeTelemetryStream, makeTelemetry, makeDevices } from '@mds-core/mds-test-data'
+import { makeTelemetryStream, makeTelemetry, makeDevices, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { AccessTokenScope } from '@mds-core/mds-api-scopes'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
@@ -35,6 +34,9 @@ import { api } from '../api'
 import { ProviderEventProcessor } from '../event-processor'
 
 const APP_JSON = 'application/json; charset=utf-8'
+const EMPTY_SCOPE = SCOPED_AUTH([], '')
+const TRIPS_READ_SCOPE = SCOPED_AUTH(['trips:read'])
+const STATUS_CHANGES_READ_SCOPE = SCOPED_AUTH(['status_changes:read'])
 
 const request = supertest(ApiServer(api))
 
@@ -155,9 +157,6 @@ const test_data = {
   telemetry: test_telemetry
 }
 
-const SCOPED_AUTH = (...scopes: AccessTokenScope[]) =>
-  `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${scopes.join(' ')}`).toString('base64')}`
-
 describe('Tests app', () => {
   before('initializes the db and cache', async () => {
     await Promise.all([db.initialize(), cache.initialize()])
@@ -186,7 +185,7 @@ describe('Tests app', () => {
   it('Get Trips (no scope)', done => {
     request
       .get('/trips')
-      .set('Authorization', SCOPED_AUTH())
+      .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -197,7 +196,7 @@ describe('Tests app', () => {
   it('Get Trips (all)', done => {
     request
       .get('/trips')
-      .set('Authorization', SCOPED_AUTH('trips:read'))
+      .set('Authorization', TRIPS_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -212,7 +211,7 @@ describe('Tests app', () => {
   it('Get Trips (non-existent vehicle)', done => {
     request
       .get('/trips?device_id=thisisnotadeviceid')
-      .set('Authorization', SCOPED_AUTH('trips:read'))
+      .set('Authorization', TRIPS_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -224,7 +223,7 @@ describe('Tests app', () => {
   it('Get Trips (vehicle)', done => {
     request
       .get(`/trips?device_id=${DEVICE_UUID}`)
-      .set('Authorization', SCOPED_AUTH('trips:read'))
+      .set('Authorization', TRIPS_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -238,7 +237,7 @@ describe('Tests app', () => {
   it('Get Trips (date range)', done => {
     request
       .get(`/trips?start_time=${test_trip_start.timestamp}&end_time=${test_trip_end.timestamp}`)
-      .set('Authorization', SCOPED_AUTH('trips:read'))
+      .set('Authorization', TRIPS_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -262,7 +261,7 @@ describe('Tests app', () => {
   it('Get Status Changes (no scope)', done => {
     request
       .get('/status_changes')
-      .set('Authorization', SCOPED_AUTH())
+      .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -273,7 +272,7 @@ describe('Tests app', () => {
   it('Get Status Changes (all)', done => {
     request
       .get('/status_changes')
-      .set('Authorization', SCOPED_AUTH('status_changes:read'))
+      .set('Authorization', STATUS_CHANGES_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -288,7 +287,7 @@ describe('Tests app', () => {
   it('Get Status Changes (ORIGINAL_TEST_TIMESTAMP)', done => {
     request
       .get(`/status_changes?start_time=${test_trip_start.timestamp}&end_time=${test_trip_end.timestamp}`)
-      .set('Authorization', SCOPED_AUTH('status_changes:read'))
+      .set('Authorization', STATUS_CHANGES_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
         log.info('----- one change:', result.body)
@@ -304,7 +303,7 @@ describe('Tests app', () => {
   it('Get Status Changes (invalid device_id)', done => {
     request
       .get(`/status_changes?device_id=notavalidUUID`)
-      .set('Authorization', SCOPED_AUTH('status_changes:read'))
+      .set('Authorization', STATUS_CHANGES_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
