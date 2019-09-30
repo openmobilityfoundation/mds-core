@@ -553,8 +553,8 @@ function makeTrip(device: Device): Trip {
   }
 }
 
-const SCOPED_AUTH = (scopes: AccessTokenScope[], provider_id = TEST1_PROVIDER_ID) =>
-  `basic ${Buffer.from(`${provider_id}|${scopes.join(' ')}`).toString('base64')}`
+const SCOPED_AUTH = (scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
+  `basic ${Buffer.from(`${principalId}|${scopes.join(' ')}`).toString('base64')}`
 
 export {
   BAD_PROVIDER_UUID,
