@@ -1,4 +1,5 @@
 {{- range $key, $api := .Values.apis }}
+{{- if $api.enabled }}
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
@@ -43,6 +44,7 @@ spec:
       - Authorization
       maxAge: "10m"
 ---
+{{- end }}
 {{- end }}
 {{- if (and $.Values.tls.letsencrypt.enabled $.Values.tls.enabled) }}
 apiVersion: certmanager.k8s.io/v1alpha1

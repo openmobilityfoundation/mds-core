@@ -1,4 +1,5 @@
 {{- range $key, $api := .Values.apis }}
+{{- if $api.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -12,4 +13,5 @@ spec:
   -
     name: http-{{ $api.name }}
     port: {{ $api.port }}
+{{- end }}
 {{- end }}

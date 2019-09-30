@@ -1,4 +1,5 @@
 {{- range $key, $api := .Values.apis }}
+{{- if $api.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -93,6 +94,7 @@ spec:
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
           {{- end }}
+{{- end }}
 {{- end }}
 {{- if $.Values.pgPass }}
 ---
