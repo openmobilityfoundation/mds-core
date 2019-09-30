@@ -83,7 +83,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById(({ params: { service_area_id } } as unknown) as AgencyApiRequest, res)
       assert.equal(statusHandler.calledWith(200), true)
       assert.equal(sendHandler.calledWith({ service_areas: serviceAreas }), true)
       Sinon.restore()
@@ -98,7 +98,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById(({ params: { service_area_id } } as unknown) as AgencyApiRequest, res)
       assert.equal(statusHandler.calledWith(404), true)
       assert.equal(sendHandler.calledWith({ result: `${service_area_id} not found` }), true)
       Sinon.restore()
@@ -113,7 +113,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById(({ params: { service_area_id } } as unknown) as AgencyApiRequest, res)
       assert.equal(statusHandler.calledWith(404), true)
       assert.equal(sendHandler.calledWith({ result: `${service_area_id} not found` }), true)
       Sinon.restore()
@@ -128,7 +128,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById(({ params: { service_area_id } } as unknown) as AgencyApiRequest, res)
       assert.equal(statusHandler.calledWith(400), true)
       assert.equal(sendHandler.calledWith({ result: `invalid service_area_id ${service_area_id} is not a UUID` }), true)
       Sinon.restore()
@@ -277,10 +277,10 @@ describe('Agency API request handlers', () => {
       Sinon.replace(db, 'readEvent', Sinon.fake.resolves('it-worked'))
       Sinon.replace(db, 'readTelemetry', Sinon.fake.resolves('it-worked'))
       await getVehicleById(
-        {
+        ({
           params: { device_id },
           query: { cached: false }
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(404), true)
@@ -309,10 +309,10 @@ describe('Agency API request handlers', () => {
       Sinon.replace(db, 'readTelemetry', Sinon.fake.resolves({}))
       Sinon.replace(utils, 'computeCompositeVehicleData', Sinon.fake.resolves('it-worked'))
       await getVehicleById(
-        {
+        ({
           params: { device_id },
           query: { cached: false }
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -334,11 +334,11 @@ describe('Agency API request handlers', () => {
       res.locals = { provider_id } as any
       Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
       await getVehiclesByProvider(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)
@@ -358,11 +358,11 @@ describe('Agency API request handlers', () => {
       res.locals = { provider_id } as any
       Sinon.replace(utils, 'getVehicles', Sinon.fake.resolves('it-worked'))
       await getVehiclesByProvider(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -385,11 +385,11 @@ describe('Agency API request handlers', () => {
         res.locals = { provider_id } as any
         Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
         await updateVehicleFail(
-          {
+          ({
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as unknown) as AgencyApiRequest,
           res,
           provider_id,
           device_id,
@@ -417,11 +417,11 @@ describe('Agency API request handlers', () => {
         res.locals = { provider_id } as any
         Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
         await updateVehicleFail(
-          {
+          ({
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as unknown) as AgencyApiRequest,
           res,
           provider_id,
           device_id,
@@ -449,11 +449,11 @@ describe('Agency API request handlers', () => {
         res.locals = { provider_id } as any
         Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
         await updateVehicleFail(
-          {
+          ({
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as unknown) as AgencyApiRequest,
           res,
           provider_id,
           device_id,
@@ -481,11 +481,11 @@ describe('Agency API request handlers', () => {
         res.locals = { provider_id } as any
         Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
         await updateVehicleFail(
-          {
+          ({
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as unknown) as AgencyApiRequest,
           res,
           provider_id,
           device_id,
@@ -509,11 +509,11 @@ describe('Agency API request handlers', () => {
       res.locals = { provider_id } as any
       Sinon.replace(utils, 'getVehicles', Sinon.fake.rejects('it-broke'))
       await getVehiclesByProvider(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)
@@ -534,12 +534,12 @@ describe('Agency API request handlers', () => {
       res.locals = { provider_id } as any
       Sinon.replace(db, 'readDevice', Sinon.fake.rejects('it-broke'))
       await updateVehicle(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any,
           body: { vehicle_id }
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(404), true)
@@ -560,12 +560,12 @@ describe('Agency API request handlers', () => {
       res.locals = { provider_id } as any
       Sinon.replace(db, 'readDevice', Sinon.fake.resolves({ provider_id: 'not-your-provider' }))
       await updateVehicle(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any,
           body: { vehicle_id }
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(404), true)
@@ -589,12 +589,12 @@ describe('Agency API request handlers', () => {
       Sinon.replace(cache, 'writeDevice', Sinon.fake.resolves({ provider_id }))
       Sinon.replace(stream, 'writeDevice', Sinon.fake.resolves({ provider_id }))
       await updateVehicle(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any,
           body: { vehicle_id }
-        } as AgencyApiRequest,
+        } as unknown) as AgencyApiRequest,
         res
       )
       assert.equal(statusHandler.calledWith(201), true)
