@@ -34,7 +34,7 @@
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.26",
-    "uuid4": "1.1.4",
+    "uuid": "3.3.3",
     "yargs": "14.0.0"
   },
   "devDependencies": {
