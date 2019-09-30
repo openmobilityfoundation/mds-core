@@ -105,6 +105,20 @@ const featureCollectionSchema = Joi.object()
   })
   .unknown(true) // TODO
 
+const geographySchema = Joi.object()
+  .keys({
+    geography_id: Joi.string()
+      .guid()
+      .required(),
+    geography_json: featureCollectionSchema,
+    read_only: Joi.boolean().allow(null),
+    previous_geography_ids: Joi.array()
+      .items(Joi.string().guid())
+      .allow(null),
+    name: Joi.string().required()
+  })
+  .unknown(true)
+
 function api(app: express.Express): express.Express {
   app.get(pathsFor('/policies'), checkScope(check => check('policies:read')), async (req, res) => {
     const { get_published = null, get_unpublished = null } = req.query
@@ -337,7 +351,7 @@ function api(app: express.Express): express.Express {
 
   app.post(pathsFor('/geographies/'), checkScope(check => check('policies:write')), async (req, res) => {
     const geography = req.body
-    const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
+    const validation = Joi.validate(geography, geographySchema)
     const details = validation.error ? validation.error.details : null
     if (details) {
       return res.status(400).send(details)
@@ -361,7 +375,7 @@ function api(app: express.Express): express.Express {
 
   app.put(pathsFor('/geographies/:geography_id'), checkScope(check => check('policies:write')), async (req, res) => {
     const geography = req.body
-    const validation = Joi.validate(geography.geography_json, featureCollectionSchema)
+    const validation = Joi.validate(geography, geographySchema)
     const details = validation.error ? validation.error.details : null
     if (details) {
       return res.status(400).send(details)
