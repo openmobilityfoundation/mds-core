@@ -263,12 +263,17 @@ helmOptions() {
 installTiller() {
   check ${FUNCNAME[0]}
 
-  if [ $(kubectl get serviceaccounts tiller-clusterrolebinding > /dev/null 2>&1; echo $?) == "1" ]; then
-    kubectl create serviceaccount tiller --namespace kube-system
-
-    cat <<'EOF' | kubectl create -f -
-kind: ClusterRoleBinding
+  if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "1" ]; then
+    warn "NOT FOR PRODUCTION USE"
+    cat << EOF | kubectl create -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
 metadata:
   name: tiller-clusterrolebinding
 subjects:
@@ -282,6 +287,7 @@ roleRef:
 EOF
 
     helm init --service-account tiller --upgrade
+    pause 5
   fi
 }
 
@@ -644,6 +650,15 @@ uninstallDashboard() {
     ${configs[dryrun]:+--dry-run}
 }
 
+uninstallTiller() {
+  if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "0" ]; then
+    kubectl delete serviceaccount tiller --namespace kube-system
+    kubectl delete clusterrolebinding tiller-clusterrolebinding
+    helm reset --force
+    pause 3
+    helm init --upgrade
+  fi
+}
 #todo: purge
 uninstallHelm() {
   case "${configs[os]}" in
