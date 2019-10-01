@@ -28,11 +28,11 @@ spec:
         {{- end }}
         resources:
           limits:
-            cpu: {{ $.Values.resources_limits_cpu | default "500m" }}
-            memory: {{ $.Values.resources_limits_memory | default "512Mi" }}
+            cpu: {{ $.Values.resourcesLimitsCpu | default "500m" }}
+            memory: {{ $.Values.resourcesLimitsMemory | default "512Mi" }}
           requests:
-            cpu: {{ $.Values.resources_requests_cpu | default "50m" }}
-            memory: {{ $.Values.resources_requests_memory | default "128Mi" }}
+            cpu: {{ $.Values.resourcesRequestsCpu | default "50m" }}
+            memory: {{ $.Values.resourcesRequestsMemory | default "128Mi" }}
         ports:
         - containerPort: {{ $api.port }}
           name: user-port
