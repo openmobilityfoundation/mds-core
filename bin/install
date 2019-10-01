@@ -212,12 +212,12 @@ build() {
 installImages() {
   check ${FUNCNAME[0]}
 
-  # if [ "${configs[image-repository]}" ]; then
-  #   for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
-  #     docker tag ${i} ${configs[image-repository]}/${i}
-  #     docker push ${configs[image-repository]}/${i}
-  #   done; unset i
-  # fi
+  if [ "${configs[image-repository]}" ]; then
+    for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
+      docker tag ${i} ${configs[image-repository]}/${i}
+      docker push ${configs[image-repository]}/${i}
+    done; unset i
+  fi
 }
 
 pause() {
