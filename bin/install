@@ -205,6 +205,12 @@ build() {
   yarn build --ignore=@aws-lambda/*
   yarn image
 
+  installImages
+}
+
+installImages() {
+  check ${FUNCNAME[0]}
+
   if [ "${configs[image-repository]}" ]; then
     for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
       docker tag ${i} ${configs[image-repository]}/${i}
@@ -681,6 +687,7 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
+    installImages) ;;
     installDashboard | installLogging | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
