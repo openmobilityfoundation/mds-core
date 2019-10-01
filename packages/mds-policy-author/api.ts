@@ -28,7 +28,7 @@ import {
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
-import { checkScope } from '@mds-core/mds-api-server'
+import { checkAccess } from '@mds-core/mds-api-server'
 
 const ruleSchema = Joi.object().keys({
   name: Joi.string().required(),
@@ -120,7 +120,7 @@ const geographySchema = Joi.object()
   .unknown(true)
 
 function api(app: express.Express): express.Express {
-  app.get(pathsFor('/policies'), checkScope(scopes => scopes.includes('policies:read')), async (req, res) => {
+  app.get(pathsFor('/policies'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
     const { get_published = null, get_unpublished = null } = req.query
     log.info('read /policies', req.query)
 
@@ -158,7 +158,7 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.post(pathsFor('/policies'), checkScope(scopes => scopes.includes('policies:write')), async (req, res) => {
+  app.post(pathsFor('/policies'), checkAccess(scopes => scopes.includes('policies:write')), async (req, res) => {
     const policy = req.body
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
@@ -184,7 +184,7 @@ function api(app: express.Express): express.Express {
 
   app.post(
     pathsFor('/policies/:policy_id/publish'),
-    checkScope(scopes => scopes.includes('policies:publish')),
+    checkAccess(scopes => scopes.includes('policies:publish')),
     async (req, res) => {
       const { policy_id } = req.params
       try {
@@ -213,7 +213,7 @@ function api(app: express.Express): express.Express {
 
   app.put(
     pathsFor('/policies/:policy_id'),
-    checkScope(scopes => scopes.includes('policies:write')),
+    checkAccess(scopes => scopes.includes('policies:write')),
     async (req, res) => {
       const policy = req.body
       const validation = Joi.validate(policy, policySchema)
@@ -247,7 +247,7 @@ function api(app: express.Express): express.Express {
 
   app.delete(
     pathsFor('/policies/:policy_id'),
-    checkScope(scopes => scopes.includes('policies:delete')),
+    checkAccess(scopes => scopes.includes('policies:delete')),
     async (req, res) => {
       const { policy_id } = req.params
       try {
@@ -262,7 +262,7 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/policies/meta/'), checkScope(scopes => scopes.includes('policies:read')), async (req, res) => {
+  app.get(pathsFor('/policies/meta/'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
     const { get_published = null, get_unpublished = null } = req.query
     log.info('read /policies/meta', req.query)
     try {
@@ -285,7 +285,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies/:policy_id'),
-    checkScope(scopes => scopes.includes('policies:read')),
+    checkAccess(scopes => scopes.includes('policies:read')),
     async (req, res) => {
       const { policy_id } = req.params
       try {
@@ -304,7 +304,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies/:policy_id/meta'),
-    checkScope(scopes => scopes.includes('policies:read')),
+    checkAccess(scopes => scopes.includes('policies:read')),
     async (req, res) => {
       const { policy_id } = req.params
       try {
@@ -319,7 +319,7 @@ function api(app: express.Express): express.Express {
 
   app.put(
     pathsFor('/policies/:policy_id/meta'),
-    checkScope(scopes => scopes.includes('policies:write')),
+    checkAccess(scopes => scopes.includes('policies:write')),
     async (req, res) => {
       const policy_metadata = req.body
       try {
@@ -341,7 +341,7 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/geographies/meta/'), checkScope(scopes => scopes.includes('policies:read')), async (req, res) => {
+  app.get(pathsFor('/geographies/meta/'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
     const get_read_only = req.query === 'true'
 
     log.info('read /geographies/meta', req.query)
@@ -358,7 +358,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/geographies/:geography_id'),
-    checkScope(scopes => scopes.includes('policies:read')),
+    checkAccess(scopes => scopes.includes('policies:read')),
     async (req, res) => {
       log.info('read geo', JSON.stringify(req.params))
       const { geography_id } = req.params
@@ -373,7 +373,7 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.post(pathsFor('/geographies/'), checkScope(scopes => scopes.includes('policies:write')), async (req, res) => {
+  app.post(pathsFor('/geographies/'), checkAccess(scopes => scopes.includes('policies:write')), async (req, res) => {
     const geography = req.body
     const validation = Joi.validate(geography, geographySchema)
     const details = validation.error ? validation.error.details : null
@@ -399,7 +399,7 @@ function api(app: express.Express): express.Express {
 
   app.put(
     pathsFor('/geographies/:geography_id'),
-    checkScope(scopes => scopes.includes('policies:write')),
+    checkAccess(scopes => scopes.includes('policies:write')),
     async (req, res) => {
       const geography = req.body
       const validation = Joi.validate(geography, geographySchema)
@@ -420,7 +420,7 @@ function api(app: express.Express): express.Express {
 
   app.delete(
     pathsFor('/geographies/:geography_id'),
-    checkScope(scopes => scopes.includes('policies:delete')),
+    checkAccess(scopes => scopes.includes('policies:delete')),
     async (req, res) => {
       const { geography_id } = req.params
       try {
@@ -435,7 +435,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/geographies/:geography_id/meta'),
-    checkScope(scopes => scopes.includes('policies:read')),
+    checkAccess(scopes => scopes.includes('policies:read')),
     async (req, res) => {
       const { geography_id } = req.params
       try {
@@ -450,7 +450,7 @@ function api(app: express.Express): express.Express {
 
   app.put(
     pathsFor('/geographies/:geography_id/meta'),
-    checkScope(scopes => scopes.includes('policies:write')),
+    checkAccess(scopes => scopes.includes('policies:write')),
     async (req, res) => {
       const geography_metadata = req.body
       try {

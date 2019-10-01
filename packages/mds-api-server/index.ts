@@ -105,7 +105,7 @@ export const ApiServer = (
 }
 
 /* istanbul ignore next */
-export const checkScope = (validator: (scopes: AccessTokenScope[]) => boolean) => (
+export const checkAccess = (validator: (scopes: AccessTokenScope[]) => boolean) => (
   req: ApiRequest,
   res: ApiResponse,
   next: express.NextFunction

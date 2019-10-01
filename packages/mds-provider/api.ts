@@ -25,7 +25,7 @@ import { Telemetry } from '@mds-core/mds-types'
 import { ReadTripsResult, Trip, ReadStatusChangesResult, StatusChange } from '@mds-core/mds-db/types'
 import { asJsonApiLinks, asPagingParams } from '@mds-core/mds-api-helpers'
 import { Feature, FeatureCollection } from 'geojson'
-import { checkScope } from '@mds-core/mds-api-server'
+import { checkAccess } from '@mds-core/mds-api-server'
 import { ProviderApiRequest, ProviderApiResponse, PROVIDER_VERSION } from './types'
 import { getEventsAsStatusChanges, getEventsAsTrips } from './legacy'
 
@@ -128,7 +128,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/trips'),
-    checkScope(scopes => scopes.includes('trips:read')),
+    checkAccess(scopes => scopes.includes('trips:read')),
     PROVIDER_MODERN
       ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
@@ -186,7 +186,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/status_changes'),
-    checkScope(scopes => scopes.includes('status_changes:read')),
+    checkAccess(scopes => scopes.includes('status_changes:read')),
     PROVIDER_MODERN
       ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
