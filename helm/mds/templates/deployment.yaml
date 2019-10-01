@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mds.fullname" $ }}-{{ $api.name }}-deployment
+  name: {{ include "mds.fullname" $ }}-{{ $api.name }}-{{ $api.version }}-deployment
   labels:
     app: {{ $api.name }}
   namespace: {{ $.Release.Namespace }}
