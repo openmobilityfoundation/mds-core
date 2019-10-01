@@ -4,26 +4,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $api.name }}
+  name: {{ $key }}
   labels:
-    app: {{ $api.name }}
+    app: {{ $key }}
   namespace: {{ $.Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ $api.name }}
+      app: {{ $key }}
   template:
     metadata:
       labels:
-        app: {{ $api.name }}
+        app: {{ $key }}
     spec:
       containers:
-      - name: {{ $api.name }}
+      - name: {{ $key }}
         {{- if $.Values.registry }}
-        image: {{ $.Values.registry }}/{{ $api.name }}:{{ $api.version }}
+        image: {{ $.Values.registry }}/{{ $key }}:{{ $api.version }}
         {{- else }}
-        image: {{ $api.name }}:{{ $api.version }}
+        image: {{ $key }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
         resources:
@@ -87,7 +87,7 @@ spec:
           {{- end }}
           {{- if $api.useEvents }}
           - name: CE_NAME
-            value: {{ $api.name }}
+            value: {{ $key }}
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
           {{- end }}

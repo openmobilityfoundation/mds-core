@@ -3,7 +3,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ $api.name }}-route
+  name: {{ $key }}-route
   namespace: {{ $.Release.Namespace }}
 spec:
   hosts:
@@ -26,7 +26,7 @@ spec:
     - destination:
         port:
           number: {{ $api.port }}
-        host: {{ $api.name }}.{{ $.Release.Namespace}}.svc.cluster.local
+        host: {{ $key }}.{{ $.Release.Namespace}}.svc.cluster.local
     corsPolicy:
       allowOrigin:
       - "*"
