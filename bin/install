@@ -130,6 +130,7 @@ where service in:
   dashboard
   kiali
   istio
+  images
   mds
   fallbackCertificate                                 : requires ingress domain; eg: -c:ingress-domain=[DOMAIN]
   ingressGatewayCertificate                           : requires certificate path; eg: -c:ingress-gateway-key-path=[KEY-PATH],ingress-gateway-certificate-path=[CERT-PATH]
