@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $api.name }}
+  name: {{ include "mds.fullname" $ }}-{{ $api.name }}-deployment
   labels:
     app: {{ $api.name }}
   namespace: {{ $.Release.Namespace }}
@@ -96,7 +96,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pg-pass
+  name: {{ include "mds.fullname" $ }}-pg-pass
   namespace: {{ $.Release.Namespace }}
 type: Opaque
 data:

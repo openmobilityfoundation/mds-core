@@ -2,7 +2,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: pg-rw-external
+  name: {{ include "mds.fullname" $ }}-pg-rw-external
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:
@@ -17,7 +17,7 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: pg-ro-external
+  name: {{ include "mds.fullname" $ }}-pg-ro-external
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:
@@ -34,7 +34,7 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: redis-external
+  name: {{ include "mds.fullname" $ }}-redis-external
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:
@@ -50,7 +50,7 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
-  name: fluentbit-output
+  name: {{ include "mds.fullname" $ }}-fluentbit-output
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:

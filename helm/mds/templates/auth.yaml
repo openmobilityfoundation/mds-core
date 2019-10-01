@@ -4,7 +4,7 @@
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
 metadata:
-  name: {{ $api.name }}-auth
+  name: {{ include "mds.fullname" $ }}-{{ $api.name }}-auth
   namespace: {{ $.Release.Namespace }}
 spec:
   targets:

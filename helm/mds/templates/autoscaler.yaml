@@ -2,7 +2,7 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ $api.name }}-hpa
+  name: {{ include "mds.fullname" $ }}-{{ $api.name }}-hpa
   namespace: {{ $.Release.Namespace }}
   annotations:
     metric-config.object.istio-requests-total.prometheus/per-replica: "true"
