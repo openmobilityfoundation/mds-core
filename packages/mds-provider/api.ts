@@ -128,7 +128,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/trips'),
-    checkScope(check => check('trips:read')),
+    checkScope(scopes => scopes.includes('trips:read')),
     PROVIDER_MODERN
       ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters
@@ -186,7 +186,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/status_changes'),
-    checkScope(check => check('status_changes:read')),
+    checkScope(scopes => scopes.includes('status_changes:read')),
     PROVIDER_MODERN
       ? /* istanbul ignore next */ async (req: ProviderApiRequest, res: ProviderApiResponse) => {
           // Standard Provider parameters

@@ -109,7 +109,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/events/:cursor?'),
-    checkScope(check => check('events:read')), // TODO: events:read:provider with filtering
+    checkScope(scopes => scopes.includes('events:read')), // TODO: events:read:provider with filtering
     async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
       try {
         const { cursor, limit } = getRequestParameters(req)
@@ -137,7 +137,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/vehicles/:device_id'),
-    checkScope(check => check('vehicles:read')), // TODO: vehicles:read:provider with filtering
+    checkScope(scopes => scopes.includes('vehicles:read')), // TODO: vehicles:read:provider with filtering
     async (req: NativeApiGetVehiclesRequest, res: NativeApiGetVehiclesResponse) => {
       const { device_id } = req.params
       try {
@@ -162,7 +162,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/providers'),
-    checkScope(check => check('providers:read')),
+    checkScope(scopes => scopes.includes('providers:read')),
     async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
       res.status(200).send({
         version: NativeApiCurrentVersion,

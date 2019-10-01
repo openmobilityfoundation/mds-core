@@ -3,8 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
-import { validateScopes } from '@mds-core/mds-api-scopes'
-import { ScopeValidator, AccessTokenScope } from '@mds-core/mds-types'
+import { AccessTokenScope } from '@mds-core/mds-types'
 
 export type ApiRequest = express.Request
 
@@ -106,12 +105,12 @@ export const ApiServer = (
 }
 
 /* istanbul ignore next */
-export const checkScope = (validator: ScopeValidator) => (
+export const checkScope = (validator: (scopes: AccessTokenScope[]) => boolean) => (
   req: ApiRequest,
   res: ApiResponse,
   next: express.NextFunction
 ) => {
-  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validateScopes(validator, res.locals.scopes)) {
+  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validator(res.locals.scopes)) {
     next()
   } else {
     res.status(403).send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
