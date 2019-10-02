@@ -690,7 +690,7 @@ check() {
     installHelm | installBookinfo) ;;
     installImages)
       [ "${configs[image-repository]}" ] || \
-        warn "configure an image-repository; eg ' ... -c:image-repository=[repo-url] ...'";;
+        warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
     installDashboard | installLogging | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
@@ -698,7 +698,8 @@ check() {
       uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
     installSimulator)
-      [ ! "${configs[simulator-repository]}" ] && usage "unspecified simulator repository";;
+      [ "${configs[simulator-repository]}" ] || \
+        warn "configure a simulator-repository; eg ' ... -c:simulator-repository=[simulator-repository-url] ...";;
     forward) ;;
     app:*) forwardIfNeeded ${1##*:};;
     cliPostgresql)
