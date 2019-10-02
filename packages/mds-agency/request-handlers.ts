@@ -135,7 +135,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
 
   const { cached } = req.query
 
-  const { provider_id } = res.locals
+  const { provider_id } = res.locals.scopes.includes('vehicles:read') ? req.query : res.locals
 
   log.info(`/vehicles/${device_id}`, cached)
   const store = cached ? cache : db
@@ -163,7 +163,8 @@ export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyAp
     pathname: req.path
   })
 
-  const { provider_id } = res.locals
+  // TODO: Replace with express middleware
+  const { provider_id } = res.locals.scopes.includes('vehicles:read') ? req.query : res.locals
 
   try {
     const response = await getVehicles(skip, take, url, provider_id, req.query)
