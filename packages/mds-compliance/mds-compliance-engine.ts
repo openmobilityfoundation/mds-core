@@ -170,40 +170,43 @@ function processTimeRule(
 
 // TODO Add types for speed policies
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// function processSpeedPolicy(policy: Policy, events: VehicleEvent[], geographies: Geography[], devices: Device[]): any {
-//   const compliance: any[] = policy.rules.reduce((compliance_acc: any[], rule: Rule) => {
-//     if (isRuleActive(rule)) {
-//       const matches: any[] = rule.geographies.reduce((matches: any[], geography: string) => {
-//         events.forEach((event: VehicleEvent) => {
-//           const device: Device | undefined = devices.find((device: Device) => {
-//             return device.device_id === event.device_id
-//           })
-//           if (event.telemetry && device) {
-//             if (
-//               Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
-//              (rule.statuses[EVENT_STATUS_MAP[event.event_type]].length === 0 ||
-//                rule.statuses[EVENT_STATUS_MAP[event.event_type]].includes(event.event_type)) &&&
-//               (!rule.vehicle_types || rule.vehicle_types.includes(device.type)) &&
-//               event.telemetry.gps.speed &&
-//               pointInShape(event.telemetry.gps, getPolygon(geographies, geography)) &&
-//               (!rule.maximum || event.telemetry.gps.speed >= rule.maximum)
-//             ) {
-//               matches.push({
-//                 match: {
-//                   measured: event.telemetry.gps.speed
-//                 }
-//               })
-//             }
-//           }
-//         })
-//         return matches
-//       }, [])
-//       compliance_acc.push({ rule, matches })
-//     }
-//     return compliance_acc
-//   }, [])
-//   return { policy, compliance }
-// }
+function processSpeedPolicy(policy: Policy, events: VehicleEvent[], geographies: Geography[], devices: Device[]): any {
+  const compliance: any[] = policy.rules.reduce((compliance_acc: any[], rule: Rule) => {
+    if (isRuleActive(rule)) {
+      const matches_result: any[] = rule.geographies.reduce((matches: any[], geography: string) => {
+        events.forEach((event: VehicleEvent) => {
+          const device_result: Device | undefined = devices.find((device: Device) => {
+            return device.device_id === event.device_id
+          })
+          if (event.telemetry && device_result) {
+            if (
+              rule.statuses &&
+              Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+              ((rule.statuses[EVENT_STATUS_MAP[event.event_type]] &&
+                event.event_type &&
+                rule.statuses[EVENT_STATUS_MAP[event.event_type]].length === 0) ||
+                rule.statuses[EVENT_STATUS_MAP[event.event_type]].includes(event.event_type)) &&
+              (!rule.vehicle_types || rule.vehicle_types.includes(device_result.type)) &&
+              event.telemetry.gps.speed &&
+              pointInShape(event.telemetry.gps, getPolygon(geographies, geography)) &&
+              (!rule.maximum || event.telemetry.gps.speed >= rule.maximum)
+            ) {
+              matches_result.push({
+                match: {
+                  measured: event.telemetry.gps.speed
+                }
+              })
+            }
+          }
+        })
+        return matches_result
+      }, [])
+      compliance_acc.push({ rule, matches_result })
+    }
+    return compliance_acc
+  }, [])
+  return { policy, compliance }
+}
 
 function processPolicy(
   policy: Policy,
