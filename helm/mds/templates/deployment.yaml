@@ -5,17 +5,17 @@ kind: Deployment
 metadata:
   name: {{ include "mds.fullname" $ }}-{{ $api.name }}-{{ $api.version }}-deployment
   labels:
-    app: {{ $api.name }}
+    app: {{ include "mds.fullname" $ }}-{{ $api.name }}
   namespace: {{ $.Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ $api.name }}
+      app: {{ include "mds.fullname" $ }}-{{ $api.name }}
   template:
     metadata:
       labels:
-        app: {{ $api.name }}
+        app: {{ include "mds.fullname" $ }}-{{ $api.name }}
     spec:
       containers:
       - name: {{ $api.name }}

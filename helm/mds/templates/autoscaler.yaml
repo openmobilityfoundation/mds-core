@@ -29,7 +29,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ $api.name }}
+    name: {{ include "mds.fullname" $ }}-{{ $api.name }}
   metrics:
     - type: Object
       object:
@@ -37,7 +37,7 @@ spec:
         target:
           apiVersion: v1
           kind: Pod
-          name: {{ $api.name }}
+          name: {{ include "mds.fullname" $ }}-{{ $api.name }}
         targetValue: 10
 ---
 {{- end }}
