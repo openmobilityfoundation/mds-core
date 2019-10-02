@@ -705,12 +705,9 @@ configure() {
     for c in $(echo ${1} | tr ',' ' '); do
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
-      echo "configure[$k]:$v"
 
-      [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
-
-      unset c k v
-    done
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+=",${v}" || configs[${k}]="${v}"
+    done; unset c k v
   else
     configs[${1}]=
   fi
