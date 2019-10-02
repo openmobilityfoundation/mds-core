@@ -1502,4 +1502,32 @@ describe('Tests pagination', async () => {
         done(err)
       })
   })
+
+  it('verifies vehicles access for all providers with vehicles:read scope', done => {
+    const VEHICLES_READ_AUTH = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|vehicles:read`).toString('base64')}`
+    request
+      .get(`/vehicles?provider_id=${TEST1_PROVIDER_ID}`)
+      .set('Authorization', VEHICLES_READ_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.assert(result.body.total === 100)
+        test.string(result.body.links.first).contains('http')
+        test.string(result.body.links.last).contains('http')
+        done(err)
+      })
+  })
+
+  it('verifies no vehicles access for all providers without vehicles:read scope', done => {
+    const VEHICLES_READ_AUTH = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+    request
+      .get(`/vehicles?provider_id=${TEST1_PROVIDER_ID}`)
+      .set('Authorization', VEHICLES_READ_AUTH)
+      .expect(200)
+      .end((err, result) => {
+        test.assert(result.body.total === 0)
+        test.string(result.body.links.first).contains('http')
+        test.string(result.body.links.last).contains('http')
+        done(err)
+      })
+  })
 })

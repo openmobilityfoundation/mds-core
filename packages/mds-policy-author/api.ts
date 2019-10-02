@@ -17,7 +17,6 @@
 import express from 'express'
 import Joi from '@hapi/joi'
 import uuid from 'uuid'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, isProviderId } from '@mds-core/mds-providers'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
