@@ -20,7 +20,7 @@ import log from '@mds-core/mds-logger'
 import { isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathsFor } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
-import { checkScope } from '@mds-core/mds-api-server'
+import { checkAccess } from '@mds-core/mds-api-server'
 import {
   getAllServiceAreas,
   getServiceAreaById,
@@ -124,16 +124,21 @@ function api(app: express.Express): express.Express {
   /**
    * Not currently in Agency spec.  Ability to read back all vehicle IDs.
    */
-  app.get(pathsFor('/admin/vehicle_ids'), checkScope(check => check('admin:all')), readAllVehicleIds)
+  app.get(pathsFor('/admin/vehicle_ids'), checkAccess(scopes => scopes.includes('admin:all')), readAllVehicleIds)
 
   // /////////////////// end Agency candidate endpoints ////////////////////
 
-  app.get(pathsFor('/admin/cache/info'), checkScope(check => check('admin:all')), getCacheInfo)
+  app.get(pathsFor('/admin/cache/info'), checkAccess(scopes => scopes.includes('admin:all')), getCacheInfo)
 
   // wipe a device -- sandbox or admin use only
-  app.get(pathsFor('/admin/wipe/:device_id'), checkScope(check => check('admin:all')), validateDeviceId, wipeDevice)
+  app.get(
+    pathsFor('/admin/wipe/:device_id'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    validateDeviceId,
+    wipeDevice
+  )
 
-  app.get(pathsFor('/admin/cache/refresh'), checkScope(check => check('admin:all')), refreshCache)
+  app.get(pathsFor('/admin/cache/refresh'), checkAccess(scopes => scopes.includes('admin:all')), refreshCache)
 
   return app
 }

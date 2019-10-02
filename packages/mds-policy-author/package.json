@@ -12,7 +12,6 @@
   "dependencies": {
     "@hapi/joi": "15.1.1",
     "@mds-core/mds-api-server": "0.1.9",
-    "@mds-core/mds-api-scopes": "0.1.0",
     "@mds-core/mds-api-helpers": "0.1.9",
     "@mds-core/mds-db": "0.1.9",
     "@mds-core/mds-logger": "0.1.9",
