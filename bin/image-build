@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Tag images built outside of the master branch with a
+# "-prerelease" suffix for deployment safety.
+
+IMAGE="$1"
+BRANCH="$(git branch --no-color --show-current)"
+
+case $BRANCH in
+  master)
+    SUFFIX="";;
+  *)
+    SUFFIX="-prerelease";;
+esac
+
+docker build -t ${IMAGE}${SUFFIX} .
+docker tag ${IMAGE}${SUFFIX} latest
