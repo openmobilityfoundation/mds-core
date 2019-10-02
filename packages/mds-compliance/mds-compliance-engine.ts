@@ -23,6 +23,8 @@ import {
   Geography,
   Policy,
   Rule,
+  SpeedMatch,
+  SpeedRule,
   TimeMatch,
   TimeRule,
   VehicleEvent,
@@ -170,42 +172,47 @@ function processTimeRule(
 
 // TODO Add types for speed policies
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function processSpeedPolicy(policy: Policy, events: VehicleEvent[], geographies: Geography[], devices: Device[]): any {
-  const compliance: any[] = policy.rules.reduce((compliance_acc: any[], rule: Rule) => {
-    if (isRuleActive(rule)) {
-      const matches_result: any[] = rule.geographies.reduce((matches: any[], geography: string) => {
-        events.forEach((event: VehicleEvent) => {
-          const device_result: Device | undefined = devices.find((device: Device) => {
-            return device.device_id === event.device_id
-          })
-          if (event.telemetry && device_result) {
-            if (
-              rule.statuses &&
-              Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
-              ((rule.statuses[EVENT_STATUS_MAP[event.event_type]] &&
-                event.event_type &&
-                rule.statuses[EVENT_STATUS_MAP[event.event_type]].length === 0) ||
-                rule.statuses[EVENT_STATUS_MAP[event.event_type]].includes(event.event_type)) &&
-              (!rule.vehicle_types || rule.vehicle_types.includes(device_result.type)) &&
-              event.telemetry.gps.speed &&
-              pointInShape(event.telemetry.gps, getPolygon(geographies, geography)) &&
-              (!rule.maximum || event.telemetry.gps.speed >= rule.maximum)
-            ) {
-              matches_result.push({
-                match: {
-                  measured: event.telemetry.gps.speed
+function processSpeedRule(
+  rule: SpeedRule,
+  events: VehicleEvent[],
+  geographies: Geography[],
+  devices: { [d: string]: Device }
+): Compliance & { matches: SpeedMatch[] | null } {
+  if (isRuleActive(rule)) {
+    const matches_result: SpeedMatch[] = rule.geographies.reduce((matches: any[], geography: string) => {
+      events.forEach((event: VehicleEvent) => {
+        const device: Device | undefined = devices[event.device_id]
+        if (event.telemetry && device) {
+          if (
+            isInStatesOrEvents(rule, event) &&
+            isInVehicleTypes(rule, device) &&
+            event.telemetry.gps.speed &&
+            pointInShape(event.telemetry.gps, getPolygon(geographies, geography)) &&
+            (!rule.maximum || event.telemetry.gps.speed >= rule.maximum)
+          ) {
+            matches.push({
+              measured: event.telemetry.gps.speed,
+              geography_id: geography,
+              matched_vehicle: {
+                device_id: device.device_id,
+                provider_id: device.provider_id,
+                vehicle_id: device.vehicle_id,
+                vehicle_type: device.type,
+                vehicle_status: EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS,
+                gps: {
+                  lat: event.telemetry.gps.lat,
+                  lng: event.telemetry.gps.lng
                 }
-              })
-            }
+              }
+            })
           }
-        })
-        return matches_result
-      }, [])
-      compliance_acc.push({ rule, matches_result })
-    }
-    return compliance_acc
-  }, [])
-  return { policy, compliance }
+        }
+      })
+      return matches
+    }, [])
+    return { rule, matches: matches_result }
+  }
+  return { rule, matches: [] }
 }
 
 function processPolicy(
@@ -307,7 +314,23 @@ function processPolicy(
           break
         }
         case 'speed':
-          compliance_acc.push({ rule, matches: [] })
+          {
+            const comp: Compliance & { matches: SpeedMatch[] | null } = processSpeedRule(
+              rule,
+              events,
+              geographies,
+              devices
+            )
+            compliance_acc.push(comp)
+            vehiclesToFilter.push(
+              ...(comp.matches
+                ? comp.matches.reduce((acc: MatchedVehicle[], match: SpeedMatch) => {
+                    acc.push(match.matched_vehicle)
+                    return acc
+                  }, [])
+                : [])
+            )
+          }
           break
         default:
           compliance_acc.push({ rule, matches: [] })

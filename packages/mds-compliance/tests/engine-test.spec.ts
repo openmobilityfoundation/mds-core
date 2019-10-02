@@ -140,7 +140,6 @@ describe('Tests Compliance Engine', () => {
     done()
   })
 
-  /* TODO -- Implement Speed Compliance */
   it('Verifies speed compliance violation', done => {
     const devices = makeDevices(5, now())
     const events = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'trip_start', 500)
