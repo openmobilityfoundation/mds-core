@@ -140,7 +140,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
   log.info(`/vehicles/${device_id}`, cached)
   const store = cached ? cache : db
   const payload = await readPayload(store, device_id)
-  if (!payload.device || payload.device.provider_id !== provider_id) {
+  if (!payload.device || (provider_id && payload.device.provider_id !== provider_id)) {
     res.status(404).send({
       error: 'not_found'
     })
