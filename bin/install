@@ -213,6 +213,7 @@ installImages() {
   check ${FUNCNAME[0]}
 
   if [ "${configs[image-repository]}" ]; then
+    git name-rev --name-only HEAD | sed -e 's/release\/\(.*\)/\1/g'
     for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
       docker tag ${i} ${configs[image-repository]}/${i}
       docker push ${configs[image-repository]}/${i}
