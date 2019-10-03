@@ -1,0 +1,38 @@
+{{- range $api := .Values.apis }}
+{{- if $api.triggeredBy }}
+{{- if $api.triggeredBy.trigger }}
+{{- range $index, $value := $api.triggeredBy.trigger }}
+apiVersion: eventing.knative.dev/v1alpha1
+kind: Trigger
+metadata:
+  name: {{ $api.name }}-{{ $value }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  broker: default
+  filter:
+    sourceAndType:
+      type: {{ $value }}
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: {{ $api.name }}
+---
+{{- end }}
+{{- end }}
+{{- if $api.triggeredBy.cron }}
+apiVersion: sources.eventing.knative.dev/v1alpha1
+kind: CronJobSource
+metadata:
+  name: {{ $api.name }}-cron
+  namespace: {{ $.Release.Namespace }}
+spec:
+  schedule: {{ $api.triggeredBy.cron }}
+  sink:
+    apiVersion: v1
+    kind: Service
+    name: {{ $api.name }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

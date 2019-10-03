@@ -63,6 +63,33 @@ apis:
     migration: false
     useCache: true
     useEvents: true
+  - name: event-processor
+    port: 4008
+    version: latest
+    useDB: true
+    migration: false
+    useCache: true
+    useEvents: true
+    triggeredBy:
+      trigger: [mds.event, mds.telemetry]
+  - name: trip-processor
+    port: 4009
+    version: latest
+    useDB: true
+    migration: false
+    useCache: true
+    useEvents: true
+    triggeredBy:
+      cron: "0 * * * *"
+  - name: provider-processor
+    port: 4010
+    version: latest
+    useDB: true
+    migration: false
+    useCache: true
+    useEvents: true
+    triggeredBy:
+      cron: "0 * * * *"
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
