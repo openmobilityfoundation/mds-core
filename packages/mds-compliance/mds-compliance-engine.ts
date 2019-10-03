@@ -224,7 +224,10 @@ function processPolicy(
   if (isPolicyActive(policy)) {
     const vehiclesToFilter: MatchedVehicle[] = []
     let overflowVehiclesMap: { [key: string]: MatchedVehicle & { rule_id: UUID } } = {}
+    const speedingVehiclesMap: { [key: string]: MatchedVehicle & { rule_id: UUID } } = {}
+    const allSpeedingVehicles = []
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
+      // This is because even if a vehicle breaks two rules, it will be counted in violation of only the first rule.
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
         /* eslint-reason need to remove matched vehicles */
         /* eslint-disable-next-line no-param-reassign */
@@ -282,6 +285,9 @@ function processPolicy(
             return [...acc, ...map.overflowed]
           }, [])
 
+          // why is this vehiclesMatched and not overflowVehiclesMap?
+          // i thought the ones you didn't want to double count were the rules in violation, and
+          // for the count rule, the vehicles that 'match' fall into 'within count compliance' bucket
           vehiclesToFilter.push(...vehiclesMatched)
           overflowVehiclesMap = {
             ...overflowVehiclesMap,
@@ -322,14 +328,18 @@ function processPolicy(
               devices
             )
             compliance_acc.push(comp)
-            vehiclesToFilter.push(
-              ...(comp.matches
-                ? comp.matches.reduce((acc: MatchedVehicle[], match: SpeedMatch) => {
-                    acc.push(match.matched_vehicle)
-                    return acc
-                  }, [])
-                : [])
-            )
+            const speedingVehicles = comp.matches
+              ? comp.matches.reduce((acc: MatchedVehicle[], match: SpeedMatch) => {
+                  acc.push(match.matched_vehicle)
+                  return acc
+                }, [])
+              : []
+            vehiclesToFilter.push(...speedingVehicles)
+            allSpeedingVehicles.push(...speedingVehicles)
+
+            speedingVehicles.forEach(vehicle => {
+              speedingVehiclesMap[vehicle.device_id] = { ...vehicle, ...{ rule_id: rule.rule_id } }
+            })
           }
           break
         default:
@@ -346,8 +356,8 @@ function processPolicy(
     return {
       policy,
       compliance,
-      total_violations: overflowedVehicles.length,
-      vehicles_in_violation: overflowedVehicles
+      total_violations: overflowedVehicles.length + allSpeedingVehicles.length,
+      vehicles_in_violation: { ...overflowedVehicles, ...speedingVehiclesMap }
     }
   }
 }
