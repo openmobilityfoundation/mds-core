@@ -21,8 +21,8 @@ declare const NPM_PACKAGE_GIT_BRANCH: string
 declare const NPM_PACKAGE_GIT_COMMIT: string
 declare const NPM_PACKAGE_BUILD_DATE: string
 
-export function setEnv() {
-  Object.assign(process.env, {
+export function env() {
+  return Object.assign(process.env, {
     npm_package_name: NPM_PACKAGE_NAME,
     npm_package_version: NPM_PACKAGE_VERSION,
     npm_package_git_branch: NPM_PACKAGE_GIT_BRANCH,
