@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && docker build -t mds-metrics-sheet:${npm_package_version} . && docker tag mds-metrics-sheet:${npm_package_version} mds-metrics-sheet:latest",
+    "image": "yarn bundle && ../../bin/image-build mds-metrics-sheet:${npm_package_version}",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
