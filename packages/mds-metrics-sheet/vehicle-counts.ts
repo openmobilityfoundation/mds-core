@@ -100,10 +100,19 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
         const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
         const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
         const d = new Date()
+        let veniceAreaSum = 0
+        const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+        for (const veniceAreaKey of veniceAreaKeys) {
+          veniceAreaSum += row.areas_48h[veniceAreaKey] || 0
+        }
+        const augmentedRow = {
+          'Venice Area': veniceAreaSum,
+          ...row.areas_48h
+        }
         return {
           date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
           name: row.provider,
-          ...row.areas_48h
+          ...augmentedRow
         }
       })
     return rows
