@@ -340,7 +340,7 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.total_violations === 0)
+          test.assert.deepEqual(result.body.total_violations, 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -442,8 +442,8 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.compliance[0].matches[0].measured === 10)
-          test.assert(result.body.total_violations === 5)
+          test.assert.deepEqual(result.body.compliance[0].matches[0].measured, 10)
+          test.assert.deepEqual(result.body.total_violations, 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -620,8 +620,8 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.compliance[0].matches[0].measured === 10)
-          test.assert(result.body.total_violations === 5)
+          test.assert.deepEqual(result.body.compliance[0].matches[0].measured, 10)
+          test.assert.deepEqual(result.body.total_violations, 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -817,7 +817,7 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.total_violations === 5)
+          test.assert.deepEqual(result.body.total_violations, 5)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -875,7 +875,7 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.count === 30)
+          test.assert.deepEqual(result.body.count, 30)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -917,7 +917,7 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', TEST2_PROVIDER_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.total_violations === 0)
+          test.assert.deepEqual(result.body.total_violations, 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -965,7 +965,7 @@ describe('Tests Compliance API:', () => {
         .set('Authorization', TEST2_PROVIDER_AUTH)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.total_violations === 15)
+          test.assert.deepEqual(result.body.total_violations, 15)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
