@@ -285,9 +285,6 @@ function processPolicy(
             return [...acc, ...map.overflowed]
           }, [])
 
-          // why is this vehiclesMatched and not overflowVehiclesMap?
-          // i thought the ones you didn't want to double count were the rules in violation, and
-          // for the count rule, the vehicles that 'match' fall into 'within count compliance' bucket
           vehiclesToFilter.push(...vehiclesMatched)
           overflowVehiclesMap = {
             ...overflowVehiclesMap,
