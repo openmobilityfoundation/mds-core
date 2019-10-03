@@ -19,8 +19,10 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { api } from '@mds-core/mds-policy-author'
 import { env } from '@container-images/env-inject'
 
-const { npm_package_name, PORT = 4007 } = env()
+const { npm_package_name, npm_package_version, npm_package_git_commit, PORT = 4007 } = env()
 
-/* eslint-reason avoids import of logger */
-/* eslint-disable-next-line no-console */
-ApiServer(api).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
+ApiServer(api).listen(PORT, () =>
+  /* eslint-reason avoids import of logger */
+  /* eslint-disable-next-line no-console */
+  console.log(`${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) running on port ${PORT}`)
+)
