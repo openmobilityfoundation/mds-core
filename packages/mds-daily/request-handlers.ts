@@ -2,7 +2,15 @@ import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import { providerName } from '@mds-core/mds-providers'
 import { now, inc, ServerError } from '@mds-core/mds-utils'
-import { UUID, VehicleEvent, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_EVENT, TripsStats } from '@mds-core/mds-types'
+import {
+  UUID,
+  VehicleEvent,
+  VEHICLE_STATUSES,
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT,
+  TripsStats,
+  Device
+} from '@mds-core/mds-types'
 import areas from 'ladot-service-areas'
 import { DailyApiRequest, DailyApiResponse, ProviderInfo } from './types'
 import {
@@ -101,25 +109,29 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
     const { eventMap } = maps
     await Promise.all(
       stats.map(async stat => {
-        const items = await db.readDeviceIds(stat.provider_id)
+        const items: (Pick<Device, 'provider_id' | 'device_id'> | undefined)[] = await db.readDeviceIds(
+          stat.provider_id
+        )
         items.map(item => {
-          const event = eventMap[item.device_id]
-          inc(stat.event_type, event ? event.event_type : 'default')
-          const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
-          inc(stat.status, status)
-          // TODO latest-state should remove service_area_id if it's null
-          if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
-            const serviceArea = areas.serviceAreaMap[event.service_area_id]
-            if (serviceArea) {
-              inc(stat.areas, serviceArea.description)
-              if (event.timestamp >= HRS_12_AGO) {
-                inc(stat.areas_12h, serviceArea.description)
-              }
-              if (event.timestamp >= HRS_24_AGO) {
-                inc(stat.areas_24h, serviceArea.description)
-              }
-              if (event.timestamp >= HRS_48_AGO) {
-                inc(stat.areas_48h, serviceArea.description)
+          if (item !== undefined) {
+            const event = eventMap[item.device_id]
+            inc(stat.event_type, event ? event.event_type : 'default')
+            const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+            inc(stat.status, status)
+            // TODO latest-state should remove service_area_id if it's null
+            if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
+              const serviceArea = areas.serviceAreaMap[event.service_area_id]
+              if (serviceArea) {
+                inc(stat.areas, serviceArea.description)
+                if (event.timestamp >= HRS_12_AGO) {
+                  inc(stat.areas_12h, serviceArea.description)
+                }
+                if (event.timestamp >= HRS_24_AGO) {
+                  inc(stat.areas_24h, serviceArea.description)
+                }
+                if (event.timestamp >= HRS_48_AGO) {
+                  inc(stat.areas_48h, serviceArea.description)
+                }
               }
             }
           }
