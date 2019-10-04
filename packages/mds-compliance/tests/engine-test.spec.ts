@@ -1,6 +1,5 @@
 import test from 'unit.js'
 import fs from 'fs'
-import util from 'util'
 
 import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
 import { RULE_TYPES, Geography, Policy, Device } from '@mds-core/mds-types'

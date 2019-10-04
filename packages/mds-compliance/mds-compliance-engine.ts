@@ -43,6 +43,7 @@ import moment from 'moment-timezone'
 const { env } = process
 
 const TWO_DAYS_IN_MS = 172800000
+type MatchedVehiclePlusRule = MatchedVehicle & { rule_id: UUID }
 
 function isPolicyActive(policy: Policy, end_time: number = now()): boolean {
   if (policy.end_date === null) {
@@ -76,6 +77,23 @@ function isInVehicleTypes(rule: Rule, device: Device): boolean {
   return !rule.vehicle_types || (rule.vehicle_types && rule.vehicle_types.includes(device.type))
 }
 
+function getMatchedVehicleFromDeviceAndEvent(
+  device: Device,
+  event: VehicleEvent & { telemetry: { gps: { lat: number; lng: number } } }
+): MatchedVehicle {
+  return {
+    device_id: device.device_id,
+    provider_id: device.provider_id,
+    vehicle_id: device.vehicle_id,
+    vehicle_type: device.type,
+    vehicle_status: EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS,
+    gps: {
+      lat: event.telemetry.gps.lat,
+      lng: event.telemetry.gps.lng
+    }
+  }
+}
+
 function processCountRule(
   rule: CountRule,
   events: VehicleEvent[],
@@ -94,17 +112,7 @@ function processCountRule(
                 const poly = getPolygon(geographies, geography)
                 if (poly && pointInShape(event.telemetry.gps, poly)) {
                   // push devices that are in violation
-                  matched_vehicles_acc.push({
-                    device_id: device.device_id,
-                    provider_id: device.provider_id,
-                    vehicle_id: device.vehicle_id,
-                    vehicle_type: device.type,
-                    vehicle_status: EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS,
-                    gps: {
-                      lat: event.telemetry.gps.lat,
-                      lng: event.telemetry.gps.lng
-                    }
-                  })
+                  matched_vehicles_acc.push(getMatchedVehicleFromDeviceAndEvent(device, event))
                 }
               }
             }
@@ -147,17 +155,7 @@ function processTimeRule(
               matches_acc.push({
                 measured: now() - event.timestamp,
                 geography_id: geography,
-                matched_vehicle: {
-                  device_id: device.device_id,
-                  provider_id: device.provider_id,
-                  vehicle_id: device.vehicle_id,
-                  vehicle_type: device.type,
-                  vehicle_status: EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS,
-                  gps: {
-                    lat: event.telemetry.gps.lat,
-                    lng: event.telemetry.gps.lng
-                  }
-                }
+                matched_vehicle: getMatchedVehicleFromDeviceAndEvent(device, event)
               })
             }
           }
@@ -193,17 +191,7 @@ function processSpeedRule(
             matches.push({
               measured: event.telemetry.gps.speed,
               geography_id: geography,
-              matched_vehicle: {
-                device_id: device.device_id,
-                provider_id: device.provider_id,
-                vehicle_id: device.vehicle_id,
-                vehicle_type: device.type,
-                vehicle_status: EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS,
-                gps: {
-                  lat: event.telemetry.gps.lat,
-                  lng: event.telemetry.gps.lng
-                }
-              }
+              matched_vehicle: getMatchedVehicleFromDeviceAndEvent(device, event)
             })
           }
         }
@@ -223,11 +211,15 @@ function processPolicy(
 ): ComplianceResponse | undefined {
   if (isPolicyActive(policy)) {
     const vehiclesToFilter: MatchedVehicle[] = []
-    let overflowVehiclesMap: { [key: string]: MatchedVehicle & { rule_id: UUID } } = {}
-    const speedingVehiclesMap: { [key: string]: MatchedVehicle & { rule_id: UUID } } = {}
-    const allSpeedingVehicles = []
+    const overflowVehiclesMap: { [key: string]: MatchedVehiclePlusRule } = {}
+    const timeVehiclesMap: { [d: string]: MatchedVehiclePlusRule } = {}
+    const speedingVehiclesMap: { [d: string]: MatchedVehiclePlusRule } = {}
+    const allOverflowVehicles: MatchedVehiclePlusRule[] = []
+    const allTimeVehicles: MatchedVehicle[] = []
+    const allSpeedingVehicles: MatchedVehicle[] = []
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
-      // This is because even if a vehicle breaks two rules, it will be counted in violation of only the first rule.
+      // Even if a vehicle breaks two rules, it will be counted in violation of only the first rule.
+      // So we must filter it out so it's not included in the processing of any other policy rules.
       vehiclesToFilter.forEach((vehicle: MatchedVehicle) => {
         /* eslint-reason need to remove matched vehicles */
         /* eslint-disable-next-line no-param-reassign */
@@ -249,12 +241,12 @@ function processPolicy(
           }
 
           const bucketMap = comp.matches.reduce(
-            (acc2: { matched: MatchedVehicle[]; overflowed: (MatchedVehicle & { rule_id: UUID })[] }[], match) => {
+            (acc2: { matched: MatchedVehicle[]; overflowed: MatchedVehiclePlusRule[] }[], match) => {
               return [
                 ...acc2,
                 match.matched_vehicles.reduce(
                   (
-                    acc: { matched: MatchedVehicle[]; overflowed: (MatchedVehicle & { rule_id: UUID })[] },
+                    acc: { matched: MatchedVehicle[]; overflowed: MatchedVehiclePlusRule[] },
                     match_instance: MatchedVehicle,
                     i: number
                   ) => {
@@ -281,24 +273,15 @@ function processPolicy(
             return [...acc, ...map.matched]
           }, [])
 
-          const overflowVehicles = bucketMap.reduce((acc: (MatchedVehicle & { rule_id: UUID })[], map) => {
-            return [...acc, ...map.overflowed]
-          }, [])
+          bucketMap.forEach(bucket => {
+            allOverflowVehicles.push(...bucket.overflowed)
+          })
 
           vehiclesToFilter.push(...vehiclesMatched)
-          overflowVehiclesMap = {
-            ...overflowVehiclesMap,
-            ...overflowVehicles.reduce(
-              (
-                acc: { [key: string]: MatchedVehicle & { rule_id: UUID } },
-                device: MatchedVehicle & { rule_id: UUID }
-              ) => {
-                acc[device.device_id] = device
-                return acc
-              },
-              {}
-            )
-          }
+
+          allOverflowVehicles.forEach(vehicle => {
+            overflowVehiclesMap[vehicle.device_id] = vehicle
+          })
 
           compliance_acc.push(compressedComp)
           break
@@ -306,14 +289,19 @@ function processPolicy(
         case 'time': {
           const comp: Compliance & { matches: TimeMatch[] | null } = processTimeRule(rule, events, geographies, devices)
           compliance_acc.push(comp)
-          vehiclesToFilter.push(
-            ...(comp.matches
-              ? comp.matches.reduce((acc: MatchedVehicle[], match: TimeMatch) => {
-                  acc.push(match.matched_vehicle)
-                  return acc
-                }, [])
-              : [])
-          )
+
+          const timeVehicles = comp.matches
+            ? comp.matches.reduce((acc: MatchedVehicle[], match: SpeedMatch) => {
+                acc.push(match.matched_vehicle)
+                return acc
+              }, [])
+            : []
+          vehiclesToFilter.push(...timeVehicles)
+          allTimeVehicles.push(...timeVehicles)
+
+          timeVehicles.forEach(vehicle => {
+            timeVehiclesMap[vehicle.device_id] = { ...vehicle, ...{ rule_id: rule.rule_id } }
+          })
           break
         }
         case 'speed':
