@@ -225,6 +225,9 @@ export interface AuditEvent extends TelemetryData {
   audit_event_type: AUDIT_EVENT_TYPE | VEHICLE_EVENT
   audit_issue_code?: string | null
   audit_subject_id: string
+  provider_event_id?: number | null
+  provider_event_type?: string | null
+  provider_event_type_reason?: string | null
   note?: string | null
   timestamp: Timestamp
   recorded: Timestamp

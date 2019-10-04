@@ -310,6 +310,9 @@ describe('Testing API', () => {
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.value(result.body.events.length).is(7)
+        test.value(result.body.events[0].provider_event_id).is(1)
+        test.value(result.body.events[0].provider_event_type).is('trip_start')
+        test.value(result.body.events[0].provider_event_type_reason).is(null)
         done(err)
       })
   })

@@ -325,7 +325,7 @@ async function writeEvent(event: VehicleEvent) {
   return { ...event, ...recorded_event }
 }
 
-async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<VehicleEvent> {
+async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise<Recorded<VehicleEvent>> {
   // read from pg
   const client = await getReadOnlyClient()
   const vals = new SqlVals()

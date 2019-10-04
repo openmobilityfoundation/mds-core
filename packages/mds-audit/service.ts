@@ -105,6 +105,11 @@ export async function readDeviceByVehicleId(provider_id: UUID, vehicle_id: strin
   }
 }
 
+export async function readEvent(device_id: UUID): Promise<Recorded<VehicleEvent>> {
+  const result: Recorded<VehicleEvent> = await db.readEvent(device_id)
+  return result
+}
+
 export async function readEvents(
   device_id: UUID,
   start_time: Timestamp,

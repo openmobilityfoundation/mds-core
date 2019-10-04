@@ -61,6 +61,7 @@ import {
   readAudits,
   readDevice,
   readDeviceByVehicleId,
+  readEvent,
   readEvents,
   readTelemetry,
   withGpsProperty,
@@ -116,14 +117,27 @@ function api(app: express.Express): express.Express {
   })
 
   /**
-   * Audit middleware to load the audit into locals using the audit_trip_id
+   * Audit middleware to load the audit and latest provider event into locals
    */
   app.use(pathsFor('/trips/:audit_trip_id'), async (req: AuditApiTripRequest, res: AuditApiResponse, next) => {
     try {
       const { audit_trip_id } = req.params
-      if (isValidAuditTripId(audit_trip_id)) {
-        res.locals.audit_trip_id = audit_trip_id
-        res.locals.audit = await readAudit(audit_trip_id)
+      if (!isValidAuditTripId(audit_trip_id)) {
+        return next()
+      }
+      res.locals.audit_trip_id = audit_trip_id
+      res.locals.audit = await readAudit(audit_trip_id)
+      let { provider_id, provider_vehicle_id } = req.body
+      if ((!provider_id || !provider_vehicle_id) && res.locals.audit) {
+        provider_id = res.locals.audit.provider_id
+        provider_vehicle_id = res.locals.audit.provider_vehicle_id
+      }
+      const device = await readDeviceByVehicleId(provider_id, provider_vehicle_id)
+      try {
+        const provider_event = await readEvent(device.device_id)
+        res.locals.provider_event = provider_event
+      } catch (err) {
+        await log.warn('Unable to find provider event to match with audit event', JSON.stringify(err))
       }
       return next()
     } catch (err) /* istanbul ignore next */ {
@@ -188,12 +202,18 @@ function api(app: express.Express): express.Express {
             })
 
             // Create the audit start event
+            const provider_event_id = res.locals.provider_event && res.locals.provider_event.id
+            const provider_event_type = res.locals.provider_event && res.locals.provider_event.event_type
+            const provider_event_reason = res.locals.provider_event && res.locals.provider_event.event_type_reason
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
               audit_subject_id,
               audit_event_type: AUDIT_EVENT_TYPES.start,
               ...flattenTelemetry(telemetry),
+              provider_event_id,
+              provider_event_type,
+              provider_event_type_reason: provider_event_reason,
               timestamp,
               recorded
             })
@@ -243,13 +263,19 @@ function api(app: express.Express): express.Express {
             isValidTimestamp(timestamp) &&
             isValidTelemetry(telemetry, { required: false })
           ) {
-            // Create the audit start event
+            // Create the audit event
+            const provider_event_id = res.locals.provider_event && res.locals.provider_event.id
+            const provider_event_type = res.locals.provider_event && res.locals.provider_event.event_type
+            const provider_event_reason = res.locals.provider_event && res.locals.provider_event.event_type_reason
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
               audit_subject_id,
               audit_event_type: event_type,
               ...flattenTelemetry(telemetry),
+              provider_event_id,
+              provider_event_type,
+              provider_event_type_reason: provider_event_reason,
               timestamp,
               recorded
             })
@@ -354,6 +380,9 @@ function api(app: express.Express): express.Express {
             })
           ) {
             // Create the audit event
+            const provider_event_id = res.locals.provider_event && res.locals.provider_event.id
+            const provider_event_type = res.locals.provider_event && res.locals.provider_event.event_type
+            const provider_event_reason = res.locals.provider_event && res.locals.provider_event.event_type_reason
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
@@ -362,6 +391,9 @@ function api(app: express.Express): express.Express {
               audit_issue_code,
               note,
               ...flattenTelemetry(telemetry),
+              provider_event_id,
+              provider_event_type,
+              provider_event_type_reason: provider_event_reason,
               timestamp,
               recorded
             })
@@ -406,12 +438,18 @@ function api(app: express.Express): express.Express {
             isValidTelemetry(telemetry, { required: false })
           ) {
             // Create the audit end event
+            const provider_event_id = res.locals.provider_event && res.locals.provider_event.id
+            const provider_event_type = res.locals.provider_event && res.locals.provider_event.event_type
+            const provider_event_reason = res.locals.provider_event && res.locals.provider_event.event_type_reason
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
               audit_subject_id,
               audit_event_type: AUDIT_EVENT_TYPES.end,
               ...flattenTelemetry(telemetry),
+              provider_event_id,
+              provider_event_type,
+              provider_event_type_reason: provider_event_reason,
               timestamp,
               recorded
             })
