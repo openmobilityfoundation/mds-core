@@ -154,6 +154,15 @@ export function withGpsProperty<T extends TelemetryData>({
   return { ...props, gps: { lat, lng, speed, heading, accuracy, hdop, altitude, satellites } }
 }
 
+export async function getVehicle(provider_id: string, vehicle_id: string) {
+  try {
+    const device = await readDeviceByVehicleId(provider_id, vehicle_id)
+    return device
+  } catch (err) {
+    return null
+  }
+}
+
 export async function getVehicles(
   skip: number,
   take: number,

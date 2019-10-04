@@ -539,6 +539,31 @@ describe('Testing API', () => {
         })
     })
   })
+
+  it('Verify get vehicle by vehicle_id and provider_id', done => {
+    request
+      .get(`/audit/vehicles/${provider_id}/vin/${provider_vehicle_id}`)
+      .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.object(result).hasProperty('body')
+        test.value(result.body.provider_id).is(provider_id)
+        test.value(result.body.vehicle_id).is(provider_vehicle_id)
+        done(err)
+      })
+  })
+
+  it('Verify get vehicle by vehicle_id and provider_id (not found)', done => {
+    request
+      .get(`/audit/vehicles/${uuid()}/vin/${provider_vehicle_id}`)
+      .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+      .expect(404)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
 })
 
 after('Shutting down Database/Cache', async () => {

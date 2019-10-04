@@ -94,6 +94,13 @@ export interface AuditApiGetTripRequest extends AuditApiTripRequest {
   query: Partial<{ [P in 'event_viewport_adjustment']: string }>
 }
 
+export interface AuditApiGetVehicleRequest extends AuditApiRequest {
+  params: {
+    provider_id: UUID
+    vin: string
+  }
+}
+
 // Allow adding type definitions for Express Response objects
 export interface AuditApiResponse<T = {}> extends ApiResponse<T> {
   locals: ApiResponseLocals & {

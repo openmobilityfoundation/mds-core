@@ -48,6 +48,7 @@ import {
   AuditApiAuditStartRequest,
   AuditApiGetTripRequest,
   AuditApiGetTripsRequest,
+  AuditApiGetVehicleRequest,
   AuditApiRequest,
   AuditApiResponse,
   AuditApiTripRequest,
@@ -67,6 +68,7 @@ import {
   withGpsProperty,
   writeAudit,
   writeAuditEvent,
+  getVehicle,
   getVehicles
 } from './service'
 
@@ -623,6 +625,9 @@ function api(app: express.Express): express.Express {
     }
   )
 
+  /**
+   * read back cached vehicle information for vehicles in bbox
+   */
   app.get(pathsFor('/vehicles'), checkAccess(scopes => scopes.includes('audits:vehicles:read')), async (req, res) => {
     const { skip, take } = { skip: 0, take: 10000 }
     const bbox = JSON.parse(req.query.bbox)
@@ -641,6 +646,27 @@ function api(app: express.Express): express.Express {
     } catch (err) {
       await log.error('getVehicles fail', err)
       return res.status(500).send({
+        error: 'server_error',
+        error_description: 'an internal server error has occurred and been logged'
+      })
+    }
+  })
+
+  /**
+   * read back cached information for a single vehicle
+   */
+  app.get(pathsFor('/vehicles/:provider_id/vin/:vin'), async (req: AuditApiGetVehicleRequest, res) => {
+    const { provider_id, vin } = req.params
+    try {
+      const response = await getVehicle(provider_id, vin)
+      if (response) {
+        res.status(200).send(response)
+      } else {
+        res.status(404).send({ error: new NotFoundError('vehicle not found', { provider_id, vin }) })
+      }
+    } catch (err) {
+      await log.error('getVehicle fail', err)
+      res.status(500).send({
         error: 'server_error',
         error_description: 'an internal server error has occurred and been logged'
       })
