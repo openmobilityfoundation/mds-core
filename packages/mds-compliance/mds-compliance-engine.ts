@@ -291,7 +291,7 @@ function processPolicy(
           compliance_acc.push(comp)
 
           const timeVehicles = comp.matches
-            ? comp.matches.reduce((acc: MatchedVehicle[], match: SpeedMatch) => {
+            ? comp.matches.reduce((acc: MatchedVehicle[], match: TimeMatch) => {
                 acc.push(match.matched_vehicle)
                 return acc
               }, [])
