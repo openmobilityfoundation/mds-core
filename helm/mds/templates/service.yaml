@@ -9,7 +9,7 @@ spec:
   selector:
     app: {{ $api.name }}
   ports:
-  -
-    name: http-{{ $api.name }}
-    port: {{ $api.port }}
+  - name: http-{{ $api.name }}
+    port: 80
+    targetPort: {{ $api.port }}
 {{- end }}

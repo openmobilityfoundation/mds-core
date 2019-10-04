@@ -306,6 +306,26 @@ installIstio() {
   }
 }
 
+installEventing() {
+  check ${FUNCNAME[0]}
+  
+  kubectl get namespace knative-eventing > /dev/null 2>&1 || {
+	kubectl apply -f https://github.com/knative/eventing/releases/download/v0.6.0/eventing.yaml
+  }
+  kubectl get namespace natss > /dev/null 2>&1 || {
+	# manually create broker - create the eventing filter
+    kubectl -n mds create serviceaccount eventing-broker-filter
+    kubectl -n mds create rolebinding eventing-broker-filter \
+      --clusterrole=eventing-broker-filter \
+      --serviceaccount=mds:eventing-broker-filter
+
+    # install natss streaming
+    kubectl create namespace natss
+    kubectl apply -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
+    kubectl apply -f https://github.com/knative/eventing/releases/download/v0.6.0/natss.yaml
+  }
+}
+
 labelNamespaceIstioInjection() {
   kubectl get namespace ${1} > /dev/null 2>&1 && \
     kubectl label namespace ${1} istio-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
@@ -608,6 +628,15 @@ uninstallIstio() {
       ${configs[dryrun]:+--dry-run} > /dev/null
   }
   [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
+}
+
+uninstallIstio() {
+  kubectl delete -f https://github.com/knative/eventing/releases/download/v0.6.0/natss.yaml
+  kubectl delete -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
+  kubectl delete namespace natss
+  kubectl -n mds delete rolebinding eventing-broker-filter
+  kubectl -n mds delete serviceaccount eventing-broker-filter
+  kubectl delete -f https://github.com/knative/eventing/releases/download/v0.6.0/eventing.yaml
 }
 
 uninstallDashboard() {
