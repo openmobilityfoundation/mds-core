@@ -312,6 +312,12 @@ export interface TimeMatch {
   matched_vehicle: MatchedVehicle
 }
 
+export interface SpeedMatch {
+  measured: number
+  geography_id: UUID
+  matched_vehicle: MatchedVehicle
+}
+
 export interface ReducedMatch {
   measured: number
   geography_id: UUID
@@ -319,7 +325,7 @@ export interface ReducedMatch {
 
 export interface Compliance {
   rule: Rule
-  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] // TODO Support for Speed issues.
+  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] | SpeedMatch[]
 }
 
 export interface ComplianceResponse {

@@ -16,6 +16,7 @@
 
 import express from 'express'
 import Joi from '@hapi/joi'
+import uuid from 'uuid'
 import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
@@ -159,7 +160,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.post(pathsFor('/policies'), checkAccess(scopes => scopes.includes('policies:write')), async (req, res) => {
-    const policy = req.body
+    const policy = { policy_id: uuid(), ...req.body }
     const validation = Joi.validate(policy, policySchema)
     const details = validation.error ? validation.error.details : null
 

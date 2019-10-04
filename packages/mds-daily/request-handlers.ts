@@ -1,6 +1,5 @@
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
-import cache from '@mds-core/mds-cache'
 import { providerName } from '@mds-core/mds-providers'
 import { now, inc, ServerError } from '@mds-core/mds-utils'
 import { UUID, VehicleEvent, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_EVENT, TripsStats } from '@mds-core/mds-types'
@@ -15,7 +14,7 @@ import {
   getTelemetryCountsPerProviderSince,
   getConformanceLast24Hours
 } from './db-helpers'
-import { startAndEnd, categorizeTrips } from './utils'
+import { startAndEnd, categorizeTrips, getMaps } from './utils'
 
 export async function dbHelperFail(err: Error | string): Promise<void> {
   await log.error(
@@ -64,32 +63,6 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
     res.status(500).send({
       error: err
     })
-  }
-
-  async function getMaps(): Promise<{
-    eventMap: { [s: string]: VehicleEvent }
-    // telemetryMap: { [s: string]: Telemetry }
-  }> {
-    try {
-      // const telemetry: Telemetry[] = await cache.readAllTelemetry()
-      // log.info('read telemetry')
-      const events: VehicleEvent[] = await cache.readAllEvents()
-      log.info('read events')
-      const eventSeed: { [s: string]: VehicleEvent } = {}
-      const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
-        return Object.assign(map, { [event.device_id]: event })
-      }, eventSeed)
-      // const telemetrySeed: { [s: string]: Telemetry } = {}
-      // const telemetryMap = telemetry.reduce((map, t) => {
-      //   return Object.assign(map, { [t.device_id]: t })
-      // }, telemetrySeed)
-      return Promise.resolve({
-        // telemetryMap,
-        eventMap
-      })
-    } catch (err) {
-      return Promise.reject(err)
-    }
   }
 
   try {

@@ -67,7 +67,7 @@ describe('Tests Compliance Engine', () => {
       if (result) {
         result.compliance.forEach(compliance => {
           if (compliance.matches && compliance.rule.rule_type === RULE_TYPES.count) {
-            test.assert(compliance.matches.length === 1)
+            test.assert.deepEqual(compliance.matches.length, 1)
           }
         })
       }
@@ -100,7 +100,7 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.rule_type === RULE_TYPES.count &&
             compliance.rule.geographies.includes(CITY_OF_LA)
           ) {
-            test.assert(compliance.matches.length !== 0)
+            test.assert.notEqual(compliance.matches.length, 0)
           }
         })
       }
@@ -132,7 +132,7 @@ describe('Tests Compliance Engine', () => {
             compliance.matches &&
             compliance.rule.rule_type === RULE_TYPES.speed
           ) {
-            test.assert(compliance.matches.length === 0)
+            test.assert.deepEqual(compliance.matches.length, 0)
           }
         })
       }
@@ -140,38 +140,38 @@ describe('Tests Compliance Engine', () => {
     done()
   })
 
-  /* TODO -- Implement Speed Compliance */
-  // it('Verifies speed compliance violation', done => {
-  //   const devices = makeDevices(5, now())
-  //   const events = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'trip_start', 500)
-  //   test.assert.doesNotThrow(() => validatePolicies(policies))
-  //   test.assert.doesNotThrow(() => validateGeographies(geographies))
-  //   test.assert.doesNotThrow(() => validateEvents(events))
+  it('Verifies speed compliance violation', done => {
+    const devices = makeDevices(5, now())
+    const events = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'trip_start', 500)
+    test.assert.doesNotThrow(() => validatePolicies(policies))
+    test.assert.doesNotThrow(() => validateGeographies(geographies))
+    test.assert.doesNotThrow(() => validateEvents(events))
 
-  //   const filteredEvents = filterEvents(events)
-  //   const filteredPolicies = filterPolicies(policies)
-  //   const deviceMap: { [d: string]: Device } = devices.reduce(
-  //     (deviceMapAcc: { [d: string]: Device }, device: Device) => {
-  //       return Object.assign(deviceMapAcc, { [device.device_id]: device })
-  //     },
-  //     {}
-  //   )
-  //   const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
-  //   results.forEach(result => {
-  //     if (result) {
-  //       result.compliance.forEach(compliance => {
-  //         if (
-  //           compliance.rule.geographies.includes(CITY_OF_LA) &&
-  //           compliance.matches &&
-  //           compliance.rule.rule_type === RULE_TYPES.speed
-  //         ) {
-  //           test.assert(compliance.matches.length !== 0)
-  //         }
-  //       })
-  //     }
-  //   })
-  //   done()
-  // })
+    const filteredEvents = filterEvents(events)
+    const filteredPolicies = filterPolicies(policies)
+    const deviceMap: { [d: string]: Device } = devices.reduce(
+      (deviceMapAcc: { [d: string]: Device }, device: Device) => {
+        return Object.assign(deviceMapAcc, { [device.device_id]: device })
+      },
+      {}
+    )
+    const results = filteredPolicies.map(policy => processPolicy(policy, filteredEvents, geographies, deviceMap))
+    results.forEach(result => {
+      if (result) {
+        result.compliance.forEach(compliance => {
+          if (
+            compliance.rule.geographies.includes(CITY_OF_LA) &&
+            compliance.matches &&
+            compliance.rule.rule_type === RULE_TYPES.speed
+          ) {
+            test.assert.deepEqual(compliance.matches.length, 5)
+            test.assert.deepEqual(result.total_violations, 5)
+          }
+        })
+      }
+    })
+    done()
+  })
 
   it('Verifies time compliance', done => {
     const devices = makeDevices(400, now())
@@ -197,7 +197,7 @@ describe('Tests Compliance Engine', () => {
             compliance.matches &&
             compliance.rule.rule_type === RULE_TYPES.time
           ) {
-            test.assert(compliance.matches.length === 0)
+            test.assert.deepEqual(compliance.matches.length, 0)
           }
         })
       }
@@ -229,7 +229,7 @@ describe('Tests Compliance Engine', () => {
             compliance.matches &&
             compliance.rule.rule_type === RULE_TYPES.time
           ) {
-            test.assert(compliance.matches.length !== 0)
+            test.assert.notEqual(compliance.matches.length, 0)
           }
         })
       }
@@ -247,7 +247,7 @@ describe('Tests Compliance Engine', () => {
 
     const filteredEvents = filterEvents(events)
 
-    test.assert(filteredEvents.length === 0)
+    test.assert.deepEqual(filteredEvents.length, 0)
 
     const filteredPolicies = filterPolicies(policies)
     const deviceMap: { [d: string]: Device } = devices.reduce(
@@ -265,7 +265,7 @@ describe('Tests Compliance Engine', () => {
             compliance.matches &&
             compliance.rule.rule_type === RULE_TYPES.time
           ) {
-            test.assert(compliance.matches.length === 0)
+            test.assert.deepEqual(compliance.matches.length, 0)
           }
         })
       }
