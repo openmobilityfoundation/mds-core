@@ -296,6 +296,7 @@ function processPolicy(
                 return acc
               }, [])
             : []
+
           vehiclesToFilter.push(...timeVehicles)
           allTimeVehicles.push(...timeVehicles)
 
@@ -341,8 +342,8 @@ function processPolicy(
     return {
       policy,
       compliance,
-      total_violations: overflowedVehicles.length + allSpeedingVehicles.length,
-      vehicles_in_violation: { ...overflowedVehicles, ...speedingVehiclesMap }
+      total_violations: overflowedVehicles.length + allTimeVehicles.length + allSpeedingVehicles.length,
+      vehicles_in_violation: { ...overflowedVehicles, ...timeVehiclesMap, ...speedingVehiclesMap }
     }
   }
 }
