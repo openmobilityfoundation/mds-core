@@ -313,13 +313,6 @@ installEventing() {
 	kubectl apply -f https://github.com/knative/eventing/releases/download/v0.6.0/eventing.yaml
   }
   kubectl get namespace natss > /dev/null 2>&1 || {
-	# manually create broker - create the eventing filter
-    kubectl -n mds create serviceaccount eventing-broker-filter
-    kubectl -n mds create rolebinding eventing-broker-filter \
-      --clusterrole=eventing-broker-filter \
-      --serviceaccount=mds:eventing-broker-filter
-
-    # install natss streaming
     kubectl create namespace natss
     kubectl apply -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
     kubectl apply -f https://github.com/knative/eventing/releases/download/v0.6.0/natss.yaml
@@ -364,6 +357,13 @@ installMds() {
   installFallbackCertificate
   kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]:-mds}
+	
+	# create broker eventing filter
+    kubectl -n mds create serviceaccount eventing-broker-filter
+    kubectl -n mds create rolebinding eventing-broker-filter \
+      --clusterrole=eventing-broker-filter \
+      --serviceaccount=mds:eventing-broker-filter
+	  
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
@@ -591,6 +591,8 @@ uninstallMetricsAdapter() {
 
 uninstallMds() {
   check ${FUNCNAME[0]}
+  kubectl -n mds delete rolebinding eventing-broker-filter
+  kubectl -n mds delete serviceaccount eventing-broker-filter
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
   uninstallNamespace ${configs[namespace-mds]:-mds}
 }
@@ -634,8 +636,6 @@ uninstallIstio() {
   kubectl delete -f https://github.com/knative/eventing/releases/download/v0.6.0/natss.yaml
   kubectl delete -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
   kubectl delete namespace natss
-  kubectl -n mds delete rolebinding eventing-broker-filter
-  kubectl -n mds delete serviceaccount eventing-broker-filter
   kubectl delete -f https://github.com/knative/eventing/releases/download/v0.6.0/eventing.yaml
 }
 
