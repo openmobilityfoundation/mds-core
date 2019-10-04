@@ -632,7 +632,7 @@ uninstallIstio() {
   [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
 }
 
-uninstallIstio() {
+uninstallEventing() {
   kubectl delete -f https://github.com/knative/eventing/releases/download/v0.6.0/natss.yaml
   kubectl delete -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
   kubectl delete namespace natss
