@@ -37,15 +37,20 @@ spec:
           name: user-port
           protocol: TCP
         env:
+          - name: PORT
+            value: {{ $api.port | quote }}
+          - name: EVENT_SOURCE
+            value: cloudevents
           - name: PATH_PREFIX
             value: {{ $api.pathPrefix }}
           - name: TIMEZONE
             value: {{ $.Values.timezone }}
-          {{- if $api.useDB }}
           - name: PG_USER
             value: {{ $.Values.postgresql.postgresqlUsername }}
           - name: PG_NAME
             value: {{ $.Values.postgresql.postgresqlDatabase }}
+          - name: PG_PREFIX
+            value: reports_
           - name: PG_PASS
             valueFrom:
               secretKeyRef:
@@ -73,8 +78,6 @@ spec:
           - name: PG_MIGRATIONS
             value: {{ $api.migration | quote }}
           {{- end }}
-          {{- end }}
-          {{- if $api.useCache }}
           - name: REDIS_HOST
             {{- if $.Values.redis.internal }}
             value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
@@ -83,13 +86,10 @@ spec:
             {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          {{- end }}
-          {{- if $api.useEvents }}
           - name: CE_NAME
             value: {{ $api.name }}
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
-          {{- end }}
 {{- end }}
 {{- if $.Values.pgPass }}
 ---

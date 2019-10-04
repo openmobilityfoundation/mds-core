@@ -1,0 +1,10 @@
+FROM mds-core-packages
+RUN mkdir /usr/src/event-processor/
+
+WORKDIR /usr/src/event-processor
+COPY ./package*.json ./
+RUN npm install
+
+COPY . .
+
+ENTRYPOINT [ "node", "index.js", "--type=event"]

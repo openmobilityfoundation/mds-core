@@ -1,0 +1,41 @@
+{
+  "name": "event-processor",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "pretest": "eslint --ignore-path .gitignore --ignore-pattern static/*.js .",
+    "test": "nyc --check-coverage --lines 70 --per-file mocha --recursive tests"
+  },
+  "nyc": {
+    "exclude": [
+      "util/*",
+      "index.js"
+    ]
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mds-core/mds-types": "file:../mds-core/packages/mds-types",
+    "@turf/boolean-point-in-polygon": "^6.0.1",
+    "@turf/helpers": "^6.1.4",
+    "bluebird": "^3.5.3",
+    "cloudevents-sdk": "^0.2.3",
+    "loglevel": "1.6.3",
+    "pg": "7.12.0",
+    "redis": "^2.8.0",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "2.3.0",
+    "@typescript-eslint/parser": "2.3.0",
+    "eslint": "6.4.0",
+    "eslint-config-airbnb-base": "14.0.0",
+    "eslint-plugin-import": "2.18.2",
+    "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
+    "supertest": "^3.3.0",
+    "unit.js": "^2.0.0"
+  }
+}

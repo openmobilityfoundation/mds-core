@@ -91,7 +91,7 @@ apis:
     triggeredBy:
       cron: "0 * * * *"
 timezone: America/Los_Angeles
-registry:
+registry: evanxadkins
 useLatestImage: true
 tls:
   enabled: false
