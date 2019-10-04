@@ -201,7 +201,9 @@ function api(app: express.Express): express.Express {
       }, [])
 
       // https://stackoverflow.com/a/51577579 to remove nulls in typesafe way
-      const events = (await cache.readAllEvents()).filter((event) : event is VehicleEvent => event !== null && isInStatesOrEvents(rule, event))
+      const events = (await cache.readAllEvents()).filter(
+        (event): event is VehicleEvent => event !== null && isInStatesOrEvents(rule, event)
+      )
       const filteredEvents = compliance_engine.filterEvents(events)
 
       const count = filteredEvents.reduce((count_acc, event) => {
