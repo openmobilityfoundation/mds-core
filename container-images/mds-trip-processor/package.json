@@ -1,9 +1,15 @@
 {
-  "name": "event-processor",
+  "name": "@container-images/trip-processor",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+	"image": "../../bin/image-build mds-trip-processor:${npm_package_version}",
     "start": "node index.js",
     "pretest": "eslint --ignore-path .gitignore --ignore-pattern static/*.js .",
     "test": "nyc --check-coverage --lines 70 --per-file mocha --recursive tests"
@@ -17,7 +23,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@mds-core/mds-types": "file:../mds-core/packages/mds-types",
+    "@mds-core/mds-types": "0.1.6",
     "@turf/boolean-point-in-polygon": "^6.0.1",
     "@turf/helpers": "^6.1.4",
     "bluebird": "^3.5.3",
