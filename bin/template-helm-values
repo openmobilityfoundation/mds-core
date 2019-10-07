@@ -12,4 +12,6 @@ for directory in container-images/mds-*; do
         export $varname=$version
 done
 
-envsubst < helm/mds/values.yaml.tpl
+mkdir -p dist
+
+envsubst < helm/mds/values.yaml.tpl | tee dist/values.yaml
