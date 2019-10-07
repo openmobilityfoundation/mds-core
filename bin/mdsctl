@@ -213,7 +213,7 @@ buildImage() {
 }
 
 getBranchSuffix() {
-  branch="$(git branch --no-color | grep '^\*' | sed 's/^\* //')"
+  branch="$(git rev-parse --abbrev-ref HEAD)"
 
   case $branch in
     master)
