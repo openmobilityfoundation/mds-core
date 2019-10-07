@@ -4,14 +4,16 @@
 # "-prerelease" suffix for deployment safety.
 
 IMAGE="$1"
-BRANCH="$(git branch --no-color --show-current)"
+BRANCH="$(git branch --no-color | grep '^\*' | sed 's/^\* //')"
+echo $BRANCH
 
 case $BRANCH in
   master)
     SUFFIX="";;
-  *)
+  develop)
     SUFFIX="-prerelease";;
+  *)
+    SUFFIX="-unstable";;
 esac
 
 docker build -t ${IMAGE}${SUFFIX} .
-docker tag ${IMAGE}${SUFFIX} latest

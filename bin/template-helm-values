@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+set -u
+set -o pipefail
+
+
+for directory in container-images/mds-*; do
+        api=$(basename $directory)
+        version=$(jq -r '.version' < $directory/package.json)
+        varname="$(echo $api | sed -e 's/^mds-//' -e 's/-/_/g' | tr a-z A-Z)_VERSION"
+        export $varname=$version
+done
+
+envsubst < helm/mds/values.yaml.tpl
