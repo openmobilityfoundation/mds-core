@@ -1,6 +1,6 @@
 import { UUID, VEHICLE_STATUS, VEHICLE_EVENT } from '@mds-core/mds-types'
 
-interface VehicleCountRow {
+export interface VehicleCountRow {
   provider_id: UUID
   provider: string
   count: number
@@ -14,14 +14,14 @@ export type VehicleCountResponse = VehicleCountRow[]
 
 export interface LastDayStatsResponse {
   [s: string]: {
-    trips_last_24h: number
-    ms_since_last_event: 5582050
-    event_counts_last_24h: { [s in VEHICLE_EVENT]: number }
-    late_event_counts_last_24h: { [s in VEHICLE_EVENT]: number }
-    telemetry_counts_last_24h: number
-    late_telemetry_counts_last_24h: number
-    events_last_24h: number
-    events_not_in_conformance: number
+    trips_last_24h?: number
+    ms_since_last_event?: 5582050
+    event_counts_last_24h?: { [s in VEHICLE_EVENT]: number }
+    late_event_counts_last_24h?: { [s in VEHICLE_EVENT]: number }
+    telemetry_counts_last_24h?: number
+    late_telemetry_counts_last_24h?: number
+    events_last_24h?: number
+    events_not_in_conformance?: number
     name: string
   }
 }

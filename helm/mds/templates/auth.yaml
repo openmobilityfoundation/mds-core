@@ -1,0 +1,28 @@
+{{- if .Values.jwt.enabled }}
+{{- range $api := .Values.apis }}
+---
+apiVersion: authentication.istio.io/v1alpha1
+kind: Policy
+metadata:
+  name: {{ $api.name }}-auth
+  namespace: {{ $.Release.Namespace }}
+spec:
+  targets:
+  - name: {{ $api.name }}
+  peers:
+  - mtls: {}
+  origins:
+  - jwt:
+      audiences:
+      {{- range $.Values.jwt.audiences }}
+      - {{ . | quote }}
+      {{- end }}
+      issuer: {{ $.Values.jwt.issuer | quote }}
+      jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwt.issuer }}
+      trigger_rules:
+      - excluded_paths:
+        - exact: {{ $api.pathPrefix }}/health
+        - exact: /health
+  principalBinding: USE_ORIGIN
+{{- end }}
+{{- end }}

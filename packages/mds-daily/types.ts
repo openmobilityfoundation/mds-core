@@ -15,3 +15,25 @@ export interface ServiceArea {
   description: string
   area: MultiPolygon
 }
+
+export interface ProviderInfo {
+  [p: string]: {
+    name: string
+    events_last_24h: number
+    trips_last_24h: number
+    ms_since_last_event: number
+    event_counts_last_24h: { [s: string]: number }
+    late_event_counts_last_24h: { [s: string]: number }
+    telemetry_counts_last_24h: number
+    late_telemetry_counts_last_24h: number
+    registered_last_24h: number
+    events_not_in_conformance: number
+  }
+}
+
+export interface DbHelperArgs {
+  start_time?: number
+  end_time?: number
+  provider_info: ProviderInfo
+  fail: (err: Error | string) => Promise<void>
+}

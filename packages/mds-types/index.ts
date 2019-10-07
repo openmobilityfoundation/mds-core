@@ -15,6 +15,8 @@
  */
 import { FeatureCollection } from 'geojson'
 
+export { AccessTokenScope, AccessTokenScopes, ScopeDescriptions } from './scopes'
+
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(keys.reduce((e, key) => {
     return { ...e, [key]: key }
@@ -280,6 +282,7 @@ export interface Policy {
   publish_date?: Timestamp
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PolicyMetadata {
   policy_id: UUID
   policy_metadata: Record<string, any>
@@ -309,6 +312,12 @@ export interface TimeMatch {
   matched_vehicle: MatchedVehicle
 }
 
+export interface SpeedMatch {
+  measured: number
+  geography_id: UUID
+  matched_vehicle: MatchedVehicle
+}
+
 export interface ReducedMatch {
   measured: number
   geography_id: UUID
@@ -316,14 +325,14 @@ export interface ReducedMatch {
 
 export interface Compliance {
   rule: Rule
-  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] // TODO Support for Speed issues.
+  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] | SpeedMatch[]
 }
 
 export interface ComplianceResponse {
   policy: Policy
   compliance: Compliance[]
   total_violations: number
-  vehicles_in_violation: UUID[]
+  vehicles_in_violation: { device_id: UUID; rule_id: UUID }[]
 }
 
 // We don't put the publish_date into the geography_json column
@@ -334,7 +343,7 @@ export interface Geography {
   geography_json: FeatureCollection
   read_only?: boolean
   previous_geography_ids?: UUID[]
-  name?: string
+  name: string
 }
 
 export interface GeographyMetadata {

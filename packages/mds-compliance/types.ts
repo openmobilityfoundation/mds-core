@@ -1,11 +1,9 @@
-import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
-import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
 import { UUID } from '@mds-core/mds-types'
 
 export type ComplianceApiRequest = ApiRequest
 export interface ComplianceApiResponse extends ApiResponse {
-  locals: {
-    claims: ApiAuthorizerClaims
+  locals: ApiResponseLocals & {
     provider_id: UUID
   }
 }

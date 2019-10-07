@@ -1,0 +1,752 @@
+#!/usr/bin/env bash
+
+osx=Darwin
+linux=Linux
+
+hash brew > /dev/null 2>&1 || {
+  case "${MDS_OS:-$(uname)}" in
+    ${osx})
+      hash brew > /dev/null 2>&1 || \
+        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)";;
+    ${linux})
+      mkdir -p ~/.linuxbrew/bin
+      hash git > /dev/null 2>&1 || (apt-get update; apt-get install -y git)
+      git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
+      ln -s ~/.linuxbrew/Homebrew/bin/brew ~/.linuxbrew/bin
+      [ $(grep -Fxq "eval \$(~/.linuxbrew/bin/brew shellenv)" ~/.bashrc; echo $?) == "1" ] && \
+        echo "eval \$(~/.linuxbrew/bin/brew shellenv)" >> ~/.bashrc
+      hash curl > /dev/null 2>&1 || (apt-get update; apt-get install -y curl)
+      eval $(~/.linuxbrew/bin/brew shellenv);;
+    *) usage "unsupported os: $(uname)";;
+  esac
+}
+
+if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
+  case "${MDS_OS:-$(uname)}" in
+    ${osx} | ${linux})
+      brew install bash
+      exec ${0} ${@} &
+      exit;;
+    *) usage "unsupported os: $(uname)";;
+  esac
+fi
+
+declare -A os=(
+  ["osx"]="${osx}"
+  ["linux"]="${linux}")
+declare -A configs=(
+  ["os"]="${MDS_OS:-`uname`}"
+  ["workdir"]="/tmp/mds/tools"
+  ["brew"]="${MDS_BREW:-yarn nvm kubernetes-helm pgcli redis python git}"
+  ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
+  ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
+  ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
+  ["install"]="${MDS_INSTALL:-mds}"
+  ["test"]="${MDS_TEST:-unit,integration}"
+  ["uninstall"]="${MDS_UNINSTALL:-bookinfo,logging,mds,istio,helm}"
+  ["forward"]="${MDS_FORWARD:-default}"
+  ["token"]="${MDS_TOKEN:-dashboard}"
+  ["reinstall"]="${MDS_REINSTALL:-mds}"
+  ["pause"]="${MDS_PAUSE:-3}"
+  ["istio-version"]="${MDS_ISTIO_VERSION:-1.2.6}" #3.0}" # fixme: 1.3.0 istio-system pods stop at INIT at times
+  ["istio-profile"]="${MDS_ISTIO_PROFILE:--istio-sds-auth}"
+  ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
+  ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
+  ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
+  ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
+  ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
+  ["values"]="${MDS_VALUES:-}"
+  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency-migration.yaml}"
+  ["sets"]="${MDS_SETS:-}"
+  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
+  ["setfiles"]="${MDS_SET_FILES:-}"
+  ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
+  ["namespace"]="${MDS_NAMESPACE:-default}"
+  ["namespace-mds"]="${MDS_NAMESPACE_MDS}"
+  ["dryrun"]="${MDS_DRY_RUN:-}")
+declare -A helmRepositories=(
+  ["stable"]="https://kubernetes-charts.storage.googleapis.com"
+  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.3.0/charts"
+  ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
+  ["elastic"]="https://helm.elastic.co")
+declare -A apps=(
+  ["mds-agency"]="https://localhost:[port]/agency,mds,app"
+  ["mds-audit"]="https://localhost:[port]/audit,mds,app"
+  ["mds-compliance"]="https://localhost:[port]/compliance,mds,app"
+  ["mds-daily"]="https://localhost:[port]/daily,mds,app"
+  ["mds-native"]="https://localhost:[port]/native,mds,app"
+  ["mds-policy"]="https://localhost:[port]/policy,mds,app"
+  ["mds-provider"]="https://localhost:[port]/provider,mds,app"
+  ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
+  ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
+  ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
+  ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
+  ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
+  ["kibana"]="http://localhost:[port],logging,app"
+  ["prometheus"]="http://localhost:[port],istio-system,app"
+  ["jaeger"]="http://localhost:[port],istio-system,app,jaeger,16686"
+  ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
+  ["bookinfo"]="http://localhost:[port],booking,app")
+yellow=`tput setaf 3`
+red=`tput setaf 9`
+reset=`tput sgr0`
+
+warn() {
+  echo "${yellow}warn: ${1}${reset}"
+}
+
+error() {
+  echo "${red}warn: ${1}${reset}"
+}
+
+usage() {
+  [ "${1}" ] && warn "${1}"
+
+  cat << EOF
+usage: $(basename ${0}) [--options] [commands]
+
+commands:
+  bootstrap                                           : install dependencies; default: ${configs[tools]},${configs[bootstrap]}
+  build                                               : build project
+  install[:{service[,{service}]}]                     : install specified service; default: ${configs[install]}
+  test[:unit,integration]                             : preform specified tests; default: ${configs[test]}
+  open:[app[,{app}]]                                  : opens a browser for the provided application(s)
+  token[:dashboard]                                   : get specified token, copied to copy-paste buffer for ${os[osx]}; default: ${configs[token]}
+  forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${configs[forward]}
+  unforward[:{app[,{app}]}]                           : deregister port-forwarding for the provided application(s)
+  cli:[postgresql,redis]                              : create a cli console for the provided service
+  uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${configs[uninstall]}
+  reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${configs[reinstall]}
+  help                                                : help message
+
+options:
+  --configure:{key}={value}[,{key}={value}]           : set configuration value by key
+  --configure:{key}+={value}                          : append configuration value by key
+  --configure:{key}=                                  : clears configuration value by key
+
+where service in:
+  helm
+  dashboard
+  kiali
+  istio
+  mds
+  fallbackCertificate                                 : requires ingress domain; eg: -c:ingress-domain=[DOMAIN]
+  ingressGatewayCertificate                           : requires certificate path; eg: -c:ingress-gateway-key-path=[KEY-PATH],ingress-gateway-certificate-path=[CERT-PATH]
+  metricsAdapter
+  logging
+  metrics
+  bookinfo
+
+where app in:
+  mds-agency
+  mds-audit
+  mds-compliance
+  mds-daily
+  mds-native
+  mds-policy
+  mds-provider
+  mds-policy-author
+  mds-postgresql
+  mds-redis-headless
+  dashboard                                           : kubernetes dashboard; see https://github.com/kubernetes/dashboard
+  grafana                                             : grafana; see: https://grafana.com
+  kibana                                              : kibana; see https://www.elastic.co/products/kibana
+  prometheus                                          : prometheus; see https://prometheus.io
+  jaeger                                              : jaeger; see https://www.jaegertracing.io
+  kiali                                               : kiali; see https://www.kiali.io
+  bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
+
+example:
+  % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
+
+pre-requisites:
+  docker desktop with kubernetes                      : see https://www.docker.com/products/docker-desktop
+EOF
+
+  [ "${1}" ] && exit 1 || exit 0
+}
+
+bootstrap() {
+  for l in ${configs[brew]}; do
+    lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
+
+    hash ${lc} > /dev/null 2>&1 || {
+      brew install ${l}
+
+      # todo: unable to detect nvm install via subshell given it is an alias
+      if [ "${l}" == "nvm" ]; then
+        [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
+        [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
+          echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
+        [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
+              echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
+        . $(brew --prefix nvm)/nvm.sh
+        nvm install node
+        nvm use node
+        nvm install 8.10.0
+        nvm alias default 8.10.0
+      fi
+    }
+  done; unset l
+
+  for p in lerna cypress mocha chai mochawesome; do
+    yarn ${p} --version > /dev/null 2>&1 || yarn add -W ${p}
+  done; unset p
+
+  invoke install "$(normalize ${configs[bootstrap]})"
+}
+
+build() {
+  check ${FUNCNAME[0]}
+
+  yarn clean
+  yarn
+  yarn build --ignore=@aws-lambda/*
+  yarn image
+}
+
+pause() {
+  sleepTime=${1:-${configs[pause]}}
+  cntr=0
+
+  echo -ne "waiting "
+
+  while (( cntr < ${sleepTime} )); do
+    echo -ne "\xF0\x9F\x8D\xBA "
+    sleep 3
+    cntr=$(($cntr + 3))
+  done
+
+  echo ""
+}
+
+updateHelmDependencies() {
+  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
+    (cd helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
+  done; unset d
+}
+
+installHelm() {
+  check ${FUNCNAME[0]}
+
+  hash helm > /dev/null 2>&1 ||
+    case "${configs[os]}" in
+      ${os[osx]} | ${os[linux]}) brew install kubernetes-helm;;
+      *) usage "unsupported os: ${configs[os]}";;
+    esac
+
+  helm init --upgrade || usage "helm intialization failure"
+  pause 5
+
+  for r in "${!helmRepositories[@]}"; do
+    helm repo add ${r} ${helmRepositories[${r}]}
+  done; unset r
+
+  updateHelmDependencies
+
+  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
+    (cd helm/$(basename ${d}); helm dependency update)
+  done; unset d
+
+  [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
+}
+
+helmOptions() {
+  for v in ${@}; do
+    [ -z ${t+x} ] && t=${v} || opts+="--${t} ${v} "
+  done; unset v t
+
+  [ ! -z ${opts+x} ] && echo ${opts}
+  unset opts
+}
+
+installDashboard() {
+  check ${FUNCNAME[0]}
+
+  helm install ./helm/dashboard --name dashboard --namespace dashboard \
+    ${configs[values]:+$(helmOptions values ${configs[values]})} \
+    ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
+    ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+    ${configs[dryrun]:+--dry-run}
+}
+
+installNamespace() {
+  for ns in ${@}; do
+    kubectl get namespace ${ns} > /dev/null 2>&1 || kubectl create namespace ${ns} ${configs[dryrun]:+--dry-run}
+  done; unset ns
+}
+
+installIstio() {
+  check ${FUNCNAME[0]}
+
+  if [ ! -d ${configs[istio]} ]; then
+    mkdir -p ${configs[workdir]}
+    (cd ${configs[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${configs[istio-version]} sh -)
+  fi
+
+  kubectl get namespace istio-system > /dev/null 2>&1 || {
+    ${configs[istio]}/bin/istioctl verify-install || error "istio verify installation failure"
+
+    installNamespace istio-system
+    pause 2
+    helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
+      --name istio-init --namespace istio-system | \
+      kubectl apply -f - ${configs[dryrun]:+--dry-run}
+    # todo: query pod status
+    pause 5
+
+    (( $(kubectl get crds | grep "istio.io" | wc -l) == 23 )) && \
+      echo "istio successfully installed" || echo "istio installation failure"
+
+    helm template ${configs[istio]}/install/kubernetes/helm/istio \
+      --name istio --namespace istio-system \
+      --values ${configs[istio]}/install/kubernetes/helm/istio/values${configs[istio-profile]}.yaml | \
+      kubectl apply -f - ${configs[dryrun]:+--dry-run}
+    labelNamespaceIstioInjection default
+  }
+}
+
+labelNamespaceIstioInjection() {
+  kubectl get namespace ${1} > /dev/null 2>&1 && \
+    kubectl label namespace ${1} istio-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
+}
+
+installLogging() {
+  check ${FUNCNAME[0]}
+
+  kubectl get namespace logging > /dev/null 2>&1 || {
+    installNamespace logging
+    labelNamespaceIstioInjection logging
+    helm install ./helm/logging --name logging --namespace logging \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[dryrun]:+--dry-run}
+  }
+}
+
+installMetrics() {
+  check ${FUNCNAME[0]}
+
+  kubectl get namespace metrics > /dev/null 2>&1 || {
+    installNamespace metrics
+    helm install ./helm/metrics --name metrics --namespace metrics \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[dryrun]:+--dry-run}
+  }
+}
+
+installMds() {
+  check ${FUNCNAME[0]}
+
+  installFallbackCertificate
+  kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-mds]:-mds}
+    labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
+    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
+      ${configs[dryrun]:+--dry-run --debug}
+    pause 12
+  }
+}
+
+installMetricsAdapter() {
+  helm status kube-metrics-adapter > /dev/null 2>&1 ||
+    helm install --name kube-metrics-adapter --namespace kube-system banzaicloud-stable/kube-metrics-adapter
+}
+
+installFallbackCertificate() {
+  if [[ ${configs[ingress-domain]+_} && ${#configs[ingress-domain]} -ge 1 ]]; then
+    TMPCERT=$(mktemp /tmp/k8s-fallback-cert.XXXXXX) || exit 1
+    openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+      -keyout ${TMPCERT}.key -out ${TMPCERT}.crt \
+      -subj "/CN=${configs[ingress-domain]}/O=${configs[ingress-domain]}"
+    kubectl -n istio-system create secret tls gateway-fallback \
+      --key ${TMPCERT}.key --cert ${TMPCERT}.crt
+    /bin/rm -rf ${TMPCERT} ${TMPCERT}.key ${TMPCERT}.crt
+  else
+    warn "ingress-domain is unspecified"
+  fi
+}
+
+installIngressGatewayCertificate() {
+  if [[ ${configs[ingress-gateway-key-path]+_} && ${#configs[ingress-gateway-key-path]} -ge 1 &&
+      ${configs[ingress-gateway-certificate-path]+_} && ${#configs[ingress-gateway-certificate-path]} -ge 1 ]]; then
+    kubectl create -n istio-system secret tls istio-ingressgateway-certs \
+      --key ${configs[ingress-gateway-key-path]} \
+      --cert ${configs[ingress-gateway-certificate-path]} \
+      ${configs[dryrun]:+--dry-run}
+  else
+    warn "ingress gateway key an certificate is unspecified"
+  fi
+}
+
+installSimulator() {
+  check ${FUNCNAME[0]}
+
+  if [[ ! -d ${configs[simulator]} ]]; then
+    mkdir -p ${configs[workdir]}
+    (cd ${configs[workdir]};
+      git clone ${configs[simulator-repository]} ${configs[simulator]})
+  fi
+
+  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
+    cd ${configs[simulator]}; \
+    git pull; \
+    pip install -r requirements.txt; \
+    docker build -t trackgen .;
+    helm install ./helm --name trackgen)
+}
+
+installBookinfo() {
+  check ${FUNCNAME[0]}
+
+  kubectl get namespace bookinfo-app > /dev/null 2>&1 || {
+    installNamespace bookinfo-app
+    labelNamespaceIstioInjection bookinfo-app
+    kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml \
+      ${configs[dryrun]:+--dry-run}
+    kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/networking/destination-rule-all.yaml \
+      ${configs[dryrun]:+--dry-run}
+  }
+}
+
+testUnit() {
+  check ${FUNCNAME[0]}
+
+# todo: enable when tests don't block
+#  yarn test
+
+  for c in $(find ./helm -type d -depth 1); do
+    helm unittest ./helm/$(basename ${c})
+  done; unset c
+}
+
+testIntegration() {
+  check ${FUNCNAME[0]}
+
+  # todo: provide [ ui | cli ] option
+  # yarn cypress open
+  yarn cypress run
+}
+
+get() {
+  v=$(echo ${1} | cut -sd ',' -f ${2})
+  [ ! -z "${v}" ] && echo ${v} || echo ${3}
+  unset v
+}
+
+portForward() {
+  fa=${apps[${1}]}
+  fns=$(get ${fa} 2)
+  fk=$(get ${fa} 3)
+  fv=$(get ${fa} 4 ${1})
+  fp=$(get ${fa} 5 -1)
+
+  (( $(kubectl -n ${fns} get pod -l ${fk}=${fv} | wc -l) == 2 )) && {
+    fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
+
+    [ ${fp} -eq "-1" ] && \
+      fp=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+
+    kubectl -n ${fns} port-forward ${fa} ${fp}:${fp} > /dev/null 2>&1 &
+    pause 3
+  }
+
+  unset fa fns fk fv fa fp
+}
+
+forward() {
+  check ${FUNCNAME[0]}
+
+  for fa in ${@}; do
+    [ ${apps[${fa}]+_} ] && portForward ${fa} || warn "unknown app: ${fa}"
+  done; unset fa
+}
+
+unforward() {
+  [ ! -z "${@}" ] || ps -ef | grep -E 'kubectl.*port-forward' | grep -v grep | awk '{print $2}' | xargs kill -9
+
+  for ua in ${@}; do
+    if [ ${apps[${ua}]+_} ]; then
+      ps -ef | grep -E 'kubectl.*port-forward' | grep ${ua} | grep -v grep | awk '{print $2}' | xargs kill -9
+    else
+      warn "unknown app: ${ua}"
+    fi
+  done; unset ua
+}
+
+tokenDashboard() {
+  case "${configs[os]}" in
+    ${os[osx]}) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
+      grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
+      pbcopy;;
+    *) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
+      grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]';;
+  esac
+}
+
+getApp() {
+  ga=${apps[${1}]}
+  gu=$(get ${ga} 1)
+  gns=$(get ${ga} 2)
+  gk=$(get ${ga} 3)
+  gv=$(get ${ga} 4 ${1})
+  gp=$(get ${ga} 5 -1)
+
+  [ ${gp} -eq -1 ] && {
+    (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
+      gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+        -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+  }
+
+  echo ${gu/\[port\]/${gp}}
+  unset ga gu gns gks gv gp
+}
+
+app() {
+  for a in ${1}; do
+    if [ ${apps[${a}]+_} ]; then
+      check ${FUNCNAME[0]}:${a}
+
+      case "${configs[os]}" in
+        ${os[osx]}) open $(getApp ${a});;
+        *) usage "unsupported os: ${configs[os]}";;
+      esac
+    else
+      usage "unknown application: ${a}"
+    fi
+  done; unset a
+}
+
+cliPostgresql() {
+  check ${FUNCNAME[0]}
+  pgcli postgres://mdsadmin@localhost:5432/mds
+}
+
+cliRedis() {
+  check ${FUNCNAME[0]}
+  redis-cli -u redis://localhost:6379/0
+}
+
+uninstallNamespace() {
+  for ns in ${@}; do
+    kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
+      ${configs[dryrun]:+--dry-run}
+  done; unset ns
+}
+
+uninstallBookinfo() {
+  uninstallNamespace bookinfo-app
+}
+
+uninstallSimulator() {
+  check ${FUNCNAME[0]}
+
+  (( $(kubectl get pod -l app=trackgen | wc -l) == 2 )) &&
+    (cd ${configs[simulator]} helm delete --purge trackgen)
+  [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
+}
+
+uninstallFallbackCertificate() {
+  kubectl get secret gateway-fallback > /dev/null 2>&1 &&
+    kubectl delete secret gateway-fallback
+}
+
+uninstallIngressGatewayCertificate() {
+  kubectl get secret istio-ingressgateway-certs > /dev/null 2>&1 &&
+    kubectl delete secret istio-ingressgateway-certs
+}
+
+uninstallMetricsAdapter() {
+  helm status kube-metrics-adapter > /dev/null 2>&1 && helm delete --purge kube-metrics-adapter
+}
+
+uninstallMds() {
+  check ${FUNCNAME[0]}
+  helm delete --purge mds ${configs[dryrun]:+--dry-run}
+  uninstallNamespace ${configs[namespace-mds]:-mds}
+}
+
+uninstallMetrics() {
+  check ${FUNCNAME[0]}
+  helm delete --purge metrics ${configs[dryrun]:+--dry-run}
+  uninstallNamespace metrics
+}
+
+uninstallLogging() {
+  check ${FUNCNAME[0]}
+  helm delete --purge logging ${configs[dryrun]:+--dry-run}
+}
+
+uninstallKiali() {
+  unforward kiali
+  helm delete --purge kiali
+  uninstallNamespace kiali
+  # kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
+  kubectl get namespace kiali > /dev/null 2>&1 && kubectl delete namespace kiali \
+    ${configs[dryrun]:+--dry-run}
+}
+
+uninstallIstio() {
+  kubectl get namespace istio-system > /dev/null 2>&1 && {
+    check ${FUNCNAME[0]}
+    helm template ${configs[istio]}/install/kubernetes/helm/istio \
+      --name istio \
+      --namespace istio-system \
+      --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
+        kubectl delete -f - ${configs[dryrun]:+--dry-run}
+    kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
+    kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
+      ${configs[dryrun]:+--dry-run} > /dev/null
+  }
+  [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
+}
+
+uninstallDashboard() {
+  unforward dashboard
+  helm delete --purge dashboard
+  uninstallNamespace dashboard
+  kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
+  kubectl get namespace dashboard > /dev/null 2>&1 && kubectl delete namespace dashboard \
+    ${configs[dryrun]:+--dry-run}
+}
+
+#todo: purge
+uninstallHelm() {
+  case "${configs[os]}" in
+    ${os[osx]}) ;; #brew uninstall kubernetes-helm;;
+    *) usage "unsupported os: ${configs[os]}";;
+  esac
+}
+
+getPort() {
+  if [ ${apps[${1}]+_} ]; then
+    ga=${apps[${1}]}
+    gns=$(get ${ga} 2)
+    gk=$(get ${ga} 3)
+    gv=$(get ${ga} 4 ${1})
+    gp=$(get ${ga} 5 -1)
+
+    [ ${gp} -eq -1 ] && {
+      (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
+        gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
+          -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
+    }
+  fi; unset ga gns gk gv
+
+  echo ${gp:-}
+}
+
+forwardIfNeeded() {
+  gp=$(getPort ${1})
+
+  if [ ${gp} -eq "-1" ]; then
+    hash install${1^} > /dev/null 2>&1 && invoke install ${1}
+    pause 3
+    gp=$(getPort ${1})
+  fi
+
+  if [ ${#gp} -ge 1 ]; then
+    echo 'exit' | telnet localhost ${gp} > /dev/null 2>&1 || forward ${1}
+  fi
+
+  unset gp
+}
+
+check() {
+  case "${1}" in
+    $(basename ${0}))
+      for d in docker kubectl; do
+        hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
+      done; unset d
+      kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
+    build | testIntegration)
+      hash yarn > /dev/null 2>&1 || bootstrap;;
+    installHelm | installBookinfo) ;;
+    installDashboard | installLogging | installMetrics | installMds)
+      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
+      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
+    installIstio | testUnit | \
+      uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
+      hash helm > /dev/null 2>&1 || installHelm;;
+    installSimulator)
+      [ ! "${configs[simulator-repository]}" ] && usage "unspecified simulator repository";;
+    forward) ;;
+    app:*) forwardIfNeeded ${1##*:};;
+    cliPostgresql)
+      hash pgcli > /dev/null 2>&1 || bootstrap
+      forwardIfNeeded mds-postgresql;;
+    cliRedis)
+      hash redis-cli > /dev/null 2>&1 || bootstrap
+      forwardIfNeeded mds-redis;;
+  esac
+}
+
+invoke() {
+  for ia in ${2}; do
+    ${1}${ia^} || warn "${1} error: ${ia}"
+  done; unset ia
+}
+
+normalize() {
+  echo ${1} | cut -d ${2:-:} -f 2- | tr ',' ' '
+}
+
+configure() {
+  if [[ ${1} == *"="* ]]; then
+    for c in $(echo ${1} | tr ',' ' '); do
+      k=$(echo ${c} | cut -d '=' -f 1)
+      v=$(echo ${c} | cut -d '=' -f 2-)
+      echo "configure[$k]:$v"
+
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
+
+      unset c k v
+    done
+  else
+    configs[${1}]=
+  fi
+}
+
+[[ ${#} == 0 ]] && usage
+[[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
+check $(basename ${0})
+
+for arg in "${@}"; do
+  case "${arg}" in
+    bootstrap) bootstrap || warn  "${arg} failure";;
+    build) build || usage "${arg} failure";;
+    install:namespace=*) installNamespace "$(normalize ${arg} =)";;
+    install) arg="${configs[install]}";&
+    install:*) invoke install "$(normalize ${arg})";;
+    test) arg="${configs[test]}";&
+    test:*) invoke test "$(normalize ${arg})";;
+    forward) arg="${configs[forward]}";&
+    forward:*) forward "$(normalize ${arg})";;
+    unforward) unforward;;
+    unforward:*) unforward "$(normalize ${arg})";;
+    token) arg="${configs[token]}";&
+    token:*) invoke token "$(normalize ${arg})";;
+    open) usage "specify an application(s) to open";;
+    open:*) app "$(normalize ${arg})";;
+    cli:*) invoke cli "$(normalize ${arg})";;
+    uninstall:namespace=*) uninstallNamespace "$(normalize ${arg} =)";;
+    uninstall) arg="${configs[uninstall]}";&
+    uninstall:*) invoke uninstall "$(normalize ${arg})";;
+    reinstall) arg="${configs[reinstall]}";&
+    reinstall:*)
+    invoke uninstall "$(normalize ${arg})"
+    invoke install "$(normalize ${arg})";;
+    help) usage;;
+    --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    *) usage "unknown command: ${arg}"
+  esac
+done; unset arg

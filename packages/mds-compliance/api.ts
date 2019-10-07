@@ -23,17 +23,29 @@ import {
   now,
   days,
   pathsFor,
-  head,
   getPolygon,
   pointInShape,
   isInStatesOrEvents,
   ServerError
 } from '@mds-core/mds-utils'
 import { Geography, Device, UUID } from '@mds-core/mds-types'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName, TEST4_PROVIDER_ID } from '@mds-core/mds-providers'
+import {
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  BLUE_SYSTEMS_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID,
+  providerName
+} from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
+
+const AllowedProviderIDs = [
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  BLUE_SYSTEMS_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID
+]
 
 function api(app: express.Express): express.Express {
   app.use(async (req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
@@ -41,16 +53,7 @@ function api(app: express.Express): express.Express {
       // verify presence of provider_id
       if (!(req.path.includes('/health') || req.path === '/')) {
         if (res.locals.claims) {
-          const { provider_id, scope } = res.locals.claims
-
-          // no admin access without auth
-          if (req.path.includes('/admin/')) {
-            if (!scope || !scope.includes('admin:all')) {
-              return res.status(403).send({
-                result: `no admin access without admin:all scope (${scope})`
-              })
-            }
-          }
+          const { provider_id } = res.locals.claims
 
           /* istanbul ignore next */
           if (!provider_id) {
@@ -115,16 +118,14 @@ function api(app: express.Express): express.Express {
         policy &&
         ((policy.provider_ids && policy.provider_ids.includes(provider_id)) ||
           !policy.provider_ids ||
-          ([TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id) &&
+          (AllowedProviderIDs.includes(provider_id) &&
             ((policy.provider_ids &&
               policy.provider_ids.length !== 0 &&
               policy.provider_ids.includes(queried_provider_id)) ||
               !policy.provider_ids ||
               policy.provider_ids.length === 0)))
       ) {
-        const target_provider_id = [TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)
-          ? queried_provider_id
-          : provider_id
+        const target_provider_id = AllowedProviderIDs.includes(provider_id) ? queried_provider_id : provider_id
         if (
           compliance_engine
             .filterPolicies(all_policies)
@@ -165,7 +166,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
-    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(res.locals.provider_id)) {
+    if (!AllowedProviderIDs.includes(res.locals.provider_id)) {
       return res.status(401).send({ result: 'unauthorized access' })
     }
 
@@ -187,12 +188,12 @@ function api(app: express.Express): express.Express {
         return [...acc, geo]
       }, [])
       const geographies = (await Promise.all(
-        geography_ids.reduce((acc: Promise<Geography[]>[], geography_id) => {
-          const geography = db.readGeographies({ geography_id })
+        geography_ids.reduce((acc: Promise<Geography>[], geography_id) => {
+          const geography = db.readSingleGeography(geography_id)
           return [...acc, geography]
         }, [])
       )).reduce((acc: Geography[], geos) => {
-        return [...acc, head(geos)]
+        return [...acc, geos]
       }, [])
 
       const polys = geographies.reduce((acc: (Geometry | FeatureCollection)[], geography) => {

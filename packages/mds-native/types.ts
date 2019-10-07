@@ -14,8 +14,7 @@
     limitations under the License.
  */
 
-import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
-import { ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
 import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
 
 // Place newer versions at the beginning of the list
@@ -28,15 +27,14 @@ export type NativeApiRequest = ApiRequest
 
 // Allow adding type definitions for Express Response objects
 export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiResponse<T> {
-  locals: {
-    claims: ApiAuthorizerClaims
+  locals: ApiResponseLocals & {
     provider_id: UUID
   }
 }
 
 export interface NativeApiGetEventsRequest extends NativeApiRequest {
   params: {
-    cursor?: string
+    cursor: string
   }
   // Query string parameters always come in as strings
   query: Partial<

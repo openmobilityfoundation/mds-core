@@ -31,20 +31,14 @@ import {
   PROPULSION_TYPES,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
-import {
-  PROVIDER_UUID,
-  PROVIDER_AUTH,
-  makeEventsWithTelemetry,
-  makeDevices,
-  COMPLIANCE_AUTH,
-  makeTelemetryInArea
-} from '@mds-core/mds-test-data'
+import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { now, rangeRandomInt } from '@mds-core/mds-utils'
 import cache from '@mds-core/mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
 import { ApiServer } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
+import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 
 const request = supertest(ApiServer(api))
@@ -54,7 +48,7 @@ const APP_JSON = 'application/json; charset=utf-8'
 const audit_trip_id = uuid()
 const audit_trip_id_2 = uuid()
 const audit_device_id: string = uuid()
-const provider_id = PROVIDER_UUID
+const provider_id = MOCHA_PROVIDER_ID
 const provider_device_id = uuid()
 const provider_vehicle_id = 'test-vehicle'
 
@@ -69,6 +63,8 @@ const telemetry = (): {} => ({
 })
 
 const AUDIT_START = Date.now()
+
+const audit_subject_id = 'user@mds-testing.info'
 
 before('Initializing Database', async () => {
   await Promise.all([db.initialize(), cache.initialize()])
@@ -106,7 +102,7 @@ describe('Testing API', () => {
   it('verify audit start (matching vehicle)', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/start`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
         timestamp: AUDIT_START,
@@ -129,8 +125,19 @@ describe('Testing API', () => {
   it('verify audit start (conflict)', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/start`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .expect(409)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('verify audit start (no scope)', done => {
+    request
+      .post(`/audit/trips/${audit_trip_id}/start`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -140,7 +147,7 @@ describe('Testing API', () => {
   it('verify audit issue event', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/event`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
         audit_event_type: AUDIT_EVENT_TYPES.issue,
@@ -157,10 +164,29 @@ describe('Testing API', () => {
       })
   })
 
+  it('verify audit issue event (no scope)', done => {
+    request
+      .post(`/audit/trips/${audit_trip_id}/event`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .send({
+        audit_event_id: uuid(),
+        audit_event_type: AUDIT_EVENT_TYPES.issue,
+        audit_issue_code: 'vehicle_not_found',
+        note: '',
+        timestamp: Date.now(),
+        telemetry: telemetry()
+      })
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('verify trip start event', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/vehicle/event`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         event_type: VEHICLE_EVENTS.trip_start,
         timestamp: Date.now(),
@@ -178,7 +204,7 @@ describe('Testing API', () => {
   it('verify audit telemetry', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/vehicle/telemetry`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         telemetry: telemetry(),
         timestamp: Date.now()
@@ -191,10 +217,25 @@ describe('Testing API', () => {
       })
   })
 
+  it('verify audit telemetry (no scope)', done => {
+    request
+      .post(`/audit/trips/${audit_trip_id}/vehicle/telemetry`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .send({
+        telemetry: telemetry(),
+        timestamp: Date.now()
+      })
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('verify trip end event', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/vehicle/event`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         event_type: VEHICLE_EVENTS.trip_end,
         timestamp: Date.now(),
@@ -212,7 +253,7 @@ describe('Testing API', () => {
   it('verify audit summary event', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/event`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
         audit_event_type: AUDIT_EVENT_TYPES.summary,
@@ -231,7 +272,7 @@ describe('Testing API', () => {
   it('verify audit end', done => {
     request
       .post(`/audit/trips/${audit_trip_id}/end`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
         timestamp: Date.now(),
@@ -245,10 +286,26 @@ describe('Testing API', () => {
       })
   })
 
-  it('verify read audit (matched vehicle)', done => {
+  it('verify audit end (no scope)', done => {
+    request
+      .post(`/audit/trips/${audit_trip_id}/end`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .send({
+        audit_event_id: uuid(),
+        timestamp: Date.now(),
+        telemetry: telemetry()
+      })
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('verify get audit (matched vehicle)', done => {
     request
       .get(`/audit/trips/${audit_trip_id}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -263,7 +320,7 @@ describe('Testing API', () => {
     it(`verify post audit (not found) ${route}`, done => {
       request
         .post(route)
-        .set('Authorization', PROVIDER_AUTH)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -272,11 +329,33 @@ describe('Testing API', () => {
     })
   )
 
+  it(`verify get audit (no scope)`, done => {
+    request
+      .get(`/audit/trips/${uuid()}`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it(`verify get audit (not found)`, done => {
     request
       .get(`/audit/trips/${uuid()}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
       .expect(404)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it(`verify list audits (no scope)`, done => {
+    request
+      .get(`/audit/trips`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .expect(403)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -289,7 +368,7 @@ describe('Testing API', () => {
     { filter: 'provider_id', query: `?provider_id=${uuid()}`, count: 0 },
     { filter: 'provider_vehicle_id', query: `?provider_vehicle_id=${provider_vehicle_id.substring(4)}`, count: 1 },
     { filter: 'provider_vehicle_id', query: `?provider_vehicle_id=not-found`, count: 0 },
-    { filter: 'audit_subject_id', query: `?audit_subject_id=clients`, count: 1 },
+    { filter: 'audit_subject_id', query: `?audit_subject_id=${audit_subject_id}`, count: 1 },
     { filter: 'audit_subject_id', query: `?audit_subject_id=not-found`, count: 0 },
     { filter: 'start_time', query: `?start_time=${AUDIT_START}`, count: 1 },
     { filter: 'start_time', query: `?start_time=${Date.now()}`, count: 0 },
@@ -301,7 +380,7 @@ describe('Testing API', () => {
     it(`verify list audits (Filter: ${filter}, Count: ${count})`, done => {
       request
         .get(`/audit/trips${query}`)
-        .set('Authorization', PROVIDER_AUTH)
+        .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -312,12 +391,24 @@ describe('Testing API', () => {
     })
   )
 
+  it('verify delete audit (no scope)', done => {
+    request
+      .delete(`/audit/trips/${uuid()}`)
+      .set('Authorization', SCOPED_AUTH([], ''))
+      .expect(403)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
   it('verify delete audit (not found)', done => {
     request
       .delete(`/audit/trips/${uuid()}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:delete'], audit_subject_id))
       .expect(404)
-      .end(err => {
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
   })
@@ -325,7 +416,7 @@ describe('Testing API', () => {
   it('verify delete audit', done => {
     request
       .delete(`/audit/trips/${audit_trip_id}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:delete'], audit_subject_id))
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -337,7 +428,7 @@ describe('Testing API', () => {
   it('verify audit start (missing vehicle)', done => {
     request
       .post(`/audit/trips/${audit_trip_id_2}/start`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
         timestamp: AUDIT_START,
@@ -356,10 +447,10 @@ describe('Testing API', () => {
       })
   })
 
-  it('verify read audit (missing vehicle)', done => {
+  it('verify get audit (missing vehicle)', done => {
     request
       .get(`/audit/trips/${audit_trip_id_2}`)
-      .set('Authorization', PROVIDER_AUTH)
+      .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
@@ -384,7 +475,7 @@ describe('Testing API', () => {
     it(`verify vehicle matching ${vehicle_id}`, done => {
       request
         .post(`/audit/trips/${uuid()}/start`)
-        .set('Authorization', PROVIDER_AUTH)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .send({
           audit_event_id: uuid(),
           timestamp: AUDIT_START,
@@ -406,9 +497,9 @@ describe('Testing API', () => {
   )
   describe('Tests retreiving vehicles inside of bbox', () => {
     before(done => {
-      const devices_a = makeDevices(10, now(), PROVIDER_UUID)
+      const devices_a = makeDevices(10, now(), MOCHA_PROVIDER_ID)
       const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
-      const devices_b = makeDevices(10, now(), PROVIDER_UUID)
+      const devices_b = makeDevices(10, now(), MOCHA_PROVIDER_ID)
       const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
       const telemetry_a = devices_a.map(device =>
         makeTelemetryInArea(device, now(), SAN_FERNANDO_VALLEY, rangeRandomInt(10))
@@ -431,7 +522,7 @@ describe('Testing API', () => {
       const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
       request
         .get(`/vehicles?bbox=${JSON.stringify(bbox)}`)
-        .set('Authorization', COMPLIANCE_AUTH)
+        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -441,39 +532,6 @@ describe('Testing API', () => {
             test.assert(typeof device.telemetry.gps.lng === 'number')
             test.assert(typeof device.updated === 'number')
           })
-          done(err)
-        })
-    })
-
-    it('Verifies proper pagination when getting vehicles inside of a bounding box', done => {
-      const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
-      request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}&skip=2&take=5`)
-        .set('Authorization', COMPLIANCE_AUTH)
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.assert(result.body.vehicles.length === 5)
-          result.body.vehicles.forEach((device: Device & { updated?: Timestamp | null; telemetry: Telemetry }) => {
-            test.assert(typeof device.telemetry.gps.lat === 'number')
-            test.assert(typeof device.telemetry.gps.lng === 'number')
-            test.assert(typeof device.updated === 'number')
-          })
-          test.string(result.body.links.next).contains('http', 'skip=7&take=5')
-          done(err)
-        })
-    })
-
-    it('Verifies cannot read past the end when getting vehicles inside of a bounding box', done => {
-      const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
-      request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}&skip=10&take=5`)
-        .set('Authorization', COMPLIANCE_AUTH)
-        .expect(200)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.assert(result.body.vehicles.length === 0)
-          test.string(result.body.links.last).contains('http', 'skip=10&take=5')
           done(err)
         })
     })

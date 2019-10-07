@@ -30,7 +30,7 @@ import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers'
-import { ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
+import { ApiResponse, ApiRequest, checkAccess } from '@mds-core/mds-api-server'
 
 import {
   NativeApiGetEventsRequest,
@@ -63,7 +63,7 @@ function api(app: express.Express): express.Express {
       }
     }
     logger.info(req.method, req.originalUrl)
-    next()
+    return next()
   })
   // ///////////////////// begin middleware ///////////////////////
 
@@ -107,32 +107,37 @@ function api(app: express.Express): express.Express {
     }
   }
 
-  app.get(pathsFor('/events/:cursor?'), async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
-    try {
-      const { cursor, limit } = getRequestParameters(req)
-      const events = await db.readEventsWithTelemetry({ ...cursor, limit })
-      return res.status(200).send({
-        version: NativeApiCurrentVersion,
-        cursor: Buffer.from(
-          JSON.stringify({
-            ...cursor,
-            last_id: events.length === 0 ? cursor.last_id : events[events.length - 1].id
-          })
-        ).toString('base64'),
-        events: events.map(({ id, service_area_id, ...event }) => event)
-      })
-    } catch (err) {
-      if (err instanceof ValidationError) {
-        await logger.warn(req.method, req.originalUrl, err)
-        return res.status(400).send({ error: err })
+  app.get(
+    pathsFor('/events/:cursor?'),
+    checkAccess(scopes => scopes.includes('events:read')), // TODO: events:read:provider with filtering
+    async (req: NativeApiGetEventsRequest, res: NativeApiGetEventsReponse) => {
+      try {
+        const { cursor, limit } = getRequestParameters(req)
+        const events = await db.readEventsWithTelemetry({ ...cursor, limit })
+        return res.status(200).send({
+          version: NativeApiCurrentVersion,
+          cursor: Buffer.from(
+            JSON.stringify({
+              ...cursor,
+              last_id: events.length === 0 ? cursor.last_id : events[events.length - 1].id
+            })
+          ).toString('base64'),
+          events: events.map(({ id, service_area_id, ...event }) => event)
+        })
+      } catch (err) {
+        if (err instanceof ValidationError) {
+          await logger.warn(req.method, req.originalUrl, err)
+          return res.status(400).send({ error: err })
+        }
+        /* istanbul ignore next */
+        return InternalServerError(req, res, err)
       }
-      /* istanbul ignore next */
-      return InternalServerError(req, res, err)
     }
-  })
+  )
 
   app.get(
     pathsFor('/vehicles/:device_id'),
+    checkAccess(scopes => scopes.includes('vehicles:read')), // TODO: vehicles:read:provider with filtering
     async (req: NativeApiGetVehiclesRequest, res: NativeApiGetVehiclesResponse) => {
       const { device_id } = req.params
       try {
@@ -155,11 +160,14 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/providers'), async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
-    res.status(200).send({
-      version: NativeApiCurrentVersion,
-      providers: Object.values(providers)
-    })
+  app.get(
+    pathsFor('/providers'),
+    checkAccess(scopes => scopes.includes('providers:read')),
+    async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
+      res.status(200).send({
+        version: NativeApiCurrentVersion,
+        providers: Object.values(providers)
+      })
   )
 
   return app
