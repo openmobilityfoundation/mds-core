@@ -28,11 +28,24 @@ import {
   isInStatesOrEvents,
   ServerError
 } from '@mds-core/mds-utils'
-import { Geography, Device, UUID } from '@mds-core/mds-types'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, providerName, TEST4_PROVIDER_ID } from '@mds-core/mds-providers'
+import { Geography, Device, UUID, VehicleEvent } from '@mds-core/mds-types'
+import {
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  BLUE_SYSTEMS_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID,
+  providerName
+} from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
+
+const AllowedProviderIDs = [
+  TEST1_PROVIDER_ID,
+  TEST2_PROVIDER_ID,
+  BLUE_SYSTEMS_PROVIDER_ID,
+  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID
+]
 
 function api(app: express.Express): express.Express {
   app.use(async (req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
@@ -105,16 +118,14 @@ function api(app: express.Express): express.Express {
         policy &&
         ((policy.provider_ids && policy.provider_ids.includes(provider_id)) ||
           !policy.provider_ids ||
-          ([TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id) &&
+          (AllowedProviderIDs.includes(provider_id) &&
             ((policy.provider_ids &&
               policy.provider_ids.length !== 0 &&
               policy.provider_ids.includes(queried_provider_id)) ||
               !policy.provider_ids ||
               policy.provider_ids.length === 0)))
       ) {
-        const target_provider_id = [TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(provider_id)
-          ? queried_provider_id
-          : provider_id
+        const target_provider_id = AllowedProviderIDs.includes(provider_id) ? queried_provider_id : provider_id
         if (
           compliance_engine
             .filterPolicies(all_policies)
@@ -155,7 +166,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
-    if (![TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, TEST4_PROVIDER_ID].includes(res.locals.provider_id)) {
+    if (!AllowedProviderIDs.includes(res.locals.provider_id)) {
       return res.status(401).send({ result: 'unauthorized access' })
     }
 
@@ -189,7 +200,10 @@ function api(app: express.Express): express.Express {
         return [...acc, getPolygon(geographies, geography.geography_id)]
       }, [])
 
-      const events = (await cache.readAllEvents()).filter(event => isInStatesOrEvents(rule, event))
+      // https://stackoverflow.com/a/51577579 to remove nulls in typesafe way
+      const events = (await cache.readAllEvents()).filter(
+        (event): event is VehicleEvent => event !== null && isInStatesOrEvents(rule, event)
+      )
       const filteredEvents = compliance_engine.filterEvents(events)
 
       const count = filteredEvents.reduce((count_acc, event) => {

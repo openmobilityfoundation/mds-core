@@ -80,12 +80,19 @@ const featureCollectionSchema = Joi.object()
   .unknown(true) // TODO
 
 const geographiesSchema = Joi.array().items(
-  Joi.object().keys({
-    geography_id: Joi.string()
-      .guid()
-      .required(),
-    geography_json: featureCollectionSchema
-  })
+  Joi.object()
+    .keys({
+      geography_id: Joi.string()
+        .guid()
+        .required(),
+      geography_json: featureCollectionSchema,
+      read_only: Joi.boolean().allow(null),
+      previous_geography_ids: Joi.array()
+        .items(Joi.string().guid())
+        .allow(null),
+      name: Joi.string().required()
+    })
+    .unknown(true)
 )
 
 const eventsSchema = Joi.array().items(
