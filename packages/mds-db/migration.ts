@@ -139,19 +139,13 @@ async function alterGeographiesColumnsMigration(exec: SqlExecuterFunction) {
     `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO ${schema.COLUMN.previous_geographies}`
   )
   await exec(
-    `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.publish_date} ${
-      schema.COLUMN_TYPE[schema.COLUMN.publish_date]
-    }`
+    `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.publish_date} ${schema.COLUMN_TYPE.publish_date}`
   )
   await exec(
-    `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.effective_date} ${
-      schema.COLUMN_TYPE[schema.COLUMN.effective_date]
-    }`
+    `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.effective_date} ${schema.COLUMN_TYPE.effective_date}`
   )
   await exec(
-    `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.description} ${
-      schema.COLUMN_TYPE[schema.COLUMN.description]
-    }`
+    `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.description} ${schema.COLUMN_TYPE.description}`
   )
 }
 
