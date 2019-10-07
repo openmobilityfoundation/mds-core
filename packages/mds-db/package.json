@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-db",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Mobility Data Specification database interface",
   "main": "dist/index.js",
   "files": [
@@ -20,11 +20,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-logger": "0.1.9",
-    "@mds-core/mds-types": "0.1.6",
-    "@mds-core/mds-utils": "0.1.9",
+    "@mds-core/mds-types": "0.1.7",
+    "@mds-core/mds-utils": "0.1.10",
     "pg": "7.12.1"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.9"
+    "@mds-core/mds-test-data": "0.1.10"
   }
 }

@@ -1,37 +1,38 @@
-{{- range $api := .Values.apis }}
+{{- range $key, $api := .Values.apis }}
+{{- if $api.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $api.name }}
+  name: {{ $key }}
   labels:
-    app: {{ $api.name }}
+    app: {{ $key }}
   namespace: {{ $.Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ $api.name }}
+      app: {{ $key }}
   template:
     metadata:
       labels:
-        app: {{ $api.name }}
+        app: {{ $key }}
     spec:
       containers:
-      - name: {{ $api.name }}
+      - name: {{ $key }}
         {{- if $.Values.registry }}
-        image: {{ $.Values.registry }}/{{ $api.name }}:{{ $api.version }}
+        image: {{ $.Values.registry }}/{{ $key }}:{{ $api.version }}
         {{- else }}
-        image: {{ $api.name }}:{{ $api.version }}
+        image: {{ $key }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
         resources:
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: {{ $api.resourcesLimitsCpu | default ($.Values.resourcesLimitsCpu | default "500m") }}
+            memory: {{ $api.resourcesLimitsMemory | default ($.Values.resourcesLimitsMemory | default "512Mi") }}
           requests:
-            cpu: 50m
-            memory: 128Mi
+            cpu: {{ $api.resourcesRequestsCpu | default ($.Values.resourcesRequestsCpu | default "50m") }}
+            memory: {{ $api.resourcesRequestsMemory | default ($.Values.resourcesRequestsMemory | default "128Mi") }}
         ports:
         - containerPort: {{ $api.port }}
           name: user-port
@@ -87,9 +88,14 @@ spec:
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
           - name: CE_NAME
-            value: {{ $api.name }}
+            value: {{ $key }}
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
+          {{- end }}
+          {{- if $api.env }}
+{{ toYaml $api.env | indent 10 }}
+          {{- end }}
+{{- end }}
 {{- end }}
 {{- if $.Values.pgPass }}
 ---

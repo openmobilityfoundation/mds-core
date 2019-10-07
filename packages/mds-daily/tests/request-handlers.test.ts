@@ -3,6 +3,8 @@ import Sinon from 'sinon'
 import { DailyApiRequest, DailyApiResponse } from '../types'
 import { getRawTripData } from '../request-handlers'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 describe('Request handlers', () => {
   describe('getRawTripData()', () => {
     it('handles a db read error in getRawTripData()', async () => {

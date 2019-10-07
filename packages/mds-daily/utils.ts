@@ -1,5 +1,7 @@
 import { isTimestamp, now, days, inc, head, tail } from '@mds-core/mds-utils'
-import { UUID, CountMap, TripsStats, VEHICLE_EVENTS } from '@mds-core/mds-types'
+import { UUID, CountMap, TripsStats, VEHICLE_EVENTS, VehicleEvent } from '@mds-core/mds-types'
+import cache from '@mds-core/mds-cache'
+import log from '@mds-core/mds-logger'
 
 // TODO move to utils?
 export function asInt(n: string | number | undefined): number | undefined {
@@ -98,4 +100,30 @@ export function categorizeTrips(perTripId: TripsData): { [s: string]: TripsStats
     Object.assign(perProvider[pid], counts)
   })
   return perProvider
+}
+
+export async function getMaps(): Promise<{
+  eventMap: { [s: string]: VehicleEvent }
+  // telemetryMap: { [s: string]: Telemetry }
+}> {
+  try {
+    // const telemetry: Telemetry[] = await cache.readAllTelemetry()
+    // log.info('read telemetry')
+    const events = await cache.readAllEvents()
+    log.info('read events')
+    const eventSeed: { [s: string]: VehicleEvent } = {}
+    const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
+      return event ? Object.assign(map, { [event.device_id]: event }) : map
+    }, eventSeed)
+    // const telemetrySeed: { [s: string]: Telemetry } = {}
+    // const telemetryMap = telemetry.reduce((map, t) => {
+    //   return Object.assign(map, { [t.device_id]: t })
+    // }, telemetrySeed)
+    return Promise.resolve({
+      // telemetryMap,
+      eventMap
+    })
+  } catch (err) {
+    return Promise.reject(err)
+  }
 }
