@@ -205,6 +205,41 @@ build() {
   yarn image
 }
 
+
+buildImage() {
+  image="$1"
+  suffix="$(getBranchSuffix)"
+  docker build -t ${image}${suffix} .
+}
+
+getBranchSuffix() {
+  branch="$(git branch --no-color | grep '^\*' | sed 's/^\* //')"
+
+  case $branch in
+    master)
+      suffix="";;
+    develop)
+      suffix="-prerelease";;
+    *)
+      suffix="-unstable";;
+  esac
+
+  echo $suffix
+}
+
+templateValues() {
+  suffix=$(getBranchSuffix)
+  for directory in container-images/mds-*; do
+    api=$(basename $directory)
+    version=$(jq -r '.version' < $directory/package.json)
+    varname="$(echo $api | sed -e 's/^mds-//' -e 's/-/_/g' | tr a-z A-Z)_VERSION"
+    export $varname=${version}${suffix}
+  done
+  mkdir -p dist
+  envsubst < helm/mds/values.yaml.tpl > dist/values.html
+  echo "Wrote dist/values.yaml"
+}
+
 pause() {
   sleepTime=${1:-${configs[pause]}}
   cntr=0
@@ -761,6 +796,8 @@ for arg in "${@}"; do
   case "${arg}" in
     bootstrap) bootstrap || warn  "${arg} failure";;
     build) build || usage "${arg} failure";;
+    buildImage) buildImage ${configs[image-name]};;
+    templateValues) templateValues;;
     install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
