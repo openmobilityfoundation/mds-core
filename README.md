@@ -121,25 +121,25 @@ MDS can be provisioned to a Kubernetes cluster as follows:
   * `preferences / kubernetes`: enabled kubernetes
 * Add `kubectl` to your PATH environment, e.g. for OSX:
   * `export PATH=/Applications/Docker.app/Contents/Resources/bin:${PATH}`
-* Configure active kubernetes cluster
+* Ensure an active kubernetes cluster is configured and accessible:
   * `kubectl config set-context docker-desktop`
 
 Lastly, build and deploy MDS to your kubernetes cluster:
 
 ```bash
-./bin/install bootstrap build install:mds test:integration
+./bin/mdsctl bootstrap build install:mds test:integration
 ```
 
 To cleanup the MDS cluster consider:
 
 ```bash
-./bin/install uninstall
+./bin/mdsctl uninstall
 ```
 
 For a complete listing of available operations consider:
 
 ```bash
-./bin/install
+./bin/mdsctl
 ```
 
 ## Contributing

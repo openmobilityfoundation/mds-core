@@ -3,7 +3,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: pg-rw-external
-  namespace: {{ .Release.Namespace }}
+  namespace: logging
 spec:
   hosts:
   - {{ $.Values.postgresql.host }}
@@ -18,7 +18,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: pg-ro-external
-  namespace: {{ .Release.Namespace }}
+  namespace: logging
 spec:
   hosts:
   - {{ $.Values.postgresql.hostReader }}
@@ -35,7 +35,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
 metadata:
   name: redis-external
-  namespace: {{ .Release.Namespace }}
+  namespace: logging
 spec:
   hosts:
   - {{ .Values.redis.host }}

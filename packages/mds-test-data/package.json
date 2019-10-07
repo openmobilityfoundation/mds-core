@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-test-data",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Mobility Data Specification test data generator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,10 +15,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-logger": "0.1.9",
-    "@mds-core/mds-types": "0.1.6",
-    "@mds-core/mds-utils": "0.1.9",
+    "@mds-core/mds-types": "0.1.7",
+    "@mds-core/mds-utils": "0.1.10",
     "ladot-service-areas": "0.1.9",
-    "uuid4": "1.1.4"
+    "uuid": "3.3.3"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",

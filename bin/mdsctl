@@ -56,9 +56,9 @@ declare -A configs=(
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency-migration.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
+  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
@@ -262,10 +262,41 @@ helmOptions() {
   unset opts
 }
 
+installTiller() {
+  check ${FUNCNAME[0]}
+
+  if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "1" ]; then
+    warn "NOT FOR PRODUCTION USE"
+    cat << EOF | kubectl create -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller-clusterrolebinding
+subjects:
+- kind: ServiceAccount
+  name: tiller
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: ""
+EOF
+
+    helm init --service-account tiller --upgrade
+    pause 5
+  fi
+}
+
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  helm install ./helm/dashboard --name dashboard --namespace dashboard \
+  helm install ./helm/dashboard --name dashboard --namespace --install dashboard \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -625,6 +656,15 @@ uninstallDashboard() {
     ${configs[dryrun]:+--dry-run}
 }
 
+uninstallTiller() {
+  if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "0" ]; then
+    kubectl delete serviceaccount tiller --namespace kube-system
+    kubectl delete clusterrolebinding tiller-clusterrolebinding
+    helm reset --force
+    pause 3
+    helm init --upgrade
+  fi
+}
 #todo: purge
 uninstallHelm() {
   case "${configs[os]}" in
@@ -713,12 +753,9 @@ configure() {
     for c in $(echo ${1} | tr ',' ' '); do
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
-      echo "configure[$k]:$v"
 
-      [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
-
-      unset c k v
-    done
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+=",${v}" || configs[${k}]="${v}"
+    done; unset c k v
   else
     configs[${1}]=
   fi

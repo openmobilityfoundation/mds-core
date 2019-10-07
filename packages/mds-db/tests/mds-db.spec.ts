@@ -41,8 +41,18 @@ const pg_info: PGInfo = {
 
 const startTime = now() - 200
 const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
-const LAGeography: Geography = { geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY, read_only: false }
-const DistrictSeven: Geography = { geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN, read_only: false }
+const LAGeography: Geography = {
+  name: 'Los Angeles',
+  geography_id: GEOGRAPHY_UUID,
+  geography_json: LA_CITY_BOUNDARY,
+  read_only: false
+}
+const DistrictSeven: Geography = {
+  name: 'District Seven',
+  geography_id: GEOGRAPHY2_UUID,
+  geography_json: DISTRICT_SEVEN,
+  read_only: false
+}
 
 /* You'll need postgres running and the env variable PG_NAME
  * to be set to run these tests.
@@ -404,7 +414,11 @@ if (pg_info.database) {
         const geography_json = clone(DistrictSeven.geography_json)
         const numFeatures = geography_json.features.length
         geography_json.features = []
-        await MDSDBPostgres.editGeography({ geography_id: DistrictSeven.geography_id, geography_json })
+        await MDSDBPostgres.editGeography({
+          name: 'District Seven',
+          geography_id: DistrictSeven.geography_id,
+          geography_json
+        })
         const result = await MDSDBPostgres.readSingleGeography(GEOGRAPHY2_UUID)
         assert.notEqual(result.geography_json.features.length, numFeatures)
         assert.equal(result.geography_json.features.length, 0)
@@ -414,6 +428,7 @@ if (pg_info.database) {
         const publishedGeographyJSON = clone(LAGeography.geography_json) as FeatureCollection
         publishedGeographyJSON.features = []
         await MDSDBPostgres.editGeography({
+          name: 'Los Angeles',
           geography_id: LAGeography.geography_id,
           geography_json: publishedGeographyJSON
         }).should.be.rejected()

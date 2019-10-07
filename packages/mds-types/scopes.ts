@@ -49,12 +49,3 @@ export const ScopeDescriptions: { [S in AccessTokenScope]: string } = {
   'vehicles:read:provider': 'Read Vehicles (Provider Access)',
   'vehicles:write:provider': 'Write Vehicles (Provider Access)'
 }
-
-export type ScopeValidator<TAccessTokenScope extends string = AccessTokenScope> = (
-  check: (scope: TAccessTokenScope) => boolean
-) => boolean
-
-export const validateScopes = <TAccessTokenScope extends string = AccessTokenScope>(
-  validator: ScopeValidator<TAccessTokenScope>,
-  scopes: TAccessTokenScope[] = []
-): boolean => validator(scope => !scope || scopes.includes(scope))

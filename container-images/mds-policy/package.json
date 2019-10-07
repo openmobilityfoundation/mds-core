@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-policy",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Docker Image for MDS Policy API",
   "main": "dist/index.js",
   "files": [
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && docker build -t mds-policy:${npm_package_version} . && docker tag mds-policy:${npm_package_version} mds-policy:latest",
+    "image": "yarn bundle && ../../bin/image-build mds-policy:${npm_package_version}",
     "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.9",
-    "@mds-core/mds-api-server": "0.1.9",
-    "@mds-core/mds-policy": "0.0.10"
+    "@container-images/env-inject": "0.1.10",
+    "@mds-core/mds-api-server": "0.1.10",
+    "@mds-core/mds-policy": "0.0.11"
   },
   "license": "Apache-2.0"
 }

@@ -6,14 +6,6 @@ tests:
     release:
       namespace: mds
     set:
-      apis:
-        - name: mds-provider
-        - name: mds-agency
-        - name: mds-audit
-        - name: mds-policy
-        - name: mds-compliance
-        - name: mds-daily
-        - name: mds-native
       jwt:
         issuer: my-issuer
         enabled: true
@@ -22,4 +14,4 @@ tests:
           - audience-2
     asserts:
       - hasDocuments:
-          count: 7
+          count: 8

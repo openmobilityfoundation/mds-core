@@ -1,5 +1,6 @@
 apis:
-  - name: mds-provider
+  mds-provider:
+    enabled: true
     pathPrefix: /provider
     port: 4000
     version: latest
@@ -7,7 +8,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-agency
+  mds-agency:
+    enabled: true
     pathPrefix: /agency
     port: 4001
     version: latest
@@ -15,7 +17,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-audit
+  mds-audit:
+    enabled: true
     pathPrefix: /audit
     port: 4002
     version: latest
@@ -23,7 +26,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-policy
+  mds-policy:
+    enabled: true
     pathPrefix: /policy
     port: 4003
     version: latest
@@ -31,7 +35,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-compliance
+  mds-compliance:
+    enabled: true
     pathPrefix: /compliance
     port: 4004
     version: latest
@@ -39,7 +44,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-daily
+  mds-daily:
+    enabled: true
     pathPrefix: /daily
     port: 4005
     version: latest
@@ -47,7 +53,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-native
+  mds-native:
+    enabled: true
     pathPrefix: /native
     port: 4006
     version: latest
@@ -55,7 +62,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: mds-policy-author
+  mds-policy-author:
+    enabled: true
     pathPrefix: /policy-author
     port: 4007
     version: latest
