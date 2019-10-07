@@ -135,10 +135,12 @@ async function doMigration(
 }
 
 async function alterGeographiesColumns(exec: SqlExecuterFunction) {
-  await exec(`ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO prev_geographies`)
-  await exec(`ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN publish_date bigint`)
-  await exec(`ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN effective_date bigint`)
-  await exec(`ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN description varchar(255)`)
+  await exec(
+    `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO ${schema.COLUMN.previous_geographies}`
+  )
+  await exec(`ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.publish_date} bigint`)
+  await exec(`ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.effective_date} bigint`)
+  await exec(`ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.description} varchar(255)`)
 }
 
 async function doMigrations(client: MDSPostgresClient) {
