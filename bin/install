@@ -357,13 +357,6 @@ installMds() {
   installFallbackCertificate
   kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]:-mds}
-	
-	# create broker eventing filter
-    kubectl -n mds create serviceaccount eventing-broker-filter
-    kubectl -n mds create rolebinding eventing-broker-filter \
-      --clusterrole=eventing-broker-filter \
-      --serviceaccount=mds:eventing-broker-filter
-	  
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
@@ -374,6 +367,11 @@ installMds() {
       ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
     pause 12
+	# create broker eventing filter
+    kubectl -n mds create serviceaccount eventing-broker-filter
+    kubectl -n mds create rolebinding eventing-broker-filter \
+      --clusterrole=eventing-broker-filter \
+      --serviceaccount=mds:eventing-broker-filter
   }
 }
 
