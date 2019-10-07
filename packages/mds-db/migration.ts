@@ -4,7 +4,7 @@ import log from '@mds-core/mds-logger'
 import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient, cols_sql, SqlExecuterFunction } from './sql-utils'
 
-const MIGRATIONS = ['createMigrationsTable', 'alterGeographiesColumnsMigration'] as const
+const MIGRATIONS = ['createMigrationsTable', 'alterGeographiesColumns'] as const
 type MIGRATION = typeof MIGRATIONS[number]
 
 // drop tables from a list of table names
@@ -160,7 +160,7 @@ async function doMigrations(client: MDSPostgresClient) {
   // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
   // migrations table is created, but it is included as it provides a template for how to invoke them.
   await doMigration(exec, 'createMigrationsTable', async () => {})
-  await doMigration(exec, 'alterGeographiesColumnsMigration', alterGeographiesColumnsMigration)
+  await doMigration(exec, 'alterGeographiesColumns', alterGeographiesColumnsMigration)
 }
 
 async function updateSchema(client: MDSPostgresClient) {
