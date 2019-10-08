@@ -412,7 +412,7 @@ installMds() {
   kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]:-mds}
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
-    configure $(imageVersion)
+    #configure $(imageVersion)
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
@@ -421,7 +421,7 @@ installMds() {
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
       ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
-    pause 12
+	pause 12
 	# create broker eventing filter
     kubectl -n mds create serviceaccount eventing-broker-filter
     kubectl -n mds create rolebinding eventing-broker-filter \
