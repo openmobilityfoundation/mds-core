@@ -23,10 +23,7 @@ async function checkDupPrevState(device_state, device_last_state) {
   if (device_last_state) {
     if (device_last_state.timestamp === device_state.timestamp) {
       if (device_state.type === 'event') {
-        if (
-          device_last_state.type === device_state.type &&
-          device_last_state.sub_state === device_state.event_type
-        ) {
+        if (device_last_state.type === device_state.type && device_last_state.sub_state === device_state.event_type) {
           return false
         }
       } else if (device_state.type === 'telemetry') {
@@ -64,10 +61,7 @@ async function checkOutOfOrder(data, device_state) {
       device_state.event_type === 'trip_end'
     ) {
       let trip_id = data.trip_id
-      let cur_state = await hget(
-        'trip:state',
-        device_state.provider_id + ':' + device_state.device_id
-      )
+      let cur_state = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
       if (!cur_state) {
         return false
       } else {
@@ -131,11 +125,7 @@ async function qualityCheck(data, device_state) {
     return false
   }
 
-  await hset(
-    'provider:state',
-    device_state.provider_id,
-    JSON.stringify(provider_state)
-  )
+  await hset('provider:state', device_state.provider_id, JSON.stringify(provider_state))
   return true
 }
 
@@ -188,14 +178,12 @@ async function processRaw(type, data) {
   }
 
   // Get last state of device
-  let device_last_state = await hget(
-    'device:state',
-    data.provider_id + ':' + data.device_id
-  )
-  device_state.last_state_data = objectWithoutProperties(
-    JSON.parse(device_last_state),
-    ['device_id', 'provider_id', 'last_state_data']
-  )
+  let device_last_state = await hget('device:state', data.provider_id + ':' + data.device_id)
+  device_state.last_state_data = objectWithoutProperties(JSON.parse(device_last_state), [
+    'device_id',
+    'provider_id',
+    'last_state_data'
+  ])
 
   // Quality filter events/telemetry
   let quality_check = await qualityCheck(data, device_state)
@@ -255,11 +243,7 @@ async function processRaw(type, data) {
       device_state.event_type === 'event' &&
       device_state.trip_id)
   ) {
-    await hset(
-      'device:state',
-      data.provider_id + ':' + data.device_id,
-      JSON.stringify(device_state)
-    )
+    await hset('device:state', data.provider_id + ':' + data.device_id, JSON.stringify(device_state))
   }
 
   // Add to PG table (reports_device_states) and stream
@@ -283,9 +267,7 @@ async function processTripEvent(device_state) {
   */
   // Create trip data
   let trip_id = device_state.trip_id
-  let district = device_state.annotation.geo.areas.length
-    ? device_state.annotation.geo.areas[0].id
-    : null
+  let district = device_state.annotation.geo.areas.length ? device_state.annotation.geo.areas[0].id : null
   let trip_event_data = {
     timestamp: device_state.timestamp,
     event: device_state.event_type,
@@ -296,10 +278,7 @@ async function processTripEvent(device_state) {
   }
 
   // Append to existing trip or create new
-  let cur_state = await hget(
-    'trip:state',
-    device_state.provider_id + ':' + device_state.device_id
-  )
+  let cur_state = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
   if (!cur_state) {
     cur_state = {}
   } else {
@@ -311,11 +290,7 @@ async function processTripEvent(device_state) {
   cur_state[trip_id].push(trip_event_data)
 
   // Update trip event cache and stream
-  await hset(
-    'trip:state',
-    device_state.provider_id + ':' + device_state.device_id,
-    JSON.stringify(cur_state)
-  )
+  await hset('trip:state', device_state.provider_id + ':' + device_state.device_id, JSON.stringify(cur_state))
   add('events', 'mds.trip.event', trip_event_data)
 
   await processTripTelemetry(device_state)
@@ -337,10 +312,7 @@ async function processTripTelemetry(device_state) {
   let trip_id
   // Check if accosiated to an event or telemetry post
   if (device_state.type === 'telemetry') {
-    let trips = await hget(
-      'trip:state',
-      device_state.provider_id + ':' + device_state.device_id
-    )
+    let trips = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
     // Requires trip start event to match telemetry to tripID
     if (!trips) {
       log.info('NO TRIP DATA FOUND')
@@ -381,14 +353,7 @@ async function processTripTelemetry(device_state) {
     annotation_version: device_state.annotation_version,
     annotation: device_state.annotation
   }
-  let cur_state = await hget(
-    'device:' +
-      device_state.provider_id +
-      ':' +
-      device_state.device_id +
-      ':trips',
-    trip_id
-  )
+  let cur_state = await hget('device:' + device_state.provider_id + ':' + device_state.device_id + ':trips', trip_id)
   if (!cur_state) {
     cur_state = []
   } else {
@@ -396,19 +361,11 @@ async function processTripTelemetry(device_state) {
   }
 
   // Don't add same telemetry timestamp twice
-  if (
-    cur_state.filter(
-      telemetry => telemetry.timestamp === trip_event_data.timestamp
-    ).length === 0
-  ) {
+  if (cur_state.filter(telemetry => telemetry.timestamp === trip_event_data.timestamp).length === 0) {
     cur_state.push(trip_event_data)
   }
   await hset(
-    'device:' +
-      device_state.provider_id +
-      ':' +
-      device_state.device_id +
-      ':trips',
+    'device:' + device_state.provider_id + ':' + device_state.device_id + ':trips',
     trip_id,
     JSON.stringify(cur_state)
   )
