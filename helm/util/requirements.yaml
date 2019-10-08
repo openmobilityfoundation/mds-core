@@ -8,9 +8,9 @@ dependencies:
     alias: elasticsearch
     version: 7.3.2
     repository: alias:elastic
-    condition: elasticsearch.enabled
+    condition: elasticsearch.internal
   - name: kibana
     alias: kibana
     version: 7.3.2
     repository: alias:elastic
-    condition: kibana.enabled
+    condition: kibana.internal
