@@ -171,6 +171,7 @@ bootstrap() {
     case ${l} in
       kubernetes-helm) lc=helm;;
       gettext) lc=envsubst;;
+      oq) brew tap blacksmoke16/tap;;
       *) lc=${l};;
     esac
 
