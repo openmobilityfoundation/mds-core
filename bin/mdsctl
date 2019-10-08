@@ -37,7 +37,7 @@ declare -A os=(
 declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-yarn nvm kubernetes-helm pgcli redis python git}"
+  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
@@ -168,24 +168,32 @@ EOF
 
 bootstrap() {
   for l in ${configs[brew]}; do
-    lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
+    case ${l} in
+      kubernetes-helm) lc=helm;;
+      gettext) lc=envsubst;;
+      *) lc=${l};;
+    esac
 
     hash ${lc} > /dev/null 2>&1 || {
       brew install ${l}
 
       # todo: unable to detect nvm install via subshell given it is an alias
-      if [ "${l}" == "nvm" ]; then
-        [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
-        [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
-          echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
-        [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
-              echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
-        . $(brew --prefix nvm)/nvm.sh
-        nvm install node
-        nvm use node
-        nvm install 8.10.0
-        nvm alias default 8.10.0
-      fi
+      case ${l} in
+        nvm)
+          [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
+          [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
+            echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
+          [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
+            echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
+          . $(brew --prefix nvm)/nvm.sh
+          nvm install node
+          nvm use node
+          nvm install 8.10.0
+          nvm alias default 8.10.0;;
+        gettext)
+          brew link --force gettext
+          export PATH=$(brew --prefix gettext)/bin:${PATH};;
+      esac
     }
   done; unset l
 
@@ -198,6 +206,11 @@ bootstrap() {
 
 build() {
   check ${FUNCNAME[0]}
+
+  for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    mi=$(docker images --filter=reference="${mi}" -q)
+    [ ${#mi} -ge 1 ] && docker rmi -f ${mi}
+  done; unset mi
 
   yarn clean
   yarn
@@ -369,6 +382,14 @@ installMetrics() {
   }
 }
 
+imageVersion() {
+  for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    is+="${is:+,}sets-mds+=apis.${mi}.version=$(docker images ${mi} --format {{.Tag}})"
+  done; unset mi
+
+  echo ${is}
+}
+
 installMds() {
   check ${FUNCNAME[0]}
 
@@ -376,6 +397,7 @@ installMds() {
   kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]:-mds}
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
+    configure $(imageVersion)
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
