@@ -16,9 +16,9 @@ describe('Request handlers', () => {
         } as any
       }
       await getRawTripData(
-        {
+        ({
           params: { trip_id: 'fake-trip-id' }
-        } as unknown as DailyApiRequest,
+        } as unknown) as DailyApiRequest,
         res as DailyApiResponse
       )
       Sinon.restore()
