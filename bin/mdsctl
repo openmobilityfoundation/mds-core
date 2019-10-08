@@ -207,6 +207,7 @@ bootstrap() {
 build() {
   check ${FUNCNAME[0]}
 
+  docker rmi $(docker images --filter=reference="mds-*" -q)
   yarn clean
   yarn
   yarn build --ignore=@aws-lambda/*
@@ -379,7 +380,6 @@ installMetrics() {
 
 imageVersion() {
   for i in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-    # todo: get @since image when multiple versions are in the repo
     is+="${is:+,}sets-mds+=apis.${i}.version=$(docker images ${i} --format {{.Tag}})"
   done; unset i
 
