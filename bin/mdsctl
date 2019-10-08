@@ -37,7 +37,7 @@ declare -A os=(
 declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-yarn nvm kubernetes-helm pgcli redis python git}"
+  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
@@ -168,7 +168,12 @@ EOF
 
 bootstrap() {
   for l in ${configs[brew]}; do
-    lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
+    case foo in
+      kubernetes-helm) lc=helm;;
+      gettext) lc=envsubst;;
+      *) lc=${l};;
+    esac
+    # lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
 
     hash ${lc} > /dev/null 2>&1 || {
       brew install ${l}
@@ -369,6 +374,15 @@ installMetrics() {
   }
 }
 
+imageVersion() {
+  for i in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    # todo: get @since image when multiple versions are in the repo
+    is+="${is:+,}sets-mds+=apis.${i}.version=$(docker images ${i} --format {{.Tag}})"
+  done; unset i
+
+  echo ${is}
+}
+
 installMds() {
   check ${FUNCNAME[0]}
 
@@ -376,6 +390,7 @@ installMds() {
   kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]:-mds}
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
+    configure $(imageVersion)
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
