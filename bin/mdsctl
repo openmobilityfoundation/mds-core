@@ -190,7 +190,9 @@ bootstrap() {
           nvm use node
           nvm install 8.10.0
           nvm alias default 8.10.0;;
-        gettext) export PATH=$(brew --prefix gettext)/bin:${PATH};;
+        gettext)
+          brew link --force gettext
+          export PATH=$(brew --prefix gettext)/bin:${PATH};;
       esac
     }
   done; unset l
