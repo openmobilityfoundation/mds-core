@@ -112,7 +112,7 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
         const items: (Pick<Device, 'provider_id' | 'device_id'> | undefined)[] = await db.readDeviceIds(
           stat.provider_id
         )
-        items.map(item => {
+        items.map(async item => {
           if (item !== undefined) {
             const event = eventMap[item.device_id]
             inc(stat.event_type, event ? event.event_type : 'default')
@@ -134,6 +134,10 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
                 }
               }
             }
+          } else {
+            await log.warn(`db.readDeviceIds(
+              ${stat.provider_id}
+            ) returned undefined array element`)
           }
         })
       })
