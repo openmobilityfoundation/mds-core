@@ -63,6 +63,7 @@ declare -A configs=(
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
   ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
+  ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
   ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
   ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
@@ -84,7 +85,7 @@ declare -A apps=(
   ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
   ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
-  ["kibana"]="http://localhost:[port],logging,app"
+  ["kibana"]="http://localhost:[port],util,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
   ["jaeger"]="http://localhost:[port],istio-system,app,jaeger,16686"
   ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
@@ -296,7 +297,7 @@ EOF
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  helm install ./helm/dashboard --name dashboard --namespace --install dashboard \
+  helm install ./helm/dashboard --name dashboard --namespace ${configs[namespace-dashboard]} \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
