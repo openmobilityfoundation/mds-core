@@ -1,5 +1,5 @@
 elasticsearch:
-  enabled: true
+  internal: true
   persistence:
     enabled: false
   replicas: 1
@@ -8,7 +8,7 @@ elasticsearch:
     requests:
       memory: 1Gi
 kibana:
-  enabled: true
+  internal: true
   env:
     ELASTICSEARCH_URL: http://elasticsearch-client:9200
 fluentbit:
