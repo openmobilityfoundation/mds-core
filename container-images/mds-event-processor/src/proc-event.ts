@@ -10,6 +10,24 @@ let { getAnnotationData, getAnnotationVersion } = require('./annotation')
 const log = require('loglevel')
 const { EVENT_STATUS_MAP } = require('@mds-core/mds-types')
 
+interface State {
+  type: any
+  timestamp: any
+  device_id: any
+  provider_id: any
+  state: any
+  event_type: any
+  event_type_reason: any
+  trip_id: any
+  service_area_id: any
+  gps: any
+  battery: any
+  annotation_version: any
+  annotation: any
+  time_recorded: any
+  last_state_data: any
+}
+
 function objectWithoutProperties(obj: { [x: string]: any }, keys: string[]) {
   let target: { [x: string]: any } = {}
   for (let i in obj) {
@@ -20,42 +38,7 @@ function objectWithoutProperties(obj: { [x: string]: any }, keys: string[]) {
   return target
 }
 
-async function checkDupPrevState(
-  device_state: {
-    type: any
-    timestamp: any
-    device_id: any
-    provider_id: any
-    state: any
-    event_type: any
-    event_type_reason: any
-    trip_id: any
-    service_area_id: any
-    gps: any
-    battery: any
-    annotation_version: any
-    annotation: any
-    time_recorded: any
-    last_state_data: any
-  },
-  device_last_state: {
-    type: any
-    timestamp: any
-    device_id: any
-    provider_id: any
-    state: any
-    event_type: any
-    event_type_reason: any
-    trip_id: any
-    service_area_id: any
-    gps: any
-    battery: any
-    annotation_version: any
-    annotation: any
-    time_recorded: any
-    last_state_data: any
-  }
-) {
+async function checkDupPrevState(device_state: State, device_last_state: State) {
   if (device_last_state) {
     if (device_last_state.timestamp === device_state.timestamp) {
       if (device_state.type === 'event') {
@@ -71,43 +54,11 @@ async function checkDupPrevState(
 }
 
 // TODO: build logic to check valid state transitions
-async function stateDiagramCheck(device_state: {
-  type: any
-  timestamp: any
-  device_id: any
-  provider_id: any
-  state: any
-  event_type: any
-  event_type_reason: any
-  trip_id: any
-  service_area_id: any
-  gps: any
-  battery: any
-  annotation_version: any
-  annotation: any
-  time_recorded: any
-  last_state_data: any
-}) {
+async function stateDiagramCheck(device_state: State) {
   return true
 }
 
-async function checkInvalid(device_state: {
-  type: any
-  timestamp: any
-  device_id: any
-  provider_id: any
-  state: any
-  event_type: any
-  event_type_reason: any
-  trip_id: any
-  service_area_id: any
-  gps: any
-  battery: any
-  annotation_version: any
-  annotation: any
-  time_recorded: any
-  last_state_data: any
-}) {
+async function checkInvalid(device_state: State) {
   if (device_state.type === 'event') {
     if (!EVENT_STATUS_MAP[device_state.event_type]) {
       return false
@@ -119,26 +70,7 @@ async function checkInvalid(device_state: {
   return true
 }
 
-async function checkOutOfOrder(
-  data: any,
-  device_state: {
-    type: any
-    timestamp: any
-    device_id: any
-    provider_id: any
-    state: any
-    event_type: any
-    event_type_reason: any
-    trip_id: any
-    service_area_id: any
-    gps: any
-    battery: any
-    annotation_version: any
-    annotation: any
-    time_recorded: any
-    last_state_data: any
-  }
-) {
+async function checkOutOfOrder(data: any, device_state: State) {
   // Only can check for events given allowable 24hr delay for telemetry
   // Currently only checking if trip events are out of order
   if (device_state.type === 'event') {
@@ -162,26 +94,7 @@ async function checkOutOfOrder(
   return true
 }
 
-async function qualityCheck(
-  data: any,
-  device_state: {
-    type: any
-    timestamp: any
-    device_id: any
-    provider_id: any
-    state: any
-    event_type: any
-    event_type_reason: any
-    trip_id: any
-    service_area_id: any
-    gps: any
-    battery: any
-    annotation_version: any
-    annotation: any
-    time_recorded: any
-    last_state_data: any
-  }
-) {
+async function qualityCheck(data: any, device_state: State) {
   /*
     Filter to reduce noise and track it at the provider level.
     Main checks include:
@@ -358,23 +271,7 @@ async function processRaw(type: string, data: any) {
   return device_state
 }
 
-async function processTripEvent(device_state: {
-  type: any
-  timestamp: any
-  device_id: any
-  provider_id: any
-  state: any
-  event_type: any
-  event_type_reason: any
-  trip_id: any
-  service_area_id: any
-  gps: any
-  battery: any
-  annotation_version: any
-  annotation: any
-  time_recorded: any
-  last_state_data: any
-}) {
+async function processTripEvent(device_state: State) {
   /*
     Add events related to a trip to a cache (trip:state)
 
@@ -418,23 +315,7 @@ async function processTripEvent(device_state: {
   await processTripTelemetry(device_state)
 }
 
-async function processTripTelemetry(device_state: {
-  type: any
-  timestamp: any
-  device_id: any
-  provider_id: any
-  state: any
-  event_type: any
-  event_type_reason: any
-  trip_id: any
-  service_area_id: any
-  gps: any
-  battery: any
-  annotation_version: any
-  annotation: any
-  time_recorded: any
-  last_state_data: any
-}) {
+async function processTripTelemetry(device_state: State) {
   /*
     Add telemetry related to a trip to a cache (device:{ID}:trips)
 

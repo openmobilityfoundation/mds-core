@@ -203,6 +203,7 @@ build() {
   yarn
   yarn build --ignore=@aws-lambda/*
   yarn image
+  docker rmi $(docker images -f 'dangling=true' -q)
 }
 
 pause() {
