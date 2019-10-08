@@ -46,6 +46,7 @@ spec:
             value: {{ $api.pathPrefix }}
           - name: TIMEZONE
             value: {{ $.Values.timezone }}
+          {{- if $api.useDB }}
           - name: PG_USER
             value: {{ $.Values.postgresql.postgresqlUsername }}
           - name: PG_NAME
@@ -79,6 +80,8 @@ spec:
           - name: PG_MIGRATIONS
             value: {{ $api.migration | quote }}
           {{- end }}
+          {{- end }}
+          {{- if $api.useCache }}
           - name: REDIS_HOST
             {{- if $.Values.redis.internal }}
             value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
@@ -87,6 +90,8 @@ spec:
             {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
+          {{- end }}
+          {{- if $api.useEvents }}
           - name: CE_NAME
             value: {{ $key }}
           - name: SINK

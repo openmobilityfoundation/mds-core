@@ -71,7 +71,8 @@ apis:
     migration: false
     useCache: true
     useEvents: true
-  - name: event-processor
+  mds-event-processor:
+    enabled: true
     port: 4008
     version: latest
     useDB: true
@@ -80,7 +81,8 @@ apis:
     useEvents: true
     triggeredBy:
       trigger: [mds.event, mds.telemetry]
-  - name: trip-processor
+  mds-trip-processor:
+    enabled: true
     port: 4009
     version: latest
     useDB: true
@@ -89,7 +91,8 @@ apis:
     useEvents: true
     triggeredBy:
       cron: "0 * * * *"
-  - name: provider-processor
+  mds-provider-processor:
+    enabled: true
     port: 4010
     version: latest
     useDB: true

@@ -49,7 +49,7 @@
     "eslint-plugin-promise": "4.2.1",
     "git-revision-webpack-plugin": "3.0.4",
     "husky": "3.0.7",
-    "lerna": "3.16.4",
+    "lerna": "3.16.5",
     "mocha": "6.2.1",
     "mochawesome": "4.1.0",
     "mockdate": "2.0.5",
