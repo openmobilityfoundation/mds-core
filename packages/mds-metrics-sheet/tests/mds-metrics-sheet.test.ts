@@ -2,6 +2,7 @@ import assert from 'assert'
 import uuid from 'uuid'
 import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent } from '../metrics-log'
 import { VehicleCountRow, LastDayStatsResponse } from '../types'
+import { computeRow } from '../vehicle-counts'
 
 const getStatus = (): VehicleCountRow['status'] => {
   return {
@@ -266,5 +267,27 @@ describe('MDS Metrics Sheet', () => {
       }
       assert.deepStrictEqual(result, expected)
     })
+  })
+
+  it('Computes row mapping correctly', () => {
+    const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+    const row = {
+      areas_48h: {},
+      provider: 'fake-provider'
+    } as VehicleCountRow
+    for (const veniceAreaKey of veniceAreaKeys) {
+      row.areas_48h[veniceAreaKey] = 5
+    }
+    const mappedRow = computeRow(row)
+    const expectedMappedRow = {
+      date: mappedRow.date, // A bit weird to copy this over...but I don't want to mock Date()
+      name: row.provider,
+      'Venice Area': 20,
+      Venice: 5,
+      'Venice Beach': 5,
+      'Venice Canals': 5,
+      'Venice Beach Special Operations Zone': 5
+    }
+    assert.deepStrictEqual(mappedRow, expectedMappedRow)
   })
 })
