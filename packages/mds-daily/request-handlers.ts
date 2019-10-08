@@ -112,32 +112,32 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
         const items: (Pick<Device, 'provider_id' | 'device_id'> | undefined)[] = await db.readDeviceIds(
           stat.provider_id
         )
-        items.map(async item => {
-          if (item !== undefined) {
-            const event = eventMap[item.device_id]
-            inc(stat.event_type, event ? event.event_type : 'default')
-            const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
-            inc(stat.status, status)
-            // TODO latest-state should remove service_area_id if it's null
-            if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
-              const serviceArea = areas.serviceAreaMap[event.service_area_id]
-              if (serviceArea) {
-                inc(stat.areas, serviceArea.description)
-                if (event.timestamp >= HRS_12_AGO) {
-                  inc(stat.areas_12h, serviceArea.description)
-                }
-                if (event.timestamp >= HRS_24_AGO) {
-                  inc(stat.areas_24h, serviceArea.description)
-                }
-                if (event.timestamp >= HRS_48_AGO) {
-                  inc(stat.areas_48h, serviceArea.description)
-                }
+        // https://stackoverflow.com/a/51577579 to remove undefined in typesafe way
+        // TODO should we log for `undefined` elements in the array?
+        items
+        .filter(
+          (item): item is Pick<Device, 'provider_id' | 'device_id'> => item !== undefined
+        )
+        .map(async item => {
+          const event = eventMap[item.device_id]
+          inc(stat.event_type, event ? event.event_type : 'default')
+          const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+          inc(stat.status, status)
+          // TODO latest-state should remove service_area_id if it's null
+          if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
+            const serviceArea = areas.serviceAreaMap[event.service_area_id]
+            if (serviceArea) {
+              inc(stat.areas, serviceArea.description)
+              if (event.timestamp >= HRS_12_AGO) {
+                inc(stat.areas_12h, serviceArea.description)
+              }
+              if (event.timestamp >= HRS_24_AGO) {
+                inc(stat.areas_24h, serviceArea.description)
+              }
+              if (event.timestamp >= HRS_48_AGO) {
+                inc(stat.areas_48h, serviceArea.description)
               }
             }
-          } else {
-            await log.warn(`db.readDeviceIds(
-              ${stat.provider_id}
-            ) returned undefined array element`)
           }
         })
       })
