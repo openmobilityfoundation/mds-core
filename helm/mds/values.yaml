@@ -7,7 +7,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-agency:
     enabled: true
     pathPrefix: /agency
@@ -16,7 +16,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-audit:
     enabled: true
     pathPrefix: /audit
@@ -25,7 +25,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-policy:
     enabled: true
     pathPrefix: /policy
@@ -34,7 +34,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-compliance:
     enabled: true
     pathPrefix: /compliance
@@ -43,7 +43,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-daily:
     enabled: true
     pathPrefix: /daily
@@ -52,7 +52,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-native:
     enabled: true
     pathPrefix: /native
@@ -61,7 +61,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author
@@ -70,7 +70,7 @@ apis:
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
