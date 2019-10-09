@@ -1221,16 +1221,37 @@ async function deleteGeography(geography_id: UUID) {
   return geography_id
 }
 
-async function publishGeography(geography_id: UUID) {
+async function publishGeography(params: { geography_id: UUID; effective_date: Timestamp }) {
   try {
     const client = await getWriteableClient()
-    const geography = await readSingleGeography(geography_id)
+    const geography = await readSingleGeography(params.geography_id)
     if (!geography) {
       throw new NotFoundError('cannot publish nonexistent geography')
     }
-    const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
-    await client.query(sql)
-    return geography_id
+    // set publish_date to now() if it isn't there already
+    // set effective_date to the provided param if it is earlier than what is already there
+    const vals = new SqlVals()
+    const conditions = []
+
+    if (!geography.read_only) {
+      conditions.push(`read_only = ${vals.add('t')}`)
+    }
+
+    if (!geography.publish_date) {
+      conditions.push(`publish_date = ${vals.add(now())}`)
+    }
+
+    if (!geography.effective_date || geography.effective_date > params.effective_date) {
+      conditions.push(`effective_date = ${vals.add(params.effective_date)}`)
+    }
+
+    conditions.join(',')
+
+    if (conditions.length > 0) {
+      const sql = `UPDATE ${schema.TABLE.geographies} SET ${conditions} where geography_id='${params.geography_id}'`
+      await client.query(sql, vals.values())
+    }
+    return params.geography_id
   } catch (err) {
     await log.error(err)
     throw err
@@ -1448,7 +1469,7 @@ async function publishPolicy(policy_id: UUID) {
     await Promise.all(
       geographies.map(geography_id => {
         log.info('publishing geography', geography_id)
-        return publishGeography(geography_id)
+        return publishGeography({ geography_id, effective_date: policy.start_date })
       })
     )
     await Promise.all(

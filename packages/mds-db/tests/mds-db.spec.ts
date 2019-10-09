@@ -397,7 +397,7 @@ if (pg_info.database) {
         const noGeos = await MDSDBPostgres.readGeographies({ get_read_only: true })
         assert.deepEqual(noGeos.length, 0)
 
-        await MDSDBPostgres.publishGeography(LAGeography.geography_id)
+        await MDSDBPostgres.publishGeography({ geography_id: LAGeography.geography_id, effective_date: now() })
         const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
         assert.deepEqual(writeableGeographies.length, 1)
       })
@@ -455,6 +455,20 @@ if (pg_info.database) {
         await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
         assert(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id))
         assert(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id))
+
+        const LAgeo = await MDSDBPostgres.readSingleGeography(LAGeography.geography_id)
+        assert(LAgeo.publish_date)
+        assert.deepEqual(LAgeo.effective_date, POLICY3_JSON.start_date)
+      })
+
+      it('will update the effective_date of a Geography if another Policy publishes it', async () => {
+        const LAgeoBefore = await MDSDBPostgres.readSingleGeography(LAGeography.geography_id)
+        await MDSDBPostgres.writePolicy(POLICY_JSON)
+        await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
+
+        const LAgeoAfter = await MDSDBPostgres.readSingleGeography(LAGeography.geography_id)
+        assert.deepEqual(LAgeoBefore.publish_date, LAgeoAfter.publish_date)
+        assert.deepEqual(LAgeoAfter.effective_date, POLICY_JSON.start_date)
       })
     })
 
