@@ -32,7 +32,7 @@ import {
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
 
-import { VehicleCountResponse } from './types'
+import { VehicleCountResponse, VehicleCountRow } from './types'
 
 // The list of providers ids on which to report
 const reportProviders = [
@@ -66,6 +66,23 @@ async function appendSheet(sheetName: string, rows: ({ date: string; name: strin
   log.info('Wrong sheet!')
 }
 
+export function mapRow(row: VehicleCountRow) {
+  const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
+  const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
+  const d = new Date()
+  const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+  const veniceAreaSum = veniceAreaKeys.reduce((acc, veniceAreaKey) => acc + row.areas_48h[veniceAreaKey] || 0, 0)
+  const augmentedRow = {
+    'Venice Area': veniceAreaSum,
+    ...row.areas_48h
+  }
+  return {
+    date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
+    name: row.provider,
+    ...augmentedRow
+  }
+}
+
 async function getProviderMetrics(iter: number): Promise<({ date: string; name: string } & unknown)[]> {
   /* after 10 failed iterations, give up */
   if (iter >= 10) {
@@ -96,25 +113,7 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
     const counts: VehicleCountResponse = await requestPromise(counts_options)
     const rows: ({ date: string; name: string } & unknown)[] = counts
       .filter(p => reportProviders.includes(p.provider_id))
-      .map(row => {
-        const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
-        const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
-        const d = new Date()
-        let veniceAreaSum = 0
-        const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
-        for (const veniceAreaKey of veniceAreaKeys) {
-          veniceAreaSum += row.areas_48h[veniceAreaKey] || 0
-        }
-        const augmentedRow = {
-          'Venice Area': veniceAreaSum,
-          ...row.areas_48h
-        }
-        return {
-          date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
-          name: row.provider,
-          ...augmentedRow
-        }
-      })
+      .map(mapRow)
     return rows
   } catch (err) {
     await log.error('getProviderMetrics', err)
