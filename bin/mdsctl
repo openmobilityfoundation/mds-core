@@ -123,6 +123,7 @@ options:
   --configure:{key}={value}[,{key}={value}]           : set configuration value by key
   --configure:{key}+={value}                          : append configuration value by key
   --configure:{key}=                                  : clears configuration value by key
+  --preset:[preset-key[,preset-key]]                  : preset configurations
 
 where service in:
   helm
@@ -155,6 +156,11 @@ where app in:
   jaeger                                              : jaeger; see https://www.jaegertracing.io
   kiali                                               : kiali; see https://www.kiali.io
   bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
+
+where preset-key in:
+  minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
+  local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
+  disabled                                            : disable service deployment; default: all
 
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
@@ -208,10 +214,10 @@ bootstrap() {
 build() {
   check ${FUNCNAME[0]}
 
-  for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-    mi=$(docker images --filter=reference="${mi}" -q)
-    [ ${#mi} -ge 1 ] && docker rmi -f ${mi}
-  done; unset mi
+  for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    si=$(docker images --filter=reference="${s}" -q)
+    [ ${#si} -ge 1 ] && docker rmi -f ${si}
+  done; unset s si
 
   yarn clean
   yarn
@@ -384,9 +390,9 @@ installMetrics() {
 }
 
 imageVersion() {
-  for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-    is+="${is:+,}sets-mds+=apis.${mi}.version=$(docker images ${mi} --format {{.Tag}})"
-  done; unset mi
+  for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    is+="${is:+,}sets-mds+=apis.${s}.version=$(docker images ${s} --format {{.Tag}})"
+  done; unset s mi
 
   echo ${is}
 }
@@ -776,6 +782,25 @@ configure() {
   fi
 }
 
+preset() {
+  for p in ${@}; do
+    case ${p} in
+      disable)
+        for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+          is+="${is:+,}sets-mds+=apis.${s}.enabled=false"
+        done; unset s;;
+      local)
+        is+="${is:+,}sets-mds+=resourcesLimitsCpu=200m,sets-mds+=resourcesLimitsMemory=200Mi,sets-mds+=resourcesRequestsCpu=20m,sets-mds+=resourcesRequestsMemory=32Mi";;
+      minimal)
+        preset $(normalize "disable,local")
+        configs[sets-mds]=${configs[sets-mds]//apis.mds-agency.enabled=false/apis.mds-agency.enabled=true};;
+    esac
+  done; unset p
+
+  [ ${#is} -ge 1 ] && configure ${is}
+  unset is
+}
+
 [[ ${#} == 0 ]] && usage
 [[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
 check $(basename ${0})
@@ -807,6 +832,7 @@ for arg in "${@}"; do
     invoke install "$(normalize ${arg})";;
     help) usage;;
     --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
