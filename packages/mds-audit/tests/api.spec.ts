@@ -548,8 +548,8 @@ describe('Testing API', () => {
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result).hasProperty('body')
-        test.value(result.body.provider_id).is(provider_id)
-        test.value(result.body.vehicle_id).is(provider_vehicle_id)
+        test.value(result.body[0].provider_id).is(provider_id)
+        test.value(result.body[0].vehicle_id).is(provider_vehicle_id)
         done(err)
       })
   })

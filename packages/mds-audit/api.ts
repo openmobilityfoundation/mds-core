@@ -638,7 +638,7 @@ function api(app: express.Express): express.Express {
     try {
       const response = await readDeviceByVehicleId(provider_id, vin)
       if (response) {
-        res.status(200).send(response)
+        res.status(200).send([response])
       } else {
         res.status(404).send({ error: new NotFoundError('vehicle not found', { provider_id, vin }) })
       }
