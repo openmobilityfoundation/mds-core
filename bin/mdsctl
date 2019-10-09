@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 osx=Darwin
 linux=Linux
 
