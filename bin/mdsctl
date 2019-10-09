@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 osx=Darwin
 linux=Linux
 
@@ -57,8 +58,10 @@ declare -A configs=(
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
+  ["presets"]="${MDS_PRESETS:-}"
+  ["presets-mds"]="${MDS_PRESETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
+  ["sets-mds"]="${MDS_SETS_MDS:-}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
@@ -174,11 +177,11 @@ EOF
 
 bootstrap() {
   for l in ${configs[brew]}; do
+    lc=${l}
     case ${l} in
       kubernetes-helm) lc=helm;;
       gettext) lc=envsubst;;
       oq) brew tap blacksmoke16/tap;;
-      *) lc=${l};;
     esac
 
     hash ${lc} > /dev/null 2>&1 || {
@@ -408,6 +411,8 @@ installMds() {
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-mds]:+$(helmOptions set ${configs[presets-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
       ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
@@ -775,7 +780,7 @@ configure() {
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
 
-      [[ "${k}" == *"+" ]] && configs[${k%+}]+=",${v}" || configs[${k}]="${v}"
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+="${configs[${k%+}]:+,}${v}" || configs[${k}]="${v}"
     done; unset c k v
   else
     configs[${1}]=
@@ -787,13 +792,16 @@ preset() {
     case ${p} in
       disable)
         for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-          is+="${is:+,}sets-mds+=apis.${s}.enabled=false"
+          is+="${is:+,}presets-mds+=apis.${s}.enabled=false"
         done; unset s;;
       local)
-        is+="${is:+,}sets-mds+=resourcesLimitsCpu=200m,sets-mds+=resourcesLimitsMemory=200Mi,sets-mds+=resourcesRequestsCpu=20m,sets-mds+=resourcesRequestsMemory=32Mi";;
+        is+="${is:+,}presets-mds+=resourcesLimitsCpu=200m"
+        is+="${is:+,}presets-mds+=resourcesLimitsMemory=200Mi"
+        is+="${is:+,}presets-mds+=resourcesRequestsCpu=20m"
+        is+="${is:+,}presets-mds+=resourcesRequestsMemory=32Mi";;
       minimal)
         preset $(normalize "disable,local")
-        configs[sets-mds]=${configs[sets-mds]//apis.mds-agency.enabled=false/apis.mds-agency.enabled=true};;
+        is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
     esac
   done; unset p
 
