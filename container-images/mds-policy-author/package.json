@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-policy-author",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Docker Image for MDS policy-author API",
   "main": "dist/index.js",
   "files": [
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.10",
-    "@mds-core/mds-api-server": "0.1.10",
-    "@mds-core/mds-policy-author": "0.0.7"
+    "@container-images/env-inject": "0.1.11",
+    "@mds-core/mds-api-server": "0.1.11",
+    "@mds-core/mds-policy-author": "0.0.8"
   },
   "license": "Apache-2.0"
 }
