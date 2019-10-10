@@ -442,7 +442,7 @@ installMds() {
     installNamespace ${configs[namespace-mds]:-mds}
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
     configure $(imageVersion)
-    echo "helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
+    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
@@ -451,7 +451,7 @@ installMds() {
       ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
       ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
-      ${configs[dryrun]:+--dry-run --debug}"
+      ${configs[dryrun]:+--dry-run --debug}
     pause 12
   }
 }
