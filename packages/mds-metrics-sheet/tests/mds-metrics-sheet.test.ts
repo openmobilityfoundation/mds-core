@@ -278,7 +278,7 @@ describe('MDS Metrics Sheet', () => {
   })
 
   it('Maps filled in row correctly', () => {
-    const areas_48h = {}
+    const areas_48h : VehicleCountRow['areas_48h'] = {}
     const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
     for (const veniceAreaKey of veniceAreaKeys) {
       areas_48h[veniceAreaKey] = 5
@@ -298,7 +298,7 @@ describe('MDS Metrics Sheet', () => {
   })
 
   it('Summarizes over Venice correctly', () => {
-    const areas_48h = {}
+    const areas_48h : VehicleCountRow['areas_48h'] = {}
     const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
     for (const veniceAreaKey of veniceAreaKeys) {
       areas_48h[veniceAreaKey] = 5
@@ -309,7 +309,7 @@ describe('MDS Metrics Sheet', () => {
   })
 
   it('Summarizes over Venice correctly with undefined column entries', () => {
-    const areas_48h = {}
+    const areas_48h : VehicleCountRow['areas_48h'] = {}
     const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
     for (const veniceAreaKey of veniceAreaKeys) {
       if (veniceAreaKey !== 'Venice') {
