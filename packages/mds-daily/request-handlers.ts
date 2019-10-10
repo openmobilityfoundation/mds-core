@@ -1,8 +1,16 @@
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import { providerName } from '@mds-core/mds-providers'
-import { now, inc, ServerError } from '@mds-core/mds-utils'
-import { UUID, VehicleEvent, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_EVENT, TripsStats } from '@mds-core/mds-types'
+import { now, inc, ServerError, filterEmptyHelper } from '@mds-core/mds-utils'
+import {
+  UUID,
+  VehicleEvent,
+  VEHICLE_STATUSES,
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT,
+  TripsStats,
+  Device
+} from '@mds-core/mds-types'
 import areas from 'ladot-service-areas'
 import { DailyApiRequest, DailyApiResponse, ProviderInfo } from './types'
 import {
@@ -35,6 +43,8 @@ const RIGHT_OF_WAY_STATUSES: string[] = [
   VEHICLE_STATUSES.reserved,
   VEHICLE_STATUSES.trip
 ]
+
+type Item = Pick<Device, 'provider_id' | 'device_id'>
 
 export async function getRawTripData(req: DailyApiRequest, res: DailyApiResponse) {
   try {
@@ -101,8 +111,8 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
     const { eventMap } = maps
     await Promise.all(
       stats.map(async stat => {
-        const items = await db.readDeviceIds(stat.provider_id)
-        items.map(item => {
+        const items: (Item | undefined)[] = await db.readDeviceIds(stat.provider_id)
+        items.filter(filterEmptyHelper<Item>(true)).map(async item => {
           const event = eventMap[item.device_id]
           inc(stat.event_type, event ? event.event_type : 'default')
           const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
