@@ -65,6 +65,9 @@ declare -A configs=(
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
+  ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
+  ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
+  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
   ["namespace-mds"]="${MDS_NAMESPACE_MDS}"
   ["dryrun"]="${MDS_DRY_RUN:-}")
 declare -A helmRepositories=(
@@ -85,7 +88,7 @@ declare -A apps=(
   ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
   ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
-  ["kibana"]="http://localhost:[port],logging,app"
+  ["kibana"]="http://localhost:[port],util,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
   ["jaeger"]="http://localhost:[port],istio-system,app,jaeger,16686"
   ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
@@ -164,6 +167,7 @@ where preset-key in:
   minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
   local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
   disabled                                            : disable service deployment; default: all
+  no-events                                           : disable eventing
 
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
@@ -364,7 +368,7 @@ EOF
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  helm install ./helm/dashboard --name dashboard --namespace dashboard \
+  helm install ./helm/dashboard --name dashboard --namespace ${configs[namespace-dashboard]} \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -415,10 +419,10 @@ labelNamespaceIstioInjection() {
 installLogging() {
   check ${FUNCNAME[0]}
 
-  kubectl get namespace logging > /dev/null 2>&1 || {
-    installNamespace logging
-    labelNamespaceIstioInjection logging
-    helm install ./helm/logging --name logging --namespace logging \
+  kubectl get namespace ${configs[namespace-logging]} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-logging]}
+    labelNamespaceIstioInjection ${configs[namespace-logging]}
+    helm install ./helm/logging --name logging --namespace ${configs[namespace-logging]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -451,11 +455,11 @@ installMds() {
   check ${FUNCNAME[0]}
 
   installFallbackCertificate
-  kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
-    installNamespace ${configs[namespace-mds]:-mds}
-    labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
+  kubectl get namespace ${configs[namespace-mds]} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-mds]}
+    labelNamespaceIstioInjection ${configs[namespace-mds]}
     configure $(imageVersion)
-    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
+    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
@@ -471,7 +475,8 @@ installMds() {
 
 installMetricsAdapter() {
   helm status kube-metrics-adapter > /dev/null 2>&1 ||
-    helm install --name kube-metrics-adapter --namespace kube-system banzaicloud-stable/kube-metrics-adapter
+    helm install --name kube-metrics-adapter --namespace ${configs[namespace-metrics-adapter]} \
+      banzaicloud-stable/kube-metrics-adapter
 }
 
 installFallbackCertificate() {
@@ -684,7 +689,7 @@ uninstallMetricsAdapter() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstallNamespace ${configs[namespace-mds]:-mds}
+  uninstallNamespace ${configs[namespace-mds]}
 }
 
 uninstallMetrics() {
@@ -696,6 +701,8 @@ uninstallMetrics() {
 uninstallLogging() {
   check ${FUNCNAME[0]}
   helm delete --purge logging ${configs[dryrun]:+--dry-run}
+  # todo: ns/util may host more apps then logging
+  #uninstallNamespace ${configs[namespace-logging]}
 }
 
 uninstallKiali() {
@@ -740,6 +747,7 @@ uninstallTiller() {
     helm init --upgrade
   fi
 }
+
 #todo: purge
 uninstallHelm() {
   case "${configs[os]}" in
@@ -793,12 +801,13 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
+    installDashboard | installMetrics | installMds)
+      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;&
+    installLogging | installMetricsAdapter)
+      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm;;
     installImages)
       [ "${configs[image-repository]}" ] || \
         warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
-    installDashboard | installLogging | installMetrics | installMds)
-      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
-      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
