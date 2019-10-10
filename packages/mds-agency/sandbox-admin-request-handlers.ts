@@ -6,9 +6,13 @@ import { ServerError } from '@mds-core/mds-utils'
 import { refresh } from './utils'
 
 export const getCacheInfo = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
-  const details = await cache.info()
-  await log.warn('cache', details)
-  res.send(details)
+  try {
+    const details = await cache.info()
+    await log.warn('cache', details)
+    res.status(200).send(details)
+  } catch (err) {
+    res.status(500).send(new ServerError())
+  }
 }
 
 export const wipeDevice = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
@@ -20,7 +24,7 @@ export const wipeDevice = async (req: AgencyApiRequest, res: AgencyApiResponse) 
     const dbResult = await db.wipeDevice(device_id)
     await log.info('db wiped', dbResult)
     if (cacheResult >= 1) {
-      res.send({
+      res.status(200).send({
         result: `successfully wiped ${device_id}`
       })
     } else {
@@ -49,13 +53,11 @@ export const refreshCache = async (req: AgencyApiRequest, res: AgencyApiResponse
 
     const promises = devices.map(device => refresh(device.device_id, device.provider_id))
     await Promise.all(promises)
-    res.send({
+    res.status(200).send({
       result: `success for ${devices.length} devices`
     })
   } catch (err) {
     await log.error('cache refresh fail', err)
-    res.send({
-      result: 'fail'
-    })
+    res.status(500).send(new ServerError())
   }
 }
