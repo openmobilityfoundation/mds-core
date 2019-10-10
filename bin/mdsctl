@@ -39,6 +39,7 @@ declare -A configs=(
   ["workdir"]="/tmp/mds/tools"
   ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
+  ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
@@ -57,8 +58,10 @@ declare -A configs=(
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
+  ["presets"]="${MDS_PRESETS:-}"
+  ["presets-mds"]="${MDS_PRESETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
+  ["sets-mds"]="${MDS_SETS_MDS:-}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
@@ -123,6 +126,7 @@ options:
   --configure:{key}={value}[,{key}={value}]           : set configuration value by key
   --configure:{key}+={value}                          : append configuration value by key
   --configure:{key}=                                  : clears configuration value by key
+  --preset:[preset-key[,preset-key]]                  : preset configurations
 
 where service in:
   helm
@@ -156,6 +160,11 @@ where app in:
   kiali                                               : kiali; see https://www.kiali.io
   bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
 
+where preset-key in:
+  minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
+  local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
+  disabled                                            : disable service deployment; default: all
+
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
 
@@ -168,11 +177,11 @@ EOF
 
 bootstrap() {
   for l in ${configs[brew]}; do
+    lc=${l}
     case ${l} in
       kubernetes-helm) lc=helm;;
       gettext) lc=envsubst;;
       oq) brew tap blacksmoke16/tap;;
-      *) lc=${l};;
     esac
 
     hash ${lc} > /dev/null 2>&1 || {
@@ -208,17 +217,29 @@ bootstrap() {
 build() {
   check ${FUNCNAME[0]}
 
-  for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-    mi=$(docker images --filter=reference="${mi}" -q)
-    [ ${#mi} -ge 1 ] && docker rmi -f ${mi}
-  done; unset mi
+  for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    si=$(docker images --filter=reference="${s}" -q)
+    [ ${#si} -ge 1 ] && docker rmi -f ${si}
+  done; unset s si
 
   yarn clean
   yarn
   yarn build --ignore=@aws-lambda/*
   yarn image
+
+  installImages
 }
 
+installImages() {
+  check ${FUNCNAME[0]}
+
+  if [ "${configs[image-repository]}" ]; then
+    for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
+      # docker tag ${i} ${configs[image-repository]}/${i}
+      docker push ${configs[image-repository]}/${i}
+    done; unset i
+  fi
+}
 
 buildImage() {
   image="$1"
@@ -343,7 +364,7 @@ EOF
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  helm install ./helm/dashboard --name dashboard --namespace --install dashboard \
+  helm install ./helm/dashboard --name dashboard --namespace dashboard \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -419,9 +440,9 @@ installMetrics() {
 }
 
 imageVersion() {
-  for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-    is+="${is:+,}sets-mds+=apis.${mi}.version=$(docker images ${mi} --format {{.Tag}})"
-  done; unset mi
+  for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+    is+="${is:+,}sets-mds+=apis.${s}.version=$(docker images ${s} --format {{.Tag}})"
+  done; unset s mi
 
   echo ${is}
 }
@@ -437,6 +458,8 @@ installMds() {
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-mds]:+$(helmOptions set ${configs[presets-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
       ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
@@ -486,7 +509,7 @@ installSimulator() {
       git clone ${configs[simulator-repository]} ${configs[simulator]})
   fi
 
-  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
+  (export PATH=$(brew --prefix python)/bin:$(brew --prefix python)/libexec/bin:${PATH};
     cd ${configs[simulator]}; \
     git pull; \
     pip install -r requirements.txt; \
@@ -640,7 +663,7 @@ uninstallSimulator() {
   check ${FUNCNAME[0]}
 
   (( $(kubectl get pod -l app=trackgen | wc -l) == 2 )) &&
-    (cd ${configs[simulator]} helm delete --purge trackgen)
+    (cd ${configs[simulator]}; helm delete --purge trackgen)
   [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
 }
 
@@ -770,6 +793,9 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
+    installImages)
+      [ "${configs[image-repository]}" ] || \
+        warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
     installDashboard | installLogging | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
@@ -805,11 +831,37 @@ configure() {
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
 
-      [[ "${k}" == *"+" ]] && configs[${k%+}]+=",${v}" || configs[${k}]="${v}"
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+="${configs[${k%+}]:+,}${v}" || configs[${k}]="${v}"
     done; unset c k v
   else
     configs[${1}]=
   fi
+}
+
+preset() {
+  for p in ${@}; do
+    case ${p} in
+      disable)
+        for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+          is+="${is:+,}presets-mds+=apis.${s}.enabled=false"
+        done; unset s;;
+      local)
+        is+="${is:+,}presets-mds+=resourcesLimitsCpu=200m"
+        is+="${is:+,}presets-mds+=resourcesLimitsMemory=200Mi"
+        is+="${is:+,}presets-mds+=resourcesRequestsCpu=20m"
+        is+="${is:+,}presets-mds+=resourcesRequestsMemory=32Mi";;
+      no-events)
+        for s in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
+          is+="${is:+,}presets-mds+=apis.${s}.useEvents=false"
+        done; unset s;;
+      minimal)
+        preset $(normalize "disable,no-events,local")
+        is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
+    esac
+  done; unset p
+
+  [ ${#is} -ge 1 ] && configure ${is}
+  unset is
 }
 
 [[ ${#} == 0 ]] && usage
@@ -845,6 +897,7 @@ for arg in "${@}"; do
     invoke install "$(normalize ${arg})";;
     help) usage;;
     --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
