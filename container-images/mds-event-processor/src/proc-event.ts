@@ -1,14 +1,10 @@
-export {}
-let { data_handler } = require('./proc.js')
+import { data_handler } from './proc.js'
+import { insert } from '../util/db'
+import { hget, hset } from '../util/cache'
+import { add } from '../util/stream'
 
-let { insert } = require('../util/db')
-let { hget, hset } = require('../util/cache')
-let { add } = require('../util/stream')
-
-let { getAnnotationData, getAnnotationVersion } = require('./annotation')
-
-const log = require('loglevel')
-const { EVENT_STATUS_MAP } = require('@mds-core/mds-types')
+import { getAnnotationData, getAnnotationVersion } from './annotation'
+import { EVENT_STATUS_MAP, VEHICLE_EVENT } from '@mds-core/mds-types'
 
 interface State {
   type: any
@@ -16,7 +12,7 @@ interface State {
   device_id: any
   provider_id: any
   state: any
-  event_type: any
+  event_type: VEHICLE_EVENT | null
   event_type_reason: any
   trip_id: any
   service_area_id: any
@@ -60,7 +56,7 @@ async function stateDiagramCheck(device_state: State) {
 
 async function checkInvalid(device_state: State) {
   if (device_state.type === 'event') {
-    if (!EVENT_STATUS_MAP[device_state.event_type]) {
+    if (device_state.event_type && !EVENT_STATUS_MAP[device_state.event_type]) {
       return false
     }
     if (!stateDiagramCheck(device_state)) {
@@ -125,21 +121,21 @@ async function qualityCheck(data: any, device_state: State) {
 
   // Check if Duplicate event
   if (!checkDupPrevState(device_state, device_state.last_state_data)) {
-    log.info('DUPLICATE EVENT')
+    console.log('DUPLICATE EVENT')
     provider_state.duplicateEvents.push(device_state)
     return false
   }
 
   // Check if Invalid event
   if (!checkInvalid(device_state)) {
-    log.info('INVALID EVENT')
+    console.log('INVALID EVENT')
     provider_state.invalidEvents.push(device_state)
     return false
   }
 
   // Check if Out of Order event
   if (!checkOutOfOrder(data, device_state)) {
-    log.info('OUT OF ORDER EVENT')
+    console.log('OUT OF ORDER EVENT')
     provider_state.outOfOrderEvents.push(device_state)
     return false
   }
@@ -171,14 +167,14 @@ async function qualityCheck(data: any, device_state: State) {
 */
 async function event_handler() {
   await data_handler('event', async function(type: any, data: any) {
-    log.info(type)
+    console.log(type)
     return processRaw(type, data)
   })
 }
 
 async function processRaw(type: string, data: any) {
   // Construct device state
-  let device_state = {
+  let device_state: any = {
     type: type.substring(type.lastIndexOf('.') + 1),
     timestamp: data.timestamp,
     device_id: data.device_id,
@@ -228,7 +224,7 @@ async function processRaw(type: string, data: any) {
       device_state.event_type_reason = data.event_type_reason
       device_state.trip_id = data.trip_id
       device_state.service_area_id = data.service_area_id
-      device_state.state = EVENT_STATUS_MAP[data.event_type]
+      device_state.state = EVENT_STATUS_MAP[data.event_type as VEHICLE_EVENT]
 
       // Take necessary steps on event trasitions
       switch (data.event_type) {
@@ -334,7 +330,7 @@ async function processTripTelemetry(device_state: State) {
     let trips = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
     // Requires trip start event to match telemetry to tripID
     if (!trips) {
-      log.info('NO TRIP DATA FOUND')
+      console.log('NO TRIP DATA FOUND')
       return null
     } else {
       trips = JSON.parse(trips)
@@ -356,7 +352,7 @@ async function processTripTelemetry(device_state: State) {
         }
       }
       if (!trip_id) {
-        log.info('NO TRIPS MATCHED')
+        console.log('NO TRIPS MATCHED')
         return null
       }
     }
@@ -392,6 +388,4 @@ async function processTripTelemetry(device_state: State) {
   )
 }
 
-module.exports = {
-  event_handler
-}
+export { event_handler }

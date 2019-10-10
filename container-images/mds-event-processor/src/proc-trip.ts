@@ -168,6 +168,4 @@ async function process_trip(
   return true
 }
 
-module.exports = {
-  trip_handler
-}
+export { trip_handler }

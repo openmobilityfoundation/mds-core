@@ -1,10 +1,7 @@
-export {}
-let { event_handler } = require('./src/proc-event.js')
-let { trip_handler } = require('./src/proc-trip.js')
-let { provider_handler } = require('./src/proc-provider')
-let { setup } = require('./util/db')
-const log = require('loglevel')
-log.setLevel('trace') // TODO, make env var?
+import { event_handler } from './src/proc-event'
+import { trip_handler } from './src/proc-trip'
+//const provider_handler = __importDefault(require("./src/proc-provider"))
+import { setup } from './util/db'
 
 function getArgs() {
   let args: { [x: string]: any } = {}
@@ -29,20 +26,22 @@ function getArgs() {
 async function process_data(type: string) {
   // just make sure the tables exist
   await setup()
-  log.info('INIT')
+  console.log('INIT')
   switch (type) {
     case 'event':
-      log.info('EVENT')
+      console.log('EVENT')
       await event_handler()
       break
     case 'trip':
-      log.info('TRIP')
+      console.log('TRIP')
       await trip_handler()
       break
-    case 'provider':
-      log.info('PROVIDER')
+    /*
+      case 'provider':
+      console.log('PROVIDER')
       await provider_handler()
       break
+    */
   }
 }
 
