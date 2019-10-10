@@ -2,7 +2,7 @@ import assert from 'assert'
 import uuid from 'uuid'
 import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent } from '../metrics-log'
 import { VehicleCountRow, LastDayStatsResponse } from '../types'
-import { mapRow } from '../vehicle-counts'
+import { mapRow, sumColumns } from '../vehicle-counts'
 
 const getStatus = (): VehicleCountRow['status'] => {
   return {
@@ -295,5 +295,29 @@ describe('MDS Metrics Sheet', () => {
       'Venice Canals': 5
     }
     assert.deepStrictEqual(actual, expected)
+  })
+
+  it('Summarizes over Venice correctly', () => {
+    const areas_48h = {}
+    const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+    for (const veniceAreaKey of veniceAreaKeys) {
+      areas_48h[veniceAreaKey] = 5
+    }
+    const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
+    const actual = sumColumns(veniceAreaKeys, row)
+    assert.strictEqual(actual, 20)
+  })
+
+  it('Summarizes over Venice correctly with undefined column entries', () => {
+    const areas_48h = {}
+    const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+    for (const veniceAreaKey of veniceAreaKeys) {
+      if (veniceAreaKey !== 'Venice') {
+        areas_48h[veniceAreaKey] = 5
+      }
+    }
+    const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
+    const actual = sumColumns(veniceAreaKeys, row)
+    assert.strictEqual(actual, 15)
   })
 })

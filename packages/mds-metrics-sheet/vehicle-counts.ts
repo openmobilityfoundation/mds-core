@@ -66,12 +66,16 @@ async function appendSheet(sheetName: string, rows: ({ date: string; name: strin
   log.info('Wrong sheet!')
 }
 
+export function sumColumns(keysToSummarize: string[], row: VehicleCountRow) {
+  return keysToSummarize.reduce((acc, veniceAreaKey) => acc + row.areas_48h[veniceAreaKey] || 0, 0)
+}
+
 export function mapRow(row: VehicleCountRow) {
   const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
   const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
   const d = new Date()
   const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
-  const veniceAreaSum = veniceAreaKeys.reduce((acc, veniceAreaKey) => acc + row.areas_48h[veniceAreaKey] || 0, 0)
+  const veniceAreaSum = sumColumns(veniceAreaKeys, row)
   const augmentedRow = {
     'Venice Area': veniceAreaSum,
     ...row.areas_48h
