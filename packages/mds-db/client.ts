@@ -95,3 +95,16 @@ export async function makeReadOnlyQuery(sql: string): Promise<any[]> {
     throw err
   }
 }
+
+export async function getLatestTime(table: string, field: string): Promise<number> {
+  const client = await getReadOnlyClient()
+
+  const sql = `SELECT ${field} FROM ${table} ORDER BY ${field} DESC LIMIT 1`
+
+  await logSql(sql)
+  const res = await client.query(sql)
+  if (res.rows.length === 1) {
+    return res.rows[0][field] as number
+  }
+  return 0 // no latest trip time, start from Dawn Of Time
+}

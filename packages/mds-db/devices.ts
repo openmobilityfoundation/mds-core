@@ -1,12 +1,13 @@
+import { QueryResult } from 'pg'
 import { UUID, Device, Recorded, DeviceID } from '@mds-core/mds-types'
-import { now, isUUID, csv } from '@mds-core/mds-utils'
+import { now, yesterday, isUUID, csv } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import schema from './schema'
 
 import { vals_sql, cols_sql, vals_list, logSql, SqlVals, MDSPostgresClient } from './sql-utils'
 
-import { getReadOnlyClient, getWriteableClient } from './client'
+import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
 export async function readDeviceByVehicleId(
   provider_id: UUID,
@@ -118,4 +119,31 @@ export async function updateDevice(device_id: UUID, provider_id: UUID, changes: 
   } else {
     return readDevice(device_id, provider_id)
   }
+}
+
+export async function wipeDevice(device_id: UUID): Promise<QueryResult> {
+  const client = await getWriteableClient()
+  const sql =
+    `BEGIN;` +
+    ` DELETE FROM ${schema.TABLE.devices} WHERE device_id='${device_id}';` +
+    ` DELETE FROM ${schema.TABLE.telemetry} WHERE device_id='${device_id}';` +
+    ` DELETE FROM ${schema.TABLE.events} WHERE device_id='${device_id}';` +
+    ` COMMIT;`
+  await logSql(sql)
+  const res = await client.query(sql)
+  // this returns a list of objects that represent the commands that just ran
+  return res
+}
+
+export async function getVehicleCountsPerProvider(): Promise<{ provider_id: UUID; count: number }[]> {
+  const sql = `select provider_id, count(provider_id) from ${schema.TABLE.devices} group by provider_id`
+  return makeReadOnlyQuery(sql)
+}
+
+export async function getNumVehiclesRegisteredLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; count: number }[]> {
+  const sql = `select provider_id, count(device_id) from ${schema.TABLE.devices} where recorded > ${start} and recorded < ${stop} group by provider_id`
+  return makeReadOnlyQuery(sql)
 }

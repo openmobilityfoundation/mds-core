@@ -1,4 +1,4 @@
-import { UUID, Policy, Timestamp, Recorded, PolicyMetadata } from '@mds-core/mds-types'
+import { UUID, Policy, Timestamp, Recorded, Rule, PolicyMetadata } from '@mds-core/mds-types'
 import { now, NotFoundError, BadParamsError, AlreadyPublishedError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
@@ -239,5 +239,22 @@ export async function updatePolicyMetadata(policy_metadata: PolicyMetadata) {
   } catch (err) {
     await log.error(err)
     throw err
+  }
+}
+
+export async function readRule(rule_id: UUID): Promise<Rule> {
+  const client = await getReadOnlyClient()
+  const sql = `SELECT * from ${schema.TABLE.policies} where EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`
+  const res = await client.query(sql).catch(err => {
+    throw err
+  })
+  if (res.rowCount !== 1) {
+    throw new Error(`invalid rule_id ${rule_id}`)
+  } else {
+    const [{ policy_json }]: { policy_json: Policy }[] = res.rows
+    const [rule] = policy_json.rules.filter(r => {
+      return r.rule_id === rule_id
+    })
+    return rule
   }
 }
