@@ -1,14 +1,13 @@
 {
   "name": "@container-images/event-processor",
   "version": "0.1.0",
-  "description": "",
+  "description": "Docker Event Processor",
   "main": "dist/index.js",
   "files": [
     "dist/"
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
 	"image": "../../bin/image-build mds-event-processor:${npm_package_version}",
     "start": "node index.js",
     "pretest": "eslint --ignore-path .gitignore --ignore-pattern static/*.js .",
