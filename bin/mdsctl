@@ -217,7 +217,7 @@ build() {
   yarn
   yarn build --ignore=@aws-lambda/*
   yarn image
-  docker rmi $(docker images -f 'dangling=true' -q)
+  docker rmi $(docker images -f 'dangling=true' -q) > /dev/null 2>&1 || warn "Could not delete all pods tagged 'None'"
 }
 
 pause() {
@@ -399,9 +399,10 @@ installMetrics() {
 
 imageVersion() {
   for mi in $(oq -i yaml -r '.apis | keys[]' ./helm/mds/values.yaml); do
-    is+="${is:+,}sets-mds+=apis.${mi}.version=$(docker images ${mi} --format {{.Tag}})"
-  done; unset mi
-
+    di=$(docker images ${mi} --format {{.Tag}})
+	[ ${#di} -ge 1 ] && \
+      is+="${is:+,}sets-mds+=apis.${mi}.version=$(docker images ${mi} --format {{.Tag}})"
+  done; unset mi di
   echo ${is}
 }
 
@@ -412,7 +413,7 @@ installMds() {
   kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]:-mds}
     labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
-    #configure $(imageVersion)
+    configure $(imageVersion)
     helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
@@ -794,6 +795,7 @@ normalize() {
 configure() {
   if [[ ${1} == *"="* ]]; then
     for c in $(echo ${1} | tr ',' ' '); do
+	  echo ${c}
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
 

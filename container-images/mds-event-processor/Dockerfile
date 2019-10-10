@@ -8,5 +8,7 @@ COPY dist/* /mds/
 
 WORKDIR /mds
 
+RUN npm install
+
 ENTRYPOINT ["/sbin/tini", "node", "index.js", "--type=event"]
 
