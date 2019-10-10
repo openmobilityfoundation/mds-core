@@ -2,6 +2,7 @@ import assert from 'assert'
 import uuid from 'uuid'
 import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent } from '../metrics-log'
 import { VehicleCountRow, LastDayStatsResponse } from '../types'
+import { mapRow, sumColumns } from '../vehicle-counts'
 
 const getStatus = (): VehicleCountRow['status'] => {
   return {
@@ -266,5 +267,57 @@ describe('MDS Metrics Sheet', () => {
       }
       assert.deepStrictEqual(result, expected)
     })
+  })
+
+  it('Maps empty row correctly', () => {
+    const areas_48h = {}
+    const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
+    const actual = mapRow(row)
+    const expected = { date: actual.date, name: 'fake-provider', 'Venice Area': 0 }
+    assert.deepStrictEqual(actual, expected)
+  })
+
+  it('Maps filled in row correctly', () => {
+    const areas_48h : VehicleCountRow['areas_48h'] = {}
+    const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+    for (const veniceAreaKey of veniceAreaKeys) {
+      areas_48h[veniceAreaKey] = 5
+    }
+    const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
+    const actual = mapRow(row)
+    const expected = {
+      date: actual.date,
+      name: 'fake-provider',
+      Venice: 5,
+      'Venice Area': 20,
+      'Venice Beach': 5,
+      'Venice Beach Special Operations Zone': 5,
+      'Venice Canals': 5
+    }
+    assert.deepStrictEqual(actual, expected)
+  })
+
+  it('Summarizes over Venice correctly', () => {
+    const areas_48h : VehicleCountRow['areas_48h'] = {}
+    const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+    for (const veniceAreaKey of veniceAreaKeys) {
+      areas_48h[veniceAreaKey] = 5
+    }
+    const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
+    const actual = sumColumns(veniceAreaKeys, row)
+    assert.strictEqual(actual, 20)
+  })
+
+  it('Summarizes over Venice correctly with undefined column entries', () => {
+    const areas_48h : VehicleCountRow['areas_48h'] = {}
+    const veniceAreaKeys = ['Venice', 'Venice Beach', 'Venice Canals', 'Venice Beach Special Operations Zone']
+    for (const veniceAreaKey of veniceAreaKeys) {
+      if (veniceAreaKey !== 'Venice') {
+        areas_48h[veniceAreaKey] = 5
+      }
+    }
+    const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
+    const actual = sumColumns(veniceAreaKeys, row)
+    assert.strictEqual(actual, 15)
   })
 })

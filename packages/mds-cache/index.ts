@@ -377,7 +377,7 @@ async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
     .filter(e => !!e)
 }
 
-async function readAllEvents() : Promise<Array<VehicleEvent | null>> {
+async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   // FIXME wildcard searching is slow
   const keys = await readKeys('device:*:event')
   const device_ids = keys.map(key => {
