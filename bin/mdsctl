@@ -39,6 +39,7 @@ declare -A configs=(
   ["workdir"]="/tmp/mds/tools"
   ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
+  ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
@@ -225,8 +226,20 @@ build() {
   yarn
   yarn build --ignore=@aws-lambda/*
   yarn image
+
+  installImages
 }
 
+installImages() {
+  check ${FUNCNAME[0]}
+
+  if [ "${configs[image-repository]}" ]; then
+    for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
+      # docker tag ${i} ${configs[image-repository]}/${i}
+      docker push ${configs[image-repository]}/${i}
+    done; unset i
+  fi
+}
 
 buildImage() {
   image="$1"
@@ -496,7 +509,7 @@ installSimulator() {
       git clone ${configs[simulator-repository]} ${configs[simulator]})
   fi
 
-  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
+  (export PATH=$(brew --prefix python)/bin:$(brew --prefix python)/libexec/bin:${PATH};
     cd ${configs[simulator]}; \
     git pull; \
     pip install -r requirements.txt; \
@@ -780,6 +793,9 @@ check() {
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
+    installImages)
+      [ "${configs[image-repository]}" ] || \
+        warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
     installDashboard | installLogging | installMetrics | installMds)
       hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
       kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
