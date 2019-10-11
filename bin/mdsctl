@@ -85,8 +85,9 @@ declare -A configs=(
   ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
   ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
   ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
-  ["namespace-mds"]="${MDS_NAMESPACE_MDS}"
-  ["dryrun"]="${MDS_DRY_RUN:-}")
+  ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
+  ["dryrun"]="${MDS_DRY_RUN:-}"
+  ["quiet"]="${MDS_QUIET:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.3.0/charts"
@@ -122,6 +123,10 @@ error() {
   echo "${red}warn: ${1}${reset}"
 }
 
+beerMe() {
+   [ ${#configs[quiet]} -eq 0 ] && echo -ne "\xF0\x9F\x8D\xBA "
+}
+
 usage() {
   [ "${1}" ] && warn "${1}"
 
@@ -147,6 +152,8 @@ options:
   --configure:{key}+={value}                          : append configuration value by key
   --configure:{key}=                                  : clears configuration value by key
   --preset:[preset-key[,preset-key]]                  : preset configurations
+  --home                                              : returns installation directory
+  --quiet                                             : less verbose
 
 where service in:
   helm
@@ -308,7 +315,7 @@ pause() {
   echo -ne "waiting "
 
   while (( cntr < ${sleepTime} )); do
-    echo -ne "\xF0\x9F\x8D\xBA "
+    beerMe
     sleep 3
     cntr=$(($cntr + 3))
   done
@@ -317,7 +324,7 @@ pause() {
 }
 
 updateHelmDependencies() {
-  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
+  for d in $(find ${configs[home]}/helm -mindepth 1 -maxdepth 1 -type d); do
     (cd ${configs[home]}/helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
   done; unset d
 }
@@ -925,6 +932,8 @@ for arg in "${@}"; do
     help) usage;;
     --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
     --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
+    --home | -h) echo ${configs[home]};;
+    --quiet | -q) configs[quiet]=true;;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
