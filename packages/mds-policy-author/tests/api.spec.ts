@@ -28,7 +28,7 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
 import { clone, isUUID } from '@mds-core/mds-utils'
-import { Policy } from '@mds-core/mds-types'
+import { Policy, Geography } from '@mds-core/mds-types'
 import { ApiServer } from '@mds-core/mds-api-server'
 import {
   POLICY_JSON,
@@ -778,6 +778,52 @@ describe('Tests app', () => {
         .expect(200)
       const result = await db.readSingleGeographyMetadata(GEOGRAPHY_UUID)
       test.assert(result.geography_metadata.some_arbitrary_thing === 'beep')
+    })
+
+    it('cannot GET geographies (no auth)', done => {
+      request
+        .get(`/geographies/`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('cannot GET geographies (wrong auth)', done => {
+      request
+        .get(`/geographies/`)
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(403)
+        .end(err => {
+          done(err)
+        })
+    })
+
+    it('can GET geographies, full version', done => {
+      request
+        .get(`/geographies/`)
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(200)
+        .end((err, result) => {
+          result.body.forEach((item: Geography) => {
+            test.assert(item.geography_json)
+          })
+          done(err)
+        })
+    })
+
+    it('can GET geographies, summarized version', done => {
+      request
+        .get(`/geographies?summary=true`)
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(200)
+        .end((err, result) => {
+          result.body.forEach((item: Geography) => {
+            test.assert(!item.geography_json)
+          })
+          done(err)
+        })
     })
 
     it('cannot GET geography metadata (no auth)', done => {
