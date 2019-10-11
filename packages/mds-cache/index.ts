@@ -194,6 +194,25 @@ async function readDevices(device_ids: UUID[]) {
   })
 }
 
+async function readDeviceStatus(device_id: UUID) {
+  var event, device
+  try {
+    event = await readEvent(device_id)
+    device = await readDevice(device_id)
+  } catch {
+    return null
+  }
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
+  const all = [device, event]
+  all.map(item => {
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
+  })
+  const values = Object.values(deviceStatusMap)
+
+  return values.filter((item: any) => item.telemetry)[0]
+}
+
 /* eslint-reason redis external lib weirdness */
 /* eslint-disable promise/prefer-await-to-then */
 /* eslint-disable promise/catch-or-return */
@@ -549,6 +568,7 @@ export = {
   writeTelemetry,
   readDevice,
   readDevices,
+  readDeviceStatus,
   readDevicesStatus,
   readEvent,
   readEvents,

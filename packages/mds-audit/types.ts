@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { UUID, Telemetry, Timestamp, Audit } from '@mds-core/mds-types'
+import { Audit, Telemetry, Timestamp, UUID } from '@mds-core/mds-types'
 import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
 
 // Allow adding type definitions for Express Request objects
@@ -92,6 +92,13 @@ export interface AuditApiGetTripsRequest extends AuditApiRequest {
 
 export interface AuditApiGetTripRequest extends AuditApiTripRequest {
   query: Partial<{ [P in 'event_viewport_adjustment']: string }>
+}
+
+export interface AuditApiGetVehicleRequest extends AuditApiRequest {
+  params: {
+    provider_id: UUID
+    vin: string
+  }
 }
 
 // Allow adding type definitions for Express Response objects
