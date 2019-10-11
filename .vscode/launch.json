@@ -163,6 +163,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -190,6 +192,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -216,6 +220,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -244,6 +250,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -271,6 +279,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -298,6 +308,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -325,6 +337,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -351,6 +365,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -377,6 +393,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -404,6 +422,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -431,6 +451,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -458,6 +480,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -485,6 +509,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
@@ -511,6 +537,8 @@
         "999999",
         "--colors",
         "--recursive",
+        "--timeout",
+        "5000",
         "'tests/**/*.ts'"
       ],
       "console": "integratedTerminal",
