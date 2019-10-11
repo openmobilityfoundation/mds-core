@@ -179,98 +179,6 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
   })
 }
 
-async function readDevice(device_id: UUID) {
-  if (!device_id) {
-    throw new Error('null device not legal to read')
-  }
-  // log.info('redis read device', device_id)
-  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
-}
-
-async function readDevices(device_ids: UUID[]) {
-  // log.info('redis read device', device_id)
-  return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
-    return parseDevice(device)
-  })
-}
-
-async function readDeviceStatus(device_id: UUID) {
-  var event, device
-  try {
-    event = await readEvent(device_id)
-    device = await readDevice(device_id)
-  } catch {
-    return null
-  }
-  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-  const all = [device, event]
-  all.map(item => {
-    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
-    Object.assign(deviceStatusMap[item.device_id], item)
-  })
-  const values = Object.values(deviceStatusMap)
-
-  return values.filter((item: any) => item.telemetry)[0]
-}
-
-/* eslint-reason redis external lib weirdness */
-/* eslint-disable promise/prefer-await-to-then */
-/* eslint-disable promise/catch-or-return */
-async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
-  log.info('readDevicesStatus', JSON.stringify(query), 'start')
-  const start = query.since || 0
-  const stop = now()
-
-  log.info('redis zrangebyscore device-ids', start, stop)
-  const client = await getClient()
-
-  const { bbox } = query
-  const deviceIdsInBbox = await getEventsInBBox(bbox)
-  const deviceIdsRes =
-    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
-  const skip = query.skip || 0
-  const take = query.take || 100000000000
-  const deviceIds = deviceIdsRes.slice(skip, skip + take)
-
-  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-
-  const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
-    .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
-      try {
-        const parsedItem = parseEvent(item)
-        if (
-          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
-          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
-        )
-          return [...acc, parsedItem]
-        return acc
-      } catch (err) {
-        return acc
-      }
-    }, [])
-    .filter(item => Boolean(item))
-
-  const eventDeviceIds = events.map(event => event.device_id)
-  const devices = (await hreads(['device'], eventDeviceIds))
-    .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
-      try {
-        const parsedItem = parseCachedItem(item)
-        return [...acc, parsedItem]
-      } catch (err) {
-        return acc
-      }
-    }, [])
-    .filter(item => Boolean(item))
-  const all = [...devices, ...events]
-  all.map(item => {
-    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
-    Object.assign(deviceStatusMap[item.device_id], item)
-  })
-  const values = Object.values(deviceStatusMap)
-
-  return values.filter((item: any) => item.telemetry)
-}
-
 // initial set of stats are super-simple: last-written values for device, event, and telemetry
 async function updateProviderStats(suffix: string, device_id: UUID, provider_id: UUID, timestamp?: Timestamp) {
   try {
@@ -406,6 +314,99 @@ async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   return (await hreads(['event'], device_ids)).map(event => {
     return parseEvent(event as StringifiedEventWithTelemetry)
   })
+}
+
+async function readDevice(device_id: UUID) {
+  if (!device_id) {
+    throw new Error('null device not legal to read')
+  }
+  // log.info('redis read device', device_id)
+  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
+}
+
+async function readDevices(device_ids: UUID[]) {
+  // log.info('redis read device', device_id)
+  return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
+    return parseDevice(device)
+  })
+}
+
+async function readDeviceStatus(device_id: UUID) {
+  let event: VehicleEvent
+  let device: Device
+  try {
+    event = await readEvent(device_id)
+    device = await readDevice(device_id)
+  } catch {
+    return null
+  }
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
+  const all = [device, event]
+  all.map(item => {
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
+  })
+  const values = Object.values(deviceStatusMap)
+
+  return values.filter((item: any) => item.telemetry)[0]
+}
+
+/* eslint-reason redis external lib weirdness */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/catch-or-return */
+async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
+  log.info('readDevicesStatus', JSON.stringify(query), 'start')
+  const start = query.since || 0
+  const stop = now()
+
+  log.info('redis zrangebyscore device-ids', start, stop)
+  const client = await getClient()
+
+  const { bbox } = query
+  const deviceIdsInBbox = await getEventsInBBox(bbox)
+  const deviceIdsRes =
+    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
+  const skip = query.skip || 0
+  const take = query.take || 100000000000
+  const deviceIds = deviceIdsRes.slice(skip, skip + take)
+
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
+
+  const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
+    .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
+      try {
+        const parsedItem = parseEvent(item)
+        if (
+          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
+          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
+        )
+          return [...acc, parsedItem]
+        return acc
+      } catch (err) {
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
+
+  const eventDeviceIds = events.map(event => event.device_id)
+  const devices = (await hreads(['device'], eventDeviceIds))
+    .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
+      try {
+        const parsedItem = parseCachedItem(item)
+        return [...acc, parsedItem]
+      } catch (err) {
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
+  const all = [...devices, ...events]
+  all.map(item => {
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
+  })
+  const values = Object.values(deviceStatusMap)
+
+  return values.filter((item: any) => item.telemetry)
 }
 
 async function readTelemetry(device_id: UUID): Promise<Telemetry> {

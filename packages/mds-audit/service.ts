@@ -163,8 +163,11 @@ export function withGpsProperty<T extends TelemetryData>({
 
 export async function getVehicle(provider_id: UUID, vehicle_id: string) {
   const device = await readDeviceByVehicleId(provider_id, vehicle_id)
-  const deviceStatus = (await cache.readDeviceStatus(device ? device.device_id : '')) as (VehicleEvent & Device)
-  if (!device || !deviceStatus) {
+  if (!device) {
+    return null
+  }
+  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device)
+  if (!deviceStatus) {
     return null
   }
   const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
