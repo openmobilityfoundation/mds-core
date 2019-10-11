@@ -434,6 +434,13 @@ if (pg_info.database) {
         }).should.be.rejected()
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id).should.be.rejected()
       })
+
+      it('understands the summary parameter', async () => {
+        const geographiesWithoutGeoJSON = await MDSDBPostgres.readGeographies({ summary: false })
+        geographiesWithoutGeoJSON.forEach(geography => assert(geography.geography_json))
+        const geographiesWithGeoJSON = await MDSDBPostgres.readGeographies({ summary: true })
+        geographiesWithGeoJSON.forEach(geography => assert.deepEqual(!!geography.geography_json, false))
+      })
     })
 
     describe('test Geography Policy interaction', () => {
