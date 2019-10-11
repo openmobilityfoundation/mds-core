@@ -1119,14 +1119,20 @@ async function readSingleGeography(geography_id: UUID): Promise<Geography> {
   }
 }
 
-async function readGeographies(params?: { get_read_only?: boolean }): Promise<Geography[]> {
+async function readGeographies(params?: { get_read_only?: boolean; summary?: boolean }): Promise<Geography[]> {
   // use params to filter
   // query on ids
   // return geographies
   try {
     const client = await getReadOnlyClient()
 
-    let sql = `select * from ${schema.TABLE.geographies}`
+    const cols =
+      params && params.summary
+        ? [...schema.TABLE_COLUMNS.geographies].filter(col => col !== schema.COLUMN.geography_json).join(',')
+        : '*'
+
+    let sql = `select ${cols} from ${schema.TABLE.geographies}`
+
     const conditions = []
     const vals = new SqlVals()
 
