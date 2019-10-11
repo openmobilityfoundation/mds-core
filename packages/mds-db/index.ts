@@ -77,7 +77,7 @@ import {
   writeTelemetry,
   getTelemetryCountsPerProviderSince,
   getMostRecentTelemetryByProvider
-} from './telemetries'
+} from './telemetry'
 
 import {
   writeStatusChanges,
