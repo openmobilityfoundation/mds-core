@@ -812,16 +812,17 @@ forwardIfNeeded() {
 check() {
   case "${1}" in
     $(basename ${0}))
-      for d in docker kubectl; do
-        hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
-      done; unset d
-      #TODO: include cluster connection check where needed if not globally
-      #kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster"
       for rc in ${configs[rc]}; do
         if [[ -f ${rc} && $(grep -q "\\\*${configs[home]}/bin\\\*" ${rc}; echo $?) != 0 ]]; then
             echo "export PATH=${configs[home]}/bin:\${PATH}" >> ${rc}
         fi
-      done; unset rc;;
+      done; unset rc
+
+      for d in docker kubectl; do
+        hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
+      done; unset d;;
+      # todo: include cluster connection check where needed if not globally
+      #kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster"
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
