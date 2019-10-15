@@ -338,15 +338,22 @@ export interface ComplianceResponse {
 // We don't put the publish_date into the geography_json column
 // as we do with the Policy type, because we don't want to mess with
 // the geojson FeatureCollection type.
-export interface Geography {
+interface BaseGeographyType {
   geography_id: UUID
-  geography_json?: FeatureCollection
   read_only?: boolean
   previous_geographies?: UUID[]
   name: string
   publish_date?: Timestamp
   effective_date?: Timestamp
   description?: string
+}
+
+export type Geography = BaseGeographyType & {
+  geography_json: FeatureCollection
+}
+
+export type GeographySummary = BaseGeographyType & {
+  geography_json?: FeatureCollection
 }
 
 export interface GeographyMetadata {
