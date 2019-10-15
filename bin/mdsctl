@@ -191,7 +191,8 @@ where preset-key in:
   minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
   local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
   disabled                                            : disable service deployment; default: all
-  no-events                                           : disable eventing
+  no-events                                           : disable eventing services
+  no-persistence                                      : disable persistence
 
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
@@ -888,8 +889,15 @@ preset() {
         for s in $(services); do
           is+="${is:+,}presets-mds+=apis.${s}.useEvents=false"
         done; unset s;;
+      no-persistence)
+        is+="${is:+,}sets-mds+=postgresql.persistence.enabled=false"
+        is+="${is:+,}sets-mds+=postgresql.volumePermissions.enabled=true"
+        is+="${is:+,}sets-mds+=postgresql.securityContext.enabled=false"
+        is+="${is:+,}sets-mds+=redis.persistence.enabled=false"
+        is+="${is:+,}sets-mds+=redis.master.persistence.enabled=false"
+        is+="${is:+,}sets-mds+=redis.slave.persistence.enabled=false";;
       minimal)
-        preset $(normalize "disable,no-events,local")
+        preset $(normalize "disable,no-events,local,no-persistence")
         is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
     esac
   done; unset p
