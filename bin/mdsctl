@@ -62,6 +62,7 @@ declare -A configs=(
   ["presets-mds"]="${MDS_PRESETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-}"
+  ["sets-logging"]="${MDS_SETS_LOGGING:=fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
@@ -423,10 +424,10 @@ installLogging() {
     installNamespace ${configs[namespace-logging]}
     labelNamespaceIstioInjection ${configs[namespace-logging]}
     helm install ./helm/util --name logging --namespace ${configs[namespace-logging]} \
-      --set fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-logging]:+$(helmOptions set ${configs[sets-logging]})} \
       ${configs[dryrun]:+--dry-run}
   }
 }
