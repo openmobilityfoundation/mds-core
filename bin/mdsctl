@@ -423,6 +423,7 @@ installLogging() {
     installNamespace ${configs[namespace-logging]}
     labelNamespaceIstioInjection ${configs[namespace-logging]}
     helm install ./helm/util --name logging --namespace ${configs[namespace-logging]} \
+      --set fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
