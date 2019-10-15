@@ -422,7 +422,7 @@ installLogging() {
 
   kubectl get namespace ${configs[namespace-logging]} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-logging]}
-    labelNamespaceIstioInjection ${configs[namespace-logging]}
+#    labelNamespaceIstioInjection ${configs[namespace-logging]}
     helm install ./helm/util --name logging --namespace ${configs[namespace-logging]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
