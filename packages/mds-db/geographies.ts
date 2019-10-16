@@ -1,4 +1,4 @@
-import { Geography, UUID, Recorded, GeographyMetadata } from '@mds-core/mds-types'
+import { Geography, GeographySummary, UUID, Recorded, GeographyMetadata } from '@mds-core/mds-types'
 import { NotFoundError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
@@ -23,7 +23,10 @@ export async function readSingleGeography(geography_id: UUID): Promise<Geography
   }
 }
 
-export async function readGeographies(params?: { get_read_only?: boolean; summary?: boolean }): Promise<Geography[]> {
+export async function readGeographies(params?: {
+  get_read_only?: boolean
+  summary?: boolean
+}): Promise<(Geography | GeographySummary)[]> {
   // use params to filter
   // query on ids
   // return geographies
