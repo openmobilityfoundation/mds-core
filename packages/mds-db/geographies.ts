@@ -7,6 +7,7 @@ import schema from './schema'
 import { vals_sql, cols_sql, vals_list, SqlVals } from './sql-utils'
 
 import { getReadOnlyClient, getWriteableClient } from './client'
+import { ReadGeographiesParams } from './types'
 
 export async function readSingleGeography(geography_id: UUID): Promise<Geography> {
   try {
@@ -23,18 +24,11 @@ export async function readSingleGeography(geography_id: UUID): Promise<Geography
   }
 }
 
-export async function readGeographies(params?: {
-  get_read_only?: boolean
-}): Promise<Geography[]> {
-  // use params to filter
-  // query on ids
-  // return geographies
+export async function readGeographies(params: Partial<ReadGeographiesParams> = {}): Promise<Geography[]> {
   try {
     const client = await getReadOnlyClient()
 
-    const cols = '*'
-
-    let sql = `select ${cols} from ${schema.TABLE.geographies}`
+    let sql = `SELECT * FROM ${schema.TABLE.geographies}`
 
     const conditions = []
     const vals = new SqlVals()
@@ -62,43 +56,14 @@ export async function readGeographies(params?: {
   }
 }
 
-export async function readGeographiesSummary(params?: {
+export async function readGeographiesSummaries(params?: {
   get_read_only?: boolean
 }): Promise<GeographySummary[]> {
-  // use params to filter
-  // query on ids
-  // return geographies
-  try {
-    const client = await getReadOnlyClient()
-
-    const cols =[...schema.TABLE_COLUMNS.geographies].filter(col => col !== schema.COLUMN.geography_json).join(',')
-
-    let sql = `select ${cols} from ${schema.TABLE.geographies}`
-
-    const conditions = []
-    const vals = new SqlVals()
-
-    if (params && params.get_read_only) {
-      conditions.push(`read_only IS TRUE`)
-    }
-
-    if (conditions.length) {
-      sql += ` WHERE ${conditions.join(' AND ')}`
-    }
-
-    const values = vals.values()
-    // TODO insufficiently general
-    // TODO add 'count'
-    const { rows } = await client.query(sql, values)
-
-    return rows.map(row => {
-      const { id, ...geography } = row
-      return geography
-    })
-  } catch (err) {
-    await log.error('readGeographies', err)
-    throw err
-  }
+  const geographies = await readGeographies(params)
+  return geographies.map(geography => {
+    const {geography_json, ...geographySummary} = geography
+    return geographySummary
+  })
 }
 
 export async function readBulkGeographyMetadata(params?: { get_read_only?: boolean }): Promise<GeographyMetadata[]> {
