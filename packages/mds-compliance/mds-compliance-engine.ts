@@ -302,16 +302,14 @@ function processPolicy(
 
           const timeVehicles = comp.matches
             ? comp.matches.reduce((acc: MatchedVehicle[], match: TimeMatch) => {
-                acc.push(match.matched_vehicle)
+                const vehicle = match.matched_vehicle
+                timeVehiclesMap[vehicle.device_id] = { ...vehicle, ...{ rule_id: rule.rule_id } }
+                acc.push(vehicle)
                 return acc
               }, [])
             : []
 
           vehiclesToFilter.push(...timeVehicles)
-
-          timeVehicles.forEach(vehicle => {
-            timeVehiclesMap[vehicle.device_id] = { ...vehicle, ...{ rule_id: rule.rule_id } }
-          })
           break
         }
         case 'speed':
