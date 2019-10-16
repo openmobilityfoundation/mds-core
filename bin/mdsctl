@@ -967,11 +967,7 @@ for arg in "${@}"; do
     reinstall:*)
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
-    help) usage;;
-    # --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
-    # --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
     home) echo ${configs[home]};;
-    # --quiet | -q) configs[quiet]=true;;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
