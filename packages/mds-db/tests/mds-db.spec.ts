@@ -441,7 +441,7 @@ if (pg_info.database) {
         const geographiesWithoutGeoJSON = await MDSDBPostgres.readGeographies()
         geographiesWithoutGeoJSON.forEach(geography => assert(geography.geography_json))
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographiesSummary()) as any[]
+        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographiesSummaries()) as any[]
         geographiesWithGeoJSON.forEach(geography => assert.deepEqual(!!geography.geography_json, false))
       })
     })
