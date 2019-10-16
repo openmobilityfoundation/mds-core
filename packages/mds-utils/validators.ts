@@ -22,8 +22,7 @@ import {
   VEHICLE_EVENT,
   UUID,
   Timestamp,
-  Telemetry,
-  GeographySummary
+  Telemetry
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
 import {
