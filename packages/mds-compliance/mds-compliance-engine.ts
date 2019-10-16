@@ -218,6 +218,8 @@ function processPolicy(
   if (isPolicyActive(policy)) {
     const vehiclesToFilter: MatchedVehicle[] = []
     let overflowVehiclesMap: { [key: string]: MatchedVehiclePlusRule } = {}
+    let countVehiclesMap: { [d: string]: MatchedVehiclePlusRule } = {}
+    let countViolations = 0
     const timeVehiclesMap: { [d: string]: MatchedVehiclePlusRule } = {}
     const speedingVehiclesMap: { [d: string]: MatchedVehiclePlusRule } = {}
     const compliance: Compliance[] = policy.rules.reduce((compliance_acc: Compliance[], rule: Rule): Compliance[] => {
@@ -259,6 +261,9 @@ function processPolicy(
                       if (overflowVehiclesMap[match_instance.device_id]) {
                         delete overflowVehiclesMap[match_instance.device_id]
                       }
+                      if (countVehiclesMap[match_instance.device_id]) {
+                        delete countVehiclesMap[match_instance.device_id]
+                      }
                       acc.matched.push(match_instance)
                     } else {
                       acc.overflowed.push({ ...match_instance, rule_id: rule.rule_id })
@@ -293,6 +298,29 @@ function processPolicy(
             )
           }
 
+          //         /*
+          // only vehicles in count violation are in overflow
+          // add to count violation properly if violating mins
+          // ie no vehicles are in violation if min violation, but # of violations goes up
+          const minimum = rule.minimum == null ? Number.NEGATIVE_INFINITY : rule.minimum
+
+          if (overflowVehicles.length > 0) {
+            countVehiclesMap = { ...countVehiclesMap, ...overflowVehiclesMap }
+            countViolations += overflowVehicles.length
+          } else if (minimum && vehiclesMatched.length < minimum) {
+            countVehiclesMap = {
+              ...countVehiclesMap,
+              ...vehiclesMatched.reduce(
+                (acc: { [key: string]: MatchedVehiclePlusRule }, device: MatchedVehiclePlusRule) => {
+                  acc[device.device_id] = device
+                  return acc
+                },
+                {}
+              )
+            }
+            countViolations += minimum - vehiclesMatched.length
+          }
+          //          */
           compliance_acc.push(compressedComp)
           break
         }
@@ -340,15 +368,15 @@ function processPolicy(
       return compliance_acc
     }, [])
 
-    const overflowedVehicles = getViolationsArray(overflowVehiclesMap)
+    const countVehicles = getViolationsArray(countVehiclesMap)
     const timeVehicles = getViolationsArray(timeVehiclesMap)
     const speedingVehicles = getViolationsArray(speedingVehiclesMap)
 
     return {
       policy,
       compliance,
-      total_violations: overflowedVehicles.length + timeVehicles.length + speedingVehicles.length,
-      vehicles_in_violation: { ...overflowedVehicles, ...timeVehiclesMap, ...speedingVehiclesMap }
+      total_violations: countViolations + timeVehicles.length + speedingVehicles.length,
+      vehicles_in_violation: { ...countVehicles, ...timeVehiclesMap, ...speedingVehiclesMap }
     }
   }
 }

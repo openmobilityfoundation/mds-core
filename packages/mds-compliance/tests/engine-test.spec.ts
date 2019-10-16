@@ -101,7 +101,7 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.geographies.includes(CITY_OF_LA)
           ) {
             test.assert.notEqual(compliance.matches.length, 0)
-            test.assert(result.total_violations > 0)
+            test.assert.deepEqual(result.total_violations, 1)
           }
         })
       }
@@ -135,7 +135,7 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.geographies.includes(CITY_OF_LA)
           ) {
             test.assert.notEqual(compliance.matches.length, 0)
-            test.assert(result.total_violations > 0)
+            test.assert.deepEqual(result.total_violations, 490)
           }
         })
       }
