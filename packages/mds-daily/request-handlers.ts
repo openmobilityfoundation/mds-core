@@ -1,9 +1,16 @@
 import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
-import cache from '@mds-core/mds-cache'
 import { providerName } from '@mds-core/mds-providers'
-import { now, inc, ServerError } from '@mds-core/mds-utils'
-import { UUID, VehicleEvent, VEHICLE_STATUSES, EVENT_STATUS_MAP, VEHICLE_EVENT, TripsStats } from '@mds-core/mds-types'
+import { now, inc, ServerError, filterEmptyHelper } from '@mds-core/mds-utils'
+import {
+  UUID,
+  VehicleEvent,
+  VEHICLE_STATUSES,
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT,
+  TripsStats,
+  Device
+} from '@mds-core/mds-types'
 import areas from 'ladot-service-areas'
 import { DailyApiRequest, DailyApiResponse, ProviderInfo } from './types'
 import {
@@ -15,7 +22,7 @@ import {
   getTelemetryCountsPerProviderSince,
   getConformanceLast24Hours
 } from './db-helpers'
-import { startAndEnd, categorizeTrips } from './utils'
+import { startAndEnd, categorizeTrips, getMaps } from './utils'
 
 export async function dbHelperFail(err: Error | string): Promise<void> {
   await log.error(
@@ -36,6 +43,8 @@ const RIGHT_OF_WAY_STATUSES: string[] = [
   VEHICLE_STATUSES.reserved,
   VEHICLE_STATUSES.trip
 ]
+
+type Item = Pick<Device, 'provider_id' | 'device_id'>
 
 export async function getRawTripData(req: DailyApiRequest, res: DailyApiResponse) {
   try {
@@ -64,32 +73,6 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
     res.status(500).send({
       error: err
     })
-  }
-
-  async function getMaps(): Promise<{
-    eventMap: { [s: string]: VehicleEvent }
-    // telemetryMap: { [s: string]: Telemetry }
-  }> {
-    try {
-      // const telemetry: Telemetry[] = await cache.readAllTelemetry()
-      // log.info('read telemetry')
-      const events: VehicleEvent[] = await cache.readAllEvents()
-      log.info('read events')
-      const eventSeed: { [s: string]: VehicleEvent } = {}
-      const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
-        return Object.assign(map, { [event.device_id]: event })
-      }, eventSeed)
-      // const telemetrySeed: { [s: string]: Telemetry } = {}
-      // const telemetryMap = telemetry.reduce((map, t) => {
-      //   return Object.assign(map, { [t.device_id]: t })
-      // }, telemetrySeed)
-      return Promise.resolve({
-        // telemetryMap,
-        eventMap
-      })
-    } catch (err) {
-      return Promise.reject(err)
-    }
   }
 
   try {
@@ -128,8 +111,8 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
     const { eventMap } = maps
     await Promise.all(
       stats.map(async stat => {
-        const items = await db.readDeviceIds(stat.provider_id)
-        items.map(item => {
+        const items: (Item | undefined)[] = await db.readDeviceIds(stat.provider_id)
+        items.filter(filterEmptyHelper<Item>(true)).map(async item => {
           const event = eventMap[item.device_id]
           inc(stat.event_type, event ? event.event_type : 'default')
           const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed

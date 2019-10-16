@@ -342,9 +342,14 @@ export interface Geography {
   geography_id: UUID
   geography_json: FeatureCollection
   read_only?: boolean
-  previous_geography_ids?: UUID[]
+  previous_geographies?: UUID[]
   name: string
+  publish_date?: Timestamp
+  effective_date?: Timestamp
+  description?: string
 }
+
+export type GeographySummary = Omit<Geography, 'geography_json'>
 
 export interface GeographyMetadata {
   geography_id: UUID

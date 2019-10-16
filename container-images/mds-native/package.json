@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-native",
-  "version": "0.0.7",
+  "version": "0.0.10",
   "description": "Docker Image for MDS Native API",
   "main": "dist/index.js",
   "files": [
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && ../../bin/image-build mds-native:${npm_package_version}",
+    "image": "yarn bundle && ../../bin/mdsctl -c:image-name=mds-native:${npm_package_version} buildImage",
     "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.9",
-    "@mds-core/mds-api-server": "0.1.9",
-    "@mds-core/mds-native": "0.0.7"
+    "@container-images/env-inject": "0.1.11",
+    "@mds-core/mds-api-server": "0.1.12",
+    "@mds-core/mds-native": "0.0.10"
   },
   "license": "Apache-2.0"
 }

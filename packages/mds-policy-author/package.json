@@ -1,7 +1,7 @@
 {
   "name": "@mds-core/mds-policy-author",
   "description": "MDS Policy Author API",
-  "version": "0.0.6",
+  "version": "0.0.9",
   "private": true,
   "licence": "Apache-2.0",
   "engineStrict": true,
@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "@hapi/joi": "15.1.1",
-    "@mds-core/mds-api-server": "0.1.9",
-    "@mds-core/mds-api-helpers": "0.1.9",
-    "@mds-core/mds-db": "0.1.9",
-    "@mds-core/mds-logger": "0.1.9",
-    "@mds-core/mds-providers": "0.1.9",
-    "@mds-core/mds-utils": "0.1.9",
+    "@mds-core/mds-api-helpers": "0.1.12",
+    "@mds-core/mds-api-server": "0.1.12",
+    "@mds-core/mds-db": "0.1.12",
+    "@mds-core/mds-logger": "0.1.10",
+    "@mds-core/mds-providers": "0.1.12",
+    "@mds-core/mds-utils": "0.1.12",
     "express": "4.17.1",
     "joi-to-json-schema": "5.1.0",
     "uuid": "3.3.3"
@@ -29,7 +29,7 @@
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --timeout 4000 --project ../../tsconfig.json --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --timeout 4000 --project ../../tsconfig.json --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && ts-node"
   }

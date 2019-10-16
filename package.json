@@ -1,7 +1,7 @@
 {
   "name": "root",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.6",
   "license": "Apache-2.0",
   "workspaces": [
     "aws-lambda/*",
@@ -36,7 +36,9 @@
     "@types/yargs": "13.0.3",
     "@typescript-eslint/eslint-plugin": "2.3.2",
     "@typescript-eslint/parser": "2.3.2",
+    "chai": "4.2.0",
     "check-node-version": "4.0.1",
+    "cypress": "3.4.1",
     "dotenv": "8.1.0",
     "eslint": "6.5.0",
     "eslint-config-airbnb-base": "14.0.0",
@@ -47,7 +49,9 @@
     "eslint-plugin-promise": "4.2.1",
     "git-revision-webpack-plugin": "3.0.4",
     "husky": "3.0.7",
+    "lerna": "3.16.4",
     "mocha": "6.2.1",
+    "mochawesome": "4.1.0",
     "mockdate": "2.0.5",
     "nodemon": "1.19.3",
     "nyc": "14.1.1",
@@ -79,6 +83,7 @@
     "run:sequential": "lerna run --stream --concurrency 1",
     "test": "check-node-version --package --print && yarn run:sequential test",
     "test:eslint": "yarn run:concurrent test:eslint",
-    "test:unit": "yarn run:sequential test:unit"
+    "test:unit": "yarn run:sequential test:unit",
+    "values": "bin/mdsctl templateValues"
   }
 }

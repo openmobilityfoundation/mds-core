@@ -1,9 +1,16 @@
 import assert from 'assert'
 /* eslint-reason extends object.prototype */
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-import should from 'should'
 import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS, Geography } from '@mds-core/mds-types'
+import {
+  Telemetry,
+  Recorded,
+  VehicleEvent,
+  Device,
+  VEHICLE_EVENTS,
+  Geography,
+  GeographySummary
+} from '@mds-core/mds-types'
 import {
   JUMP_TEST_DEVICE_1,
   makeDevices,
@@ -433,6 +440,13 @@ if (pg_info.database) {
           geography_json: publishedGeographyJSON
         }).should.be.rejected()
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id).should.be.rejected()
+      })
+
+      it('understands the summary parameter', async () => {
+        const geographiesWithoutGeoJSON = (await MDSDBPostgres.readGeographies({ summary: false })) as Geography[]
+        geographiesWithoutGeoJSON.forEach(geography => assert(geography.geography_json))
+        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographies({ summary: true })) as GeographySummary[]
+        geographiesWithGeoJSON.forEach(geography => assert.deepEqual(!!geography.geography_json, false))
       })
     })
 
