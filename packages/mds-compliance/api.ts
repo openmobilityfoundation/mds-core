@@ -122,7 +122,7 @@ function api(app: express.Express): express.Express {
             .includes(policy.policy_id)
         ) {
           const [geographies, deviceRecords] = await Promise.all([
-            db.readGeographies(),
+            db.readGeographies() as Promise<Geography[]>,
             db.readDeviceIds(target_provider_id)
           ])
           const deviceIdSubset = deviceRecords.map((record: { device_id: UUID; provider_id: UUID }) => record.device_id)
