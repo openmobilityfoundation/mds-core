@@ -133,6 +133,23 @@ usage() {
   cat << EOF
 usage: $(basename ${0}) [--options] [commands]
 
+options:
+  [-c | --configure] [{key}={value}[,{key}={value}]   : set configuration value(s) by key(s)
+                   [{key}+={value}[,{key}+={value}]   : append configuraiton value(s) by key(s)
+                   [{key}=                            : clear configuration value(s) by key(s)
+  [-p | --preset] [preset-key[,preset-key]]           : preset configuration(s)
+  [-w | --workdir] [WORK-DIR]                         : specify working directory
+  [-s | --sleep] [PAUSE]                              : specify pause time
+  [-q | --quiet]                                      : less verbose
+  [-h | --help]                                       : usage
+
+where preset-key in:
+  minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
+  local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
+  disabled                                            : disable service deployment; default: all
+  no-events                                           : disable eventing services
+  no-persistence                                      : disable persistence
+
 commands:
   bootstrap                                           : install dependencies; default: ${configs[tools]},${configs[bootstrap]}
   build                                               : build project
@@ -145,15 +162,7 @@ commands:
   cli:[postgresql,redis]                              : create a cli console for the provided service
   uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${configs[uninstall]}
   reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${configs[reinstall]}
-  help                                                : help message
-
-options:
-  --configure:{key}={value}[,{key}={value}]           : set configuration value by key
-  --configure:{key}+={value}                          : append configuration value by key
-  --configure:{key}=                                  : clears configuration value by key
-  --preset:[preset-key[,preset-key]]                  : preset configurations
-  --home                                              : returns installation directory
-  --quiet                                             : less verbose
+  home                                                : return installation directory
 
 where service in:
   helm
@@ -186,13 +195,6 @@ where app in:
   jaeger                                              : jaeger; see https://www.jaegertracing.io
   kiali                                               : kiali; see https://www.kiali.io
   bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
-
-where preset-key in:
-  minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
-  local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
-  disabled                                            : disable service deployment; default: all
-  no-events                                           : disable eventing services
-  no-persistence                                      : disable persistence
 
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
@@ -907,6 +909,34 @@ preset() {
 }
 
 check $(basename ${0})
+
+while getopts ":w:s:c:p:q-:h-:" opt; do
+  case "${opt}" in
+    -)
+      case "${OPTARG}" in
+        configure) configure "$(echo ${!OPTIND} | cut -d ':' -f 2-)"; OPTIND=$(( ${OPTIND} + 1 ));;
+        configure=*) configure "$(echo "${OPTARG#*=}" | cut -d ':' -f 2-)";;
+        presets) preset "$(normalize ${!OPTIND})"; OPTIND=$(( ${OPTIND} + 1 ));;
+        presets=*) preset "$(normalize ${OPTARG#*=})";;
+        workdir) configs[workdir]="${!OPTIND}"; OPTIND=$(( ${OPTIND} + 1 ));;
+        workdir=*) configs[workdir]="${OPTARG#*=}";;
+        sleep) configs[pause]="${!OPTIND}"; OPTIND=$(( ${OPTIND} + 1 ));;
+        sleep=*) configs[pause]="${OPTARG#*=}";;
+        quiet) confgs[quiet]=true;;
+        help) usage;;
+        *) [ "${OPTERR}" = 1 ] && [ "${optspec:0:1}" != ":" ] && echo "unknown option --${OPTARG}";;
+      esac;;
+    c) configure "$(echo ${OPTARG} | cut -d ':' -f 2-)";;
+    p) preset "$(normalize ${OPTARG})";;
+    w) configs[workdir]=${OPTARG};;
+    s) configs[pause]=${OPTARG};;
+    q) configs[quiet]=true;;
+    h) usage;;
+    :) usage "option -${OPTARG} requires an argument" 1;;
+    \?) [ "${OPTERR}" != 1 ] || [ "${optspec:0:1}" = ":" ] && usage "unknown option -${OPTARG}" 1;;
+  esac
+done
+
 [[ ${#} == 0 ]] && usage
 [[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
 
@@ -938,10 +968,10 @@ for arg in "${@}"; do
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     help) usage;;
-    --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
-    --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
-    --home | -h) echo ${configs[home]};;
-    --quiet | -q) configs[quiet]=true;;
+    # --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    # --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
+    home) echo ${configs[home]};;
+    # --quiet | -q) configs[quiet]=true;;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
