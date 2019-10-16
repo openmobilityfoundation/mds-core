@@ -25,18 +25,14 @@ export async function readSingleGeography(geography_id: UUID): Promise<Geography
 
 export async function readGeographies(params?: {
   get_read_only?: boolean
-  summary?: boolean
-}): Promise<(Geography | GeographySummary)[]> {
+}): Promise<Geography[]> {
   // use params to filter
   // query on ids
   // return geographies
   try {
     const client = await getReadOnlyClient()
 
-    const cols =
-      params && params.summary
-        ? [...schema.TABLE_COLUMNS.geographies].filter(col => col !== schema.COLUMN.geography_json).join(',')
-        : '*'
+    const cols = '*'
 
     let sql = `select ${cols} from ${schema.TABLE.geographies}`
 
@@ -65,6 +61,46 @@ export async function readGeographies(params?: {
     throw err
   }
 }
+
+export async function readGeographiesSummary(params?: {
+  get_read_only?: boolean
+}): Promise<GeographySummary[]> {
+  // use params to filter
+  // query on ids
+  // return geographies
+  try {
+    const client = await getReadOnlyClient()
+
+    const cols =[...schema.TABLE_COLUMNS.geographies].filter(col => col !== schema.COLUMN.geography_json).join(',')
+
+    let sql = `select ${cols} from ${schema.TABLE.geographies}`
+
+    const conditions = []
+    const vals = new SqlVals()
+
+    if (params && params.get_read_only) {
+      conditions.push(`read_only IS TRUE`)
+    }
+
+    if (conditions.length) {
+      sql += ` WHERE ${conditions.join(' AND ')}`
+    }
+
+    const values = vals.values()
+    // TODO insufficiently general
+    // TODO add 'count'
+    const { rows } = await client.query(sql, values)
+
+    return rows.map(row => {
+      const { id, ...geography } = row
+      return geography
+    })
+  } catch (err) {
+    await log.error('readGeographies', err)
+    throw err
+  }
+}
+
 export async function readBulkGeographyMetadata(params?: { get_read_only?: boolean }): Promise<GeographyMetadata[]> {
   const geographies = await readGeographies(params)
   const geography_ids = geographies.map(geography => {

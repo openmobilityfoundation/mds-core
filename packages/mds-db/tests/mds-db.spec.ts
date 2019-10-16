@@ -24,6 +24,7 @@ import {
 import { now, clone, NotFoundError } from '@mds-core/mds-utils'
 
 import { isNullOrUndefined } from 'util'
+import { GeographySummary } from 'packages/mds-types/dist'
 import MDSDBPostgres from '../index'
 
 import { dropTables, createTables, updateSchema } from '../migration'
@@ -437,9 +438,10 @@ if (pg_info.database) {
       })
 
       it('understands the summary parameter', async () => {
-        const geographiesWithoutGeoJSON = (await MDSDBPostgres.readGeographies({ summary: false })) as Geography[]
+        const geographiesWithoutGeoJSON = await MDSDBPostgres.readGeographies()
         geographiesWithoutGeoJSON.forEach(geography => assert(geography.geography_json))
-        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographies({ summary: true })) as Geography[] // Read back as Geography instead of GeographySummary so we can verify there is no geography_json.
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographiesSummary()) as any[]
         geographiesWithGeoJSON.forEach(geography => assert.deepEqual(!!geography.geography_json, false))
       })
     })
