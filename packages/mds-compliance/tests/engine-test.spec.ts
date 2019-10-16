@@ -76,7 +76,7 @@ describe('Tests Compliance Engine', () => {
   })
 
   it('Verifies count compliance maximum violation', done => {
-    const devices = makeDevices(3000, now())
+    const devices = makeDevices(3001, now())
     const events = makeEventsWithTelemetry(devices, now(), CITY_OF_LA, 'trip_start')
     test.assert.doesNotThrow(() => validatePolicies(policies))
     test.assert.doesNotThrow(() => validateGeographies(geographies))
@@ -101,11 +101,9 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.geographies.includes(CITY_OF_LA)
           ) {
             test.assert.notEqual(compliance.matches.length, 0)
+            test.assert(result.total_violations > 0)
           }
         })
-        console.log('rezzy rez')
-        console.log(result)
-        test.assert(result.total_violations > 0)
       }
     })
     done()
@@ -137,9 +135,9 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.geographies.includes(CITY_OF_LA)
           ) {
             test.assert.notEqual(compliance.matches.length, 0)
+            test.assert(result.total_violations > 0)
           }
         })
-        test.assert(result.total_violations > 0)
       }
     })
     done()
