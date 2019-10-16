@@ -203,7 +203,7 @@ export = {
   readTrips,
   readTripList,
   readGeographies,
-  readGeographiesSummary: readGeographiesSummaries,
+  readGeographiesSummaries,
   writeGeography,
   publishGeography,
   deleteGeography,

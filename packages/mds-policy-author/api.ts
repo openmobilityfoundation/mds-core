@@ -452,7 +452,7 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/geographies'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
     const summary = req.query.summary === 'true'
     try {
-      const geographies = summary ? await db.readGeographiesSummary() : await db.readGeographies()
+      const geographies = summary ? await db.readGeographiesSummaries() : await db.readGeographies()
       return res.status(200).send(geographies)
     } catch (err) {
       await log.error('failed to read geographies', err.stack)
