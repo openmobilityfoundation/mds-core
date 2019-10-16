@@ -1,53 +1,12 @@
-import {
-  Audit,
-  AuditEvent,
-  VehicleEvent,
-  Geography,
-  UUID,
-  Policy,
-  Timestamp,
-  Device,
-  Telemetry,
-  Recorded,
-  DeviceID,
-  Rule,
-  GeographyMetadata,
-  PolicyMetadata,
-  VEHICLE_EVENT
-} from '@mds-core/mds-types'
-import {
-  convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry,
-  now,
-  isUUID,
-  isTimestamp,
-  seconds,
-  days,
-  yesterday,
-  csv,
-  NotFoundError,
-  BadParamsError,
-  AlreadyPublishedError
-} from '@mds-core/mds-utils'
+import { VehicleEvent, Device, Telemetry } from '@mds-core/mds-types'
 import log from '@mds-core/mds-logger'
 
-import { QueryResult } from 'pg'
 import { dropTables, updateSchema } from './migration'
-import {
-  ReadEventsResult,
-  ReadTripsResult,
-  ReadStatusChangesResult,
-  StatusChange,
-  Trip,
-  TelemetryRecord,
-  ReadEventsQueryParams,
-  ReadHistoricalEventsQueryParams,
-  ReadAuditsQueryParams
-} from './types'
-
-import schema from './schema'
+import { MDSPostgresClient } from './sql-utils'
+import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
 import {
+<<<<<<< HEAD
   vals_sql,
   cols_sql,
   vals_list,
@@ -85,56 +44,87 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     host: PG_HOST || 'localhost',
     port: Number(PG_PORT) || 5432
   }
+=======
+  readDeviceByVehicleId,
+  readDeviceIds,
+  readDevice,
+  readDeviceList,
+  writeDevice,
+  updateDevice,
+  wipeDevice,
+  getVehicleCountsPerProvider,
+  getNumVehiclesRegisteredLast24HoursByProvider
+} from './devices'
+>>>>>>> develop
 
-  await log.info('connecting to postgres:', ...Object.keys(info).map(key => (info as { [x: string]: unknown })[key]))
+import {
+  writeEvent,
+  readEvent,
+  readEvents,
+  readEventsForStatusChanges,
+  readHistoricalEvents,
+  getEventCountsPerProviderSince,
+  getEventsLast24HoursPerProvider,
+  getNumEventsLast24HoursByProvider,
+  getMostRecentEventByProvider,
+  readEventsWithTelemetry
+} from './events'
 
-  const client = configureClient({ ...info, password: PG_PASS })
+import {
+  readPolicies,
+  writePolicy,
+  readPolicy,
+  editPolicy,
+  deletePolicy,
+  writePolicyMetadata,
+  updatePolicyMetadata,
+  readBulkPolicyMetadata,
+  readSinglePolicyMetadata,
+  publishPolicy,
+  readRule,
+  isPolicyPublished
+} from './policies'
 
-  try {
-    await client.connect()
-    if (useWriteable) {
-      if (PG_MIGRATIONS === 'true') {
-        await updateSchema(client)
-      }
-    }
-    client.setConnected(true)
-    return client
-  } catch (err) {
-    await log.error('postgres connection error', err.stack)
-    client.setConnected(false)
-    throw err
-  }
-}
+import {
+  writeGeographyMetadata,
+  updateGeographyMetadata,
+  readSingleGeographyMetadata,
+  readSingleGeography,
+  readBulkGeographyMetadata,
+  readGeographies,
+  writeGeography,
+  publishGeography,
+  deleteGeography,
+  isGeographyPublished,
+  editGeography
+} from './geographies'
 
-async function getReadOnlyClient(): Promise<MDSPostgresClient> {
-  if (readOnlyCachedClient && readOnlyCachedClient.connected) {
-    return readOnlyCachedClient
-  }
+import { readAudit, readAudits, writeAudit, deleteAudit, readAuditEvents, writeAuditEvent } from './audits'
 
-  try {
-    readOnlyCachedClient = await setupClient(false)
-    return readOnlyCachedClient
-  } catch (err) {
-    readOnlyCachedClient = null
-    await log.error('postgres connection error', err)
-    throw err
-  }
-}
+import {
+  writeTrips,
+  updateTrip,
+  readTrips,
+  readTripList,
+  readTripIds,
+  getLatestTripTime,
+  getTripEventsLast24HoursByProvider,
+  getTripCountsPerProviderSince
+} from './trips'
 
-async function getWriteableClient(): Promise<MDSPostgresClient> {
-  if (writeableCachedClient && writeableCachedClient.connected) {
-    return writeableCachedClient
-  }
+import {
+  readTelemetry,
+  writeTelemetry,
+  getTelemetryCountsPerProviderSince,
+  getMostRecentTelemetryByProvider
+} from './telemetry'
 
-  try {
-    writeableCachedClient = await setupClient(true)
-    return writeableCachedClient
-  } catch (err) {
-    writeableCachedClient = null
-    await log.error('postgres connection error', err)
-    throw err
-  }
-}
+import {
+  writeStatusChanges,
+  readStatusChanges,
+  readUnprocessedStatusChangeEvents,
+  getLatestStatusChangeTime
+} from './status_changes'
 
 async function initialize() {
   const client: MDSPostgresClient = await getWriteableClient()
@@ -142,23 +132,6 @@ async function initialize() {
   await updateSchema(client)
   await getReadOnlyClient()
   return 'postgres'
-}
-
-// This should never be exported, to prevent risk of SQL injection.
-// Only functions in this module should ever call it.
-
-/* eslint-reason ambigous helper function that wraps a query as Readonly */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-async function makeReadOnlyQuery(sql: string): Promise<any[]> {
-  try {
-    const client = await getReadOnlyClient()
-    await logSql(sql)
-    const result = await client.query(sql)
-    return result.rows
-  } catch (err) {
-    await log.error(`error with SQL query ${sql}`, err.stack || err)
-    throw err
-  }
 }
 
 /*
@@ -199,6 +172,7 @@ async function health(): Promise<{
   }
 }
 
+<<<<<<< HEAD
 function commaize(array: any[], quote = `'`, join = ','): any {
   return array.map((val: any) => `${stringify(val, quote)}`).join(join)
 }
@@ -813,6 +787,8 @@ async function getMostRecentEventByProvider(): Promise<{ provider_id: UUID; max:
   return makeReadOnlyQuery(sql)
 }
 
+=======
+>>>>>>> develop
 async function startup() {
   await Promise.all([getWriteableClient(), getReadOnlyClient()])
 }
@@ -826,899 +802,6 @@ async function shutdown(): Promise<void> {
   } catch (err) {
     await log.error('error during disconnection', err.stack)
   }
-}
-
-async function readAudit(audit_trip_id: UUID) {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.audits} WHERE deleted IS NULL AND audit_trip_id=$1`
-  const values = [audit_trip_id]
-  await logSql(sql, values)
-  const result = await client.query(sql, values)
-  if (result.rows.length === 1) {
-    return result.rows[0]
-  }
-  const error = `readAudit db failed for ${audit_trip_id}: rows=${result.rows.length}`
-  await log.warn(error)
-  throw new Error(error)
-}
-
-async function readAudits(query: ReadAuditsQueryParams) {
-  const client = await getReadOnlyClient()
-
-  const { skip, take, provider_id, provider_vehicle_id, audit_subject_id, start_time, end_time } = query
-
-  const vals = new SqlVals()
-
-  const conditions = [
-    `deleted IS NULL`,
-    ...(provider_id ? [`provider_id = ${vals.add(provider_id)}`] : []),
-    ...(provider_vehicle_id ? [`provider_vehicle_id ILIKE ${vals.add(`%${provider_vehicle_id}%`)}`] : []),
-    ...(audit_subject_id ? [`audit_subject_id ILIKE ${vals.add(`%${audit_subject_id}%`)}`] : []),
-    ...(start_time ? [`timestamp >= ${vals.add(start_time)}`] : []),
-    ...(end_time ? [`timestamp <= ${vals.add(end_time)}`] : [])
-  ]
-
-  try {
-    const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-    const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.audits} ${filter}`
-    const countVals = vals.values()
-    await logSql(countSql, countVals)
-    const countResult = await client.query(countSql, countVals)
-    const count = parseInt(countResult.rows[0].count)
-    if (count === 0) {
-      return {
-        count,
-        audits: []
-      }
-    }
-    const selectSql = `SELECT * FROM ${schema.TABLE.audits} ${filter} ORDER BY "timestamp" DESC${
-      typeof skip === 'number' && skip >= 0 ? ` OFFSET ${vals.add(skip)}` : ''
-    }${typeof take === 'number' && take >= 0 ? ` LIMIT ${vals.add(take)}` : ''}`
-    const selectVals = vals.values()
-    await logSql(selectSql, selectVals)
-    const selectResult = await client.query(selectSql, selectVals)
-    return {
-      count,
-      audits: selectResult.rows
-    }
-  } catch (err) {
-    await log.error('readAudits error', err.stack || err)
-    throw err
-  }
-}
-
-async function writeAudit(audit: Audit): Promise<Recorded<Audit>> {
-  // write pg
-  const client = await getWriteableClient()
-  const sql = `INSERT INTO ${schema.TABLE.audits} (${cols_sql(schema.TABLE_COLUMNS.audits)}) VALUES (${vals_sql(
-    schema.TABLE_COLUMNS.audits
-  )}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.audits, { ...audit, recorded: now() })
-  await logSql(sql, values)
-  const {
-    rows: [recorded_audit]
-  }: { rows: Recorded<Audit>[] } = await client.query(sql, values)
-  return { ...audit, ...recorded_audit }
-}
-
-async function deleteAudit(audit_trip_id: UUID) {
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.audits} SET deleted=$1 WHERE audit_trip_id=$2 AND deleted IS NULL`
-  const values = [now(), audit_trip_id]
-  await logSql(sql, values)
-  const result = await client.query(sql, values)
-  return result.rowCount
-}
-
-async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<AuditEvent>[]> {
-  try {
-    const client = await getReadOnlyClient()
-    const vals = new SqlVals()
-    const sql = `SELECT * FROM ${schema.TABLE.audit_events} WHERE audit_trip_id=${vals.add(
-      audit_trip_id
-    )} ORDER BY "timestamp"`
-    const sqlVals = vals.values()
-    await logSql(sql, sqlVals)
-    const result = await client.query(sql, sqlVals)
-    return result.rows
-  } catch (err) {
-    await log.error('readAuditEvents error', err.stack || err)
-    throw err
-  }
-}
-
-async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded<AuditEvent>> {
-  const client = await getWriteableClient()
-  const sql = `INSERT INTO ${schema.TABLE.audit_events} (${cols_sql(
-    schema.TABLE_COLUMNS.audit_events
-  )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.audit_events)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.audit_events, { ...audit_event, recorded: now() })
-  await logSql(sql, values)
-  const {
-    rows: [recorded_audit_event]
-  }: { rows: Recorded<AuditEvent>[] } = await client.query(sql, values)
-  return { ...audit_event, ...recorded_audit_event }
-}
-
-async function writeTrips(trips: Trip[]): Promise<Recorded<Trip>[]> {
-  if (trips.length === 0) {
-    throw new Error('writeTrips: zero trips')
-  }
-  try {
-    const client = await getWriteableClient()
-    const recorded = now()
-
-    const values = csv(
-      trips
-        .map(trip =>
-          csv(vals_list(schema.TABLE_COLUMNS.trips, { ...trip, recorded: trip.recorded || recorded }).map(to_sql))
-        )
-        .map(row => `(${row})`)
-    )
-
-    const sql = `INSERT INTO ${schema.TABLE.trips} (${cols_sql(
-      schema.TABLE_COLUMNS.trips
-    )}) VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
-
-    await logSql(sql)
-    const { rows: recorded_trips }: { rows: Recorded<Trip>[] } = await client.query(sql)
-    return recorded_trips.map(recorded_trip => ({
-      ...trips.find(trip => trip.provider_trip_id === recorded_trip.provider_trip_id),
-      ...recorded_trip
-    }))
-  } catch (err) {
-    await log.error('pg writeTrips error', err)
-    throw err
-  }
-}
-
-async function readTrips(
-  params: Partial<{
-    skip: number
-    take: number
-    provider_id: UUID
-    device_id: UUID
-    vehicle_id: string
-    min_end_time: Timestamp
-    max_end_time: Timestamp
-  }>
-): Promise<ReadTripsResult> {
-  const client = await getReadOnlyClient()
-  const { device_id, vehicle_id, provider_id, min_end_time, max_end_time, skip, take } = params
-
-  const vals = new SqlVals()
-  const conditions: string[] = ['trip_start IS NOT NULL', 'trip_end IS NOT NULL']
-
-  if (device_id) {
-    if (!isUUID(device_id)) {
-      throw new Error(`invalid device_id ${device_id}`)
-    } else {
-      conditions.push(`device_id = ${vals.add(device_id)}`)
-    }
-  }
-
-  if (provider_id) {
-    if (!isUUID(provider_id)) {
-      throw new Error(`invalid provider_id ${provider_id}`)
-    } else {
-      conditions.push(`provider_id = ${vals.add(provider_id)}`)
-    }
-  }
-
-  if (vehicle_id) {
-    conditions.push(`vehicle_id = ${vals.add(vehicle_id)}`)
-  }
-
-  if (min_end_time !== undefined) {
-    if (!isTimestamp(min_end_time)) {
-      throw new Error(`invalid min_end_time ${min_end_time}`)
-    } else {
-      conditions.push(`trip_end >= ${vals.add(min_end_time)}`)
-    }
-  }
-
-  if (max_end_time !== undefined) {
-    if (!isTimestamp(max_end_time)) {
-      throw new Error(`invalid max_end_time ${max_end_time}`)
-    } else {
-      conditions.push(`trip_end <= ${vals.add(max_end_time)}`) // FIXME confirm <=
-    }
-  }
-
-  const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`
-
-  const exec = SqlExecuter(client)
-
-  const {
-    rows: [{ count }]
-  } = await exec(`SELECT COUNT(*) FROM ${schema.TABLE.trips} ${where}`, vals.values())
-
-  if (count === 0) {
-    return { count, trips: [] }
-  }
-
-  const { rows: trips } = await exec(
-    `SELECT * FROM ${schema.TABLE.trips} ${where} ORDER BY id${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
-      take ? ` LIMIT ${vals.add(take)}` : ''
-    }`,
-    vals.values()
-  )
-
-  return { count, trips }
-}
-
-async function writeStatusChanges(status_changes: StatusChange[]): Promise<Recorded<StatusChange>[]> {
-  if (status_changes.length === 0) {
-    throw new Error('writeStatusChanges: zero status_changes')
-  }
-  try {
-    const client = await getWriteableClient()
-    const recorded = now()
-
-    const values = csv(
-      status_changes
-        .map(sc =>
-          csv(vals_list(schema.TABLE_COLUMNS.status_changes, { ...sc, recorded: sc.recorded || recorded }).map(to_sql))
-        )
-        .map(row => `(${row})`)
-    )
-
-    const sql = `INSERT INTO ${schema.TABLE.status_changes} (${cols_sql(
-      schema.TABLE_COLUMNS.status_changes
-    )}) VALUES ${values} ON CONFLICT DO NOTHING RETURNING *`
-
-    await logSql(sql)
-    const { rows: recorded_status_changes }: { rows: Recorded<StatusChange>[] } = await client.query(sql)
-    return recorded_status_changes.map(recorded_status_change => ({
-      ...status_changes.find(
-        status_change =>
-          status_change.device_id === recorded_status_change.device_id &&
-          status_change.event_time === recorded_status_change.event_time
-      ),
-      ...recorded_status_change
-    }))
-  } catch (err) {
-    await log.error('pg writeStatusChanges error', err)
-    return err
-  }
-}
-
-async function readStatusChanges(
-  params: Partial<{
-    skip: number
-    take: number
-    device_id: UUID
-    provider_id: UUID
-    start_time: Timestamp
-    end_time: Timestamp
-  }>
-): Promise<ReadStatusChangesResult> {
-  const client = await getReadOnlyClient()
-
-  const { provider_id, device_id, start_time, end_time, skip, take } = params
-
-  const vals = new SqlVals()
-  const conditions = []
-
-  if (provider_id) {
-    if (!isUUID(provider_id)) {
-      throw new Error(`invalid provider_id ${provider_id}`)
-    } else {
-      conditions.push(`provider_id = ${vals.add(provider_id)}`)
-    }
-  }
-
-  if (device_id) {
-    if (!isUUID(device_id)) {
-      throw new Error(`invalid device_id ${device_id}`)
-    } else {
-      conditions.push(`device_id = ${vals.add(device_id)}`)
-    }
-  }
-
-  if (start_time !== undefined) {
-    if (!isTimestamp(start_time)) {
-      throw new Error(`invalid start_time ${start_time}`)
-    } else {
-      conditions.push(`event_time >= ${vals.add(start_time)}`)
-    }
-  }
-
-  if (end_time !== undefined) {
-    if (!isTimestamp(end_time)) {
-      throw new Error(`invalid end_time ${end_time}`)
-    } else {
-      conditions.push(`event_time <= ${vals.add(end_time)}`)
-    }
-  }
-
-  const where = conditions.length === 0 ? '' : ` WHERE ${conditions.join(' AND ')}`
-
-  const exec = SqlExecuter(client)
-
-  const {
-    rows: [{ count }]
-  } = await exec(`SELECT COUNT(*) FROM ${schema.TABLE.status_changes} ${where}`, vals.values())
-
-  if (count === 0) {
-    return { count, status_changes: [] }
-  }
-
-  const { rows: status_changes } = await exec(
-    `SELECT * FROM ${schema.TABLE.status_changes} ${where} ORDER BY id${skip ? ` OFFSET ${vals.add(skip)}` : ''}${
-      take ? ` LIMIT ${vals.add(take)}` : ''
-    }`,
-    vals.values()
-  )
-
-  return { count, status_changes }
-}
-
-async function getLatestTime(table: string, field: string): Promise<number> {
-  const client = await getReadOnlyClient()
-
-  const sql = `SELECT ${field} FROM ${table} ORDER BY ${field} DESC LIMIT 1`
-
-  await logSql(sql)
-  const res = await client.query(sql)
-  if (res.rows.length === 1) {
-    return res.rows[0][field] as number
-  }
-  return 0 // no latest trip time, start from Dawn Of Time
-}
-
-async function getLatestStatusChangeTime(): Promise<number> {
-  return getLatestTime(schema.TABLE.status_changes, 'event_time')
-}
-
-async function getLatestTripTime(): Promise<number> {
-  return getLatestTime(schema.TABLE.trips, 'trip_end')
-}
-
-async function readSingleGeography(geography_id: UUID): Promise<Geography> {
-  try {
-    const client = await getReadOnlyClient()
-
-    const sql = `select * from ${schema.TABLE.geographies} where geography_id = '${geography_id}'`
-    const { rows } = await client.query(sql)
-
-    const { id, ...geography } = rows[0]
-    return geography
-  } catch (err) {
-    await log.error('readSingleGeography', err)
-    throw new NotFoundError(`could not find geography ${geography_id}`)
-  }
-}
-
-async function readGeographies(params?: { get_read_only?: boolean }): Promise<Geography[]> {
-  // use params to filter
-  // query on ids
-  // return geographies
-  try {
-    const client = await getReadOnlyClient()
-
-    let sql = `select * from ${schema.TABLE.geographies}`
-    const conditions = []
-    const vals = new SqlVals()
-
-    if (params && params.get_read_only) {
-      conditions.push(`read_only IS TRUE`)
-    }
-
-    if (conditions.length) {
-      sql += ` WHERE ${conditions.join(' AND ')}`
-    }
-
-    const values = vals.values()
-    // TODO insufficiently general
-    // TODO add 'count'
-    const { rows } = await client.query(sql, values)
-
-    return rows.map(row => {
-      const { id, ...geography } = row
-      return geography
-    })
-  } catch (err) {
-    await log.error('readGeographies', err)
-    throw err
-  }
-}
-
-async function readBulkGeographyMetadata(params?: { get_read_only?: boolean }): Promise<GeographyMetadata[]> {
-  const geographies = await readGeographies(params)
-  const geography_ids = geographies.map(geography => {
-    return `'${geography.geography_id}'`
-  })
-
-  if (geography_ids.length === 0) {
-    return []
-  }
-  const sql = `select * from ${schema.TABLE.geography_metadata} where geography_id in (${geography_ids.join(',')})`
-
-  const client = await getReadOnlyClient()
-  const res = await client.query(sql)
-  return res.rows.map(row => {
-    return { geography_id: row.geography_id, geography_metadata: row.geography_metadata }
-  })
-}
-
-async function writeGeography(geography: Geography): Promise<Recorded<Geography>> {
-  // validate TODO
-  // write
-  const client = await getWriteableClient()
-  const sql = `INSERT INTO ${schema.TABLE.geographies} (${cols_sql(
-    schema.TABLE_COLUMNS.geographies
-  )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.geographies)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.geographies, { ...geography })
-  const {
-    rows: [recorded_geography]
-  }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
-  return { ...geography, ...recorded_geography }
-}
-
-async function isGeographyPublished(geography_id: UUID) {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.geographies} WHERE geography_id='${geography_id}'`
-  const result = await client.query(sql).catch(err => {
-    throw err
-  })
-  if (result.rows.length === 0) {
-    throw new NotFoundError(`geography_id ${geography_id} not found`)
-  }
-  log.info('is geography published', geography_id, result.rows[0].read_only)
-  return Boolean(result.rows[0].read_only)
-}
-
-async function editGeography(geography: Geography) {
-  // validate TODO
-  if (await isGeographyPublished(geography.geography_id)) {
-    throw new Error('Cannot edit published Geography')
-  }
-
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.geographies} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND read_only IS FALSE`
-  await client.query(sql, [geography.geography_json])
-  return geography
-}
-
-async function deleteGeography(geography_id: UUID) {
-  if (await isGeographyPublished(geography_id)) {
-    throw new Error('Cannot edit published Geography')
-  }
-
-  const client = await getWriteableClient()
-  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id='${geography_id}' AND read_only IS FALSE`
-  await client.query(sql)
-  return geography_id
-}
-
-async function publishGeography(geography_id: UUID) {
-  try {
-    const client = await getWriteableClient()
-    const geography = await readSingleGeography(geography_id)
-    if (!geography) {
-      throw new NotFoundError('cannot publish nonexistent geography')
-    }
-    const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
-    await client.query(sql)
-    return geography_id
-  } catch (err) {
-    await log.error(err)
-    throw err
-  }
-}
-
-async function writeGeographyMetadata(geography_metadata: GeographyMetadata) {
-  const client = await getWriteableClient()
-  const sql = `INSERT INTO ${schema.TABLE.geography_metadata} (${cols_sql(
-    schema.TABLE_COLUMNS.geography_metadata
-  )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.geography_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.geography_metadata, {
-    geography_id: geography_metadata.geography_id,
-    geography_metadata: geography_metadata.geography_metadata
-  })
-  const {
-    rows: [recorded_metadata]
-  }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
-  return { ...geography_metadata, ...recorded_metadata }
-}
-
-async function readSingleGeographyMetadata(geography_id: UUID): Promise<GeographyMetadata> {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.geography_metadata} WHERE geography_id = '${geography_id}'`
-  const result = await client.query(sql)
-  if (result.rows.length === 0) {
-    throw new NotFoundError(`Metadata for ${geography_id} not found`)
-  }
-  return { geography_id, geography_metadata: result.rows[0].geography_metadata }
-}
-
-async function updateGeographyMetadata(geography_metadata: GeographyMetadata) {
-  await readSingleGeographyMetadata(geography_metadata.geography_id)
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.geography_metadata}
-    SET geography_metadata = '${JSON.stringify(geography_metadata.geography_metadata)}'
-    WHERE geography_id = '${geography_metadata.geography_id}'`
-  const {
-    rows: [recorded_metadata]
-  }: { rows: Recorded<GeographyMetadata>[] } = await client.query(sql)
-  return {
-    ...geography_metadata,
-    ...recorded_metadata
-  }
-}
-
-async function readPolicies(params?: {
-  policy_id?: UUID
-  name?: string
-  description?: string
-  start_date?: Timestamp
-  get_unpublished?: boolean
-  get_published?: boolean
-}): Promise<Policy[]> {
-  // use params to filter
-  // query
-  // return policies
-  const client = await getReadOnlyClient()
-
-  // TODO more params
-  let sql = `select * from ${schema.TABLE.policies}`
-  const conditions = []
-  const vals = new SqlVals()
-  if (params) {
-    if (params.policy_id) {
-      conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
-    }
-
-    if (params.get_unpublished) {
-      conditions.push(`policy_json->>'publish_date' IS NULL`)
-    }
-
-    if (params.get_published) {
-      conditions.push(`policy_json->>'publish_date' IS NOT NULL`)
-    }
-
-    if (params.get_unpublished && params.get_published) {
-      throw new BadParamsError('cannot have get_unpublished and get_published both be true')
-    }
-
-    if (params.start_date) {
-      conditions.push(`policy_json->>'start_date' >= '${params.start_date}'`)
-    }
-  }
-
-  if (conditions.length) {
-    sql += ` WHERE ${conditions.join(' AND ')}`
-  }
-  const values = vals.values()
-  const res = await client.query(sql, values)
-  return res.rows.map(row => row.policy_json)
-}
-
-async function readBulkPolicyMetadata(params?: {
-  policy_id?: UUID
-  name?: string
-  description?: string
-  start_date?: Timestamp
-  get_unpublished?: boolean
-  get_published?: boolean
-}): Promise<PolicyMetadata[]> {
-  const policies = await readPolicies(params)
-  const policy_ids = policies.map(policy => {
-    return `'${policy.policy_id}'`
-  })
-
-  if (policy_ids.length === 0) {
-    return []
-  }
-  const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id in (${policy_ids.join(',')})`
-
-  const client = await getReadOnlyClient()
-  const res = await client.query(sql)
-  return res.rows.map(row => {
-    return { policy_id: row.policy_id, policy_metadata: row.policy_metadata }
-  })
-}
-
-async function readSinglePolicyMetadata(policy_id: UUID): Promise<PolicyMetadata> {
-  const client = await getReadOnlyClient()
-
-  const sql = `select * from ${schema.TABLE.policy_metadata} where policy_id = '${policy_id}'`
-  const res = await client.query(sql)
-  if (res.rows.length === 1) {
-    const { policy_metadata } = res.rows[0]
-    return { policy_id, policy_metadata }
-  }
-  await log.info(`readSinglePolicyMetadata db failed for ${policy_id}: rows=${res.rows.length}`)
-  throw new NotFoundError(`metadata for policy_id ${policy_id} not found`)
-}
-
-async function readPolicy(policy_id: UUID): Promise<Policy> {
-  const client = await getReadOnlyClient()
-
-  const sql = `select * from ${schema.TABLE.policies} where policy_id = '${policy_id}'`
-  const res = await client.query(sql)
-  if (res.rows.length === 1) {
-    return res.rows[0].policy_json
-  }
-  await log.info(`readPolicy db failed for ${policy_id}: rows=${res.rows.length}`)
-  throw new NotFoundError(`policy_id ${policy_id} not found`)
-}
-
-async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
-  // validate TODO
-  const client = await getWriteableClient()
-  const sql = `INSERT INTO ${schema.TABLE.policies} (${cols_sql(schema.TABLE_COLUMNS.policies)}) VALUES (${vals_sql(
-    schema.TABLE_COLUMNS.policies
-  )}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.policies, { ...policy, policy_json: policy })
-  const {
-    rows: [recorded_policy]
-  }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
-  return { ...policy, ...recorded_policy }
-}
-
-async function isPolicyPublished(policy_id: UUID) {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * FROM ${schema.TABLE.policies} WHERE policy_id='${policy_id}'`
-  const result = await client.query(sql)
-  if (result.rows.length === 0) {
-    return false
-  }
-  return Boolean(result.rows[0].policy_json.publish_date)
-}
-
-async function editPolicy(policy: Policy) {
-  // validate TODO
-  const { policy_id } = policy
-
-  if (await isPolicyPublished(policy_id)) {
-    throw new AlreadyPublishedError('Cannot edit published policy')
-  }
-
-  const result = await readPolicies({ policy_id, get_unpublished: true })
-  if (result.length === 0) {
-    throw new NotFoundError(`no policy of id ${policy_id} was found`)
-  }
-
-  const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.policies} SET policy_json=$1 WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
-  await client.query(sql, [policy])
-  return policy
-}
-
-async function deletePolicy(policy_id: UUID) {
-  if (await isPolicyPublished(policy_id)) {
-    throw new Error('Cannot edit published Geography')
-  }
-
-  const client = await getWriteableClient()
-  const sql = `DELETE FROM ${schema.TABLE.policies} WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
-  await client.query(sql)
-  return policy_id
-}
-
-async function publishPolicy(policy_id: UUID) {
-  try {
-    const client = await getWriteableClient()
-    if (await isPolicyPublished(policy_id)) {
-      throw new AlreadyPublishedError('Cannot re-publish existing policy')
-    }
-
-    const policy = (await readPolicies({ policy_id, get_unpublished: true }))[0]
-    if (!policy) {
-      throw new NotFoundError('cannot publish nonexistent policy')
-    }
-
-    const geographies: UUID[] = []
-    policy.rules.forEach(rule => {
-      rule.geographies.forEach(geography_id => {
-        geographies.push(geography_id)
-      })
-    })
-    await Promise.all(
-      geographies.map(geography_id => {
-        log.info('publishing geography', geography_id)
-        return publishGeography(geography_id)
-      })
-    )
-    await Promise.all(
-      geographies.map(geography_id => {
-        const ispublished = isGeographyPublished(geography_id)
-        log.info('published geography', geography_id, ispublished)
-      })
-    )
-
-    // Only publish the policy if the geographies are successfully published first
-    const publishPolicySQL = `UPDATE ${
-      schema.TABLE.policies
-    } SET policy_json = policy_json::jsonb || '{"publish_date": ${now()}}' where policy_id='${policy_id}'`
-    await client.query(publishPolicySQL).catch(err => {
-      throw err
-    })
-    return policy_id
-  } catch (err) {
-    await log.error(err)
-    throw err
-  }
-}
-
-async function writePolicyMetadata(policy_metadata: PolicyMetadata) {
-  const client = await getWriteableClient()
-  const sql = `INSERT INTO ${schema.TABLE.policy_metadata} (${cols_sql(
-    schema.TABLE_COLUMNS.policy_metadata
-  )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.policy_metadata)}) RETURNING *`
-  const values = vals_list(schema.TABLE_COLUMNS.policy_metadata, {
-    policy_id: policy_metadata.policy_id,
-    policy_metadata: policy_metadata.policy_metadata
-  })
-  const {
-    rows: [recorded_metadata]
-  }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql, values)
-  return {
-    ...policy_metadata,
-    ...recorded_metadata
-  }
-}
-
-async function updatePolicyMetadata(policy_metadata: PolicyMetadata) {
-  try {
-    await readSinglePolicyMetadata(policy_metadata.policy_id)
-    const client = await getWriteableClient()
-    const sql = `UPDATE ${schema.TABLE.policy_metadata}
-      SET policy_metadata = '${JSON.stringify(policy_metadata.policy_metadata)}'
-      WHERE policy_id = '${policy_metadata.policy_id}'`
-    const {
-      rows: [recorded_metadata]
-    }: { rows: Recorded<PolicyMetadata>[] } = await client.query(sql)
-    return {
-      ...policy_metadata,
-      ...recorded_metadata
-    }
-  } catch (err) {
-    await log.error(err)
-    throw err
-  }
-}
-
-async function readRule(rule_id: UUID): Promise<Rule> {
-  const client = await getReadOnlyClient()
-  const sql = `SELECT * from ${schema.TABLE.policies} where EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`
-  const res = await client.query(sql).catch(err => {
-    throw err
-  })
-  if (res.rowCount !== 1) {
-    throw new Error(`invalid rule_id ${rule_id}`)
-  } else {
-    const [{ policy_json }]: { policy_json: Policy }[] = res.rows
-    const [rule] = policy_json.rules.filter(r => {
-      return r.rule_id === rule_id
-    })
-    return rule
-  }
-}
-
-async function readUnprocessedStatusChangeEvents(
-  before: Recorded<VehicleEvent> | null,
-  take = 1000
-): Promise<{ count: number; events: Recorded<VehicleEvent>[] }> {
-  const client = await getReadOnlyClient()
-  const vals = new SqlVals()
-  const exec = SqlExecuter(client)
-
-  const where = `WHERE ${(before ? [`E.id < ${before.id}`] : [])
-    .concat(
-      `NOT EXISTS (SELECT FROM ${schema.TABLE.status_changes} WHERE device_id = E.device_id AND event_time = E.timestamp)`
-    )
-    .join(' AND ')}`
-
-  const {
-    rows: [{ count }]
-  } = await exec(`SELECT COUNT(*) FROM ${schema.TABLE.events} E ${where}`, vals.values())
-
-  if (count === 0) {
-    return { count, events: [] }
-  }
-
-  const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
-      schema.TABLE.events
-    } E ${where} ORDER BY E.id LIMIT ${vals.add(take)}) AS E LEFT JOIN ${
-      schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp`,
-    vals.values()
-  )
-
-  return {
-    count,
-    events: rows.map(({ lat, lng, telemetry_timestamp, ...event }) => ({
-      ...event,
-      telemetry_timestamp,
-      telemetry: telemetry_timestamp
-        ? {
-            timestamp: telemetry_timestamp,
-            gps: { lat, lng }
-          }
-        : null
-    }))
-  }
-}
-
-async function readEventsWithTelemetry({
-  device_id,
-  provider_id,
-  start_time,
-  end_time,
-  last_id = 0,
-  limit = 1000
-}: Partial<{
-  device_id: UUID
-  provider_id: UUID
-  start_time: Timestamp
-  end_time: Timestamp
-  last_id: number
-  limit: number
-}>): Promise<Recorded<VehicleEvent>[]> {
-  const client = await getReadOnlyClient()
-  const vals = new SqlVals()
-  const exec = SqlExecuter(client)
-
-  const conditions: string[] = last_id ? [`id > ${vals.add(last_id)}`] : []
-
-  if (provider_id) {
-    if (!isUUID(provider_id)) {
-      throw new Error(`invalid provider_id ${provider_id}`)
-    } else {
-      conditions.push(`provider_id = ${vals.add(provider_id)}`)
-    }
-  }
-
-  if (device_id) {
-    if (!isUUID(device_id)) {
-      throw new Error(`invalid device_id ${device_id}`)
-    } else {
-      conditions.push(`device_id = ${vals.add(device_id)}`)
-    }
-  }
-
-  if (start_time !== undefined) {
-    if (!isTimestamp(start_time)) {
-      throw new Error(`invalid start_time ${start_time}`)
-    } else {
-      conditions.push(`timestamp >= ${vals.add(start_time)}`)
-    }
-  }
-
-  if (end_time !== undefined) {
-    if (!isTimestamp(end_time)) {
-      throw new Error(`invalid end_time ${end_time}`)
-    } else {
-      conditions.push(`timestamp <= ${vals.add(end_time)}`)
-    }
-  }
-
-  const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
-
-  const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
-      schema.TABLE.events
-    }${where} ORDER BY id LIMIT ${vals.add(limit)}
-    ) AS E LEFT JOIN ${
-      schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp ORDER BY id`,
-    vals.values()
-  )
-
-  return rows.map(({ lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
-    ...event,
-    telemetry: telemetry_timestamp
-      ? {
-          timestamp: telemetry_timestamp,
-          gps: { lat, lng, speed, heading, accuracy, altitude },
-          charge
-        }
-      : null
-  }))
 }
 
 async function seed(data: {
@@ -1744,67 +827,6 @@ async function seed(data: {
     return Promise.resolve()
   }
   return Promise.resolve('no data')
-}
-
-interface ReadTripIdsResult {
-  count: number
-  tripIds: UUID[]
-}
-
-interface ReadTripIdsQueryParams {
-  skip: number
-  take: number
-  device_id: UUID
-  min_end_time: Timestamp
-  max_end_time: Timestamp
-}
-
-async function readTripIds(params: Partial<ReadTripIdsQueryParams> = {}): Promise<ReadTripIdsResult> {
-  const { skip, take, device_id, min_end_time, max_end_time } = params
-
-  const client = await getReadOnlyClient()
-
-  if (typeof skip !== 'number' || skip < 0) {
-    throw new Error('requires integer skip')
-  }
-  if (typeof take !== 'number' || skip < 0) {
-    throw new Error('requires integer take')
-  }
-
-  const vals = new SqlVals()
-  const conditions = [`event_type = 'trip_end'`]
-  if (max_end_time) {
-    conditions.push(`"timestamp" <= ${vals.add(Number(max_end_time))}`)
-  }
-  if (min_end_time) {
-    conditions.push(`"timestamp" >= ${vals.add(Number(min_end_time))}`)
-  }
-  if (device_id) {
-    conditions.push(`device_id = ${vals.add(device_id)}`)
-  }
-
-  const condSql = conditions.join(' AND ')
-
-  try {
-    const countSql = `SELECT COUNT(*) FROM ${schema.TABLE.events} WHERE ${condSql}`
-    const countVals = vals.values()
-    await logSql(countSql, countVals)
-    const res = await client.query(countSql, countVals)
-    const count = parseInt(res.rows[0].count)
-    const selectSql = `SELECT * FROM ${schema.TABLE.events} WHERE ${condSql} ORDER BY "timestamp" OFFSET ${vals.add(
-      skip
-    )} LIMIT ${vals.add(take)}`
-    const selectVals = vals.values()
-    await logSql(selectSql, selectVals)
-    const res2 = await client.query(selectSql, selectVals)
-    return {
-      tripIds: res2.rows.map(row => row.trip_id),
-      count
-    }
-  } catch (err) {
-    await log.error('readTripIds error', err)
-    throw err
-  }
 }
 
 export = {

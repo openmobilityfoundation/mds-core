@@ -1,7 +1,7 @@
 {
   "name": "@mds-core/mds-policy",
   "description": "MDS Policy API",
-  "version": "0.0.11",
+  "version": "0.0.14",
   "license": "Apache-2.0",
   "engineStrict": true,
   "engines": {
@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@hapi/joi": "15.1.1",
-    "@mds-core/mds-api-server": "0.1.10",
-    "@mds-core/mds-db": "0.1.10",
-    "@mds-core/mds-logger": "0.1.9",
-    "@mds-core/mds-providers": "0.1.10",
-    "@mds-core/mds-types": "0.1.7",
-    "@mds-core/mds-utils": "0.1.10",
+    "@mds-core/mds-api-server": "0.1.13",
+    "@mds-core/mds-db": "0.1.13",
+    "@mds-core/mds-logger": "0.1.11",
+    "@mds-core/mds-providers": "0.1.13",
+    "@mds-core/mds-types": "0.1.10",
+    "@mds-core/mds-utils": "0.1.13",
     "express": "4.17.1",
     "joi-to-json-schema": "5.1.0",
     "uuid": "3.3.3"
@@ -30,7 +30,7 @@
     "start": "PATH_PREFIX=/policy yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   }

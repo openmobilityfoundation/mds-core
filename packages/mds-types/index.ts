@@ -349,6 +349,8 @@ export interface Geography {
   description?: string
 }
 
+export type GeographySummary = Omit<Geography, 'geography_json'>
+
 export interface GeographyMetadata {
   geography_id: UUID
   geography_metadata: Record<string, any>
