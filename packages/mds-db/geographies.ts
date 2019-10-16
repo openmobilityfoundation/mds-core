@@ -58,7 +58,7 @@ export async function readGeographies(params: Partial<ReadGeographiesParams> = {
   }
 }
 
-export async function readGeographiesSummaries(params?: { get_read_only?: boolean }): Promise<GeographySummary[]> {
+export async function readGeographySummaries(params?: { get_read_only?: boolean }): Promise<GeographySummary[]> {
   const geographies = await readGeographies(params)
   return geographies.map(geography => {
     const { geography_json, ...geographySummary } = geography
