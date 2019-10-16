@@ -340,7 +340,7 @@ export interface ComplianceResponse {
 // the geojson FeatureCollection type.
 export interface Geography {
   geography_id: UUID
-  geography_json?: FeatureCollection
+  geography_json: FeatureCollection
   read_only?: boolean
   previous_geographies?: UUID[]
   name: string
@@ -348,6 +348,8 @@ export interface Geography {
   effective_date?: Timestamp
   description?: string
 }
+
+export type GeographySummary = Omit<Geography, 'geography_json'>
 
 export interface GeographyMetadata {
   geography_id: UUID
