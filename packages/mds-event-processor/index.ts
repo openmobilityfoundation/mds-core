@@ -1,14 +1,10 @@
-let { event_handler } = require('./src/proc-event')
-let { trip_handler } = require('./src/proc-trip')
-let { provider_handler } = require('./src/proc-provider')
-let { setup } = require('./util/db')
-const log = require('loglevel')
-log.setLevel('trace') // TODO, make env var?
-
-log.setLevel('trace')
+import { event_handler } from './src/proc-event'
+import { trip_handler } from './src/proc-trip'
+//import { provider_handler } from './src/proc-provider'
+import db from '@mds-core/mds-db'
 
 function getArgs() {
-  const args = {}
+  let args: { [x: string]: any } = {}
   process.argv.slice(2, process.argv.length).forEach(arg => {
     // long arg
     if (arg.slice(0, 2) === '--') {
@@ -27,29 +23,33 @@ function getArgs() {
   return args
 }
 
-async function process_data(type) {
+async function process_data(type: string) {
   // just make sure the tables exist
-  await setup()
-  log.info('INIT')
+  await db.initialize()
+  console.log('INIT')
   switch (type) {
     case 'event':
-      log.info('EVENT')
+      console.log('EVENT')
       await event_handler()
       break
     case 'trip':
-      log.info('TRIP')
+      console.log('TRIP')
       await trip_handler()
       break
-    case 'provider':
-      log.info('PROVIDER')
+    /*
+      case 'provider':
+      console.log('PROVIDER')
       await provider_handler()
       break
+    */
   }
 }
 
-let args = getArgs()
-if (args['type']) {
-  process_data(args['type'])
-} else {
-  console.error('no type specified!')
+export const main = () => {
+  let args = getArgs()
+  if (args['type']) {
+    process_data(args['type'])
+  } else {
+    console.error('no type specified!')
+  }
 }

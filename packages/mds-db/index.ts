@@ -58,6 +58,7 @@ import {
   configureClient,
   MDSPostgresClient
 } from './sql-utils'
+import { TABLE_NAME } from './schema'
 
 const { env } = process
 
@@ -196,6 +197,76 @@ async function health(): Promise<{
       cache_hit_result: cacheHitResult
     }
   }
+}
+
+function commaize(array: any[], quote = `'`, join = ','): any {
+  return array.map((val: any) => `${stringify(val, quote)}`).join(join)
+}
+
+function db_time(time: any): any {
+  let date_time = parseInt(time) ? parseInt(time) : time
+  return (
+    new Date(date_time)
+      .toISOString()
+      .replace('T', ' ')
+      .substr(0, 23) + 'UTC'
+  )
+}
+
+function stringify(data: any, quote: any, nested = false): any {
+  if (!data && data !== 0) {
+    return `NULL`
+  } else if (Array.isArray(data)) {
+    // get type
+    let type = ''
+    let first = [data]
+    while (first.length > 0 && Array.isArray(first[0])) {
+      type = '[]' + type
+      first = first[0]
+    }
+
+    first = first[0]
+    switch (typeof first) {
+      case 'object':
+        type = 'JSON' + type
+        break
+      case 'string':
+        type = 'varchar(31)' + type
+        break
+      default:
+        type = typeof first + type
+    }
+
+    let commaized_content = commaize(data.map(data_element => stringify(data_element, `'`, true)), ``)
+    let cast = !nested && type !== '[]'
+    return `${cast ? 'CAST(' : ''}${nested ? '' : 'ARRAY'}[${commaized_content}]${cast ? ` AS ${type})` : ''}`
+  } else if (typeof data === 'object') {
+    return `${quote}${JSON.stringify(data)}${quote}`
+  } else {
+    return `${quote}${data}${quote}`
+  }
+}
+
+async function runQuery(query: any) {
+  const client = await getWriteableClient()
+  let results = await client.query(query)
+  return results.rows
+}
+
+async function insert(table_name: TABLE_NAME, data: { [x: string]: any }) {
+  if (!data) {
+    return null
+  }
+  let fields = Object.keys(schema.TABLE[table_name])
+  let query = `INSERT INTO ${table_name} (${commaize(fields, `"`)}) `
+  log.info(commaize(fields.map(field => (field.includes('time') ? db_time(data[field]) : data[field]))))
+  query += `VALUES (${commaize(fields.map(field => (field.includes('time') ? db_time(data[field]) : data[field])))})`
+  console.log(query)
+  return runQuery(query)
+}
+
+async function resetTable(table_name: TABLE_NAME) {
+  await runQuery(`TRUNCATE ${table_name}`)
 }
 
 async function readDeviceByVehicleId(
@@ -1739,6 +1810,8 @@ async function readTripIds(params: Partial<ReadTripIdsQueryParams> = {}): Promis
 export = {
   initialize,
   health,
+  insert,
+  resetTable,
   seed,
   startup,
   shutdown,

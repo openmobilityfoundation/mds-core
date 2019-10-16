@@ -3,9 +3,5 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [
-    { "path": "../../container-images/env-inject/tsconfig.build.json" },
-    { "path": "../../packages/mds-agency/tsconfig.build.json" },
-    { "path": "../../packages/mds-api-server/tsconfig.build.json" }
-  ]
+  "references": [{ "path": "../../packages/mds-event-processor/tsconfig.build.json" }]
 }

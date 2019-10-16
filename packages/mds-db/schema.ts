@@ -14,7 +14,10 @@ const TABLE = Enum(
   'policy_metadata',
   'status_changes',
   'telemetry',
-  'trips'
+  'trips',
+  'reports_device_states',
+  'reports_trips',
+  'reports_providers'
 )
 export type TABLE_NAME = keyof typeof TABLE
 const TABLES = Object.keys(TABLE) as TABLE_NAME[]
@@ -83,7 +86,38 @@ const COLUMN = Enum(
   'type',
   'vehicle_id',
   'vehicle_type',
-  'year'
+  'year',
+  'timestamp',
+  'device_id',
+  'provider_id',
+  'state',
+  'event_type',
+  'event_type_reason',
+  'trip_id',
+  'service_area_id',
+  'gps',
+  'battery',
+  'annotation_version',
+  'annotation',
+  'time_recorded',
+  'last_state_data',
+  'trip_id',
+  'device_id',
+  'provider_id',
+  'start_time',
+  'end_time',
+  'start_district',
+  'end_district',
+  'duration',
+  'distance',
+  'telemetry',
+  'provider_id',
+  'timestamp',
+  'cap_count',
+  'dead_count',
+  'invalid_count',
+  'duplicate_count',
+  'ooo_count'
 )
 export type COLUMN_NAME = keyof typeof COLUMN
 const COLUMNS = Object.keys(COLUMN) as COLUMN_NAME[]
@@ -210,6 +244,43 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.standard_cost,
     COLUMN.actual_cost,
     COLUMN.recorded
+  ],
+  [TABLE.reports_device_states]: [
+    COLUMN.timestamp,
+    COLUMN.device_id,
+    COLUMN.provider_id,
+    COLUMN.state,
+    COLUMN.event_type,
+    COLUMN.event_type_reason,
+    COLUMN.trip_id,
+    COLUMN.service_area_id,
+    COLUMN.gps,
+    COLUMN.battery,
+    COLUMN.annotation_version,
+    COLUMN.annotation,
+    COLUMN.time_recorded,
+    COLUMN.last_state_data
+  ],
+  [TABLE.reports_trips]: [
+    COLUMN.trip_id,
+    COLUMN.device_id,
+    COLUMN.provider_id,
+    COLUMN.start_time,
+    COLUMN.end_time,
+    COLUMN.start_district,
+    COLUMN.end_district,
+    COLUMN.duration,
+    COLUMN.distance,
+    COLUMN.telemetry
+  ],
+  [TABLE.reports_providers]: [
+    COLUMN.provider_id,
+    COLUMN.timestamp,
+    COLUMN.cap_count,
+    COLUMN.dead_count,
+    COLUMN.invalid_count,
+    COLUMN.duplicate_count,
+    COLUMN.ooo_count
   ]
 }
 
@@ -225,8 +296,13 @@ const TABLE_KEY: { [T in TABLE_NAME]: COLUMN_NAME[] } = {
   [TABLE.policy_metadata]: [COLUMN.policy_id],
   [TABLE.status_changes]: [COLUMN.device_id, COLUMN.event_time],
   [TABLE.telemetry]: [COLUMN.device_id, COLUMN.timestamp],
-  [TABLE.trips]: [COLUMN.provider_trip_id]
+  [TABLE.trips]: [COLUMN.provider_trip_id],
+  [TABLE.reports_device_states]: [COLUMN.timestamp, COLUMN.device_id, COLUMN.provider_id, COLUMN.type],
+  [TABLE.reports_trips]: [COLUMN.trip_id, COLUMN.device_id, COLUMN.provider_id],
+  [TABLE.reports_providers]: [COLUMN.provider_id, COLUMN.timestamp]
 }
+
+// TODO: Add table constraints (e.g. non-null values)
 
 const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.accuracy]: 'real',
@@ -292,7 +368,38 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.type]: 'varchar(31) NOT NULL',
   [COLUMN.vehicle_id]: 'varchar(255) NOT NULL',
   [COLUMN.vehicle_type]: 'varchar(31) NOT NULL',
-  [COLUMN.year]: 'smallint'
+  [COLUMN.year]: 'smallint',
+  [COLUMN.timestamp]: 'timestamp with time zone',
+  [COLUMN.device_id]: 'uuid',
+  [COLUMN.provider_id]: 'uuid',
+  [COLUMN.state]: 'device_state',
+  [COLUMN.event_type]: 'device_event',
+  [COLUMN.event_type_reason]: 'varchar',
+  [COLUMN.trip_id]: 'uuid',
+  [COLUMN.service_area_id]: 'uuid',
+  [COLUMN.gps]: 'json',
+  [COLUMN.battery]: 'double precision',
+  [COLUMN.annotation_version]: 'smallint',
+  [COLUMN.annotation]: 'json',
+  [COLUMN.time_recorded]: 'timestamp with time zone',
+  [COLUMN.last_state_data]: 'json',
+  [COLUMN.trip_id]: 'uuid',
+  [COLUMN.device_id]: 'uuid',
+  [COLUMN.provider_id]: 'uuid',
+  [COLUMN.start_time]: 'timestamp with time zone',
+  [COLUMN.end_time]: 'timestamp with time zone',
+  [COLUMN.start_district]: 'uuid',
+  [COLUMN.end_district]: 'uuid',
+  [COLUMN.duration]: 'bigint',
+  [COLUMN.distance]: 'double precision',
+  [COLUMN.telemetry]: 'json[]',
+  [COLUMN.provider_id]: 'uuid',
+  [COLUMN.timestamp]: 'timestamp with time zone',
+  [COLUMN.cap_count]: 'bigint',
+  [COLUMN.dead_count]: 'bigint',
+  [COLUMN.invalid_count]: 'bigint',
+  [COLUMN.duplicate_count]: 'bigint',
+  [COLUMN.ooo_count]: 'bigint'
 }
 
 export default {

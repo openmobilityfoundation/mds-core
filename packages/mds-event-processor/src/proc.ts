@@ -1,14 +1,35 @@
 const env = process.env
-const log = require('loglevel')
-const { reset_all } = require('../util/reset')
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import http from 'http'
 
-const http = require('http')
-async function data_handler(type, callback) {
-  log.info('Creating server...')
-  const server = http.createServer((req, res) => {
+async function reset_all(type: string) {
+  // cache related
+  if (type === 'event') {
+    await cache.delCache('device:state')
+  } else if (type === 'trip') {
+    await cache.delCache('trip:state')
+    await cache.delMatch('device:*:trips')
+  }
+
+  // database related
+  await db.initialize()
+  if (type === 'event') {
+    await db.resetTable('reports_device_states')
+  } else if (type === 'trip') {
+    await db.resetTable('reports_trips')
+  }
+}
+
+async function data_handler(
+  type: string,
+  callback: { (type: any, data: any): Promise<any>; (arg0: any, arg1: any): void }
+) {
+  console.log('Creating server...')
+  const server = http.createServer((req: any, res: any) => {
     if (req.method === 'POST') {
-      let body = ''
-      req.on('data', function(data) {
+      let body: any
+      req.on('data', function(data: string) {
         body += data
       })
       req.on('end', function() {
@@ -19,7 +40,7 @@ async function data_handler(type, callback) {
 
         body = JSON.parse(body)
 
-        let ce_data = {}
+        let ce_data: { [x: string]: any } = {}
         if (type === 'application/json') {
           // binary
           ce_data = {
@@ -43,6 +64,7 @@ async function data_handler(type, callback) {
       // TODO: MAKE SURE ADMIN PERMISSIONS ARE SETUP
       if (req.url === '/reset') {
         reset_all(type)
+        console.log('done resetting')
         res.statusCode = 200
         res.end()
       }
@@ -50,9 +72,7 @@ async function data_handler(type, callback) {
       res.end()
     }
   })
-  log.info(`listening on ${env.PORT}...`)
+  console.log(`listening on ${env.PORT}...`)
   server.listen(env.PORT || 4007)
 }
-module.exports = {
-  data_handler
-}
+export { data_handler }

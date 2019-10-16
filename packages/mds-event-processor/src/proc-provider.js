@@ -1,7 +1,7 @@
 let { data_handler } = require('./proc.js')
-let { insert, runQuery } = require('../util/db')
-let { hset, hget, hgetall, hdel } = require('../util/cache')
-let { add } = require('../util/stream')
+let { insert, runQuery } = require('../db')
+let { hset, hget, hgetall, hdel } = require('../cache')
+let { add } = require('../stream')
 
 let { calcTotalDist } = require('./geo/geo')
 

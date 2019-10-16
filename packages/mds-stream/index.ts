@@ -301,6 +301,7 @@ export = {
   reset,
   shutdown,
   startup,
+  writeCloudEvent,
   writeDevice,
   writeEvent,
   writeStream,

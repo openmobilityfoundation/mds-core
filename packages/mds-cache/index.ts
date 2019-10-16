@@ -45,6 +45,7 @@ const { env } = process
 
 const { unflatten } = flatten
 
+// TO DO: Shouldn't we be using @type defionition of redis interface
 declare module 'redis' {
   interface RedisClient {
     dbsizeAsync: () => Promise<number>
@@ -52,6 +53,8 @@ declare module 'redis' {
     flushdbAsync: () => Promise<'OK'>
     hdelAsync: (...args: (string | number)[]) => Promise<number>
     hgetallAsync: (arg1: string) => Promise<{ [key: string]: string }>
+    hgetAsync: (key: string, field: string) => Promise<string>
+    hsetAsync: (key: string, field: string, value: string) => Promise<number>
     hmsetAsync: (...args: unknown[]) => Promise<'OK'>
     infoAsync: () => Promise<string>
     keysAsync: (arg1: string) => Promise<string[]>
@@ -103,6 +106,33 @@ async function info() {
     }
   })
   return data
+}
+
+async function delMatch(key: string) {
+  let rows = await readKeys(key)
+  for (let row_index in rows) {
+    await (await getClient()).delAsync(rows[row_index])
+  }
+}
+
+async function delCache(key: string) {
+  await (await getClient()).delAsync(key)
+}
+
+async function hget(key: string, field: string) {
+  return (await getClient()).hgetAsync(key, field)
+}
+
+async function hgetall(key: string) {
+  return (await getClient()).hgetallAsync(key)
+}
+
+async function hset(key: string, field: string, value: string) {
+  await (await getClient()).hsetAsync(key, field, value)
+}
+
+async function hdel(key: string, field: string) {
+  return (await getClient()).hdelAsync(key, field)
 }
 
 // update the ordered list of (device_id, timestamp) tuples
@@ -377,7 +407,7 @@ async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
     .filter(e => !!e)
 }
 
-async function readAllEvents() : Promise<Array<VehicleEvent | null>> {
+async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   // FIXME wildcard searching is slow
   const keys = await readKeys('device:*:event')
   const device_ids = keys.map(key => {
@@ -539,6 +569,12 @@ export = {
   initialize,
   health,
   info,
+  delMatch,
+  delCache,
+  hget,
+  hgetall,
+  hset,
+  hdel,
   seed,
   reset,
   startup,

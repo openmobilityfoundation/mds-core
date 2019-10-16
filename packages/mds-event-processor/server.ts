@@ -14,8 +14,7 @@
     limitations under the License.
  */
 
-import { main } from '@mds-core/mds-event-processor'
+// Express local
+import { main } from './index'
 
-/* eslint-reason avoids import of logger */
-/* eslint-disable-next-line no-console */
 main()
