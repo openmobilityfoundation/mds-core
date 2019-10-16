@@ -1,5 +1,7 @@
 import assert from 'assert'
-import { categorizeTrips, TripsData, asInt } from '../utils'
+import cache from '@mds-core/mds-cache'
+import Sinon from 'sinon'
+import { categorizeTrips, TripsData, asInt, getMaps } from '../utils'
 
 describe('MDS Daily utils', () => {
   describe('asInt()', () => {
@@ -49,5 +51,11 @@ describe('MDS Daily utils', () => {
       }
       assert.deepStrictEqual(result, expected)
     })
+  })
+
+  it('Computes event mapping correctly even with cache miss', async () => {
+    Sinon.replace(cache, 'readAllEvents', Sinon.fake.resolves([null]))
+    const maps = await getMaps()
+    assert.deepStrictEqual(maps, { eventMap: {} })
   })
 })

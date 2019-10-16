@@ -3,6 +3,8 @@ import Sinon from 'sinon'
 import { DailyApiRequest, DailyApiResponse } from '../types'
 import { getRawTripData } from '../request-handlers'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 describe('Request handlers', () => {
   describe('getRawTripData()', () => {
     it('handles a db read error in getRawTripData()', async () => {
@@ -14,9 +16,9 @@ describe('Request handlers', () => {
         } as any
       }
       await getRawTripData(
-        {
+        ({
           params: { trip_id: 'fake-trip-id' }
-        } as DailyApiRequest,
+        } as unknown) as DailyApiRequest,
         res as DailyApiResponse
       )
       Sinon.restore()

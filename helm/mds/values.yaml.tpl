@@ -1,65 +1,73 @@
 apis:
-  - name: mds-provider
+  mds-provider:
+    enabled: true
     pathPrefix: /provider
     port: 4000
-    version: latest
+    version: ${PROVIDER_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
-  - name: mds-agency
+    useEvents: false
+  mds-agency:
+    enabled: true
     pathPrefix: /agency
     port: 4001
-    version: latest
+    version: ${AGENCY_VERSION}
     useDB: true
-    migration: true
+    migration: false
     useCache: true
-    useEvents: true
-  - name: mds-audit
+    useEvents: false
+  mds-audit:
+    enabled: true
     pathPrefix: /audit
     port: 4002
-    version: latest
+    version: ${AUDIT_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
-  - name: mds-policy
+    useEvents: false
+  mds-policy:
+    enabled: true
     pathPrefix: /policy
     port: 4003
-    version: latest
+    version: ${POLICY_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
-  - name: mds-compliance
+    useEvents: false
+  mds-compliance:
+    enabled: true
     pathPrefix: /compliance
     port: 4004
-    version: latest
+    version: ${COMPLIANCE_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
-  - name: mds-daily
+    useEvents: false
+  mds-daily:
+    enabled: true
     pathPrefix: /daily
     port: 4005
-    version: latest
+    version: ${DAILY_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
-  - name: mds-native
+    useEvents: false
+  mds-native:
+    enabled: true
     pathPrefix: /native
     port: 4006
-    version: latest
+    version: ${NATIVE_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
-  - name: mds-policy-author
+    useEvents: false
+  mds-policy-author:
+    enabled: true
     pathPrefix: /policy-author
     port: 4007
-    version: latest
+    version: ${POLICY_AUTHOR_VERSION}
     useDB: true
     migration: false
     useCache: true
-    useEvents: true
+    useEvents: false

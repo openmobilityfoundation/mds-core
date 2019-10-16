@@ -1,14 +1,15 @@
 {{- if .Values.jwt.enabled }}
-{{- range $api := .Values.apis }}
+{{- range $key, $api := .Values.apis }}
+{{- if $api.enabled }}
 ---
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
 metadata:
-  name: {{ $api.name }}-auth
+  name: {{ $key }}-auth
   namespace: {{ $.Release.Namespace }}
 spec:
   targets:
-  - name: {{ $api.name }}
+  - name: {{ $key }}
   peers:
   - mtls: {}
   origins:
@@ -24,5 +25,6 @@ spec:
         - exact: {{ $api.pathPrefix }}/health
         - exact: /health
   principalBinding: USE_ORIGIN
+{{- end }}
 {{- end }}
 {{- end }}

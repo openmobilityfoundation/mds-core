@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-providers",
-  "version": "0.1.9",
+  "version": "0.1.12",
   "description": "Mobility Data Specification provider details",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,6 +20,6 @@
     "test:unit": "exit 0"
   },
   "dependencies": {
-    "@mds-core/mds-types": "0.1.6"
+    "@mds-core/mds-types": "0.1.9"
   }
 }

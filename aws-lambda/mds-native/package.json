@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-native",
-  "version": "0.0.7",
+  "version": "0.0.10",
   "description": "AWS Lambda for MDS Native API",
   "main": "dist/index.js",
   "files": [
@@ -21,9 +21,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "0.1.9",
-    "@mds-core/mds-api-server": "0.1.9",
-    "@mds-core/mds-native": "0.0.7"
+    "@aws-lambda/aws-serverless-express-handler": "0.1.12",
+    "@mds-core/mds-api-server": "0.1.12",
+    "@mds-core/mds-native": "0.0.10"
   },
   "license": "Apache-2.0"
 }

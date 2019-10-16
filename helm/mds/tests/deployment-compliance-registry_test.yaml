@@ -2,7 +2,7 @@ suite: test deployment compliance registry
 templates:
   - deployment.yaml
 tests:
-  - it: doc 4
+  - it: doc 2
     set:
       registry: foo-registry
     release:
@@ -10,170 +10,170 @@ tests:
     asserts:
       - isAPIVersion:
           of: apps/v1
-        documentIndex: 4
+        documentIndex: 2
       - isKind:
           of: Deployment
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: metadata.name
           value: mds-compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: metadata.labels.app
           value: mds-compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: metadata.namespace
           value: mds
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.replicas
           value: 1
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.selector.matchLabels.app
           value: mds-compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.metadata.labels.app
           value: mds-compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].name
           value: mds-compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].image
           value: foo-registry/mds-compliance:latest
-        documentIndex: 4
+        documentIndex: 2
       - isNull:
           path: spec.template.spec.containers[0].imagePullPolicy
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].resources.limits.cpu
           value: 500m
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].resources.limits.memory
           value: 512Mi
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].resources.requests.cpu
           value: 50m
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].resources.requests.memory
           value: 128Mi
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].ports[0].containerPort
           value: 4004
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].ports[0].name
           value: user-port
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].ports[0].protocol
           value: TCP
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[0].name
           value: PATH_PREFIX
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[0].value
           value: /compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[1].name
           value: TIMEZONE
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[1].value
           value: America/Los_Angeles
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[2].name
           value: PG_USER
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[2].value
           value: mdsadmin
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[3].name
           value: PG_NAME
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[3].value
           value: mds
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[4].name
           value: PG_PASS
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.name
           value: pg-pass
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[4].valueFrom.secretKeyRef.key
           value: postgresql-password
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[5].name
           value: PG_PORT
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[5].value
           value: "5432"
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[6].name
           value: PG_HOST
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[6].value
           value: mds-postgresql.mds.svc.cluster.local
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[7].name
           value: PG_HOST_READER
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[7].value
           value: mds-postgresql.mds.svc.cluster.local
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[8].name
           value: REDIS_HOST
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[8].value
           value: mds-redis-master.mds.svc.cluster.local
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[9].name
           value: REDIS_PORT
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[9].value
           value: "6379"
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[10].name
           value: CE_NAME
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[10].value
           value: mds-compliance
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[11].name
           value: SINK
-        documentIndex: 4
+        documentIndex: 2
       - equal:
           path: spec.template.spec.containers[0].env[11].value
           value: http://default-broker.mds.svc.cluster.local
-        documentIndex: 4
+        documentIndex: 2

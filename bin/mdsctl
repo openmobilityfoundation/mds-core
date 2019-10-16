@@ -31,14 +31,32 @@ if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
   esac
 fi
 
+installDir() {
+  source="${BASH_SOURCE[0]}";
+
+  while [ -h "${source}" ]; do
+    dir="$(cd -P "$(dirname "${source}")" && pwd)"
+    source="$(readlink "${source}")"
+
+    [[ ${source} != /* ]] && source="${dir}/${source}"
+  done
+
+  id="$(cd -P "$(dirname "${source}")" && pwd)"
+
+  echo $(dirname "${id}")
+}
+
 declare -A os=(
   ["osx"]="${osx}"
   ["linux"]="${linux}")
 declare -A configs=(
+  ["home"]="${MDS_HOME:-$(installDir)}"
   ["os"]="${MDS_OS:-`uname`}"
+  ["rc"]="${MDS_RC:-~/.bashrc ~/.zshrc}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-yarn nvm kubernetes-helm pgcli redis python git}"
+  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis python git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
+  ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
@@ -56,14 +74,20 @@ declare -A configs=(
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
-  ["values-mds"]="${MDS_VALUES_MDS:-./bin/values-agency-migration.yaml}"
+  ["values-mds"]="${MDS_VALUES_MDS:-}"
+  ["presets"]="${MDS_PRESETS:-}"
+  ["presets-mds"]="${MDS_PRESETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
   ["sets"]="${MDS_SETS:-}"
-  ["sets-mds"]="${MDS_SETS_MDS:-pgPass=Password123#}"
+  ["sets-mds"]="${MDS_SETS_MDS:-}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
-  ["namespace-mds"]="${MDS_NAMESPACE_MDS}"
-  ["dryrun"]="${MDS_DRY_RUN:-}")
+  ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
+  ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
+  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
+  ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
+  ["dryrun"]="${MDS_DRY_RUN:-}"
+  ["quiet"]="${MDS_QUIET:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.3.0/charts"
@@ -82,7 +106,7 @@ declare -A apps=(
   ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
   ["dashboard"]="https://localhost:[port],dashboard,k8s-app,kubernetes-dashboard"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
-  ["kibana"]="http://localhost:[port],logging,app"
+  ["kibana"]="http://localhost:[port],util,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
   ["jaeger"]="http://localhost:[port],istio-system,app,jaeger,16686"
   ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
@@ -97,6 +121,10 @@ warn() {
 
 error() {
   echo "${red}warn: ${1}${reset}"
+}
+
+beerMe() {
+   [ ${#configs[quiet]} -eq 0 ] && echo -ne "\xF0\x9F\x8D\xBA "
 }
 
 usage() {
@@ -123,6 +151,9 @@ options:
   --configure:{key}={value}[,{key}={value}]           : set configuration value by key
   --configure:{key}+={value}                          : append configuration value by key
   --configure:{key}=                                  : clears configuration value by key
+  --preset:[preset-key[,preset-key]]                  : preset configurations
+  --home                                              : returns installation directory
+  --quiet                                             : less verbose
 
 where service in:
   helm
@@ -156,6 +187,13 @@ where app in:
   kiali                                               : kiali; see https://www.kiali.io
   bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
 
+where preset-key in:
+  minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
+  local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
+  disabled                                            : disable service deployment; default: all
+  no-events                                           : disable eventing services
+  no-persistence                                      : disable persistence
+
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
 
@@ -168,24 +206,33 @@ EOF
 
 bootstrap() {
   for l in ${configs[brew]}; do
-    lc=$([ "${l}" == "kubernetes-helm" ] && echo helm || echo ${l})
+    lc=${l}
+    case ${l} in
+      kubernetes-helm) lc=helm;;
+      gettext) lc=envsubst;;
+      oq) brew tap blacksmoke16/tap;;
+    esac
 
     hash ${lc} > /dev/null 2>&1 || {
       brew install ${l}
 
       # todo: unable to detect nvm install via subshell given it is an alias
-      if [ "${l}" == "nvm" ]; then
-        [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
-        [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
-          echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
-        [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
-              echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
-        . $(brew --prefix nvm)/nvm.sh
-        nvm install node
-        nvm use node
-        nvm install 8.10.0
-        nvm alias default 8.10.0
-      fi
+      case ${l} in
+        nvm)
+          [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
+          [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
+            echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
+          [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
+            echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
+          . $(brew --prefix nvm)/nvm.sh
+          nvm install node
+          nvm use node
+          nvm install 8.10.0
+          nvm alias default 8.10.0;;
+        gettext)
+          brew link --force gettext
+          export PATH=$(brew --prefix gettext)/bin:${PATH};;
+      esac
     }
   done; unset l
 
@@ -196,13 +243,64 @@ bootstrap() {
   invoke install "$(normalize ${configs[bootstrap]})"
 }
 
+services() {
+  echo $(oq -i yaml -r '.apis | keys[]' ${configs[home]}/helm/mds/values.yaml)
+}
+
 build() {
   check ${FUNCNAME[0]}
 
-  yarn clean
-  yarn
-  yarn build --ignore=@aws-lambda/*
-  yarn image
+  for s in $(services); do
+    si=$(docker images --filter=reference="${s}" -q)
+    [ ${#si} -ge 1 ] && docker rmi -f ${si}
+  done; unset s si
+
+# todo: provide build-config-option for progressive builds, ie no-clean
+  (cd ${configs[home]};
+    yarn clean;
+    yarn;
+    yarn build --ignore=@aws-lambda/*;
+    yarn image)
+
+  installImages
+}
+
+installImages() {
+  check ${FUNCNAME[0]}
+
+  if [ "${configs[image-repository]}" ]; then
+    for i in $(docker images --filter "reference=mds-*" --format '{{ .Repository}}:{{ .Tag}}'); do
+      # docker tag ${i} ${configs[image-repository]}/${i}
+      docker push ${configs[image-repository]}/${i}
+    done; unset i
+  fi
+}
+
+buildImage() {
+  docker build -t ${1}$(getBranchSuffix) .
+}
+
+getBranchSuffix() {
+  case "$(git rev-parse --abbrev-ref HEAD)" in
+    master) suffix="";;
+    develop) suffix="-prerelease";;
+    *) suffix="-unstable";;
+  esac
+
+  echo ${suffix}
+}
+
+templateValues() {
+  suffix=$(getBranchSuffix)
+  for directory in container-images/mds-*; do
+    api=$(basename $directory)
+    version=$(jq -r '.version' < $directory/package.json)
+    varname="$(echo $api | sed -e 's/^mds-//' -e 's/-/_/g' | tr a-z A-Z)_VERSION"
+    export $varname=${version}${suffix}
+  done
+  mkdir -p dist
+  envsubst < helm/mds/values.yaml.tpl > dist/values.html
+  echo "Wrote dist/values.yaml"
 }
 
 pause() {
@@ -212,7 +310,7 @@ pause() {
   echo -ne "waiting "
 
   while (( cntr < ${sleepTime} )); do
-    echo -ne "\xF0\x9F\x8D\xBA "
+    beerMe
     sleep 3
     cntr=$(($cntr + 3))
   done
@@ -221,8 +319,8 @@ pause() {
 }
 
 updateHelmDependencies() {
-  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
-    (cd helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
+  for d in $(find ${configs[home]}/helm -mindepth 1 -maxdepth 1 -type d); do
+    (cd ${configs[home]}/helm/$(basename ${d}); /bin/rm -rf tmpcharts; helm dependency update)
   done; unset d
 }
 
@@ -244,10 +342,6 @@ installHelm() {
 
   updateHelmDependencies
 
-  for d in $(find ./helm -mindepth 1 -maxdepth 1 -type d); do
-    (cd helm/$(basename ${d}); helm dependency update)
-  done; unset d
-
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 }
 
@@ -260,10 +354,41 @@ helmOptions() {
   unset opts
 }
 
+installTiller() {
+  check ${FUNCNAME[0]}
+
+  if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "1" ]; then
+    warn "NOT FOR PRODUCTION USE"
+    cat << EOF | kubectl create -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller-clusterrolebinding
+subjects:
+- kind: ServiceAccount
+  name: tiller
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: ""
+EOF
+
+    helm init --service-account tiller --upgrade
+    pause 5
+  fi
+}
+
 installDashboard() {
   check ${FUNCNAME[0]}
 
-  helm install ./helm/dashboard --name dashboard --namespace dashboard \
+  helm install ${configs[home]}/helm/dashboard --name dashboard --namespace ${configs[namespace-dashboard]} \
     ${configs[values]:+$(helmOptions values ${configs[values]})} \
     ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
     ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -314,10 +439,10 @@ labelNamespaceIstioInjection() {
 installLogging() {
   check ${FUNCNAME[0]}
 
-  kubectl get namespace logging > /dev/null 2>&1 || {
-    installNamespace logging
-    labelNamespaceIstioInjection logging
-    helm install ./helm/logging --name logging --namespace logging \
+  kubectl get namespace ${configs[namespace-logging]} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-logging]}
+    labelNamespaceIstioInjection ${configs[namespace-logging]}
+    helm install ${configs[home]}/helm/logging --name logging --namespace ${configs[namespace-logging]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -330,7 +455,7 @@ installMetrics() {
 
   kubectl get namespace metrics > /dev/null 2>&1 || {
     installNamespace metrics
-    helm install ./helm/metrics --name metrics --namespace metrics \
+    helm install ${configs[home]}/helm/metrics --name metrics --namespace metrics \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[setfiles]:+$(helmOptions set ${configs[setfiles]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
@@ -338,16 +463,27 @@ installMetrics() {
   }
 }
 
+imageVersion() {
+  for s in $(services); do
+    is+="${is:+,}sets-mds+=apis.${s}.version=$(docker images ${s} --format {{.Tag}})"
+  done; unset s mi
+
+  echo ${is}
+}
+
 installMds() {
   check ${FUNCNAME[0]}
 
   installFallbackCertificate
-  kubectl get namespace ${configs[namespace-mds]:-mds} > /dev/null 2>&1 || {
-    installNamespace ${configs[namespace-mds]:-mds}
-    labelNamespaceIstioInjection ${configs[namespace-mds]:-mds}
-    helm install ./helm/mds --name mds --namespace ${configs[namespace-mds]:-mds} \
+  kubectl get namespace ${configs[namespace-mds]} > /dev/null 2>&1 || {
+    installNamespace ${configs[namespace-mds]}
+    labelNamespaceIstioInjection ${configs[namespace-mds]}
+    configure $(imageVersion)
+    helm install ${configs[home]}/helm/mds --name mds --namespace ${configs[namespace-mds]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-mds]:+$(helmOptions set ${configs[presets-mds]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
       ${configs[sets-mds]:+$(helmOptions set ${configs[sets-mds]})} \
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
@@ -359,7 +495,8 @@ installMds() {
 
 installMetricsAdapter() {
   helm status kube-metrics-adapter > /dev/null 2>&1 ||
-    helm install --name kube-metrics-adapter --namespace kube-system banzaicloud-stable/kube-metrics-adapter
+    helm install --name kube-metrics-adapter --namespace ${configs[namespace-metrics-adapter]} \
+      banzaicloud-stable/kube-metrics-adapter
 }
 
 installFallbackCertificate() {
@@ -397,10 +534,10 @@ installSimulator() {
       git clone ${configs[simulator-repository]} ${configs[simulator]})
   fi
 
-  (export PATH=/usr/local/opt/python/libexec/bin:${PATH};
-    cd ${configs[simulator]}; \
-    git pull; \
-    pip install -r requirements.txt; \
+  (export PATH=$(brew --prefix python)/bin:$(brew --prefix python)/libexec/bin:${PATH};
+    cd ${configs[simulator]};
+    git pull;
+    pip install -r requirements.txt;
     docker build -t trackgen .;
     helm install ./helm --name trackgen)
 }
@@ -424,8 +561,8 @@ testUnit() {
 # todo: enable when tests don't block
 #  yarn test
 
-  for c in $(find ./helm -type d -depth 1); do
-    helm unittest ./helm/$(basename ${c})
+  for c in $(find ${configs[home]}/helm -type d -depth 1); do
+    helm unittest ${configs[home]}/helm/$(basename ${c})
   done; unset c
 }
 
@@ -551,7 +688,7 @@ uninstallSimulator() {
   check ${FUNCNAME[0]}
 
   (( $(kubectl get pod -l app=trackgen | wc -l) == 2 )) &&
-    (cd ${configs[simulator]} helm delete --purge trackgen)
+    (cd ${configs[simulator]}; helm delete --purge trackgen)
   [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
 }
 
@@ -572,7 +709,7 @@ uninstallMetricsAdapter() {
 uninstallMds() {
   check ${FUNCNAME[0]}
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
-  uninstallNamespace ${configs[namespace-mds]:-mds}
+  uninstallNamespace ${configs[namespace-mds]}
 }
 
 uninstallMetrics() {
@@ -584,6 +721,8 @@ uninstallMetrics() {
 uninstallLogging() {
   check ${FUNCNAME[0]}
   helm delete --purge logging ${configs[dryrun]:+--dry-run}
+  # todo: ns/util may host more apps then logging
+  #uninstallNamespace ${configs[namespace-logging]}
 }
 
 uninstallKiali() {
@@ -617,6 +756,16 @@ uninstallDashboard() {
   kubectl delete secrets kubernetes-dashboard-key-holder -n kube-system ${configs[dryrun]:+--dry-run}
   kubectl get namespace dashboard > /dev/null 2>&1 && kubectl delete namespace dashboard \
     ${configs[dryrun]:+--dry-run}
+}
+
+uninstallTiller() {
+  if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "0" ]; then
+    kubectl delete serviceaccount tiller --namespace kube-system
+    kubectl delete clusterrolebinding tiller-clusterrolebinding
+    helm reset --force
+    pause 3
+    helm init --upgrade
+  fi
 }
 
 #todo: purge
@@ -664,16 +813,27 @@ forwardIfNeeded() {
 check() {
   case "${1}" in
     $(basename ${0}))
+      for rc in ${configs[rc]}; do
+        if [[ -f ${rc} && $(grep -q "\\\*${configs[home]}/bin\\\*" ${rc}; echo $?) != 0 ]]; then
+            echo "export PATH=${configs[home]}/bin:\${PATH}" >> ${rc}
+        fi
+      done; unset rc
+
       for d in docker kubectl; do
         hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
-      done; unset d
-      kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
+      done; unset d;;
+      # todo: include cluster connection check where needed if not globally
+      #kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster"
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
-    installDashboard | installLogging | installMetrics | installMds)
-      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm
-      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
+    installDashboard | installMetrics | installMds)
+      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;&
+    installLogging | installMetricsAdapter)
+      hash helm > /dev/null 2>&1 && updateHelmDependencies || installHelm;;
+    installImages)
+      [ "${configs[image-repository]}" ] || \
+        warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
     installIstio | testUnit | \
       uninstallDashboard | uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || installHelm;;
@@ -705,25 +865,57 @@ configure() {
     for c in $(echo ${1} | tr ',' ' '); do
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
-      echo "configure[$k]:$v"
 
-      [[ "${k}" == *"+" ]] && configs[${k%+}]+=" ${v}" || configs[${k}]="${v}"
-
-      unset c k v
-    done
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+="${configs[${k%+}]:+,}${v}" || configs[${k}]="${v}"
+    done; unset c k v
   else
     configs[${1}]=
   fi
 }
 
+preset() {
+  for p in ${@}; do
+    case ${p} in
+      disable)
+        for s in $(services); do
+          is+="${is:+,}presets-mds+=apis.${s}.enabled=false"
+        done; unset s;;
+      local)
+        is+="${is:+,}presets-mds+=resourcesLimitsCpu=200m"
+        is+="${is:+,}presets-mds+=resourcesLimitsMemory=200Mi"
+        is+="${is:+,}presets-mds+=resourcesRequestsCpu=20m"
+        is+="${is:+,}presets-mds+=resourcesRequestsMemory=32Mi";;
+      no-events)
+        for s in $(services); do
+          is+="${is:+,}presets-mds+=apis.${s}.useEvents=false"
+        done; unset s;;
+      no-persistence)
+        is+="${is:+,}sets-mds+=postgresql.persistence.enabled=false"
+        is+="${is:+,}sets-mds+=postgresql.volumePermissions.enabled=true"
+        is+="${is:+,}sets-mds+=postgresql.securityContext.enabled=false"
+        is+="${is:+,}sets-mds+=redis.persistence.enabled=false"
+        is+="${is:+,}sets-mds+=redis.master.persistence.enabled=false"
+        is+="${is:+,}sets-mds+=redis.slave.persistence.enabled=false";;
+      minimal)
+        preset $(normalize "disable,no-events,local,no-persistence")
+        is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
+    esac
+  done; unset p
+
+  [ ${#is} -ge 1 ] && configure ${is}
+  unset is
+}
+
+check $(basename ${0})
 [[ ${#} == 0 ]] && usage
 [[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
-check $(basename ${0})
 
 for arg in "${@}"; do
   case "${arg}" in
     bootstrap) bootstrap || warn  "${arg} failure";;
     build) build || usage "${arg} failure";;
+    buildImage) buildImage ${configs[image-name]};;
+    templateValues) templateValues;;
     install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
@@ -747,6 +939,9 @@ for arg in "${@}"; do
     invoke install "$(normalize ${arg})";;
     help) usage;;
     --configure:* | configure:* | -c:*) configure "$(echo ${arg} | cut -d ':' -f 2-)";;
+    --preset:* | preset:* | -p:*) preset "$(normalize ${arg})";;
+    --home | -h) echo ${configs[home]};;
+    --quiet | -q) configs[quiet]=true;;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg

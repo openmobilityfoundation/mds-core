@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-metrics-sheet",
-  "version": "0.1.10",
+  "version": "0.1.13",
   "description": "AWS Lambda for MDS Metrics Sheet",
   "main": "dist/index.js",
   "files": [
@@ -20,7 +20,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-metrics-sheet": "0.0.10"
+    "@mds-core/mds-metrics-sheet": "0.0.13"
   },
   "license": "Apache-2.0"
 }

@@ -2,28 +2,28 @@ suite: test autoscaler audit
 templates:
   - autoscaler.yaml
 tests:
-  - it: doc 2
+  - it: doc 1
     release:
       namespace: mds
     asserts:
       - isAPIVersion:
           of: autoscaling/v2beta1
-        documentIndex: 2
+        documentIndex: 1
       - isKind:
           of: HorizontalPodAutoscaler
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: metadata.name
           value: mds-audit-hpa
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: metadata.namespace
           value: mds
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: metadata.annotations.metric-config\.object\.istio-requests-total\.prometheus/per-replica
           value: "true"
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: metadata.annotations.metric-config\.object\.istio-requests-total\.prometheus/query
           value: |
@@ -43,48 +43,48 @@ tests:
                 }
               ) by (pod_name)
             )
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.maxReplicas
           value: 10
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.minReplicas
           value: 1
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.scaleTargetRef.apiVersion
           value: apps/v1
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.scaleTargetRef.kind
           value: Deployment
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.scaleTargetRef.name
           value: mds-audit
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.metrics[0].type
           value: Object
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.metrics[0].object.metricName
           value: istio-requests-total
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.metrics[0].object.target.apiVersion
           value: v1
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.metrics[0].object.target.kind
           value: Pod
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.metrics[0].object.target.name
           value: mds-audit
-        documentIndex: 2
+        documentIndex: 1
       - equal:
           path: spec.metrics[0].object.targetValue
           value: 10
-        documentIndex: 2
+        documentIndex: 1
