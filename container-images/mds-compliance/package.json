@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-compliance",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Docker Image for MDS Compliance API",
   "main": "dist/index.js",
   "files": [
@@ -22,9 +22,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.11",
-    "@mds-core/mds-api-server": "0.1.12",
-    "@mds-core/mds-compliance": "0.1.13"
+    "@container-images/env-inject": "0.1.12",
+    "@mds-core/mds-api-server": "0.1.13",
+    "@mds-core/mds-compliance": "0.1.14"
   },
   "license": "Apache-2.0"
 }
