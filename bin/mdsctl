@@ -54,7 +54,7 @@ declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["rc"]="${MDS_RC:-~/.bashrc ~/.zshrc}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis python git}"
+  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
@@ -537,10 +537,8 @@ installSimulator() {
       git clone ${configs[simulator-repository]} ${configs[simulator]})
   fi
 
-  (export PATH=$(brew --prefix python)/bin:$(brew --prefix python)/libexec/bin:${PATH};
-    cd ${configs[simulator]};
+  (cd ${configs[simulator]};
     git pull;
-    pip install -r requirements.txt;
     docker build -t trackgen .;
     helm install ./helm --name trackgen)
 }
@@ -941,7 +939,7 @@ done
 [[ ${#} == 0 ]] && usage
 [[ ! -d ${configs[workdir]} ]] && mkdir -p ${configs[workdir]}
 
-for arg in "${@}"; do
+for arg in "${@:$OPTIND}"; do
   case "${arg}" in
     bootstrap) bootstrap || warn  "${arg} failure";;
     build) build || usage "${arg} failure";;
