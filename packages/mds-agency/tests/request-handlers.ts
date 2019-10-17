@@ -2,7 +2,7 @@ import areas, { ServiceArea } from 'ladot-service-areas'
 import Sinon from 'sinon'
 import assert from 'assert'
 import uuid from 'uuid'
-import { Device } from 'packages/mds-types'
+import { Device, VEHICLE_TYPES } from 'packages/mds-types'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
@@ -143,7 +143,7 @@ describe('Agency API request handlers', () => {
     const getFakeBody = () => {
       const device_id = uuid()
       const vehicle_id = uuid()
-      const type: Device['type'] = 'carshare'
+      const type: Device['type'] = VEHICLE_TYPES.carshare
       const propulsion: Device['propulsion'] = ['combustion']
       const body = {
         device_id,
