@@ -915,8 +915,8 @@ while getopts ":w:s:c:p:q-:h-:" opt; do
       case "${OPTARG}" in
         configure) configure "$(echo ${!OPTIND} | cut -d ':' -f 2-)"; OPTIND=$(( ${OPTIND} + 1 ));;
         configure=*) configure "$(echo "${OPTARG#*=}" | cut -d ':' -f 2-)";;
-        presets) preset "$(normalize ${!OPTIND})"; OPTIND=$(( ${OPTIND} + 1 ));;
-        presets=*) preset "$(normalize ${OPTARG#*=})";;
+        preset) preset "$(normalize ${!OPTIND})"; OPTIND=$(( ${OPTIND} + 1 ));;
+        preset=*) preset "$(normalize ${OPTARG#*=})";;
         workdir) configs[workdir]="${!OPTIND}"; OPTIND=$(( ${OPTIND} + 1 ));;
         workdir=*) configs[workdir]="${OPTARG#*=}";;
         sleep) configs[pause]="${!OPTIND}"; OPTIND=$(( ${OPTIND} + 1 ));;
