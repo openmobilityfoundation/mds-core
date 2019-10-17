@@ -163,6 +163,7 @@ commands:
   uninstall[:{service[,{service}]}]                   : uninstall specified service(s); default: ${configs[uninstall]}
   reinstall[:{service[,{service}]}]                   : reinstall specified service(s); default: ${configs[reinstall]}
   home                                                : return installation directory
+  completion                                          : return bash-completion
 
 where service in:
   helm
@@ -968,6 +969,7 @@ for arg in "${@}"; do
     invoke uninstall "$(normalize ${arg})"
     invoke install "$(normalize ${arg})";;
     home) echo ${configs[home]};;
+    completion) cat ${configs[home]}/bin/mdsctl-completion.bash;;
     *) usage "unknown command: ${arg}"
   esac
 done; unset arg
