@@ -1,6 +1,6 @@
 {
   "name": "@aws-lambda/mds-provider",
-  "version": "0.1.10",
+  "version": "0.1.13",
   "description": "AWS Lambda for MDS Provider API",
   "main": "dist/index.js",
   "files": [
@@ -21,9 +21,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@aws-lambda/aws-serverless-express-handler": "0.1.10",
-    "@mds-core/mds-api-server": "0.1.10",
-    "@mds-core/mds-provider": "1.0.10"
+    "@aws-lambda/aws-serverless-express-handler": "0.1.13",
+    "@mds-core/mds-api-server": "0.1.13",
+    "@mds-core/mds-provider": "1.0.13"
   },
   "license": "Apache-2.0"
 }

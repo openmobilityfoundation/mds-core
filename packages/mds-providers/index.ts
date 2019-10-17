@@ -25,7 +25,6 @@ export const LADOT_PROVIDER_ID = '33bbcec3-f91b-4461-bc41-61711afb9460'
 export const BLUE_SYSTEMS_PROVIDER_ID = '5674ea42-a2ab-42e0-b9fd-cbade6cb2561'
 export const TEST1_PROVIDER_ID = '5f7114d1-4091-46ee-b492-e55875f7de00'
 export const TEST2_PROVIDER_ID = '45f37d69-73ca-4ca6-a461-e7283cffa01a'
-export const DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID = '11111111-2222-4444-8888-999999999999' // To be
 
 // Mocha testing PROVIDER_ID value
 export const MOCHA_PROVIDER_ID = 'c8051767-4b14-4794-abc1-85aad48baff1'
@@ -60,8 +59,7 @@ const PROVIDER_IDS = [
   MOCHA_PROVIDER_ID,
   SUPPORT1_PROVIDER_ID,
   SUPPORT2_PROVIDER_ID,
-  SUPPORT3_PROVIDER_ID,
-  DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID
+  SUPPORT3_PROVIDER_ID
 ] as const
 
 type PROVIDER_ID = typeof PROVIDER_IDS[number]
@@ -207,11 +205,6 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
   [SUPPORT3_PROVIDER_ID]: Object.freeze({
     provider_id: SUPPORT3_PROVIDER_ID,
     provider_name: 'Support 3'
-  }),
-  [DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID]: Object.freeze({
-    provider_id: DEPRECATED_BLUE_SYSTEMS_PROVIDER_ID,
-    provider_name: 'Blue Systems (DEPRECATED)',
-    url: 'https://www.bluesystems.ai'
   })
 })
 

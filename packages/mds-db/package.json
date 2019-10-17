@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-db",
-  "version": "0.1.10",
+  "version": "0.1.13",
   "description": "Mobility Data Specification database interface",
   "main": "dist/index.js",
   "files": [
@@ -14,17 +14,17 @@
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 0 ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --timeout 6000 --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts && nyc report --reporter=html"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 0 ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --timeout 6000 --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts && nyc report --reporter=html"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-logger": "0.1.9",
-    "@mds-core/mds-types": "0.1.7",
-    "@mds-core/mds-utils": "0.1.10",
+    "@mds-core/mds-logger": "0.1.11",
+    "@mds-core/mds-types": "0.1.10",
+    "@mds-core/mds-utils": "0.1.13",
     "pg": "7.12.1"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.10"
+    "@mds-core/mds-test-data": "0.1.13"
   }
 }
