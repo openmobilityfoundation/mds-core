@@ -15,9 +15,7 @@
  */
 
 import GoogleSpreadsheet from 'google-spreadsheet'
-
 import { promisify } from 'util'
-import requestPromise, { RequestPromiseOptions } from 'request-promise'
 import log from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
@@ -30,7 +28,7 @@ import {
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
 import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
-import { UrlOptions } from 'request'
+import { requestPromiseExceptionHelper } from './utils'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow, VehicleCountRow } from './types'
 
 // The list of providers ids on which to report
@@ -157,17 +155,7 @@ async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
   log.info('Wrong sheet!')
 }
 
-// Utility to add additional fields to error object
-const requestPromiseExceptionHelper = async (payload: UrlOptions & RequestPromiseOptions) => {
-  try {
-    return requestPromise(payload)
-  } catch (err) {
-    err.url = payload.url
-    throw err
-  }
-}
-
-async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
+export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
   /* after 10 failed iterations, give up */
   if (iter >= 10) {
     throw new Error(`Failed to write to sheet after 10 tries!`)
