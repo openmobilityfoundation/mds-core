@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-logger",
-  "version": "0.1.9",
+  "version": "0.1.11",
   "description": "Mobility Data Specification logging interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
