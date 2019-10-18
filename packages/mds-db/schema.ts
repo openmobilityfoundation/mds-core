@@ -87,7 +87,7 @@ const COLUMN = Enum(
   'vehicle_id',
   'vehicle_type',
   'year',
-  'timestamp',
+  'date_timestamp',
   'device_id',
   'provider_id',
   'state',
@@ -246,7 +246,8 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.recorded
   ],
   [TABLE.reports_device_states]: [
-    COLUMN.timestamp,
+    COLUMN.type,
+    COLUMN.date_timestamp,
     COLUMN.device_id,
     COLUMN.provider_id,
     COLUMN.state,
@@ -275,7 +276,7 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
   ],
   [TABLE.reports_providers]: [
     COLUMN.provider_id,
-    COLUMN.timestamp,
+    COLUMN.date_timestamp,
     COLUMN.cap_count,
     COLUMN.dead_count,
     COLUMN.invalid_count,
@@ -297,12 +298,10 @@ const TABLE_KEY: { [T in TABLE_NAME]: COLUMN_NAME[] } = {
   [TABLE.status_changes]: [COLUMN.device_id, COLUMN.event_time],
   [TABLE.telemetry]: [COLUMN.device_id, COLUMN.timestamp],
   [TABLE.trips]: [COLUMN.provider_trip_id],
-  [TABLE.reports_device_states]: [COLUMN.timestamp, COLUMN.device_id, COLUMN.provider_id, COLUMN.type],
+  [TABLE.reports_device_states]: [COLUMN.date_timestamp, COLUMN.device_id, COLUMN.provider_id, COLUMN.type],
   [TABLE.reports_trips]: [COLUMN.trip_id, COLUMN.device_id, COLUMN.provider_id],
-  [TABLE.reports_providers]: [COLUMN.provider_id, COLUMN.timestamp]
+  [TABLE.reports_providers]: [COLUMN.provider_id, COLUMN.date_timestamp]
 }
-
-// TODO: Add table constraints (e.g. non-null values)
 
 const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.accuracy]: 'real',
@@ -369,11 +368,11 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.vehicle_id]: 'varchar(255) NOT NULL',
   [COLUMN.vehicle_type]: 'varchar(31) NOT NULL',
   [COLUMN.year]: 'smallint',
-  [COLUMN.timestamp]: 'timestamp with time zone',
+  [COLUMN.date_timestamp]: 'timestamp with time zone',
   [COLUMN.device_id]: 'uuid',
   [COLUMN.provider_id]: 'uuid',
-  [COLUMN.state]: 'device_state',
-  [COLUMN.event_type]: 'device_event',
+  [COLUMN.state]: 'varchar(255)',
+  [COLUMN.event_type]: 'varchar(255)',
   [COLUMN.event_type_reason]: 'varchar',
   [COLUMN.trip_id]: 'uuid',
   [COLUMN.service_area_id]: 'uuid',
@@ -394,7 +393,6 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.distance]: 'double precision',
   [COLUMN.telemetry]: 'json[]',
   [COLUMN.provider_id]: 'uuid',
-  [COLUMN.timestamp]: 'timestamp with time zone',
   [COLUMN.cap_count]: 'bigint',
   [COLUMN.dead_count]: 'bigint',
   [COLUMN.invalid_count]: 'bigint',
