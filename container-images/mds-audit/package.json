@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-audit",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Docker Image for MDS Audit API",
   "main": "dist/index.js",
   "files": [
@@ -20,9 +20,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.12",
-    "@mds-core/mds-api-server": "0.1.13",
-    "@mds-core/mds-audit": "0.1.25"
+    "@container-images/env-inject": "0.1.13",
+    "@mds-core/mds-api-server": "0.1.14",
+    "@mds-core/mds-audit": "0.1.26"
   },
   "license": "Apache-2.0"
 }
