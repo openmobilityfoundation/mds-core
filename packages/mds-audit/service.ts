@@ -105,6 +105,18 @@ export async function readDeviceByVehicleId(provider_id: UUID, vehicle_id: strin
   }
 }
 
+export async function readEvent(device_id: UUID | null): Promise<Recorded<VehicleEvent> | null> {
+  if (!device_id) {
+    return null
+  }
+  try {
+    const provider_event = await db.readEvent(device_id)
+    return provider_event
+  } catch (err) {
+    return null
+  }
+}
+
 export async function readEvents(
   device_id: UUID,
   start_time: Timestamp,
@@ -147,6 +159,20 @@ export function withGpsProperty<T extends TelemetryData>({
   ...props
 }: T): WithGpsProperty<T> {
   return { ...props, gps: { lat, lng, speed, heading, accuracy, hdop, altitude, satellites } }
+}
+
+export async function getVehicle(provider_id: UUID, vehicle_id: string) {
+  const device = await readDeviceByVehicleId(provider_id, vehicle_id)
+  if (!device) {
+    return null
+  }
+  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device)
+  if (!deviceStatus) {
+    return null
+  }
+  const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
+  const updated = deviceStatus.timestamp
+  return { ...deviceStatus, status, updated }
 }
 
 export async function getVehicles(
