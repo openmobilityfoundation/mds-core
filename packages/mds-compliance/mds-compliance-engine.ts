@@ -308,16 +308,6 @@ function processPolicy(
             countVehiclesMap = { ...countVehiclesMap, ...overflowVehiclesMap }
             countViolations += overflowVehicles.length
           } else if (minimum && vehiclesMatched.length < minimum) {
-            countVehiclesMap = {
-              ...countVehiclesMap,
-              ...vehiclesMatched.reduce(
-                (acc: { [key: string]: MatchedVehiclePlusRule }, device: MatchedVehiclePlusRule) => {
-                  acc[device.device_id] = device
-                  return acc
-                },
-                {}
-              )
-            }
             countViolations += minimum - vehiclesMatched.length
           }
           //          */
