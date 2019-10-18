@@ -110,7 +110,7 @@ export async function readEvent(device_id: UUID | null): Promise<Recorded<Vehicl
     return null
   }
   try {
-    const provider_event: Recorded<VehicleEvent> = await db.readEvent(device_id)
+    const provider_event = await db.readEvent(device_id)
     return provider_event
   } catch (err) {
     return null
