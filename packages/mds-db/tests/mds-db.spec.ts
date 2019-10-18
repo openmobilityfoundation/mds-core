@@ -24,7 +24,6 @@ import {
 import { now, clone, NotFoundError } from '@mds-core/mds-utils'
 
 import { isNullOrUndefined } from 'util'
-import { GeographySummary } from 'packages/mds-types/dist'
 import MDSDBPostgres from '../index'
 
 import { dropTables, createTables, updateSchema } from '../migration'
