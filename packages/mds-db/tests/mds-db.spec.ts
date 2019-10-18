@@ -2,6 +2,7 @@ import assert from 'assert'
 /* eslint-reason extends object.prototype */
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import should from 'should'
+
 import { FeatureCollection } from 'geojson'
 import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS, Geography } from '@mds-core/mds-types'
 import {
@@ -436,9 +437,10 @@ if (pg_info.database) {
       })
 
       it('understands the summary parameter', async () => {
-        const geographiesWithoutGeoJSON = await MDSDBPostgres.readGeographies({ summary: false })
+        const geographiesWithoutGeoJSON = await MDSDBPostgres.readGeographies()
         geographiesWithoutGeoJSON.forEach(geography => assert(geography.geography_json))
-        const geographiesWithGeoJSON = await MDSDBPostgres.readGeographies({ summary: true })
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographySummaries()) as any[]
         geographiesWithGeoJSON.forEach(geography => assert.deepEqual(!!geography.geography_json, false))
       })
     })

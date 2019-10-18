@@ -25,7 +25,7 @@ export const Enum = <T extends string>(...keys: T[]) =>
 export const isEnum = (enums: { [key: string]: string }, value: unknown) =>
   typeof value === 'string' && typeof enums === 'object' && enums[value] === value
 
-export const VEHICLE_TYPES = Enum('car', 'bicycle', 'scooter', 'recumbent')
+export const VEHICLE_TYPES = Enum('carshare', 'bicycle', 'scooter', 'recumbent')
 export type VEHICLE_TYPE = keyof typeof VEHICLE_TYPES
 
 export const RULE_TYPES = Enum('count', 'speed', 'time')
@@ -177,6 +177,12 @@ export interface VehicleEvent {
   recorded: Timestamp
 }
 
+export interface VehicleEventSummary {
+  provider_event_id: number | null
+  provider_event_type: VEHICLE_EVENT | null
+  provider_event_type_reason?: VEHICLE_REASON | null
+}
+
 // Standard telemetry columns (used in more than one table)
 export interface TelemetryData {
   lat: number
@@ -226,6 +232,9 @@ export interface AuditEvent extends TelemetryData {
   audit_issue_code?: string | null
   audit_subject_id: string
   note?: string | null
+  provider_event_id?: number | null
+  provider_event_type?: string | null
+  provider_event_type_reason?: string | null
   timestamp: Timestamp
   recorded: Timestamp
 }
@@ -340,7 +349,7 @@ export interface ComplianceResponse {
 // the geojson FeatureCollection type.
 export interface Geography {
   geography_id: UUID
-  geography_json?: FeatureCollection
+  geography_json: FeatureCollection
   read_only?: boolean
   previous_geographies?: UUID[]
   name: string
@@ -348,6 +357,8 @@ export interface Geography {
   effective_date?: Timestamp
   description?: string
 }
+
+export type GeographySummary = Omit<Geography, 'geography_json'>
 
 export interface GeographyMetadata {
   geography_id: UUID

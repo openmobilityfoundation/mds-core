@@ -39,7 +39,7 @@ module.exports = ({ env, argv, dirname, bundles }) => {
           return data
         }
       ),
-      // Make npm package name/version available to AWS Lambda handler
+      // Make npm package name/version available to bundle
       new webpack.DefinePlugin({
         NPM_PACKAGE_NAME: JSON.stringify(npm_package_name),
         NPM_PACKAGE_VERSION: JSON.stringify(npm_package_version),
