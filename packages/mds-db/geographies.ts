@@ -129,7 +129,7 @@ export async function deleteGeography(geography_id: UUID) {
   }
 
   const client = await getWriteableClient()
-  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id='${geography_id}' AND read_only IS FALSE`
+  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id='${geography_id}' AND read_only IS NOT TRUE`
   await client.query(sql)
   return geography_id
 }
