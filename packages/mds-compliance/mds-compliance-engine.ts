@@ -298,10 +298,9 @@ function processPolicy(
             )
           }
 
-          //         /*
-          // only vehicles in count violation are in overflow
-          // add to count violation properly if violating mins
-          // ie no vehicles are in violation if min violation, but # of violations goes up
+          // only vehicles in count maximum violation are in overflow
+          // no vehicles are in violation if it's a mininimum violation,
+          // but # of violations goes up
           const minimum = rule.minimum == null ? Number.NEGATIVE_INFINITY : rule.minimum
 
           if (overflowVehicles.length > 0) {
@@ -310,8 +309,9 @@ function processPolicy(
           } else if (minimum && vehiclesMatched.length < minimum) {
             countViolations += minimum - vehiclesMatched.length
           }
-          //          */
+
           compliance_acc.push(compressedComp)
+
           break
         }
         case 'time': {
