@@ -230,8 +230,8 @@ bootstrap() {
           . $(brew --prefix nvm)/nvm.sh
           nvm install node
           nvm use node
-          nvm install 8.10.0
-          nvm alias default 8.10.0;;
+          nvm install 10.16.3
+          nvm alias default 10.16.3;;
         gettext)
           brew link --force gettext
           export PATH=$(brew --prefix gettext)/bin:${PATH};;
