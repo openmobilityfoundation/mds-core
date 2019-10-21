@@ -15,9 +15,7 @@
  */
 
 import GoogleSpreadsheet from 'google-spreadsheet'
-
 import { promisify } from 'util'
-import requestPromise from 'request-promise'
 import log from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
@@ -30,6 +28,7 @@ import {
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
 import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
+import { requestPromiseExceptionHelper } from './utils'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow, VehicleCountRow } from './types'
 
 // The list of providers ids on which to report
@@ -156,7 +155,7 @@ async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
   log.info('Wrong sheet!')
 }
 
-async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
+export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
   /* after 10 failed iterations, give up */
   if (iter >= 10) {
     throw new Error(`Failed to write to sheet after 10 tries!`)
@@ -174,27 +173,27 @@ async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
     json: true
   }
   try {
-    const token = await requestPromise(token_options)
+    const token = await requestPromiseExceptionHelper(token_options)
     const counts_options = {
-      uri: 'https://api.ladot.io/daily/admin/vehicle_counts',
+      url: 'https://api.ladot.io/daily/admin/vehicle_counts',
       headers: { authorization: `Bearer ${token.access_token}` },
       json: true
     }
     const last_options = {
-      uri: 'https://api.ladot.io/daily/admin/last_day_stats_by_provider',
+      url: 'https://api.ladot.io/daily/admin/last_day_stats_by_provider',
       headers: { authorization: `Bearer ${token.access_token}` },
       json: true
     }
 
-    const counts: VehicleCountResponse = await requestPromise(counts_options)
-    const last: LastDayStatsResponse = await requestPromise(last_options)
+    const counts: VehicleCountResponse = await requestPromiseExceptionHelper(counts_options)
+    const last: LastDayStatsResponse = await requestPromiseExceptionHelper(last_options)
 
     const rows: MetricsSheetRow[] = counts
       .filter(p => reportProviders.includes(p.provider_id))
       .map(provider => mapProviderToPayload(provider, last))
     return rows
   } catch (err) {
-    await log.error('getProviderMetrics', err)
+    await log.error(`getProviderMetrics() API call error on ${err.url}`, err)
     return getProviderMetrics(iter + 1)
   }
 }
