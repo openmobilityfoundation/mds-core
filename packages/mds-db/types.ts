@@ -106,3 +106,7 @@ export interface VehicleEventCountResult {
   count: number
   events: Recorded<VehicleEvent>[]
 }
+
+export interface ReadGeographiesParams {
+  get_read_only: boolean
+}
