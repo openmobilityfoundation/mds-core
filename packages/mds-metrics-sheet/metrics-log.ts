@@ -103,10 +103,10 @@ export const mapProviderToPayload = (provider: VehicleCountRow, last: LastDaySta
     enters = event_counts_last_24h.trip_enter || 0
     leaves = event_counts_last_24h.trip_leave || 0
     telems = last[provider.provider_id].telemetry_counts_last_24h || 0
-    if (late_telemetry_counts_last_24h) {
+    if (late_telemetry_counts_last_24h !== undefined && late_telemetry_counts_last_24h !== null) {
       telem_sla = telems ? percent(late_telemetry_counts_last_24h, telems) : 0
     }
-    if (late_event_counts_last_24h) {
+    if (late_event_counts_last_24h !== undefined && late_event_counts_last_24h !== null) {
       start_sla = starts ? percent(late_event_counts_last_24h.trip_start, starts) : 0
       end_sla = ends ? percent(late_event_counts_last_24h.trip_end, ends) : 0
     }
