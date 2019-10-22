@@ -1,8 +1,10 @@
 import assert from 'assert'
 import uuid from 'uuid'
-import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent } from '../metrics-log'
+import Sinon from 'sinon'
+import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent, getProviderMetrics } from '../metrics-log'
 import { VehicleCountRow, LastDayStatsResponse } from '../types'
 import { mapRow, sumColumns } from '../vehicle-counts'
+import * as utils from '../utils'
 
 const getStatus = (): VehicleCountRow['status'] => {
   return {
@@ -91,6 +93,21 @@ const getProvider = (): VehicleCountRow => {
     event_type: getEvent(),
     areas: {},
     areas_48h: {}
+  }
+}
+
+// https://stackoverflow.com/a/46957474
+// TODO holdover from old node, when we upgrade replace with assert.rejects()
+async function assertThrowsAsync(fn: Function, regExp: RegExp) {
+  let f = () => {}
+  try {
+    await fn()
+  } catch (e) {
+    f = () => {
+      throw e
+    }
+  } finally {
+    assert.throws(f, regExp)
   }
 }
 
@@ -319,5 +336,15 @@ describe('MDS Metrics Sheet', () => {
     const row = { areas_48h, provider: 'fake-provider' } as VehicleCountRow
     const actual = sumColumns(veniceAreaKeys, row)
     assert.strictEqual(actual, 15)
+  })
+
+  describe('getProviderMetrics()', () => {
+    it('Retries 10 times', async () => {
+      const fakeRejects = Sinon.fake.rejects('it-broke')
+      Sinon.replace(utils, 'requestPromiseExceptionHelper', fakeRejects)
+      await assertThrowsAsync(async () => getProviderMetrics(0), /Error/)
+      assert.strictEqual(fakeRejects.callCount, 10)
+      Sinon.restore()
+    })
   })
 })
