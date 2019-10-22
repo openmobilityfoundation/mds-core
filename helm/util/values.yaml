@@ -1,0 +1,32 @@
+elasticsearch:
+  internal: true
+  persistence:
+    enabled: false
+  replicas: 1
+  minimumMasterNodes: 1
+  resources:
+    requests:
+      memory: 1Gi
+kibana:
+  internal: true
+  env:
+    ELASTICSEARCH_URL: http://elasticsearch-client:9200
+fluentbit:
+  enabled: true
+  backend:
+    type: es
+    es:
+      host: localhost
+      port: 65535
+      scheme: http
+      index: kubernetes_cluster
+      type: flb_type
+      logstash_prefix: kubernetes_cluster
+      replace_dots: "On"
+      time_key: "@timestamp"
+      http_user:
+      http_passwd:
+      tls: "on"
+      tls_verify: "off"
+      tls_ca: ""
+      tls_debug: 4
