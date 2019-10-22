@@ -310,6 +310,9 @@ describe('Testing API', () => {
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.value(result.body.events.length).is(7)
+        test.value(result.body.events[0].provider_event_id).is(1)
+        test.value(result.body.events[0].provider_event_type).is('trip_start')
+        test.value(result.body.events[0].provider_event_type_reason).is(null)
         done(err)
       })
   })
@@ -495,9 +498,10 @@ describe('Testing API', () => {
         })
     })
   )
-  describe('Tests retreiving vehicles inside of bbox', () => {
+  describe('Tests retreiving vehicles', () => {
+    let devices_a: Device[]
     before(done => {
-      const devices_a = makeDevices(10, now(), MOCHA_PROVIDER_ID)
+      devices_a = makeDevices(10, now(), MOCHA_PROVIDER_ID)
       const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
       const devices_b = makeDevices(10, now(), MOCHA_PROVIDER_ID)
       const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
@@ -532,6 +536,35 @@ describe('Testing API', () => {
             test.assert(typeof device.telemetry.gps.lng === 'number')
             test.assert(typeof device.updated === 'number')
           })
+          done(err)
+        })
+    })
+
+    it('Verify get vehicle by vehicle_id and provider_id', done => {
+      request
+        .get(`/audit/vehicles/${devices_a[0].provider_id}/vin/${devices_a[0].vehicle_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          test.object(result).hasProperty('body')
+          test.object(result.body).hasProperty('vehicles')
+          test.value(result.body.vehicles[0].provider_id).is(devices_a[0].provider_id)
+          test.value(result.body.vehicles[0].vehicle_id).is(devices_a[0].vehicle_id)
+          test.value(result.body.vehicles[0].updated).is(result.body.vehicles[0].timestamp)
+          test.value(result.body.vehicles[0].status).is('trip')
+          test.value(result.body.vehicles[0].telemetry.charge > 0).is(true)
+          done(err)
+        })
+    })
+
+    it('Verify get vehicle by vehicle_id and provider_id (not found)', done => {
+      request
+        .get(`/audit/vehicles/${uuid()}/vin/${devices_a[0].vehicle_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+        .expect(404)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })

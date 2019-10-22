@@ -230,6 +230,7 @@ describe('Tests Compliance Engine', () => {
             compliance.rule.rule_type === RULE_TYPES.time
           ) {
             test.assert.notEqual(compliance.matches.length, 0)
+            test.assert.deepEqual(result.total_violations, 400)
           }
         })
       }

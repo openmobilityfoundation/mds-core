@@ -386,6 +386,10 @@ if (pg_info.database) {
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
         await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
+
+        await MDSDBPostgres.writeGeography({ ...{ read_only: undefined }, ...LAGeography })
+        await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
+        await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
       })
 
       it('can write, read, and publish a Geography', async () => {
@@ -437,9 +441,10 @@ if (pg_info.database) {
       })
 
       it('understands the summary parameter', async () => {
-        const geographiesWithoutGeoJSON = (await MDSDBPostgres.readGeographies({ summary: false })) as Geography[]
+        const geographiesWithoutGeoJSON = await MDSDBPostgres.readGeographies()
         geographiesWithoutGeoJSON.forEach(geography => assert(geography.geography_json))
-        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographies({ summary: true })) as Geography[] // Read back as Geography instead of GeographySummary so we can verify there is no geography_json.
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        const geographiesWithGeoJSON = (await MDSDBPostgres.readGeographySummaries()) as any[]
         geographiesWithGeoJSON.forEach(geography => assert.deepEqual(!!geography.geography_json, false))
       })
     })
