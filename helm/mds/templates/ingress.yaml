@@ -17,7 +17,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: {{ $api.pathPrefix }}
+        regex: {{ printf "^%s[^-][/]{0,1}.*$" $api.pathPrefix }}
         {{- if (and $.Values.tls.letsencrypt.enabled $.Values.tls.enabled) }}
         scheme:
           exact: https
@@ -55,7 +55,7 @@ metadata:
 spec:
   secretName: ingress-cert
   issuerRef:
-    name: letsencrypt-{{ .Values.tls.letsencrypt.production | ternary "prod" "staging" }}
+    name: letsencrypt{{ .Values.tls.letsencrypt.production | ternary "" "-staging" }}
     kind: ClusterIssuer
   {{- if .Values.tls.domain }}
   commonName: {{ .Values.tls.domain }}
