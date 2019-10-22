@@ -1,7 +1,7 @@
 {
   "name": "@mds-core/mds-policy",
   "description": "MDS Policy API",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "license": "Apache-2.0",
   "engineStrict": true,
   "engines": {
@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@hapi/joi": "15.1.1",
-    "@mds-core/mds-api-server": "0.1.14",
-    "@mds-core/mds-db": "0.1.14",
-    "@mds-core/mds-logger": "0.1.12",
-    "@mds-core/mds-providers": "0.1.14",
-    "@mds-core/mds-types": "0.1.11",
-    "@mds-core/mds-utils": "0.1.14",
+    "@mds-core/mds-api-server": "0.1.15",
+    "@mds-core/mds-db": "0.1.15",
+    "@mds-core/mds-logger": "0.1.13",
+    "@mds-core/mds-providers": "0.1.15",
+    "@mds-core/mds-types": "0.1.12",
+    "@mds-core/mds-utils": "0.1.15",
     "express": "4.17.1",
     "joi-to-json-schema": "5.1.0",
     "uuid": "3.3.3"
