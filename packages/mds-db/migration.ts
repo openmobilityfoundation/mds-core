@@ -4,7 +4,12 @@ import log from '@mds-core/mds-logger'
 import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient, cols_sql, SqlExecuterFunction } from './sql-utils'
 
-const MIGRATIONS = ['createMigrationsTable', 'alterGeographiesColumns', 'alterAuditEventsColumns'] as const
+const MIGRATIONS = [
+  'createMigrationsTable',
+  'alterGeographiesColumns',
+  'alterAuditEventsColumns',
+  'alterPreviousGeographiesColumn'
+] as const
 type MIGRATION = typeof MIGRATIONS[number]
 
 // drop tables from a list of table names
@@ -135,9 +140,7 @@ async function doMigration(
 }
 
 async function alterGeographiesColumnsMigration(exec: SqlExecuterFunction) {
-  await exec(
-    `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO ${schema.COLUMN.previous_geographies}`
-  )
+  await exec(`ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO previous_geographies`)
   await exec(
     `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.publish_date} ${schema.COLUMN_TYPE.publish_date}`
   )
@@ -161,6 +164,12 @@ async function alterAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
   )
 }
 
+async function alterPreviousGeographiesColumnMigration(exec: SqlExecuterFunction) {
+  await exec(
+    `ALTER TABLE ${schema.TABLE.geography_metadata} RENAME COLUMN previous_geographies ${schema.COLUMN_TYPE.prev_geographies}`
+  )
+}
+
 async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
   // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
@@ -168,6 +177,7 @@ async function doMigrations(client: MDSPostgresClient) {
   await doMigration(exec, 'createMigrationsTable', async () => {})
   await doMigration(exec, 'alterGeographiesColumns', alterGeographiesColumnsMigration)
   await doMigration(exec, 'alterAuditEventsColumns', alterAuditEventsColumnsMigration)
+  await doMigration(exec, 'alterPreviousGeographiesColumn', alterPreviousGeographiesColumnMigration)
 }
 
 async function updateSchema(client: MDSPostgresClient) {
