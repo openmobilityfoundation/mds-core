@@ -351,7 +351,7 @@ export interface Geography {
   geography_id: UUID
   geography_json: FeatureCollection
   read_only?: boolean
-  previous_geographies?: UUID[]
+  prev_geographies?: UUID[]
   name: string
   publish_date?: Timestamp
   effective_date?: Timestamp

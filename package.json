@@ -1,14 +1,14 @@
 {
   "name": "root",
   "private": true,
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "Apache-2.0",
   "workspaces": [
     "container-images/*",
     "packages/*"
   ],
   "engines": {
-    "node": "8.10.0"
+    "node": "10.16.3"
   },
   "devDependencies": {
     "@types/bluebird": "3.5.27",
@@ -23,7 +23,7 @@
     "@types/mocha": "5.2.7",
     "@types/mockdate": "2.0.0",
     "@types/moment-timezone": "0.5.12",
-    "@types/node": "8.10",
+    "@types/node": "10.14.21",
     "@types/pg": "7.11.2",
     "@types/point-in-polygon": "1.0.0",
     "@types/redis": "2.8.14",
