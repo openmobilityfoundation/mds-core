@@ -166,7 +166,7 @@ async function alterAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
 
 async function alterPreviousGeographiesColumnMigration(exec: SqlExecuterFunction) {
   await exec(
-    `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geographies ${schema.COLUMN_TYPE.prev_geographies}`
+    `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geographies ${schema.COLUMN.prev_geographies}`
   )
 }
 
