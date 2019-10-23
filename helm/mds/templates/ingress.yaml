@@ -17,7 +17,7 @@ spec:
   http:
   - match:
     - uri:
-        regex: {{ printf "^%s[^-][/]{0,1}.*$" $api.pathPrefix }}
+        regex: {{ printf "^%s($|/.*$)" $api.pathPrefix }}
         {{- if (and $.Values.tls.letsencrypt.enabled $.Values.tls.enabled) }}
         scheme:
           exact: https
