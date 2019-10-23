@@ -4,7 +4,12 @@ import log from '@mds-core/mds-logger'
 import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { logSql, SqlExecuter, MDSPostgresClient, cols_sql, SqlExecuterFunction } from './sql-utils'
 
-const MIGRATIONS = ['createMigrationsTable', 'alterGeographiesColumns'] as const
+const MIGRATIONS = [
+  'createMigrationsTable',
+  'alterGeographiesColumns',
+  'alterAuditEventsColumns',
+  'alterPreviousGeographiesColumn'
+] as const
 type MIGRATION = typeof MIGRATIONS[number]
 
 // drop tables from a list of table names
@@ -135,9 +140,7 @@ async function doMigration(
 }
 
 async function alterGeographiesColumnsMigration(exec: SqlExecuterFunction) {
-  await exec(
-    `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO ${schema.COLUMN.previous_geographies}`
-  )
+  await exec(`ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geography_ids TO previous_geographies`)
   await exec(
     `ALTER TABLE ${schema.TABLE.geographies} ADD COLUMN ${schema.COLUMN.publish_date} ${schema.COLUMN_TYPE.publish_date}`
   )
@@ -149,12 +152,32 @@ async function alterGeographiesColumnsMigration(exec: SqlExecuterFunction) {
   )
 }
 
+async function alterAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
+  await exec(
+    `ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN ${schema.COLUMN.provider_event_id} ${schema.COLUMN_TYPE.provider_event_id}`
+  )
+  await exec(
+    `ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN ${schema.COLUMN.provider_event_type} ${schema.COLUMN_TYPE.provider_event_type}`
+  )
+  await exec(
+    `ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN ${schema.COLUMN.provider_event_type_reason} ${schema.COLUMN_TYPE.provider_event_type_reason}`
+  )
+}
+
+async function alterPreviousGeographiesColumnMigration(exec: SqlExecuterFunction) {
+  await exec(
+    `ALTER TABLE ${schema.TABLE.geographies} RENAME COLUMN previous_geographies ${schema.COLUMN.prev_geographies}`
+  )
+}
+
 async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
   // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
   // migrations table is created, but it is included as it provides a template for how to invoke them.
   await doMigration(exec, 'createMigrationsTable', async () => {})
   await doMigration(exec, 'alterGeographiesColumns', alterGeographiesColumnsMigration)
+  await doMigration(exec, 'alterAuditEventsColumns', alterAuditEventsColumnsMigration)
+  await doMigration(exec, 'alterPreviousGeographiesColumn', alterPreviousGeographiesColumnMigration)
 }
 
 async function updateSchema(client: MDSPostgresClient) {

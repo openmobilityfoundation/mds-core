@@ -1,15 +1,14 @@
 {
   "name": "root",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.10",
   "license": "Apache-2.0",
   "workspaces": [
-    "aws-lambda/*",
     "container-images/*",
     "packages/*"
   ],
   "engines": {
-    "node": "8.10.0"
+    "node": "10.16.3"
   },
   "devDependencies": {
     "@types/bluebird": "3.5.27",
@@ -24,7 +23,7 @@
     "@types/mocha": "5.2.7",
     "@types/mockdate": "2.0.0",
     "@types/moment-timezone": "0.5.12",
-    "@types/node": "8.10",
+    "@types/node": "10.14.21",
     "@types/pg": "7.11.2",
     "@types/point-in-polygon": "1.0.0",
     "@types/redis": "2.8.14",
@@ -78,10 +77,9 @@
     "bundle": "yarn run:concurrent bundle",
     "image": "yarn run:concurrent image",
     "clean": "git clean -fdX -e '!.env' && yarn",
-    "deploy": "yarn run:sequential",
     "run:concurrent": "lerna run --stream",
     "run:sequential": "lerna run --stream --concurrency 1",
-    "test": "check-node-version --package --print && yarn run:sequential test",
+    "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",
     "test:eslint": "yarn run:concurrent test:eslint",
     "test:unit": "yarn run:sequential test:unit",
     "values": "bin/mdsctl templateValues"

@@ -3,7 +3,6 @@
 Repo for LADOT MDS implementation for contribution to the Open Mobility Foundation.  It represents what is currently up and running for Los Angeles production MDS as well as new features under development.  Includes the following:
 
 * A current LADOT implementation of all MDS endpoints
-* AWS production bindings (aws-lambda)
 * Development versions of mds-audit, mds-policy, and mds-compliance
 * MDS logging (mds-logger), daily metrics (mds-daily) and Google sheet reporting app for technical compliance.
 
