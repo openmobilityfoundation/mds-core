@@ -58,7 +58,7 @@ const COLUMN = Enum(
   'policy_id',
   'policy_json',
   'policy_metadata',
-  'previous_geographies',
+  'prev_geographies',
   'propulsion_type',
   'propulsion',
   'provider_device_id',
@@ -158,7 +158,7 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.geography_json,
     COLUMN.publish_date,
     COLUMN.read_only,
-    COLUMN.previous_geographies,
+    COLUMN.prev_geographies,
     COLUMN.name
   ],
   [TABLE.geography_metadata]: [COLUMN.id, COLUMN.geography_id, COLUMN.geography_metadata],
@@ -274,7 +274,7 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.policy_json]: 'json NOT NULL',
   [COLUMN.policy_metadata]: 'json',
   [COLUMN.publish_date]: 'bigint',
-  [COLUMN.previous_geographies]: 'uuid[]',
+  [COLUMN.prev_geographies]: 'uuid[]',
   [COLUMN.propulsion_type]: 'varchar(31)[] NOT NULL',
   [COLUMN.propulsion]: 'varchar(31)[] NOT NULL',
   [COLUMN.provider_device_id]: 'uuid', // May be null if can't find

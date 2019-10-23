@@ -386,6 +386,10 @@ if (pg_info.database) {
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
         await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
+
+        await MDSDBPostgres.writeGeography({ ...{ read_only: undefined }, ...LAGeography })
+        await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
+        await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
       })
 
       it('can write, read, and publish a Geography', async () => {
