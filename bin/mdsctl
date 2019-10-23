@@ -931,6 +931,10 @@ preset() {
       minimal)
         preset $(normalize "disable,no-events,local,no-persistence")
         is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
+	  eventing)
+		preset $(normalize "minimal")
+		is+="${is:+,}sets-mds+=apis.mds-event-processor.enabled=true";;
+	    
     esac
   done; unset p
 
