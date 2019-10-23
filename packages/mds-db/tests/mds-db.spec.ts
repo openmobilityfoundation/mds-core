@@ -402,7 +402,7 @@ if (pg_info.database) {
         const noGeos = await MDSDBPostgres.readGeographies({ get_read_only: true })
         assert.deepEqual(noGeos.length, 0)
 
-        await MDSDBPostgres.publishGeography(LAGeography.geography_id)
+        await MDSDBPostgres.publishGeography({ geography_id: LAGeography.geography_id, publish_date: now() })
         const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
         assert.deepEqual(writeableGeographies.length, 1)
       })
@@ -468,6 +468,11 @@ if (pg_info.database) {
         await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
         assert(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id))
         assert(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id))
+
+        const policy = await MDSDBPostgres.readPolicy(POLICY3_JSON.policy_id)
+        const geography = await MDSDBPostgres.readSingleGeography(DistrictSeven.geography_id)
+
+        assert.deepEqual(policy.publish_date, geography.publish_date)
       })
     })
 

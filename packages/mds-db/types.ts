@@ -110,3 +110,8 @@ export interface VehicleEventCountResult {
 export interface ReadGeographiesParams {
   get_read_only: boolean
 }
+
+export interface PublishGeographiesParams {
+  publish_date: Timestamp
+  geography_id: UUID
+}
