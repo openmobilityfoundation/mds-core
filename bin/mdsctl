@@ -934,6 +934,12 @@ preset() {
 	  eventing)
 		preset $(normalize "minimal")
 		is+="${is:+,}sets-mds+=apis.mds-event-processor.enabled=true";;
+	  wsl)
+	    is+="${is:+,}sets-mds+=postgresql.internal=false"
+		is+="${is:+,}sets-mds+=postgresql.host=host.docker.internal"
+		is+="${is:+,}sets-mds+=postgresql.hostReader=host.docker.internal"
+		is+="${is:+,}sets-mds+=redis.internal=false"
+		is+="${is:+,}sets-mds+=redis.host=host.docker.internal"
 	    
     esac
   done; unset p
