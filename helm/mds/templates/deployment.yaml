@@ -38,6 +38,8 @@ spec:
           name: user-port
           protocol: TCP
         env:
+          - name: PORT
+            value: 4000
           - name: PATH_PREFIX
             value: {{ $api.pathPrefix }}
           - name: TIMEZONE
