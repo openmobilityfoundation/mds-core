@@ -17,8 +17,8 @@
     "@mds-core/mds-logger": "0.1.15",
     "@mds-core/mds-types": "0.1.14",
     "@mds-core/mds-utils": "0.1.17",
-    "bluebird": "3.5.5",
-    "flat": "4.1.0",
+    "bluebird": "3.7.1",
+    "flat": "5.0.0",
     "redis": "2.8.0"
   },
   "scripts": {
