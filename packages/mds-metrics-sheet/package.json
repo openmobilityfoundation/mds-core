@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-metrics-sheet",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Automate reporting api insert into LADOT compliance spreadsheet",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,9 +16,9 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-logger": "0.1.14",
-    "@mds-core/mds-providers": "0.1.16",
-    "@mds-core/mds-types": "0.1.13",
+    "@mds-core/mds-logger": "0.1.15",
+    "@mds-core/mds-providers": "0.1.17",
+    "@mds-core/mds-types": "0.1.14",
     "google-spreadsheet": "2.0.8",
     "request": "2.88.0",
     "request-promise": "4.2.4"
