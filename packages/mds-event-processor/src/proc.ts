@@ -28,6 +28,7 @@ async function data_handler(
   console.log('Creating server...')
   const server = http.createServer((req: any, res: any) => {
     if (req.method === 'POST') {
+      console.log('Recieved POST')
       let body: any
       req.on('data', function(data: string) {
         body += data

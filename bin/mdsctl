@@ -932,7 +932,8 @@ preset() {
         preset $(normalize "disable,no-events,local,no-persistence")
         is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
 	  eventing)
-		preset $(normalize "minimal")
+		preset $(normalize "disable,local,no-persistence")
+		is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
 		is+="${is:+,}sets-mds+=apis.mds-event-processor.enabled=true";;
 	  wsl)
 	    is+="${is:+,}sets-mds+=postgresql.internal=false"

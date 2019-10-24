@@ -179,8 +179,10 @@ async function writeDevice(device: Device) {
 
 async function writeEvent(event: VehicleEvent) {
   if (env.SINK) {
+    logger.info('WRITING TO STREAM')
     return writeCloudEvent('mds.event', JSON.stringify(event))
   }
+  logger.info('HERE', env)
   return Promise.all([DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM].map(stream => writeStream(stream, 'event', event)))
 }
 
