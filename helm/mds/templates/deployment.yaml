@@ -1,29 +1,29 @@
-{{- range $key, $api := .Values.apis }}
+{{- range $name, $api := .Values.apis }}
 {{- if $api.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $key }}
+  name: {{ $name }}
   labels:
-    app: {{ $key }}
+    app: {{ $name }}
   namespace: {{ $.Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ $key }}
+      app: {{ $name }}
   template:
     metadata:
       labels:
-        app: {{ $key }}
+        app: {{ $name }}
     spec:
       containers:
-      - name: {{ $key }}
+      - name: {{ $name }}
         {{- if $.Values.registry }}
-        image: {{ $.Values.registry }}/{{ $key }}:{{ $api.version }}
+        image: {{ $.Values.registry }}/{{ $name }}:{{ $api.version }}
         {{- else }}
-        image: {{ $key }}:{{ $api.version }}
+        image: {{ $name }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
         resources:
@@ -42,7 +42,6 @@ spec:
             value: {{ $api.pathPrefix }}
           - name: TIMEZONE
             value: {{ $.Values.timezone }}
-          {{- if $api.useDB }}
           - name: PG_USER
             value: {{ $.Values.postgresql.postgresqlUsername }}
           - name: PG_NAME
@@ -69,13 +68,11 @@ spec:
             {{- else }}
             value: {{ $.Values.postgresql.host }}
             {{- end }}
-            {{- end }}
           {{- if $api.migration }}
           - name: PG_MIGRATIONS
             value: {{ $api.migration | quote }}
           {{- end }}
           {{- end }}
-          {{- if $api.useCache }}
           - name: REDIS_HOST
             {{- if $.Values.redis.internal }}
             value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
@@ -84,10 +81,9 @@ spec:
             {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          {{- end }}
-          {{- if $api.useEvents }}
+          {{- if $.Values.useEvents }}
           - name: CE_NAME
-            value: {{ $key }}
+            value: {{ $name }}
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
           {{- end }}
