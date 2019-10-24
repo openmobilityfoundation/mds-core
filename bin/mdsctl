@@ -573,7 +573,8 @@ testIntegration() {
 
   # todo: provide [ ui | cli ] option
   # yarn cypress open
-  yarn cypress run
+  # fixme: run suites
+  yarn run ts-mocha ./tests/agency.spec.ts
 }
 
 get() {
