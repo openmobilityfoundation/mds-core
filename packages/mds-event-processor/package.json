@@ -8,9 +8,12 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "node index.js",
-    "pretest": "eslint --ignore-path .gitignore --ignore-pattern static/*.js .",
-    "test": "nyc --check-coverage --lines 70 --per-file mocha --recursive tests"
+    "start": "yarn watch server --type=event",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 80 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   },
   "nyc": {
     "exclude": [

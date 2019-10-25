@@ -1,4 +1,4 @@
-import { data_handler } from './proc.js'
+import { data_handler } from './proc'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'

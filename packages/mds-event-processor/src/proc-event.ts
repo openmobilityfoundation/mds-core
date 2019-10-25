@@ -1,4 +1,4 @@
-import { data_handler } from './proc.js'
+import { data_handler } from './proc'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
@@ -178,6 +178,7 @@ async function processRaw(type: string, data: any) {
   let device_state: any = {
     type: type.substring(type.lastIndexOf('.') + 1),
     timestamp: data.timestamp,
+    date_timestamp: data.timestamp,
     device_id: data.device_id,
     provider_id: data.provider_id,
     state: null,

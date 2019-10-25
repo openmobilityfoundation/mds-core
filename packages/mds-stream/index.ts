@@ -51,6 +51,10 @@ function getBinding() {
 }
 
 async function writeCloudEvent(type: string, data: string) {
+  if (!env.SINK) {
+    return
+  }
+
   const cloudevent = new Cloudevent(Cloudevent.specs['0.2'])
     .type(type)
     .source(env.CE_NAME)

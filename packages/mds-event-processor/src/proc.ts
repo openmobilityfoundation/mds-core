@@ -28,18 +28,20 @@ async function data_handler(
   console.log('Creating server...')
   const server = http.createServer((req: any, res: any) => {
     if (req.method === 'POST') {
-      console.log('Recieved POST')
-      let body: any
+      console.log('Received POST')
+      let body: string
+      body = ''
       req.on('data', function(data: string) {
         body += data
       })
       req.on('end', function() {
         let type = req.headers['content-type']
-        if (type.indexOf(';')) {
+        if (type.indexOf(';') >= 0) {
           type = type.substring(0, type.indexOf(';'))
         }
 
-        body = JSON.parse(body)
+        let parsed_body: any
+        parsed_body = JSON.parse(body)
 
         let ce_data: { [x: string]: any } = {}
         if (type === 'application/json') {
@@ -49,11 +51,11 @@ async function data_handler(
             specversion: req.headers['ce-specversion'],
             source: req.headers['ce-source'],
             id: req.headers['ce-id'],
-            data: body
+            data: parsed_body
           }
         } else if (type === 'application/cloudevents+json') {
           // structured
-          ce_data = body
+          ce_data = parsed_body
         }
 
         callback(ce_data.type, ce_data.data)

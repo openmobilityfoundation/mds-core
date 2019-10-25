@@ -98,7 +98,7 @@ async function initialize() {
   return 'postgres'
 }
 
-function commaize(array: any[], quote = `'`, join = ','): any {
+function commaize(array: ReadonlyArray<string>, quote = `'`, join = ','): any {
   return array.map((val: any) => `${stringify(val, quote)}`).join(join)
 }
 
@@ -156,7 +156,7 @@ async function insert(table_name: TABLE_NAME, data: { [x: string]: any }) {
   if (!data) {
     return null
   }
-  let fields = Object.keys(schema.TABLE[table_name])
+  let fields = schema.TABLE_COLUMNS[table_name]
   let query = `INSERT INTO ${String(table_name)} (${commaize(fields, `"`)}) `
   log.info(commaize(fields.map(field => (field.includes('time') ? db_time(data[field]) : data[field]))))
   query += `VALUES (${commaize(fields.map(field => (field.includes('time') ? db_time(data[field]) : data[field])))})`
