@@ -13,9 +13,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: {{ $api.pathPrefix }}
-        scheme:
-          exact: https
+        regex: {{ printf "^%s($|/.*$)" $api.pathPrefix }}
     route:
     - destination:
         port:
