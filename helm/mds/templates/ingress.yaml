@@ -7,7 +7,7 @@ metadata:
   namespace: {{ $.Release.Namespace }}
 spec:
   hosts:
-  - "*"
+  - {{ $.Values.tls.domain }}
   gateways:
   - mds-gateway
   http:
@@ -64,5 +64,5 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "*"
+    - {{ .Values.domain }}
   {{- end }}

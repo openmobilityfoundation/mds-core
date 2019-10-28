@@ -74,6 +74,7 @@ apis:
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
+domain: '*'
 tls:
   enabled: false
   domain:
