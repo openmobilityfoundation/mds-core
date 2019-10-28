@@ -42,12 +42,10 @@ useEvents: false
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
+domain: '*'
 tls:
   enabled: false
   domain:
-  letsencrypt:
-    enabled: false
-    production: false
 jwt:
   issuer:
   enabled: false

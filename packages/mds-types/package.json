@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-types",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Mobility Data Specification common types",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
