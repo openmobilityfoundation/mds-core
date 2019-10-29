@@ -39,7 +39,7 @@ spec:
           protocol: TCP
         env:
           - name: PORT
-            value: 4000
+            value: "4000"
           - name: PATH_PREFIX
             value: {{ $api.pathPrefix }}
           - name: TIMEZONE
