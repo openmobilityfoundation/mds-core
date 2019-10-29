@@ -55,7 +55,8 @@ postgresql:
   host:
   hostReader:
   port: 5432
-  existingSecret: pg-pass
+  existingSecret: api-secrets
+  password:  # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
   image:
