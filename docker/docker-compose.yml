@@ -4,10 +4,9 @@ services:
   agency:
     image: mds-agency:0.1.17-unstable
     ports:
-      - "4000"
+      - "4001"
     environment:
       PATH_PREFIX: /agency
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -21,7 +20,6 @@ services:
       - "4000"
     environment:
       PATH_PREFIX: /provider
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -32,10 +30,9 @@ services:
   audit:
     image: mds-audit:0.1.18-unstable
     ports:
-      - "4000"
+      - "4002"
     environment:
       PATH_PREFIX: /audit
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -46,10 +43,9 @@ services:
   policy:
     image: mds-policy:0.1.17-unstable
     ports:
-      - "4000"
+      - "4003"
     environment:
       PATH_PREFIX: /policy
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -60,10 +56,9 @@ services:
   compliance:
     image: mds-compliance:0.1.17-unstable
     ports:
-      - "4000"
+      - "4004"
     environment:
       PATH_PREFIX: /compliance
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -74,10 +69,9 @@ services:
   daily:
     image: mds-daily:0.1.17-unstable
     ports:
-      - "4000"
+      - "4005"
     environment:
       PATH_PREFIX: /daily
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -88,10 +82,9 @@ services:
   native:
     image: mds-native:0.0.15-unstable
     ports:
-      - "4000"
+      - "4006"
     environment:
       PATH_PREFIX: /native
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
@@ -102,10 +95,9 @@ services:
   policy-author:
     image: mds-policy-author:0.1.17-unstable
     ports:
-      - "4000"
+      - "4007"
     environment:
       PATH_PREFIX: /policy-author
-      PORT: "4000"
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin
