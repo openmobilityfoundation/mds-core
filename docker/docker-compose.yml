@@ -1,0 +1,137 @@
+version: "3.7"
+services:
+
+  agency:
+    image: mds-agency:0.1.17-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /agency
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  provider:
+    image: mds-provider:0.1.17-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /provider
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  audit:
+    image: mds-audit:0.1.18-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /audit
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  policy:
+    image: mds-policy:0.1.17-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /policy
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  compliance:
+    image: mds-compliance:0.1.17-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /compliance
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  daily:
+    image: mds-daily:0.1.17-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /daily
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  native:
+    image: mds-native:0.0.15-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /native
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  policy-author:
+    image: mds-policy-author:0.1.17-unstable
+    ports:
+      - "4000"
+    environment:
+      PATH_PREFIX: /policy-author
+      PORT: "4000"
+      PG_HOST: postgres
+      PG_NAME: mds
+      PG_USER: mdsadmin
+      PG_PASS: "Password123#"
+      PG_MIGRATIONS: "true"
+      REDIS_HOST: redis
+
+  gateway:
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+
+  redis:
+    image: redis:5
+    ports:
+      - "6379"
+
+  postgres:
+    image: postgres:10
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: mdsadmin
+      POSTGRES_PASSWORD: "Password123#"
+      POSTGRES_DB: mds
+
+networks:
+  default:
