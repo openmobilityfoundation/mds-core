@@ -107,7 +107,9 @@ metadata:
   namespace: {{ $.Release.Namespace }}
 data:
   {{- if .Values.slack.channel }}
-  slack-token: {{ .Values.slack.token | base64 }}
+  slack-token: {{ .Values.slack.token | b64enc }}
   {{- end }}
-  postgresql-password: {{ .Values.postgresql.password | base64 }}
+  {{- if .Values.postgresql.password }}
+  postgresql-password: {{ .Values.postgresql.password | b64enc }}
+  {{- end }}
 type: Opaque

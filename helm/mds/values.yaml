@@ -98,3 +98,6 @@ fluentbit:
       tls_ca: ""
       # TLS debugging levels = 1-4
       tls_debug: 4
+slack:
+  channel:
+  token:
