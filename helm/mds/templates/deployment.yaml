@@ -51,7 +51,7 @@ spec:
           - name: PG_PASS
             valueFrom:
               secretKeyRef:
-                name: pg-pass
+                name: mds-secrets
                 key: postgresql-password
           - name: PG_HOST
           {{- if $.Values.postgresql.internal }}
@@ -85,8 +85,29 @@ spec:
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
           {{- end }}
+          {{- if $.Values.slack.channel }}
+          - name: SLACK_CHANNEL
+            value: {{ $.Values.slack.channel }}
+          - name: SLACK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: mds-secrets
+                key: slack-token
+          {{- end }}
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
           {{- end }}
   {{- end }}
 {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secrets
+  namespace: {{ $.Release.Namespace }}
+data:
+  {{- if .Values.slack.channel }}
+  slack-token: {{ .Values.slack.token | base64 }}
+  {{- end }}
+  postgresql-password: {{ .Values.postgresql.password | base64 }}
+type: Opaque
