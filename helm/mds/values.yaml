@@ -77,9 +77,7 @@ useLatestImage: true
 domain: '*'
 tls:
   enabled: false
-  letsencrypt:
-    enabled: false
-    production: false
+  domain:
 jwt:
   issuer:
   enabled: false
