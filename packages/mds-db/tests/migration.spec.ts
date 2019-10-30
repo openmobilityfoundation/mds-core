@@ -68,7 +68,9 @@ if (pg_info.database) {
       test.array(table_names).is(schema.TABLES.sort())
       const indices_result = await client.query(`SELECT tablename FROM pg_indexes WHERE indexdef like '%idx_recorded%'`)
       const indices = indices_result.rows.map((row: DBRow) => row.tablename).sort()
-      test.array(indices).is(['audit_events', 'audits', 'devices', 'events', 'status_changes', 'telemetry', 'trips'])
+      test
+        .array(indices)
+        .is(schema.TABLES.sort().filter(table => schema.TABLE_COLUMNS[table].includes(schema.COLUMN.recorded)))
       await client.end()
     })
 
