@@ -7,18 +7,18 @@ metadata:
   namespace: {{ $.Release.Namespace }}
 spec:
   hosts:
-  - {{ $.Values.tls.domain }}
+  - {{ $.Values.domain | quote }}
   gateways:
   - mds-gateway
   http:
   - match:
     - uri:
-        regex: {{ printf "^%s($|/.*$)" $api.pathPrefix }}
+        regex: {{ printf "^%s($|/.*$)" $api.pathPrefix | quote }}
     route:
     - destination:
+        host: {{ $key }}.{{ $.Release.Namespace}}.svc.cluster.local
         port:
           number: {{ $api.port }}
-        host: {{ $key }}.{{ $.Release.Namespace}}.svc.cluster.local
     corsPolicy:
       allowOrigin:
       - "*"
@@ -64,5 +64,5 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - {{ .Values.domain }}
+    - {{ .Values.domain | quote }}
   {{- end }}
