@@ -31,7 +31,6 @@ import db from '@mds-core/mds-db'
 import log from '@mds-core/mds-logger'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
-import { ProviderEventProcessor } from '../event-processor'
 
 const APP_JSON = 'application/json; charset=utf-8'
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
@@ -160,16 +159,11 @@ const test_data = {
 describe('Tests app', () => {
   before('initializes the db and cache', async () => {
     await Promise.all([db.initialize(), cache.initialize()])
+    await Promise.all([db.seed(test_data), cache.seed(test_data)])
   })
 
   after('Shuts down the db and cache', async () => {
     await Promise.all([db.shutdown(), cache.shutdown()])
-  })
-
-  it('verifies event processing', async () => {
-    await Promise.all([db.seed(test_data), cache.seed(test_data)])
-    const processed = await ProviderEventProcessor({ interval: 0 })
-    test.value(processed).is(3)
   })
 
   it('Get Trips (no authorization)', done => {
