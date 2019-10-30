@@ -12,7 +12,6 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "start": "PATH_PREFIX=/provider yarn watch server",
-    "stream": "yarn watch stream",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 85 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts",
@@ -32,8 +31,7 @@
     "express": "4.17.1",
     "ladot-service-areas": "0.1.9",
     "url": "0.11.0",
-    "uuid": "3.3.3",
-    "yargs": "14.2.0"
+    "uuid": "3.3.3"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "0.1.17"

@@ -1,6 +1,8 @@
+import morgan from 'morgan'
 import bodyParser from 'body-parser'
 import express from 'express'
 import cors from 'cors'
+import logger from '@mds-core/mds-logger'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { AccessTokenScope } from '@mds-core/mds-types'
@@ -58,33 +60,52 @@ export const ApiServer = (
   // Disable x-powered-by header
   app.disable('x-powered-by')
 
-  // Parse JSON body
-  app.use(bodyParser.json({ limit: '5mb' }))
-
-  // Enable CORS
+  // Middleware
   app.use(
+    //
+    // Request logging
+    //
+    morgan('tiny', {
+      skip: (req, res) => {
+        // By default only log 400/500 errors
+        const { API_REQUEST_LOG_LEVEL = 400 } = process.env
+        return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
+      },
+      // Use logger, but remove extra line feed added by morgan stream option
+      stream: { write: msg => logger.info(msg.slice(0, -1)) }
+    }),
+    //
+    // JSON body parser
+    //
+    bodyParser.json({ limit: '5mb' }),
+    //
+    // CORS
+    //
     handleCors
       ? cors() // Server handles CORS
       : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-          // Gateway handles CORS pre-flight
-          if (req.method !== 'OPTIONS') {
-            res.header('Access-Control-Allow-Origin', '*')
-          }
+          res.header('Access-Control-Allow-Origin', '*')
           next()
-        }
-  )
-
-  // Authorizer
-  app.use((req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-    const { MAINTENANCE: maintenance } = process.env
-    if (maintenance) {
-      return res.status(503).send(about())
+        },
+    //
+    // Maintenance
+    //
+    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+      if (process.env.MAINTENANCE) {
+        return res.status(503).send(about())
+      }
+      next()
+    },
+    //
+    // Authorizer
+    //
+    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+      const claims = authorizer(req)
+      res.locals.claims = claims
+      res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
+      next()
     }
-    const claims = authorizer(req)
-    res.locals.claims = claims
-    res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
-    next()
-  })
+  )
 
   app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
     // 200 OK

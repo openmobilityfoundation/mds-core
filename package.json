@@ -23,6 +23,7 @@
     "@types/mocha": "5.2.7",
     "@types/mockdate": "2.0.0",
     "@types/moment-timezone": "0.5.12",
+    "@types/morgan": "1.7.37",
     "@types/node": "10.14.21",
     "@types/pg": "7.11.2",
     "@types/point-in-polygon": "1.0.0",

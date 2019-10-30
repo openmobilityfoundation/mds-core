@@ -4,8 +4,6 @@ import { csv } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 import schema from './schema'
 
-const pgDebug = process.env.PG_DEBUG === 'true'
-
 export interface PGInfo {
   user?: string
   database?: string
@@ -144,7 +142,7 @@ export function to_sql(value: DBValueType | undefined | object) {
 
 // logging specific to sql debugging.  can be turned on/off using PG_DEBUG env var.
 export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
-  if (!pgDebug) {
+  if (process.env.PG_DEBUG !== 'true') {
     return
   }
   let out: unknown[]
