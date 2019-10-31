@@ -258,3 +258,12 @@ export async function readRule(rule_id: UUID): Promise<Rule> {
     return rule
   }
 }
+
+export async function findPoliciesByGeographyID(geography_id: UUID): Promise<Policy[]> {
+  const client = await getReadOnlyClient()
+  const sql = `select * from ${schema.TABLE.policies}
+    where ${schema.COLUMN.policy_json}::jsonb
+    @> '{"rules":[{"geographies":["${geography_id}"]}]}'`
+  const res = await client.query(sql)
+  return res.rows.map(row => row.policy_json)
+}
