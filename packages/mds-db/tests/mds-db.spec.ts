@@ -44,14 +44,12 @@ const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
 const LAGeography: Geography = {
   name: 'Los Angeles',
   geography_id: GEOGRAPHY_UUID,
-  geography_json: LA_CITY_BOUNDARY,
-  read_only: false
+  geography_json: LA_CITY_BOUNDARY
 }
 const DistrictSeven: Geography = {
   name: 'District Seven',
   geography_id: GEOGRAPHY2_UUID,
-  geography_json: DISTRICT_SEVEN,
-  read_only: false
+  geography_json: DISTRICT_SEVEN
 }
 
 /* You'll need postgres running and the env variable PG_NAME
@@ -370,7 +368,7 @@ if (pg_info.database) {
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
         await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
 
-        await MDSDBPostgres.writeGeography({ ...{ read_only: undefined }, ...LAGeography })
+        await MDSDBPostgres.writeGeography(LAGeography)
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
         await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
       })

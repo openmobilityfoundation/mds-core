@@ -36,7 +36,7 @@ export async function readGeographies(params: Partial<ReadGeographiesParams> = {
     const vals = new SqlVals()
 
     if (get_read_only) {
-      conditions.push(`read_only IS TRUE`)
+      conditions.push(`publish_date IS NOT NULL`)
     }
 
     if (conditions.length) {
@@ -107,8 +107,8 @@ export async function isGeographyPublished(geography_id: UUID) {
   if (result.rows.length === 0) {
     throw new NotFoundError(`geography_id ${geography_id} not found`)
   }
-  log.info('is geography published', geography_id, result.rows[0].read_only)
-  return Boolean(result.rows[0].read_only)
+  log.info('is geography published', geography_id, Boolean(result.rows[0].publish_date))
+  return Boolean(result.rows[0].publish_date)
 }
 
 export async function editGeography(geography: Geography) {
@@ -118,7 +118,7 @@ export async function editGeography(geography: Geography) {
   }
 
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.geographies} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND read_only IS FALSE`
+  const sql = `UPDATE ${schema.TABLE.geographies} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND publish_date IS NULL`
   await client.query(sql, [geography.geography_json])
   return geography
 }
@@ -129,7 +129,7 @@ export async function deleteGeography(geography_id: UUID) {
   }
 
   const client = await getWriteableClient()
-  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id=$1 AND read_only IS NOT TRUE`
+  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id=$1 AND publish_date IS NULL`
   await client.query(sql, [geography_id])
   return geography_id
 }
@@ -146,10 +146,8 @@ export async function publishGeography(params: PublishGeographiesParams) {
 
     const vals = new SqlVals()
     const conditions = []
-    conditions.push(`read_only = ${vals.add('t')}`)
     conditions.push(`publish_date = ${vals.add(publish_date)}`)
-    vals.add(geography_id)
-    const sql = `UPDATE ${schema.TABLE.geographies} SET ${conditions} where geography_id=$3`
+    const sql = `UPDATE ${schema.TABLE.geographies} SET ${conditions} where geography_id=${vals.add(geography_id)}`
 
     await client.query(sql, vals.values())
     return geography_id
