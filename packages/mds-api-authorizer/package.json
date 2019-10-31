@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-api-authorizer",
-  "version": "0.1.14",
+  "version": "0.1.17",
   "description": "MDS API Authorizer",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,11 +18,11 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-types": "0.1.11",
+    "@mds-core/mds-types": "0.1.14",
     "jwt-decode": "2.2.0"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.14"
+    "@mds-core/mds-test-data": "0.1.17"
   },
   "license": "Apache-2.0"
 }

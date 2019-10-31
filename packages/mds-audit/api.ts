@@ -125,7 +125,6 @@ function api(app: express.Express): express.Express {
           // stash audit_subject_id and timestamp (for recording db writes)
           res.locals.audit_subject_id = subject_id
           res.locals.recorded = Date.now()
-          log.info(subject_id, req.method, req.originalUrl)
           return next()
         }
       }
