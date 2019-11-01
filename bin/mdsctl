@@ -293,6 +293,20 @@ getBranchSuffix() {
   echo ${suffix}
 }
 
+# TODO: DRY
+templateDockerCompose() {
+  suffix=$(getBranchSuffix)
+  for directory in container-images/mds-*; do
+    api=$(basename $directory)
+    version=$(jq -r '.version' < $directory/package.json)
+    varname="$(echo $api | sed -e 's/^mds-//' -e 's/-/_/g' | tr a-z A-Z)_VERSION"
+    export $varname=${version}${suffix}
+  done
+  envsubst < docker-compose.yml.tpl > docker-compose.yml
+  echo "Wrote docker-compose.yml"
+}
+
+# TODO: DRY
 templateValues() {
   suffix=$(getBranchSuffix)
   for directory in container-images/mds-*; do
@@ -946,6 +960,7 @@ for arg in "${@:$OPTIND}"; do
     build) build || usage "${arg} failure";;
     buildImage) buildImage ${configs[image-name]};;
     templateValues) templateValues;;
+    templateDockerCompose) templateDockerCompose;;
     install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
