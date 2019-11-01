@@ -17,7 +17,7 @@
 import log from '@mds-core/mds-logger'
 
 import flatten from 'flat'
-import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
+import { nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
 import {
   UUID,
   Timestamp,
@@ -179,28 +179,13 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
   })
 }
 
-// initial set of stats are super-simple: last-written values for device, event, and telemetry
-async function updateProviderStats(suffix: string, device_id: UUID, provider_id: UUID, timestamp?: Timestamp) {
-  try {
-    return (await getClient()).hmsetAsync(
-      `provider:${provider_id}:stats`,
-      `last${capitalizeFirst(suffix)}`,
-      timestamp || now()
-    )
-  } catch (err) {
-    const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-    await log.info(msg)
-    return Promise.resolve(msg)
-  }
-}
-
 // anything with a device_id, e.g. device, telemetry, etc.
 async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | VehicleEvent) {
   if (typeof item.device_id !== 'string') {
     await log.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
-  const { device_id, provider_id } = item
+  const { device_id } = item
   const key = `device:${device_id}:${suffix}`
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
@@ -214,20 +199,7 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   }
 
   await (await getClient()).hmsetAsync(key, hmap)
-  if ('timestamp' in item) {
-    return Promise.all([
-      // make sure the device list is updated (per-provider)
-      updateVehicleList(device_id, item.timestamp),
-      // update last-written values
-      updateProviderStats(suffix, device_id, provider_id, item.timestamp)
-    ])
-  }
-  return Promise.all([
-    // make sure the device list is updated (per-provider)
-    updateVehicleList(device_id),
-    // update last-written values
-    updateProviderStats(suffix, device_id, provider_id)
-  ])
+  return updateVehicleList(device_id)
 }
 
 // put basics of device in the cache
@@ -463,16 +435,6 @@ async function readAllTelemetry() {
   }, [])
 }
 
-async function readProviderStats(provider_id: UUID) {
-  const key = `provider:${provider_id}:stats`
-  const flat = await (await getClient()).hgetallAsync(key)
-  if (!flat) {
-    throw new Error(`no stats found for provider_id ${provider_id}`)
-  } else {
-    return unflatten(flat)
-  }
-}
-
 async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; telemetry: Telemetry[] }) {
   log.info('cache seed')
   const data = dataParam || {
@@ -576,7 +538,6 @@ export = {
   readAllEvents,
   readTelemetry,
   readAllTelemetry,
-  readProviderStats,
   readKeys,
   wipeDevice,
   updateVehicleList,
