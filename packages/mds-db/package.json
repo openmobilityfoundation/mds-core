@@ -14,7 +14,7 @@
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 0 ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --timeout 6000 --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts && nyc report --reporter=html"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 60 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
