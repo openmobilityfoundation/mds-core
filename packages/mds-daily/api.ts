@@ -19,7 +19,7 @@ import express from 'express'
 import log from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
-import { isUUID, pathsFor } from '@mds-core/mds-utils'
+import { isUUID, pathsFor, now } from '@mds-core/mds-utils'
 import { checkAccess } from '@mds-core/mds-api-server'
 import { DailyApiRequest, DailyApiResponse } from './types'
 import {
@@ -89,7 +89,11 @@ function api(app: express.Express): express.Express {
     pathsFor('/admin/events'),
     checkAccess(scopes => scopes.includes('admin:all')),
     async (req: DailyApiRequest, res: DailyApiResponse) => {
+      const start = now()
       const events = await cache.readAllEvents()
+      const finish = now()
+      const timeElapsed = finish - start
+      await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() time elapsed: ${timeElapsed}`)
       res.status(200).send({
         events
       })
