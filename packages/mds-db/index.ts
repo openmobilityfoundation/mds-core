@@ -21,7 +21,6 @@ import {
   writeEvent,
   readEvent,
   readEvents,
-  readEventsForStatusChanges,
   readHistoricalEvents,
   getEventCountsPerProviderSince,
   getEventsLast24HoursPerProvider,
@@ -62,7 +61,7 @@ import {
 
 import { readAudit, readAudits, writeAudit, deleteAudit, readAuditEvents, writeAuditEvent } from './audits'
 
-import { readTripIds, getTripEventsLast24HoursByProvider, getTripCountsPerProviderSince } from './trips'
+import { getTripEventsLast24HoursByProvider, getTripCountsPerProviderSince } from './trips'
 
 import {
   readTelemetry,
@@ -216,7 +215,5 @@ export = {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
-  readEventsWithTelemetry,
-  readTripIds,
-  readEventsForStatusChanges
+  readEventsWithTelemetry
 }

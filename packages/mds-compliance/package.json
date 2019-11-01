@@ -40,7 +40,7 @@
   "devDependencies": {
     "@mds-core/mds-agency": "0.0.19",
     "@mds-core/mds-policy": "0.0.18",
-    "@mds-core/mds-provider": "1.0.17",
+    "@mds-core/mds-providers": "0.1.17",
     "@mds-core/mds-test-data": "0.1.17"
   }
 }
