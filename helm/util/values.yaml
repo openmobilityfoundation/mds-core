@@ -16,8 +16,7 @@ fluentbit:
   backend:
     type: es
     es:
-      # host: localhost
-      # port: 65535
+      host: elasticsearch-master-0
       scheme: http
       index: kubernetes_cluster
       type: flb_type
