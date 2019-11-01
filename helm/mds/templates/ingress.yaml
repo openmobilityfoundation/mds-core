@@ -18,7 +18,7 @@ spec:
     - destination:
         host: {{ $key }}.{{ $.Release.Namespace}}.svc.cluster.local
         port:
-          number: {{ $api.port }}
+          number: 4000
     corsPolicy:
       allowOrigin:
       - "*"

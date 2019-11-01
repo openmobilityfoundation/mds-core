@@ -2,75 +2,43 @@ apis:
   mds-provider:
     enabled: true
     pathPrefix: /provider
-    port: 4000
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
   mds-agency:
     enabled: true
     pathPrefix: /agency
-    port: 4001
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
   mds-audit:
     enabled: true
     pathPrefix: /audit
-    port: 4002
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
   mds-policy:
     enabled: true
     pathPrefix: /policy
-    port: 4003
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
   mds-compliance:
     enabled: true
     pathPrefix: /compliance
-    port: 4004
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
   mds-daily:
     enabled: true
     pathPrefix: /daily
-    port: 4005
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
   mds-native:
     enabled: true
     pathPrefix: /native
-    port: 4006
     version: latest
-    useDB: true
-    migration: false
-    useCache: true
-    useEvents: true
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author
-    port: 4007
     version: latest
-    useDB: true
     migration: false
-    useCache: true
-    useEvents: true
+useEvents: false
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
@@ -87,7 +55,8 @@ postgresql:
   host:
   hostReader:
   port: 5432
-  existingSecret: pg-pass
+  existingSecret: mds-secrets
+  password:  # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
   image:
@@ -129,3 +98,6 @@ fluentbit:
       tls_ca: ""
       # TLS debugging levels = 1-4
       tls_debug: 4
+slack:
+  channel:
+  token:
