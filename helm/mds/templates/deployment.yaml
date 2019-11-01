@@ -34,7 +34,7 @@ spec:
             cpu: {{ $api.resourcesRequestsCpu | default ($.Values.resourcesRequestsCpu | default "50m") }}
             memory: {{ $api.resourcesRequestsMemory | default ($.Values.resourcesRequestsMemory | default "128Mi") }}
         ports:
-        - containerPort: {{ $api.port }}
+        - containerPort: 4000
           name: user-port
           protocol: TCP
         env:
@@ -103,7 +103,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: api-secrets
+  name: mds-secrets
   namespace: {{ $.Release.Namespace }}
 data:
   {{- if .Values.slack.channel }}
