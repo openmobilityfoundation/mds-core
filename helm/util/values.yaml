@@ -16,8 +16,8 @@ fluentbit:
   backend:
     type: es
     es:
-      host: localhost
-      port: 65535
+      # host: localhost
+      # port: 65535
       scheme: http
       index: kubernetes_cluster
       type: flb_type
