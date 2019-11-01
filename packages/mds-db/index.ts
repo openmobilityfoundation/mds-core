@@ -62,16 +62,7 @@ import {
 
 import { readAudit, readAudits, writeAudit, deleteAudit, readAuditEvents, writeAuditEvent } from './audits'
 
-import {
-  writeTrips,
-  updateTrip,
-  readTrips,
-  readTripList,
-  readTripIds,
-  getLatestTripTime,
-  getTripEventsLast24HoursByProvider,
-  getTripCountsPerProviderSince
-} from './trips'
+import { readTripIds, getTripEventsLast24HoursByProvider, getTripCountsPerProviderSince } from './trips'
 
 import {
   readTelemetry,
@@ -79,13 +70,6 @@ import {
   getTelemetryCountsPerProviderSince,
   getMostRecentTelemetryByProvider
 } from './telemetry'
-
-import {
-  writeStatusChanges,
-  readStatusChanges,
-  readUnprocessedStatusChangeEvents,
-  getLatestStatusChangeTime
-} from './status_changes'
 
 async function initialize() {
   const client: MDSPostgresClient = await getWriteableClient()
@@ -198,10 +182,6 @@ export = {
   deleteAudit,
   readAuditEvents,
   writeAuditEvent,
-  writeTrips,
-  updateTrip,
-  readTrips,
-  readTripList,
   readGeographies,
   readGeographySummaries,
   writeGeography,
@@ -226,13 +206,9 @@ export = {
   publishPolicy,
   isPolicyPublished,
   readRule,
-  writeStatusChanges,
-  readStatusChanges,
   getEventCountsPerProviderSince,
   getTelemetryCountsPerProviderSince,
   getTripCountsPerProviderSince,
-  getLatestTripTime,
-  getLatestStatusChangeTime,
   getNumVehiclesRegisteredLast24HoursByProvider,
   getMostRecentEventByProvider,
   getVehicleCountsPerProvider,
@@ -240,7 +216,6 @@ export = {
   getMostRecentTelemetryByProvider,
   getTripEventsLast24HoursByProvider,
   getEventsLast24HoursPerProvider,
-  readUnprocessedStatusChangeEvents,
   readEventsWithTelemetry,
   readTripIds,
   readEventsForStatusChanges
