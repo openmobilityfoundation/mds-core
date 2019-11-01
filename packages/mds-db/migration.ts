@@ -9,7 +9,8 @@ const MIGRATIONS = [
   'alterGeographiesColumns',
   'alterAuditEventsColumns',
   'alterPreviousGeographiesColumn',
-  'dropDeprecatedProviderTables'
+  'dropDeprecatedProviderTables',
+  'dropReadOnlyGeographyColumn'
 ] as const
 type MIGRATION = typeof MIGRATIONS[number]
 
@@ -177,6 +178,10 @@ async function dropDeprecatedProviderTablesMigration(exec: SqlExecuterFunction) 
   await exec(`DROP TABLE IF EXISTS ${csv(schema.DEPRECATED_PROVIDER_TABLES)};`)
 }
 
+async function dropReadOnlyGeographyColumnMigration(exec: SqlExecuterFunction) {
+  await exec(`ALTER TABLE ${schema.TABLE.geographies} DROP COLUMN read_only`)
+}
+
 async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
   // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
@@ -186,6 +191,7 @@ async function doMigrations(client: MDSPostgresClient) {
   await doMigration(exec, 'alterAuditEventsColumns', alterAuditEventsColumnsMigration)
   await doMigration(exec, 'alterPreviousGeographiesColumn', alterPreviousGeographiesColumnMigration)
   await doMigration(exec, 'dropDeprecatedProviderTables', dropDeprecatedProviderTablesMigration)
+  await doMigration(exec, 'dropReadOnlyGeographyColumn', dropReadOnlyGeographyColumnMigration)
 }
 
 async function updateSchema(client: MDSPostgresClient) {

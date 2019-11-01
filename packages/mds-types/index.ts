@@ -350,7 +350,6 @@ export interface ComplianceResponse {
 export interface Geography {
   geography_id: UUID
   geography_json: FeatureCollection
-  read_only?: boolean
   prev_geographies?: UUID[]
   name: string
   publish_date?: Timestamp
