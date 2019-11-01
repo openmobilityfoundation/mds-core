@@ -2,7 +2,7 @@ version: "3.7"
 services:
 
   agency:
-    image: mds-agency:0.1.17-unstable
+    image: mds-agency:${AGENCY_VERSION}
     ports:
       - "4001"
     environment:
@@ -15,7 +15,7 @@ services:
       REDIS_HOST: redis
 
   provider:
-    image: mds-provider:0.1.17-unstable
+    image: mds-provider:$PROVIDER_VERSION
     ports:
       - "4000"
     environment:
@@ -28,7 +28,7 @@ services:
       REDIS_HOST: redis
 
   audit:
-    image: mds-audit:0.1.18-unstable
+    image: mds-audit:$AUDIT_VERSION
     ports:
       - "4002"
     environment:
@@ -41,7 +41,7 @@ services:
       REDIS_HOST: redis
 
   policy:
-    image: mds-policy:0.1.17-unstable
+    image: mds-policy:$POLICY_VERSION
     ports:
       - "4003"
     environment:
@@ -54,7 +54,7 @@ services:
       REDIS_HOST: redis
 
   compliance:
-    image: mds-compliance:0.1.17-unstable
+    image: mds-compliance:$COMPLIANCE_VERSION
     ports:
       - "4004"
     environment:
@@ -67,7 +67,7 @@ services:
       REDIS_HOST: redis
 
   daily:
-    image: mds-daily:0.1.17-unstable
+    image: mds-daily:$DAILY_VERSION
     ports:
       - "4005"
     environment:
@@ -80,7 +80,7 @@ services:
       REDIS_HOST: redis
 
   native:
-    image: mds-native:0.0.15-unstable
+    image: mds-native:$NATIVE_VERSION
     ports:
       - "4006"
     environment:
@@ -93,7 +93,7 @@ services:
       REDIS_HOST: redis
 
   policy-author:
-    image: mds-policy-author:0.1.17-unstable
+    image: mds-policy-author:$POLICY_AUTHOR_VERSION
     ports:
       - "4007"
     environment:
