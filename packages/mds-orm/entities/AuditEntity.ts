@@ -1,6 +1,6 @@
 import { Entity, Index, Column } from 'typeorm'
 import { UUID } from '@mds-core/mds-types'
-import { BigintTransformer } from './decorators'
+import { BigintTransformer } from './transformers'
 
 const table = 'audits'
 
