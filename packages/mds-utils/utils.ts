@@ -622,6 +622,20 @@ function clone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj))
 }
 
+// T is the non-null and non-undefined type
+function filterEmptyHelper<T>(warnOnEmpty?: boolean) {
+  // https://stackoverflow.com/a/51577579 to remove null/undefined in typesafe way
+  return (elem: T | undefined | null, idx: number): elem is T => {
+    if (elem !== undefined && elem !== null) {
+      return true
+    }
+    if (warnOnEmpty) {
+      log.warn(`Encountered empty element at index: ${idx}`) // eslint-disable-line @typescript-eslint/no-floating-promises
+    }
+    return false
+  }
+}
+
 export {
   UUID_REGEX,
   isUUID,
@@ -661,5 +675,6 @@ export {
   getPolygon,
   isInStatesOrEvents,
   routeDistance,
-  clone
+  clone,
+  filterEmptyHelper
 }

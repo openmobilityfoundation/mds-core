@@ -449,6 +449,17 @@ function api(app: express.Express): express.Express {
     }
   )
 
+  app.get(pathsFor('/geographies'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
+    const summary = req.query.summary === 'true'
+    try {
+      const geographies = summary ? await db.readGeographySummaries() : await db.readGeographies()
+      return res.status(200).send(geographies)
+    } catch (err) {
+      await log.error('failed to read geographies', err.stack)
+      return res.status(404).send({ result: 'not found' })
+    }
+  })
+
   app.put(
     pathsFor('/geographies/:geography_id/meta'),
     checkAccess(scopes => scopes.includes('policies:write')),

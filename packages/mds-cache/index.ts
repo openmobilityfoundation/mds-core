@@ -17,7 +17,7 @@
 import log from '@mds-core/mds-logger'
 
 import flatten from 'flat'
-import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
+import { nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
 import {
   UUID,
   Timestamp,
@@ -179,101 +179,13 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
   })
 }
 
-async function readDevice(device_id: UUID) {
-  if (!device_id) {
-    throw new Error('null device not legal to read')
-  }
-  // log.info('redis read device', device_id)
-  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
-}
-
-async function readDevices(device_ids: UUID[]) {
-  // log.info('redis read device', device_id)
-  return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
-    return parseDevice(device)
-  })
-}
-
-/* eslint-reason redis external lib weirdness */
-/* eslint-disable promise/prefer-await-to-then */
-/* eslint-disable promise/catch-or-return */
-async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
-  log.info('readDevicesStatus', JSON.stringify(query), 'start')
-  const start = query.since || 0
-  const stop = now()
-
-  log.info('redis zrangebyscore device-ids', start, stop)
-  const client = await getClient()
-
-  const { bbox } = query
-  const deviceIdsInBbox = await getEventsInBBox(bbox)
-  const deviceIdsRes =
-    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
-  const skip = query.skip || 0
-  const take = query.take || 100000000000
-  const deviceIds = deviceIdsRes.slice(skip, skip + take)
-
-  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-
-  const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
-    .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
-      try {
-        const parsedItem = parseEvent(item)
-        if (
-          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
-          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
-        )
-          return [...acc, parsedItem]
-        return acc
-      } catch (err) {
-        return acc
-      }
-    }, [])
-    .filter(item => Boolean(item))
-
-  const eventDeviceIds = events.map(event => event.device_id)
-  const devices = (await hreads(['device'], eventDeviceIds))
-    .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
-      try {
-        const parsedItem = parseCachedItem(item)
-        return [...acc, parsedItem]
-      } catch (err) {
-        return acc
-      }
-    }, [])
-    .filter(item => Boolean(item))
-  const all = [...devices, ...events]
-  all.map(item => {
-    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
-    Object.assign(deviceStatusMap[item.device_id], item)
-  })
-  const values = Object.values(deviceStatusMap)
-
-  return values.filter((item: any) => item.telemetry)
-}
-
-// initial set of stats are super-simple: last-written values for device, event, and telemetry
-async function updateProviderStats(suffix: string, device_id: UUID, provider_id: UUID, timestamp?: Timestamp) {
-  try {
-    return (await getClient()).hmsetAsync(
-      `provider:${provider_id}:stats`,
-      `last${capitalizeFirst(suffix)}`,
-      timestamp || now()
-    )
-  } catch (err) {
-    const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-    await log.info(msg)
-    return Promise.resolve(msg)
-  }
-}
-
 // anything with a device_id, e.g. device, telemetry, etc.
 async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | VehicleEvent) {
   if (typeof item.device_id !== 'string') {
     await log.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
-  const { device_id, provider_id } = item
+  const { device_id } = item
   const key = `device:${device_id}:${suffix}`
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
@@ -287,20 +199,7 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   }
 
   await (await getClient()).hmsetAsync(key, hmap)
-  if ('timestamp' in item) {
-    return Promise.all([
-      // make sure the device list is updated (per-provider)
-      updateVehicleList(device_id, item.timestamp),
-      // update last-written values
-      updateProviderStats(suffix, device_id, provider_id, item.timestamp)
-    ])
-  }
-  return Promise.all([
-    // make sure the device list is updated (per-provider)
-    updateVehicleList(device_id),
-    // update last-written values
-    updateProviderStats(suffix, device_id, provider_id)
-  ])
+  return updateVehicleList(device_id)
 }
 
 // put basics of device in the cache
@@ -389,6 +288,99 @@ async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   })
 }
 
+async function readDevice(device_id: UUID) {
+  if (!device_id) {
+    throw new Error('null device not legal to read')
+  }
+  // log.info('redis read device', device_id)
+  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
+}
+
+async function readDevices(device_ids: UUID[]) {
+  // log.info('redis read device', device_id)
+  return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
+    return parseDevice(device)
+  })
+}
+
+async function readDeviceStatus(device_id: UUID) {
+  let event: VehicleEvent
+  let device: Device
+  try {
+    event = await readEvent(device_id)
+    device = await readDevice(device_id)
+  } catch {
+    return null
+  }
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
+  const all = [device, event]
+  all.map(item => {
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
+  })
+  const values = Object.values(deviceStatusMap)
+
+  return values.filter((item: any) => item.telemetry)[0]
+}
+
+/* eslint-reason redis external lib weirdness */
+/* eslint-disable promise/prefer-await-to-then */
+/* eslint-disable promise/catch-or-return */
+async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
+  log.info('readDevicesStatus', JSON.stringify(query), 'start')
+  const start = query.since || 0
+  const stop = now()
+
+  log.info('redis zrangebyscore device-ids', start, stop)
+  const client = await getClient()
+
+  const { bbox } = query
+  const deviceIdsInBbox = await getEventsInBBox(bbox)
+  const deviceIdsRes =
+    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync('device-ids', start, stop) : deviceIdsInBbox
+  const skip = query.skip || 0
+  const take = query.take || 100000000000
+  const deviceIds = deviceIdsRes.slice(skip, skip + take)
+
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
+
+  const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
+    .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
+      try {
+        const parsedItem = parseEvent(item)
+        if (
+          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
+          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
+        )
+          return [...acc, parsedItem]
+        return acc
+      } catch (err) {
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
+
+  const eventDeviceIds = events.map(event => event.device_id)
+  const devices = (await hreads(['device'], eventDeviceIds))
+    .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
+      try {
+        const parsedItem = parseCachedItem(item)
+        return [...acc, parsedItem]
+      } catch (err) {
+        return acc
+      }
+    }, [])
+    .filter(item => Boolean(item))
+  const all = [...devices, ...events]
+  all.map(item => {
+    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+    Object.assign(deviceStatusMap[item.device_id], item)
+  })
+  const values = Object.values(deviceStatusMap)
+
+  return values.filter((item: any) => item.telemetry)
+}
+
 async function readTelemetry(device_id: UUID): Promise<Telemetry> {
   // log.info('redis read telemetry for', device_id)
   const telemetry = await hread('telemetry', device_id)
@@ -441,16 +433,6 @@ async function readAllTelemetry() {
       return acc
     }
   }, [])
-}
-
-async function readProviderStats(provider_id: UUID) {
-  const key = `provider:${provider_id}:stats`
-  const flat = await (await getClient()).hgetallAsync(key)
-  if (!flat) {
-    throw new Error(`no stats found for provider_id ${provider_id}`)
-  } else {
-    return unflatten(flat)
-  }
 }
 
 async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; telemetry: Telemetry[] }) {
@@ -549,13 +531,13 @@ export = {
   writeTelemetry,
   readDevice,
   readDevices,
+  readDeviceStatus,
   readDevicesStatus,
   readEvent,
   readEvents,
   readAllEvents,
   readTelemetry,
   readAllTelemetry,
-  readProviderStats,
   readKeys,
   wipeDevice,
   updateVehicleList,

@@ -38,12 +38,6 @@ export interface Trip {
   recorded: Timestamp
 }
 
-// TODO move to mds-db?
-export interface ReadTripsResult {
-  count: number
-  trips: Trip[]
-}
-
 export interface StatusChange {
   provider_id: UUID
   provider_name: string
@@ -61,12 +55,6 @@ export interface StatusChange {
 }
 
 export type StatusChangeEvent = Pick<StatusChange, 'event_type' | 'event_type_reason'>
-
-// TODO move to mds-db?
-export interface ReadStatusChangesResult {
-  count: number
-  status_changes: StatusChange[]
-}
 
 // Represents a row in the "telemetry" table
 export interface TelemetryRecord extends TelemetryData {
@@ -105,4 +93,13 @@ export type ReadAuditsQueryParams = Partial<{
 export interface VehicleEventCountResult {
   count: number
   events: Recorded<VehicleEvent>[]
+}
+
+export interface ReadGeographiesParams {
+  get_read_only: boolean
+}
+
+export interface PublishGeographiesParams {
+  publish_date: Timestamp
+  geography_id: UUID
 }

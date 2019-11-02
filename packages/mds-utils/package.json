@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-utils",
-  "version": "0.1.10",
+  "version": "0.1.18",
   "description": "Mobility Data Specification utility functions",
   "keywords": [
     "mds",
@@ -10,7 +10,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@hapi/joi": "15.1.1",
-    "@mds-core/mds-types": "0.1.7",
+    "@mds-core/mds-types": "0.1.15",
     "circle-to-polygon": "1.0.2",
     "point-in-polygon": "1.0.1"
   },
@@ -23,6 +23,6 @@
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 35 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive tests/**/*.ts"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 35 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts"
   }
 }
