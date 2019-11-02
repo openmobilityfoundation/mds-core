@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-api-server",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "MDS API Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,8 +18,8 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-api-authorizer": "0.1.17",
-    "@mds-core/mds-utils": "0.1.17",
+    "@mds-core/mds-api-authorizer": "0.1.18",
+    "@mds-core/mds-utils": "0.1.18",
     "body-parser": "1.19.0",
     "cors": "2.8.5",
     "express": "4.17.1",
