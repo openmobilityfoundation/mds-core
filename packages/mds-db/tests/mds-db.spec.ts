@@ -44,14 +44,12 @@ const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'
 const LAGeography: Geography = {
   name: 'Los Angeles',
   geography_id: GEOGRAPHY_UUID,
-  geography_json: LA_CITY_BOUNDARY,
-  read_only: false
+  geography_json: LA_CITY_BOUNDARY
 }
 const DistrictSeven: Geography = {
   name: 'District Seven',
   geography_id: GEOGRAPHY2_UUID,
-  geography_json: DISTRICT_SEVEN,
-  read_only: false
+  geography_json: DISTRICT_SEVEN
 }
 
 /* You'll need postgres running and the env variable PG_NAME
@@ -370,7 +368,7 @@ if (pg_info.database) {
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
         await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
 
-        await MDSDBPostgres.writeGeography({ ...{ read_only: undefined }, ...LAGeography })
+        await MDSDBPostgres.writeGeography(LAGeography)
         await MDSDBPostgres.deleteGeography(LAGeography.geography_id)
         await MDSDBPostgres.readSingleGeography(LAGeography.geography_id).should.be.rejected()
       })
@@ -385,7 +383,7 @@ if (pg_info.database) {
         const noGeos = await MDSDBPostgres.readGeographies({ get_read_only: true })
         assert.deepEqual(noGeos.length, 0)
 
-        await MDSDBPostgres.publishGeography(LAGeography.geography_id)
+        await MDSDBPostgres.publishGeography({ geography_id: LAGeography.geography_id, publish_date: now() })
         const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
         assert.deepEqual(writeableGeographies.length, 1)
       })
@@ -451,6 +449,11 @@ if (pg_info.database) {
         await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
         assert(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id))
         assert(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id))
+
+        const policy = await MDSDBPostgres.readPolicy(POLICY3_JSON.policy_id)
+        const geography = await MDSDBPostgres.readSingleGeography(DistrictSeven.geography_id)
+
+        assert.deepEqual(policy.publish_date, geography.publish_date)
       })
     })
 

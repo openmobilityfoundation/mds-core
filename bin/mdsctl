@@ -76,7 +76,7 @@ declare -A configs=(
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["presets"]="${MDS_PRESETS:-}"
-  ["presets-mds"]="${MDS_PRESETS_MDS:-pgPass=Password123#,apis.mds-agency.migration=true}"
+  ["presets-mds"]="${MDS_PRESETS_MDS:-postgresql.password=Password123#,apis.mds-agency.migration=true}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-}"
   ["sets-logging"]="${MDS_SETS_LOGGING:=fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
@@ -293,6 +293,20 @@ getBranchSuffix() {
   echo ${suffix}
 }
 
+# TODO: DRY
+templateDockerCompose() {
+  suffix=$(getBranchSuffix)
+  for directory in container-images/mds-*; do
+    api=$(basename $directory)
+    version=$(jq -r '.version' < $directory/package.json)
+    varname="$(echo $api | sed -e 's/^mds-//' -e 's/-/_/g' | tr a-z A-Z)_VERSION"
+    export $varname=${version}${suffix}
+  done
+  envsubst < docker-compose.yml.tpl > docker-compose.yml
+  echo "Wrote docker-compose.yml"
+}
+
+# TODO: DRY
 templateValues() {
   suffix=$(getBranchSuffix)
   for directory in container-images/mds-*; do
@@ -946,6 +960,7 @@ for arg in "${@:$OPTIND}"; do
     build) build || usage "${arg} failure";;
     buildImage) buildImage ${configs[image-name]};;
     templateValues) templateValues;;
+    templateDockerCompose) templateDockerCompose;;
     install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
