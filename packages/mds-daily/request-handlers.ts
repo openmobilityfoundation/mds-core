@@ -123,7 +123,9 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
         const items: (Item | undefined)[] = await db.readDeviceIds(stat.provider_id)
         const finish2 = now()
         const timeElapsed2 = finish2 - start2
-        await log.info(`MDS-DAILY /admin/vehicle_counts -> db.readDeviceIds(${stat.provider_id}) time elapsed: ${timeElapsed2}`)
+        await log.info(
+          `MDS-DAILY /admin/vehicle_counts -> db.readDeviceIds(${stat.provider_id}) time elapsed: ${timeElapsed2}`
+        )
         items.filter(filterEmptyHelper<Item>(true)).map(async item => {
           const event = eventMap[item.device_id]
           inc(stat.event_type, event ? event.event_type : 'default')
@@ -166,7 +168,9 @@ export async function getLastDayTripsByProvider(req: DailyApiRequest, res: Daily
     const rows = await db.getTripEventsLast24HoursByProvider(start_time, end_time)
     const finish = now()
     const timeElapsed = finish - start
-    await log.info(`MDS-DAILY /admin/last_day_trips_by_provider -> db.getTripEventsLast24HoursByProvider() time elapsed: ${timeElapsed}`)
+    await log.info(
+      `MDS-DAILY /admin/last_day_trips_by_provider -> db.getTripEventsLast24HoursByProvider() time elapsed: ${timeElapsed}`
+    )
     const perTripId = categorizeTrips(
       rows.reduce(
         (
@@ -219,7 +223,9 @@ export async function getLastDayStatsByProvider(req: DailyApiRequest, res: Daily
     ])
     const finish = now()
     const timeElapsed = finish - start
-    await log.info(`MDS-DAILY /admin/last_day_stats_by_provider -> Promise.all(dbHelpers...) time elapsed: ${timeElapsed}`)
+    await log.info(
+      `MDS-DAILY /admin/last_day_stats_by_provider -> Promise.all(dbHelpers...) time elapsed: ${timeElapsed}`
+    )
 
     Object.keys(provider_info).map(provider_id => {
       provider_info[provider_id].name = providerName(provider_id)
