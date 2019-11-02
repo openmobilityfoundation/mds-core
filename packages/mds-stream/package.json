@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-stream",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Mobility Data Specification stream interface",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,11 +14,11 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-logger": "0.1.15",
-    "@mds-core/mds-types": "0.1.14",
-    "bluebird": "3.5.5",
+    "@mds-core/mds-logger": "0.1.16",
+    "@mds-core/mds-types": "0.1.15",
+    "bluebird": "3.7.1",
     "cloudevents-sdk": "0.3.2",
-    "flat": "4.1.0",
+    "flat": "5.0.0",
     "node-gzip": "1.1.2",
     "redis": "2.8.0"
   },
