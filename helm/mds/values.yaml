@@ -1,9 +1,4 @@
 apis:
-  mds-provider:
-    enabled: true
-    pathPrefix: /provider
-    version: latest
-    migration: false
   mds-agency:
     enabled: true
     pathPrefix: /agency
@@ -56,7 +51,7 @@ postgresql:
   hostReader:
   port: 5432
   existingSecret: mds-secrets
-  password:  # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
+  password: # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
   image:

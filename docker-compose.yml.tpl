@@ -14,19 +14,6 @@ services:
       PG_MIGRATIONS: "true"
       REDIS_HOST: redis
 
-  provider:
-    image: mds-provider:$PROVIDER_VERSION
-    ports:
-      - "4000"
-    environment:
-      PATH_PREFIX: /provider
-      PG_HOST: postgres
-      PG_NAME: mds
-      PG_USER: mdsadmin
-      PG_PASS: "Password123#"
-      PG_MIGRATIONS: "true"
-      REDIS_HOST: redis
-
   audit:
     image: mds-audit:$AUDIT_VERSION
     ports:

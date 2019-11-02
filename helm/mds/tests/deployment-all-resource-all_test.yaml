@@ -40,11 +40,6 @@ tests:
           resourcesLimitsMemory: 262Mi
           resourcesRequestsCpu: 11m
           resourcesRequestsMemory: 19Mi
-        mds-provider:
-          resourcesLimitsCpu: 257m
-          resourcesLimitsMemory: 263Mi
-          resourcesRequestsCpu: 12m
-          resourcesRequestsMemory: 20Mi
     release:
       namespace: mds
     asserts:
@@ -291,14 +286,6 @@ tests:
         documentIndex: 7
       - isKind:
           of: Deployment
-        documentIndex: 7
-      - equal:
-          path: metadata.name
-          value: mds-provider
-        documentIndex: 7
-      - equal:
-          path: metadata.labels.app
-          value: mds-provider
         documentIndex: 7
       - equal:
           path: metadata.namespace
