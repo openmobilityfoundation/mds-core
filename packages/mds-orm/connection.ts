@@ -1,6 +1,7 @@
 import { createConnection } from 'typeorm'
 import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 import { DeviceEntity } from './entities/DeviceEntity'
+import { AuditEntity } from './entities/AuditEntity'
 
 const loggingOption = (options: string): LoggerOptions => {
   return ['false', 'true', 'all'].includes(options) ? options !== 'false' : (options.split(' ') as LoggerOptions)
@@ -19,11 +20,11 @@ const getConnection = async (name: ConnectionName) => {
     username: PG_USER,
     password: PG_PASS,
     database: PG_NAME,
-    synchronize: true,
+    synchronize: false,
     logging: loggingOption(PG_DEBUG.toLowerCase()),
     maxQueryExecutionTime: 1000,
     logger: 'simple-console',
-    entities: [DeviceEntity]
+    entities: [AuditEntity, DeviceEntity]
   })
   if (!connection) throw Error('Connection Error')
   return connection

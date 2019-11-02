@@ -2,7 +2,7 @@ import { Entity, Index, Column } from 'typeorm'
 import { UUID } from '@mds-core/mds-types'
 import { BigintTransformer } from './decorators'
 
-const table = 'ormdevices'
+const table = 'devices'
 
 @Entity(table)
 export class DeviceEntity {

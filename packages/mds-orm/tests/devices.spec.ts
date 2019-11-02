@@ -1,5 +1,6 @@
 import test from 'unit.js'
 import uuid from 'uuid'
+import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { getReadOnlyConnection, getReadWriteConnection } from '../connection'
 import { DeviceEntity } from '../entities/DeviceEntity'
 
@@ -9,10 +10,13 @@ const recorded = Date.now()
 describe('Write/Read Devices', () => {
   it(records > 1 ? `Write ${records} Device(s)` : 'Write Device', async () => {
     const connection = await getReadWriteConnection()
-    const devices = [...Array(records)].map(() => ({
+    const devices = [...Array(records)].map((_, index) => ({
       device_id: uuid(),
-      provider_id: uuid(),
-      vehicle_id: 'ABC-123',
+      provider_id: MOCHA_PROVIDER_ID,
+      vehicle_id: `${Math.random()
+        .toString(36)
+        .substr(2, 3)
+        .toUpperCase()}-${index.toString().padStart(6, '0')}`,
       type: 'scooter',
       propulsion: ['electric', 'human'],
       year: 2019,
