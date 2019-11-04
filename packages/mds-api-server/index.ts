@@ -65,15 +65,28 @@ export const ApiServer = (
     //
     // Request logging
     //
-    morgan('tiny', {
-      skip: (req, res) => {
-        // By default only log 400/500 errors
-        const { API_REQUEST_LOG_LEVEL = 400 } = process.env
-        return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
-      },
-      // Use logger, but remove extra line feed added by morgan stream option
-      stream: { write: msg => logger.info(msg.slice(0, -1)) }
-    }),
+    morgan(
+      (tokens, req: ApiRequest, res: ApiResponse) =>
+        [
+          ...(res.locals.claims && res.locals.claims.provider_id ? [res.locals.claims.provider_id] : []),
+          tokens.method(req, res),
+          tokens.url(req, res),
+          tokens.status(req, res),
+          tokens.res(req, res, 'content-length'),
+          '-',
+          tokens['response-time'](req, res),
+          'ms'
+        ].join(' '),
+      {
+        skip: (req: ApiRequest, res: ApiResponse) => {
+          // By default only log 400/500 errors
+          const { API_REQUEST_LOG_LEVEL = 400 } = process.env
+          return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
+        },
+        // Use logger, but remove extra line feed added by morgan stream option
+        stream: { write: msg => logger.info(msg.slice(0, -1)) }
+      }
+    ),
     //
     // JSON body parser
     //
