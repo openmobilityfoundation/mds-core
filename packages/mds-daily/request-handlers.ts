@@ -249,7 +249,7 @@ export async function getTimeSinceLastEventHandler(req: DailyApiRequest, res: Da
     const finish = now()
     const timeElapsed = finish - start
     await log.info(
-      `MDS-DAILY /admin/get_time_since_last_event -> getTimeSinceLastEvent(dbHelperArgs) time elapsed: ${timeElapsed}`
+      `MDS-DAILY /admin/time_since_last_event -> getTimeSinceLastEvent(dbHelperArgs) time elapsed: ${timeElapsed}`
     )
 
     Object.keys(provider_info).map(provider_id => {
@@ -274,7 +274,7 @@ export async function getNumVehiclesRegisteredLast24HoursHandler(req: DailyApiRe
     const finish = now()
     const timeElapsed = finish - start
     await log.info(
-      `MDS-DAILY /admin/get_num_vehicles_registered_last_24_hours -> db.getNumVehiclesRegisteredLast24Hours() time elapsed: ${timeElapsed}`
+      `MDS-DAILY /admin/num_vehicles_registered_last_24_hours -> db.getNumVehiclesRegisteredLast24Hours() time elapsed: ${timeElapsed}`
     )
 
     Object.keys(provider_info).map(provider_id => {
@@ -299,7 +299,7 @@ export async function getNumEventsLast24HoursHandler(req: DailyApiRequest, res: 
     const finish = now()
     const timeElapsed = finish - start
     await log.info(
-      `MDS-DAILY /admin/get_num_event_last_24_hours -> db.getNumEventsLast24Hours() time elapsed: ${timeElapsed}`
+      `MDS-DAILY /admin/num_event_last_24_hours -> db.getNumEventsLast24Hours() time elapsed: ${timeElapsed}`
     )
 
     Object.keys(provider_info).map(provider_id => {
@@ -323,7 +323,7 @@ export async function getTripCountsSinceHandler(req: DailyApiRequest, res: Daily
     await getTripCountsSince(dbHelperArgs)
     const finish = now()
     const timeElapsed = finish - start
-    await log.info(`MDS-DAILY /admin/get_trip_counts_since -> getTripCountsSince() time elapsed: ${timeElapsed}`)
+    await log.info(`MDS-DAILY /admin/trip_counts_since -> getTripCountsSince() time elapsed: ${timeElapsed}`)
 
     Object.keys(provider_info).map(provider_id => {
       provider_info[provider_id].name = providerName(provider_id)
@@ -347,7 +347,7 @@ export async function getEventCountsPerProviderSinceHandler(req: DailyApiRequest
     const finish = now()
     const timeElapsed = finish - start
     await log.info(
-      `MDS-DAILY /admin/get_event_counts_per_provider_since -> getEventCountsPerProviderSince() time elapsed: ${timeElapsed}`
+      `MDS-DAILY /admin/event_counts_per_provider_since -> getEventCountsPerProviderSince() time elapsed: ${timeElapsed}`
     )
 
     Object.keys(provider_info).map(provider_id => {
@@ -372,7 +372,7 @@ export async function getTelemetryCountsPerProviderSinceHandler(req: DailyApiReq
     const finish = now()
     const timeElapsed = finish - start
     await log.info(
-      `MDS-DAILY /admin/get_telemetry_counts_per_provider_since -> getTelemetryCountsPerProviderSince() time elapsed: ${timeElapsed}`
+      `MDS-DAILY /admin/telemetry_counts_per_provider_since -> getTelemetryCountsPerProviderSince() time elapsed: ${timeElapsed}`
     )
 
     Object.keys(provider_info).map(provider_id => {
@@ -397,7 +397,7 @@ export async function getConformanceLast24HoursHandler(req: DailyApiRequest, res
     const finish = now()
     const timeElapsed = finish - start
     await log.info(
-      `MDS-DAILY /admin/get_conformance_last_24_hours -> getConformanceLast24Hours() time elapsed: ${timeElapsed}`
+      `MDS-DAILY /admin/conformance_last_24_hours -> getConformanceLast24Hours() time elapsed: ${timeElapsed}`
     )
 
     Object.keys(provider_info).map(provider_id => {
