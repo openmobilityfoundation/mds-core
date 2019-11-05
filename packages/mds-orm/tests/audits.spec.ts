@@ -26,7 +26,14 @@ describe('Write/Read Audits', () => {
       recorded
     }))
     try {
-      await connection.manager.save(AuditEntity, audits, { chunk: 5000 })
+      // await connection.manager.save(AuditEntity, audits, { chunk: 5000 })
+      await connection
+        .createQueryBuilder()
+        .insert()
+        .into(AuditEntity)
+        .values(audits)
+        .onConflict('DO NOTHING')
+        .execute()
       test.value(audits.length).is(records)
     } finally {
       await connection.close()

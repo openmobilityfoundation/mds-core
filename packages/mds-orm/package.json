@@ -19,7 +19,7 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-providers": "0.1.17",
+    "@mds-core/mds-providers": "0.1.18",
     "pg": "7.12.1",
     "reflect-metadata": "0.1.13",
     "typeorm": "0.2.20"
