@@ -82,6 +82,7 @@
     "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",
     "test:eslint": "yarn run:concurrent test:eslint",
     "test:unit": "yarn run:sequential test:unit",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "values": "bin/mdsctl templateValues"
   }
 }
