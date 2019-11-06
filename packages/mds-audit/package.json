@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-audit",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Endpoint for auditing compliance with MDS",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,19 +22,19 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-api-helpers": "0.1.18",
-    "@mds-core/mds-api-server": "0.1.18",
-    "@mds-core/mds-cache": "0.1.18",
-    "@mds-core/mds-db": "0.1.18",
-    "@mds-core/mds-logger": "0.1.16",
-    "@mds-core/mds-providers": "0.1.18",
-    "@mds-core/mds-types": "0.1.15",
-    "@mds-core/mds-utils": "0.1.18",
+    "@mds-core/mds-api-helpers": "0.1.19",
+    "@mds-core/mds-api-server": "0.1.19",
+    "@mds-core/mds-cache": "0.1.19",
+    "@mds-core/mds-db": "0.1.19",
+    "@mds-core/mds-logger": "0.1.17",
+    "@mds-core/mds-providers": "0.1.19",
+    "@mds-core/mds-types": "0.1.16",
+    "@mds-core/mds-utils": "0.1.19",
     "express": "4.17.1",
     "uuid": "3.3.3"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.18"
+    "@mds-core/mds-test-data": "0.1.19"
   },
   "license": "Apache-2.0"
 }
