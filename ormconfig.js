@@ -1,3 +1,13 @@
-const { PG_HOST: host, PG_PORT: port, PG_USER: username, PG_PASS: password, PG_NAME: database } = process.env
+// Use parseInt for bigint columns so the values get returned as numbers instead of strings
+require('pg').types.setTypeParser(20, Number)
 
-module.exports = { type: 'postgres', host, port, username, password, database }
+const { PG_HOST, PG_PORT, PG_USER, PG_PASS, PG_NAME } = process.env
+
+module.exports = {
+  type: 'postgres',
+  host: PG_HOST || 'localhost',
+  port: Number(PG_PORT) || 5432,
+  username: PG_USER,
+  password: PG_PASS,
+  database: PG_NAME
+}
