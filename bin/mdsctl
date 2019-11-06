@@ -54,14 +54,14 @@ declare -A configs=(
   ["os"]="${MDS_OS:-`uname`}"
   ["rc"]="${MDS_RC:-~/.bashrc ~/.zshrc}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm pgcli redis git}"
+  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm kubernetes-helm k9s pgcli redis git}"
   ["tools"]="${MDS_TOOLCHAIN:-kubernetes-helm,pgcli}"
   ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
   ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio}"
   ["install"]="${MDS_INSTALL:-mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
-  ["uninstall"]="${MDS_UNINSTALL:-bookinfo,logging,mds,istio,helm}"
+  ["uninstall"]="${MDS_UNINSTALL:-logging,mds,istio,helm}"
   ["forward"]="${MDS_FORWARD:-default}"
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
@@ -91,7 +91,7 @@ declare -A configs=(
   ["quiet"]="${MDS_QUIET:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
-  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.3.0/charts"
+  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/${configs[istio-version]}/charts"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
   ["elastic"]="https://helm.elastic.co")
 declare -A apps=(
@@ -110,8 +110,7 @@ declare -A apps=(
   ["kibana"]="http://localhost:[port],util,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
   ["jaeger"]="http://localhost:[port],istio-system,app,jaeger,16686"
-  ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001"
-  ["bookinfo"]="http://localhost:[port],booking,app")
+  ["kiali"]="http://localhost:[port],istio-system,app,kiali,20001")
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
@@ -177,7 +176,6 @@ where service in:
   metricsAdapter
   logging
   metrics
-  bookinfo
 
 where app in:
   mds-agency
@@ -196,7 +194,6 @@ where app in:
   prometheus                                          : prometheus; see https://prometheus.io
   jaeger                                              : jaeger; see https://www.jaegertracing.io
   kiali                                               : kiali; see https://www.kiali.io
-  bookinfo                                            : bookinfo; see https://istio.io/docs/examples/bookinfo
 
 example:
   % ./bin/$(basename ${0}) bootstrap build install:mds test:integration
@@ -558,19 +555,6 @@ installSimulator() {
     helm install ./helm --name trackgen)
 }
 
-installBookinfo() {
-  check ${FUNCNAME[0]}
-
-  kubectl get namespace bookinfo-app > /dev/null 2>&1 || {
-    installNamespace bookinfo-app
-    labelNamespaceIstioInjection bookinfo-app
-    kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/platform/kube/bookinfo.yaml \
-      ${configs[dryrun]:+--dry-run}
-    kubectl apply -n bookinfo-app -f ${configs[istio]}/samples/bookinfo/networking/destination-rule-all.yaml \
-      ${configs[dryrun]:+--dry-run}
-  }
-}
-
 testUnit() {
   check ${FUNCNAME[0]}
 
@@ -694,10 +678,6 @@ uninstallNamespace() {
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
   done; unset ns
-}
-
-uninstallBookinfo() {
-  uninstallNamespace bookinfo-app
 }
 
 uninstallSimulator() {
