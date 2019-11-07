@@ -143,7 +143,7 @@ describe('Agency API request handlers', () => {
     const getFakeBody = () => {
       const device_id = uuid()
       const vehicle_id = uuid()
-      const type: Device['type'] = VEHICLE_TYPES.carshare
+      const type: Device['type'] = VEHICLE_TYPES.car
       const propulsion: Device['propulsion'] = ['combustion']
       const body = {
         device_id,
