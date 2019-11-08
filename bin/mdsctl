@@ -313,7 +313,7 @@ templateValues() {
     export $varname=${version}${suffix}
   done
   mkdir -p dist
-  envsubst < helm/mds/values.yaml.tpl > dist/values.html
+  envsubst < helm/mds/values.yaml.tpl > dist/values.yaml
   echo "Wrote dist/values.yaml"
 }
 
