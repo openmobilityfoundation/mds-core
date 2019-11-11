@@ -89,7 +89,11 @@ function api(app: express.Express): express.Express {
 
   // ///////////////////// begin daily endpoints ///////////////////////
 
-  app.get(pathsFor('/admin/vehicle_counts'), checkAccess(scopes => scopes.includes('admin:all')), getVehicleCounts)
+  app.get(
+    pathsFor('/admin/vehicle_counts'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    getVehicleCounts
+  )
 
   // read all the latest events out of the cache
   app.get(

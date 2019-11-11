@@ -76,7 +76,7 @@ export interface ReadEventsQueryParams {
 }
 
 export interface ReadHistoricalEventsQueryParams {
-  provider_id: UUID
+  provider_id?: UUID
   end_date: number
 }
 

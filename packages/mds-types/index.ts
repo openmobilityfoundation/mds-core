@@ -18,14 +18,16 @@ import { FeatureCollection } from 'geojson'
 export { AccessTokenScope, AccessTokenScopes, ScopeDescriptions } from './scopes'
 
 export const Enum = <T extends string>(...keys: T[]) =>
-  Object.freeze(keys.reduce((e, key) => {
-    return { ...e, [key]: key }
-  }, {}) as { [K in T]: K })
+  Object.freeze(
+    keys.reduce((e, key) => {
+      return { ...e, [key]: key }
+    }, {}) as { [K in T]: K }
+  )
 
 export const isEnum = (enums: { [key: string]: string }, value: unknown) =>
   typeof value === 'string' && typeof enums === 'object' && enums[value] === value
 
-export const VEHICLE_TYPES = Enum('carshare', 'bicycle', 'scooter', 'recumbent')
+export const VEHICLE_TYPES = Enum('car', 'bicycle', 'scooter', 'recumbent')
 export type VEHICLE_TYPE = keyof typeof VEHICLE_TYPES
 
 export const RULE_TYPES = Enum('count', 'speed', 'time')

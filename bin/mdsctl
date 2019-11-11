@@ -73,20 +73,21 @@ declare -A configs=(
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
+  ["namespace"]="${MDS_NAMESPACE:-default}"
+  ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
+  ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
+  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
+  ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["presets"]="${MDS_PRESETS:-}"
   ["presets-mds"]="${MDS_PRESETS_MDS:-postgresql.password=Password123#,apis.mds-agency.migration=true}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-}"
-  ["sets-logging"]="${MDS_SETS_LOGGING:=fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
+  ["sets-logging"]="${MDS_SETS_LOGGING:-fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
+  ["sets-simulator"]="${MDS_SETS_SIMULATOR:-host=http://mds-agency.${configs[namespace-mds]}.svc.cluster.local:4000/agency}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
-  ["namespace"]="${MDS_NAMESPACE:-default}"
-  ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
-  ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
-  ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
-  ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["dryrun"]="${MDS_DRY_RUN:-}"
   ["quiet"]="${MDS_QUIET:-}")
 declare -A helmRepositories=(
@@ -313,7 +314,7 @@ templateValues() {
     export $varname=${version}${suffix}
   done
   mkdir -p dist
-  envsubst < helm/mds/values.yaml.tpl > dist/values.html
+  envsubst < helm/mds/values.yaml.tpl > dist/values.yaml
   echo "Wrote dist/values.yaml"
 }
 
@@ -552,7 +553,13 @@ installSimulator() {
   (cd ${configs[simulator]};
     git pull;
     docker build -t trackgen .;
-    helm install ./helm --name trackgen)
+    helm install ./helm --name trackgen \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-simulator]:+$(helmOptions set ${configs[sets-simulator]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[dryrun]:+--dry-run --debug})
 }
 
 testUnit() {

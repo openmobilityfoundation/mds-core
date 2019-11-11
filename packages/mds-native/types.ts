@@ -16,6 +16,7 @@
 
 import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
 import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
+import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 // Place newer versions at the beginning of the list
 const NATIVE_API_VERSIONS = ['0.1.0'] as const
@@ -23,7 +24,7 @@ type NATIVE_API_VERSION = typeof NATIVE_API_VERSIONS[number]
 export const [NativeApiCurrentVersion] = NATIVE_API_VERSIONS
 
 // Allow adding type definitions for Express Request objects
-export type NativeApiRequest = ApiRequest
+export type NativeApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 
 // Allow adding type definitions for Express Response objects
 export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiResponse<T> {
@@ -32,10 +33,7 @@ export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiR
   }
 }
 
-export interface NativeApiGetEventsRequest extends NativeApiRequest {
-  params: {
-    cursor: string
-  }
+export interface NativeApiGetEventsRequest extends NativeApiRequest<{ cursor: string }> {
   // Query string parameters always come in as strings
   query: Partial<
     {
@@ -55,9 +53,7 @@ interface NativeApiGetEventsReponseBody extends NativeApiResponseBody {
 
 export type NativeApiGetEventsReponse = NativeApiResponse<NativeApiGetEventsReponseBody>
 
-export interface NativeApiGetVehiclesRequest extends NativeApiRequest {
-  params: { device_id: UUID }
-}
+export type NativeApiGetVehiclesRequest = NativeApiRequest<{ device_id: UUID }>
 
 interface NativeApiGetVehiclesResponseBody extends NativeApiResponseBody {
   vehicle: Omit<Recorded<Device>, 'id'>
