@@ -16,13 +16,12 @@
 
 import { Audit, Telemetry, Timestamp, UUID } from '@mds-core/mds-types'
 import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
+import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 // Allow adding type definitions for Express Request objects
-export type AuditApiRequest = ApiRequest
+export type AuditApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 
-export interface AuditApiTripRequest extends AuditApiRequest {
-  params: { audit_trip_id: UUID }
-}
+export type AuditApiTripRequest = AuditApiRequest<{ audit_trip_id: UUID }>
 
 export interface AuditApiAuditStartRequest extends AuditApiTripRequest {
   body: {

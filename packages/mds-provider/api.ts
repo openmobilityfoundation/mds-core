@@ -40,7 +40,11 @@ function api(app: express.Express): express.Express {
 
   // / /////////////////////// trips /////////////////////////////////
 
-  app.get(pathsFor('/trips'), checkAccess(scopes => scopes.includes('trips:read')), getEventsAsTrips)
+  app.get(
+    pathsFor('/trips'),
+    checkAccess(scopes => scopes.includes('trips:read')),
+    getEventsAsTrips
+  )
 
   // / ////////////////////////////// status_changes /////////////////////////////
 

@@ -21,13 +21,29 @@ import { checkAccess } from '@mds-core/mds-api-server'
 import { getStateSnapshot, getEventSnapshot, getTelemetryCounts, getEventCounts } from './request-handlers'
 
 function api(app: express.Express): express.Express {
-  app.get(pathsFor('/state_snapshot'), checkAccess(scopes => scopes.includes('admin:all')), getStateSnapshot)
+  app.get(
+    pathsFor('/state_snapshot'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    getStateSnapshot
+  )
 
-  app.get(pathsFor('/event_snapshot'), checkAccess(scopes => scopes.includes('admin:all')), getEventSnapshot)
+  app.get(
+    pathsFor('/event_snapshot'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    getEventSnapshot
+  )
 
-  app.get(pathsFor('/telemetry_counts'), checkAccess(scopes => scopes.includes('admin:all')), getTelemetryCounts)
+  app.get(
+    pathsFor('/telemetry_counts'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    getTelemetryCounts
+  )
 
-  app.get(pathsFor('/event_counts'), checkAccess(scopes => scopes.includes('admin:all')), getEventCounts)
+  app.get(
+    pathsFor('/event_counts'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    getEventCounts
+  )
 
   return app
 }
