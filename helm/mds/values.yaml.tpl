@@ -29,6 +29,11 @@ apis:
     pathPrefix: /daily
     version: ${DAILY_VERSION}
     migration: false
+  mds-metrics:
+    enabled: true
+    pathPrefix: /metrics
+    version: ${METRICS_VERSION}
+    migration: false
   mds-native:
     enabled: true
     pathPrefix: /native

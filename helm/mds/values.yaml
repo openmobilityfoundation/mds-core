@@ -29,6 +29,11 @@ apis:
     pathPrefix: /daily
     version: latest
     migration: false
+  mds-metrics:
+    enabled: true
+    pathPrefix: /metrics
+    version: latest
+    migration: false
   mds-native:
     enabled: true
     pathPrefix: /native
@@ -56,7 +61,7 @@ postgresql:
   hostReader:
   port: 5432
   existingSecret: mds-secrets
-  password:  # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
+  password: # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
   image:
