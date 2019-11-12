@@ -1,17 +1,19 @@
 import test from 'unit.js'
 import uuid from 'uuid'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
-import { getReadOnlyConnection, getReadWriteConnection } from '../connection'
+import { ConnectionManager } from '../connection'
 import { AuditEntity } from '../entities/AuditEntity'
 
 const records = 5_000
 const recorded = Date.now()
 const audit_device_id = uuid()
 
+const manager = ConnectionManager(AuditEntity)
+
 describe('Write/Read Audits', () => {
   it(records > 1 ? `Write ${records} Audits(s)` : 'Write Audit', async () => {
-    const connection = await getReadWriteConnection()
-    const audits = [...Array(records)].map((_, index) => ({
+    const connection = await manager.getConnection('rw')
+    const audits = Array.from({ length: records }, (_, index) => ({
       audit_trip_id: uuid(),
       audit_subject_id: 'auditor@agency.city',
       audit_device_id,
@@ -41,7 +43,7 @@ describe('Write/Read Audits', () => {
   })
 
   it(records > 1 ? `Read ${records} Audits(s)` : 'Read Audit', async () => {
-    const connection = await getReadOnlyConnection()
+    const connection = await manager.getConnection('ro')
     try {
       const audits = await connection.manager.find(AuditEntity, { where: { audit_device_id }, order: { id: 'ASC' } })
       test.value(audits.length).is(records)

@@ -1,16 +1,18 @@
 import test from 'unit.js'
 import uuid from 'uuid'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
-import { getReadOnlyConnection, getReadWriteConnection } from '../connection'
+import { ConnectionManager } from '../connection'
 import { DeviceEntity } from '../entities/DeviceEntity'
 
 const records = 10_000
 const recorded = Date.now()
 
+const manager = ConnectionManager(DeviceEntity)
+
 describe('Write/Read Devices', () => {
   it(records > 1 ? `Write ${records} Device(s)` : 'Write Device', async () => {
-    const connection = await getReadWriteConnection()
-    const devices = [...Array(records)].map((_, index) => ({
+    const connection = await manager.getConnection('rw')
+    const devices = Array.from({ length: records }, (_, index) => ({
       device_id: uuid(),
       provider_id: MOCHA_PROVIDER_ID,
       vehicle_id: `${Math.random()
@@ -32,7 +34,7 @@ describe('Write/Read Devices', () => {
   })
 
   it(records > 1 ? `Read ${records} Device(s)` : 'Read Device', async () => {
-    const connection = await getReadOnlyConnection()
+    const connection = await manager.getConnection('ro')
     try {
       const devices = await connection.manager.find(DeviceEntity, { where: { recorded }, order: { id: 'ASC' } })
       test.value(devices.length).is(records)

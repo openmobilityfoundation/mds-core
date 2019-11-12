@@ -1,1 +1,1 @@
-export { getReadOnlyConnection, getReadWriteConnection } from './connection'
+export { ConnectionManager } from './connection'

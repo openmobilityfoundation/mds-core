@@ -1,7 +1,9 @@
 import Mali from 'mali'
 import logger from '@mds-core/mds-logger'
-import { getReadOnlyConnection } from './connection'
+import { ConnectionManager } from './connection'
 import { DeviceEntity } from './entities/DeviceEntity'
+
+const manager = ConnectionManager(DeviceEntity)
 
 /**
  * Handler for the Echo RPC.
@@ -12,7 +14,7 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
   // Log that we received the request
   logger.info('Received request.', ctx.req)
 
-  const connection = await getReadOnlyConnection()
+  const connection = await manager.getConnection('ro')
 
   const device = await connection.manager.findOne(DeviceEntity, {
     where: { vehicle_id: ctx.req.vehicle_id }
@@ -22,8 +24,6 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
     // Define the message, and time
     device
   }
-
-  await connection.close()
 
   // Log the we set the response
   logger.info('Sending Response.', ctx.res)
