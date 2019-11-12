@@ -10,13 +10,25 @@ import {
   UUID
 } from '@mds-core/mds-types'
 
-export type StateSnapshotResponse = {
+export type WithSlice<T> = {
+  snapshot: T
+  slice: {
+    start: number
+    end: number
+  }
+}
+
+export type StateSnapshot = {
   [T in VEHICLE_TYPE]: { [S in VEHICLE_STATUS]: number }
 }
 
-export type EventSnapshotResponse = {
+export type StateSnapshotResponse = WithSlice<StateSnapshot>
+
+export type EventSnapshot = {
   [T in VEHICLE_TYPE]: { [S in VEHICLE_EVENT]: number }
 }
+
+export type EventSnapshotResponse = WithSlice<EventSnapshot>
 
 export type TelemetryCountsResponse = {
   telemetryCount: {
@@ -65,7 +77,7 @@ export const instantiateEventSnapshotResponse = (value: number) =>
       [vehicle_type]: Object.keys(VEHICLE_EVENTS).reduce((acc2, event_type) => ({ ...acc2, [event_type]: value }), {})
     }),
     {}
-  ) as EventSnapshotResponse
+  ) as EventSnapshot
 
 export const instantiateStateSnapshotResponse = (value: number) =>
   Object.keys(VEHICLE_TYPES).reduce(
@@ -74,4 +86,4 @@ export const instantiateStateSnapshotResponse = (value: number) =>
       [vehicle_type]: Object.keys(VEHICLE_STATUSES).reduce((acc2, event_type) => ({ ...acc2, [event_type]: value }), {})
     }),
     {}
-  ) as StateSnapshotResponse
+  ) as StateSnapshot

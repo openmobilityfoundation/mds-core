@@ -12,8 +12,8 @@ import {
   GetTelemetryCountsResponse,
   GetEventCountsResponse,
   TelemetryCountsResponse,
-  EventSnapshotResponse,
-  StateSnapshotResponse
+  StateSnapshot,
+  EventSnapshot
 } from './types'
 import { getTimeBins } from './utils'
 
@@ -50,15 +50,20 @@ export async function getStateSnapshot(req: MetricsApiRequest, res: GetStateSnap
 
             const incrementedSubAcc = { [type]: inc(acc[type], status) }
 
-            return { ...acc, incrementedSubAcc }
+            return { ...acc, ...incrementedSubAcc }
           }, instantiateStateSnapshotResponse(0))
 
           return statusCounts
         }
       })
-      .filter((e): e is StateSnapshotResponse => e !== undefined)
+      .filter((e): e is StateSnapshot => e !== undefined)
 
-    res.status(200).send(result)
+    const resultWithSlices = result.map((snapshot, idx) => {
+      const slice = slices[idx]
+      return { snapshot, slice }
+    })
+
+    res.status(200).send(resultWithSlices)
   } catch (error) {
     await log.error(error)
     res.status(500).send(new ServerError())
@@ -103,9 +108,14 @@ export async function getEventSnapshot(req: MetricsApiRequest, res: GetEventsSna
           return eventCounts
         }
       })
-      .filter((e): e is EventSnapshotResponse => e !== undefined)
+      .filter((e): e is EventSnapshot => e !== undefined)
 
-    res.status(200).send(result)
+    const resultWithSlices = result.map((snapshot, idx) => {
+      const slice = slices[idx]
+      return { snapshot, slice }
+    })
+
+    res.status(200).send(resultWithSlices)
   } catch (error) {
     await log.error(error)
     res.status(500).send(new ServerError())
