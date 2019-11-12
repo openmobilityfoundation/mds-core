@@ -120,6 +120,11 @@ async function qualityCheck(data: any, device_state: State) {
     provider_state = JSON.parse(ps)
   }
 
+  if (device_state.type === 'event' && !data.telemetry) {
+    console.log('EVENT MISSING TELEMETRY')
+    return false
+  }
+
   // Check if Duplicate event
   if (!checkDupPrevState(device_state, device_state.last_state_data)) {
     console.log('DUPLICATE EVENT')
@@ -168,7 +173,7 @@ async function qualityCheck(data: any, device_state: State) {
 */
 async function event_handler() {
   await data_handler('event', async function(type: any, data: any) {
-    console.log(type)
+    console.log(type, data)
     return processRaw(type, data)
   })
 }
@@ -266,7 +271,7 @@ async function processRaw(type: string, data: any) {
 
   // Add to PG table (reports_device_states) and stream
   await db.insert('reports_device_states', device_state)
-  await stream.writeCloudEvent('mds.processed.event', JSON.stringify(device_state))
+  //await stream.writeCloudEvent('mds.processed.event', JSON.stringify(device_state))
   return device_state
 }
 

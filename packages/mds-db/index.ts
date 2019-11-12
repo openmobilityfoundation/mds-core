@@ -158,9 +158,8 @@ async function insert(table_name: TABLE_NAME, data: { [x: string]: any }) {
   }
   let fields = schema.TABLE_COLUMNS[table_name]
   let query = `INSERT INTO ${String(table_name)} (${commaize(fields, `"`)}) `
-  log.info(commaize(fields.map(field => (field.includes('time') ? db_time(data[field]) : data[field]))))
   query += `VALUES (${commaize(fields.map(field => (field.includes('time') ? db_time(data[field]) : data[field])))})`
-  console.log(query)
+  //console.log(query)
   return runQuery(query)
 }
 

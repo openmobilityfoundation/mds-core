@@ -146,7 +146,7 @@ async function process_trip(
   // Insert into PG DB and stream
   log.info('INSERT')
   try {
-    await db.insert('trips', trip_data)
+    await db.insert('reports_trips', trip_data)
   } catch (err) {
     console.log(err)
   }

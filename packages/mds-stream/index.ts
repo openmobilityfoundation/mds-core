@@ -59,8 +59,16 @@ async function writeCloudEvent(type: string, data: string) {
     .type(type)
     .source(env.CE_NAME)
     .data(data)
-
   return getBinding().emit(cloudevent)
+  /*.then(response => {
+    // Treat the response
+    console.log(response.data);
+
+  }).catch(err => {
+    // Deal with errors
+    console.error(err);
+  });
+  */
 }
 
 declare module 'redis' {
@@ -183,7 +191,7 @@ async function writeDevice(device: Device) {
 
 async function writeEvent(event: VehicleEvent) {
   if (env.SINK) {
-    logger.warn('WRITING TO STREAM')
+    //logger.warn('WRITING TO STREAM')
     return writeCloudEvent('mds.event', JSON.stringify(event))
   }
   logger.info('NO BROKER SINK PROVIDED', env)

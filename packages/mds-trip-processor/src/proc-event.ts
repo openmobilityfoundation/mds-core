@@ -1,14 +1,10 @@
-export {}
-let { data_handler } = require('./proc.js')
+import { data_handler } from './proc'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import stream from '@mds-core/mds-stream'
 
-let { insert } = require('../util/db')
-let { hget, hset } = require('../util/cache')
-let { add } = require('../util/stream')
-
-let { getAnnotationData, getAnnotationVersion } = require('./annotation')
-
-const log = require('loglevel')
-const { EVENT_STATUS_MAP } = require('@mds-core/mds-types')
+import { getAnnotationData, getAnnotationVersion } from './annotation'
+import { EVENT_STATUS_MAP, VEHICLE_EVENT } from '@mds-core/mds-types'
 
 interface State {
   type: any
@@ -16,7 +12,7 @@ interface State {
   device_id: any
   provider_id: any
   state: any
-  event_type: any
+  event_type: VEHICLE_EVENT | null
   event_type_reason: any
   trip_id: any
   service_area_id: any
@@ -60,7 +56,7 @@ async function stateDiagramCheck(device_state: State) {
 
 async function checkInvalid(device_state: State) {
   if (device_state.type === 'event') {
-    if (!EVENT_STATUS_MAP[device_state.event_type]) {
+    if (device_state.event_type && !EVENT_STATUS_MAP[device_state.event_type]) {
       return false
     }
     if (!stateDiagramCheck(device_state)) {
@@ -80,7 +76,7 @@ async function checkOutOfOrder(data: any, device_state: State) {
       device_state.event_type === 'trip_end'
     ) {
       let trip_id = data.trip_id
-      let cur_state = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
+      let cur_state = await cache.hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
       if (!cur_state) {
         return false
       } else {
@@ -112,39 +108,45 @@ async function qualityCheck(data: any, device_state: State) {
         outOfOrderEvents
 
   */
-  let provider_state = await hget('provider:state', device_state.provider_id)
-  if (!provider_state) {
+  let ps = await cache.hget('provider:state', device_state.provider_id)
+  let provider_state: { duplicateEvents: any; invalidEvents: any; outOfOrderEvents: any }
+  if (!ps) {
     provider_state = {
       duplicateEvents: [],
       invalidEvents: [],
       outOfOrderEvents: []
     }
   } else {
-    provider_state = JSON.parse(provider_state)
+    provider_state = JSON.parse(ps)
+  }
+
+  if (device_state.type === 'event' && !data.telemetry) {
+    console.log('EVENT MISSING TELEMETRY')
+    return false
   }
 
   // Check if Duplicate event
   if (!checkDupPrevState(device_state, device_state.last_state_data)) {
-    log.info('DUPLICATE EVENT')
+    console.log('DUPLICATE EVENT')
     provider_state.duplicateEvents.push(device_state)
     return false
   }
 
   // Check if Invalid event
   if (!checkInvalid(device_state)) {
-    log.info('INVALID EVENT')
+    console.log('INVALID EVENT')
     provider_state.invalidEvents.push(device_state)
     return false
   }
 
   // Check if Out of Order event
   if (!checkOutOfOrder(data, device_state)) {
-    log.info('OUT OF ORDER EVENT')
+    console.log('OUT OF ORDER EVENT')
     provider_state.outOfOrderEvents.push(device_state)
     return false
   }
 
-  await hset('provider:state', device_state.provider_id, JSON.stringify(provider_state))
+  await cache.hset('provider:state', device_state.provider_id, JSON.stringify(provider_state))
   return true
 }
 
@@ -171,16 +173,17 @@ async function qualityCheck(data: any, device_state: State) {
 */
 async function event_handler() {
   await data_handler('event', async function(type: any, data: any) {
-    log.info(type)
+    console.log(type, data)
     return processRaw(type, data)
   })
 }
 
 async function processRaw(type: string, data: any) {
   // Construct device state
-  let device_state = {
+  let device_state: any = {
     type: type.substring(type.lastIndexOf('.') + 1),
     timestamp: data.timestamp,
+    date_timestamp: data.timestamp,
     device_id: data.device_id,
     provider_id: data.provider_id,
     state: null,
@@ -197,13 +200,14 @@ async function processRaw(type: string, data: any) {
   }
 
   // Get last state of device
-  let device_last_state = await hget('device:state', data.provider_id + ':' + data.device_id)
-  device_state.last_state_data = objectWithoutProperties(JSON.parse(device_last_state), [
-    'device_id',
-    'provider_id',
-    'last_state_data'
-  ])
-
+  let dls = await cache.hget('device:state', data.provider_id + ':' + data.device_id)
+  if (dls) {
+    device_state.last_state_data = objectWithoutProperties(JSON.parse(dls), [
+      'device_id',
+      'provider_id',
+      'last_state_data'
+    ])
+  }
   // Quality filter events/telemetry
   let quality_check = await qualityCheck(data, device_state)
   if (!quality_check) {
@@ -228,7 +232,7 @@ async function processRaw(type: string, data: any) {
       device_state.event_type_reason = data.event_type_reason
       device_state.trip_id = data.trip_id
       device_state.service_area_id = data.service_area_id
-      device_state.state = EVENT_STATUS_MAP[data.event_type]
+      device_state.state = EVENT_STATUS_MAP[data.event_type as VEHICLE_EVENT]
 
       // Take necessary steps on event trasitions
       switch (data.event_type) {
@@ -256,18 +260,18 @@ async function processRaw(type: string, data: any) {
 
   // Only update cache (device:state) with most recent event
   if (
-    !device_last_state ||
-    device_last_state.timestamp < device_state.timestamp ||
-    (device_last_state.timestamp === device_state.timestamp &&
+    !dls ||
+    device_state.last_state_data.timestamp < device_state.timestamp ||
+    (device_state.last_state_data.timestamp === device_state.timestamp &&
       device_state.event_type === 'event' &&
       device_state.trip_id)
   ) {
-    await hset('device:state', data.provider_id + ':' + data.device_id, JSON.stringify(device_state))
+    await cache.hset('device:state', data.provider_id + ':' + data.device_id, JSON.stringify(device_state))
   }
 
   // Add to PG table (reports_device_states) and stream
-  await insert('device_states', device_state)
-  await add('events', 'mds.processed.event', device_state)
+  await db.insert('reports_device_states', device_state)
+  await stream.writeCloudEvent('mds.processed.event', JSON.stringify(device_state))
   return device_state
 }
 
@@ -297,11 +301,21 @@ async function processTripEvent(device_state: State) {
   }
 
   // Append to existing trip or create new
-  let cur_state = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
-  if (!cur_state) {
-    cur_state = {}
+  let cs = await cache.hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
+  let cur_state: {
+    [trip_id: string]: {
+      timestamp: any
+      event: any
+      event_type_resaon: any
+      service_area_id: any
+      district: any
+      gps: any
+    }[]
+  }
+  if (cs) {
+    cur_state = JSON.parse(cs)
   } else {
-    cur_state = JSON.parse(cur_state)
+    cur_state = {}
   }
   if (!cur_state[trip_id]) {
     cur_state[trip_id] = []
@@ -309,8 +323,8 @@ async function processTripEvent(device_state: State) {
   cur_state[trip_id].push(trip_event_data)
 
   // Update trip event cache and stream
-  await hset('trip:state', device_state.provider_id + ':' + device_state.device_id, JSON.stringify(cur_state))
-  add('events', 'mds.trip.event', trip_event_data)
+  await cache.hset('trip:state', device_state.provider_id + ':' + device_state.device_id, JSON.stringify(cur_state))
+  await stream.writeCloudEvent('mds.trip.event', JSON.stringify(trip_event_data))
 
   await processTripTelemetry(device_state)
 }
@@ -331,13 +345,23 @@ async function processTripTelemetry(device_state: State) {
   let trip_id
   // Check if accosiated to an event or telemetry post
   if (device_state.type === 'telemetry') {
-    let trips = await hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
+    let trip_query = await cache.hget('trip:state', device_state.provider_id + ':' + device_state.device_id)
+    let trips: {
+      [trip_id: string]: {
+        timestamp: any
+        event: any
+        event_type_resaon: any
+        service_area_id: any
+        district: any
+        gps: any
+      }[]
+    }
     // Requires trip start event to match telemetry to tripID
-    if (!trips) {
-      log.info('NO TRIP DATA FOUND')
+    if (!trip_query) {
+      console.log('NO TRIP DATA FOUND')
       return null
     } else {
-      trips = JSON.parse(trips)
+      trips = JSON.parse(trip_query)
       let trip
       let trip_start_time
       // find latest trip whose start time is before current timestamp
@@ -356,7 +380,7 @@ async function processTripTelemetry(device_state: State) {
         }
       }
       if (!trip_id) {
-        log.info('NO TRIPS MATCHED')
+        console.log('NO TRIPS MATCHED')
         return null
       }
     }
@@ -373,25 +397,24 @@ async function processTripTelemetry(device_state: State) {
     annotation_version: device_state.annotation_version,
     annotation: device_state.annotation
   }
+
+  let cs = await cache.hget('device:' + device_state.provider_id + ':' + device_state.device_id + ':trips', trip_id)
   let cur_state: { timestamp: any; latitude: any; longitude: any; annotation_version: any; annotation: any }[]
-  cur_state = await hget('device:' + device_state.provider_id + ':' + device_state.device_id + ':trips', trip_id)
-  if (!cur_state) {
+  if (!cs) {
     cur_state = []
   } else {
-    cur_state = JSON.parse(cur_state.toString())
+    cur_state = JSON.parse(cs)
   }
 
   // Don't add same telemetry timestamp twice
   if (cur_state.filter(state => state.timestamp === trip_event_data.timestamp).length === 0) {
     cur_state.push(trip_event_data)
   }
-  await hset(
+  await cache.hset(
     'device:' + device_state.provider_id + ':' + device_state.device_id + ':trips',
     trip_id,
     JSON.stringify(cur_state)
   )
 }
 
-module.exports = {
-  event_handler
-}
+export { event_handler }

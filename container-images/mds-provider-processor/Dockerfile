@@ -8,6 +8,6 @@ COPY dist/* /mds/
 
 WORKDIR /mds
 
-ENTRYPOINT ["/sbin/tini", "node", "index.js", "--type=trip"]
+ENTRYPOINT ["/sbin/tini", "node", "index.js", "--type=provider"]
 
 

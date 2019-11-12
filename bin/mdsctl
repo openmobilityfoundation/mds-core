@@ -66,7 +66,8 @@ declare -A configs=(
   ["token"]="${MDS_TOKEN:-dashboard}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
-  ["istio-version"]="${MDS_ISTIO_VERSION:-1.2.6}" #3.0}" # fixme: 1.3.0 istio-system pods stop at INIT at times
+  ["istio-repository"]= 
+  ["istio-version"]="${MDS_ISTIO_VERSION:-1.0.7}" #3.0}" # fixme: 1.3.0 istio-system pods stop at INIT at times
   ["istio-profile"]="${MDS_ISTIO_PROFILE:--istio-sds-auth}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
@@ -91,7 +92,7 @@ declare -A configs=(
   ["quiet"]="${MDS_QUIET:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
-  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.3.0/charts"
+  ["istio.io"]="https://storage.googleapis.com/istio-release/releases/1.0.7/charts/"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
   ["elastic"]="https://helm.elastic.co")
 declare -A apps=(
@@ -414,24 +415,9 @@ installIstio() {
   fi
 
   kubectl get namespace istio-system > /dev/null 2>&1 || {
-    ${configs[istio]}/bin/istioctl verify-install || error "istio verify installation failure"
-
-    installNamespace istio-system
-    pause 2
-    helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
-      --name istio-init --namespace istio-system | \
-      kubectl apply -f - ${configs[dryrun]:+--dry-run}
-    # todo: query pod status
-    pause 5
-
-    (( $(kubectl get crds | grep "istio.io" | wc -l) == 23 )) && \
-      echo "istio successfully installed" || echo "istio installation failure"
-
-    helm template ${configs[istio]}/install/kubernetes/helm/istio \
-      --name istio --namespace istio-system \
-      --values ${configs[istio]}/install/kubernetes/helm/istio/values${configs[istio-profile]}.yaml | \
-      kubectl apply -f - ${configs[dryrun]:+--dry-run}
-    labelNamespaceIstioInjection default
+    kubectl apply -f ${configs[istio]}/install/kubernetes/helm/helm-service-account.yaml
+    helm init --service-account tiller
+    helm install ${configs[istio]}/install/kubernetes/helm/istio --name istio --namespace istio-system
   }
 }
 
@@ -439,11 +425,12 @@ installEventing() {
   check ${FUNCNAME[0]}
   
   kubectl get namespace knative-eventing > /dev/null 2>&1 || {
+	kubectl apply --selector knative.dev/crd-install=true -f https://github.com/knative/eventing/releases/download/v0.6.0/eventing.yaml
 	kubectl apply -f https://github.com/knative/eventing/releases/download/v0.6.0/eventing.yaml
   }
   kubectl get namespace natss > /dev/null 2>&1 || {
     kubectl create namespace natss
-    kubectl apply -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
+	kubectl apply -n natss -f https://raw.githubusercontent.com/knative/eventing/da72a315ff8375cb1176c6f1d5fc34c53662ee76/contrib/natss/config/broker/natss.yaml
     kubectl apply -f https://github.com/knative/eventing/releases/download/v0.6.0/natss.yaml
   }
 }
@@ -759,18 +746,12 @@ uninstallKiali() {
 }
 
 uninstallIstio() {
-  kubectl get namespace istio-system > /dev/null 2>&1 && {
-    check ${FUNCNAME[0]}
-    helm template ${configs[istio]}/install/kubernetes/helm/istio \
-      --name istio \
-      --namespace istio-system \
-      --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
-        kubectl delete -f - ${configs[dryrun]:+--dry-run}
-    kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
-    kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
-      ${configs[dryrun]:+--dry-run} > /dev/null
-  }
-  [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
+  helm delete --purge istio
+  kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio/templates/crds.yaml -n istio-system
+  #helm template ${configs[istio]}/install/kubernetes/helm/istio --name istio --namespace istio-system | kubectl delete -f -
+  #helm delete --purge istio-init
+  kubectl get namespace istio-system > /dev/null 2>&1 && kubectl delete namespace istio-system \
+    ${configs[dryrun]:+--dry-run}
 }
 
 uninstallEventing() {
@@ -934,7 +915,9 @@ preset() {
 	  eventing)
 		preset $(normalize "disable,local,no-persistence")
 		is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true"
-		is+="${is:+,}sets-mds+=apis.mds-event-processor.enabled=true";;
+		is+="${is:+,}sets-mds+=apis.mds-event-processor.enabled=true"
+		is+="${is:+,}sets-mds+=apis.mds-trip-processor.enabled=true"
+		is+="${is:+,}sets-mds+=apis.mds-provider-processor.enabled=true";;
 	  wsl)
 	    is+="${is:+,}sets-mds+=postgresql.internal=false"
 		is+="${is:+,}sets-mds+=postgresql.host=host.docker.internal"

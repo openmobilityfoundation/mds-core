@@ -1,11 +1,11 @@
-let { data_handler } = require('./proc.js')
-let { insert } = require('../util/db')
-let { hset, hget, hgetall, hdel } = require('../util/cache')
-let { add } = require('../util/stream')
+import { data_handler } from './proc'
+import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
+import stream from '@mds-core/mds-stream'
 
 let { calcTotalDist } = require('./geo/geo')
 
-const log = require('loglevel')
+import log from 'loglevel'
 
 /*
     Trip processor api that runs inside a Kubernetes pod, activated via cron job.
@@ -19,24 +19,20 @@ const log = require('loglevel')
           VALUES = trip_data
 */
 async function trip_handler() {
-  await data_handler('trip', async function(type, data) {
+  await data_handler('trip', async function(type: any, data: any) {
     trip_aggregator()
   })
 }
 
 async function trip_aggregator() {
-  let all_trips = await hgetall('trip:state')
+  console.log('here')
+  let all_trips = await cache.hgetall('trip:state')
   for (let id in all_trips) {
     let [provider_id, device_id] = id.split(':')
     let device_trips = JSON.parse(all_trips[id])
     let unprocessed_trips = device_trips
     for (let trip_id in device_trips) {
-      let trip_processed = await process_trip(
-        provider_id,
-        device_id,
-        trip_id,
-        device_trips[trip_id]
-      )
+      let trip_processed = await process_trip(provider_id, device_id, trip_id, device_trips[trip_id])
       if (trip_processed) {
         log.info('TRIP PROCESSED')
         delete unprocessed_trips[trip_id]
@@ -45,16 +41,16 @@ async function trip_aggregator() {
     if (Object.keys(unprocessed_trips).length) {
       // If not all trips were processed set cache to current state of unprocessed trips
       log.info('PROCESSED SOME TRIPS')
-      await hset('trip:state', id, JSON.stringify(unprocessed_trips))
+      await cache.hset('trip:state', id, JSON.stringify(unprocessed_trips))
     } else {
       // Else if all were processed delete entry from cache
       log.info('PROCESSED ALL TRIPS')
-      await hdel('trip:state', id)
+      await cache.hdel('trip:state', id)
     }
   }
 }
 
-function calcTotalTime(telemetry, start_time) {
+function calcTotalTime(telemetry: { [x: string]: { [x: string]: { timestamp: any } } }, start_time: any) {
   /*
     Not currently used, but allows tracking of time between individual telemetry/event points
   */
@@ -69,7 +65,12 @@ function calcTotalTime(telemetry, start_time) {
   return count
 }
 
-async function process_trip(provider_id, device_id, trip_id, trip_events) {
+async function process_trip(
+  provider_id: string,
+  device_id: string,
+  trip_id: string,
+  trip_events: { timestamp: any; event: any; event_type_resaon: any; service_area_id: any; district: any; gps: any }[]
+) {
   /*
     Add telemetry and meta data into database when a trip ends
 
@@ -87,13 +88,14 @@ async function process_trip(provider_id, device_id, trip_id, trip_events) {
   }
 
   // Process anything where the last timestamp is more than 24 hours old
-  trip_events.sort(function(a, b) {
+  trip_events.sort(function(a: { timestamp: number }, b: { timestamp: number }) {
     return a.timestamp - b.timestamp
   })
   let time_range = 24 * 60 * 60 * 1000
   let cur_time = new Date().getTime()
   let latest_time = trip_events[trip_events.length - 1].timestamp
   if (latest_time + time_range > cur_time) {
+    console.log('trips ended less than 24hrs ago')
     return false
   }
 
@@ -110,29 +112,22 @@ async function process_trip(provider_id, device_id, trip_id, trip_events) {
     end_district: trip_end_info.district,
     duration: 0, // in milliseconds
     distance: 0, // default in miles
-    telemetry: []
+    telemetry: Array()
   }
 
   // Get trip telemetry data
-  let trip_telemetry = JSON.parse(
-    await hget('device:' + provider_id + ':' + device_id + ':trips', trip_id)
-  )
+  let trip_telemetry = JSON.parse(await cache.hget('device:' + provider_id + ':' + device_id + ':trips', trip_id))
   // Separate telemetry by trip events
   if (trip_telemetry && trip_telemetry.length > 0) {
     log.info('Parsing telemtry data')
-    for (
-      let event_index = 0;
-      event_index < trip_events.length - 1;
-      event_index++
-    ) {
+    for (let event_index = 0; event_index < trip_events.length - 1; event_index++) {
       let start_time = trip_events[event_index].timestamp
       let end_time = trip_events[event_index + 1].timestamp
       let trip_segment = trip_telemetry.filter(
-        telemetry_point =>
-          telemetry_point.timestamp >= start_time &&
-          telemetry_point.timestamp <= end_time
+        (telemetry_point: { timestamp: number }) =>
+          telemetry_point.timestamp >= start_time && telemetry_point.timestamp <= end_time
       )
-      trip_segment.sort(function(a, b) {
+      trip_segment.sort(function(a: { timestamp: number }, b: { timestamp: number }) {
         return a.timestamp - b.timestamp
       })
       trip_data.telemetry.push(trip_segment)
@@ -153,20 +148,22 @@ async function process_trip(provider_id, device_id, trip_id, trip_events) {
   // Insert into PG DB and stream
   log.info('INSERT')
   try {
-    await insert('trips', trip_data)
+    await db.insert('reports_trips', trip_data)
   } catch (err) {
     console.log(err)
   }
+  /*
   log.info('stream')
   try {
-    await add('trips', 'mds.processed.trip', trip_data)
+    await stream.writeCloudEvent('mds.processed.trip', JSON.stringify(trip_data))
   } catch (err) {
     console.log(err)
   }
+  */
   // Delete all processed telemetry data from cache
   log.info('DELETE')
   try {
-    await hdel('device:' + provider_id + ':' + device_id + ':trips', trip_id)
+    await cache.hdel('device:' + provider_id + ':' + device_id + ':trips', trip_id)
   } catch (err) {
     console.log(err)
   }
@@ -174,6 +171,4 @@ async function process_trip(provider_id, device_id, trip_id, trip_events) {
   return true
 }
 
-module.exports = {
-  trip_handler
-}
+export { trip_handler }

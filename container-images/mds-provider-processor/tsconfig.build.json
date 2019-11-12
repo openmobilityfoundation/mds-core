@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../../packages/mds-trip-processor/tsconfig.build.json" }]
+  "references": [{ "path": "../../packages/mds-provider-processor/tsconfig.build.json" }]
 }

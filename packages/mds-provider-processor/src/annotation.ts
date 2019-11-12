@@ -1,10 +1,10 @@
-let { findServiceAreas } = require('./geo/geo')
+import { findServiceAreas } from './geo/geo'
 
 let version = 1
 /* This function is called on each event processed. It calculates the annotation data and
  * returns it. To be used with mds geography related things.
  */
-function getAnnotationData(gps) {
+function getAnnotationData(gps: any) {
   let areas = findServiceAreas(gps.lng, gps.lat)
   let in_bound = areas.length > 0
   return {
@@ -22,7 +22,4 @@ function getAnnotationVersion() {
   return version
 }
 
-module.exports = {
-  getAnnotationData,
-  getAnnotationVersion
-}
+export { getAnnotationData, getAnnotationVersion }

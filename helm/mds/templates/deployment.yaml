@@ -95,7 +95,7 @@ spec:
           - name: CE_NAME
             value: {{ $key }}
           - name: SINK
-            value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
+            value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local/
           {{- end }}
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
