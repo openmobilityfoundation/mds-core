@@ -87,6 +87,21 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Server: mds-orm",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-orm",
+      "env": {
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "npm_package_name": "@mds-core/mds-orm"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Server: mds-policy",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
       "args": ["server.ts"],

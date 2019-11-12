@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+message Device {
+  double id = 1;
+  string device_id = 2;
+  string provider_id = 3;
+  string vehicle_id = 4;
+  string type = 5;
+  repeated string propulsion = 6;
+  optional int32 year = 7;
+  optional string mfgr = 8;
+  optional string model = 9;
+  double recorded = 10;
+}
+
+message FindDeviceByVehicleIdRequest {
+    string vehicle_id = 1;
+}
+
+message FindDeviceByVehicleIdResponse {
+    Device device = 1;
+}
+
+service Devices {
+    rpc findDeviceByVehicleId (FindDeviceByVehicleIdRequest) returns (FindDeviceByVehicleIdResponse) {};
+}
