@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-db",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "Mobility Data Specification database interface",
   "main": "dist/index.js",
   "files": [
@@ -19,12 +19,12 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-logger": "0.1.18",
-    "@mds-core/mds-types": "0.1.17",
-    "@mds-core/mds-utils": "0.1.20",
+    "@mds-core/mds-logger": "0.1.19",
+    "@mds-core/mds-types": "0.1.18",
+    "@mds-core/mds-utils": "0.1.21",
     "pg": "7.12.1"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.20"
+    "@mds-core/mds-test-data": "0.1.21"
   }
 }
