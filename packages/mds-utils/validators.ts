@@ -48,7 +48,7 @@ const uuidSchema = stringSchema.guid()
 
 const timestampSchema = numberSchema.min(1420099200000)
 
-const providerIdSchema = uuidSchema.valid(...Object.keys(providers))
+const providerIdSchema = uuidSchema.valid(Object.keys(providers))
 
 const vehicleIdSchema = stringSchema.max(255)
 
@@ -75,10 +75,10 @@ const telemetrySchema = Joi.object().keys({
   timestamp: timestampSchema.required()
 })
 
-const vehicleEventTypeSchema = stringSchema.valid(...Object.keys(VEHICLE_EVENTS))
+const vehicleEventTypeSchema = stringSchema.valid(Object.keys(VEHICLE_EVENTS))
 
 const auditEventTypeSchema = (accept?: AUDIT_EVENT_TYPE[]): Joi.StringSchema =>
-  stringSchema.valid(...(accept || Object.keys(AUDIT_EVENT_TYPES)))
+  stringSchema.valid(accept || Object.keys(AUDIT_EVENT_TYPES))
 
 const auditIssueCodeSchema = stringSchema.max(31)
 
@@ -92,7 +92,7 @@ const Format = (property: string, error: Joi.ValidationError): string => {
 
 const Validate = (value: unknown, schema: Joi.Schema, options: Partial<ValidatorOptions>): boolean => {
   const { assert = true, required = true, property = 'value' } = options
-  const { error } = schema.validate(value, { presence: required ? 'required' : 'optional' })
+  const { error } = Joi.validate(value, schema, { presence: required ? 'required' : 'optional' })
   if (error && assert) {
     throw new ValidationError(`invalid_${property}`.toLowerCase(), {
       [property]: value,

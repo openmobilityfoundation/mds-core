@@ -9,7 +9,7 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@hapi/joi": "16.1.7",
+    "@hapi/joi": "15.1.1",
     "@mds-core/mds-types": "0.1.16",
     "circle-to-polygon": "1.0.2",
     "point-in-polygon": "1.0.1"
