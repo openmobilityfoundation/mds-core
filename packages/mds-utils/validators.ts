@@ -16,6 +16,8 @@
 
 import { providers } from '@mds-core/mds-providers' // map of uuids -> obb
 import {
+  VEHICLE_TYPES,
+  DAYS_OF_WEEK,
   AUDIT_EVENT_TYPES,
   VEHICLE_EVENTS,
   AUDIT_EVENT_TYPE,
@@ -25,6 +27,7 @@ import {
   Telemetry
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
+import joiToJsonSchema from 'joi-to-json-schema'
 import {
   StringifiedTelemetry,
   StringifiedEventWithTelemetry,
@@ -73,6 +76,61 @@ const telemetrySchema = Joi.object().keys({
   provider_id: providerIdSchema.optional(),
   device_id: uuidSchema.optional(),
   timestamp: timestampSchema.required()
+})
+
+const ruleSchema = Joi.object().keys({
+  name: Joi.string().required(),
+  rule_id: Joi.string()
+    .guid()
+    .required(),
+  rule_type: Joi.string()
+    .valid(['count', 'time', 'speed', 'user'])
+    .required(),
+  rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
+  geographies: Joi.array().items(Joi.string().guid()),
+  statuses: Joi.object()
+    .keys({
+      available: Joi.array(),
+      reserved: Joi.array(),
+      unavailable: Joi.array(),
+      removed: Joi.array(),
+      inactive: Joi.array(),
+      trip: Joi.array(),
+      elsewhere: Joi.array()
+    })
+    .allow(null),
+  vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
+  maximum: Joi.number(),
+  minimum: Joi.number(),
+  start_time: Joi.string(),
+  end_time: Joi.string(),
+  days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
+  messages: Joi.object(),
+  value_url: Joi.string().uri()
+})
+
+const policySchema = Joi.object().keys({
+  name: Joi.string().required(),
+  description: Joi.string().required(),
+  policy_id: Joi.string()
+    .guid()
+    .required(),
+  start_date: Joi.date()
+    .timestamp('javascript')
+    .required(),
+  end_date: Joi.date()
+    .timestamp('javascript')
+    .allow(null),
+  prev_policies: Joi.array()
+    .items(Joi.string().guid())
+    .allow(null),
+  provider_ids: Joi.array()
+    .items(Joi.string().guid())
+    .allow(null),
+  rules: Joi.array()
+    .min(1)
+    .items(ruleSchema)
+    .required()
 })
 
 const vehicleEventTypeSchema = stringSchema.valid(Object.keys(VEHICLE_EVENTS))
@@ -174,3 +232,5 @@ export const isStringifiedEventWithTelemetry = (event: unknown): event is String
 
 export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
   HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
+
+export const policySchemaJson = joiToJsonSchema(policySchema)
