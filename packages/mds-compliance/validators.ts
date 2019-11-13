@@ -11,9 +11,9 @@ const ruleSchema = Joi.object().keys({
     .guid()
     .required(),
   rule_type: Joi.string()
-    .valid('count', 'time', 'speed', 'user')
+    .valid(['count', 'time', 'speed', 'user'])
     .required(),
-  rule_units: Joi.string().valid('seconds', 'minutes', 'hours', 'mph', 'kph'),
+  rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
   geographies: Joi.array().items(Joi.string().guid()),
   statuses: Joi.object().keys({
     available: Joi.array(),
@@ -24,12 +24,12 @@ const ruleSchema = Joi.object().keys({
     trip: Joi.array(),
     elsewhere: Joi.array()
   }),
-  vehicle_types: Joi.array().items(Joi.string().valid(...Object.values(VEHICLE_TYPES))),
+  vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
   maximum: Joi.number(),
   minimum: Joi.number(),
   start_time: Joi.string(),
   end_time: Joi.string(),
-  days: Joi.array().items(Joi.string().valid(...DAYS_OF_WEEK)),
+  days: Joi.array().items(Joi.string().valid(DAYS_OF_WEEK)),
   messages: Joi.object(),
   value_url: Joi.string().uri()
 })
@@ -60,7 +60,7 @@ const policiesSchema = Joi.array().items(
 const featureSchema = Joi.object()
   .keys({
     type: Joi.string()
-      .valid('Feature')
+      .valid(['Feature'])
       .required(),
     properties: Joi.object().required(),
     geometry: Joi.object().required()
@@ -70,7 +70,7 @@ const featureSchema = Joi.object()
 const featureCollectionSchema = Joi.object()
   .keys({
     type: Joi.string()
-      .valid('FeatureCollection')
+      .valid(['FeatureCollection'])
       .required(),
     features: Joi.array()
       .min(1)
@@ -106,7 +106,7 @@ const eventsSchema = Joi.array().items(
     timestamp: Joi.date()
       .timestamp('javascript')
       .required(),
-    event_type: Joi.string().valid(...Object.values(VEHICLE_EVENTS)),
+    event_type: Joi.string().valid(Object.values(VEHICLE_EVENTS)),
     event_type_reason: Joi.string(),
     telemetry_timestamp: Joi.date().timestamp('javascript'),
     telemetry: Joi.object(), // TODO Add telemetry schema
@@ -123,7 +123,7 @@ const Format = (property: string, error: Joi.ValidationError): string => {
 }
 
 export function validatePolicies(policies: unknown): policies is Policy[] {
-  const { error } = policiesSchema.validate(policies)
+  const { error } = Joi.validate(policies, policiesSchema)
   if (error) {
     throw new ValidationError('invalid_policies', {
       policies,
@@ -134,7 +134,7 @@ export function validatePolicies(policies: unknown): policies is Policy[] {
 }
 
 export function validateGeographies(geographies: unknown): geographies is Geography[] {
-  const { error } = geographiesSchema.validate(geographies)
+  const { error } = Joi.validate(geographies, geographiesSchema)
   if (error) {
     throw new ValidationError('invalid_geographies', {
       geographies,
@@ -145,7 +145,7 @@ export function validateGeographies(geographies: unknown): geographies is Geogra
 }
 
 export function validateEvents(events: unknown): events is VehicleEvent[] {
-  const { error } = eventsSchema.validate(events)
+  const { error } = Joi.validate(events, eventsSchema)
   if (error) {
     throw new ValidationError('invalid events', {
       events,
