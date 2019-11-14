@@ -401,12 +401,13 @@ if (pg_info.database) {
         const numFeatures = geography_json.features.length
         geography_json.features = []
         await MDSDBPostgres.editGeography({
-          name: 'District Seven',
+          name: 'District Seven Updated Name',
           geography_id: DistrictSeven.geography_id,
           geography_json
         })
         const result = await MDSDBPostgres.readSingleGeography(GEOGRAPHY2_UUID)
         assert.notEqual(result.geography_json.features.length, numFeatures)
+        assert.equal(result.name, 'District Seven Updated Name')
         assert.equal(result.geography_json.features.length, 0)
       })
 
