@@ -1,16 +1,16 @@
 {
   "name": "@mds-core/mds-metrics",
   "description": "MDS Metrics API",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-cache": "0.1.19",
-    "@mds-core/mds-db": "0.1.19",
-    "@mds-core/mds-logger": "0.1.17",
-    "@mds-core/mds-providers": "0.1.19",
-    "@mds-core/mds-types": "0.1.16",
-    "@mds-core/mds-utils": "0.1.19",
+    "@mds-core/mds-cache": "0.1.23",
+    "@mds-core/mds-db": "0.1.23",
+    "@mds-core/mds-logger": "0.1.21",
+    "@mds-core/mds-providers": "0.1.23",
+    "@mds-core/mds-types": "0.1.20",
+    "@mds-core/mds-utils": "0.1.23",
     "express": "4.17.1"
   },
   "main": "dist/index.js",

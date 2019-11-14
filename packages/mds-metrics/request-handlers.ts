@@ -12,8 +12,8 @@ import {
   GetTelemetryCountsResponse,
   GetEventCountsResponse,
   TelemetryCountsResponse,
-  EventSnapshotResponse,
-  StateSnapshotResponse
+  StateSnapshot,
+  EventSnapshot
 } from './types'
 import { getTimeBins } from './utils'
 
@@ -26,12 +26,18 @@ export async function getStateSnapshot(req: MetricsApiRequest, res: GetStateSnap
     const device_ids = (await db.readDeviceIds(provider_id)).map(device => device.device_id)
     const devices = await db.readDeviceList(device_ids)
 
+    log.info(`Fetched ${devices.length} devices from db`)
+
     const eventsBySlice = await Promise.all(
       slices.map(slice => {
         const { end } = slice
         return db.readHistoricalEvents({ end_date: end })
       })
     )
+
+    log.info(`Fetched ${eventsBySlice.length} event snapshots from db`)
+    log.info(`First event slice has ${eventsBySlice[0].length} events`)
+    log.info(`Last event slice has ${eventsBySlice[eventsBySlice.length - 1].length} events`)
 
     const result = eventsBySlice
       .map(events => {
@@ -49,16 +55,23 @@ export async function getStateSnapshot(req: MetricsApiRequest, res: GetStateSnap
             }
 
             const incrementedSubAcc = { [type]: inc(acc[type], status) }
-
-            return { ...acc, incrementedSubAcc }
+            return { ...acc, ...incrementedSubAcc }
           }, instantiateStateSnapshotResponse(0))
 
+          log.info(`Snapshot: ${statusCounts}`)
           return statusCounts
         }
       })
-      .filter((e): e is StateSnapshotResponse => e !== undefined)
+      .filter((e): e is StateSnapshot => e !== undefined)
 
-    res.status(200).send(result)
+    const resultWithSlices = result.map((snapshot, idx) => {
+      const slice = slices[idx]
+      return { snapshot, slice }
+    })
+
+    log.info(`state_snapshot result: ${resultWithSlices}`)
+
+    res.status(200).send(resultWithSlices)
   } catch (error) {
     await log.error(error)
     res.status(500).send(new ServerError())
@@ -74,12 +87,18 @@ export async function getEventSnapshot(req: MetricsApiRequest, res: GetEventsSna
     const device_ids = (await db.readDeviceIds(provider_id)).map(device => device.device_id)
     const devices = await db.readDeviceList(device_ids)
 
+    log.info(`Fetched ${devices.length} devices from db`)
+
     const eventsBySlice = await Promise.all(
       slices.map(slice => {
         const { end } = slice
         return db.readHistoricalEvents({ end_date: end })
       })
     )
+
+    log.info(`Fetched ${eventsBySlice.length} event snapshots from db`)
+    log.info(`First event slice has ${eventsBySlice[0].length} events`)
+    log.info(`Last event slice has ${eventsBySlice[eventsBySlice.length - 1].length} events`)
 
     const result = eventsBySlice
       .map(events => {
@@ -100,12 +119,21 @@ export async function getEventSnapshot(req: MetricsApiRequest, res: GetEventsSna
             return { ...acc, incrementedSubAcc }
           }, instantiateEventSnapshotResponse(0))
 
+          log.info(`Snapshot: ${eventCounts}`)
+
           return eventCounts
         }
       })
-      .filter((e): e is EventSnapshotResponse => e !== undefined)
+      .filter((e): e is EventSnapshot => e !== undefined)
 
-    res.status(200).send(result)
+    const resultWithSlices = result.map((snapshot, idx) => {
+      const slice = slices[idx]
+      return { snapshot, slice }
+    })
+
+    log.info(`event_snapshot result: ${resultWithSlices}`)
+
+    res.status(200).send(resultWithSlices)
   } catch (error) {
     await log.error(error)
     res.status(500).send(new ServerError())

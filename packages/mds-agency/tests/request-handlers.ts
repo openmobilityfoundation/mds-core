@@ -87,7 +87,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
       assert.equal(statusHandler.calledWith(200), true)
       assert.equal(sendHandler.calledWith({ service_areas: serviceAreas }), true)
       Sinon.restore()
@@ -102,7 +102,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
       assert.equal(statusHandler.calledWith(404), true)
       assert.equal(sendHandler.calledWith({ result: `${service_area_id} not found` }), true)
       Sinon.restore()
@@ -117,7 +117,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
       assert.equal(statusHandler.calledWith(404), true)
       assert.equal(sendHandler.calledWith({ result: `${service_area_id} not found` }), true)
       Sinon.restore()
@@ -132,7 +132,7 @@ describe('Agency API request handlers', () => {
         send: sendHandler
       } as any)
       res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest, res)
+      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
       assert.equal(statusHandler.calledWith(400), true)
       assert.equal(sendHandler.calledWith({ result: `invalid service_area_id ${service_area_id} is not a UUID` }), true)
       Sinon.restore()
@@ -284,7 +284,7 @@ describe('Agency API request handlers', () => {
         {
           params: { device_id },
           query: { cached: false }
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(404), true)
@@ -316,7 +316,7 @@ describe('Agency API request handlers', () => {
         {
           params: { device_id },
           query: { cached: false }
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -342,7 +342,7 @@ describe('Agency API request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)
@@ -366,7 +366,7 @@ describe('Agency API request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -393,7 +393,7 @@ describe('Agency API request handlers', () => {
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as AgencyApiRequest<{ device_id: string }>,
           res,
           provider_id,
           device_id,
@@ -425,7 +425,7 @@ describe('Agency API request handlers', () => {
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as AgencyApiRequest<{ device_id: string }>,
           res,
           provider_id,
           device_id,
@@ -457,7 +457,7 @@ describe('Agency API request handlers', () => {
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as AgencyApiRequest<{ device_id: string }>,
           res,
           provider_id,
           device_id,
@@ -489,7 +489,7 @@ describe('Agency API request handlers', () => {
             params: { device_id },
             query: { cached: false },
             get: Sinon.fake.returns('foo') as any
-          } as AgencyApiRequest,
+          } as AgencyApiRequest<{ device_id: string }>,
           res,
           provider_id,
           device_id,
@@ -517,7 +517,7 @@ describe('Agency API request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)
@@ -543,7 +543,7 @@ describe('Agency API request handlers', () => {
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any,
           body: { vehicle_id }
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(404), true)
@@ -569,7 +569,7 @@ describe('Agency API request handlers', () => {
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any,
           body: { vehicle_id }
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(404), true)
@@ -598,7 +598,7 @@ describe('Agency API request handlers', () => {
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any,
           body: { vehicle_id }
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(201), true)

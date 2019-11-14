@@ -1,5 +1,6 @@
 import log from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
+import cache from '@mds-core/mds-cache'
 import { VehicleEvent } from '@mds-core/mds-types'
 import { now, isStateTransitionValid } from '@mds-core/mds-utils'
 import { DbHelperArgs } from './types'
@@ -28,10 +29,12 @@ export const getTripCountsSince = async ({ start_time, end_time, provider_info, 
 export const getTimeSinceLastEvent = async ({ provider_info, fail }: DbHelperArgs) => {
   try {
     const start = now()
+    await cache.getMostRecentEventByProvider()
     const rows = await db.getMostRecentEventByProvider()
+    // TODO fall back to DB if we're missing providers
     const finish = now()
     const timeElapsed = finish - start
-    await log.info(`MDS-DAILY db.getMostRecentEventByProvider() time elapsed: ${timeElapsed}`)
+    await log.info(`MDS-DAILY cache.getMostRecentEventByProvider() time elapsed: ${timeElapsed}`)
     await log.info('time since last event', rows)
     rows.map(row => {
       const pid = row.provider_id

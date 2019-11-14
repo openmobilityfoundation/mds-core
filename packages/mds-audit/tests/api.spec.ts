@@ -523,7 +523,10 @@ describe('Testing API', () => {
     })
 
     it('Verify getting vehicles inside of a bounding box', done => {
-      const bbox = [[-118.484776, 33.996855], [-118.452283, 33.96299]] // BBOX encompasses the entirity of CANALS
+      const bbox = [
+        [-118.484776, 33.996855],
+        [-118.452283, 33.96299]
+      ] // BBOX encompasses the entirity of CANALS
       request
         .get(`/vehicles?bbox=${JSON.stringify(bbox)}`)
         .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))

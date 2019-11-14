@@ -6,8 +6,9 @@ import logger from '@mds-core/mds-logger'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { AccessTokenScope } from '@mds-core/mds-types'
+import { Params, ParamsDictionary } from 'express-serve-static-core'
 
-export type ApiRequest = express.Request
+export type ApiRequest<P extends Params = ParamsDictionary> = express.Request<P>
 
 export interface ApiResponseLocals {
   claims: ApiAuthorizerClaims | null
@@ -16,8 +17,7 @@ export interface ApiResponseLocals {
 
 export interface ApiResponse<T = unknown> extends express.Response {
   locals: ApiResponseLocals
-  status: (code: number) => ApiResponse<T | { error: Error }>
-  send: (body: T) => ApiResponse<T | { error: Error }>
+  send: (body: T | { error: Error }) => this
 }
 
 const about = () => {

@@ -3,14 +3,12 @@ import Sinon from 'sinon'
 import assert from 'assert'
 import {
   getTripCountsSince,
-  getTimeSinceLastEvent,
   getEventCountsPerProviderSince,
   getTelemetryCountsPerProviderSince,
   getNumVehiclesRegisteredLast24Hours,
   getNumEventsLast24Hours,
   getConformanceLast24Hours
 } from '../db-helpers'
-import { ProviderInfo } from '../types'
 
 /* eslint-disable promise/avoid-new */
 
@@ -43,43 +41,6 @@ describe('DB helpers for API', () => {
       const fail = Sinon.fake.returns('fake')
       const provider_info = {}
       await getTripCountsSince({
-        start_time: 10,
-        end_time: 20,
-        provider_info,
-        fail
-      })
-      assert.equal(fail.called, true)
-      Sinon.restore()
-    })
-  })
-
-  describe('getTimeSinceLastEvent()', () => {
-    it('computes correctly', async () => {
-      const fakeRows: ReturnType<typeof db['getMostRecentEventByProvider']> = new Promise(resolve => {
-        resolve([
-          {
-            provider_id: 'fake-provider-id',
-            max: 10
-          }
-        ])
-      })
-      Sinon.replace(db, 'getMostRecentEventByProvider', Sinon.fake.returns(fakeRows))
-      const provider_info: ProviderInfo = {}
-      await getTimeSinceLastEvent({
-        start_time: 10,
-        end_time: 20,
-        provider_info,
-        fail: Sinon.fake.returns('fake')
-      })
-      assert.equal(provider_info['fake-provider-id'].ms_since_last_event > 0, true)
-      Sinon.restore()
-    })
-
-    it('fails gracefully', async () => {
-      Sinon.replace(db, 'getMostRecentEventByProvider', Sinon.fake.rejects('fake-error'))
-      const fail = Sinon.fake.returns('fake')
-      const provider_info = {}
-      await getTimeSinceLastEvent({
         start_time: 10,
         end_time: 20,
         provider_info,
