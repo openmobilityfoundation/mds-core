@@ -133,6 +133,67 @@ const policySchema = Joi.object().keys({
     .required()
 })
 
+const policiesSchema = Joi.array().items(policySchema)
+
+const featureSchema = Joi.object()
+  .keys({
+    type: Joi.string()
+      .valid(['Feature'])
+      .required(),
+    properties: Joi.object().required(),
+    geometry: Joi.object().required()
+  })
+  .unknown(true) // TODO
+
+const featureCollectionSchema = Joi.object()
+  .keys({
+    type: Joi.string()
+      .valid(['FeatureCollection'])
+      .required(),
+    features: Joi.array()
+      .min(1)
+      .items(featureSchema)
+      .required()
+  })
+  .unknown(true) // TODO
+
+const geographiesSchema = Joi.array().items(
+  Joi.object()
+    .keys({
+      geography_id: Joi.string()
+        .guid()
+        .required(),
+      geography_json: featureCollectionSchema,
+      read_only: Joi.boolean().allow(null),
+      previous_geography_ids: Joi.array()
+        .items(Joi.string().guid())
+        .allow(null),
+      name: Joi.string().required()
+    })
+    .unknown(true)
+)
+
+const eventsSchema = Joi.array().items(
+  Joi.object().keys({
+    device_id: Joi.string()
+      .guid()
+      .required(),
+    provider_id: Joi.string()
+      .guid()
+      .required(),
+    timestamp: Joi.date()
+      .timestamp('javascript')
+      .required(),
+    event_type: Joi.string().valid(Object.values(VEHICLE_EVENTS)),
+    event_type_reason: Joi.string(),
+    telemetry_timestamp: Joi.date().timestamp('javascript'),
+    telemetry: Joi.object(), // TODO Add telemetry schema
+    trip_id: Joi.string().guid(),
+    service_area_id: Joi.string().guid(),
+    recorded: Joi.date().timestamp('javascript')
+  })
+)
+
 const vehicleEventTypeSchema = stringSchema.valid(Object.keys(VEHICLE_EVENTS))
 
 const auditEventTypeSchema = (accept?: AUDIT_EVENT_TYPE[]): Joi.StringSchema =>
@@ -233,4 +294,36 @@ export const isStringifiedEventWithTelemetry = (event: unknown): event is String
 export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
   HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
 
+export function validatePolicies(policies: unknown): policies is Policy[] {
+  const { error } = Joi.validate(policies, policiesSchema)
+  if (error) {
+    throw new ValidationError('invalid_policies', {
+      policies,
+      details: Format('policies', error)
+    })
+  }
+  return true
+}
+
+export function validateGeographies(geographies: unknown): geographies is Geography[] {
+  const { error } = Joi.validate(geographies, geographiesSchema)
+  if (error) {
+    throw new ValidationError('invalid_geographies', {
+      geographies,
+      details: Format('geographies', error)
+    })
+  }
+  return true
+}
+
+export function validateEvents(events: unknown): events is VehicleEvent[] {
+  const { error } = Joi.validate(events, eventsSchema)
+  if (error) {
+    throw new ValidationError('invalid events', {
+      events,
+      details: Format('events', error)
+    })
+  }
+  return true
+}
 export const policySchemaJson = joiToJsonSchema(policySchema)
