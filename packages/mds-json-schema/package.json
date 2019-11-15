@@ -12,8 +12,8 @@
   "dependencies": {
     "@hapi/joi": "15.1.1",
     "joi-to-json-schema": "5.1.0",
-    "@mds-core/mds-types": "0.1.20",
-    "@mds-core/mds-utils": "0.1.23"
+    "@mds-core/mds-types": "0.1.21",
+    "@mds-core/mds-utils": "0.1.24"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
