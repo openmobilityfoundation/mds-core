@@ -23,10 +23,9 @@ import {
   UUID_REGEX,
   NotFoundError,
   BadParamsError,
-  AlreadyPublishedError,
-  policyValidationDetails,
-  geographyValidationDetails
+  AlreadyPublishedError
 } from '@mds-core/mds-utils'
+import { policyValidationDetails, geographyValidationDetails } from '@mds-core/mds-json-schema'
 import log from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'

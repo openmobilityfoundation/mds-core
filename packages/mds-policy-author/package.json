@@ -10,15 +10,14 @@
     "npm": ">= 6.8.0"
   },
   "dependencies": {
-    "@hapi/joi": "15.1.1",
     "@mds-core/mds-api-helpers": "0.1.23",
     "@mds-core/mds-api-server": "0.1.23",
     "@mds-core/mds-db": "0.1.23",
     "@mds-core/mds-logger": "0.1.21",
     "@mds-core/mds-providers": "0.1.23",
     "@mds-core/mds-utils": "0.1.23",
+    "@mds-core/mds-json-schema": "0.1.1",
     "express": "4.17.1",
-    "joi-to-json-schema": "5.1.0",
     "uuid": "3.3.3"
   },
   "main": "dist/index.js",
