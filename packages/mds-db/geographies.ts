@@ -118,8 +118,17 @@ export async function editGeography(geography: Geography) {
   }
 
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.geographies} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND publish_date IS NULL`
-  await client.query(sql, [geography.geography_json])
+  const vals = new SqlVals()
+  const conditions: string[] = []
+  Object.entries(geography).forEach(([key, value]) => {
+    if (key === 'geography_json') {
+      conditions.push(`geography_json = ${vals.add(JSON.stringify(geography.geography_json))}`)
+    } else {
+      conditions.push(`${key} = ${vals.add(value)}`)
+    }
+  })
+  const sql = `UPDATE ${schema.TABLE.geographies} SET ${conditions} WHERE geography_id='${geography.geography_id}' AND publish_date IS NULL`
+  await client.query(sql, vals.values())
   return geography
 }
 
