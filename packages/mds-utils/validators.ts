@@ -16,6 +16,9 @@
 
 import { providers } from '@mds-core/mds-providers' // map of uuids -> obb
 import {
+  Geography,
+  Policy,
+  VehicleEvent,
   VEHICLE_TYPES,
   DAYS_OF_WEEK,
   AUDIT_EVENT_TYPES,
@@ -109,7 +112,7 @@ const ruleSchema = Joi.object().keys({
   value_url: Joi.string().uri()
 })
 
-const policySchema = Joi.object().keys({
+export const policySchema = Joi.object().keys({
   name: Joi.string().required(),
   description: Joi.string().required(),
   policy_id: Joi.string()
@@ -157,21 +160,21 @@ const featureCollectionSchema = Joi.object()
   })
   .unknown(true) // TODO
 
-const geographiesSchema = Joi.array().items(
-  Joi.object()
-    .keys({
-      geography_id: Joi.string()
-        .guid()
-        .required(),
-      geography_json: featureCollectionSchema,
-      read_only: Joi.boolean().allow(null),
-      previous_geography_ids: Joi.array()
-        .items(Joi.string().guid())
-        .allow(null),
-      name: Joi.string().required()
-    })
-    .unknown(true)
-)
+export const geographySchema = Joi.object()
+  .keys({
+    geography_id: Joi.string()
+      .guid()
+      .required(),
+    geography_json: featureCollectionSchema,
+    read_only: Joi.boolean().allow(null),
+    previous_geography_ids: Joi.array()
+      .items(Joi.string().guid())
+      .allow(null),
+    name: Joi.string().required()
+  })
+  .unknown(true)
+
+const geographiesSchema = Joi.array().items(geographySchema)
 
 const eventsSchema = Joi.array().items(
   Joi.object().keys({
@@ -326,4 +329,25 @@ export function validateEvents(events: unknown): events is VehicleEvent[] {
   }
   return true
 }
+
+export function policyValidationDetails(policy: Policy): Joi.ValidationErrorItem[] | null {
+  const { error } = Joi.validate(policy, policySchema)
+  if (error) {
+    return error.details
+  }
+  return null
+}
+
+export function geographyValidationDetails(geography: Geography): Joi.ValidationErrorItem[] | null {
+  const { error } = Joi.validate(geography, geographySchema)
+  if (error) {
+    return error.details
+  }
+  return null
+}
+
+export function rawValidatePolicy(policy: Policy): Joi.ValidationResult<Policy> {
+  return Joi.validate(policy, policySchema)
+}
+
 export const policySchemaJson = joiToJsonSchema(policySchema)

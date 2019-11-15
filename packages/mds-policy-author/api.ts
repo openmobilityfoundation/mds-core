@@ -15,9 +15,7 @@
  */
 
 import express from 'express'
-import Joi from '@hapi/joi'
 import uuid from 'uuid'
-import { VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import {
   pathsFor,
@@ -25,112 +23,28 @@ import {
   UUID_REGEX,
   NotFoundError,
   BadParamsError,
-  AlreadyPublishedError
+  AlreadyPublishedError,
+  policyValidationDetails,
+  geographyValidationDetails
 } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'
 
-const ruleSchema = Joi.object().keys({
-  name: Joi.string().required(),
-  rule_id: Joi.string()
-    .guid()
-    .required(),
-  rule_type: Joi.string()
-    .valid(['count', 'time', 'speed', 'user'])
-    .required(),
-  rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
-  geographies: Joi.array().items(Joi.string().guid()),
-  statuses: Joi.object().keys({
-    available: Joi.array(),
-    reserved: Joi.array(),
-    unavailable: Joi.array(),
-    removed: Joi.array(),
-    inactive: Joi.array(),
-    trip: Joi.array(),
-    elsewhere: Joi.array()
-  }),
-  vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
-  maximum: Joi.number(),
-  minimum: Joi.number(),
-  start_time: Joi.string(),
-  end_time: Joi.string(),
-  days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
-  messages: Joi.object(),
-  value_url: Joi.string().uri()
-})
-
-const policySchema = Joi.object().keys({
-  name: Joi.string().required(),
-  description: Joi.string().required(),
-  policy_id: Joi.string()
-    .guid()
-    .required(),
-  start_date: Joi.date()
-    .timestamp('javascript')
-    .required(),
-  end_date: Joi.date()
-    .timestamp('javascript')
-    .allow(null),
-  prev_policies: Joi.array()
-    .items(Joi.string().guid())
-    .allow(null),
-  provider_ids: Joi.array()
-    .items(Joi.string().guid())
-    .allow(null),
-  rules: Joi.array()
-    .min(1)
-    .items(ruleSchema)
-    .required()
-})
-
-const featureSchema = Joi.object()
-  .keys({
-    type: Joi.string()
-      .valid(['Feature'])
-      .required(),
-    properties: Joi.object().required(),
-    geometry: Joi.object().required()
-  })
-  .unknown(true) // TODO
-
-const featureCollectionSchema = Joi.object()
-  .keys({
-    type: Joi.string()
-      .valid(['FeatureCollection'])
-      .required(),
-    features: Joi.array()
-      .min(1)
-      .items(featureSchema)
-      .required()
-  })
-  .unknown(true) // TODO
-
-const geographySchema = Joi.object()
-  .keys({
-    geography_id: Joi.string()
-      .guid()
-      .required(),
-    geography_json: featureCollectionSchema,
-    read_only: Joi.boolean().allow(null),
-    previous_geography_ids: Joi.array()
-      .items(Joi.string().guid())
-      .allow(null),
-    name: Joi.string().required()
-  })
-  .unknown(true)
-
 function api(app: express.Express): express.Express {
-  app.get(pathsFor('/policies'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
-    const { get_published = null, get_unpublished = null } = req.query
-    log.info('read /policies', req.query)
+  app.get(
+    pathsFor('/policies'),
+    checkAccess(scopes => scopes.includes('policies:read')),
+    async (req, res) => {
+      const { get_published = null, get_unpublished = null } = req.query
+      log.info('read /policies', req.query)
 
-    try {
-      const policies = await db.readPolicies({ get_published, get_unpublished })
+      try {
+        const policies = await db.readPolicies({ get_published, get_unpublished })
 
-      // Let's not worry about filtering for just active policies at the moment.
+        // Let's not worry about filtering for just active policies at the moment.
 
-      /*
+        /*
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
@@ -144,44 +58,49 @@ function api(app: express.Express): express.Express {
         return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
       })
       */
-      res.status(200).send(policies)
-    } catch (err) {
-      await log.error('failed to read policies', err)
-      if (err instanceof BadParamsError) {
-        res.status(400).send({
-          result:
-            'Cannot set both get_unpublished and get_published to be true. If you want all policies, set both params to false or do not send them.'
+        res.status(200).send(policies)
+      } catch (err) {
+        await log.error('failed to read policies', err)
+        if (err instanceof BadParamsError) {
+          res.status(400).send({
+            result:
+              'Cannot set both get_unpublished and get_published to be true. If you want all policies, set both params to false or do not send them.'
+          })
+        }
+        res.status(404).send({
+          result: 'not found'
         })
       }
-      res.status(404).send({
-        result: 'not found'
-      })
     }
-  })
+  )
 
-  app.post(pathsFor('/policies'), checkAccess(scopes => scopes.includes('policies:write')), async (req, res) => {
-    const policy = { policy_id: uuid(), ...req.body }
-    const validation = Joi.validate(policy, policySchema)
-    const details = validation.error ? validation.error.details : null
+  app.post(
+    pathsFor('/policies'),
+    checkAccess(scopes => scopes.includes('policies:write')),
+    async (req, res) => {
+      const policy = { policy_id: uuid(), ...req.body }
 
-    if (details) {
-      await log.error('invalid policy json', details)
-      return res.status(400).send(details)
-    }
+      const details = policyValidationDetails(policy)
 
-    try {
-      await db.writePolicy(policy)
-      return res.status(201).send(policy)
-    } catch (err) {
-      if (err.code === '23505') {
-        return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
+      if (details != null) {
+        await log.error('invalid policy json', details)
+        return res.status(400).send(details)
       }
-      /* istanbul ignore next */
-      await log.error('failed to write policy', err)
-      /* istanbul ignore next */
-      return res.status(500).send({ error: new ServerError(err) })
+
+      try {
+        await db.writePolicy(policy)
+        return res.status(201).send(policy)
+      } catch (err) {
+        if (err.code === '23505') {
+          return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
+        }
+        /* istanbul ignore next */
+        await log.error('failed to write policy', err)
+        /* istanbul ignore next */
+        return res.status(500).send({ error: new ServerError(err) })
+      }
     }
-  })
+  )
 
   app.post(
     pathsFor('/policies/:policy_id/publish'),
@@ -217,10 +136,11 @@ function api(app: express.Express): express.Express {
     checkAccess(scopes => scopes.includes('policies:write')),
     async (req, res) => {
       const policy = req.body
-      const validation = Joi.validate(policy, policySchema)
-      const details = validation.error ? validation.error.details : null
 
-      if (details) {
+      const details = policyValidationDetails(policy)
+
+      if (details != null) {
+        await log.error('invalid policy json', details)
         return res.status(400).send(details)
       }
 
@@ -263,26 +183,30 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/policies/meta/'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
-    const { get_published = null, get_unpublished = null } = req.query
-    log.info('read /policies/meta', req.query)
-    try {
-      const metadata = await db.readBulkPolicyMetadata({ get_published, get_unpublished })
+  app.get(
+    pathsFor('/policies/meta/'),
+    checkAccess(scopes => scopes.includes('policies:read')),
+    async (req, res) => {
+      const { get_published = null, get_unpublished = null } = req.query
+      log.info('read /policies/meta', req.query)
+      try {
+        const metadata = await db.readBulkPolicyMetadata({ get_published, get_unpublished })
 
-      res.status(200).send(metadata)
-    } catch (err) {
-      await log.error('failed to read policies', err)
-      if (err instanceof BadParamsError) {
-        res.status(400).send({
-          result:
-            'Cannot set both get_unpublished and get_published to be true. If you want all policy metadata, set both params to false or do not send them.'
+        res.status(200).send(metadata)
+      } catch (err) {
+        await log.error('failed to read policies', err)
+        if (err instanceof BadParamsError) {
+          res.status(400).send({
+            result:
+              'Cannot set both get_unpublished and get_published to be true. If you want all policy metadata, set both params to false or do not send them.'
+          })
+        }
+        res.status(404).send({
+          result: 'not found'
         })
       }
-      res.status(404).send({
-        result: 'not found'
-      })
     }
-  })
+  )
 
   app.get(
     pathsFor('/policies/:policy_id'),
@@ -342,20 +266,24 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/geographies/meta/'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
-    const get_read_only = req.query === 'true'
+  app.get(
+    pathsFor('/geographies/meta/'),
+    checkAccess(scopes => scopes.includes('policies:read')),
+    async (req, res) => {
+      const get_read_only = req.query === 'true'
 
-    log.info('read /geographies/meta', req.query)
-    try {
-      const metadata = await db.readBulkGeographyMetadata({ get_read_only })
-      res.status(200).send(metadata)
-    } catch (err) {
-      await log.error('failed to read geography metadata', err)
-      res.status(404).send({
-        result: 'not found'
-      })
+      log.info('read /geographies/meta', req.query)
+      try {
+        const metadata = await db.readBulkGeographyMetadata({ get_read_only })
+        res.status(200).send(metadata)
+      } catch (err) {
+        await log.error('failed to read geography metadata', err)
+        res.status(404).send({
+          result: 'not found'
+        })
+      }
     }
-  })
+  )
 
   app.get(
     pathsFor('/geographies/:geography_id'),
@@ -374,38 +302,44 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.post(pathsFor('/geographies/'), checkAccess(scopes => scopes.includes('policies:write')), async (req, res) => {
-    const geography = req.body
-    const validation = Joi.validate(geography, geographySchema)
-    const details = validation.error ? validation.error.details : null
-    if (details) {
-      return res.status(400).send(details)
-    }
+  app.post(
+    pathsFor('/geographies/'),
+    checkAccess(scopes => scopes.includes('policies:write')),
+    async (req, res) => {
+      const geography = req.body
+      const details = geographyValidationDetails(geography)
 
-    try {
-      await db.writeGeography(geography)
-      return res.status(201).send(geography)
-    } catch (err) {
-      if (err.code === '23505') {
-        return res
-          .status(409)
-          .send({ result: `geography ${geography.geography_id} already exists! Did you mean to PUT?` })
+      if (details != null) {
+        await log.error('invalid policy json', details)
+        return res.status(400).send(details)
       }
-      /* istanbul ignore next */
-      await log.error('failed to write geography', err.stack)
-      /* istanbul ignore next */
-      return res.status(500).send(new ServerError(err))
+
+      try {
+        await db.writeGeography(geography)
+        return res.status(201).send(geography)
+      } catch (err) {
+        if (err.code === '23505') {
+          return res
+            .status(409)
+            .send({ result: `geography ${geography.geography_id} already exists! Did you mean to PUT?` })
+        }
+        /* istanbul ignore next */
+        await log.error('failed to write geography', err.stack)
+        /* istanbul ignore next */
+        return res.status(500).send(new ServerError(err))
+      }
     }
-  })
+  )
 
   app.put(
     pathsFor('/geographies/:geography_id'),
     checkAccess(scopes => scopes.includes('policies:write')),
     async (req, res) => {
       const geography = req.body
-      const validation = Joi.validate(geography, geographySchema)
-      const details = validation.error ? validation.error.details : null
-      if (details) {
+      const details = geographyValidationDetails(geography)
+
+      if (details != null) {
+        await log.error('invalid policy json', details)
         return res.status(400).send(details)
       }
 
@@ -449,16 +383,20 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/geographies'), checkAccess(scopes => scopes.includes('policies:read')), async (req, res) => {
-    const summary = req.query.summary === 'true'
-    try {
-      const geographies = summary ? await db.readGeographySummaries() : await db.readGeographies()
-      return res.status(200).send(geographies)
-    } catch (err) {
-      await log.error('failed to read geographies', err.stack)
-      return res.status(404).send({ result: 'not found' })
+  app.get(
+    pathsFor('/geographies'),
+    checkAccess(scopes => scopes.includes('policies:read')),
+    async (req, res) => {
+      const summary = req.query.summary === 'true'
+      try {
+        const geographies = summary ? await db.readGeographySummaries() : await db.readGeographies()
+        return res.status(200).send(geographies)
+      } catch (err) {
+        await log.error('failed to read geographies', err.stack)
+        return res.status(404).send({ result: 'not found' })
+      }
     }
-  })
+  )
 
   app.put(
     pathsFor('/geographies/:geography_id/meta'),
