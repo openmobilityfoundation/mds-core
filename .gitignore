@@ -209,6 +209,9 @@ values.*.yaml
 helm/charts
 helm/tools
 
+# docker
+docker-compose.yml
+
 # cypress
 cypress/fixtures
 cypress/plugins

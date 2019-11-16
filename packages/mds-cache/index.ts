@@ -17,7 +17,7 @@
 import log from '@mds-core/mds-logger'
 
 import flatten from 'flat'
-import { capitalizeFirst, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
+import { nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
 import {
   UUID,
   Timestamp,
@@ -173,17 +173,21 @@ async function getEventsInBBox(bbox: BoundingBox) {
   return client.georadiusAsync('locations', lng, lat, radius, 'm')
 }
 
-async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedItem[]> {
+async function hreads(
+  suffixes: string[],
+  ids: UUID[],
+  prefix: 'device' | 'provider' = 'device'
+): Promise<CachedItem[]> {
   if (suffixes === undefined) {
     throw new Error('hreads: no suffixes')
   }
-  if (device_ids === undefined) {
-    throw new Error('hreads: no device_ids')
+  if (ids === undefined) {
+    throw new Error('hreads: no ids')
   }
   // bleah
   const multi = (await getClient()).multi()
 
-  suffixes.map(suffix => device_ids.map(device_id => multi.hgetall(`device:${device_id}:${suffix}`)))
+  suffixes.map(suffix => ids.map(id => multi.hgetall(`${prefix}:${id}:${suffix}`)))
 
   /* eslint-reason external lib weirdness */
   /* eslint-disable-next-line promise/avoid-new */
@@ -198,7 +202,7 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
         resolve(
           replies.map((flat, index) => {
             if (flat) {
-              const flattened = { ...flat, device_id: device_ids[index % device_ids.length] }
+              const flattened = { ...flat, [`${prefix}_id`]: ids[index % ids.length] }
               return unflatten(flattened)
             }
             return unflatten(null)
@@ -209,28 +213,13 @@ async function hreads(suffixes: string[], device_ids: UUID[]): Promise<CachedIte
   })
 }
 
-// initial set of stats are super-simple: last-written values for device, event, and telemetry
-async function updateProviderStats(suffix: string, device_id: UUID, provider_id: UUID, timestamp?: Timestamp) {
-  try {
-    return (await getClient()).hmsetAsync(
-      `provider:${provider_id}:stats`,
-      `last${capitalizeFirst(suffix)}`,
-      timestamp || now()
-    )
-  } catch (err) {
-    const msg = `cannot updateProviderStats for unknown ${device_id}: ${err.message}`
-    await log.info(msg)
-    return Promise.resolve(msg)
-  }
-}
-
 // anything with a device_id, e.g. device, telemetry, etc.
 async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | VehicleEvent) {
   if (typeof item.device_id !== 'string') {
     await log.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
-  const { device_id, provider_id } = item
+  const { device_id } = item
   const key = `device:${device_id}:${suffix}`
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
@@ -243,21 +232,15 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
     await (await getClient()).hdelAsync(key, ...nulls)
   }
 
-  await (await getClient()).hmsetAsync(key, hmap)
-  if ('timestamp' in item) {
-    return Promise.all([
-      // make sure the device list is updated (per-provider)
-      updateVehicleList(device_id, item.timestamp),
-      // update last-written values
-      updateProviderStats(suffix, device_id, provider_id, item.timestamp)
-    ])
-  }
-  return Promise.all([
-    // make sure the device list is updated (per-provider)
-    updateVehicleList(device_id),
-    // update last-written values
-    updateProviderStats(suffix, device_id, provider_id)
-  ])
+  const client = await getClient()
+
+  await Promise.all(
+    (suffix === 'event' ? [`provider:${item.provider_id}:latest_event`, key] : [key]).map(k =>
+      client.hmsetAsync(k, hmap)
+    )
+  )
+
+  return updateVehicleList(device_id)
 }
 
 // put basics of device in the cache
@@ -270,6 +253,18 @@ async function writeDevice(device: Device) {
 
 async function readKeys(pattern: string) {
   return (await getClient()).keysAsync(pattern)
+}
+
+async function getMostRecentEventByProvider(): Promise<{ provider_id: string; max: number }[]> {
+  const provider_ids = (await readKeys('provider:*:latest_event')).map(key => {
+    const [, provider_id] = key.split(':')
+    return provider_id
+  })
+  const result = await hreads(['latest_event'], provider_ids, 'provider')
+  return result.map(elem => {
+    const max = parseInt(elem.timestamp || '0')
+    return { provider_id: elem.provider_id, max }
+  })
 }
 
 async function wipeDevice(device_id: UUID) {
@@ -408,7 +403,8 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
         const parsedItem = parseEvent(item)
         if (
           EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
-          (parsedItem.telemetry && isInsideBoundingBox(parsedItem.telemetry, query.bbox))
+          parsedItem.telemetry &&
+          isInsideBoundingBox(parsedItem.telemetry, query.bbox)
         )
           return [...acc, parsedItem]
         return acc
@@ -491,16 +487,6 @@ async function readAllTelemetry() {
       return acc
     }
   }, [])
-}
-
-async function readProviderStats(provider_id: UUID) {
-  const key = `provider:${provider_id}:stats`
-  const flat = await (await getClient()).hgetallAsync(key)
-  if (!flat) {
-    throw new Error(`no stats found for provider_id ${provider_id}`)
-  } else {
-    return unflatten(flat)
-  }
 }
 
 async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; telemetry: Telemetry[] }) {
@@ -612,9 +598,9 @@ export = {
   readAllEvents,
   readTelemetry,
   readAllTelemetry,
-  readProviderStats,
   readKeys,
   wipeDevice,
   updateVehicleList,
-  cleanup
+  cleanup,
+  getMostRecentEventByProvider
 }

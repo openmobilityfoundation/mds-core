@@ -54,7 +54,7 @@ describe('Sandbox admin request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)
@@ -77,7 +77,7 @@ describe('Sandbox admin request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -102,7 +102,7 @@ describe('Sandbox admin request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -126,7 +126,7 @@ describe('Sandbox admin request handlers', () => {
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest,
+        } as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)

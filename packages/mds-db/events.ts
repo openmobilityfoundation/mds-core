@@ -160,7 +160,7 @@ export async function readEventsForStatusChanges(params: ReadEventsQueryParams):
   }
 }
 
-export async function readHistoricalEvents(params: ReadHistoricalEventsQueryParams) {
+export async function readHistoricalEvents(params: ReadHistoricalEventsQueryParams): Promise<VehicleEvent[]> {
   const { provider_id: query_provider_id, end_date } = params
   const client = await getReadOnlyClient()
   const vals = new SqlVals()

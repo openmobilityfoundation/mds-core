@@ -7,7 +7,7 @@ import schema from './schema'
 import { vals_sql, cols_sql, vals_list, SqlVals } from './sql-utils'
 
 import { getReadOnlyClient, getWriteableClient } from './client'
-import { ReadGeographiesParams } from './types'
+import { ReadGeographiesParams, PublishGeographiesParams } from './types'
 
 export async function readSingleGeography(geography_id: UUID): Promise<Geography> {
   try {
@@ -36,7 +36,7 @@ export async function readGeographies(params: Partial<ReadGeographiesParams> = {
     const vals = new SqlVals()
 
     if (get_read_only) {
-      conditions.push(`read_only IS TRUE`)
+      conditions.push(`publish_date IS NOT NULL`)
     }
 
     if (conditions.length) {
@@ -107,8 +107,8 @@ export async function isGeographyPublished(geography_id: UUID) {
   if (result.rows.length === 0) {
     throw new NotFoundError(`geography_id ${geography_id} not found`)
   }
-  log.info('is geography published', geography_id, result.rows[0].read_only)
-  return Boolean(result.rows[0].read_only)
+  log.info('is geography published', geography_id, Boolean(result.rows[0].publish_date))
+  return Boolean(result.rows[0].publish_date)
 }
 
 export async function editGeography(geography: Geography) {
@@ -118,8 +118,17 @@ export async function editGeography(geography: Geography) {
   }
 
   const client = await getWriteableClient()
-  const sql = `UPDATE ${schema.TABLE.geographies} SET geography_json=$1 WHERE geography_id='${geography.geography_id}' AND read_only IS FALSE`
-  await client.query(sql, [geography.geography_json])
+  const vals = new SqlVals()
+  const conditions: string[] = []
+  Object.entries(geography).forEach(([key, value]) => {
+    if (key === 'geography_json') {
+      conditions.push(`geography_json = ${vals.add(JSON.stringify(geography.geography_json))}`)
+    } else {
+      conditions.push(`${key} = ${vals.add(value)}`)
+    }
+  })
+  const sql = `UPDATE ${schema.TABLE.geographies} SET ${conditions} WHERE geography_id='${geography.geography_id}' AND publish_date IS NULL`
+  await client.query(sql, vals.values())
   return geography
 }
 
@@ -129,20 +138,27 @@ export async function deleteGeography(geography_id: UUID) {
   }
 
   const client = await getWriteableClient()
-  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id=$1 AND read_only IS NOT TRUE`
+  const sql = `DELETE FROM ${schema.TABLE.geographies} WHERE geography_id=$1 AND publish_date IS NULL`
   await client.query(sql, [geography_id])
   return geography_id
 }
 
-export async function publishGeography(geography_id: UUID) {
+export async function publishGeography(params: PublishGeographiesParams) {
+  const { geography_id, publish_date } = params
   try {
     const client = await getWriteableClient()
+
     const geography = await readSingleGeography(geography_id)
     if (!geography) {
       throw new NotFoundError('cannot publish nonexistent geography')
     }
-    const sql = `UPDATE ${schema.TABLE.geographies} SET read_only = TRUE where geography_id='${geography_id}'`
-    await client.query(sql)
+
+    const vals = new SqlVals()
+    const conditions = []
+    conditions.push(`publish_date = ${vals.add(publish_date)}`)
+    const sql = `UPDATE ${schema.TABLE.geographies} SET ${conditions} where geography_id=${vals.add(geography_id)}`
+
+    await client.query(sql, vals.values())
     return geography_id
   } catch (err) {
     await log.error(err)

@@ -1,29 +1,29 @@
-{{- range $key, $api := .Values.apis }}
-{{- if $api.enabled }}
+{{- range $name, $api := .Values.apis }}
+  {{- if $api.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $key }}
+  name: {{ $name }}
   labels:
-    app: {{ $key }}
+    app: {{ $name }}
   namespace: {{ $.Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ $key }}
+      app: {{ $name }}
   template:
     metadata:
       labels:
-        app: {{ $key }}
+        app: {{ $name }}
     spec:
       containers:
-      - name: {{ $key }}
+      - name: {{ $name }}
         {{- if $.Values.registry }}
-        image: {{ $.Values.registry }}/{{ $key }}:{{ $api.version }}
+        image: {{ $.Values.registry }}/{{ $name }}:{{ $api.version }}
         {{- else }}
-        image: {{ $key }}:{{ $api.version }}
+        image: {{ $name }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
         resources:
@@ -34,7 +34,7 @@ spec:
             cpu: {{ $api.resourcesRequestsCpu | default ($.Values.resourcesRequestsCpu | default "50m") }}
             memory: {{ $api.resourcesRequestsMemory | default ($.Values.resourcesRequestsMemory | default "128Mi") }}
         ports:
-        - containerPort: {{ $api.port }}
+        - containerPort: 4000
           name: user-port
           protocol: TCP
         env:
@@ -46,7 +46,6 @@ spec:
             value: {{ $api.pathPrefix }}
           - name: TIMEZONE
             value: {{ $.Values.timezone }}
-          {{- if $api.useDB }}
           - name: PG_USER
             value: {{ $.Values.postgresql.postgresqlUsername }}
           - name: PG_NAME
@@ -56,59 +55,67 @@ spec:
           - name: PG_PASS
             valueFrom:
               secretKeyRef:
-                name: pg-pass
+                name: mds-secrets
                 key: postgresql-password
+          - name: PG_HOST
+          {{- if $.Values.postgresql.internal }}
+            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
+          {{- else }}
+            value: {{ $.Values.postgresql.host }}
+          {{- end }}
+          {{- if $.Values.postgresql.hostReader }}
+          - name: PG_HOST_READER
+            value: {{ $.Values.postgresql.hostReader }}
+          {{- end }}
+          {{- if $.Values.postgresql.port }}
           - name: PG_PORT
             value: {{ $.Values.postgresql.port | quote }}
-          - name: PG_HOST
-            {{- if $.Values.postgresql.internal }}
-            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
-            {{- else }}
-            value: {{ $.Values.postgresql.host }}
-            {{- end }}
-          - name: PG_HOST_READER
-            {{- if $.Values.postgresql.internal }}
-            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
-            {{- else }}
-            {{- if $.Values.postgresql.hostReader }}
-            value: {{ $.Values.postgresql.hostReader }}
-            {{- else }}
-            value: {{ $.Values.postgresql.host }}
-            {{- end }}
-            {{- end }}
+          {{- end }}
           {{- if $api.migration }}
           - name: PG_MIGRATIONS
             value: {{ $api.migration | quote }}
           {{- end }}
-          {{- end }}
-          {{- if $api.useCache }}
           - name: REDIS_HOST
-            {{- if $.Values.redis.internal }}
+          {{- if $.Values.redis.internal }}
             value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
-            {{- else }}
+          {{- else }}
             value: {{ $.Values.redis.host }}
-            {{- end }}
+          {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          {{- end }}
-          {{- if $api.useEvents }}
+          {{- if $.Values.useEvents }}
           - name: CE_NAME
-            value: {{ $key }}
+            value: {{ $name }}
           - name: SINK
             value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local/
+          {{- end }}
+          {{- if $.Values.slack.channel }}
+          - name: SLACK_CHANNEL
+            value: {{ $.Values.slack.channel }}
+          - name: SLACK_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: mds-secrets
+                key: slack-token
           {{- end }}
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
           {{- end }}
+  {{- end }}
 {{- end }}
-{{- end }}
-{{- if $.Values.pgPass }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pg-pass
+  name: mds-secrets
   namespace: {{ $.Release.Namespace }}
+data:
+  {{- if .Values.slack.channel }}
+  slack-token: {{ .Values.slack.token | b64enc }}
+  {{- end }}
+  {{- if .Values.postgresql.password }}
+  postgresql-password: {{ .Values.postgresql.password | b64enc }}
+  {{- end }}
 type: Opaque
 data:
   postgresql-password: {{ $.Values.pgPass | b64enc }}

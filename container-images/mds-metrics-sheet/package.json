@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-metrics-sheet",
-  "version": "0.1.17",
+  "version": "0.1.25",
   "description": "Docker Image for MDS Metrics Sheet",
   "main": "dist/index.js",
   "files": [
@@ -19,7 +19,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-metrics-sheet": "0.0.17"
+    "@mds-core/mds-metrics-sheet": "0.0.25"
   },
   "license": "Apache-2.0"
 }

@@ -48,8 +48,12 @@ type Item = Pick<Device, 'provider_id' | 'device_id'>
 
 export async function getRawTripData(req: DailyApiRequest, res: DailyApiResponse) {
   try {
+    const start = now()
     const { trip_id } = req.params
     const eventsAndCount: { events: VehicleEvent[]; count: number } = await db.readEvents({ trip_id })
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(`MDS-DAILY /admin/raw_trip_data/:trip_id -> db.readEvents({ trip_id }) time elapsed: ${timeElapsed}`)
     if (eventsAndCount.events.length > 0) {
       const { events } = eventsAndCount
       events[0].timestamp_long = new Date(events[0].timestamp).toString()
@@ -76,7 +80,11 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
   }
 
   try {
+    const start = now()
     const rows = await db.getVehicleCountsPerProvider()
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(`MDS-DAILY /admin/vehicle_counts -> db.getVehicleCountsPerProvider() time elapsed: ${timeElapsed}`)
     const stats: {
       provider_id: UUID
       provider: string
@@ -111,7 +119,13 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
     const { eventMap } = maps
     await Promise.all(
       stats.map(async stat => {
+        const start2 = now()
         const items: (Item | undefined)[] = await db.readDeviceIds(stat.provider_id)
+        const finish2 = now()
+        const timeElapsed2 = finish2 - start2
+        await log.info(
+          `MDS-DAILY /admin/vehicle_counts -> db.readDeviceIds(${stat.provider_id}) time elapsed: ${timeElapsed2}`
+        )
         items.filter(filterEmptyHelper<Item>(true)).map(async item => {
           const event = eventMap[item.device_id]
           inc(stat.event_type, event ? event.event_type : 'default')
@@ -150,7 +164,13 @@ export async function getLastDayTripsByProvider(req: DailyApiRequest, res: Daily
 
   const { start_time, end_time } = startAndEnd(req.params)
   try {
+    const start = now()
     const rows = await db.getTripEventsLast24HoursByProvider(start_time, end_time)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/last_day_trips_by_provider -> db.getTripEventsLast24HoursByProvider() time elapsed: ${timeElapsed}`
+    )
     const perTripId = categorizeTrips(
       rows.reduce(
         (
@@ -190,6 +210,7 @@ export async function getLastDayStatsByProvider(req: DailyApiRequest, res: Daily
   const { start_time, end_time } = startAndEnd(req.params)
 
   try {
+    const start = now()
     const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
     await Promise.all([
       getTimeSinceLastEvent(dbHelperArgs),
@@ -200,6 +221,184 @@ export async function getLastDayStatsByProvider(req: DailyApiRequest, res: Daily
       getTelemetryCountsPerProviderSince(dbHelperArgs),
       getConformanceLast24Hours(dbHelperArgs)
     ])
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/last_day_stats_by_provider -> Promise.all(dbHelpers...) time elapsed: ${timeElapsed}`
+    )
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getTimeSinceLastEventHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getTimeSinceLastEvent(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/time_since_last_event -> getTimeSinceLastEvent(dbHelperArgs) time elapsed: ${timeElapsed}`
+    )
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getNumVehiclesRegisteredLast24HoursHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getNumVehiclesRegisteredLast24Hours(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/num_vehicles_registered_last_24_hours -> db.getNumVehiclesRegisteredLast24Hours() time elapsed: ${timeElapsed}`
+    )
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getNumEventsLast24HoursHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getNumEventsLast24Hours(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/num_event_last_24_hours -> db.getNumEventsLast24Hours() time elapsed: ${timeElapsed}`
+    )
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getTripCountsSinceHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getTripCountsSince(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(`MDS-DAILY /admin/trip_counts_since -> getTripCountsSince() time elapsed: ${timeElapsed}`)
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getEventCountsPerProviderSinceHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getEventCountsPerProviderSince(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/event_counts_per_provider_since -> getEventCountsPerProviderSince() time elapsed: ${timeElapsed}`
+    )
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getTelemetryCountsPerProviderSinceHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getTelemetryCountsPerProviderSince(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/telemetry_counts_per_provider_since -> getTelemetryCountsPerProviderSince() time elapsed: ${timeElapsed}`
+    )
+
+    Object.keys(provider_info).map(provider_id => {
+      provider_info[provider_id].name = providerName(provider_id)
+    })
+    res.status(200).send(provider_info)
+  } catch (err) {
+    await log.error('unable to fetch data from last 24 hours', err)
+    res.status(500).send(new ServerError())
+  }
+}
+
+export async function getConformanceLast24HoursHandler(req: DailyApiRequest, res: DailyApiResponse) {
+  const provider_info: ProviderInfo = {}
+
+  const { start_time, end_time } = startAndEnd(req.params)
+
+  try {
+    const start = now()
+    const dbHelperArgs = { start_time, end_time, provider_info, fail: dbHelperFail }
+    await getConformanceLast24Hours(dbHelperArgs)
+    const finish = now()
+    const timeElapsed = finish - start
+    await log.info(
+      `MDS-DAILY /admin/conformance_last_24_hours -> getConformanceLast24Hours() time elapsed: ${timeElapsed}`
+    )
 
     Object.keys(provider_info).map(provider_id => {
       provider_info[provider_id].name = providerName(provider_id)

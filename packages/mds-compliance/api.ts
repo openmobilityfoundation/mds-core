@@ -176,12 +176,14 @@ function api(app: express.Express): express.Express {
       const geography_ids = rule.geographies.reduce((acc: UUID[], geo: UUID) => {
         return [...acc, geo]
       }, [])
-      const geographies = (await Promise.all(
-        geography_ids.reduce((acc: Promise<Geography>[], geography_id) => {
-          const geography = db.readSingleGeography(geography_id)
-          return [...acc, geography]
-        }, [])
-      )).reduce((acc: Geography[], geos) => {
+      const geographies = (
+        await Promise.all(
+          geography_ids.reduce((acc: Promise<Geography>[], geography_id) => {
+            const geography = db.readSingleGeography(geography_id)
+            return [...acc, geography]
+          }, [])
+        )
+      ).reduce((acc: Geography[], geos) => {
         return [...acc, geos]
       }, [])
 

@@ -13,6 +13,7 @@ Repo for LADOT MDS implementation for contribution to the Open Mobility Foundati
 * PostgreSQL
 * Redis
 * [Yarn](https://yarnpkg.com/en/docs/install#mac-stable)
+* [NVM](https://github.com/nvm-sh/nvm#installation-and-update)
 
 #### Database config on macOS
 If you haven't installed PostegreSQL and Redis you can install them with homebrew on macOS
@@ -32,6 +33,15 @@ If you encounter the following error:
 
 The following command should fix your issue
 `createdb -h localhost`
+
+To run tests, you will need this:
+`createdb -h localhost mdstest`
+
+Then add `export PG_NAME=mdstest` to your shell's environment file.  (The name is not important, but you'll need to point it somehwere.)
+
+#### Node setup
+
+You should have NVM already installed from the link above.  The top level directory of the project has a `.nvmrc` file and you should be able to run `nvm install` to get the right version of Node.
 
 #### Package setup
 Install [Lerna](https://lerna.js.org/)
@@ -140,6 +150,10 @@ For a complete listing of available operations consider:
 ```bash
 ./bin/mdsctl
 ```
+
+## Other
+
+To commit code, you will need the pre-commit tool, which can be installed via `brew install pre-commit`.  For more information, see [SECURITY.md](.github/SECURITY.md)
 
 ## Contributing
 

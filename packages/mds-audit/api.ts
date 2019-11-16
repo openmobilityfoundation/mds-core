@@ -125,7 +125,6 @@ function api(app: express.Express): express.Express {
           // stash audit_subject_id and timestamp (for recording db writes)
           res.locals.audit_subject_id = subject_id
           res.locals.recorded = Date.now()
-          log.info(subject_id, req.method, req.originalUrl)
           return next()
         }
       }
@@ -617,29 +616,33 @@ function api(app: express.Express): express.Express {
   /**
    * read back cached vehicle information for vehicles in bbox
    */
-  app.get(pathsFor('/vehicles'), checkAccess(scopes => scopes.includes('audits:vehicles:read')), async (req, res) => {
-    const { skip, take } = { skip: 0, take: 10000 }
-    const bbox = JSON.parse(req.query.bbox)
+  app.get(
+    pathsFor('/vehicles'),
+    checkAccess(scopes => scopes.includes('audits:vehicles:read')),
+    async (req, res) => {
+      const { skip, take } = { skip: 0, take: 10000 }
+      const bbox = JSON.parse(req.query.bbox)
 
-    const url = urls.format({
-      protocol: req.get('x-forwarded-proto') || req.protocol,
-      host: req.get('host'),
-      pathname: req.path
-    })
-
-    const { provider_id } = req.query
-
-    try {
-      const response = await getVehicles(skip, take, url, provider_id, req.query, bbox)
-      return res.status(200).send(response)
-    } catch (err) {
-      await log.error('getVehicles fail', err)
-      return res.status(500).send({
-        error: 'server_error',
-        error_description: 'an internal server error has occurred and been logged'
+      const url = urls.format({
+        protocol: req.get('x-forwarded-proto') || req.protocol,
+        host: req.get('host'),
+        pathname: req.path
       })
+
+      const { provider_id } = req.query
+
+      try {
+        const response = await getVehicles(skip, take, url, provider_id, req.query, bbox)
+        return res.status(200).send(response)
+      } catch (err) {
+        await log.error('getVehicles fail', err)
+        return res.status(500).send({
+          error: 'server_error',
+          error_description: 'an internal server error has occurred and been logged'
+        })
+      }
     }
-  })
+  )
 
   /**
    * read back cached information for a single vehicle

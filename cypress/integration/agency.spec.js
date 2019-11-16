@@ -12,7 +12,8 @@ describe('dbInit', function() {
       expect(resp.status).to.eq(200)
       expect(resp.headers['content-type']).to.eq('application/json; charset=utf-8');
       expect(resp.headers['server']).to.eq('istio-envoy');
-      expect(resp.body).to.deep.eq({"name":"@container-images/mds-agency","version":"0.1.9","build":{"date":"2019-09-20T00:15:25.778Z","branch":"alex/helm","commit":"76ad82f"},"node":"8.16.1","status":"Running"});
+      expect(resp.body['name']).to.eq("@container-images/mds-agency");
+      expect(resp.body['status']).to.eq("Running");
     })
   })
 })

@@ -1,8 +1,9 @@
 import { UUID } from '@mds-core/mds-types'
 import { MultiPolygon } from 'geojson'
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
+import { Params, ParamsDictionary } from 'express-serve-static-core'
 
-export type DailyApiRequest = ApiRequest
+export type DailyApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 export type DailyApiResponse = ApiResponse
 
 export interface ServiceArea {

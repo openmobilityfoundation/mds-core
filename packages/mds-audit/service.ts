@@ -166,7 +166,7 @@ export async function getVehicle(provider_id: UUID, vehicle_id: string) {
   if (!device) {
     return null
   }
-  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device)
+  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as VehicleEvent & Device
   if (!deviceStatus) {
     return null
   }

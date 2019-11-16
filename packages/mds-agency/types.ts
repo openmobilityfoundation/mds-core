@@ -1,8 +1,10 @@
 import { UUID, Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
 import { MultiPolygon } from 'geojson'
 import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
+import { Params, ParamsDictionary } from 'express-serve-static-core'
 
-export type AgencyApiRequest = ApiRequest
+export type AgencyApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
+
 export interface AgencyApiResponse extends ApiResponse {
   locals: ApiResponseLocals & {
     provider_id: UUID

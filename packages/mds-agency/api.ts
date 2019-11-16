@@ -124,11 +124,19 @@ function api(app: express.Express): express.Express {
   /**
    * Not currently in Agency spec.  Ability to read back all vehicle IDs.
    */
-  app.get(pathsFor('/admin/vehicle_ids'), checkAccess(scopes => scopes.includes('admin:all')), readAllVehicleIds)
+  app.get(
+    pathsFor('/admin/vehicle_ids'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    readAllVehicleIds
+  )
 
   // /////////////////// end Agency candidate endpoints ////////////////////
 
-  app.get(pathsFor('/admin/cache/info'), checkAccess(scopes => scopes.includes('admin:all')), getCacheInfo)
+  app.get(
+    pathsFor('/admin/cache/info'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    getCacheInfo
+  )
 
   // wipe a device -- sandbox or admin use only
   app.get(
@@ -138,7 +146,11 @@ function api(app: express.Express): express.Express {
     wipeDevice
   )
 
-  app.get(pathsFor('/admin/cache/refresh'), checkAccess(scopes => scopes.includes('admin:all')), refreshCache)
+  app.get(
+    pathsFor('/admin/cache/refresh'),
+    checkAccess(scopes => scopes.includes('admin:all')),
+    refreshCache
+  )
 
   return app
 }

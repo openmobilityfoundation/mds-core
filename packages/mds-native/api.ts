@@ -53,16 +53,10 @@ function api(app: express.Express): express.Express {
   // ///////////////////// begin middleware ///////////////////////
   app.use(async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     if (!(req.path.includes('/health') || req.path === '/')) {
-      try {
-        if (!res.locals.claims) {
-          return res.status(401).send({ error: new AuthorizationError('missing_claims') })
-        }
-      } catch (err) {
-        /* istanbul ignore next */
-        return InternalServerError(req, res, err)
+      if (!res.locals.claims) {
+        return res.status(401).send({ error: new AuthorizationError('missing_claims') })
       }
     }
-    logger.info(req.method, req.originalUrl)
     return next()
   })
   // ///////////////////// begin middleware ///////////////////////
