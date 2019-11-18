@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "client": "ts-node client",
-    "grpcc": "grpcc -i -p protos/devices.proto -a 127.0.0.1:50051",
+    "grpcc": "grpcc -i -p protos/repository.proto -a 127.0.0.1:50051",
     "server": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",

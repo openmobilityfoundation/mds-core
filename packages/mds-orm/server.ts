@@ -54,7 +54,7 @@ const findDevices = async (ctx: Mali.Context) => {
  * and provide a friendly name for the service.
  * @type {Mali}
  */
-const app = new Mali('./protos/devices.proto', 'Devices', {
+const app = new Mali('./protos/repository.proto', 'Repository', {
   // These are gRPC native options that Mali passes down
   // to the underlying gRPC loader.
   defaults: true,

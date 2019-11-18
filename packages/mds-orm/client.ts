@@ -5,13 +5,13 @@ async function main() {
   const client = grpcClient(
     'localhost:50051',
     {
-      file: './protos/devices.proto',
+      file: './protos/repository.proto',
       load: {
         defaults: true,
         keepCase: true
       }
     },
-    'Devices'
+    'Repository'
   )
 
   try {

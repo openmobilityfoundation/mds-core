@@ -29,7 +29,7 @@ message FindDeviceByVehicleIdResponse {
     Device device = 1;
 }
 
-service Devices {
+service Repository {
     rpc findDevices (FindDevicesRequest) returns (FindDevicesResponse) {};
     rpc findDeviceByVehicleId (FindDeviceByVehicleIdRequest) returns (FindDeviceByVehicleIdResponse) {};
 }
