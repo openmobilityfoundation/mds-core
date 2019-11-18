@@ -6,7 +6,7 @@ import { DeviceEntity } from './entities/DeviceEntity'
 const manager = ConnectionManager(DeviceEntity)
 
 /**
- * Handler for the Echo RPC.
+ * Handler for the findDeviceByVehicleId RPC.
  * @param {object} ctx The request context provided by Mali.
  * @returns {Promise<void>}
  */
@@ -30,6 +30,33 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
 }
 
 /**
+ * Handler for the findDevices RPC.
+ * @param {object} ctx The request context provided by Mali.
+ * @returns {Promise<void>}
+ */
+const findDevices = async (ctx: Mali.Context) => {
+  // Log that we received the request
+  logger.info('Received request.', ctx.req)
+
+  const connection = await manager.getConnection('ro')
+
+  const devices = await connection.manager
+    .createQueryBuilder()
+    .select()
+    .from(DeviceEntity, 'D')
+    .limit(ctx.req.limit ?? 10_000)
+    .execute()
+  // Set the response on the context
+  ctx.res = {
+    // Define the message, and time
+    devices
+  }
+
+  // Log the we set the response
+  logger.info('Sending Response.')
+}
+
+/**
  * Create a new instance of the Mali server.
  * We pass in the path to our Protocol Buffer definition,
  * and provide a friendly name for the service.
@@ -44,7 +71,7 @@ const app = new Mali('./protos/devices.proto', 'Devices', {
 
 // Create a listener for the Echo RPC using the echo function
 // as the handler.
-app.use({ findDeviceByVehicleId })
+app.use({ findDeviceByVehicleId, findDevices })
 
 // Start listening on localhost
 app.start('127.0.0.1:50051')
