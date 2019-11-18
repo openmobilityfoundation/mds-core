@@ -11,18 +11,13 @@ const manager = ConnectionManager(DeviceEntity)
  * @returns {Promise<void>}
  */
 const findDeviceByVehicleId = async (ctx: Mali.Context) => {
-  logger.info('Received request.', ctx.req)
-
   const connection = await manager.getConnection('ro')
 
   const device = await connection.manager.findOne(DeviceEntity, {
     where: { vehicle_id: ctx.req.vehicle_id }
   })
 
-  // Set the response on the context
   ctx.res = { device }
-
-  logger.info('Sending Response.', ctx.res)
 }
 
 /**
@@ -31,8 +26,6 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
  * @returns {Promise<void>}
  */
 const findDevices = async (ctx: Mali.Context) => {
-  logger.info('Received request.', ctx.req)
-
   const connection = await manager.getConnection('ro')
 
   const devices = await connection
@@ -42,10 +35,7 @@ const findDevices = async (ctx: Mali.Context) => {
     .limit(ctx.req.limit ?? 10_000)
     .getMany()
 
-  // Set the response on the context
   ctx.res = { devices }
-
-  logger.info('Sending Response.')
 }
 
 /**
@@ -59,6 +49,14 @@ const app = new Mali('./protos/repository.proto', 'Repository', {
   // to the underlying gRPC loader.
   defaults: true,
   keepCase: true
+})
+
+app.use(async (ctx: Mali.Context, next: Function) => {
+  const start = Date.now()
+  logger.info('Received request', ctx.req)
+  await next()
+  const ms = Date.now() - start
+  logger.info(`Sent Reponse ${ctx.name} ${ctx.type} ${ms}ms`)
 })
 
 // Create a listener/handlers
