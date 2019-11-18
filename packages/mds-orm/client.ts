@@ -17,7 +17,7 @@ async function main() {
   try {
     if (process.argv.length < 3) {
       const { devices } = await client.findDevices()
-      logger.info(devices.length)
+      logger.info(devices.length, devices.length > 0 && devices[0])
     } else {
       const [, , vehicle_id] = process.argv
       logger.info(`Searching for ${vehicle_id}`)

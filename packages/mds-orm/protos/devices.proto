@@ -14,7 +14,7 @@ message Device {
 }
 
 message FindDevicesRequest {
-  optional int32 limit = 1 [default = 10000];
+  optional int32 limit = 1 [default = 10];
 }
 
 message FindDevicesResponse {

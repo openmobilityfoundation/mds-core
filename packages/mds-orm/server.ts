@@ -11,7 +11,6 @@ const manager = ConnectionManager(DeviceEntity)
  * @returns {Promise<void>}
  */
 const findDeviceByVehicleId = async (ctx: Mali.Context) => {
-  // Log that we received the request
   logger.info('Received request.', ctx.req)
 
   const connection = await manager.getConnection('ro')
@@ -19,13 +18,10 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
   const device = await connection.manager.findOne(DeviceEntity, {
     where: { vehicle_id: ctx.req.vehicle_id }
   })
-  // Set the response on the context
-  ctx.res = {
-    // Define the message, and time
-    device
-  }
 
-  // Log the we set the response
+  // Set the response on the context
+  ctx.res = { device }
+
   logger.info('Sending Response.', ctx.res)
 }
 
@@ -35,24 +31,20 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
  * @returns {Promise<void>}
  */
 const findDevices = async (ctx: Mali.Context) => {
-  // Log that we received the request
   logger.info('Received request.', ctx.req)
 
   const connection = await manager.getConnection('ro')
 
-  const devices = await connection.manager
+  const devices = await connection
     .createQueryBuilder()
-    .select()
-    .from(DeviceEntity, 'D')
+    .select('device')
+    .from(DeviceEntity, 'device')
     .limit(ctx.req.limit ?? 10_000)
-    .execute()
-  // Set the response on the context
-  ctx.res = {
-    // Define the message, and time
-    devices
-  }
+    .getMany()
 
-  // Log the we set the response
+  // Set the response on the context
+  ctx.res = { devices }
+
   logger.info('Sending Response.')
 }
 
@@ -69,12 +61,10 @@ const app = new Mali('./protos/devices.proto', 'Devices', {
   keepCase: true
 })
 
-// Create a listener for the Echo RPC using the echo function
-// as the handler.
+// Create a listener/handlers
 app.use({ findDeviceByVehicleId, findDevices })
 
 // Start listening on localhost
 app.start('127.0.0.1:50051')
 
-// Log out that we're listening and ready for connections
 logger.info('Listening...')
