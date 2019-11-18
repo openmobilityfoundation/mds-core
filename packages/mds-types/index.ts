@@ -18,11 +18,9 @@ import { FeatureCollection } from 'geojson'
 export { AccessTokenScope, AccessTokenScopes, ScopeDescriptions } from './scopes'
 
 export const Enum = <T extends string>(...keys: T[]) =>
-  Object.freeze(
-    keys.reduce((e, key) => {
-      return { ...e, [key]: key }
-    }, {}) as { [K in T]: K }
-  )
+  Object.freeze(keys.reduce((e, key) => {
+    return { ...e, [key]: key }
+  }, {}) as { [K in T]: K })
 
 export const isEnum = (enums: { [key: string]: string }, value: unknown) =>
   typeof value === 'string' && typeof enums === 'object' && enums[value] === value
