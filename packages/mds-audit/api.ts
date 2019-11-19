@@ -36,7 +36,8 @@ import {
   AuthorizationError,
   ConflictError,
   NotFoundError,
-  ServerError
+  ServerError,
+  UnsupportedTypeError
 } from '@mds-core/mds-utils'
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import {
@@ -81,6 +82,14 @@ import {
   writeAudit,
   writeAuditEvent
 } from './service'
+import {
+  attachmentSummary,
+  deleteAuditAttachment,
+  multipartFormUpload,
+  readAttachments,
+  validateFile,
+  writeAttachment
+} from './attachments'
 
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {
@@ -480,6 +489,9 @@ function api(app: express.Express): express.Express {
           // Read the audit events
           const auditEvents = await readAuditEvents(audit_trip_id)
 
+          // Read the audit attachments
+          const attachments = await readAttachments(audit_trip_id)
+
           const device = provider_device_id
             ? await readDevice(provider_device_id, provider_id)
             : await readDeviceByVehicleId(provider_id, provider_vehicle_id)
@@ -525,6 +537,7 @@ function api(app: express.Express): express.Express {
                 ...audit,
                 provider_vehicle_id: device.vehicle_id,
                 events: auditEvents.map(withGpsProperty),
+                attachments: attachments.map(attachmentSummary),
                 provider: {
                   device,
                   events: deviceEvents,
@@ -535,10 +548,16 @@ function api(app: express.Express): express.Express {
             return res.status(200).send({
               ...audit,
               events: auditEvents.map(withGpsProperty),
+              attachments: attachments.map(attachmentSummary),
               provider: { device, events: [], telemetry: [] }
             })
           }
-          return res.status(200).send({ ...audit, events: auditEvents.map(withGpsProperty), provider: null })
+          return res.status(200).send({
+            ...audit,
+            events: auditEvents.map(withGpsProperty),
+            attachments: attachments.map(attachmentSummary),
+            provider: null
+          })
         }
         // 404 Not Found
         return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
@@ -602,9 +621,20 @@ function api(app: express.Express): express.Express {
 
         // Query the audits
         const { count, audits } = await readAudits(query)
+        const auditsWithAttachments = await Promise.all(
+          audits.map(async audit => {
+            const attachments = await readAttachments(audit.audit_trip_id)
+            return {
+              ...audit,
+              attachments: attachments.map(attachmentSummary)
+            }
+          })
+        )
 
         // 200 OK
-        return res.status(200).send({ count, audits, links: asJsonApiLinks(req, skip, take, count) })
+        return res
+          .status(200)
+          .send({ count, audits: auditsWithAttachments, links: asJsonApiLinks(req, skip, take, count) })
       } catch (err) /* istanbul ignore next */ {
         // 500 Internal Server Error
         await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
@@ -662,6 +692,53 @@ function api(app: express.Express): express.Express {
         error: 'server_error',
         error_description: 'an internal server error has occurred and been logged'
       })
+    }
+  })
+
+  /**
+   * attach media to an audit, uploaded as multipart/form-data
+   */
+  app.post(pathsFor('/trips/:audit_trip_id/attach/:mimetype'), multipartFormUpload, async (req, res) => {
+    const { audit, audit_trip_id } = res.locals
+    if (!audit) {
+      return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
+    }
+    try {
+      validateFile(req.file)
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        return res.status(400).send({ error: err })
+      }
+      if (err instanceof UnsupportedTypeError) {
+        return res.status(415).send({ error: err })
+      }
+    }
+    try {
+      const attachment = await writeAttachment(req.file, audit_trip_id)
+      res.status(200).send({
+        ...attachmentSummary(attachment),
+        audit_trip_id
+      })
+    } catch (err) {
+      await log.error('post attachment fail', err)
+      return res.status(500).send({ error: new ServerError(err) })
+    }
+  })
+
+  /**
+   * delete media from an audit
+   */
+  app.delete(pathsFor('/trips/:audit_trip_id/attachment/:attachment_id'), async (req, res) => {
+    const { audit_trip_id, attachment_id } = req.params
+    try {
+      await deleteAuditAttachment(audit_trip_id, attachment_id)
+      res.status(200).send({})
+    } catch (err) {
+      await log.error('delete attachment error', err)
+      if (err instanceof NotFoundError) {
+        return res.status(404).send({ error: err })
+      }
+      return res.status(500).send({ error: new ServerError(err) })
     }
   })
 

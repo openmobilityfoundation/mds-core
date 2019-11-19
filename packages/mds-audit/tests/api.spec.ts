@@ -23,23 +23,28 @@
 
 import supertest from 'supertest'
 import {
+  Attachment,
+  Audit,
+  AuditAttachment,
   Device,
-  Timestamp,
   Telemetry,
-  VEHICLE_EVENTS,
+  Timestamp,
   AUDIT_EVENT_TYPES,
   PROPULSION_TYPES,
+  VEHICLE_EVENTS,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
 import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { now, rangeRandomInt } from '@mds-core/mds-utils'
+import { NotFoundError, now, rangeRandomInt } from '@mds-core/mds-utils'
 import cache from '@mds-core/mds-cache'
 import test from 'unit.js'
 import uuid from 'uuid'
 import { ApiServer } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
+import Sinon from 'sinon'
 import { api } from '../api'
+import * as attachments from '../attachments'
 
 const request = supertest(ApiServer(api))
 
@@ -313,6 +318,7 @@ describe('Testing API', () => {
         test.value(result.body.events[0].provider_event_id).is(1)
         test.value(result.body.events[0].provider_event_type).is('trip_start')
         test.value(result.body.events[0].provider_event_type_reason).is(null)
+        test.value(result.body.attachments).is([])
         done(err)
       })
   })
@@ -568,6 +574,218 @@ describe('Testing API', () => {
         .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+  })
+  const attachment_id = uuid()
+  const baseUrl = 'http://example.com/'
+  describe('Tests for attachments', () => {
+    before(done => {
+      const audit = {
+        audit_trip_id,
+        audit_device_id,
+        audit_subject_id,
+        provider_id,
+        provider_name: 'test',
+        provider_vehicle_id,
+        provider_device_id,
+        timestamp: AUDIT_START,
+        recorded: AUDIT_START
+      } as Audit
+      const attachment = {
+        attachment_id,
+        attachment_filename: `${attachment_id}.jpg`,
+        base_url: baseUrl,
+        mimetype: 'image/jpeg',
+        thumbnail_filename: `${attachment_id}.thumbnail.jpg`,
+        attachment_mimetype: 'image/jpeg',
+        recorded: AUDIT_START
+      } as Attachment
+      const auditAttachment = {
+        attachment_id,
+        audit_trip_id,
+        recorded: AUDIT_START
+      } as AuditAttachment
+      Promise.all([db.initialize(), cache.initialize()]).then(async () => {
+        await db.writeDevice({
+          device_id: provider_device_id,
+          provider_id,
+          vehicle_id: provider_vehicle_id,
+          propulsion: [PROPULSION_TYPES.electric],
+          type: VEHICLE_TYPES.scooter,
+          recorded: AUDIT_START
+        })
+        await db.writeAudit(audit)
+        await db.writeAttachment(attachment)
+        await db.writeAuditAttachment(auditAttachment)
+        done()
+      })
+    })
+
+    afterEach(() => {
+      Sinon.restore()
+    })
+
+    it('verify get audit by id with attachments', done => {
+      request
+        .get(`/audit/trips/${audit_trip_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result.body.attachments[0].attachment_id).is(attachment_id)
+          test.value(result.body.attachments[0].attachment_url).is(`http://example.com/${attachment_id}.jpg`)
+          test.value(result.body.attachments[0].thumbnail_url).is(`http://example.com/${attachment_id}.thumbnail.jpg`)
+          done(err)
+        })
+    })
+
+    it('verify get trips with attachments', done => {
+      request
+        .get('/audit/trips')
+        .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result.body.audits[0].attachments[0].attachment_id).is(attachment_id)
+          test.value(result.body.audits[0].attachments[0].attachment_url).is(`http://example.com/${attachment_id}.jpg`)
+          test
+            .value(result.body.audits[0].attachments[0].thumbnail_url)
+            .is(`http://example.com/${attachment_id}.thumbnail.jpg`)
+          done(err)
+        })
+    })
+
+    it('verify post attachment (audit not found)', done => {
+      request
+        .post(`/trips/${uuid()}/attach/image%2Fpng`)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+        .send({}) // TODO: include file
+        .expect(404)
+        .end((err, result) => {
+          test.value(result.body.error.name).is('NotFoundError')
+          test.value(result.body.error.reason).is('audit not found')
+          done(err)
+        })
+    })
+
+    const attachmentTests = [
+      {
+        name: 'no file',
+        file: 'empty.png',
+        status: 400,
+        errName: 'ValidationError',
+        errReason: 'No attachment found'
+      },
+      {
+        name: 'missing extension',
+        file: 'samplepng',
+        status: 400,
+        errName: 'ValidationError',
+        errReason: `Missing file extension in filename samplepng`
+      },
+      {
+        name: 'missing extension',
+        file: 'samplepng.',
+        status: 400,
+        errName: 'ValidationError',
+        errReason: `Missing file extension in filename samplepng.`
+      },
+      {
+        name: 'unsupported mimetype',
+        file: 'sample.gif',
+        status: 415,
+        errName: 'UnsupportedTypeError',
+        errReason: `Unsupported mime type image/gif`
+      }
+    ]
+
+    attachmentTests.forEach(testCase =>
+      it(`verify post bad attachment (${testCase.name})`, done => {
+        request
+          .post(`/trips/${audit_trip_id}/attach/image%2Fpng`)
+          .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+          .attach('file', `./tests/${testCase.file}`)
+          .expect(testCase.status)
+          .end((err, result) => {
+            test.value(result.body.error.name).is(testCase.errName)
+            test.value(result.body.error.reason).is(testCase.errReason)
+            done(err)
+          })
+      })
+    )
+
+    it('verify audit attach (success)', done => {
+      const fake = Sinon.fake.returns({
+        audit_trip_id,
+        attachment_id,
+        recorded: AUDIT_START,
+        attachment_filename: `${attachment_id}.jpg`,
+        base_url: baseUrl,
+        mimetype: 'image/jpeg'
+      } as Attachment)
+      Sinon.replace(attachments, 'writeAttachment', fake)
+      request
+        .post(`/trips/${audit_trip_id}/attach/image%2Fpng`)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+        .attach('file', `./tests/sample.png`)
+        .expect(200)
+        .end((err, result) => {
+          test.value(result.body.attachment_id).is(attachment_id)
+          test.value(result.body.attachment_url).is(`${baseUrl + attachment_id}.jpg`)
+          test.value(result.body.thumbnail_url).is('')
+          done(err)
+        })
+    })
+
+    it('verify audit attach (error)', done => {
+      const fake = Sinon.fake.returns(null)
+      Sinon.replace(attachments, 'writeAttachment', fake)
+      request
+        .post(`/trips/${audit_trip_id}/attach/image%2Fpng`)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+        .attach('file', `./tests/sample.png`)
+        .expect(500)
+        .end((err, result) => {
+          test.value(result.error.status).is(500)
+          done(err)
+        })
+    })
+
+    it('verify audit delete (success)', done => {
+      const fake = Sinon.fake.returns(null)
+      Sinon.replace(attachments, 'deleteAuditAttachment', fake)
+      request
+        .delete(`/trips/${audit_trip_id}/attachment/${attachment_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result.body).is({})
+          done(err)
+        })
+    })
+
+    it('verify audit delete (not found)', done => {
+      const fake = Sinon.fake.throws(new NotFoundError())
+      Sinon.replace(attachments, 'deleteAuditAttachment', fake)
+      request
+        .delete(`/trips/${audit_trip_id}/attachment/${attachment_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+        .expect(404)
+        .end((err, result) => {
+          test.value(result.body.error.name).is('NotFoundError')
+          done(err)
+        })
+    })
+
+    it('verify audit delete (error)', done => {
+      const fake = Sinon.fake.throws(new Error())
+      Sinon.replace(attachments, 'deleteAuditAttachment', fake)
+      request
+        .delete(`/trips/${audit_trip_id}/attachment/${attachment_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
+        .expect(500)
+        .end((err, result) => {
+          test.value(result.body.error.name).is('ServerError')
           done(err)
         })
     })
