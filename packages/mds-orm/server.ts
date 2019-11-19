@@ -6,14 +6,16 @@ import { DeviceEntity } from './entities/DeviceEntity'
 const manager = ConnectionManager(DeviceEntity)
 
 /**
- * Handler for the findDeviceByVehicleId RPC.
+ * Handler for the getDeviceByVehicleId RPC.
  * @param {object} ctx The request context provided by Mali.
  * @returns {Promise<void>}
  */
-const findDeviceByVehicleId = async (ctx: Mali.Context) => {
+const getDeviceByVehicleId = async (ctx: Mali.Context) => {
   const connection = await manager.getConnection('ro')
 
-  const device = await connection.manager.findOne(DeviceEntity, {
+  const repository = connection.getRepository(DeviceEntity)
+
+  const device = await repository.findOne({
     where: { vehicle_id: ctx.req.vehicle_id }
   })
 
@@ -21,18 +23,21 @@ const findDeviceByVehicleId = async (ctx: Mali.Context) => {
 }
 
 /**
- * Handler for the findDevices RPC.
+ * Handler for the getDevices RPC.
  * @param {object} ctx The request context provided by Mali.
  * @returns {Promise<void>}
  */
-const findDevices = async (ctx: Mali.Context) => {
+const getDevices = async (ctx: Mali.Context) => {
   const connection = await manager.getConnection('ro')
 
-  const devices = await connection
+  const repository = connection.getRepository(DeviceEntity)
+
+  const { skip, take } = ctx.req
+
+  const devices = await repository
     .createQueryBuilder()
-    .select('device')
-    .from(DeviceEntity, 'device')
-    .limit(ctx.req.limit ?? 10_000)
+    .offset(skip)
+    .limit(take)
     .getMany()
 
   ctx.res = { devices }
@@ -60,7 +65,7 @@ app.use(async (ctx: Mali.Context, next: Function) => {
 })
 
 // Create a listener/handlers
-app.use({ findDeviceByVehicleId, findDevices })
+app.use({ getDeviceByVehicleId, getDevices })
 
 // Start listening on localhost
 app.start('127.0.0.1:50051')

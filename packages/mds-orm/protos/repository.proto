@@ -13,23 +13,24 @@ message Device {
   double recorded = 10;
 }
 
-message FindDevicesRequest {
-  optional int32 limit = 1 [default = 10];
+message GetDevicesRequest {
+  optional int32 skip = 1;
+  optional int32 take = 2;
 }
 
-message FindDevicesResponse {
+message GetDevicesResponse {
   repeated Device devices = 1;
 }
 
-message FindDeviceByVehicleIdRequest {
+message GetDeviceByVehicleIdRequest {
     string vehicle_id = 1;
 }
 
-message FindDeviceByVehicleIdResponse {
+message GetDeviceByVehicleIdResponse {
     Device device = 1;
 }
 
 service Repository {
-    rpc findDevices (FindDevicesRequest) returns (FindDevicesResponse) {};
-    rpc findDeviceByVehicleId (FindDeviceByVehicleIdRequest) returns (FindDeviceByVehicleIdResponse) {};
+    rpc getDevices (GetDevicesRequest) returns (GetDevicesResponse) {};
+    rpc getDeviceByVehicleId (GetDeviceByVehicleIdRequest) returns (GetDeviceByVehicleIdResponse) {};
 }

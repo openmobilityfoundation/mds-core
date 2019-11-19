@@ -16,12 +16,12 @@ async function main() {
 
   try {
     if (process.argv.length < 3) {
-      const { devices } = await client.findDevices()
-      logger.info(devices.length, devices.length > 0 && devices[0])
+      const { devices } = await client.getDevices()
+      logger.info(devices.length, devices.length > 0 ? devices[0] : devices)
     } else {
       const [, , vehicle_id] = process.argv
       logger.info(`Searching for ${vehicle_id}`)
-      const { device } = await client.findDeviceByVehicleId({ vehicle_id })
+      const { device } = await client.getDeviceByVehicleId({ vehicle_id })
       logger.info(device)
     }
   } catch (err) {
