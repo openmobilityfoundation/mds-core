@@ -1,16 +1,16 @@
-syntax = "proto3";
+syntax = "proto2";
 
 message Device {
-  double id = 1;
-  string device_id = 2;
-  string provider_id = 3;
-  string vehicle_id = 4;
-  string type = 5;
+  required double id = 1;
+  required string device_id = 2;
+  required string provider_id = 3;
+  required string vehicle_id = 4;
+  required string type = 5;
   repeated string propulsion = 6;
   optional int32 year = 7;
   optional string mfgr = 8;
   optional string model = 9;
-  double recorded = 10;
+  required double recorded = 10;
 }
 
 message GetDevicesRequest {
@@ -23,14 +23,14 @@ message GetDevicesResponse {
 }
 
 message GetDeviceByVehicleIdRequest {
-    string vehicle_id = 1;
+  required string vehicle_id = 1;
 }
 
 message GetDeviceByVehicleIdResponse {
-    Device device = 1;
+  required Device device = 1;
 }
 
 service Repository {
-    rpc getDevices (GetDevicesRequest) returns (GetDevicesResponse) {};
-    rpc getDeviceByVehicleId (GetDeviceByVehicleIdRequest) returns (GetDeviceByVehicleIdResponse) {};
+  rpc getDevices (GetDevicesRequest) returns (GetDevicesResponse) {};
+  rpc getDeviceByVehicleId (GetDeviceByVehicleIdRequest) returns (GetDeviceByVehicleIdResponse) {};
 }
