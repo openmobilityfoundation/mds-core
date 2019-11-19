@@ -26,7 +26,8 @@ describe('Write/Read Devices', () => {
       recorded
     }))
     try {
-      await connection.manager.save(DeviceEntity, devices, { chunk: 5000 })
+      const repository = connection.getRepository(DeviceEntity)
+      await repository.save(devices, { chunk: 5000 })
       test.value(devices.length).is(records)
     } finally {
       await connection.close()

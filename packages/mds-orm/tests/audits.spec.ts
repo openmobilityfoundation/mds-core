@@ -28,11 +28,10 @@ describe('Write/Read Audits', () => {
       recorded
     }))
     try {
-      // await connection.manager.save(AuditEntity, audits, { chunk: 5000 })
-      await connection
+      const repository = connection.getRepository(AuditEntity)
+      await repository
         .createQueryBuilder()
         .insert()
-        .into(AuditEntity)
         .values(audits)
         .onConflict('DO NOTHING')
         .execute()
