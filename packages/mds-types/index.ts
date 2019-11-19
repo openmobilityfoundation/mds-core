@@ -177,12 +177,6 @@ export interface VehicleEvent {
   recorded: Timestamp
 }
 
-export interface VehicleEventSummary {
-  provider_event_id: number | null
-  provider_event_type: VEHICLE_EVENT | null
-  provider_event_type_reason?: VEHICLE_REASON | null
-}
-
 // Standard telemetry columns (used in more than one table)
 export interface TelemetryData {
   lat: number
@@ -256,15 +250,17 @@ export interface AuditEvent extends TelemetryData {
   audit_issue_code?: string | null
   audit_subject_id: string
   note?: string | null
-  provider_event_id?: number | null
-  provider_event_type?: string | null
-  provider_event_type_reason?: string | null
   timestamp: Timestamp
   recorded: Timestamp
 }
 
 export interface AuditDetails extends Audit {
   events: WithGpsProperty<AuditEvent>[]
+  provider_event_type?: string | null
+  provider_event_type_reason?: string | null
+  provider_status?: string | null
+  provider_telemetry?: Telemetry | null
+  provider_event_time?: Timestamp | null
   attachments: AttachmentSummary[]
   provider: null | {
     device: Device

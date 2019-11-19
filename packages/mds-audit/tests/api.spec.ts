@@ -32,6 +32,7 @@ import {
   AUDIT_EVENT_TYPES,
   PROPULSION_TYPES,
   VEHICLE_EVENTS,
+  VEHICLE_REASONS,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
 import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
@@ -68,6 +69,7 @@ const telemetry = (): {} => ({
 })
 
 const AUDIT_START = Date.now()
+const OLD_EVENT = Date.now() - 60000
 
 const audit_subject_id = 'user@mds-testing.info'
 
@@ -77,30 +79,53 @@ before('Initializing Database', async () => {
 
 describe('Testing API', () => {
   before(done => {
-    const timestamp = Date.now()
+    const baseEvent = {
+      provider_id,
+      device_id: provider_device_id,
+      event_type: VEHICLE_EVENTS.agency_drop_off,
+      event_type_reason: VEHICLE_REASONS.rebalance,
+      telemetry_timestamp: AUDIT_START,
+      trip_id: uuid(),
+      timestamp: AUDIT_START,
+      recorded: AUDIT_START
+    }
+    const baseTelemetry = {
+      provider_id,
+      device_id: provider_device_id,
+      timestamp: AUDIT_START,
+      recorded: AUDIT_START,
+      charge: 0.5,
+      gps: {
+        lat: 37.4230723,
+        lng: -122.137429,
+        speed: 0,
+        hdop: 1,
+        heading: 180
+      }
+    }
     db.writeDevice({
       device_id: provider_device_id,
       provider_id,
       vehicle_id: provider_vehicle_id,
       propulsion: [PROPULSION_TYPES.electric],
       type: VEHICLE_TYPES.scooter,
-      recorded: timestamp
+      recorded: AUDIT_START
     }).then(() => {
       db.writeEvent({
-        provider_id,
-        device_id: provider_device_id,
-        event_type: 'trip_start',
-        telemetry: {
-          provider_id,
-          device_id: provider_device_id,
-          timestamp,
-          gps: { lat: 37.4230723, lng: -122.13742939999999 }
+        ...baseEvent,
+        ...{ telemetry_timestamp: OLD_EVENT, timestamp: OLD_EVENT }
+      })
+      db.writeEvent(baseEvent)
+      db.writeTelemetry([
+        {
+          ...baseTelemetry,
+          ...{ timestamp: OLD_EVENT, recorded: OLD_EVENT }
         },
-        telemetry_timestamp: timestamp,
-        trip_id: uuid(),
-        timestamp,
-        recorded: timestamp
-      }).then(() => done())
+        {
+          ...baseTelemetry,
+          ...{ timestamp: AUDIT_START, recorded: AUDIT_START }
+        }
+      ]).then(() => done())
     })
   })
 
@@ -307,22 +332,6 @@ describe('Testing API', () => {
       })
   })
 
-  it('verify get audit (matched vehicle)', done => {
-    request
-      .get(`/audit/trips/${audit_trip_id}`)
-      .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.value(result.body.events.length).is(7)
-        test.value(result.body.events[0].provider_event_id).is(1)
-        test.value(result.body.events[0].provider_event_type).is('trip_start')
-        test.value(result.body.events[0].provider_event_type_reason).is(null)
-        test.value(result.body.attachments).is([])
-        done(err)
-      })
-  })
-
   const routes = ['note', 'vehicle/event', 'vehicle/telemetry', 'end'].map(path => `/audit/trips/${uuid()}/${path}`)
 
   routes.forEach(route =>
@@ -337,6 +346,23 @@ describe('Testing API', () => {
         })
     })
   )
+
+  it('verify get audit (matched vehicle)', done => {
+    request
+      .get(`/audit/trips/${audit_trip_id}`)
+      .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
+      .expect(200)
+      .end((err, result) => {
+        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result.body.events.length).is(7)
+        test.value(result.body.provider_event_type).is(VEHICLE_EVENTS.agency_drop_off)
+        test.value(result.body.provider_event_type_reason).is(VEHICLE_REASONS.rebalance)
+        test.value(result.body.provider_status).is('available')
+        test.value(result.body.provider_telemetry.charge).is(0.5)
+        test.value(result.body.provider_event_time).is(AUDIT_START)
+        done(err)
+      })
+  })
 
   it(`verify get audit (no scope)`, done => {
     request
