@@ -11,7 +11,7 @@ async function main() {
         keepCase: true
       }
     },
-    'Repository'
+    'DeviceService'
   )
 
   try {
