@@ -14,6 +14,7 @@
     limitations under the License.
  */
 
+import db from '@mds-core/mds-db'
 import express from 'express'
 import uuid from 'uuid'
 import log from '@mds-core/mds-logger'
@@ -36,19 +37,19 @@ import {
   AuthorizationError,
   ConflictError,
   NotFoundError,
-  ServerError
+  ServerError,
+  UnsupportedTypeError
 } from '@mds-core/mds-utils'
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import {
   AUDIT_EVENT_TYPES,
   AuditDetails,
   AuditEvent,
-  Recorded,
+  EVENT_STATUS_MAP,
   Timestamp,
   Telemetry,
   TelemetryData,
-  VehicleEvent,
-  VehicleEventSummary
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import { asPagingParams, asJsonApiLinks } from '@mds-core/mds-api-helpers'
 import { checkAccess } from '@mds-core/mds-api-server'
@@ -74,13 +75,20 @@ import {
   readAudits,
   readDevice,
   readDeviceByVehicleId,
-  readEvent,
   readEvents,
   readTelemetry,
   withGpsProperty,
   writeAudit,
   writeAuditEvent
 } from './service'
+import {
+  attachmentSummary,
+  deleteAuditAttachment,
+  multipartFormUpload,
+  readAttachments,
+  validateFile,
+  writeAttachment
+} from './attachments'
 
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {
@@ -98,14 +106,6 @@ function flattenTelemetry(telemetry?: Telemetry): TelemetryData {
         altitude: null,
         charge: null
       }
-}
-
-function flattenProviderEvent(providerEvent: Recorded<VehicleEvent> | null): VehicleEventSummary {
-  return {
-    provider_event_id: providerEvent ? providerEvent.id : null,
-    provider_event_type: providerEvent ? providerEvent.event_type : null,
-    provider_event_type_reason: providerEvent ? providerEvent.event_type_reason : null
-  }
 }
 
 function api(app: express.Express): express.Express {
@@ -193,7 +193,6 @@ function api(app: express.Express): express.Express {
             const provider_device = await readDeviceByVehicleId(provider_id, provider_vehicle_id)
             const provider_device_id = provider_device ? provider_device.device_id : null
             const provider_name = providerName(provider_id)
-            const providerEvent = await readEvent(provider_device_id)
 
             // Create the audit
             await writeAudit({
@@ -215,7 +214,6 @@ function api(app: express.Express): express.Express {
               audit_subject_id,
               audit_event_type: AUDIT_EVENT_TYPES.start,
               ...flattenTelemetry(telemetry),
-              ...flattenProviderEvent(providerEvent),
               timestamp,
               recorded
             })
@@ -266,14 +264,12 @@ function api(app: express.Express): express.Express {
             isValidTelemetry(telemetry, { required: false })
           ) {
             // Create the audit event
-            const providerEvent = await readEvent(audit.provider_device_id)
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
               audit_subject_id,
               audit_event_type: event_type,
               ...flattenTelemetry(telemetry),
-              ...flattenProviderEvent(providerEvent),
               timestamp,
               recorded
             })
@@ -378,7 +374,6 @@ function api(app: express.Express): express.Express {
             })
           ) {
             // Create the audit event
-            const providerEvent = await readEvent(audit.provider_device_id)
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
@@ -387,7 +382,6 @@ function api(app: express.Express): express.Express {
               audit_issue_code,
               note,
               ...flattenTelemetry(telemetry),
-              ...flattenProviderEvent(providerEvent),
               timestamp,
               recorded
             })
@@ -432,14 +426,12 @@ function api(app: express.Express): express.Express {
             isValidTelemetry(telemetry, { required: false })
           ) {
             // Create the audit end event
-            const providerEvent = await readEvent(audit.provider_device_id)
             await writeAuditEvent({
               audit_trip_id,
               audit_event_id,
               audit_subject_id,
               audit_event_type: AUDIT_EVENT_TYPES.end,
               ...flattenTelemetry(telemetry),
-              ...flattenProviderEvent(providerEvent),
               timestamp,
               recorded
             })
@@ -479,6 +471,9 @@ function api(app: express.Express): express.Express {
 
           // Read the audit events
           const auditEvents = await readAuditEvents(audit_trip_id)
+
+          // Read the audit attachments
+          const attachments = await readAttachments(audit_trip_id)
 
           const device = provider_device_id
             ? await readDevice(provider_device_id, provider_id)
@@ -520,11 +515,23 @@ function api(app: express.Express): express.Express {
             if (start_time && end_time) {
               const deviceEvents = await readEvents(device.device_id, start_time, end_time)
               const deviceTelemetry = await readTelemetry(device.device_id, start_time, end_time)
-
+              const providerEvent = await db.readEventsWithTelemetry({
+                device_id: device.device_id,
+                provider_id: device.provider_id,
+                end_time: audit_start, // Last provider event before the audit started
+                order_by: 'timestamp DESC',
+                limit: 1
+              })
               return res.status(200).send({
                 ...audit,
                 provider_vehicle_id: device.vehicle_id,
+                provider_event_type: providerEvent[0]?.event_type,
+                provider_event_type_reason: providerEvent[0]?.event_type_reason,
+                provider_status: EVENT_STATUS_MAP[providerEvent[0]?.event_type as VEHICLE_EVENT],
+                provider_telemetry: providerEvent[0]?.telemetry,
+                provider_event_time: providerEvent[0]?.timestamp,
                 events: auditEvents.map(withGpsProperty),
+                attachments: attachments.map(attachmentSummary),
                 provider: {
                   device,
                   events: deviceEvents,
@@ -535,10 +542,16 @@ function api(app: express.Express): express.Express {
             return res.status(200).send({
               ...audit,
               events: auditEvents.map(withGpsProperty),
+              attachments: attachments.map(attachmentSummary),
               provider: { device, events: [], telemetry: [] }
             })
           }
-          return res.status(200).send({ ...audit, events: auditEvents.map(withGpsProperty), provider: null })
+          return res.status(200).send({
+            ...audit,
+            events: auditEvents.map(withGpsProperty),
+            attachments: attachments.map(attachmentSummary),
+            provider: null
+          })
         }
         // 404 Not Found
         return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
@@ -602,9 +615,20 @@ function api(app: express.Express): express.Express {
 
         // Query the audits
         const { count, audits } = await readAudits(query)
+        const auditsWithAttachments = await Promise.all(
+          audits.map(async audit => {
+            const attachments = await readAttachments(audit.audit_trip_id)
+            return {
+              ...audit,
+              attachments: attachments.map(attachmentSummary)
+            }
+          })
+        )
 
         // 200 OK
-        return res.status(200).send({ count, audits, links: asJsonApiLinks(req, skip, take, count) })
+        return res
+          .status(200)
+          .send({ count, audits: auditsWithAttachments, links: asJsonApiLinks(req, skip, take, count) })
       } catch (err) /* istanbul ignore next */ {
         // 500 Internal Server Error
         await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
@@ -662,6 +686,53 @@ function api(app: express.Express): express.Express {
         error: 'server_error',
         error_description: 'an internal server error has occurred and been logged'
       })
+    }
+  })
+
+  /**
+   * attach media to an audit, uploaded as multipart/form-data
+   */
+  app.post(pathsFor('/trips/:audit_trip_id/attach/:mimetype'), multipartFormUpload, async (req, res) => {
+    const { audit, audit_trip_id } = res.locals
+    if (!audit) {
+      return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
+    }
+    try {
+      validateFile(req.file)
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        return res.status(400).send({ error: err })
+      }
+      if (err instanceof UnsupportedTypeError) {
+        return res.status(415).send({ error: err })
+      }
+    }
+    try {
+      const attachment = await writeAttachment(req.file, audit_trip_id)
+      res.status(200).send({
+        ...attachmentSummary(attachment),
+        audit_trip_id
+      })
+    } catch (err) {
+      await log.error('post attachment fail', err)
+      return res.status(500).send({ error: new ServerError(err) })
+    }
+  })
+
+  /**
+   * delete media from an audit
+   */
+  app.delete(pathsFor('/trips/:audit_trip_id/attachment/:attachment_id'), async (req, res) => {
+    const { audit_trip_id, attachment_id } = req.params
+    try {
+      await deleteAuditAttachment(audit_trip_id, attachment_id)
+      res.status(200).send({})
+    } catch (err) {
+      await log.error('delete attachment error', err)
+      if (err instanceof NotFoundError) {
+        return res.status(404).send({ error: err })
+      }
+      return res.status(500).send({ error: new ServerError(err) })
     }
   })
 

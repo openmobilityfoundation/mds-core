@@ -276,7 +276,7 @@ export async function badEvent(event: VehicleEvent) {
   if (event.timestamp === undefined) {
     return {
       error: 'missing_param',
-      error_description: 'missing enum field "event_type"'
+      error_description: 'missing enum field "timestamp"'
     }
   }
   if (!isTimestamp(event.timestamp)) {

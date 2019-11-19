@@ -61,3 +61,9 @@ export class AlreadyPublishedError extends BaseError {
     super('AlreadyPublishedError', reason(error))
   }
 }
+
+export class UnsupportedTypeError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('UnsupportedTypeError', reason(error))
+  }
+}

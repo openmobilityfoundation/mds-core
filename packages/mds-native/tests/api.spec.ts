@@ -12,7 +12,7 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { providers, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import uuid from 'uuid'
-import { PROPULSION_TYPES, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
 const APP_JSON = 'application/json; charset=utf-8'
@@ -33,6 +33,23 @@ before('Initializing Database', async () => {
 describe('Verify API', () => {
   before(done => {
     const timestamp = Date.now()
+    const oldTimestamp = timestamp - 60000
+    const olderTimestamp = timestamp - 120000
+    const baseEvent = {
+      provider_id,
+      device_id,
+      event_type: VEHICLE_EVENTS.trip_start,
+      telemetry: {
+        provider_id,
+        device_id,
+        timestamp,
+        gps: { lat: 37.4230723, lng: -122.13742939999999 }
+      },
+      telemetry_timestamp: timestamp,
+      trip_id: uuid(),
+      timestamp,
+      recorded: timestamp
+    }
     db.writeDevice({
       device_id,
       provider_id,
@@ -42,20 +59,14 @@ describe('Verify API', () => {
       recorded: timestamp
     }).then(() => {
       db.writeEvent({
-        provider_id,
-        device_id,
-        event_type: 'trip_start',
-        telemetry: {
-          provider_id,
-          device_id,
-          timestamp,
-          gps: { lat: 37.4230723, lng: -122.13742939999999 }
-        },
-        telemetry_timestamp: timestamp,
-        trip_id: uuid(),
-        timestamp,
-        recorded: timestamp
-      }).then(() => done())
+        ...baseEvent,
+        ...{ timestamp: olderTimestamp, telemetry_timestamp: olderTimestamp }
+      })
+      db.writeEvent({
+        ...baseEvent,
+        ...{ timestamp: oldTimestamp, telemetry_timestamp: oldTimestamp }
+      })
+      db.writeEvent(baseEvent).then(() => done())
     })
   })
 
@@ -89,9 +100,10 @@ describe('Verify API', () => {
         test.value(result1).hasHeader('content-type', APP_JSON)
         test.object(result1.body).hasProperty('version')
         test.object(result1.body).hasProperty('events')
-        test.value(result1.body.events.length).is(1)
+        test.value(result1.body.events.length).is(3)
         test.object(result1.body.events[0]).hasProperty('device_id', device_id)
         test.object(result1.body).hasProperty('cursor')
+        test.value(result1.body.cursor).is(Buffer.from(JSON.stringify({ last_id: 3 })).toString('base64'))
         if (err1) {
           done(err1)
         } else {

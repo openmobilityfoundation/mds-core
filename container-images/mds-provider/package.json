@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-provider",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "Docker Image for MDS Provider API",
   "main": "dist/index.js",
   "files": [
@@ -20,9 +20,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.23",
-    "@mds-core/mds-api-server": "0.1.24",
-    "@mds-core/mds-provider": "1.0.24"
+    "@container-images/env-inject": "0.1.24",
+    "@mds-core/mds-api-server": "0.1.25",
+    "@mds-core/mds-provider": "1.0.25"
   },
   "license": "Apache-2.0"
 }
