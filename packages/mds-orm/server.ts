@@ -34,16 +34,16 @@ const getDevices = async (ctx: Mali.Context) => {
 
   const { skip, take } = ctx.req
 
-  const devices =
+  const [devices, count] =
     take === 0
       ? []
       : await repository
           .createQueryBuilder()
           .offset(skip)
           .limit(take)
-          .getMany()
+          .getManyAndCount()
 
-  ctx.res = { devices }
+  ctx.res = { count, devices }
 }
 
 /**
@@ -55,7 +55,7 @@ const getDevices = async (ctx: Mali.Context) => {
 const app = new Mali('./protos/repository.proto', 'DeviceService', {
   // These are gRPC native options that Mali passes down
   // to the underlying gRPC loader.
-  defaults: true,
+  // defaults: true,
   keepCase: true
 })
 
