@@ -25,6 +25,8 @@ import { WebClient as SlackClient } from '@slack/client'
 
 const { env } = process
 
+type LogLevel = 'INFO' | 'WARN' | 'ERROR'
+
 interface Datum {
   lat?: string
   lng?: string
@@ -217,6 +219,15 @@ async function error(...msg: any[]): Promise<any[]> {
   return censoredMsg
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function log(logLevel: LogLevel, ...msg: any[]): Promise<any[]> {
+  return {
+    INFO: info,
+    WARN: warn,
+    ERROR: error
+  }[logLevel](...msg)
+}
+
 async function startup() {
   // try {
   // 	if (env.PUSHOVER_TOKEN) {
@@ -230,4 +241,4 @@ async function startup() {
   // }
 }
 
-export = { info, warn, error, startup }
+export = { log, info, warn, error, startup }

@@ -456,6 +456,11 @@ if (pg_info.database) {
 
         assert.deepEqual(policy.publish_date, geography.publish_date)
       })
+
+      it('can find policies using geographies by geography ID', async () => {
+        const policies = await MDSDBPostgres.findPoliciesByGeographyID(LAGeography.geography_id)
+        assert.deepEqual(policies[0].policy_id, POLICY3_JSON.policy_id)
+      })
     })
 
     describe('Geography metadata', () => {

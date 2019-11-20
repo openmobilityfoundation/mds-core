@@ -429,19 +429,19 @@ installIstio() {
 
     installNamespace istio-system
     pause 2
-    helm template ${configs[istio]}/install/kubernetes/helm/istio-init \
-      --name istio-init --namespace istio-system | \
-      kubectl apply -f - ${configs[dryrun]:+--dry-run}
+    helm install ${configs[istio]}/install/kubernetes/helm/istio-init \
+      --name istio-init --namespace istio-system \
+      ${configs[dryrun]:+--dry-run}
     # todo: query pod status
     pause 5
 
     (( $(kubectl get crds | grep "istio.io" | wc -l) == 23 )) && \
       echo "istio successfully installed" || echo "istio installation failure"
 
-    helm template ${configs[istio]}/install/kubernetes/helm/istio \
+    helm install ${configs[istio]}/install/kubernetes/helm/istio \
       --name istio --namespace istio-system \
-      --values ${configs[istio]}/install/kubernetes/helm/istio/values${configs[istio-profile]}.yaml | \
-      kubectl apply -f - ${configs[dryrun]:+--dry-run}
+      --values ${configs[istio]}/install/kubernetes/helm/istio/values${configs[istio-profile]}.yaml \
+      ${configs[dryrun]:+--dry-run}
     labelNamespaceIstioInjection default
   }
 }
@@ -740,16 +740,13 @@ uninstallKiali() {
 uninstallIstio() {
   kubectl get namespace istio-system > /dev/null 2>&1 && {
     check ${FUNCNAME[0]}
-    helm template ${configs[istio]}/install/kubernetes/helm/istio \
-      --name istio \
-      --namespace istio-system \
-      --values ${configs[istio]}/install/kubernetes/helm/istio/values-istio-demo.yaml | \
-        kubectl delete -f - ${configs[dryrun]:+--dry-run}
+    helm delete --purge istio ${configs[dryrun]:+--dry-run}
+    helm delete --purge istio-init ${configs[dryrun]:+--dry-run}
     kubectl delete namespace istio-system ${configs[dryrun]:+--dry-run}
     kubectl delete -f ${configs[istio]}/install/kubernetes/helm/istio-init/files \
       ${configs[dryrun]:+--dry-run} > /dev/null
   }
-  [ -d ${configs[istio]} ] && /bin/rm -rf ${configs[istio]}
+  [[ -d ${configs[istio]} && -z "${configs[dryrun]}" ]] && echo "/bin/rm -rf ${configs[istio]}"
 }
 
 uninstallDashboard() {

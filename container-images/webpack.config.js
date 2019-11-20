@@ -54,6 +54,9 @@ module.exports = ({ env, argv, dirname, bundles }) => {
     output: {
       libraryTarget: 'commonjs'
     },
+    externals: {
+      sharp: 'commonjs sharp'
+    },
     target: 'node',
     stats: {
       all: false,
