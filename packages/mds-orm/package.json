@@ -35,6 +35,7 @@
     "typeorm": "0.2.20"
   },
   "devDependencies": {
+    "@mds-core/mds-db": "0.1.25",
     "grpcc": "1.1.3"
   }
 }
