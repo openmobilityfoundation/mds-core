@@ -301,14 +301,25 @@ async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
 
 async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   // FIXME wildcard searching is slow
+  let start = now()
   const keys = await readKeys('device:*:event')
+  let finish = now()
+  let timeElapsed = finish - start
+  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() readKeys() time elapsed: ${timeElapsed}`)
   const device_ids = keys.map(key => {
     const [, device_id] = key.split(':')
     return device_id
   })
-  return (await hreads(['event'], device_ids)).map(event => {
+
+  start = now()
+  const result = (await hreads(['event'], device_ids)).map(event => {
     return parseEvent(event as StringifiedEventWithTelemetry)
   })
+  finish = now()
+  timeElapsed = finish - start
+  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() hreads() time elapsed: ${timeElapsed}`)
+
+  return result
 }
 
 async function readDevice(device_id: UUID) {
