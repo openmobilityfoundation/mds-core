@@ -1,7 +1,5 @@
 syntax = "proto2";
 
-package mds.repository.v1;
-
 message Device {
   required double id = 1;
   required string device_id = 2;
@@ -33,7 +31,7 @@ message GetDeviceByVehicleIdResponse {
   required Device device = 1;
 }
 
-service DeviceService {
+service Repository {
   rpc getDevices (GetDevicesRequest) returns (GetDevicesResponse) {};
   rpc getDeviceByVehicleId (GetDeviceByVehicleIdRequest) returns (GetDeviceByVehicleIdResponse) {};
 }
