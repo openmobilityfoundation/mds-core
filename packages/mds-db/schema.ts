@@ -90,12 +90,7 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.thumbnail_mimetype,
     COLUMN.recorded
   ],
-  [TABLE.audit_attachments]: [
-    COLUMN.id,
-    COLUMN.attachment_id,
-    COLUMN.audit_trip_id,
-    COLUMN.recorded
-  ],
+  [TABLE.audit_attachments]: [COLUMN.id, COLUMN.attachment_id, COLUMN.audit_trip_id, COLUMN.recorded],
   [TABLE.audits]: [
     COLUMN.id,
     COLUMN.audit_trip_id,

@@ -7,8 +7,8 @@ import { RULE_TYPES, Geography, Policy, Device } from '@mds-core/mds-types'
 import { la_city_boundary } from '@mds-core/mds-policy/tests/la-city-boundary'
 import { FeatureCollection } from 'geojson'
 import { processPolicy, filterPolicies, filterEvents } from '@mds-core/mds-compliance/mds-compliance-engine'
-import { ValidationError, RuntimeError } from '@mds-core/mds-utils'
-import { validateEvents, validateGeographies, validatePolicies } from '../validators'
+import { RuntimeError } from '@mds-core/mds-utils'
+import { ValidationError, validateEvents, validateGeographies, validatePolicies } from '@mds-core/mds-schema-validators'
 
 let policies: Policy[] = []
 

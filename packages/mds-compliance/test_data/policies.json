@@ -6,6 +6,7 @@
     "start_date": 1552678594428,
     "end_date": null,
     "prev_policies": null,
+    "provider_ids": null,
     "rules": [
       {
         "name": "Greater LA",
@@ -26,6 +27,7 @@
     "start_date": 1552678594428,
     "end_date": null,
     "prev_policies": null,
+    "provider_ids": null,
     "rules": [
       {
         "name": "Greater LA (rentable)",
@@ -46,6 +48,7 @@
     "start_date": 1552678594428,
     "end_date": null,
     "prev_policies": null,
+    "provider_ids": null,
     "rules": [
       {
         "name": "Greater LA",

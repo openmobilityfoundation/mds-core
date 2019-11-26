@@ -31,9 +31,9 @@ import {
   isValidAuditEventType,
   isValidAuditIssueCode,
   isValidAuditNote,
-  isValidNumber
+  isValidNumber,
+  ValidationError
 } from '../validators'
-import { ValidationError } from '../exceptions'
 
 describe('Tests validators', () => {
   it('verified Number validator', done => {
