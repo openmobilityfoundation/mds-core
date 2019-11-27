@@ -22,6 +22,14 @@ import urls from 'url'
 import {
   pathsFor,
   seconds,
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ServerError,
+  UnsupportedTypeError
+} from '@mds-core/mds-utils'
+
+import {
   isValidAuditDeviceId,
   isValidAuditEventId,
   isValidAuditEventType,
@@ -33,13 +41,9 @@ import {
   isValidVehicleEventType,
   isValidAuditIssueCode,
   isValidAuditNote,
-  ValidationError,
-  AuthorizationError,
-  ConflictError,
-  NotFoundError,
-  ServerError,
-  UnsupportedTypeError
-} from '@mds-core/mds-utils'
+  ValidationError
+} from '@mds-core/mds-schema-validators'
+
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import {
   AUDIT_EVENT_TYPES,

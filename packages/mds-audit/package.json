@@ -30,6 +30,7 @@
     "@mds-core/mds-providers": "0.1.25",
     "@mds-core/mds-types": "0.1.22",
     "@mds-core/mds-utils": "0.1.25",
+    "@mds-core/mds-schema-validators": "0.1.1",
     "@types/multer": "1.3.10",
     "@types/sharp": "0.23.0",
     "aws-sdk": "2.571.0",

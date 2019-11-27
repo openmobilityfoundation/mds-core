@@ -3,7 +3,7 @@ import {
   isStringifiedTelemetry,
   isStringifiedEventWithTelemetry,
   isStringifiedCacheReadDeviceResult
-} from '@mds-core/mds-utils'
+} from '@mds-core/mds-schema-validators'
 
 import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult, CachedItem } from './types'
 

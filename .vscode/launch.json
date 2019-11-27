@@ -39,6 +39,22 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Server: mds-config",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-config",
+      "env": {
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "npm_package_name": "@mds-core/mds-config",
+        "PATH_PREFIX": "/config"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Server: mds-daily",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
       "args": ["server.ts"],
@@ -321,6 +337,63 @@
       "env": {
         "DOTENV_CONFIG_PATH": "../../.env",
         "PATH_PREFIX": "/compliance"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-config",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "--timeout",
+        "5000",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-config",
+      "env": {
+        "DOTENV_CONFIG_PATH": "../../.env",
+        "PATH_PREFIX": "/config"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-config-service",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "--timeout",
+        "5000",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-config-service",
+      "env": {
+        "DOTENV_CONFIG_PATH": "../../.env"
       }
     },
     {

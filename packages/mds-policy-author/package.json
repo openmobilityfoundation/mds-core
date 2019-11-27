@@ -10,15 +10,14 @@
     "npm": ">= 6.8.0"
   },
   "dependencies": {
-    "@hapi/joi": "15.1.1",
     "@mds-core/mds-api-helpers": "0.1.25",
     "@mds-core/mds-api-server": "0.1.25",
     "@mds-core/mds-db": "0.1.25",
     "@mds-core/mds-logger": "0.1.23",
     "@mds-core/mds-providers": "0.1.25",
     "@mds-core/mds-utils": "0.1.25",
+    "@mds-core/mds-schema-validators": "0.1.1",
     "express": "4.17.1",
-    "joi-to-json-schema": "5.1.0",
     "uuid": "3.3.3"
   },
   "main": "dist/index.js",
@@ -27,7 +26,7 @@
     "build": "tsc --build tsconfig.build.json",
     "start": "PATH_PREFIX=/policy-author yarn watch server",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
