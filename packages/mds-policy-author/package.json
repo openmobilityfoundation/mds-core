@@ -26,7 +26,7 @@
     "build": "tsc --build tsconfig.build.json",
     "start": "PATH_PREFIX=/policy-author yarn watch server",
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 65 --reporter=text --reporter=html ts-mocha --timeout 4000 --project ../../tsconfig.json --require source-map-support/register --require dotenv/config --recursive --timeout 6000 tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",

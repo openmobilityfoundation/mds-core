@@ -33,6 +33,7 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'max-classes-per-file': 'off',
     'no-console': 'warn',
+    'no-empty': ['error', { allowEmptyCatch: true }],
     'no-plusplus': 'off',
     'no-restricted-syntax': 'off',
     'no-var': 'error',
