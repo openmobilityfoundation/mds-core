@@ -90,7 +90,7 @@ function api(app: express.Express): express.Express {
 
   /**
    * Endpoint to register vehicles
-   * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicle---register Register}
+   * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicle---register Register}
    */
   app.post(pathsFor('/vehicles'), registerVehicle)
 
@@ -109,13 +109,13 @@ function api(app: express.Express): express.Express {
 
   /**
    * Endpoint to submit vehicle events
-   * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicle---event Events}
+   * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicle---event Events}
    */
   app.post(pathsFor('/vehicles/:device_id/event'), validateDeviceId, submitVehicleEvent)
 
   /**
    * Endpoint to submit telemetry
-   * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#vehicles---update-telemetry Telemetry}
+   * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicles---update-telemetry Telemetry}
    */
   app.post(pathsFor('/vehicles/telemetry'), submitVehicleTelemetry)
 
