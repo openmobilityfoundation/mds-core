@@ -71,6 +71,7 @@ export async function readAudits(query: ReadAuditsQueryParams) {
 
 export async function writeAudit(audit: Audit): Promise<Recorded<Audit>> {
   // write pg
+  const start = now()
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.audits} (${cols_sql(schema.TABLE_COLUMNS.audits)}) VALUES (${vals_sql(
     schema.TABLE_COLUMNS.audits
@@ -80,6 +81,8 @@ export async function writeAudit(audit: Audit): Promise<Recorded<Audit>> {
   const {
     rows: [recorded_audit]
   }: { rows: Recorded<Audit>[] } = await client.query(sql, values)
+  const finish = now()
+  log.info(`MDS-DB writeAudit time elapsed: ${finish - start}ms`)
   return { ...audit, ...recorded_audit }
 }
 
@@ -110,6 +113,7 @@ export async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<Aud
 }
 
 export async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded<AuditEvent>> {
+  const start = now()
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.audit_events} (${cols_sql(
     schema.TABLE_COLUMNS.audit_events
@@ -119,5 +123,7 @@ export async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded
   const {
     rows: [recorded_audit_event]
   }: { rows: Recorded<AuditEvent>[] } = await client.query(sql, values)
+  const finish = now()
+  log.info(`MDS-DB writeAuditEvent time elapsed: ${finish - start}ms`)
   return { ...audit_event, ...recorded_audit_event }
 }

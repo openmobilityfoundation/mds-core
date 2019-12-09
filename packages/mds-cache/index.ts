@@ -133,6 +133,7 @@ async function addGeospatialHash(device_id: UUID, coordinates: [number, number])
 }
 
 async function getEventsInBBox(bbox: BoundingBox) {
+  const start = now()
   const client = await getClient()
   const [pt1, pt2] = bbox
   const points = bbox.map(pt => {
@@ -140,7 +141,11 @@ async function getEventsInBBox(bbox: BoundingBox) {
   })
   const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
   const radius = routeDistance(points)
-  return client.georadiusAsync('locations', lng, lat, radius, 'm')
+  const events = client.georadiusAsync('locations', lng, lat, radius, 'm')
+  const finish = now()
+  const timeElapsed = finish - start
+  log.info(`MDS-CACHE getEventsInBBox ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
+  return events
 }
 
 async function hreads(
@@ -284,10 +289,14 @@ async function writeEvent(event: VehicleEvent) {
 }
 
 async function readEvent(device_id: UUID): Promise<VehicleEvent> {
-  // log.info('redis read event', device_id)
   log.info('redis read event for', device_id)
-  const event = await hread('event', device_id)
-  return parseEvent(event as StringifiedEventWithTelemetry)
+  const start = now()
+  const rawEvent = await hread('event', device_id)
+  const event = parseEvent(rawEvent as StringifiedEventWithTelemetry)
+  const finish = now()
+  const timeElapsed = finish - start
+  log.info(`MDS-CACHE readEvent ${device_id} time elapsed: ${timeElapsed}ms`)
+  return event
 }
 
 async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
@@ -305,7 +314,7 @@ async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   const keys = await readKeys('device:*:event')
   let finish = now()
   let timeElapsed = finish - start
-  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() readKeys() time elapsed: ${timeElapsed}`)
+  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() readKeys() time elapsed: ${timeElapsed}ms`)
   const device_ids = keys.map(key => {
     const [, device_id] = key.split(':')
     return device_id
@@ -317,7 +326,7 @@ async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   })
   finish = now()
   timeElapsed = finish - start
-  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() hreads() time elapsed: ${timeElapsed}`)
+  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() hreads() time elapsed: ${timeElapsed}ms`)
 
   return result
 }
@@ -327,7 +336,13 @@ async function readDevice(device_id: UUID) {
     throw new Error('null device not legal to read')
   }
   // log.info('redis read device', device_id)
-  return parseDevice((await hread('device', device_id)) as StringifiedCacheReadDeviceResult)
+  const start = now()
+  const rawDevice = await hread('device', device_id)
+  const device = parseDevice(rawDevice as StringifiedCacheReadDeviceResult)
+  const finish = now()
+  const timeElapsed = finish - start
+  log.info(`MDS-CACHE readDevice ${device_id} time elapsed: ${timeElapsed}ms`)
+  return device
 }
 
 async function readDevices(device_ids: UUID[]) {
@@ -368,6 +383,7 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   log.info('redis zrangebyscore device-ids', start, stop)
   const client = await getClient()
 
+  const geoStart = now()
   const { bbox } = query
   const deviceIdsInBbox = await getEventsInBBox(bbox)
   const deviceIdsRes =
@@ -375,9 +391,11 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
   const skip = query.skip || 0
   const take = query.take || 100000000000
   const deviceIds = deviceIdsRes.slice(skip, skip + take)
+  const geoFinish = now()
+  const timeElapsed = geoFinish - geoStart
+  log.info(`MDS-CACHE readDevicesStatus bbox fetch ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
 
-  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-
+  const eventsStart = now()
   const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
     .reduce((acc: VehicleEvent[], item: StringifiedEventWithTelemetry) => {
       try {
@@ -394,7 +412,11 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
       }
     }, [])
     .filter(item => Boolean(item))
+  const eventsFinish = now()
+  const eventsTimeElapsed = eventsFinish - eventsStart
+  log.info(`MDS-CACHE readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`)
 
+  const devicesStart = now()
   const eventDeviceIds = events.map(event => event.device_id)
   const devices = (await hreads(['device'], eventDeviceIds))
     .reduce((acc: (Device | Telemetry | VehicleEvent)[], item: CachedItem) => {
@@ -407,13 +429,20 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
     }, [])
     .filter(item => Boolean(item))
   const all = [...devices, ...events]
+  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
   all.map(item => {
     deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
     Object.assign(deviceStatusMap[item.device_id], item)
   })
   const values = Object.values(deviceStatusMap)
+  const valuesWithTelemetry = values.filter((item: any) => item.telemetry)
+  const devicesFinish = now()
+  const devicesTimeElapsed = devicesFinish - devicesStart
+  log.info(
+    `MDS-CACHE readDevicesStatus device processing ${JSON.stringify(bbox)} time elapsed: ${devicesTimeElapsed}ms`
+  )
 
-  return values.filter((item: any) => item.telemetry)
+  return valuesWithTelemetry
 }
 
 async function readTelemetry(device_id: UUID): Promise<Telemetry> {
