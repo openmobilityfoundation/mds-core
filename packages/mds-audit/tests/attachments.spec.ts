@@ -96,7 +96,11 @@ describe('Testing Attachments Service', () => {
     const uploadStub = Sinon.stub(aws.S3.prototype, 'upload')
     const writeAttachmentStub = Sinon.stub(db, 'writeAttachment')
     const writeAuditAttachmentStub = Sinon.stub(db, 'writeAuditAttachment')
-    uploadStub.returns({ promise: () => {} })
+    uploadStub.returns({
+      promise: () => {
+        // Intentionally empty
+      }
+    })
     const res: Attachment | null = await writeAttachment(attachmentFile, auditTripId)
     assert.equal(res && res.attachment_filename.includes('.png'), true)
     assert.equal(res && res.thumbnail_filename && res.thumbnail_filename.includes('.png'), true)

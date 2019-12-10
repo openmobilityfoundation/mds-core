@@ -12,7 +12,7 @@
     "start": "PATH_PREFIX=/compliance yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/compliance DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/compliance DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json tests/**/*.ts",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   },
@@ -23,20 +23,19 @@
   "author": "City of Los Angeles.",
   "license": "Apache-2.0",
   "dependencies": {
-    "@hapi/joi": "15.1.1",
     "@mds-core/mds-api-server": "0.1.25",
     "@mds-core/mds-cache": "0.1.25",
     "@mds-core/mds-db": "0.1.25",
     "@mds-core/mds-logger": "0.1.23",
+    "@mds-core/mds-schema-validators": "0.1.1",
     "@mds-core/mds-stream": "0.1.25",
     "@mds-core/mds-types": "0.1.22",
     "@mds-core/mds-utils": "0.1.25",
-    "@mds-core/mds-schema-validators": "0.1.1",
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.27",
     "uuid": "3.3.3",
-    "yargs": "14.2.0"
+    "yargs": "15.0.2"
   },
   "devDependencies": {
     "@mds-core/mds-agency": "0.0.27",

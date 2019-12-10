@@ -28,6 +28,7 @@ module.exports = {
     'array-callback-return': 'off',
     'consistent-return': 'off',
     eqeqeq: 'error',
+    'import/extensions': ['error', 'ignorePackages', { ts: 'never' }],
     'import/no-extraneous-dependencies': 'off',
     'import/no-unresolved': 'off',
     'import/prefer-default-export': 'off',
