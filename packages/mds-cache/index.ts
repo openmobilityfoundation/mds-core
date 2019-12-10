@@ -17,7 +17,7 @@
 import log from '@mds-core/mds-logger'
 
 import flatten from 'flat'
-import { nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
+import { NotFoundError, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
 import {
   UUID,
   Timestamp,
@@ -121,7 +121,7 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   if (flat) {
     return unflatten({ ...flat, device_id })
   }
-  throw new Error(`${suffix} for ${device_id} not found`)
+  throw new NotFoundError(`${suffix} for ${device_id} not found`)
 }
 
 /* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner. */
@@ -355,21 +355,38 @@ async function readDevices(device_ids: UUID[]) {
 async function readDeviceStatus(device_id: UUID) {
   let event: VehicleEvent
   let device: Device
+  const cachedInfo = []
   try {
     event = await readEvent(device_id)
-    device = await readDevice(device_id)
-  } catch {
-    return null
+    cachedInfo.push(event)
+  } catch (err) {
+    if (err.name !== 'NotFoundError') {
+      throw err
+    }
+    log.info('Missing vehicle event', 'device_id', device_id)
   }
+  try {
+    device = await readDevice(device_id)
+    cachedInfo.push(device)
+  } catch (err) {
+    if (err.name !== 'NotFoundError') {
+      throw err
+    }
+    log.info('Missing vehicle device', 'device_id', device_id)
+  }
+
   const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-  const all = [device, event]
-  all.map(item => {
+  cachedInfo.map(item => {
     deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
     Object.assign(deviceStatusMap[item.device_id], item)
   })
-  const values = Object.values(deviceStatusMap)
-
-  return values.filter((item: any) => item.telemetry)[0]
+  const statuses = Object.values(deviceStatusMap)
+  const statusWithTelemetry = statuses.find((status: any) => status.telemetry)
+  if (statusWithTelemetry === undefined) {
+    log.info('Missing vehicle telemetry', 'device_id', device_id)
+    return statuses[0]
+  }
+  return statusWithTelemetry
 }
 
 /* eslint-reason redis external lib weirdness */
