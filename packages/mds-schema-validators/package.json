@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-schema-validators",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Mobility Data Specification JSON schema definition and validation",
   "keywords": [
     "mds",
@@ -11,9 +11,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@hapi/joi": "15.1.1",
-    "joi-to-json-schema": "5.1.0",
-    "@mds-core/mds-types": "0.1.22",
-    "@mds-core/mds-utils": "0.1.25"
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26",
+    "joi-to-json-schema": "5.1.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
