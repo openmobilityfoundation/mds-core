@@ -28,7 +28,7 @@
     "test": "yarn test:prettier && yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:prettier": "prettier --write --check --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --lines 85 ts-mocha --project ../../tsconfig.json --require source-map-support/register --require dotenv/config tests/**/*.ts",
+    "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --lines 85 ts-mocha --project ../../tsconfig.json",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && ts-node"
   }
