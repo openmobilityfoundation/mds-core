@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-native",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "Docker Image for MDS Native API",
   "main": "dist/index.js",
   "files": [
@@ -20,9 +20,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.24",
-    "@mds-core/mds-api-server": "0.1.25",
-    "@mds-core/mds-native": "0.0.23"
+    "@container-images/env-inject": "0.1.25",
+    "@mds-core/mds-api-server": "0.1.26",
+    "@mds-core/mds-native": "0.0.24"
   },
   "license": "Apache-2.0"
 }

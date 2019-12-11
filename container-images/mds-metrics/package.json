@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-metrics",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "MDS Metrics prototype",
   "main": "dist/index.js",
   "files": [
@@ -20,9 +20,9 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.24",
-    "@mds-core/mds-api-server": "0.1.25",
-    "@mds-core/mds-metrics": "0.0.7"
+    "@container-images/env-inject": "0.1.25",
+    "@mds-core/mds-api-server": "0.1.26",
+    "@mds-core/mds-metrics": "0.0.8"
   },
   "license": "Apache-2.0"
 }

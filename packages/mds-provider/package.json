@@ -1,7 +1,7 @@
 {
   "name": "@mds-core/mds-provider",
   "description": "MDS Provider implementation to pair with MDS Agency",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -19,21 +19,21 @@
     "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   },
   "dependencies": {
-    "@mds-core/mds-api-helpers": "0.1.25",
-    "@mds-core/mds-api-server": "0.1.25",
-    "@mds-core/mds-cache": "0.1.25",
-    "@mds-core/mds-db": "0.1.25",
-    "@mds-core/mds-logger": "0.1.23",
-    "@mds-core/mds-providers": "0.1.25",
-    "@mds-core/mds-stream": "0.1.25",
-    "@mds-core/mds-types": "0.1.22",
-    "@mds-core/mds-utils": "0.1.25",
+    "@mds-core/mds-api-helpers": "0.1.26",
+    "@mds-core/mds-api-server": "0.1.26",
+    "@mds-core/mds-cache": "0.1.26",
+    "@mds-core/mds-db": "0.1.26",
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-providers": "0.1.26",
+    "@mds-core/mds-stream": "0.1.26",
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26",
     "express": "4.17.1",
     "ladot-service-areas": "0.1.9",
     "url": "0.11.0",
     "uuid": "3.3.3"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.25"
+    "@mds-core/mds-test-data": "0.1.26"
   }
 }
