@@ -1,0 +1,29 @@
+{
+  "name": "@mds-core/mds-schema-validators",
+  "version": "0.1.2",
+  "description": "Mobility Data Specification JSON schema definition and validation",
+  "keywords": [
+    "mds",
+    "json",
+    "schema"
+  ],
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@hapi/joi": "15.1.1",
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26",
+    "joi-to-json-schema": "5.1.0"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 70 ts-mocha --project ../../tsconfig.json tests/**/*.ts"
+  }
+}

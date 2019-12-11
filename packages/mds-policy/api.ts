@@ -16,11 +16,10 @@
 
 import express from 'express'
 // import { isProviderId, providerName } from '@mds-core/mds-providers'
-import Joi from '@hapi/joi'
-import joiToJsonSchema from 'joi-to-json-schema'
-import { Policy, UUID, VEHICLE_TYPES, DAYS_OF_WEEK } from '@mds-core/mds-types'
+import { Policy, UUID } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import { now, pathsFor, NotFoundError, isUUID } from '@mds-core/mds-utils'
+import { policySchemaJson } from '@mds-core/mds-schema-validators'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
@@ -127,63 +126,8 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  const ruleSchema = Joi.object().keys({
-    name: Joi.string().required(),
-    rule_id: Joi.string()
-      .guid()
-      .required(),
-    rule_type: Joi.string()
-      .valid(['count', 'time', 'speed', 'user'])
-      .required(),
-    rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
-    geographies: Joi.array().items(Joi.string().guid()),
-    statuses: Joi.object()
-      .keys({
-        available: Joi.array(),
-        reserved: Joi.array(),
-        unavailable: Joi.array(),
-        removed: Joi.array(),
-        inactive: Joi.array(),
-        trip: Joi.array(),
-        elsewhere: Joi.array()
-      })
-      .allow(null),
-    vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
-    maximum: Joi.number(),
-    minimum: Joi.number(),
-    start_time: Joi.string(),
-    end_time: Joi.string(),
-    days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
-    messages: Joi.object(),
-    value_url: Joi.string().uri()
-  })
-
-  const policySchema = Joi.object().keys({
-    name: Joi.string().required(),
-    description: Joi.string().required(),
-    policy_id: Joi.string()
-      .guid()
-      .required(),
-    start_date: Joi.date()
-      .timestamp('javascript')
-      .required(),
-    end_date: Joi.date()
-      .timestamp('javascript')
-      .allow(null),
-    prev_policies: Joi.array()
-      .items(Joi.string().guid())
-      .allow(null),
-    provider_ids: Joi.array()
-      .items(Joi.string().guid())
-      .allow(null),
-    rules: Joi.array()
-      .min(1)
-      .items(ruleSchema)
-      .required()
-  })
-
   app.get(pathsFor('/schema/policy'), (req, res) => {
-    res.status(200).send(joiToJsonSchema(policySchema))
+    res.status(200).send(policySchemaJson)
   })
 
   return app

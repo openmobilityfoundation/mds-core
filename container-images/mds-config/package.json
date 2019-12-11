@@ -1,0 +1,28 @@
+{
+  "name": "@container-images/mds-config",
+  "version": "0.0.2",
+  "description": "Docker Image for MDS Config API",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && ../../bin/mdsctl -c:image-name=mds-config:${npm_package_version} buildImage",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@container-images/env-inject": "0.1.25",
+    "@mds-core/mds-api-server": "0.1.26",
+    "@mds-core/mds-config": "0.0.2"
+  },
+  "license": "Apache-2.0"
+}

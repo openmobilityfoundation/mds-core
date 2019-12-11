@@ -99,11 +99,14 @@ const getProvider = (): VehicleCountRow => {
 // https://stackoverflow.com/a/46957474
 // TODO holdover from old node, when we upgrade replace with assert.rejects()
 async function assertThrowsAsync(fn: Function, regExp: RegExp) {
-  let f = () => {}
+  let f = () => {
+    // Function that does not throw
+  }
   try {
     await fn()
   } catch (e) {
     f = () => {
+      // Function that throws
       throw e
     }
   } finally {

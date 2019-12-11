@@ -216,6 +216,9 @@ function processPolicy(
   devices: { [d: string]: Device }
 ): ComplianceResponse | undefined {
   if (isPolicyActive(policy)) {
+    const sortedEvents = events.sort((e_1, e_2) => {
+      return e_1.timestamp - e_2.timestamp
+    })
     const vehiclesToFilter: MatchedVehicle[] = []
     let overflowVehiclesMap: { [key: string]: MatchedVehiclePlusRule } = {}
     let countVehiclesMap: { [d: string]: MatchedVehiclePlusRule } = {}
@@ -233,7 +236,12 @@ function processPolicy(
 
       switch (rule.rule_type) {
         case 'count': {
-          const comp: Compliance & { matches: CountMatch[] } = processCountRule(rule, events, geographies, devices)
+          const comp: Compliance & { matches: CountMatch[] } = processCountRule(
+            rule,
+            sortedEvents,
+            geographies,
+            devices
+          )
 
           const compressedComp = {
             rule,
@@ -315,7 +323,12 @@ function processPolicy(
           break
         }
         case 'time': {
-          const comp: Compliance & { matches: TimeMatch[] | null } = processTimeRule(rule, events, geographies, devices)
+          const comp: Compliance & { matches: TimeMatch[] | null } = processTimeRule(
+            rule,
+            sortedEvents,
+            geographies,
+            devices
+          )
           compliance_acc.push(comp)
 
           const timeVehicles = comp.matches
@@ -334,7 +347,7 @@ function processPolicy(
           {
             const comp: Compliance & { matches: SpeedMatch[] | null } = processSpeedRule(
               rule,
-              events,
+              sortedEvents,
               geographies,
               devices
             )

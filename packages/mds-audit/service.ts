@@ -32,6 +32,8 @@ import {
   VEHICLE_EVENT,
   VEHICLE_STATUSES
 } from '@mds-core/mds-types'
+import log from '@mds-core/mds-logger'
+import { now } from '@mds-core/mds-utils'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)
@@ -94,11 +96,15 @@ export async function readDevice(device_id: UUID, provider_id: UUID): Promise<Re
 
 export async function readDeviceByVehicleId(provider_id: UUID, vehicle_id: string): Promise<Recorded<Device> | null> {
   try {
+    const start = now()
     const result: Recorded<Device> = await db.readDeviceByVehicleId(
       provider_id,
       vehicle_id,
       vehicle_id.replace(/[\W_-]/g, '')
     )
+    const finish = now()
+    const timeElapsed = finish - start
+    log.info(`db.readDeviceByVehicleId ${provider_id} ${vehicle_id} time elapsed: ${timeElapsed}ms`)
     return result
   } catch (err) {
     return null
@@ -167,12 +173,14 @@ export async function getVehicle(provider_id: UUID, vehicle_id: string) {
     return null
   }
   const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as VehicleEvent & Device
-  if (!deviceStatus) {
-    return null
+  if (deviceStatus !== null) {
+    const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
+    const updated = deviceStatus.timestamp
+    return { ...device, ...deviceStatus, status, updated }
   }
-  const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
-  const updated = deviceStatus.timestamp
-  return { ...deviceStatus, status, updated }
+  const { device_id } = device
+  log.info('Missing vehicle status', { provider_id, vehicle_id, device_id })
+  return device
 }
 
 export async function getVehicles(
@@ -192,6 +200,7 @@ export async function getVehicles(
     return s
   }
 
+  const start = now()
   const statusesSuperset = ((await cache.readDevicesStatus({ bbox })) as (VehicleEvent & Device)[]).filter(
     status =>
       EVENT_STATUS_MAP[status.event_type as VEHICLE_EVENT] !== VEHICLE_STATUSES.removed &&
@@ -203,6 +212,8 @@ export async function getVehicles(
     const updated = item.timestamp
     return [...acc, { ...item, status, updated }]
   }, [])
+  const finish = now()
+  log.info(`getVehicles processing ${JSON.stringify(bbox)} provider ${provider_id} time elapsed: ${finish - start}ms`)
 
   const noNext = skip + take >= statusesSuperset.length
   const noPrev = skip === 0 || skip > statusesSuperset.length

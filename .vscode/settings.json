@@ -6,7 +6,6 @@
   "eslint.validate": [{ "language": "typescript", "autoFix": true }],
   "eslint.options": { "ignorePath": ".gitignore" },
   "prettier.disableLanguages": ["markdown"],
-  "prettier.eslintIntegration": true,
   "[typescript]": {
     "editor.formatOnSave": false
   },

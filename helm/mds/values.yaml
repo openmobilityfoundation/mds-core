@@ -43,6 +43,11 @@ apis:
     pathPrefix: /policy-author
     version: latest
     migration: false
+  mds-config:
+    enabled: true
+    pathPrefix: /config
+    version: latest
+    migration: false
 useEvents: false
 timezone: America/Los_Angeles
 registry:
