@@ -50,6 +50,7 @@ declare -A os=(
   ["osx"]="${osx}"
   ["linux"]="${linux}")
 declare -A configs=(
+  ["local-context"]="${MDS_LOCACL_CONTEXT:-docker-desktop|docker-for-desktop}"
   ["home"]="${MDS_HOME:-$(installDir)}"
   ["os"]="${MDS_OS:-`uname`}"
   ["rc"]="${MDS_RC:-~/.bashrc ~/.zshrc}"
@@ -122,6 +123,15 @@ warn() {
 
 error() {
   echo "${red}warn: ${1}${reset}"
+}
+
+lower() {
+  echo "${1}" | tr '[:upper:]' '[:lower:]'
+}
+
+prompt() {
+  IFS= read -rp "${yellow}${1}${reset}" response
+  echo $(lower ${response})
 }
 
 beerMe() {
@@ -207,6 +217,8 @@ EOF
 }
 
 bootstrap() {
+  check ${FUNCNAME[0]}
+
   for l in ${configs[brew]}; do
     lc=${l}
     case ${l} in
@@ -411,6 +423,8 @@ installDashboard() {
 }
 
 installNamespace() {
+  check ${FUNCNAME[0]}
+
   for ns in ${@}; do
     kubectl get namespace ${ns} > /dev/null 2>&1 || kubectl create namespace ${ns} ${configs[dryrun]:+--dry-run}
   done; unset ns
@@ -510,6 +524,8 @@ installMds() {
 }
 
 installMetricsAdapter() {
+  check ${FUNCNAME[0]}
+
   helm status kube-metrics-adapter > /dev/null 2>&1 ||
     helm install --name kube-metrics-adapter --namespace ${configs[namespace-metrics-adapter]} \
       banzaicloud-stable/kube-metrics-adapter
@@ -530,6 +546,8 @@ installFallbackCertificate() {
 }
 
 installIngressGatewayCertificate() {
+  check ${FUNCNAME[0]}
+
   if [[ ${configs[ingress-gateway-key-path]+_} && ${#configs[ingress-gateway-key-path]} -ge 1 &&
       ${configs[ingress-gateway-certificate-path]+_} && ${#configs[ingress-gateway-certificate-path]} -ge 1 ]]; then
     kubectl create -n istio-system secret tls istio-ingressgateway-certs \
@@ -616,6 +634,8 @@ forward() {
 }
 
 unforward() {
+  check ${FUNCNAME[0]}
+
   [ ! -z "${@}" ] || ps -ef | grep -E 'kubectl.*port-forward' | grep -v grep | awk '{print $2}' | xargs kill -9
 
   for ua in ${@}; do
@@ -628,6 +648,8 @@ unforward() {
 }
 
 tokenDashboard() {
+  check ${FUNCNAME[0]}
+
   case "${configs[os]}" in
     ${os[osx]}) kubectl -n dashboard describe secret $(kubectl -n dashboard get secret | \
       grep admin-user | awk '{print $1}') | grep ^token | cut -d: -f2 | tr -d '[:space:]' | \
@@ -681,6 +703,8 @@ cliRedis() {
 }
 
 uninstallNamespace() {
+  check ${FUNCNAME[0]}
+
   for ns in ${@}; do
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
@@ -696,39 +720,50 @@ uninstallSimulator() {
 }
 
 uninstallFallbackCertificate() {
+  check ${FUNCNAME[0]}
+
   kubectl get secret gateway-fallback > /dev/null 2>&1 &&
     kubectl delete secret gateway-fallback
 }
 
 uninstallIngressGatewayCertificate() {
+  check ${FUNCNAME[0]}
+
   kubectl get secret istio-ingressgateway-certs > /dev/null 2>&1 &&
     kubectl delete secret istio-ingressgateway-certs
 }
 
 uninstallMetricsAdapter() {
+  check ${FUNCNAME[0]}
+
   helm status kube-metrics-adapter > /dev/null 2>&1 && helm delete --purge kube-metrics-adapter
 }
 
 uninstallMds() {
   check ${FUNCNAME[0]}
+
   helm delete --purge mds ${configs[dryrun]:+--dry-run}
   uninstallNamespace ${configs[namespace-mds]}
 }
 
 uninstallMetrics() {
   check ${FUNCNAME[0]}
+
   helm delete --purge metrics ${configs[dryrun]:+--dry-run}
   uninstallNamespace metrics
 }
 
 uninstallLogging() {
   check ${FUNCNAME[0]}
+
   helm delete --purge logging ${configs[dryrun]:+--dry-run}
   # todo: ns/util may host more apps then logging
   #uninstallNamespace ${configs[namespace-logging]}
 }
 
 uninstallKiali() {
+  check ${FUNCNAME[0]}
+
   unforward kiali
   helm delete --purge kiali
   uninstallNamespace kiali
@@ -738,6 +773,8 @@ uninstallKiali() {
 }
 
 uninstallIstio() {
+  check ${FUNCNAME[0]}
+
   kubectl get namespace istio-system > /dev/null 2>&1 && {
     check ${FUNCNAME[0]}
     helm delete --purge istio ${configs[dryrun]:+--dry-run}
@@ -750,6 +787,8 @@ uninstallIstio() {
 }
 
 uninstallDashboard() {
+  check ${FUNCNAME[0]}
+
   unforward dashboard
   helm delete --purge dashboard
   uninstallNamespace dashboard
@@ -759,6 +798,8 @@ uninstallDashboard() {
 }
 
 uninstallTiller() {
+  check ${FUNCNAME[0]}
+
   if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "0" ]; then
     kubectl delete serviceaccount tiller --namespace kube-system
     kubectl delete clusterrolebinding tiller-clusterrolebinding
@@ -770,6 +811,8 @@ uninstallTiller() {
 
 #todo: purge
 uninstallHelm() {
+  check ${FUNCNAME[0]}
+
   case "${configs[os]}" in
     ${os[osx]}) ;; #brew uninstall kubernetes-helm;;
     *) usage "unsupported os: ${configs[os]}";;
@@ -810,6 +853,16 @@ forwardIfNeeded() {
   unset gp
 }
 
+context() {
+  hash kubectl && {
+    [[ -z ${context+x} && "$(lower $(kubectl config current-context))" =~ ^(${configs[local-context]})$ ]] || {
+      v=yes
+      [[ "$(prompt "confirm you want to proceed: [${v}/no] ")" != "${v}" ]] && usage "opted to exit" || context=true
+      unset v
+    }
+  }
+}
+
 check() {
   case "${1}" in
     $(basename ${0}))
@@ -824,6 +877,7 @@ check() {
       done; unset d;;
       # todo: include cluster connection check where needed if not globally
       #kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster"
+    * | install* | uninstall*) context;&
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installHelm | installBookinfo) ;;
