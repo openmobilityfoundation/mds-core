@@ -354,7 +354,7 @@ async function readDevices(device_ids: UUID[]) {
 
 async function readDeviceStatus(device_id: UUID) {
   // Read event and device in parallel, catching NotFoundErrors
-  const promises = [readEvent(device_id), readDevice(device_id)].map(p =>
+  const promises = [readEvent(device_id), readDevice(device_id)].map((p: Promise<{}>) =>
     /* eslint-disable-next-line promise/prefer-await-to-callbacks */
     p.catch((err: Error) => {
       if (err.name !== 'NotFoundError') {
