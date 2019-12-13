@@ -353,40 +353,25 @@ async function readDevices(device_ids: UUID[]) {
 }
 
 async function readDeviceStatus(device_id: UUID) {
-  let event: VehicleEvent
-  let device: Device
-  const cachedInfo = []
-  try {
-    event = await readEvent(device_id)
-    cachedInfo.push(event)
-  } catch (err) {
-    if (err.name !== 'NotFoundError') {
-      throw err
-    }
-    log.info('Missing vehicle event', 'device_id', device_id)
-  }
-  try {
-    device = await readDevice(device_id)
-    cachedInfo.push(device)
-  } catch (err) {
-    if (err.name !== 'NotFoundError') {
-      throw err
-    }
-    log.info('Missing vehicle device', 'device_id', device_id)
-  }
-
+  // Read event and device in parallel, catching NotFoundErrors
+  const promises = [readEvent(device_id), readDevice(device_id)].map(p =>
+    /* eslint-disable-next-line promise/prefer-await-to-callbacks */
+    p.catch((err: Error) => {
+      if (err.name !== 'NotFoundError') {
+        throw err
+      }
+    })
+  )
+  const results = await Promise.all(promises).catch(err => log.error('Error reading device status', err))
   const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-  cachedInfo.map(item => {
-    deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
-    Object.assign(deviceStatusMap[item.device_id], item)
-  })
+  results
+    .filter((item: CachedItem) => item !== undefined)
+    .map((item: CachedItem) => {
+      deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+      Object.assign(deviceStatusMap[item.device_id], item)
+    })
   const statuses = Object.values(deviceStatusMap)
-  const statusWithTelemetry = statuses.find((status: any) => status.telemetry)
-  if (statusWithTelemetry === undefined) {
-    log.info('Missing vehicle telemetry', 'device_id', device_id)
-    return statuses[0]
-  }
-  return statusWithTelemetry
+  return statuses.find((status: any) => status.telemetry) || statuses[0] || null
 }
 
 /* eslint-reason redis external lib weirdness */

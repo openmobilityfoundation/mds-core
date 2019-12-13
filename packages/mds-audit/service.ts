@@ -172,7 +172,7 @@ export async function getVehicle(provider_id: UUID, vehicle_id: string) {
   if (!device) {
     return null
   }
-  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as VehicleEvent & Device
+  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device) | null
   if (deviceStatus !== null) {
     const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
     const updated = deviceStatus.timestamp
