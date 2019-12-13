@@ -1,3 +1,1 @@
-import { getSettings } from './client'
-
-export default { getSettings }
+export { client } from './client'
