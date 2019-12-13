@@ -14,6 +14,7 @@ const TABLE = Enum(
   'migrations',
   'policies',
   'policy_metadata',
+  'stops',
   'telemetry'
 )
 export type TABLE_NAME = keyof typeof TABLE
@@ -22,6 +23,7 @@ const DEPRECATED_PROVIDER_TABLES = ['status_changes', 'trips']
 
 const COLUMN = Enum(
   'accuracy',
+  'address',
   'altitude',
   'attachment_filename',
   'attachment_id',
@@ -32,7 +34,9 @@ const COLUMN = Enum(
   'audit_subject_id',
   'audit_trip_id',
   'base_url',
+  'capacity',
   'charge',
+  'cross_street',
   'deleted',
   'description',
   'device_id',
@@ -46,15 +50,23 @@ const COLUMN = Enum(
   'id',
   'lat',
   'lng',
+  'location_type',
   'mfgr',
   'migration',
   'mimetype',
   'model',
   'name',
   'note',
+  'num_spots_available',
+  'num_spots_disabled',
+  'num_vehicles_available',
+  'num_vehicles_disabled',
+  'parking_verification_url',
+  'platform_code',
   'policy_id',
   'policy_json',
   'policy_metadata',
+  'post_code',
   'prev_geographies',
   'propulsion_type',
   'propulsion',
@@ -64,17 +76,25 @@ const COLUMN = Enum(
   'provider_vehicle_id',
   'publish_date',
   'recorded',
+  'rental_methods',
+  'reservation_cost',
   'service_area_id',
+  'short_name',
   'speed',
+  'stop_id',
+  'stop_name',
   'telemetry_timestamp',
   'thumbnail_filename',
   'thumbnail_mimetype',
   'timestamp',
+  'timezone',
   'trip_id',
   'type',
   'vehicle_id',
   'vehicle_type',
-  'year'
+  'wheelchair_boarding',
+  'year',
+  'zone_id'
 )
 export type COLUMN_NAME = keyof typeof COLUMN
 const COLUMNS = Object.keys(COLUMN) as COLUMN_NAME[]
@@ -173,6 +193,29 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.altitude,
     COLUMN.charge,
     COLUMN.recorded
+  ],
+  [TABLE.stops]: [
+    COLUMN.id,
+    COLUMN.stop_id,
+    COLUMN.stop_name,
+    COLUMN.short_name,
+    COLUMN.platform_code,
+    COLUMN.geography_id,
+    COLUMN.zone_id,
+    COLUMN.address,
+    COLUMN.post_code,
+    COLUMN.rental_methods,
+    COLUMN.capacity,
+    COLUMN.location_type,
+    COLUMN.timezone,
+    COLUMN.cross_street,
+    COLUMN.num_vehicles_available,
+    COLUMN.num_vehicles_disabled,
+    COLUMN.num_spots_available,
+    COLUMN.num_spots_disabled,
+    COLUMN.wheelchair_boarding,
+    COLUMN.reservation_cost,
+    COLUMN.recorded
   ]
 }
 
@@ -188,11 +231,13 @@ const TABLE_KEY: { [T in TABLE_NAME]: COLUMN_NAME[] } = {
   [TABLE.migrations]: [COLUMN.migration],
   [TABLE.policies]: [COLUMN.policy_id],
   [TABLE.policy_metadata]: [COLUMN.policy_id],
+  [TABLE.stops]: [COLUMN.stop_id],
   [TABLE.telemetry]: [COLUMN.device_id, COLUMN.timestamp]
 }
 
 const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.accuracy]: 'real',
+  [COLUMN.address]: 'varchar(255)',
   [COLUMN.altitude]: 'real',
   [COLUMN.attachment_filename]: 'varchar(64) NOT NULL',
   [COLUMN.attachment_id]: 'uuid NOT NULL',
@@ -203,7 +248,9 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.audit_subject_id]: 'varchar(255) NOT NULL',
   [COLUMN.audit_trip_id]: 'uuid NOT NULL',
   [COLUMN.base_url]: 'varchar(127) NOT NULL',
+  [COLUMN.capacity]: 'jsonb',
   [COLUMN.charge]: 'real',
+  [COLUMN.cross_street]: 'varchar(255)',
   [COLUMN.deleted]: 'bigint',
   [COLUMN.description]: 'varchar(255)',
   [COLUMN.device_id]: 'uuid NOT NULL',
@@ -217,15 +264,23 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.id]: 'bigint GENERATED ALWAYS AS IDENTITY',
   [COLUMN.lat]: 'double precision NOT NULL',
   [COLUMN.lng]: 'double precision NOT NULL',
+  [COLUMN.location_type]: 'varchar(255)',
   [COLUMN.mfgr]: 'varchar(127)',
   [COLUMN.migration]: 'varchar(255) NOT NULL',
   [COLUMN.mimetype]: 'varchar(255) NOT NULL',
   [COLUMN.model]: 'varchar(127)',
   [COLUMN.name]: 'varchar(255)',
   [COLUMN.note]: 'varchar(255)',
+  [COLUMN.num_vehicles_available]: 'jsonb NOT NULL',
+  [COLUMN.num_vehicles_disabled]: 'jsonb',
+  [COLUMN.num_spots_available]: 'jsonb NOT NULL',
+  [COLUMN.num_spots_disabled]: 'jsonb',
+  [COLUMN.parking_verification_url]: 'varchar(255)',
+  [COLUMN.platform_code]: 'varchar(255)',
   [COLUMN.policy_id]: 'uuid NOT NULL',
   [COLUMN.policy_json]: 'json NOT NULL',
   [COLUMN.policy_metadata]: 'json',
+  [COLUMN.post_code]: 'varchar(255)',
   [COLUMN.prev_geographies]: 'uuid[]',
   [COLUMN.propulsion_type]: 'varchar(31)[] NOT NULL',
   [COLUMN.propulsion]: 'varchar(31)[] NOT NULL',
@@ -235,17 +290,25 @@ const COLUMN_TYPE: { [C in COLUMN_NAME]: string } = {
   [COLUMN.provider_vehicle_id]: 'varchar(255) NOT NULL',
   [COLUMN.publish_date]: 'bigint',
   [COLUMN.recorded]: 'bigint NOT NULL', // timestamp of when record was created
+  [COLUMN.rental_methods]: 'varchar(255)',
+  [COLUMN.reservation_cost]: 'jsonb',
   [COLUMN.service_area_id]: 'uuid',
+  [COLUMN.short_name]: 'varchar(31)',
   [COLUMN.speed]: 'real',
+  [COLUMN.stop_id]: 'uuid NOT NULL',
+  [COLUMN.stop_name]: 'varchar(255) NOT NULL',
   [COLUMN.telemetry_timestamp]: 'bigint',
   [COLUMN.thumbnail_filename]: 'varchar(64)',
   [COLUMN.thumbnail_mimetype]: 'varchar(64)',
   [COLUMN.timestamp]: 'bigint NOT NULL',
+  [COLUMN.timezone]: 'varchar(255)',
   [COLUMN.trip_id]: 'uuid',
   [COLUMN.type]: 'varchar(31) NOT NULL',
   [COLUMN.vehicle_id]: 'varchar(255) NOT NULL',
   [COLUMN.vehicle_type]: 'varchar(31) NOT NULL',
-  [COLUMN.year]: 'smallint'
+  [COLUMN.wheelchair_boarding]: 'bool DEFAULT FALSE',
+  [COLUMN.year]: 'smallint',
+  [COLUMN.zone_id]: 'varchar(255)'
 }
 
 export default {

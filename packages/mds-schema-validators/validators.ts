@@ -28,7 +28,8 @@ import {
   RULE_TYPES,
   UUID,
   Timestamp,
-  Telemetry
+  Telemetry,
+  Stop
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
@@ -209,6 +210,43 @@ const auditIssueCodeSchema = stringSchema.max(31)
 
 const auditNoteSchema = stringSchema.max(255)
 
+const vehicleTypesCountMapSchema = Joi.object().keys({
+  scooter: Joi.number(),
+  bicycle: Joi.number(),
+  car: Joi.number(),
+  moped: Joi.number()
+})
+
+const stopSchema = Joi.object().keys({
+  stop_id: uuidSchema.required(),
+  stop_name: stringSchema.required(),
+  short_name: stringSchema.optional(),
+  platform_code: stringSchema.optional(),
+  geography_id: uuidSchema.optional(),
+  lat: numberSchema
+    .min(-90)
+    .max(90)
+    .required(),
+  lng: numberSchema
+    .min(-180)
+    .max(180)
+    .required(),
+  zone_id: uuidSchema.optional(),
+  address: stringSchema.optional(),
+  post_code: stringSchema.optional(),
+  rental_methods: stringSchema.optional(),
+  capacity: vehicleTypesCountMapSchema.required(),
+  location_type: stringSchema.optional(),
+  timezone: stringSchema.optional(),
+  cross_street: stringSchema.optional(),
+  num_vehicles_available: vehicleTypesCountMapSchema.required(),
+  num_vehicles_disabled: vehicleTypesCountMapSchema.optional(),
+  num_spots_available: vehicleTypesCountMapSchema.required(),
+  num_spots_disabled: vehicleTypesCountMapSchema.optional(),
+  wheelchair_boarding: Joi.bool(),
+  reservation_cost: vehicleTypesCountMapSchema.optional()
+})
+
 const Format = (property: string, error: Joi.ValidationError): string => {
   const [{ message, path }] = error.details
   const [, ...details] = message.split(' ')
@@ -248,6 +286,17 @@ export const isValidAuditTripId = (
 
 interface AuditEventValidatorOptions extends ValidatorOptions {
   accept: AUDIT_EVENT_TYPE[]
+}
+
+export const isValidStop = (value: unknown): value is Stop => {
+  const { error } = Joi.validate(value, stopSchema)
+  if (error) {
+    throw new ValidationError('invalid_stop', {
+      value,
+      details: Format('stop', error)
+    })
+  }
+  return true
 }
 
 export const isValidDeviceId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>

@@ -72,6 +72,7 @@ import {
   getMostRecentTelemetryByProvider
 } from './telemetry'
 
+import { writeStop, readStop, readStops } from './stops'
 import {
   deleteAttachment,
   deleteAuditAttachment,
@@ -235,5 +236,8 @@ export = {
   getEventsLast24HoursPerProvider,
   readEventsWithTelemetry,
   readTripIds,
-  readEventsForStatusChanges
+  readEventsForStatusChanges,
+  writeStop,
+  readStop,
+  readStops
 }

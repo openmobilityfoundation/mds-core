@@ -1,7 +1,8 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import areas from 'ladot-service-areas'
 import log from '@mds-core/mds-logger'
-import { isUUID, now, ServerError } from '@mds-core/mds-utils'
+import { isUUID, now, ServerError, ValidationError, NotFoundError } from '@mds-core/mds-utils'
+import { isValidStop } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
@@ -445,5 +446,53 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
       result: 'no valid telemetry submitted',
       failures: [`device_id ${data[0].device_id}: not found`]
     })
+  }
+}
+
+export const registerStop = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  const stop = req.body
+
+  try {
+    isValidStop(stop)
+    const recorded_stop = await db.writeStop(stop)
+    return res.status(201).send(recorded_stop)
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return res.status(404).send(err.message)
+    }
+    if (err instanceof ValidationError) {
+      return res.status(400).send({ error: err })
+    }
+
+    return res.status(500).send(new ServerError())
+  }
+}
+
+export const readStop = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  const { stop_id } = req.params
+  try {
+    const recorded_stop = await db.readStop(stop_id)
+
+    if (!recorded_stop) {
+      return res.status(404).send(new NotFoundError())
+    }
+
+    res.status(200).send(recorded_stop)
+  } catch (err) {
+    res.status(500).send(new ServerError())
+  }
+}
+
+export const readStops = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+  try {
+    const stops = await db.readStops()
+
+    if (!stops) {
+      return res.status(404).send(new NotFoundError())
+    }
+
+    res.status(200).send(stops)
+  } catch (err) {
+    return res.status(500).send(new ServerError())
   }
 }
