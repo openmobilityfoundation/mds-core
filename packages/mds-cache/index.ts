@@ -392,10 +392,17 @@ async function readDeviceStatus(device_id: UUID) {
 /* eslint-reason redis external lib weirdness */
 /* eslint-disable promise/prefer-await-to-then */
 /* eslint-disable promise/catch-or-return */
-async function readDevicesStatus(query: { since?: number; skip?: number; take?: number; bbox: BoundingBox }) {
+async function readDevicesStatus(query: {
+  since?: number
+  skip?: number
+  take?: number
+  bbox: BoundingBox
+  strict?: boolean
+}) {
   log.info('readDevicesStatus', JSON.stringify(query), 'start')
   const start = query.since || 0
   const stop = now()
+  const strictChecking = query.strict
 
   log.info('redis zrangebyscore device-ids', start, stop)
   const client = await getClient()
@@ -418,12 +425,12 @@ async function readDevicesStatus(query: { since?: number; skip?: number; take?: 
       try {
         const parsedItem = parseEvent(item)
         if (
-          EVENT_STATUS_MAP[parsedItem.event_type] !== VEHICLE_STATUSES.removed &&
-          parsedItem.telemetry &&
-          isInsideBoundingBox(parsedItem.telemetry, query.bbox)
+          EVENT_STATUS_MAP[parsedItem.event_type] === VEHICLE_STATUSES.removed ||
+          !parsedItem.telemetry ||
+          (strictChecking && !isInsideBoundingBox(parsedItem.telemetry, query.bbox))
         )
-          return [...acc, parsedItem]
-        return acc
+          return acc
+        return [...acc, parsedItem]
       } catch (err) {
         return acc
       }

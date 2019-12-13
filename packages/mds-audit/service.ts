@@ -189,7 +189,8 @@ export async function getVehicles(
   url: string,
   provider_id: string,
   reqQuery: { [x: string]: string },
-  bbox: BoundingBox
+  bbox: BoundingBox,
+  strict = true
 ) {
   function fmt(query: { skip: number; take: number }): string {
     const flat: { [key: string]: number } = { ...reqQuery, ...query }
@@ -201,7 +202,7 @@ export async function getVehicles(
   }
 
   const start = now()
-  const statusesSuperset = ((await cache.readDevicesStatus({ bbox })) as (VehicleEvent & Device)[]).filter(
+  const statusesSuperset = ((await cache.readDevicesStatus({ bbox, strict })) as (VehicleEvent & Device)[]).filter(
     status =>
       EVENT_STATUS_MAP[status.event_type as VEHICLE_EVENT] !== VEHICLE_STATUSES.removed &&
       (!provider_id || status.provider_id === provider_id)
