@@ -49,3 +49,8 @@ apis:
     pathPrefix: /config
     version: ${CONFIG_VERSION}
     migration: false
+  mds-web-sockets:
+    enabled: true
+    pathPrefix: /web-sockets
+    version: ${WEB_SOCKETS_VERSION}
+    migration: false

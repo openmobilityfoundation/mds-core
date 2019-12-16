@@ -13,6 +13,7 @@
     { "path": "../../packages/mds-stream/tsconfig.build.json" },
     { "path": "../../packages/mds-test-data/tsconfig.build.json" },
     { "path": "../../packages/mds-types/tsconfig.build.json" },
-    { "path": "../../packages/mds-utils/tsconfig.build.json" }
+    { "path": "../../packages/mds-utils/tsconfig.build.json" },
+    { "path": "../../packages/mds-web-sockets/tsconfig.build.json" }
   ]
 }
