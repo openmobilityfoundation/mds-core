@@ -1,7 +1,7 @@
 import log from '@mds-core/mds-logger'
 
 import { updateSchema } from './migration'
-import { logSql, configureClient, MDSPostgresClient } from './sql-utils'
+import { logSql, configureClient, MDSPostgresClient, SqlVals } from './sql-utils'
 
 const { env } = process
 
@@ -84,11 +84,12 @@ export async function getWriteableClient(): Promise<MDSPostgresClient> {
 
 /* eslint-reason ambigous helper function that wraps a query as Readonly */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export async function makeReadOnlyQuery(sql: string): Promise<any[]> {
+export async function makeReadOnlyQuery(sql: string, vals?: SqlVals): Promise<any[]> {
   try {
+    const values = vals?.values()
     const client = await getReadOnlyClient()
     await logSql(sql)
-    const result = await client.query(sql)
+    const result = await client.query(sql, values)
     return result.rows
   } catch (err) {
     await log.error(`error with SQL query ${sql}`, err.stack || err)
