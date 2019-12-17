@@ -40,7 +40,8 @@ export class Clients {
   public saveAuth(token: string, client: WebSocket) {
     try {
       const auth = WebSocketAuthorizer(token)
-      if (auth) {
+      const scopes = auth?.scope.split(' ') ?? []
+      if (scopes.includes('admin:all')) {
         this.authenticatedClients.push(client)
         client.send('Authentication success!')
       } else client.send(new AuthorizationError())
