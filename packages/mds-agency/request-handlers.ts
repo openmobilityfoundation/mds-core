@@ -20,7 +20,7 @@ import {
   UUID
 } from '@mds-core/mds-types'
 import urls from 'url'
-import socket from '@mds-core/mds-web-sockets'
+import * as socket from '@mds-core/mds-web-sockets'
 import {
   badDevice,
   getVehicles,
