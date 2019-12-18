@@ -21,7 +21,7 @@
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "server": "yarn watch server",
+    "server": "yarn watch launch_server",
     "client": "yarn watch client",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",

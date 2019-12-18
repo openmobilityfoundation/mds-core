@@ -14,7 +14,9 @@ const {
 export const WebSocketServer = () => {
   const server = ApiServer(app => app).listen(PORT, () => log.info(`${npm_package_name} running on port ${PORT}`))
 
+  log.info('Creating WS server')
   const wss = new WebSocket.Server({ server })
+  log.info('WS Server created!')
 
   setWsHeartbeat(
     wss,
@@ -100,5 +102,3 @@ export const WebSocketServer = () => {
     })
   })
 }
-
-WebSocketServer()
