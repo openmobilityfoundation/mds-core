@@ -1,6 +1,8 @@
 import db from '@mds-core/mds-db'
-import { inc, RuntimeError, ServerError } from '@mds-core/mds-utils'
-import { EVENT_STATUS_MAP } from '@mds-core/mds-types'
+import { inc, RuntimeError, ServerError, isUUID, BadParamsError, parseRelative } from '@mds-core/mds-utils'
+import { EVENT_STATUS_MAP, VEHICLE_TYPES, UUID, VEHICLE_TYPE } from '@mds-core/mds-types'
+import { Parser } from 'json2csv'
+import fs from 'fs'
 
 import log from '@mds-core/mds-logger'
 import {
@@ -13,9 +15,10 @@ import {
   GetEventCountsResponse,
   TelemetryCountsResponse,
   StateSnapshot,
-  EventSnapshot
+  EventSnapshot,
+  GetAllResponse
 } from './types'
-import { getTimeBins } from './utils'
+import { getTimeBins, normalizeToArray, getBinSize } from './utils'
 
 export async function getStateSnapshot(req: MetricsApiRequest, res: GetStateSnapshotResponse) {
   const { body } = req
@@ -186,4 +189,125 @@ export async function getEventCounts(req: MetricsApiRequest, res: GetEventCounts
     await log.error(error)
     res.status(500).send(new ServerError(error))
   }
+}
+
+/*
+  This method simply returns the time-binned metrics table rows with some basic querying.
+
+  This method is a stopgap so the FE has something to display.
+
+  It is scheduled to be replaced with methods that have better querying support
+  and finer-grained field-fetching a la GraphQL.
+
+  **Note: unlike the above methods, this method exclusively uses URL query params**
+*/
+
+export async function getAll(req: MetricsApiRequest, res: GetAllResponse) {
+  const { query } = req
+  const bin_size = getBinSize(query.bin_size)
+
+  const { start_time, end_time } = parseRelative(query.start || 'today', query.end || 'now')
+  const slices = bin_size
+    .map(currBinSize => {
+      return getTimeBins({
+        bin_size: currBinSize,
+        start_time,
+        end_time
+      })
+    })
+    .reduce((prevSlices, currSlices) => {
+      return prevSlices.concat(currSlices)
+    }, [])
+  const provider_ids = normalizeToArray<UUID>(query.provider_id)
+  const vehicle_types = normalizeToArray<VEHICLE_TYPE>(query.vehicle_type)
+  const format: string | 'json' | 'tsv' = query.format || 'json'
+
+  if (format !== 'json' && format !== 'tsv') {
+    return res.status(400).send(new BadParamsError(`Bad format query param: ${format}`))
+  }
+
+  for (const currProviderId of provider_ids) {
+    if (!isUUID(currProviderId)) {
+      return res.status(400).send(new BadParamsError(`provider_id ${currProviderId} is not a UUID`))
+    }
+  }
+
+  for (const currVehicleType of vehicle_types) {
+    if (!Object.values(VEHICLE_TYPES).includes(currVehicleType)) {
+      return res.status(400).send(new BadParamsError(`vehicle_type ${currVehicleType} is not a valid vehicle type`))
+    }
+  }
+
+  try {
+    if (format === 'json') {
+      const bucketedMetrics = await Promise.all(
+        slices.map(slice => {
+          const { start, end } = slice
+          return db.getAllMetrics({
+            start_time: start,
+            end_time: end,
+            geography_id: null,
+            provider_ids,
+            vehicle_types
+          })
+        })
+      )
+
+      const bucketedMetricsWithTimeSlice = bucketedMetrics.map((bucketedMetricsRow, idx) => {
+        const slice = slices[idx]
+        return { data: bucketedMetricsRow, ...slice }
+      })
+
+      return res.status(200).send(bucketedMetricsWithTimeSlice)
+    }
+    if (format === 'tsv') {
+      const parser = new Parser({
+        delimiter: '\t'
+      })
+      const metricsRows = await db.getAllMetrics({
+        start_time,
+        end_time,
+        geography_id: null,
+        provider_ids,
+        vehicle_types
+      })
+      const metricsRowsTsv = parser.parse(metricsRows)
+
+      return res.status(200).send(metricsRowsTsv)
+    }
+    // We should never fall out to this case
+    return res.status(500).send(new ServerError('Unexpected error'))
+  } catch (error) {
+    await log.error(error)
+    res.status(500).send(new ServerError(error))
+  }
+}
+
+export async function getAllStubbed(req: MetricsApiRequest, res: GetAllResponse) {
+  const { query } = req
+  // const bin_size = getBinSizeFromQuery(query)
+
+  // const { start_time, end_time } = parseRelative(query.start || 'today', query.end || 'now')
+  // const slices = getTimeBins({
+  //   bin_size,
+  //   start_time,
+  //   end_time
+  // })
+  const provider_id = query.provider_id || null
+  const vehicle_type = query.vehicle_type || null
+  const format: string | 'json' | 'tsv' = query.format || 'json'
+
+  if (format !== 'json' && format !== 'tsv') {
+    return res.status(400).send(new BadParamsError(`Bad format query param: ${format}`))
+  }
+
+  if (provider_id !== null && !isUUID(provider_id))
+    return res.status(400).send(new BadParamsError(`provider_id ${provider_id} is not a UUID`))
+
+  // TODO test validation
+  if (vehicle_type !== null && !Object.values(VEHICLE_TYPES).includes(vehicle_type))
+    return res.status(400).send(new BadParamsError(`vehicle_type ${vehicle_type} is not a valid vehicle type`))
+
+  const tsvStub = fs.readFileSync('./metrics-sample-v1.tsv').toString()
+  return res.status(200).send(tsvStub)
 }

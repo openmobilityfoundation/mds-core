@@ -1,5 +1,5 @@
 declare module 'ladot-service-areas' {
-  import { Geometry } from 'geojson'
+  import { Geometry, MultiPolygon } from 'geojson'
 
   export interface ServiceArea {
     start_date: number
@@ -8,7 +8,7 @@ declare module 'ladot-service-areas' {
     replacement_area: string | null
     type: string
     description: string
-    area: Geometry
+    area: MultiPolygon
   }
 
   export const serviceAreaMap: { [key: string]: ServiceArea }

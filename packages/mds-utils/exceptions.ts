@@ -10,60 +10,66 @@ const reason = (error?: Error | string) => (error instanceof Error ? error.messa
 /* istanbul ignore next */
 export class ServerError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('ServerError', reason(error))
+    super('ServerError', reason(error), info)
   }
 }
 
 /* istanbul ignore next */
 export class NotFoundError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('NotFoundError', reason(error))
+    super('NotFoundError', reason(error), info)
   }
 }
 
 /* istanbul ignore next */
 export class ConflictError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('ConflictError', reason(error))
+    super('ConflictError', reason(error), info)
   }
 }
 
 /* istanbul ignore next */
 export class AuthorizationError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('AuthorizationError', reason(error))
+    super('AuthorizationError', reason(error), info)
   }
 }
 
 /* istanbul ignore next */
 export class RuntimeError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('RuntimeError', reason(error))
+    super('RuntimeError', reason(error), info)
   }
 }
 
 /* istanbul ignore next */
 export class ValidationError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('ValidationError', reason(error))
+    super('ValidationError', reason(error), info)
   }
 }
 
 /* istanbul ignore next */
 export class BadParamsError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('BadParamsError', reason(error))
+    super('BadParamsError', reason(error), info)
   }
 }
 
 export class AlreadyPublishedError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('AlreadyPublishedError', reason(error))
+    super('AlreadyPublishedError', reason(error), info)
   }
 }
 
 export class UnsupportedTypeError extends BaseError {
   public constructor(error?: Error | string, public info?: unknown) {
-    super('UnsupportedTypeError', reason(error))
+    super('UnsupportedTypeError', reason(error), info)
+  }
+}
+
+export class ParseError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('ParseError', reason(error), info)
   }
 }

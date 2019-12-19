@@ -2,6 +2,7 @@ import fs from 'fs'
 import { format, normalize } from 'path'
 import { homedir } from 'os'
 import { promisify } from 'util'
+import logger from '@mds-core/mds-logger'
 import { NotFoundError, UnsupportedTypeError } from '@mds-core/mds-utils'
 import JSON5 from 'json5'
 
@@ -33,19 +34,14 @@ const readFile = async (path: string): Promise<string> => {
   }
 }
 
-const asJson = <TSettings extends {}>(utf8: string): TSettings => {
-  try {
-    const json: TSettings = JSON5.parse(utf8)
-    return json
-  } catch (error) {
-    throw new UnsupportedTypeError('Settings File must contain JSON', error)
-  }
-}
-
 const readJsonFile = async <TSettings extends {}>(property: string): Promise<TSettings> => {
   const path = await getFilePath(property)
   const file = await readFile(path)
-  return asJson<TSettings>(file)
+  try {
+    return JSON5.parse(file)
+  } catch (error) {
+    throw new UnsupportedTypeError('Settings File must contain JSON', { error, path })
+  }
 }
 
 export const client = {
@@ -54,5 +50,18 @@ export const client = {
       (Array.isArray(properties) ? properties : [properties]).map(property => readJsonFile(property))
     )
     return settings.reduce<TConfig>((config, setting) => Object.assign(config, setting), {} as TConfig)
+  }
+}
+
+export const ConfigManager = <TConfig extends {} = {}>(properties: string | string[]) => {
+  let config: TConfig | null = null
+  return {
+    getConfig: async (): Promise<TConfig> => {
+      if (config === null) {
+        config = await client.getSettings<TConfig>(properties)
+        logger.info('Loaded Configuration', properties, config)
+      }
+      return config
+    }
   }
 }

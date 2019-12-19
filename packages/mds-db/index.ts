@@ -82,6 +82,19 @@ import {
   writeAuditAttachment
 } from './attachments'
 
+import {
+  getStates,
+  getTrips,
+  getTripCount,
+  getVehicleTripCount,
+  getLateEventCount,
+  getLateTelemetryCount,
+  insertDeviceStates,
+  insertTrips,
+  insertMetrics,
+  getAllMetrics
+} from './processors'
+
 async function initialize() {
   const client: MDSPostgresClient = await getWriteableClient()
   await dropTables(client)
@@ -199,6 +212,15 @@ export = {
   readAuditAttachments,
   writeAttachment,
   writeAuditAttachment,
+  getStates,
+  getTrips,
+  getTripCount,
+  getVehicleTripCount,
+  getLateEventCount,
+  getLateTelemetryCount,
+  insertDeviceStates,
+  insertTrips,
+  insertMetrics,
   readGeographies,
   readGeographySummaries,
   writeGeography,
@@ -237,6 +259,7 @@ export = {
   readEventsWithTelemetry,
   readTripIds,
   readEventsForStatusChanges,
+  getAllMetrics,
   writeStop,
   readStop,
   readStops

@@ -41,99 +41,91 @@ const about = () => {
   }
 }
 
-interface ApiServerOptions {
-  authorizer: ApiAuthorizer
-  handleCors: boolean
+export const RequestLoggingMiddleware = () =>
+  morgan(
+    (tokens, req: ApiRequest, res: ApiResponse) =>
+      [
+        ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'),
+        '-',
+        tokens['response-time'](req, res),
+        'ms'
+      ].join(' '),
+    {
+      skip: (req: ApiRequest, res: ApiResponse) => {
+        // By default only log 400/500 errors
+        const { API_REQUEST_LOG_LEVEL = 0 } = process.env
+        return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
+      },
+      // Use logger, but remove extra line feed added by morgan stream option
+      stream: { write: msg => logger.info(msg.slice(0, -1)) }
+    }
+  )
+
+export const JsonBodyParserMiddleware = (options: bodyParser.OptionsJson) => bodyParser.json(options)
+
+type CorsMiddlewareOptions = { handleCors: boolean }
+export const CorsMiddleware = ({ handleCors = false }: Partial<CorsMiddlewareOptions> = {}) =>
+  handleCors
+    ? cors() // Server handles CORS
+    : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+        res.header('Access-Control-Allow-Origin', '*')
+        next()
+      }
+
+export const MaintenanceModeMiddleware = () => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+  if (process.env.MAINTENANCE) {
+    return res.status(503).send(about())
+  }
+  next()
+}
+
+type AuthorizerMiddlewareOptions = { authorizer: ApiAuthorizer }
+export const AuthorizerMiddleware = ({
+  authorizer = AuthorizationHeaderApiAuthorizer
+}: Partial<AuthorizerMiddlewareOptions> = {}) => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+  const claims = authorizer(req)
+  res.locals.claims = claims
+  res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
+  next()
+}
+
+export const AboutRequestHandler = async (req: ApiRequest, res: ApiResponse) => {
+  return res.status(200).send(about())
+}
+
+export const HealthRequestHandler = async (req: ApiRequest, res: ApiResponse) => {
+  return res.status(200).send({
+    ...about(),
+    process: process.pid,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  })
 }
 
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
-  options: Partial<ApiServerOptions> = {},
+  { handleCors, authorizer }: Partial<CorsMiddlewareOptions & AuthorizerMiddlewareOptions> = {},
   app: express.Express = express()
 ): express.Express => {
-  const { authorizer, handleCors } = {
-    authorizer: AuthorizationHeaderApiAuthorizer,
-    handleCors: false,
-    ...options
-  }
-
   // Disable x-powered-by header
   app.disable('x-powered-by')
 
   // Middleware
   app.use(
-    //
-    // Request logging
-    //
-    morgan(
-      (tokens, req: ApiRequest, res: ApiResponse) =>
-        [
-          ...(res.locals.claims && res.locals.claims.provider_id ? [res.locals.claims.provider_id] : []),
-          tokens.method(req, res),
-          tokens.url(req, res),
-          tokens.status(req, res),
-          tokens.res(req, res, 'content-length'),
-          '-',
-          tokens['response-time'](req, res),
-          'ms'
-        ].join(' '),
-      {
-        skip: (req: ApiRequest, res: ApiResponse) => {
-          // By default only log 400/500 errors
-          const { API_REQUEST_LOG_LEVEL = 400 } = process.env
-          return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
-        },
-        // Use logger, but remove extra line feed added by morgan stream option
-        stream: { write: msg => logger.info(msg.slice(0, -1)) }
-      }
-    ),
-    //
-    // JSON body parser
-    //
-    bodyParser.json({ limit: '5mb' }),
-    //
-    // CORS
-    //
-    handleCors
-      ? cors() // Server handles CORS
-      : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-          res.header('Access-Control-Allow-Origin', '*')
-          next()
-        },
-    //
-    // Maintenance
-    //
-    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-      if (process.env.MAINTENANCE) {
-        return res.status(503).send(about())
-      }
-      next()
-    },
-    //
-    // Authorizer
-    //
-    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-      const claims = authorizer(req)
-      res.locals.claims = claims
-      res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
-      next()
-    }
+    RequestLoggingMiddleware(),
+    JsonBodyParserMiddleware({ limit: '5mb' }),
+    CorsMiddleware({ handleCors }),
+    MaintenanceModeMiddleware(),
+    AuthorizerMiddleware({ authorizer })
   )
 
-  app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
-    // 200 OK
-    return res.status(200).send(about())
-  })
-
-  app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
-    // 200 OK
-    return res.status(200).send({
-      ...about(),
-      process: process.pid,
-      uptime: process.uptime(),
-      memory: process.memoryUsage()
-    })
-  })
+  // Routes
+  app.get(pathsFor('/'), AboutRequestHandler)
+  app.get(pathsFor('/health'), HealthRequestHandler)
 
   return api(app)
 }

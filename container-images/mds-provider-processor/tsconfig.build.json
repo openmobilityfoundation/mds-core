@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../../packages/mds-event-server/tsconfig.build.json" },
+    { "path": "../../packages/mds-provider-processor/tsconfig.build.json" }
+  ]
+}

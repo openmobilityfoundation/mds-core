@@ -1,0 +1,27 @@
+{
+  "name": "@container-images/mds-trip-processor",
+  "version": "0.1.0",
+  "description": "Docker Image for MDS Trip Processor",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && ../../bin/mdsctl -c:image-name=mds-trip-processor:${npm_package_version} buildImage",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "exit 0"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@mds-core/mds-event-server": "0.1.0",
+    "@mds-core/mds-trip-processor": "0.1.0"
+  },
+  "license": "Apache-2.0"
+}

@@ -7,7 +7,8 @@ import {
   VEHICLE_EVENTS,
   VEHICLE_STATUSES,
   Timestamp,
-  UUID
+  UUID,
+  MetricsTableRow
 } from '@mds-core/mds-types'
 
 export type WithSlice<T> = {
@@ -55,6 +56,12 @@ export type EventCountsResponse = {
   }
 }
 
+export type MetricsAllResponse = {
+  data: MetricsTableRow[] | string
+  start: number
+  end: number
+}
+
 export type GetTimeBinsParams = {
   start_time: Timestamp
   end_time: Timestamp
@@ -69,6 +76,12 @@ export type GetStateSnapshotResponse = MetricsApiResponse<StateSnapshotResponse[
 export type GetEventsSnapshotResponse = MetricsApiResponse<EventSnapshotResponse[]>
 export type GetTelemetryCountsResponse = MetricsApiResponse<TelemetryCountsResponse[]>
 export type GetEventCountsResponse = MetricsApiResponse<EventCountsResponse[]>
+
+export type HourOrDay = 'hour' | 'day'
+
+// This will send either JSON bucketed rows with start/end,
+// or a totally flat tsv string blob
+export type GetAllResponse = MetricsApiResponse<MetricsAllResponse[] | string>
 
 export const instantiateEventSnapshotResponse = (value: number) =>
   Object.keys(VEHICLE_TYPES).reduce(

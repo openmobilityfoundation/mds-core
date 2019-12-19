@@ -1,9 +1,9 @@
-{{- range $key, $api := .Values.apis }}
+{{- range $name, $api := .Values.apis }}
 {{- if $api.enabled }}
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: {{ $key }}-route
+  name: {{ $name }}-route
   namespace: {{ $.Release.Namespace }}
 spec:
   hosts:
@@ -16,7 +16,7 @@ spec:
         regex: {{ printf "^%s($|/.*$)" $api.pathPrefix | quote }}
     route:
     - destination:
-        host: {{ $key }}.{{ $.Release.Namespace}}.svc.cluster.local
+        host: {{ $name }}.{{ $.Release.Namespace}}.svc.cluster.local
         port:
           number: 4000
     corsPolicy:

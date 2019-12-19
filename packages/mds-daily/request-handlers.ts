@@ -6,6 +6,7 @@ import {
   UUID,
   VehicleEvent,
   VEHICLE_STATUSES,
+  RIGHT_OF_WAY_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_EVENT,
   TripsStats,
@@ -36,13 +37,6 @@ const SERVER_ERROR = {
   error: 'server_error',
   error_description: 'an internal server error has occurred and been logged'
 }
-
-const RIGHT_OF_WAY_STATUSES: string[] = [
-  VEHICLE_STATUSES.available,
-  VEHICLE_STATUSES.unavailable,
-  VEHICLE_STATUSES.reserved,
-  VEHICLE_STATUSES.trip
-]
 
 type Item = Pick<Device, 'provider_id' | 'device_id'>
 

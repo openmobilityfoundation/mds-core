@@ -17,7 +17,7 @@
 import logger from '@mds-core/mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import Cloudevent from 'cloudevents-sdk'
+import { BinaryHTTPEmitter, event as cloudevent } from 'cloudevents-sdk/v1'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
 import {
   Stream,
@@ -25,38 +25,36 @@ import {
   ReadStreamResult,
   DEVICE_INDEX_STREAM,
   DEVICE_RAW_STREAM,
-  PROVIDER_EVENT_STREAM,
   ReadStreamOptions,
   StreamItemID
 } from './types'
 
 const { env } = process
 
-/* eslint-reason no cloud-event typings */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-let binding: any = null
+let binding: BinaryHTTPEmitter | null = null
 
-function getBinding() {
+const getBinding = () => {
   if (!binding) {
-    const config = {
+    binding = new BinaryHTTPEmitter({
       method: 'POST',
       url: env.SINK
-    }
-
-    // eslint-disable-next-line new-cap
-    binding = new Cloudevent.bindings['http-binary0.2'](config)
+    })
   }
-
   return binding
 }
 
 async function writeCloudEvent(type: string, data: string) {
-  const cloudevent = new Cloudevent(Cloudevent.specs['0.2'])
-    .type(type)
+  if (!env.SINK || !env.CE_NAME) {
+    return
+  }
+
+  // fixme: unable to set-and-propgate additional ce headers, eg: ce.addExtension('foo', 'bar')
+  const event = cloudevent()
+    .type(`${env.TENANT_ID ?? 'mds'}.${type}`)
     .source(env.CE_NAME)
     .data(data)
 
-  return getBinding().emit(cloudevent)
+  return getBinding().emit(event)
 }
 
 declare module 'redis' {
@@ -108,8 +106,7 @@ let cachedClient: redis.RedisClient | null = null
 
 const STREAM_MAXLEN: { [S in Stream]: number } = {
   'device:index': 10_000,
-  'device:raw': 1_000_000,
-  'provider:event': 100_000
+  'device:raw': 1_000_000
 }
 
 async function getClient() {
@@ -172,22 +169,22 @@ async function writeStreamBatch(stream: Stream, field: string, values: unknown[]
 // put basics of vehicle in the cache
 async function writeDevice(device: Device) {
   if (env.SINK) {
-    return writeCloudEvent('mds.device', JSON.stringify(device))
+    return writeCloudEvent('device', JSON.stringify(device))
   }
   return writeStream(DEVICE_INDEX_STREAM, 'data', device)
 }
 
 async function writeEvent(event: VehicleEvent) {
   if (env.SINK) {
-    return writeCloudEvent('mds.event', JSON.stringify(event))
+    return writeCloudEvent('event', JSON.stringify(event))
   }
-  return Promise.all([DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM].map(stream => writeStream(stream, 'event', event)))
+  return writeStream(DEVICE_RAW_STREAM, 'event', event)
 }
 
 // put latest locations in the cache
 async function writeTelemetry(telemetry: Telemetry[]) {
   if (env.SINK) {
-    await Promise.all(telemetry.map(item => writeCloudEvent('mds.telemetry', JSON.stringify(item))))
+    await Promise.all(telemetry.map(item => writeCloudEvent('telemetry', JSON.stringify(item))))
     return
   }
   const start = now()
@@ -301,6 +298,7 @@ export = {
   reset,
   shutdown,
   startup,
+  writeCloudEvent,
   writeDevice,
   writeEvent,
   writeStream,

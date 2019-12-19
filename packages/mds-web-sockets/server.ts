@@ -8,7 +8,7 @@ import { Clients } from './clients'
 import { ENTITY_TYPE } from './types'
 
 const {
-  env: { npm_package_name, PORT = 4001 }
+  env: { npm_package_name, PORT = 4009 }
 } = process
 
 export const WebSocketServer = () => {

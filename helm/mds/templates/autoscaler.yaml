@@ -1,9 +1,9 @@
-{{- range $key, $api := .Values.apis }}
+{{- range $name, $api := .Values.apis }}
 {{- if $api.enabled }}
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ $key }}-hpa
+  name: {{ $name }}-hpa
   namespace: {{ $.Release.Namespace }}
   annotations:
     metric-config.object.istio-requests-total.prometheus/per-replica: "true"
@@ -11,7 +11,7 @@ metadata:
       sum(
         rate(
           istio_requests_total{
-            destination_workload="{{ $key }}",
+            destination_workload="{{ $name }}",
             destination_workload_namespace="{{ $.Release.Namespace }}"
           }[1m]
         )
@@ -20,7 +20,7 @@ metadata:
         count(
           container_memory_usage_bytes{
             namespace="{{ $.Release.Namespace }}",
-            pod_name=~"{{ $key }}.*"
+            pod_name=~"{{ $name }}.*"
           }
         ) by (pod_name)
       )
@@ -30,7 +30,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ $key }}
+    name: {{ $name }}
   metrics:
     - type: Object
       object:
@@ -38,7 +38,7 @@ spec:
         target:
           apiVersion: v1
           kind: Pod
-          name: {{ $key }}
+          name: {{ $name }}
         targetValue: 10
 ---
 {{- end }}
