@@ -98,6 +98,10 @@ export const WebSocketServer = () => {
         return clients.saveClient(args, ws)
       }
 
+      if (header === 'PING') {
+        return
+      }
+
       return ws.send('Invalid request!')
     })
   })
