@@ -294,13 +294,7 @@ buildImage() {
 }
 
 getBranchSuffix() {
-  case "$(git rev-parse --abbrev-ref HEAD)" in
-    master) suffix="";;
-    develop) suffix="-prerelease";;
-    *) suffix="-unstable";;
-  esac
-
-  echo ${suffix}
+  git rev-parse --abbrev-ref HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
 }
 
 # TODO: DRY
