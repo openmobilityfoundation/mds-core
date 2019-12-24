@@ -38,8 +38,8 @@ async function sendPush(entity: ENTITY_TYPE, data: VehicleEvent | Telemetry) {
   return client.send(`PUSH%${entity}%${JSON.stringify(data)}`)
 }
 
-export function writeTelemetry(telemetry: Telemetry) {
-  return sendPush('TELEMETRIES', telemetry)
+export function writeTelemetry(telemetries: Telemetry[]) {
+  return telemetries.map(telemetry => sendPush('TELEMETRIES', telemetry))
 }
 
 export function writeEvent(event: VehicleEvent) {
