@@ -108,6 +108,11 @@ spec:
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
           {{- end }}
+          {{- if hasKey $.Values "global" }}
+          {{- if hasKey $.Values.global "env" }}
+{{ toYaml $.Values.global.env | indent 10 }}
+          {{- end }}
+          {{- end }}
   {{- end }}
 {{- end }}
 ---
