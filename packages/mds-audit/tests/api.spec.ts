@@ -546,7 +546,8 @@ describe('Testing API', () => {
       devices_c = makeDevices(10, now(), MOCHA_PROVIDER_ID)
 
       const seedData = {
-        devices: [...devices_a, ...devices_b, ...devices_c],
+        // Include a duplicate device (same vin + provider but different device_id)
+        devices: [...devices_a, ...devices_b, ...devices_c, { ...devices_c[0], ...{ device_id: uuid() } }],
         events: [...events_a, ...events_b],
         telemetry: [...telemetry_a, ...telemetry_b]
       }
@@ -616,6 +617,22 @@ describe('Testing API', () => {
           test.value(result.body.vehicles[0].provider_id).is(devices_c[0].provider_id)
           test.value(result.body.vehicles[0].vehicle_id).is(devices_c[0].vehicle_id)
           test.object(result.body.vehicles[0]).hasNotProperty('status')
+          done(err)
+        })
+    })
+
+    it('Verify get vehicle by vehicle_id and provider_id (duplicate device)', done => {
+      request
+        .get(`/audit/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          test.object(result).hasProperty('body')
+          test.object(result.body).hasProperty('vehicles')
+          test.value(result.body.vehicles[0].provider_id).is(devices_c[0].provider_id)
+          test.value(result.body.vehicles[0].vehicle_id).is(devices_c[0].vehicle_id)
+          test.value(result.body.vehicles[0].device_id).isNot(devices_c[0].device_id)
           done(err)
         })
     })

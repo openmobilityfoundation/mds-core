@@ -6,7 +6,7 @@ import { MDSPostgresClient } from './sql-utils'
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
 import {
-  readDeviceByVehicleId,
+  readDevicesByVehicleId,
   readDeviceIds,
   readDevice,
   readDeviceList,
@@ -187,7 +187,7 @@ export = {
   seed,
   startup,
   shutdown,
-  readDeviceByVehicleId,
+  readDevicesByVehicleId,
   readDeviceIds,
   readDevice,
   readDeviceList,

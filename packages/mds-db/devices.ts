@@ -1,6 +1,6 @@
 import { QueryResult } from 'pg'
 import { UUID, Device, Recorded, DeviceID } from '@mds-core/mds-types'
-import { now, yesterday, isUUID, csv } from '@mds-core/mds-utils'
+import { now, yesterday, isUUID, csv, NotFoundError } from '@mds-core/mds-utils'
 import log from '@mds-core/mds-logger'
 
 import schema from './schema'
@@ -9,11 +9,11 @@ import { vals_sql, cols_sql, vals_list, logSql, SqlVals, MDSPostgresClient } fro
 
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
-export async function readDeviceByVehicleId(
+export async function readDevicesByVehicleId(
   provider_id: UUID,
   vehicle_id: UUID,
   ...alternate_vehicle_ids: UUID[]
-): Promise<Recorded<Device>> {
+): Promise<Recorded<Device>[]> {
   const client = await getReadOnlyClient()
   const vehicle_ids = [...new Set([vehicle_id, ...alternate_vehicle_ids])]
   const vals = new SqlVals()
@@ -21,19 +21,21 @@ export async function readDeviceByVehicleId(
     provider_id
   )} AND translate(vehicle_id, translate(lower(vehicle_id), 'abcdefghijklmnopqrstuvwxyz1234567890', ''), '') ILIKE ANY(ARRAY[${vehicle_ids
     .map(id => vals.add(id))
-    .join(', ')}])`
+    .join(', ')}]) ORDER BY "id" DESC`
 
   const values = vals.values()
   await logSql(sql, values)
   const result = await client.query(sql, values)
-  if (result.rows.length === 1) {
-    return result.rows[0] as Recorded<Device>
+  if (result.rows.length !== 1) {
+    const error = `device associated with vehicle ${
+      vehicle_ids.length === 1 ? vehicle_id : `(${csv(vehicle_ids)})`
+    } for provider ${provider_id}: rows=${result.rows.length}`
+    await log.warn(error)
   }
-  const error = `device associated with vehicle ${
-    vehicle_ids.length === 1 ? vehicle_id : `(${csv(vehicle_ids)})`
-  } for provider ${provider_id}: rows=${result.rows.length}`
-  await log.warn(error)
-  throw Error(error)
+  if (result.rows.length === 0) {
+    throw new NotFoundError('No device found', { provider_id, vehicle_ids })
+  }
+  return result.rows as Recorded<Device>[]
 }
 
 export async function readDeviceIds(provider_id?: UUID, skip?: number, take?: number): Promise<DeviceID[]> {

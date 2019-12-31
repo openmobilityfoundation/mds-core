@@ -78,7 +78,6 @@ import {
   readAuditEvents,
   readAudits,
   readDevice,
-  readDeviceByVehicleId,
   readEvents,
   readTelemetry,
   withGpsProperty,
@@ -194,7 +193,7 @@ function api(app: express.Express): express.Express {
             isValidTelemetry(telemetry, { required: false })
           ) {
             // Find provider device and event by vehicle id lookup
-            const provider_device = await readDeviceByVehicleId(provider_id, provider_vehicle_id)
+            const provider_device = await getVehicle(provider_id, provider_vehicle_id)
             const provider_device_id = provider_device ? provider_device.device_id : null
             const provider_name = providerName(provider_id)
 
@@ -481,7 +480,7 @@ function api(app: express.Express): express.Express {
 
           const device = provider_device_id
             ? await readDevice(provider_device_id, provider_id)
-            : await readDeviceByVehicleId(provider_id, provider_vehicle_id)
+            : await getVehicle(provider_id, provider_vehicle_id)
 
           if (device) {
             // Calculate the event window for the provider vehicle (trip_start/trip_end)

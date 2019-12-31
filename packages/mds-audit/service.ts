@@ -30,6 +30,7 @@ import {
   BoundingBox,
   EVENT_STATUS_MAP,
   VEHICLE_EVENT,
+  VEHICLE_EVENTS,
   VEHICLE_STATUSES
 } from '@mds-core/mds-types'
 import log from '@mds-core/mds-logger'
@@ -94,20 +95,20 @@ export async function readDevice(device_id: UUID, provider_id: UUID): Promise<Re
   return result
 }
 
-export async function readDeviceByVehicleId(provider_id: UUID, vehicle_id: string): Promise<Recorded<Device> | null> {
+export async function readDevicesByVehicleId(provider_id: UUID, vehicle_id: string): Promise<Recorded<Device>[]> {
   try {
     const start = now()
-    const result: Recorded<Device> = await db.readDeviceByVehicleId(
+    const results: Recorded<Device>[] = await db.readDevicesByVehicleId(
       provider_id,
       vehicle_id,
       vehicle_id.replace(/[\W_-]/g, '')
     )
     const finish = now()
     const timeElapsed = finish - start
-    log.info(`db.readDeviceByVehicleId ${provider_id} ${vehicle_id} time elapsed: ${timeElapsed}ms`)
-    return result
+    log.info(`db.readDevicesByVehicleId ${provider_id} ${vehicle_id} time elapsed: ${timeElapsed}ms`)
+    return results
   } catch (err) {
-    return null
+    return []
   }
 }
 
@@ -168,19 +169,29 @@ export function withGpsProperty<T extends TelemetryData>({
 }
 
 export async function getVehicle(provider_id: UUID, vehicle_id: string) {
-  const device = await readDeviceByVehicleId(provider_id, vehicle_id)
-  if (!device) {
+  const devices = await readDevicesByVehicleId(provider_id, vehicle_id)
+  if (devices.length === 0) {
     return null
   }
-  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device) | null
-  if (deviceStatus !== null) {
-    const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
-    const updated = deviceStatus.timestamp
-    return { ...device, ...deviceStatus, status, updated }
-  }
-  const { device_id } = device
-  log.info('Missing vehicle status', { provider_id, vehicle_id, device_id })
-  return device
+  const deviceStatusMap: {
+    active: (Device & { updated?: Timestamp | null })[]
+    inactive: (Device & { updated?: Timestamp | null })[]
+  } = { active: [], inactive: [] }
+  await Promise.all(
+    devices.map(async device => {
+      const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device) | null
+      if (deviceStatus === null || deviceStatus.event_type === VEHICLE_EVENTS.deregister) {
+        const { device_id } = device
+        log.info('Bad vehicle status', { deviceStatus, provider_id, vehicle_id, device_id })
+        deviceStatusMap.inactive.push(device)
+      } else {
+        const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
+        const updated = deviceStatus.timestamp
+        deviceStatusMap.active.push({ ...device, ...deviceStatus, status, updated })
+      }
+    })
+  )
+  return deviceStatusMap.active[0] || deviceStatusMap.inactive[0] || null
 }
 
 export async function getVehicles(
