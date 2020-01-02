@@ -1,5 +1,7 @@
 import grpcClient from 'grpc-caller'
 import logger from '@mds-core/mds-logger'
+/* eslint reason import of generated file */
+/* eslint-disable-next-line import/extensions */
 import { IGetDevicesResponse } from './proto/generated'
 
 async function main() {
