@@ -14,4 +14,6 @@
     limitations under the License.
  */
 
-export { eventHandler } from './src/proc-event'
+import { eventProcessor } from './src/proc-event'
+
+export default eventProcessor

@@ -88,7 +88,7 @@ bluebird.promisifyAll(redis.RedisClient.prototype)
 let cachedClient: redis.RedisClient | null
 
 // optionally prefix a 'tenantId' key given the redis is a shared service across deployments
-function decorateKey(key: string) : string {
+function decorateKey(key: string): string {
   return env.TENANT_ID ? `${env.TENANT_ID}:$key` : key
 }
 
@@ -333,7 +333,11 @@ async function getMostRecentEventByProvider(): Promise<{ provider_id: string; ma
 }
 
 async function wipeDevice(device_id: UUID) {
-  const keys = [decorateKey(`device:${device_id}:event`), decorateKey(`device:${device_id}:telemetry`), decorateKey(`device:${device_id}:device`)]
+  const keys = [
+    decorateKey(`device:${device_id}:event`),
+    decorateKey(`device:${device_id}:telemetry`),
+    decorateKey(`device:${device_id}:device`)
+  ]
   if (keys.length > 0) {
     log.info('del', ...keys)
     return (await getClient()).delAsync(...keys)
@@ -486,7 +490,9 @@ async function readDevicesStatus(query: {
   const { bbox } = query
   const deviceIdsInBbox = await getEventsInBBox(bbox)
   const deviceIdsRes =
-    deviceIdsInBbox.length === 0 ? await client.zrangebyscoreAsync(decorateKey('device-ids'), start, stop) : deviceIdsInBbox
+    deviceIdsInBbox.length === 0
+      ? await client.zrangebyscoreAsync(decorateKey('device-ids'), start, stop)
+      : deviceIdsInBbox
   const skip = query.skip || 0
   const take = query.take || 100000000000
   const deviceIds = deviceIdsRes.slice(skip, skip + take)

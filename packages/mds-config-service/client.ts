@@ -53,10 +53,10 @@ export const client = {
   }
 }
 
-export const ConfigManager = <TConfig extends {} = {}>(properties: string | string[]) => {
+export const ConfigurationManager = <TConfig extends {} = {}>(properties: string | string[]) => {
   let config: TConfig | null = null
   return {
-    getConfig: async (): Promise<TConfig> => {
+    configuration: async (): Promise<TConfig> => {
       if (config === null) {
         config = await client.getSettings<TConfig>(properties)
         logger.info('Loaded Configuration', properties, config)

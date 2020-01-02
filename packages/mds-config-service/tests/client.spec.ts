@@ -1,6 +1,6 @@
 import test from 'unit.js'
 import { NotFoundError } from '@mds-core/mds-utils'
-import { client, ConfigManager } from '../client'
+import { client, ConfigurationManager } from '../client'
 
 const { MDS_CONFIG_PATH } = process.env
 
@@ -44,10 +44,10 @@ describe('Test Config Client', () => {
   })
 
   it('Config Manager', async () => {
-    const config = await ConfigManager<{ name?: string; compilerOptions?: { outDir?: string } }>([
+    const config = await ConfigurationManager<{ name?: string; compilerOptions?: { outDir?: string } }>([
       'package',
       'tsconfig.build'
-    ]).getConfig()
+    ]).configuration()
     test.value(config).isNot(null)
     test.value(config.name).is('@mds-core/mds-config-service')
     test.value(config.compilerOptions?.outDir).is('dist')

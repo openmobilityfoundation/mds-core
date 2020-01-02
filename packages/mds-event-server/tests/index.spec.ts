@@ -19,9 +19,9 @@
 import supertest from 'supertest'
 import test from 'unit.js'
 import { event as cloudevent } from 'cloudevents-sdk/v1'
-import { EventServer, EventHandler } from '../index'
+import { EventServer, EventProcessor } from '../index'
 
-const handler: EventHandler<unknown, { handled: unknown }> = async (type, data) => ({ handled: data })
+const handler: EventProcessor<unknown, { handled: unknown }> = async (type, data) => ({ handled: data })
 
 const request = supertest(EventServer(handler))
 

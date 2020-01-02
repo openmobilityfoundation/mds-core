@@ -14,4 +14,6 @@
     limitations under the License.
  */
 
-export { tripAggregator } from './src/proc-trip'
+import { tripProcessor } from './src/proc-trip'
+
+export default tripProcessor

@@ -12,7 +12,7 @@ import {
   UUID,
   Timestamp
 } from '@mds-core/mds-types'
-import config from './config'
+import { getConfig } from './configuration'
 
 async function calcEventCounts(
   providerID: UUID,
@@ -129,6 +129,7 @@ async function calcLateEventCount(
   startTime: Timestamp,
   endTime: Timestamp
 ): Promise<LateMetricObj> {
+  const config = await getConfig()
   const startEndList = await db.getLateEventCount(
     providerID,
     vehicleType,

@@ -4,10 +4,10 @@ import { pathsFor } from '@mds-core/mds-utils'
 import { AboutRequestHandler, HealthRequestHandler, JsonBodyParserMiddleware } from '@mds-core/mds-api-server'
 import { Cloudevent, BinaryHTTPReceiver } from 'cloudevents-sdk/v1'
 
-export type EventHandler<TData, TResult> = (type: string, data: TData, event: Cloudevent) => Promise<TResult>
+export type EventProcessor<TData, TResult> = (type: string, data: TData, event: Cloudevent) => Promise<TResult>
 
 export const EventServer = <TData, TResult>(
-  handler: EventHandler<TData, TResult>,
+  processor: EventProcessor<TData, TResult>,
   server: express.Express = express()
 ): express.Express => {
   // Disable x-powered-by header
@@ -31,13 +31,14 @@ export const EventServer = <TData, TResult>(
   server.get(pathsFor('/health'), HealthRequestHandler)
 
   server.post('/', async (req, res) => {
+    const { method, headers, body } = req
     try {
       const event = parseCloudEvent(req)
-      await logger.info('Cloud Event', req.method, event.format())
-      const result = await handler(event.getType(), event.getData(), event)
+      await logger.info('Cloud Event', method, event.format())
+      const result = await processor(event.getType(), event.getData(), event)
       return res.status(200).send({ result })
     } catch (error) /* istanbul ignore next */ {
-      await logger.error('ERROR Cloud Event', 'BODY:', req.body, 'HEADERS:', req.headers, 'ERROR:', error)
+      await logger.error('Cloud Event', error, { method, headers, body })
       return res.status(500).send({ error })
     }
   })

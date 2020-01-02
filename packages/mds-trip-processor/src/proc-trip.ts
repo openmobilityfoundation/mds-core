@@ -4,7 +4,7 @@ import log from '@mds-core/mds-logger'
 import { calcDistance, isUUID, now } from '@mds-core/mds-utils'
 import { TripEvent, TripEntry, UUID, Timestamp } from '@mds-core/mds-types'
 import { eventValidation, createTelemetryMap } from './utils'
-import config from './config'
+import { getConfig } from './configuration'
 
 /*
     Trip processor that runs inside a Kubernetes pod, activated via cron job.
@@ -25,6 +25,7 @@ async function processTrip(
   events: TripEvent[],
   curTime: Timestamp
 ): Promise<UUID | null> {
+  const config = await getConfig()
   /*
     Add telemetry and meta data into database when a trip ends
 
@@ -40,7 +41,7 @@ async function processTrip(
 
   // Validation
   events.sort((a, b) => a.timestamp - b.timestamp)
-  if (!eventValidation(events, curTime)) {
+  if (!eventValidation(events, curTime, config.compliance_sla.max_telemetry_time)) {
     return null
   }
 
@@ -97,7 +98,8 @@ async function processTrip(
   throw new Error('TELEMETRY NOT FOUND')
 }
 
-export async function tripAggregator() {
+export async function tripProcessor() {
+  await Promise.all([db.startup(), cache.startup(), getConfig()])
   const curTime = now()
   const tripsMap = await cache.readAllTripsEvents()
   if (!tripsMap) {

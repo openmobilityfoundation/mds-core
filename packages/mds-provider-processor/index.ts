@@ -14,4 +14,6 @@
     limitations under the License.
  */
 
-export { providerAggregator } from './src/proc-provider'
+import { providerProcessor } from './src/proc-provider'
+
+export default providerProcessor

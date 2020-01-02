@@ -1,1 +1,1 @@
-export { client, ConfigManager } from './client'
+export { client, ConfigurationManager } from './client'

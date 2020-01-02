@@ -2,7 +2,7 @@ import db from '@mds-core/mds-db'
 import { MetricsTableRow, UUID, Timestamp, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { now } from '@mds-core/mds-utils'
 import metric from './metrics'
-import config from './config'
+import { getConfig } from './configuration'
 
 /*
     Provider processor that runs inside a Kubernetes pod, activated via cron job.
@@ -29,6 +29,7 @@ async function processProvider(providerID: UUID, curTime: Timestamp) {
   const binStart = curTime - 3600000
   const binStartYesterday = binStart - 86400000
   const binEndYesterday = curTime - 86400000
+  const config = await getConfig()
   await Promise.all(
     config.organization.vehicleTypes.map(async vehicleType => {
       const provider_data: MetricsTableRow = {
@@ -65,7 +66,7 @@ async function processProvider(providerID: UUID, curTime: Timestamp) {
           out_of_order_count: null // providerData ? providerData.outOfOrderEvents.length : null
         },
         sla: {
-          max_vehicle_cap: (config.compliance_sla.cap_count as { [provider: string]: number })[providerID],
+          max_vehicle_cap: config.compliance_sla.cap_count[providerID],
           min_registered: config.compliance_sla.min_registered,
           min_trip_start_count: config.compliance_sla.min_trip_start_count,
           min_trip_end_count: config.compliance_sla.min_trip_end_count,
@@ -81,16 +82,8 @@ async function processProvider(providerID: UUID, curTime: Timestamp) {
   )
 }
 
-export async function providerAggregator() {
-  const curTime: Timestamp = now()
-  const providersList: UUID[] = config.organization.providers
-  await Promise.all(
-    providersList.map(provider => {
-      try {
-        return processProvider(provider, curTime)
-      } catch (err) {
-        return err
-      }
-    })
-  )
+export async function providerProcessor() {
+  const [{ providers }] = await Promise.all([getConfig(), db.startup()])
+  const curTime = now()
+  await Promise.all(providers.map(provider => processProvider(provider.provider_id, curTime)))
 }

@@ -131,7 +131,7 @@ export async function processTripEvent(deviceState: StateEntry): Promise<boolean
   return false
 }
 
-export async function eventHandler(type: string, data: VehicleEvent & Telemetry): Promise<void> {
+export async function eventProcessor(type: string, data: VehicleEvent & Telemetry): Promise<void> {
   const { timestamp, device_id, provider_id, recorded } = data
   const lastState = await cache.readDeviceState(`${provider_id}:${device_id}`)
   // Construct state

@@ -15,12 +15,12 @@
  */
 
 import { EventServer } from '@mds-core/mds-event-server'
-import { tripAggregator as handler } from '@mds-core/mds-trip-processor'
+import processor from '@mds-core/mds-trip-processor'
 import { env } from '@container-images/env-inject'
 
 const { npm_package_name, npm_package_version, npm_package_git_commit, PORT = 5002 } = env()
 
-EventServer(handler).listen(PORT, () =>
+EventServer(processor).listen(PORT, () =>
   /* eslint-reason avoids import of logger */
   /* eslint-disable-next-line no-console */
   console.log(`${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) running on port ${PORT}`)

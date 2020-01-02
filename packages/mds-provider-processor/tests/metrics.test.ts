@@ -5,9 +5,8 @@ import { VEHICLE_EVENTS, VEHICLE_EVENT, VEHICLE_TYPES } from '@mds-core/mds-type
 import uuid from 'uuid'
 import assert from 'assert'
 import metric from '../src/metrics'
-import config from '../src/config'
 
-const PROVIDER_ID = config.organization.providers[0]
+const PROVIDER_ID = uuid()
 const time = now()
 async function seedDeviceState(event: VEHICLE_EVENT) {
   await db.insertDeviceStates({
