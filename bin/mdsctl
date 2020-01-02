@@ -311,11 +311,15 @@ installImages() {
 }
 
 buildImage() {
-  docker build -t ${1}$(getBranchSuffix) .
+  docker build -t ${1}$(getBranchSuffix)$(getCommitHash) .
 }
 
 getBranchSuffix() {
   git rev-parse --abbrev-ref HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
+}
+
+getCommitHash() {
+  git rev-parse --short HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
 }
 
 # TODO: DRY
@@ -333,7 +337,13 @@ templateDockerCompose() {
 
 # TODO: DRY
 templateValues() {
-  suffix=$(getBranchSuffix)
+  branchSuffix=$(getBranchSuffix)
+  if [ "$branchSuffix" = "-master" ]; then
+    suffix="$branchSuffix"
+  else
+    suffix="$branchSuffix"$(getCommitHash)
+  fi
+
   for directory in container-images/mds-*; do
     api=$(basename $directory)
     version=$(jq -r '.version' < $directory/package.json)
