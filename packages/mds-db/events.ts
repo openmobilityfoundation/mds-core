@@ -260,21 +260,32 @@ export async function getEventCountsPerProviderSince(
   stop = now()
 ): Promise<{ provider_id: UUID; event_type: string; count: number; slacount: number }[]> {
   const thirty_sec = seconds(30)
-  const sql = `select provider_id, event_type, count(*), count(case when (recorded-timestamp) > ${thirty_sec} then 1 else null end) as slacount from events where recorded > ${start} and recorded < ${stop} group by provider_id, event_type`
-  return makeReadOnlyQuery(sql)
+  const vals = new SqlVals()
+  const sql = `select provider_id, event_type, count(*), count(case when (recorded-timestamp) > ${vals.add(
+    thirty_sec
+  )} then 1 else null end) as slacount from events where recorded > ${vals.add(start)} and recorded < ${vals.add(
+    stop
+  )} group by provider_id, event_type`
+  return makeReadOnlyQuery(sql, vals)
 }
 
 export async function getEventsLast24HoursPerProvider(start = yesterday(), stop = now()): Promise<VehicleEvent[]> {
-  const sql = `select provider_id, device_id, event_type, recorded, timestamp from ${schema.TABLE.events} where recorded > ${start} and recorded < ${stop} order by "timestamp" ASC`
-  return makeReadOnlyQuery(sql)
+  const vals = new SqlVals()
+  const sql = `select provider_id, device_id, event_type, recorded, timestamp from ${
+    schema.TABLE.events
+  } where recorded > ${vals.add(start)} and recorded < ${vals.add(stop)} order by "timestamp" ASC`
+  return makeReadOnlyQuery(sql, vals)
 }
 
 export async function getNumEventsLast24HoursByProvider(
   start = yesterday(),
   stop = now()
 ): Promise<{ provider_id: UUID; count: number }[]> {
-  const sql = `select provider_id, count(*) from ${schema.TABLE.events} where recorded > ${start} and recorded < ${stop} group by provider_id`
-  return makeReadOnlyQuery(sql)
+  const vals = new SqlVals()
+  const sql = `select provider_id, count(*) from ${schema.TABLE.events} where recorded > ${vals.add(
+    start
+  )} and recorded < ${vals.add(stop)} group by provider_id`
+  return makeReadOnlyQuery(sql, vals)
 }
 export async function readEventsWithTelemetry({
   device_id,

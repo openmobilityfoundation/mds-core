@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-config-service",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Mobility Data Specification configuration service",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,12 +14,13 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
+    "@mds-core/mds-logger": "0.1.24",
     "json5": "2.1.1"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json"
   }
 }

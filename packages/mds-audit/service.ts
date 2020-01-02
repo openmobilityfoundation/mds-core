@@ -30,8 +30,11 @@ import {
   BoundingBox,
   EVENT_STATUS_MAP,
   VEHICLE_EVENT,
+  VEHICLE_EVENTS,
   VEHICLE_STATUSES
 } from '@mds-core/mds-types'
+import log from '@mds-core/mds-logger'
+import { now } from '@mds-core/mds-utils'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)
@@ -92,16 +95,20 @@ export async function readDevice(device_id: UUID, provider_id: UUID): Promise<Re
   return result
 }
 
-export async function readDeviceByVehicleId(provider_id: UUID, vehicle_id: string): Promise<Recorded<Device> | null> {
+export async function readDevicesByVehicleId(provider_id: UUID, vehicle_id: string): Promise<Recorded<Device>[]> {
   try {
-    const result: Recorded<Device> = await db.readDeviceByVehicleId(
+    const start = now()
+    const results: Recorded<Device>[] = await db.readDevicesByVehicleId(
       provider_id,
       vehicle_id,
       vehicle_id.replace(/[\W_-]/g, '')
     )
-    return result
+    const finish = now()
+    const timeElapsed = finish - start
+    log.info(`db.readDevicesByVehicleId ${provider_id} ${vehicle_id} time elapsed: ${timeElapsed}ms`)
+    return results
   } catch (err) {
-    return null
+    return []
   }
 }
 
@@ -162,17 +169,29 @@ export function withGpsProperty<T extends TelemetryData>({
 }
 
 export async function getVehicle(provider_id: UUID, vehicle_id: string) {
-  const device = await readDeviceByVehicleId(provider_id, vehicle_id)
-  if (!device) {
+  const devices = await readDevicesByVehicleId(provider_id, vehicle_id)
+  if (devices.length === 0) {
     return null
   }
-  const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as VehicleEvent & Device
-  if (!deviceStatus) {
-    return null
-  }
-  const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
-  const updated = deviceStatus.timestamp
-  return { ...deviceStatus, status, updated }
+  const deviceStatusMap: {
+    active: (Device & { updated?: Timestamp | null })[]
+    inactive: (Device & { updated?: Timestamp | null })[]
+  } = { active: [], inactive: [] }
+  await Promise.all(
+    devices.map(async device => {
+      const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device) | null
+      if (deviceStatus === null || deviceStatus.event_type === VEHICLE_EVENTS.deregister) {
+        const { device_id } = device
+        log.info('Bad vehicle status', { deviceStatus, provider_id, vehicle_id, device_id })
+        deviceStatusMap.inactive.push(device)
+      } else {
+        const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
+        const updated = deviceStatus.timestamp
+        deviceStatusMap.active.push({ ...device, ...deviceStatus, status, updated })
+      }
+    })
+  )
+  return deviceStatusMap.active[0] || deviceStatusMap.inactive[0] || null
 }
 
 export async function getVehicles(
@@ -181,7 +200,8 @@ export async function getVehicles(
   url: string,
   provider_id: string,
   reqQuery: { [x: string]: string },
-  bbox: BoundingBox
+  bbox: BoundingBox,
+  strict = true
 ) {
   function fmt(query: { skip: number; take: number }): string {
     const flat: { [key: string]: number } = { ...reqQuery, ...query }
@@ -192,7 +212,8 @@ export async function getVehicles(
     return s
   }
 
-  const statusesSuperset = ((await cache.readDevicesStatus({ bbox })) as (VehicleEvent & Device)[]).filter(
+  const start = now()
+  const statusesSuperset = ((await cache.readDevicesStatus({ bbox, strict })) as (VehicleEvent & Device)[]).filter(
     status =>
       EVENT_STATUS_MAP[status.event_type as VEHICLE_EVENT] !== VEHICLE_STATUSES.removed &&
       (!provider_id || status.provider_id === provider_id)
@@ -203,6 +224,8 @@ export async function getVehicles(
     const updated = item.timestamp
     return [...acc, { ...item, status, updated }]
   }, [])
+  const finish = now()
+  log.info(`getVehicles processing ${JSON.stringify(bbox)} provider ${provider_id} time elapsed: ${finish - start}ms`)
 
   const noNext = skip + take >= statusesSuperset.length
   const noPrev = skip === 0 || skip > statusesSuperset.length

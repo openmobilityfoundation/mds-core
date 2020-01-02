@@ -187,3 +187,7 @@ export const SqlExecuter = (client: MDSPostgresClient) => async (command: string
 }
 
 export type SqlExecuterFunction = ReturnType<typeof SqlExecuter>
+
+export function arrayToInQueryFormat(arr: unknown[]) {
+  return `(${arr.map(currElem => `"${currElem}"`)})`
+}

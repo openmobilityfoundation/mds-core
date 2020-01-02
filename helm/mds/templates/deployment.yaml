@@ -18,12 +18,10 @@ spec:
       labels:
         app: {{ $name }}
     spec:
-      {{- if (eq $name "mds-config") }}
       volumes:
         - name: mds-config-files
           configMap:
             name: mds-config-files
-      {{- end }}
       containers:
       - name: {{ $name }}
         {{- if $.Values.registry }}
@@ -43,11 +41,9 @@ spec:
         - containerPort: 4000
           name: user-port
           protocol: TCP
-        {{- if (eq $name "mds-config") }}
         volumeMounts:
         - name: mds-config-files
           mountPath: /mds-config/
-        {{- end }}
         env:
           - name: PORT
             value: "4000"
@@ -77,7 +73,7 @@ spec:
           {{- if $.Values.postgresql.port }}
           - name: PG_PORT
             value: {{ $.Values.postgresql.port | quote }}
-          {{- end }}
+          {{- end}}
           {{- if $api.migration }}
           - name: PG_MIGRATIONS
             value: {{ $api.migration | quote }}
@@ -90,11 +86,15 @@ spec:
           {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          {{- if $.Values.useEvents }}
+          - name: EVENT_SOURCE
+            value: cloudevents
           - name: CE_NAME
             value: {{ $name }}
           - name: SINK
-            value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
+            value: http://natss-broker.{{ $.Release.Namespace }}.svc.cluster.local
+          {{- if not (empty $.Values.tenantId) }}
+          - name: TENANT_ID
+            value: {{ $.Values.tenantId }}
           {{- end }}
           {{- if $.Values.slack.channel }}
           - name: SLACK_CHANNEL
@@ -107,6 +107,11 @@ spec:
           {{- end }}
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
+          {{- end }}
+          {{- if hasKey $.Values "global" }}
+          {{- if hasKey $.Values.global "env" }}
+{{ toYaml $.Values.global.env | indent 10 }}
+          {{- end }}
           {{- end }}
   {{- end }}
 {{- end }}

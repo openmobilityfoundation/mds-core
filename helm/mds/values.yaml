@@ -38,6 +38,7 @@ apis:
     enabled: true
     pathPrefix: /native
     version: latest
+    migration: false
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author
@@ -48,7 +49,31 @@ apis:
     pathPrefix: /config
     version: latest
     migration: false
-useEvents: false
+  mds-web-sockets:
+    enabled: true
+    pathPrefix: /web-sockets
+    version: latest
+    migration: false
+processors:
+  mds-event-processor:
+    enabled: true
+    version: latest
+    migration: false
+    triggeredBy:
+      trigger: [event, telemetry]
+  mds-trip-processor:
+    enabled: true
+    version: latest
+    migration: false
+    triggeredBy:
+      cron: '0 * * * *'
+  mds-provider-processor:
+    enabled: true
+    version: latest
+    migration: false
+    triggeredBy:
+      cron: '0 * * * *'
+tenantId:
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true

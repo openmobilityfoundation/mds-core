@@ -30,11 +30,21 @@ import {
   VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
-  BBox
+  BBox,
+  TripTelemetry,
+  GpsData
 } from '@mds-core/mds-types'
 import { TelemetryRecord } from '@mds-core/mds-db/types'
 import log from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
+import { point as turfPoint } from '@turf/helpers'
+import turf from '@turf/boolean-point-in-polygon'
+import { serviceAreaMap } from 'ladot-service-areas'
+
+import { BadParamsError } from '@mds-core/mds-utils'
+
+import moment from 'moment-timezone'
+import { isArray } from 'util'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
@@ -636,6 +646,198 @@ function filterEmptyHelper<T>(warnOnEmpty?: boolean) {
   }
 }
 
+function findServiceAreas(lng: number, lat: number): { id: string; type: string }[] {
+  const turfPT = turfPoint([lng, lat])
+  return Object.keys(serviceAreaMap)
+    .filter(i => turf(turfPT, serviceAreaMap[i].area))
+    .map(key => {
+      return { id: key, type: 'district' }
+    })
+}
+
+function moved(latA: number, lngA: number, latB: number, lngB: number) {
+  const limit = 0.00001 // arbitrary amount
+  const latDiff = Math.abs(latA - latB)
+  const lngDiff = Math.abs(lngA - lngB)
+  return lngDiff > limit || latDiff > limit // very computational efficient basic check (better than sqrts & trig)
+}
+
+const calcDistance = (telemetry: TripTelemetry[][], startGps: GpsData): { distance: number; points: number[] } => {
+  let tempX = startGps.lat
+  let tempY = startGps.lng
+  let distance = 0
+  const points: number[] = []
+  for (let n = 0; n < telemetry.length; n++) {
+    for (let m = 0; m < telemetry[n].length; m++) {
+      const currPing = telemetry[n][m]
+      if (currPing.latitude !== null && currPing.longitude !== null) {
+        const pointDist = routeDistance([
+          { lat: tempX, lng: tempY },
+          { lat: currPing.latitude, lng: currPing.longitude }
+        ])
+        distance += pointDist
+        points.push(pointDist)
+        tempX = currPing.latitude
+        tempY = currPing.longitude
+      }
+    }
+  }
+  return { distance, points }
+}
+
+const getCurrentDate = () => {
+  return new Date()
+}
+
+const getLocalTime = () => moment(getCurrentDate()).tz(process.env.TIMEZONE || 'America/Los_Angeles')
+
+const parseOperator = (offset: string): '+' | '-' => {
+  if (offset === 'today' || offset === 'yesterday' || offset === 'now') {
+    return '+'
+  }
+
+  const operator = offset[0]
+
+  if (operator !== '+' && operator !== '-') {
+    throw new BadParamsError(`Invalid time offset operator: ${offset}, ${operator}`)
+  }
+
+  return operator
+}
+
+const parseCount = (offset: string) => {
+  if (offset === 'today' || offset === 'now') {
+    return 0
+  }
+  if (offset === 'yesterday') {
+    return 1
+  }
+
+  const count = Number(offset.slice(1, -1))
+  if (Number.isNaN(count)) {
+    throw new BadParamsError(`Invalid time offset count: ${offset}, ${count}`)
+  }
+  return count
+}
+
+const parseUnit = (offset: string): 'days' | 'hours' => {
+  const shorthand = offset.slice(-1)
+  const shorthandToUnit: {
+    [key: string]: 'days' | 'hours'
+  } = {
+    d: 'days',
+    h: 'hours'
+  }
+  if (offset === 'today' || offset === 'yesterday' || offset === 'now') {
+    return 'days'
+  }
+  const unit = shorthandToUnit[shorthand]
+  if (unit === undefined) {
+    throw new BadParamsError(`Invalid offset unit shorthand: ${offset}, ${shorthand}`)
+  }
+  return unit
+}
+
+const parseIsRelative = (offset: string): boolean => {
+  if (offset === 'today' || offset === 'yesterday' || offset === 'now') {
+    return false
+  }
+  return true
+}
+
+const parseOffset = (
+  offset: string
+): {
+  unit: 'days' | 'hours'
+  operator: '+' | '-'
+  count: number
+  relative: boolean
+} => {
+  const operator = parseOperator(offset)
+  const count = parseCount(offset)
+  const unit = parseUnit(offset)
+  const relative = parseIsRelative(offset)
+
+  return {
+    unit,
+    operator,
+    count,
+    relative
+  }
+}
+
+const parseAnchorPoint = (offset: string) => {
+  const localTime = getLocalTime()
+  if (offset === 'today') {
+    return localTime.startOf('day')
+  }
+  if (offset === 'now') {
+    return localTime
+  }
+  if (offset === 'yesterday') {
+    return localTime.startOf('day').subtract(1, 'days')
+  }
+  throw new BadParamsError(`Invalid anchor point: ${offset}`)
+}
+
+const parseRelative = (
+  startOffset: string,
+  endOffset: string
+): {
+  start_time: Timestamp
+  end_time: Timestamp
+} => {
+  const parsedStartOffset = parseOffset(startOffset)
+  const parsedEndOffset = parseOffset(endOffset)
+
+  if (!parsedStartOffset?.relative && !parsedEndOffset?.relative) {
+    return {
+      start_time: parseAnchorPoint(startOffset).valueOf(),
+      end_time: parseAnchorPoint(endOffset).valueOf()
+    }
+  }
+
+  if (parsedStartOffset?.relative && parsedEndOffset?.relative) {
+    throw new BadParamsError(`Both start_offset and end_offset cannot be relative to each other`)
+  }
+
+  if (parsedStartOffset?.relative) {
+    const anchorPoint = parseAnchorPoint(endOffset)
+    const { operator, unit, count } = parsedStartOffset
+    if (operator === '-') {
+      return {
+        start_time: anchorPoint.subtract(count, unit).valueOf(),
+        end_time: anchorPoint.valueOf()
+      }
+    }
+    throw new BadParamsError(`Invalid starting point: ${startOffset}`)
+  }
+
+  if (parsedEndOffset?.relative) {
+    const anchorPoint = parseAnchorPoint(startOffset)
+    const { operator, unit, count } = parsedEndOffset
+    if (operator === '+') {
+      return {
+        start_time: anchorPoint.valueOf(),
+        end_time: anchorPoint.add(count, unit).valueOf()
+      }
+    }
+    throw new BadParamsError(`Invalid ending point: ${endOffset}`)
+  }
+
+  throw new BadParamsError(`Both start_offset and end_offset cannot be relative to each other`)
+}
+
+function normalizeToArray<T>(elementToNormalize: T | T[] | undefined): T[] {
+  if (elementToNormalize === undefined) {
+    return []
+  }
+  if (isArray(elementToNormalize)) {
+    return elementToNormalize
+  }
+  return [elementToNormalize]
+}
+
 export {
   UUID_REGEX,
   isUUID,
@@ -676,5 +878,17 @@ export {
   isInStatesOrEvents,
   routeDistance,
   clone,
-  filterEmptyHelper
+  filterEmptyHelper,
+  findServiceAreas,
+  moved,
+  calcDistance,
+  parseOperator,
+  parseCount,
+  parseUnit,
+  parseOffset,
+  parseAnchorPoint,
+  parseRelative,
+  parseIsRelative,
+  getCurrentDate,
+  normalizeToArray
 }

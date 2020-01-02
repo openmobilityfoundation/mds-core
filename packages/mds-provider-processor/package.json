@@ -1,0 +1,40 @@
+{
+  "name": "@mds-core/mds-provider-processor",
+  "version": "0.1.0",
+  "description": "MDS Provider Metric Processor",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 60 ts-mocha --project ../../tsconfig.json",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+  },
+  "nyc": {
+    "exclude": [
+      "util/*",
+      "index.js"
+    ]
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mds-core/mds-cache": "0.1.26",
+    "@mds-core/mds-config-service": "0.0.2",
+    "@mds-core/mds-db": "0.1.26",
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-types": "0.1.23",
+    "@turf/boolean-point-in-polygon": "6.0.1",
+    "@turf/helpers": "6.1.4",
+    "cloudevents-sdk": "1.0.0",
+    "loglevel": "1.6.6",
+    "uuid": "3.3.3"
+  },
+  "devDependencies": {}
+}

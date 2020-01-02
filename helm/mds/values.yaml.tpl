@@ -49,3 +49,27 @@ apis:
     pathPrefix: /config
     version: ${CONFIG_VERSION}
     migration: false
+  mds-web-sockets:
+    enabled: true
+    pathPrefix: /web-sockets
+    version: ${WEB_SOCKETS_VERSION}
+    migration: false
+processors:
+  mds-event-processor:
+    enabled: true
+    version: ${EVENT_PROCESSOR_VERSION}
+    migration: false
+    triggeredBy:
+      trigger: [event, telemetry]
+  mds-trip-processor:
+    enabled: true
+    version: ${TRIP_PROCESSOR_VERSION}
+    migration: false
+    triggeredBy:
+      cron: '0 * * * *'
+  mds-provider-processor:
+    enabled: true
+    version: ${PROVIDER_PROCESSOR_VERSION}
+    migration: false
+    triggeredBy:
+      cron: '0 * * * *'

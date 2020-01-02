@@ -531,19 +531,23 @@ describe('Testing API', () => {
     })
   )
   describe('Tests retreiving vehicles', () => {
-    let devices_a: Device[]
+    let devices_a: Device[] // Have events and telemetry outside our BBOX
+    let devices_b: Device[] // Have events and telemetry inside our BBOX
+    let devices_c: Device[] // No events or telemetry
     before(done => {
       devices_a = makeDevices(10, now(), MOCHA_PROVIDER_ID)
-      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start) // Generate a bunch of events outside of our BBOX
-      const devices_b = makeDevices(10, now(), MOCHA_PROVIDER_ID)
-      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start) // Generate a bunch of events inside of our BBOX
+      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start)
       const telemetry_a = devices_a.map(device =>
         makeTelemetryInArea(device, now(), SAN_FERNANDO_VALLEY, rangeRandomInt(10))
       )
+      devices_b = makeDevices(10, now(), MOCHA_PROVIDER_ID)
+      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start)
       const telemetry_b = devices_b.map(device => makeTelemetryInArea(device, now(), CANALS, rangeRandomInt(10)))
+      devices_c = makeDevices(10, now(), MOCHA_PROVIDER_ID)
 
       const seedData = {
-        devices: [...devices_a, ...devices_b],
+        // Include a duplicate device (same vin + provider but different device_id)
+        devices: [...devices_a, ...devices_b, ...devices_c, { ...devices_c[0], ...{ device_id: uuid() } }],
         events: [...events_a, ...events_b],
         telemetry: [...telemetry_a, ...telemetry_b]
       }
@@ -600,6 +604,35 @@ describe('Testing API', () => {
         .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('Verify get vehicle by vehicle_id and provider_id (no event or telemetry)', done => {
+      request
+        .get(`/audit/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result.body.vehicles[0].provider_id).is(devices_c[0].provider_id)
+          test.value(result.body.vehicles[0].vehicle_id).is(devices_c[0].vehicle_id)
+          test.object(result.body.vehicles[0]).hasNotProperty('status')
+          done(err)
+        })
+    })
+
+    it('Verify get vehicle by vehicle_id and provider_id (duplicate device)', done => {
+      request
+        .get(`/audit/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`)
+        .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
+        .expect(200)
+        .end((err, result) => {
+          test.value(result).hasHeader('content-type', APP_JSON)
+          test.object(result).hasProperty('body')
+          test.object(result.body).hasProperty('vehicles')
+          test.value(result.body.vehicles[0].provider_id).is(devices_c[0].provider_id)
+          test.value(result.body.vehicles[0].vehicle_id).is(devices_c[0].vehicle_id)
+          test.value(result.body.vehicles[0].device_id).isNot(devices_c[0].device_id)
           done(err)
         })
     })

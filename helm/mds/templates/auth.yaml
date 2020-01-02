@@ -1,15 +1,15 @@
 {{- if .Values.jwt.enabled }}
-{{- range $key, $api := .Values.apis }}
+{{- range $name, $api := .Values.apis }}
 {{- if $api.enabled }}
 ---
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
 metadata:
-  name: {{ $key }}-auth
+  name: {{ $name }}-auth
   namespace: {{ $.Release.Namespace }}
 spec:
   targets:
-  - name: {{ $key }}
+  - name: {{ $name }}
   peers:
   - mtls: {}
   origins:

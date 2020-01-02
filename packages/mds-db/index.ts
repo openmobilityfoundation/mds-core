@@ -6,7 +6,7 @@ import { MDSPostgresClient } from './sql-utils'
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
 import {
-  readDeviceByVehicleId,
+  readDevicesByVehicleId,
   readDeviceIds,
   readDevice,
   readDeviceList,
@@ -72,6 +72,7 @@ import {
   getMostRecentTelemetryByProvider
 } from './telemetry'
 
+import { writeStop, readStop, readStops } from './stops'
 import {
   deleteAttachment,
   deleteAuditAttachment,
@@ -80,6 +81,19 @@ import {
   writeAttachment,
   writeAuditAttachment
 } from './attachments'
+
+import {
+  getStates,
+  getTrips,
+  getTripCount,
+  getVehicleTripCount,
+  getLateEventCount,
+  getLateTelemetryCount,
+  insertDeviceStates,
+  insertTrips,
+  insertMetrics,
+  getAllMetrics
+} from './processors'
 
 async function initialize() {
   const client: MDSPostgresClient = await getWriteableClient()
@@ -173,7 +187,7 @@ export = {
   seed,
   startup,
   shutdown,
-  readDeviceByVehicleId,
+  readDevicesByVehicleId,
   readDeviceIds,
   readDevice,
   readDeviceList,
@@ -198,6 +212,15 @@ export = {
   readAuditAttachments,
   writeAttachment,
   writeAuditAttachment,
+  getStates,
+  getTrips,
+  getTripCount,
+  getVehicleTripCount,
+  getLateEventCount,
+  getLateTelemetryCount,
+  insertDeviceStates,
+  insertTrips,
+  insertMetrics,
   readGeographies,
   readGeographySummaries,
   writeGeography,
@@ -235,5 +258,9 @@ export = {
   getEventsLast24HoursPerProvider,
   readEventsWithTelemetry,
   readTripIds,
-  readEventsForStatusChanges
+  readEventsForStatusChanges,
+  getAllMetrics,
+  writeStop,
+  readStop,
+  readStops
 }

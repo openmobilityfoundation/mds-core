@@ -4,8 +4,8 @@ export type ReadStreamOptions = Partial<{
   noack: boolean
 }>
 
-export const Streams = ['device:index', 'device:raw', 'provider:event'] as const
-export const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM, PROVIDER_EVENT_STREAM] = Streams
+export const Streams = ['device:index', 'device:raw'] as const
+export const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM] = Streams
 export type Stream = typeof Streams[number]
 
 export type StreamItemID = string

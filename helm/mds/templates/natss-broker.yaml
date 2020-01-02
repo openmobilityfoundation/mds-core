@@ -1,0 +1,11 @@
+apiVersion: eventing.knative.dev/v1alpha1
+kind: Broker
+metadata:
+  name: natss # better name
+  namespace: {{ $.Release.Namespace }}
+spec:
+  channelTemplateSpec:
+    apiVersion: messaging.knative.dev/v1alpha1
+    kind: NatssChannel
+#    kind: ClusterChannelProvisioner
+#    name: natss

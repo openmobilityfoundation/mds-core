@@ -15,7 +15,7 @@ import { now } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
-import { Telemetry } from 'packages/mds-types'
+import { Telemetry } from '@mds-core/mds-types'
 import { api } from '../api'
 import { StateSnapshotResponse } from '../types'
 

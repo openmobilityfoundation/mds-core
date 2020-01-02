@@ -185,9 +185,6 @@ async function dropAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
 
 async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
-  // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
-  // migrations table is created, but it is included as it provides a template for how to invoke them.
-  await doMigration(exec, 'createMigrationsTable', async () => {})
   await doMigration(exec, 'alterGeographiesColumns', alterGeographiesColumnsMigration)
   await doMigration(exec, 'alterAuditEventsColumns', alterAuditEventsColumnsMigration)
   await doMigration(exec, 'alterPreviousGeographiesColumn', alterPreviousGeographiesColumnMigration)

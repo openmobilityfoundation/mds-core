@@ -10,8 +10,7 @@ spec:
   selector:
     app: {{ $name }}
   ports:
-  -
-    name: http-{{ $name }}
+  - name: http-{{ $name }}
     port: 4000
 {{- end }}
 {{- end }}
