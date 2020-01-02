@@ -1,7 +1,7 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import areas from 'ladot-service-areas'
 import log from '@mds-core/mds-logger'
-import { isUUID, now, ServerError, ValidationError, NotFoundError } from '@mds-core/mds-utils'
+import { isUUID, now, ServerError, ValidationError, NotFoundError, normalizeToArray } from '@mds-core/mds-utils'
 import { isValidStop } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
@@ -323,7 +323,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
     const { telemetry } = recorded_event
 
     if (telemetry) {
-      await db.writeTelemetry(Array.isArray(telemetry) ? telemetry : [telemetry])
+      await db.writeTelemetry(normalizeToArray(telemetry))
     }
 
     try {

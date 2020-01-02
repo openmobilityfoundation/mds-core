@@ -1,5 +1,13 @@
 import db from '@mds-core/mds-db'
-import { inc, RuntimeError, ServerError, isUUID, BadParamsError, parseRelative } from '@mds-core/mds-utils'
+import {
+  inc,
+  RuntimeError,
+  ServerError,
+  isUUID,
+  BadParamsError,
+  parseRelative,
+  normalizeToArray
+} from '@mds-core/mds-utils'
 import { EVENT_STATUS_MAP, VEHICLE_TYPES, UUID, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { Parser } from 'json2csv'
 import fs from 'fs'
@@ -18,7 +26,7 @@ import {
   EventSnapshot,
   GetAllResponse
 } from './types'
-import { getTimeBins, normalizeToArray, getBinSize } from './utils'
+import { getTimeBins, getBinSize } from './utils'
 
 export async function getStateSnapshot(req: MetricsApiRequest, res: GetStateSnapshotResponse) {
   const { body } = req

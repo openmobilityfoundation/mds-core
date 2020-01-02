@@ -44,6 +44,7 @@ import { serviceAreaMap } from 'ladot-service-areas'
 import { BadParamsError } from '@mds-core/mds-utils'
 
 import moment from 'moment-timezone'
+import { isArray } from 'util'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
@@ -827,6 +828,16 @@ const parseRelative = (
   throw new BadParamsError(`Both start_offset and end_offset cannot be relative to each other`)
 }
 
+function normalizeToArray<T>(elementToNormalize: T | T[] | undefined): T[] {
+  if (elementToNormalize === undefined) {
+    return []
+  }
+  if (isArray(elementToNormalize)) {
+    return elementToNormalize
+  }
+  return [elementToNormalize]
+}
+
 export {
   UUID_REGEX,
   isUUID,
@@ -878,5 +889,6 @@ export {
   parseAnchorPoint,
   parseRelative,
   parseIsRelative,
-  getCurrentDate
+  getCurrentDate,
+  normalizeToArray
 }

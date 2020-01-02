@@ -16,7 +16,15 @@
 
 import test from 'unit.js'
 import assert from 'assert'
-import { routeDistance, filterEmptyHelper, parseOperator, parseCount, parseUnit, parseIsRelative } from '../utils'
+import {
+  routeDistance,
+  filterEmptyHelper,
+  parseOperator,
+  parseCount,
+  parseUnit,
+  parseIsRelative,
+  normalizeToArray
+} from '../utils'
 
 const Boston = { lat: 42.360081, lng: -71.058884 }
 const LosAngeles = { lat: 34.052235, lng: -118.243683 }
@@ -124,6 +132,18 @@ describe('Tests Utilities', () => {
         assert.strictEqual(parseIsRelative('yesterday'), false)
         assert.strictEqual(parseIsRelative('now'), false)
       })
+    })
+  })
+
+  describe('Normalize to array', () => {
+    it('Normalizes undefined to empty array', () => {
+      assert.deepStrictEqual(normalizeToArray(undefined), [])
+    })
+    it('Normalizes single element into singleton array', () => {
+      assert.deepStrictEqual(normalizeToArray('test'), ['test'])
+    })
+    it('Leaves array untouched', () => {
+      assert.deepStrictEqual(normalizeToArray(['test1', 'test2']), ['test1', 'test2'])
     })
   })
 })
