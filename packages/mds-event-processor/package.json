@@ -12,7 +12,7 @@
     "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 73 ts-mocha --project ../../tsconfig.json",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 60 ts-mocha --project ../../tsconfig.json",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
     "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
   },
