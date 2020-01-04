@@ -62,7 +62,7 @@ spec:
                 key: postgresql-password
           - name: PG_HOST
           {{- if $.Values.postgresql.internal }}
-            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Namespace }}-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
           {{- else }}
             value: {{ $.Values.postgresql.host }}
           {{- end }}
@@ -80,7 +80,7 @@ spec:
           {{- end }}
           - name: REDIS_HOST
           {{- if $.Values.redis.internal }}
-            value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Namespace }}-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
           {{- else }}
             value: {{ $.Values.redis.host }}
           {{- end }}
