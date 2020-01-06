@@ -2,9 +2,10 @@ import WebSocket from 'ws'
 import { VehicleEvent, Telemetry } from '@mds-core/mds-types'
 import log from '@mds-core/mds-logger'
 import { setWsHeartbeat, WebSocketBase } from 'ws-heartbeat/client'
+import requestPromise from 'request-promise'
 import { ENTITY_TYPE } from './types'
 
-const { TOKEN, URL = 'ws://mds-web-sockets:4000' } = process.env
+const { TOKEN, URL = 'mds-web-sockets:4000' } = process.env
 
 let connection: WebSocket
 
@@ -13,29 +14,43 @@ async function sendAuth() {
   return connection.send(`AUTH%Bearer ${TOKEN}`)
 }
 
-function getClient() {
+async function getClient() {
   if (connection && connection.readyState === 1) {
     return connection
   }
-  connection = new WebSocket(URL)
 
-  setWsHeartbeat(connection as WebSocketBase, 'PING')
+  try {
+    const res = await requestPromise(`http://${URL}`)
 
-  connection.onopen = async () => {
-    await sendAuth()
+    if (res.statusCode === 503) {
+      throw new Error('Could not connect to WebSocket server')
+    }
+    connection = new WebSocket(`ws://${URL}`)
+
+    setWsHeartbeat(connection as WebSocketBase, 'PING')
+
+    connection.onopen = async () => {
+      await sendAuth()
+    }
+
+    connection.onerror = async err => {
+      return log.error(err)
+    }
+
+    return connection
+  } catch (err) {
+    throw new Error(`Could not connect to WebSocket server ${err}`)
   }
-
-  connection.onerror = async err => {
-    return log.error(err)
-  }
-
-  return connection
 }
 
 /* Force test event to be send back to client */
 async function sendPush(entity: ENTITY_TYPE, data: VehicleEvent | Telemetry) {
-  const client = getClient()
-  return client.send(`PUSH%${entity}%${JSON.stringify(data)}`)
+  try {
+    const client = await getClient()
+    return client.send(`PUSH%${entity}%${JSON.stringify(data)}`)
+  } catch (err) {
+    await log.warn(err)
+  }
 }
 
 export function writeTelemetry(telemetries: Telemetry[]) {
