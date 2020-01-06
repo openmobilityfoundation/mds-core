@@ -16,6 +16,7 @@
 
 import test from 'unit.js'
 import assert from 'assert'
+import { VEHICLE_EVENTS, VehicleEvent } from '@mds-core/mds-types'
 import {
   routeDistance,
   filterEmptyHelper,
@@ -23,6 +24,8 @@ import {
   parseCount,
   parseUnit,
   parseIsRelative,
+  isStateTransitionValidOld,
+  isStateTransitionValid,
   normalizeToArray
 } from '../utils'
 
@@ -144,6 +147,23 @@ describe('Tests Utilities', () => {
     })
     it('Leaves array untouched', () => {
       assert.deepStrictEqual(normalizeToArray(['test1', 'test2']), ['test1', 'test2'])
+    })
+  })
+
+  describe('State machine', () => {
+    it('Tests state transitions', () => {
+      const events = Object.keys(VEHICLE_EVENTS)
+      for (const event_type_A of events) {
+        for (const event_type_B of events) {
+          const eventA = { event_type: event_type_A } as VehicleEvent
+          const eventB = { event_type: event_type_B } as VehicleEvent
+          assert.strictEqual(
+            isStateTransitionValid(eventA, eventB),
+            isStateTransitionValidOld(eventA, eventB),
+            `${eventA.event_type}, ${eventB.event_type}`
+          )
+        }
+      }
     })
   })
 })

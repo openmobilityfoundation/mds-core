@@ -32,7 +32,8 @@ import {
   VEHICLE_STATUS,
   BBox,
   TripTelemetry,
-  GpsData
+  GpsData,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import { TelemetryRecord } from '@mds-core/mds-db/types'
 import log from '@mds-core/mds-logger'
@@ -45,6 +46,7 @@ import { BadParamsError } from '@mds-core/mds-utils'
 
 import moment from 'moment-timezone'
 import { isArray } from 'util'
+import { getNextState } from './state-machine'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
@@ -508,7 +510,7 @@ function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: Boun
   return false
 }
 
-function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
+function isStateTransitionValidOld(eventA: VehicleEvent, eventB: VehicleEvent) {
   switch (EVENT_STATUS_MAP[eventA.event_type]) {
     case VEHICLE_STATUSES.available:
       switch (eventB.event_type) {
@@ -588,6 +590,15 @@ function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
     default:
       return false
   }
+}
+
+function isStateTransitionValid(
+  eventA: VehicleEvent & { event_type: VEHICLE_EVENT },
+  eventB: VehicleEvent & { event_type: VEHICLE_EVENT }
+) {
+  const currState = EVENT_STATUS_MAP[eventA.event_type]
+  const nextState = getNextState(currState, eventB.event_type)
+  return nextState !== undefined
 }
 
 function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {
@@ -870,6 +881,7 @@ export {
   isInsideBoundingBox,
   head,
   tail,
+  isStateTransitionValidOld,
   isStateTransitionValid,
   pointInGeometry,
   convertTelemetryToTelemetryRecord,
