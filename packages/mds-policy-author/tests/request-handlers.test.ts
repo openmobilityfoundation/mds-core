@@ -1,8 +1,8 @@
 import Sinon from 'sinon'
 import db from '@mds-core/mds-db'
 
-import { getPolicies } from '../request-handlers'
 import { mockReq, mockRes } from 'sinon-express-mock'
+import { getPolicies } from '../request-handlers'
 
 describe('Policy Author Request Handlers', () => {
   describe('getPolicies()', () => {
