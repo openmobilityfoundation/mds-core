@@ -8,7 +8,7 @@ import {
   parseRelative,
   normalizeToArray
 } from '@mds-core/mds-utils'
-import { EVENT_STATUS_MAP, VEHICLE_TYPES, UUID, VEHICLE_TYPE } from '@mds-core/mds-types'
+import { EVENT_STATUS_MAP, VEHICLE_TYPES, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { Parser } from 'json2csv'
 import fs from 'fs'
 
@@ -226,7 +226,7 @@ export async function getAll(req: MetricsApiRequest, res: GetAllResponse) {
     .reduce((prevSlices, currSlices) => {
       return prevSlices.concat(currSlices)
     }, [])
-  const provider_ids = normalizeToArray<UUID>(query.provider_id)
+  const { provider_ids } = res.locals
   const vehicle_types = normalizeToArray<VEHICLE_TYPE>(query.vehicle_type)
   const format: string | 'json' | 'tsv' = query.format || 'json'
 
@@ -251,6 +251,7 @@ export async function getAll(req: MetricsApiRequest, res: GetAllResponse) {
       const bucketedMetrics = await Promise.all(
         slices.map(slice => {
           const { start, end } = slice
+          // If scope === metrics:read:provider, provider_ids must contain provider_id from claim to prevent * search on provider_id
           return db.getAllMetrics({
             start_time: start,
             end_time: end,
