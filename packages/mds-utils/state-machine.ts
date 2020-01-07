@@ -46,4 +46,30 @@ const getNextState = (currStatus: VEHICLE_STATUS, nextEvent: VEHICLE_EVENT): VEH
   return stateTransitionDict[currStatus]?.[nextEvent]
 }
 
-export { stateTransitionDict, getNextState }
+const generateTransitionLabel = (
+  status: VEHICLE_STATUS,
+  nextStatus: VEHICLE_STATUS,
+  transitionEvent: VEHICLE_EVENT
+) => {
+  return `${status} -> ${nextStatus} [ label = ${transitionEvent} ]`
+}
+
+// Punch this output into http://www.webgraphviz.com/
+const generateGraph = () => {
+  const graphEntries = []
+  const statuses: VEHICLE_STATUS[] = Object.values(VEHICLE_STATUSES)
+  for (const status of statuses) {
+    const eventTransitions: VEHICLE_EVENT[] = Object.keys(stateTransitionDict[status]) as VEHICLE_EVENT[]
+    for (const event of eventTransitions) {
+      if (event) {
+        const nextStatus: VEHICLE_STATUS | undefined = stateTransitionDict[status][event]
+        if (nextStatus) {
+          graphEntries.push(`\t${generateTransitionLabel(status, nextStatus, event)}`)
+        }
+      }
+    }
+  }
+  return `digraph G {\n${graphEntries.join('\n')}\n}`
+}
+
+export { stateTransitionDict, getNextState, generateGraph }
