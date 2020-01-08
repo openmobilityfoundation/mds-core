@@ -24,10 +24,10 @@ import {
   parseCount,
   parseUnit,
   parseIsRelative,
-  isStateTransitionValidOld,
   isStateTransitionValid,
   normalizeToArray
 } from '../utils'
+import { expectedTransitions } from './state-transition-expected'
 
 const Boston = { lat: 42.360081, lng: -71.058884 }
 const LosAngeles = { lat: 34.052235, lng: -118.243683 }
@@ -157,11 +157,9 @@ describe('Tests Utilities', () => {
         for (const event_type_B of events) {
           const eventA = { event_type: event_type_A } as VehicleEvent
           const eventB = { event_type: event_type_B } as VehicleEvent
-          assert.strictEqual(
-            isStateTransitionValid(eventA, eventB),
-            isStateTransitionValidOld(eventA, eventB),
-            `${eventA.event_type}, ${eventB.event_type}`
-          )
+          const actual = isStateTransitionValid(eventA, eventB)
+          const transitionKey = `${eventA.event_type}, ${eventB.event_type}`
+          assert.strictEqual(actual, expectedTransitions[eventA.event_type][eventB.event_type], transitionKey)
         }
       }
     })

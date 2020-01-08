@@ -26,8 +26,6 @@ import {
   BoundingBox,
   Geography,
   Rule,
-  VEHICLE_EVENTS,
-  VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   BBox,
@@ -510,86 +508,6 @@ function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: Boun
   return false
 }
 
-function isStateTransitionValidOld(eventA: VehicleEvent, eventB: VehicleEvent) {
-  switch (EVENT_STATUS_MAP[eventA.event_type]) {
-    case VEHICLE_STATUSES.available:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.agency_pick_up:
-          return true
-        case VEHICLE_EVENTS.service_end:
-          return true
-        case VEHICLE_EVENTS.trip_start:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.elsewhere:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_enter:
-          return true
-        case VEHICLE_EVENTS.provider_pick_up:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.provider_drop_off:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.inactive:
-      switch (eventB.event_type) {
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.removed:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_enter:
-          return true
-        case VEHICLE_EVENTS.provider_drop_off:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.reserved:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_start:
-          return true
-        case VEHICLE_EVENTS.cancel_reservation:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.trip:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_leave:
-          return true
-        case VEHICLE_EVENTS.trip_end:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.unavailable:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.service_start:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.agency_pick_up:
-          return true
-        case VEHICLE_EVENTS.provider_pick_up:
-          return true
-        default:
-          return false
-      }
-    default:
-      return false
-  }
-}
-
 function isStateTransitionValid(
   eventA: VehicleEvent & { event_type: VEHICLE_EVENT },
   eventB: VehicleEvent & { event_type: VEHICLE_EVENT }
@@ -879,7 +797,6 @@ export {
   isInsideBoundingBox,
   head,
   tail,
-  isStateTransitionValidOld,
   isStateTransitionValid,
   pointInGeometry,
   convertTelemetryToTelemetryRecord,

@@ -19,7 +19,9 @@ const stateTransitionDict: {
     [VEHICLE_EVENTS.deregister]: VEHICLE_STATUSES.inactive,
     [VEHICLE_EVENTS.provider_drop_off]: VEHICLE_STATUSES.available
   },
-  [VEHICLE_STATUSES.inactive]: {},
+  [VEHICLE_STATUSES.inactive]: {
+    [VEHICLE_EVENTS.register]: VEHICLE_STATUSES.removed
+  },
   [VEHICLE_STATUSES.removed]: {
     [VEHICLE_EVENTS.trip_enter]: VEHICLE_STATUSES.trip,
     [VEHICLE_EVENTS.provider_drop_off]: VEHICLE_STATUSES.available,
