@@ -545,8 +545,6 @@ function isStateTransitionValidOld(eventA: VehicleEvent, eventB: VehicleEvent) {
       }
     case VEHICLE_STATUSES.removed:
       switch (eventB.event_type) {
-        case VEHICLE_EVENTS.register:
-          return true
         case VEHICLE_EVENTS.trip_enter:
           return true
         case VEHICLE_EVENTS.provider_drop_off:
