@@ -32,11 +32,11 @@
     "@mds-core/mds-providers": "0.1.26",
     "grpc": "1.24.2",
     "grpc-caller": "0.13.0",
-    "mali": "0.19.0",
-    "pg": "7.12.1",
+    "mali": "0.20.0",
+    "pg": "7.17.1",
     "protobufjs": "6.8.8",
     "reflect-metadata": "0.1.13",
-    "typeorm": "0.2.20"
+    "typeorm": "0.2.22"
   },
   "devDependencies": {
     "@mds-core/mds-db": "0.1.26"

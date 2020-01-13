@@ -35,7 +35,7 @@
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.27",
     "uuid": "3.3.3",
-    "yargs": "15.0.2"
+    "yargs": "15.1.0"
   },
   "devDependencies": {
     "@mds-core/mds-agency": "0.0.28",

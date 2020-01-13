@@ -26,13 +26,12 @@ import {
   BoundingBox,
   Geography,
   Rule,
-  VEHICLE_EVENTS,
-  VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   BBox,
   TripTelemetry,
-  GpsData
+  GpsData,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import { TelemetryRecord } from '@mds-core/mds-db/types'
 import log from '@mds-core/mds-logger'
@@ -45,6 +44,7 @@ import { BadParamsError } from '@mds-core/mds-utils'
 
 import moment from 'moment-timezone'
 import { isArray } from 'util'
+import { getNextState } from './state-machine'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
@@ -508,86 +508,13 @@ function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: Boun
   return false
 }
 
-function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
-  switch (EVENT_STATUS_MAP[eventA.event_type]) {
-    case VEHICLE_STATUSES.available:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.agency_pick_up:
-          return true
-        case VEHICLE_EVENTS.service_end:
-          return true
-        case VEHICLE_EVENTS.trip_start:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.elsewhere:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_enter:
-          return true
-        case VEHICLE_EVENTS.provider_pick_up:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.provider_drop_off:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.inactive:
-      switch (eventB.event_type) {
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.removed:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.register:
-          return true
-        case VEHICLE_EVENTS.trip_enter:
-          return true
-        case VEHICLE_EVENTS.provider_drop_off:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.reserved:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_start:
-          return true
-        case VEHICLE_EVENTS.cancel_reservation:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.trip:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_leave:
-          return true
-        case VEHICLE_EVENTS.trip_end:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.unavailable:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.service_start:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.agency_pick_up:
-          return true
-        case VEHICLE_EVENTS.provider_pick_up:
-          return true
-        default:
-          return false
-      }
-    default:
-      return false
-  }
+function isStateTransitionValid(
+  eventA: VehicleEvent & { event_type: VEHICLE_EVENT },
+  eventB: VehicleEvent & { event_type: VEHICLE_EVENT }
+) {
+  const currState = EVENT_STATUS_MAP[eventA.event_type]
+  const nextState = getNextState(currState, eventB.event_type)
+  return nextState !== undefined
 }
 
 function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {

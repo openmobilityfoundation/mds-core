@@ -1,4 +1,4 @@
-import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
+import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
 import {
   VEHICLE_STATUS,
   VEHICLE_EVENT,
@@ -71,7 +71,12 @@ export interface MetricsApiRequest extends ApiRequest {
   body: Partial<GetTimeBinsParams & { provider_id: UUID }>
 }
 
-export type MetricsApiResponse<T> = ApiResponse<T | Error>
+export type MetricsApiResponse<T> = ApiResponse<T | Error> & {
+  locals: ApiResponseLocals & {
+    provider_id: UUID
+    provider_ids: UUID[]
+  }
+}
 export type GetStateSnapshotResponse = MetricsApiResponse<StateSnapshotResponse[]>
 export type GetEventsSnapshotResponse = MetricsApiResponse<EventSnapshotResponse[]>
 export type GetTelemetryCountsResponse = MetricsApiResponse<TelemetryCountsResponse[]>

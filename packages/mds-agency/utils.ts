@@ -395,11 +395,15 @@ export function getServiceArea(event: VehicleEvent): UUID | null {
 
 export async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
   const recorded_telemetry = await db.writeTelemetry(Array.isArray(telemetry) ? telemetry : [telemetry])
-  await Promise.all([
-    cache.writeTelemetry(recorded_telemetry),
-    stream.writeTelemetry(recorded_telemetry),
-    socket.writeTelemetry(recorded_telemetry)
-  ])
+  try {
+    await Promise.all([
+      cache.writeTelemetry(recorded_telemetry),
+      stream.writeTelemetry(recorded_telemetry),
+      socket.writeTelemetry(recorded_telemetry)
+    ])
+  } catch (err) {
+    await log.warn(`Failed to write telemetry to cache/socket/stream, ${err}`)
+  }
   return recorded_telemetry
 }
 

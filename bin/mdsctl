@@ -3,6 +3,8 @@
 osx=Darwin
 linux=Linux
 
+[ ! -f ~/.bashrc ] && touch ~/.bashrc
+
 hash brew > /dev/null 2>&1 || {
   case "${MDS_OS:-$(uname)}" in
     ${osx})
@@ -56,7 +58,12 @@ declare -A configs=(
   ["provider"]="${MDS_PROVIDER:-}"
   ["rc"]="${MDS_RC:-~/.bashrc ~/.zshrc}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-oq jq gettext yarn nvm helm@2 derailed/k9s/k9s pgcli redis git go}"
+  ["brew"]="${MDS_BREW:-oq jq envsubst yarn nvm helm k9s git go}"
+  ["brew-envsubst"]="gettext"
+  ["brew-helm"]="helm@2"
+  ["brew-k9s"]="derailed/k9s/k9s"
+  ["brew-oq"]="blacksmoke16/tap"
+  ["paths"]="${MDS_PATHS:-envsubst helm}"
   ["tools"]="${MDS_TOOLCHAIN:-helm,pgcli}"
   ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
@@ -68,13 +75,17 @@ declare -A configs=(
   ["forward"]="${MDS_FORWARD:-default}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
-  ["istio-version"]="${MDS_ISTIO_VERSION:-1.4.2}" #1.3.6}""
-  ["istio-profile"]="${MDS_ISTIO_PROFILE:-}" #-istio-sds-auth}" # todo: looks to fail when installing istio-nodeagent
+  # note: istio-version=1.4.2 (latest) has been verified for development environments
+  ["istio-version"]="${MDS_ISTIO_VERSION:-1.3.6}"
+  # note: fails when installing istio-nodeagent (i.e. -istio-sds-auth)
+  ["istio-profile"]="${MDS_ISTIO_PROFILE:-}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
-  ["knative-version"]="${MDS_KNATIVE_VERSION:-0.11.0}" # 0.10.1}"
-  ["knative-components"]="${MDS_KNATIVE_COMPONENTS:-eventing}" # monitoring serving}"
+  ["knative-version"]="${MDS_KNATIVE_VERSION:-0.11.0}"
+  # note: supports knative module (monitoring, serving), e.g.: :-eventing monitoring serving}
+  ["knative-components"]="${MDS_KNATIVE_COMPONENTS:-eventing}"
   ["natss"]="${MDS_NATSS_PATH:-${configs[workdir]}/src/knative.dev/eventing-contrib}"
   ["natss-version"]="${MDS_NATSS_VERSION:-${configs[knative-version]}}"
+  ["grafana-plugins"]="${MDS_GRAFANA_PLUGINS:-devopsprodigy-kubegraf-app}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
@@ -83,11 +94,13 @@ declare -A configs=(
   ["values-mds"]="${MDS_VALUES_MDS:-}"
   ["values-natss"]="${MDS_VALUES_NATSS:-}"
   ["presets"]="${MDS_PRESETS:-}"
-  ["presets-mds"]="${MDS_PRESETS_MDS:-postgresql.password=Password123#,apis.mds-agency.migration=true}"
-  ["presets-natss"]="${MDS_PRESETS_NATSS:-}"
+  ["presets-mds-database-password"]="${MDS_PRESETS_MDS_DATABASE_PASSWORD:-Password123#}"
+  ["presets-mds"]="${MDS_PRESETS_MDS:-postgresql.password=${configs[presets-mds-database-password]},apis.mds-agency.migration=true}"
+  ["presets-natss"]="${MDS_PRESETS_NATSS:-resourcesLimitsMemory=32M}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-}"
-  ["sets-istio"]="${MDS_SETS_ISTIO:-}" #pilot.resources.requests.memory=512Mi}"
+  # todo: try scaling down istio's resource requirements (e.g. local dev): pilot.resources.requests.memory=512Mi}
+  ["sets-istio"]="${MDS_SETS_ISTIO:-}"
   ["sets-natss"]="${MDS_SETS_NATSS:-}"
   ["sets-logging"]="${MDS_SETS_LOGGING:-fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
   ["sets-simulator"]="${MDS_SETS_SIMULATOR:-registry=,jwt.enabled=false}"
@@ -101,14 +114,17 @@ declare -A configs=(
   ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["namespace-simulator"]="${MDS_NAMESPACE_SIMULATOR:-${configs[namespace-mds]}}"
   ["namespace-knative"]="${MDS_NAMESPACE_KNATIVE:-knative-eventing}"
-  ["namespace-natss"]="${MDS_NAMESPACE_NATSS:-natss}" #${configs[namespace-mds]}}"
+  ["namespace-natss"]="${MDS_NAMESPACE_NATSS:-natss}"
+  ["namespace-dns-lookup"]="${MDS_NAMESPACE_DNS_LOOKUP:-default}"
+  ["namespace-curl"]="${MDS_NAMESPACE_CURL:-default}"
   ["dryrun"]="${MDS_DRY_RUN:-}"
   ["quiet"]="${MDS_QUIET:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/${configs[istio-version]}/charts"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
-  ["elastic"]="https://helm.elastic.co")
+  ["elastic"]="https://helm.elastic.co"
+  ["bitnami"]="https://charts.bitnami.com/bitnami")
 declare -A apps=(
   ["mds-agency"]="https://localhost:[port]/agency,mds,app"
   ["mds-audit"]="https://localhost:[port]/audit,mds,app"
@@ -128,6 +144,12 @@ declare -A apps=(
 yellow=`tput setaf 3`
 red=`tput setaf 9`
 reset=`tput sgr0`
+
+initialize() {
+  for p in ${configs[paths]}; do
+    export PATH=$(brew --prefix ${configs[brew-${p}]:-${p}})/bin:${PATH}
+  done; unset p
+}
 
 warn() {
   echo "${yellow}warn: ${1}${reset}"
@@ -150,6 +172,16 @@ beerMe() {
    [ ${#configs[quiet]} -eq 0 ] && echo -ne "\xF0\x9F\x8D\xBA "
 }
 
+urlEncode() {
+	local LANG=C i c e=''
+	for ((i=0;i<${#1};i++)); do
+    c=${1:$i:1}
+		[[ "${c}" =~ [a-zA-Z0-9\.\~\_\-] ]] || printf -v c '%%%02X' "'${c}"
+    e+="${c}"
+	done; unset c
+  echo "${e}"
+}
+
 usage() {
   [ "${1}" ] && warn "${1}"
 
@@ -170,13 +202,13 @@ where preset-key in:
   minimal                                             : minimal service deployment; default: preset(local) + mds-agency, postgresql, redis
   local                                               : local resource (cpu, memory) deployment; default: limitsCpu=200m, limitsMemory=200Mi, requestsCpu=20m, requestsMemory=32Mi
   disabled                                            : disable service deployment; default: all
-  no-events                                           : disable eventing services
   no-persistence                                      : disable persistence
 
 commands:
   bootstrap                                           : install dependencies; default: ${configs[tools]},${configs[bootstrap]}
   build                                               : build project
   install[:{service[,{service}]}]                     : install specified service; default: ${configs[install]}
+  cycle[]:[app[,app]]]                                : restart app; default: cycle all services
   test[:unit,integration]                             : preform specified tests; default: ${configs[test]}
   open:[app[,{app}]]                                  : opens a browser for the provided application(s)
   forward[:{app[,{app}]}]                             : register port-forwarding for the provided application(s); default: ${configs[forward]}
@@ -199,6 +231,9 @@ where service in:
   metrics
   nats
   natss
+  grafana
+  dnslookup
+  curl
 
 where app in:
   mds-agency
@@ -231,14 +266,13 @@ bootstrap() {
   check ${FUNCNAME[0]}
 
   for l in ${configs[brew]}; do
-    lc=${l}
-    case ${l} in
-      gettext) lc=envsubst;;
-      oq) brew tap blacksmoke16/tap;;
-    esac
+    lc=${configs[brew-${l}]:-${l}}
 
-    hash ${lc} > /dev/null 2>&1 || {
-      brew install ${l}
+    hash ${l} > /dev/null 2>&1 || {
+      case ${l} in
+        oq) brew tap ${lc};;
+        *) brew install ${lc};;
+      esac
 
       # todo: unable to detect nvm install via subshell given it is an alias
       case ${l} in
@@ -253,13 +287,12 @@ bootstrap() {
           nvm use node
           nvm install 10.16.3
           nvm alias default 10.16.3;;
-        gettext)
-          brew link --force gettext
-          export PATH=$(brew --prefix gettext)/bin:${PATH};;
-        helm@2) export PATH=$(brew --prefix helm@2)/bin:${PATH};;
+        envsubst) brew link --force ${lc};;
       esac
     }
-  done; unset l
+  done; unset l lc
+
+  initialize
 
   # fixme: impl
   hash ko > /dev/null 2>&1 || {
@@ -311,11 +344,15 @@ installImages() {
 }
 
 buildImage() {
-  docker build -t ${1}$(getBranchSuffix) .
+  docker build -t ${1}$(getBranchSuffix)$(getCommitHash) .
 }
 
 getBranchSuffix() {
   git rev-parse --abbrev-ref HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
+}
+
+getCommitHash() {
+  git rev-parse --short HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
 }
 
 # TODO: DRY
@@ -333,7 +370,13 @@ templateDockerCompose() {
 
 # TODO: DRY
 templateValues() {
-  suffix=$(getBranchSuffix)
+  branchSuffix=$(getBranchSuffix)
+  if [ "$branchSuffix" = "-master" ]; then
+    suffix="$branchSuffix"
+  else
+    suffix="$branchSuffix"$(getCommitHash)
+  fi
+
   for directory in container-images/mds-*; do
     api=$(basename $directory)
     version=$(jq -r '.version' < $directory/package.json)
@@ -381,7 +424,7 @@ installHelm() {
   [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
 
   case "${configs[provider],,}" in
-    gcp) installTiller;;
+    aws | gcp) installTiller;;
     *);;
   esac
 }
@@ -395,10 +438,10 @@ helmOptions() {
   unset opts
 }
 
+# fixme: cleanup
 installTiller() {
   check ${FUNCNAME[0]}
 
-  # fixme: clean this up, one path
   case "${configs[provider],,}" in
     gcp)
       kubectl create clusterrolebinding cluster-admin-binding \
@@ -407,9 +450,9 @@ installTiller() {
       kubectl create serviceaccount --namespace kube-system tiller
       kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
       kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}';;
+    aws) ;&
     *)
       if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "1" ]; then
-        warn "NOT FOR PRODUCTION USE"
         cat << EOF | kubectl create -f -
 apiVersion: v1
 kind: ServiceAccount
@@ -417,21 +460,21 @@ metadata:
   name: tiller
   namespace: kube-system
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: tiller-clusterrolebinding
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
 subjects:
 - kind: ServiceAccount
   name: tiller
   namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: ""
 EOF
-      helm init --service-account tiller --upgrade
-    fi;;
+        helm init --service-account tiller --upgrade
+      fi;;
   esac
 }
 
@@ -493,6 +536,8 @@ installIstio() {
 }
 
 labelNamespaceIstioInjection() {
+  check ${FUNCNAME[0]}
+
   kubectl get namespace ${1} > /dev/null 2>&1 && \
     kubectl label namespace ${1} istio-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
 }
@@ -525,6 +570,13 @@ installMetrics() {
   }
 }
 
+installGrafana() {
+  (( $(helm list --short grafana | wc -l) == 0 )) && {
+    helm install --name grafana bitnami/grafana --set admin.user=admin --set admin.password=pwd --set plugins=${grafana-plugins}
+    # todo: port-forward
+  }
+}
+
 imageVersion() {
   for s in $(services); do
     is+="${is:+,}sets-mds+=apis.${s}.version=$(docker images ${s} --format {{.Tag}})"
@@ -548,7 +600,8 @@ installMds() {
       configure $(imageVersion) || configure sets-mds+=registry=${configs[image-repository]}
     pause 5
     # kubectl -n ${configs[namespace-mds]} wait --for=condition=complete job --all
-    helm install ${configs[home]}/helm/mds --name mds --namespace ${configs[namespace-mds]} \
+    helm install ${configs[home]}/helm/mds --name ${configs[namespace-mds]} \
+      --namespace ${configs[namespace-mds]} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
@@ -563,6 +616,17 @@ installMds() {
   }
 }
 
+cycle() {
+  # check ${FUNCNAME[0]}
+
+  for a in ${@}; do
+    (( $(kubectl -n ${configs[namespace-mds]} get pod -l app=${a} --ignore-not-found=true | wc -l) == 2 )) && {
+      p=$(kubectl -n ${configs[namespace-mds]} get pod -l app=${a} -o jsonpath='{.items[0].metadata.name}')
+      [[ ! -z "${p}" ]] && kubectl -n ${configs[namespace-mds]} delete pod ${p}
+    }
+  done; unset a p
+}
+
 installMetricsAdapter() {
   check ${FUNCNAME[0]}
 
@@ -573,6 +637,7 @@ installMetricsAdapter() {
 
 installFallbackCertificate() {
   if [[ ${configs[ingress-domain]+_} && ${#configs[ingress-domain]} -ge 1 ]]; then
+    check ${FUNCNAME[0]}
     TMPCERT=$(mktemp /tmp/k8s-fallback-cert.XXXXXX) || exit 1
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
       -keyout ${TMPCERT}.key -out ${TMPCERT}.crt \
@@ -580,8 +645,6 @@ installFallbackCertificate() {
     kubectl -n istio-system create secret tls gateway-fallback \
       --key ${TMPCERT}.key --cert ${TMPCERT}.crt
     /bin/rm -rf ${TMPCERT} ${TMPCERT}.key ${TMPCERT}.crt
-  # else
-  #   warn "ingress-domain is unspecified"
   fi
 }
 
@@ -590,6 +653,7 @@ installIngressGatewayCertificate() {
 
   if [[ ${configs[ingress-gateway-key-path]+_} && ${#configs[ingress-gateway-key-path]} -ge 1 &&
       ${configs[ingress-gateway-certificate-path]+_} && ${#configs[ingress-gateway-certificate-path]} -ge 1 ]]; then
+    check ${FUNCNAME[0]}
     kubectl create -n istio-system secret tls istio-ingressgateway-certs \
       --key ${configs[ingress-gateway-key-path]} \
       --cert ${configs[ingress-gateway-certificate-path]} \
@@ -623,6 +687,7 @@ installSimulator() {
 }
 
 labelNamespaceKnativeEventingInjection() {
+  check ${FUNCNAME[0]}
   kubectl get namespace ${1} > /dev/null 2>&1 && \
     kubectl label namespace ${1} knative-eventing-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
 }
@@ -631,38 +696,37 @@ installKnative() {
   check ${FUNCNAME[0]}
 
   for c in ${configs[knative-components]}; do
-    case "${c}" in
-      eventing)
-        kubectl get namespace knative-eventing > /dev/null 2>&1 || {
-          if [ -d ${configs[home]}/helm/knative-eventing/${configs[knative-version]} ]; then
-            helm install ${configs[home]}/helm/knative-eventing-init/${configs[knative-version]} \
-              --name knative-eventing-init #--namespace knative-eventing \
-              ${configs[values]:+$(helmOptions values ${configs[values]})} \
-              ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
-              ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-              ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-              ${configs[dryrun]:+--dry-run --debug}
-            helm install ${configs[home]}/helm/knative-eventing/${configs[knative-version]} \
-              --name knative-eventing #--namespace knative-eventing \
-              ${configs[values]:+$(helmOptions values ${configs[values]})} \
-              ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
-              ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-              ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-              ${configs[dryrun]:+--dry-run --debug}
-          else
-            for s in knative.dev/crd-install=true ''; do
-              kubectl get namespace knative-eventing > /dev/null 2>&1 || {
-                # [[ "${c}" == eventing ]] && cy=release || unset cy
-                # [[ "${c}" == monitoring ]] && { cy=${c}; c=serving; }
-                kubectl apply ${s:+--selector ${s}} \
-                  --filename https://github.com/knative/eventing/releases/download/v${configs[knative-version]}/release.yaml \
-                    ${configs[dryrun]:+--dry-run --debug}
-                pause 5
-              }
-            done; unset s
-          fi
-        };;
-    esac
+    kubectl get namespace knative-${c} > /dev/null 2>&1 || {
+      if [ -d ${configs[home]}/helm/knative-${c}/${configs[knative-version]} ]; then
+        helm install ${configs[home]}/helm/knative-${c}-init/${configs[knative-version]} \
+          --name knative-${c}-init #--namespace knative-${c} \
+          ${configs[values]:+$(helmOptions values ${configs[values]})} \
+          ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+          ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+          ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+          ${configs[dryrun]:+--dry-run --debug}
+        helm install ${configs[home]}/helm/knative-${c}/${configs[knative-version]} \
+          --name knative-${c} #--namespace knative-${c} \
+          ${configs[values]:+$(helmOptions values ${configs[values]})} \
+          ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+          ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+          ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+          ${configs[dryrun]:+--dry-run --debug}
+      else
+        for s in knative.dev/crd-install=true ''; do
+          case ${c} in
+            eventing) cy=release;;
+            monitoring) cy=${c}; cc=serving;;
+            serving) cy=${c};;
+          esac
+          echo "kubectl apply ${s:+--selector ${s}} \
+            --filename https://github.com/knative/${cc}/releases/download/v${configs[knative-version]}/${cy}.yaml \
+            ${configs[dryrun]:+--dry-run --debug}"
+          unset cc
+          pause 5
+        done; unset s
+      fi
+    }
   done; unset c
 
   pause 8
@@ -688,6 +752,7 @@ installNatss() {
         --name natss \
         ${configs[values]:+$(helmOptions values ${configs[values]})} \
         ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+        ${configs[presets-natss]:+$(helmOptions set ${configs[presets-natss]})} \
         ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
         ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
         ${configs[dryrun]:+--dry-run --debug}
@@ -742,6 +807,18 @@ installNatss() {
   pause 7
 }
 
+installDnslookup() {
+  (( $(helm list --short dns-lookup | wc -l) == 0 )) && {
+    helm install ./helm/dns --name dns-lookup --namespace ${configs[namespace-dns-lookup]}
+  }
+}
+
+installCurl() {
+  (( $(helm list --short curl | wc -l) == 0 )) && {
+    helm install ./helm/curl --name curl --namespace ${configs[namespace-curl]}
+  }
+}
+
 testUnit() {
   check ${FUNCNAME[0]}
 
@@ -749,7 +826,7 @@ testUnit() {
 #  yarn test
 
   for c in $(find ${configs[home]}/helm -type d -depth 1); do
-    helm unittest ${configs[home]}/helm/$(basename ${c})
+    helm unittest ${configs[home]} g/helm/$(basename ${c})
   done; unset c
 }
 
@@ -768,13 +845,15 @@ get() {
 }
 
 portForward() {
+  check ${FUNCNAME[0]}
+
   fa=${apps[${1}]}
   fns=$(get ${fa} 2)
   fk=$(get ${fa} 3)
   fv=$(get ${fa} 4 ${1})
   fp=$(get ${fa} 5 -1)
 
-  (( $(kubectl -n ${fns} get pod -l ${fk}=${fv} | wc -l) == 2 )) && {
+  (( $(kubectl -n ${fns} get pod -l ${fk}=${fv} --ignore-not-found=true | wc -l) == 2 )) && {
     fa=$(kubectl -n ${fns} get pod -l ${fk}=${fv} -o jsonpath='{.items[0].metadata.name}')
 
     [ ${fp} -eq "-1" ] && \
@@ -788,16 +867,12 @@ portForward() {
 }
 
 forward() {
-  check ${FUNCNAME[0]}
-
   for fa in ${@}; do
     [ ${apps[${fa}]+_} ] && portForward ${fa} || warn "unknown app: ${fa}"
   done; unset fa
 }
 
 unforward() {
-  check ${FUNCNAME[0]}
-
   [ ! -z "${@}" ] || ps -ef | grep -E 'kubectl.*port-forward' | grep -v grep | awk '{print $2}' | xargs kill -9
 
   for ua in ${@}; do
@@ -810,6 +885,8 @@ unforward() {
 }
 
 getApp() {
+  check ${FUNCNAME[0]}
+
   ga=${apps[${1}]}
   gu=$(get ${ga} 1)
   gns=$(get ${ga} 2)
@@ -818,7 +895,7 @@ getApp() {
   gp=$(get ${ga} 5 -1)
 
   [ ${gp} -eq -1 ] && {
-    (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
+    (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} --ignore-not-found=true | wc -l) == 2 )) &&
       gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
         -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
   }
@@ -844,12 +921,17 @@ app() {
 
 cliPostgresql() {
   check ${FUNCNAME[0]}
-  pgcli postgres://mdsadmin@localhost:5432/mds
+  # pgcli postgres://mdsadmin@localhost:5432/mds
+  kubectl -n ${configs[namespace-mds]} run -it --image=dencold/pgcli --rm=true --attach pgcli \
+    postgres://mdsadmin:$(urlEncode ${configs[presets-mds-database-password]})@${configs[namespace-mds]}-postgresql:5432/mds
 }
 
 cliRedis() {
   check ${FUNCNAME[0]}
-  redis-cli -u redis://localhost:6379/0
+  # redis-cli -u redis://localhost:6379/0
+  echo "issue command: redis-cli -u redis://${configs[namespace-mds]}-redis-master:6379/0"
+  kubectl -n ${configs[namespace-mds]} run -it --image=redis --rm=true --attach redis-cli \
+    /bin/bash #redis-cli -u redis://${configs[namespace-mds]}-redis-master:6379/0
 }
 
 uninstallNamespace() {
@@ -859,6 +941,13 @@ uninstallNamespace() {
     kubectl get namespace ${1} > /dev/null 2>&1 && kubectl delete namespace ${ns} \
       ${configs[dryrun]:+--dry-run}
   done; unset ns
+}
+
+uninstallHelm() {
+  case "${configs[provider],,}" in
+    aws | gcp) uninstallTiller;;
+    *);;
+  esac
 }
 
 uninstallSimulator() {
@@ -888,10 +977,17 @@ uninstallMetricsAdapter() {
   helm status kube-metrics-adapter > /dev/null 2>&1 && helm delete --purge kube-metrics-adapter
 }
 
+uninstallGrafana() {
+  (( $(helm list --short grafana | wc -l) == 1 )) && {
+    # todo: unforward
+    helm delete --purge grafana
+  }
+}
+
 uninstallMds() {
   check ${FUNCNAME[0]}
 
-  helm delete --purge mds ${configs[dryrun]:+--dry-run}
+  helm delete --purge ${configs[namespace-mds]} ${configs[dryrun]:+--dry-run}
   uninstallNamespace ${configs[namespace-mds]}
 }
 
@@ -943,6 +1039,18 @@ uninstallNatss() {
       # done; unset ns
       [ -d ${configs[natss]} ] && /bin/rm -rf ${configs[natss]}
     fi
+  }
+}
+
+uninstallDnslookup() {
+  (( $(helm list --short dns-lookup | wc -l) == 1 )) && {
+    helm delete --purge dns-lookup
+  }
+}
+
+uninstallCurl() {
+  (( $(helm list --short curl | wc -l) == 1 )) && {
+    helm delete --purge curl
   }
 }
 
@@ -1002,10 +1110,48 @@ uninstallTiller() {
     pause 3
     helm init --upgrade
   fi
+  case "${configs[provider],,}" in
+    gcp)
+      if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "0" ]; then
+        kubectl delete serviceaccount tiller --namespace kube-system
+        kubectl delete clusterrolebinding tiller-clusterrolebinding
+        helm reset --force
+        pause 3
+        helm init --upgrade
+      fi;;
+    aws) ;&
+    *)
+      if [ $(kubectl get serviceaccount tiller --namespace kube-system > /dev/null 2>&1; echo $?) == "1" ]; then
+        cat << EOF | kubectl delete -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: tiller
+  namespace: kube-system
+EOF
+        helm reset --force
+        pause 3
+        helm init --upgrade
+      fi;;
+  esac
 }
 
 getPort() {
   if [ ${apps[${1}]+_} ]; then
+    check ${FUNCNAME[0]}
     ga=${apps[${1}]}
     gns=$(get ${ga} 2)
     gk=$(get ${ga} 3)
@@ -1013,7 +1159,7 @@ getPort() {
     gp=$(get ${ga} 5 -1)
 
     [ ${gp} -eq -1 ] && {
-      (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} | wc -l) == 2 )) &&
+      (( $(kubectl -n ${gns} get pod -l ${gk}=${gv} --ignore-not-found=true | wc -l) == 2 )) &&
         gp=$(kubectl -n ${gns} get pod -l ${gk}=${gv} \
           -o jsonpath='{.items[0].spec.containers[0].ports[0].containerPort}')
     }
@@ -1039,8 +1185,8 @@ forwardIfNeeded() {
 }
 
 context() {
-  hash kubectl && {
-    [[ -z ${context+x} && "$(lower $(kubectl config current-context))" =~ ^(${configs[local-context]})$ ]] || {
+  [[ -z ${context+x} ]] && {
+    [[ "$(lower $(kubectl config current-context))" =~ ^(${configs[local-context]})$ ]] || {
       v=yes
       [[ "$(prompt "confirm you want to proceed: [${v}/no] ")" != "${v}" ]] && usage "opted to exit" || context=true
       unset v
@@ -1049,7 +1195,8 @@ context() {
 }
 
 check() {
-  context
+  nc=("$(basename ${0})" bootstrap build installHelm)
+  [[ ! " ${nc[@]} " =~ " ${1} " ]] && context
 
   case "${1}" in
     $(basename ${0}))
@@ -1081,15 +1228,14 @@ check() {
       uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || bootstrap;;
     installSimulator)
-      [ ! "${configs[simulator-repository]}" ] && usage "unspecified simulator repository";;
-    forward) ;;
+      [[ ! -d ${configs[simulator]} && ! "${configs[simulator-repository]}" ]] && usage "unspecified simulator repository";;
     app:*) forwardIfNeeded ${1##*:};;
-    cliPostgresql)
-      hash pgcli > /dev/null 2>&1 || bootstrap
-      forwardIfNeeded mds-postgresql;;
-    cliRedis)
-      hash redis-cli > /dev/null 2>&1 || bootstrap
-      forwardIfNeeded mds-redis;;
+    cliPostgresql) ;;
+      # hash pgcli > /dev/null 2>&1 || bootstrap
+      # forwardIfNeeded mds-postgresql;;
+    cliRedis) ;;
+      # hash redis-cli > /dev/null 2>&1 || bootstrap
+      # forwardIfNeeded mds-redis;;
   esac
 }
 
@@ -1139,13 +1285,14 @@ preset() {
         is+="${is:+,}sets-mds+=redis.master.persistence.enabled=false"
         is+="${is:+,}sets-mds+=redis.slave.persistence.enabled=false";;
       minimal)
-        preset $(normalize "disable,no-events,local,no-persistence")
+        preset $(normalize "disable,local,no-persistence")
         is+="${is:+,}sets-mds+=apis.mds-agency.enabled=true";;
       processors)
         preset $(normalize "minimal")
         for p in $(processors); do
           is+="${is:+,}presets-mds+=processors.${p}.enabled=true"
-        done; unset p;;
+        done; unset p
+        is+="${is:+,}sets-mds+=apis.mds-web-sockets.enabled=true";;
       data-external)
         is+="${is:+,}sets-mds+=postgresql.internal=false"
         is+="${is:+,}sets-mds+=postgresql.host=host.docker.internal"
@@ -1159,6 +1306,7 @@ preset() {
   unset is
 }
 
+initialize
 check $(basename ${0})
 
 while getopts ":w:s:c:p:q-:h-:" opt; do
@@ -1201,6 +1349,8 @@ for arg in "${@:$OPTIND}"; do
     install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
+    cycle) s=$(services); p=$(processors); arg="${s// /,},${p// /,}"; unset s p;&
+    cycle:*) cycle "$(normalize ${arg})";;
     test) arg="${configs[test]}";&
     test:*) invoke test "$(normalize ${arg})";;
     forward) arg="${configs[forward]}";&

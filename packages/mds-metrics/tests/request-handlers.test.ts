@@ -21,7 +21,10 @@ describe('Request handlers', () => {
     const send = Sinon.fake.returns('boop')
     const status = Sinon.fake.returns({ send })
     const res: GetAllResponse = ({
-      status
+      status,
+      locals: {
+        provider_ids: []
+      }
     } as unknown) as GetAllResponse
 
     const fakeMetricsRows: MetricsTableRow[] = []
@@ -45,15 +48,16 @@ describe('Request handlers', () => {
         end_time: 400,
         bin_size: 100
       },
-      query: {
-        provider_id
-      }
+      query: {}
     } as MetricsApiRequest
 
     const send = Sinon.fake.returns('boop')
     const status = Sinon.fake.returns({ send })
     const res: GetAllResponse = ({
-      status
+      status,
+      locals: {
+        provider_ids: [provider_id]
+      }
     } as unknown) as GetAllResponse
 
     const fakeMetricsRows: MetricsTableRow[] = []
@@ -79,7 +83,6 @@ describe('Request handlers', () => {
         bin_size: 100
       },
       query: {
-        provider_id,
         format: 'tsv'
       }
     } as MetricsApiRequest
@@ -87,7 +90,10 @@ describe('Request handlers', () => {
     const send = Sinon.fake.returns('boop')
     const status = Sinon.fake.returns({ send })
     const res: GetAllResponse = ({
-      status
+      status,
+      locals: {
+        provider_ids: [provider_id]
+      }
     } as unknown) as GetAllResponse
 
     const fakeMetricsRows: MetricsTableRow[] = [
@@ -124,15 +130,16 @@ describe('Request handlers', () => {
         end_time: 400,
         bin_size: 100
       },
-      query: {
-        provider_id
-      }
+      query: {}
     } as MetricsApiRequest
 
     const send = Sinon.fake.returns('boop')
     const status = Sinon.fake.returns({ send })
     const res: GetAllResponse = ({
-      status
+      status,
+      locals: {
+        provider_ids: [provider_id]
+      }
     } as unknown) as GetAllResponse
 
     await requestHandlers.getAll(req, res)
@@ -152,7 +159,6 @@ describe('Request handlers', () => {
         bin_size: 100
       },
       query: {
-        provider_id,
         format: 'not-valid'
       }
     } as MetricsApiRequest
@@ -160,7 +166,10 @@ describe('Request handlers', () => {
     const send = Sinon.fake.returns('boop')
     const status = Sinon.fake.returns({ send })
     const res: GetAllResponse = ({
-      status
+      status,
+      locals: {
+        provider_ids: [provider_id]
+      }
     } as unknown) as GetAllResponse
 
     await requestHandlers.getAll(req, res)

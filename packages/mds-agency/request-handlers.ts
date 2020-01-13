@@ -412,12 +412,6 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
     if (valid.length) {
       const recorded_telemetry = await writeTelemetry(valid)
 
-      try {
-        await socket.writeTelemetry(recorded_telemetry)
-      } catch (err) {
-        await log.error('Failed to write telemetry to socket', err)
-      }
-
       const delta = Date.now() - start
       if (delta > 300) {
         log.info(

@@ -136,13 +136,13 @@ MDS can be provisioned to a Kubernetes cluster as follows:
 Lastly, build and deploy MDS to your kubernetes cluster:
 
 ```bash
-./bin/mdsctl bootstrap build install:mds test:integration
+./bin/mdsctl bootstrap -p processors build install:mds test:integration
 ```
 
 To cleanup the MDS cluster consider:
 
 ```bash
-./bin/mdsctl uninstall
+./bin/mdsctl uninstall:mds uninstall
 ```
 
 For a complete listing of available operations consider:

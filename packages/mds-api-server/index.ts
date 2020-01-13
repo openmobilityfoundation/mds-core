@@ -131,14 +131,16 @@ export const ApiServer = (
 }
 
 /* istanbul ignore next */
-export const checkAccess = (validator: (scopes: AccessTokenScope[]) => boolean) => (
-  req: ApiRequest,
-  res: ApiResponse,
-  next: express.NextFunction
-) => {
-  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validator(res.locals.scopes)) {
-    next()
-  } else {
-    res.status(403).send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
-  }
-}
+export const checkAccess = (validator: (scopes: AccessTokenScope[]) => boolean | Promise<boolean>) =>
+  process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false'
+    ? async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+        next() // Bypass
+      }
+    : async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+        const valid = await validator(res.locals.scopes)
+        return valid
+          ? next()
+          : res
+              .status(403)
+              .send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
+      }

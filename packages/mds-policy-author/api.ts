@@ -29,48 +29,13 @@ import { policyValidationDetails, geographyValidationDetails } from '@mds-core/m
 import log from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'
+import { getPolicies } from './request-handlers'
 
 function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/policies'),
     checkAccess(scopes => scopes.includes('policies:read')),
-    async (req, res) => {
-      const { get_published = null, get_unpublished = null } = req.query
-      log.info('read /policies', req.query)
-
-      try {
-        const policies = await db.readPolicies({ get_published, get_unpublished })
-
-        // Let's not worry about filtering for just active policies at the moment.
-
-        /*
-      const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
-        if (policy.prev_policies) {
-          prev_policies_acc.push(...policy.prev_policies)
-        }
-        return prev_policies_acc
-      }, [])
-      const active = policies.filter(p => {
-        // overlapping segment logic
-        const p_start_date = p.start_date
-        const p_end_date = p.end_date || Number.MAX_SAFE_INTEGER
-        return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
-      })
-      */
-        res.status(200).send(policies)
-      } catch (err) {
-        await log.error('failed to read policies', err)
-        if (err instanceof BadParamsError) {
-          res.status(400).send({
-            result:
-              'Cannot set both get_unpublished and get_published to be true. If you want all policies, set both params to false or do not send them.'
-          })
-        }
-        res.status(404).send({
-          result: 'not found'
-        })
-      }
-    }
+    getPolicies
   )
 
   app.post(

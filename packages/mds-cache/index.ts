@@ -81,9 +81,13 @@ declare module 'redis' {
     zrangebyscoreAsync: (key: string, min: number | string, max: number | string) => Promise<string[]>
     georadiusAsync: (key: string, longitude: number, latitude: number, radius: number, unit: string) => Promise<UUID[]>
   }
+  interface Multi {
+    hgetallAsync: (arg1: string) => Promise<{ [key: string]: string }>
+  }
 }
 
 bluebird.promisifyAll(redis.RedisClient.prototype)
+bluebird.promisifyAll(redis.Multi.prototype)
 
 let cachedClient: redis.RedisClient | null
 
@@ -252,7 +256,11 @@ async function hreads(
   // bleah
   const multi = (await getClient()).multi()
 
-  suffixes.map(suffix => ids.map(id => multi.hgetall(decorateKey(`${prefix}:${id}:${suffix}`))))
+  suffixes.map(suffix =>
+    ids.map(async id => {
+      await multi.hgetallAsync(decorateKey(`${prefix}:${id}:${suffix}`))
+    })
+  )
 
   /* eslint-reason external lib weirdness */
   /* eslint-disable-next-line promise/avoid-new */
