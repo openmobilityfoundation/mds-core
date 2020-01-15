@@ -2,7 +2,7 @@ import test from 'unit.js'
 import uuid from 'uuid'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { ConnectionManager } from '../connection'
-import { AuditEntity } from '../entities/AuditEntity'
+import { AuditEntity } from '../entities/audit-entity'
 
 const records = 5_000
 const recorded = Date.now()

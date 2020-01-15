@@ -1,15 +1,9 @@
-import { Entity, Index, Column } from 'typeorm'
+import { Entity, Column } from 'typeorm'
 import { UUID } from '@mds-core/mds-types'
-import { BigintTransformer } from './transformers'
+import { RecordedEntity } from './recorded-entity'
 
-const table = 'devices'
-
-@Entity(table)
-export class DeviceEntity {
-  @Column('bigint', { generated: 'increment', transformer: BigintTransformer })
-  @Index(`${table}_id_idx`, { unique: true })
-  id: number
-
+@Entity('devices')
+export class DeviceEntity extends RecordedEntity {
   @Column('uuid', { primary: true })
   device_id: UUID
 
@@ -33,8 +27,4 @@ export class DeviceEntity {
 
   @Column('varchar', { length: 127, nullable: true })
   model: string
-
-  @Column('bigint', { transformer: BigintTransformer })
-  @Index(`${table}_recorded_idx`)
-  recorded: number
 }

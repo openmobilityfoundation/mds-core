@@ -1,7 +1,7 @@
 import Mali from 'mali'
 import logger from '@mds-core/mds-logger'
 import { ConnectionManager } from './connection'
-import { DeviceEntity } from './entities/DeviceEntity'
+import { DeviceEntity } from './entities/device-entity'
 
 const manager = ConnectionManager(DeviceEntity)
 
