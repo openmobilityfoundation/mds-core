@@ -3,3 +3,11 @@ export type AsEntity<T> = {
 }
 
 export type Nullable<T> = T | null
+
+export type JsonObject = {
+  [property: string]: Nullable<JsonValue>
+}
+
+export type JsonArray = Nullable<JsonValue>[]
+
+export type JsonValue = string | number | boolean | JsonObject | JsonArray
