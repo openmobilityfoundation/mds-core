@@ -1,6 +1,7 @@
 import test from 'unit.js'
 import uuid from 'uuid'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
+import { PROPULSION_TYPE, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { ConnectionManager } from '../connection'
 import { DeviceEntity } from '../entities/device-entity'
 
@@ -20,8 +21,8 @@ export default () =>
           .toString(36)
           .substr(2, 3)
           .toUpperCase()}-${index.toString().padStart(6, '0')}`,
-        type: 'scooter',
-        propulsion: ['electric', 'human'],
+        type: 'scooter' as VEHICLE_TYPE,
+        propulsion: ['electric', 'human'] as PROPULSION_TYPE[],
         year: 2019,
         mfgr: 'ScootFast',
         recorded
