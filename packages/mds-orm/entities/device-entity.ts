@@ -1,5 +1,5 @@
 import { Entity, Column } from 'typeorm'
-import { UUID } from '@mds-core/mds-types'
+import { UUID, PROPULSION_TYPE, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { RecordedEntity } from './recorded-entity'
 
 @Entity('devices')
@@ -14,10 +14,10 @@ export class DeviceEntity extends RecordedEntity {
   vehicle_id: string
 
   @Column('varchar', { length: 31 })
-  type: string
+  type: VEHICLE_TYPE
 
   @Column('varchar', { array: true })
-  propulsion: string[]
+  propulsion: PROPULSION_TYPE[]
 
   @Column('smallint', { nullable: true })
   year: number
