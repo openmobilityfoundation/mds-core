@@ -49,7 +49,6 @@
     "eslint-plugin-prettier": "3.1.2",
     "eslint-plugin-promise": "4.2.1",
     "git-revision-webpack-plugin": "3.0.4",
-    "grpcc": "1.1.3",
     "husky": "4.0.10",
     "lerna": "3.20.2",
     "mocha": "7.0.0",
@@ -86,7 +85,6 @@
     "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",
     "test:eslint": "yarn run:concurrent test:eslint",
     "test:unit": "yarn run:sequential test:unit",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "values": "bin/mdsctl templateValues"
   }
 }

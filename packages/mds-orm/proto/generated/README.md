@@ -1,1 +1,0 @@
-Files in this folder are generated and should not be edited or committed

@@ -12,30 +12,18 @@
     "database"
   ],
   "scripts": {
-    "build": "yarn pbjs && yarn pbts && tsc --build tsconfig.build.json",
-    "client": "ts-node client",
-    "grpcc": "grpcc -i -p proto/repository.proto -a 127.0.0.1:50051",
-    "pbjs": "../../node_modules/protobufjs/bin/pbjs -t static-module --keep-case --no-create --no-encode --no-decode --no-verify --no-convert -w commonjs -o proto/generated/index.js proto/*.proto",
-    "pbts": "../../node_modules/protobufjs/bin/pbts -o proto/generated/index.d.ts proto/generated/index.js",
-    "server": "yarn watch server",
+    "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json",
-    "watch": "nodemon --watch '../../packages' --ext 'ts proto' --ignore '*.d.ts' --exec yarn watch:exec --",
-    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+    "test:unit": "yarn typeorm schema:sync && DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json",
+    "typeorm": "DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config ../../node_modules/typeorm/cli.js"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@grpc/proto-loader": "0.5.3",
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-providers": "0.1.26",
-    "grpc": "1.24.2",
-    "grpc-caller": "0.13.0",
-    "mali": "0.20.0",
     "pg": "7.17.1",
-    "protobufjs": "6.8.8",
-    "reflect-metadata": "0.1.13",
     "typeorm": "0.2.22"
   },
   "devDependencies": {}

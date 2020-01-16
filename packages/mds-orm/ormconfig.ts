@@ -1,7 +1,7 @@
 import { types as PostgresTypes } from 'pg'
-import * as entities from '@mds-core/mds-orm/entities'
-import * as migrations from '@mds-core/mds-orm/migrations'
-import { MdsOrmNamingStrategy } from '@mds-core/mds-orm/naming-strategies'
+import * as entities from './entities'
+import * as migrations from './migrations'
+import { MdsOrmNamingStrategy } from './naming-strategies'
 
 // Use parseInt for bigint columns so the values get returned as numbers instead of strings
 PostgresTypes.setTypeParser(20, Number)

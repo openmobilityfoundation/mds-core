@@ -1,8 +1,6 @@
 .tern-project
 mds-*.zip
 dist
-**/proto/generated/*
-!**/proto/generated/README.md
 helm/mds/files/mds-config
 
 # Created by https://www.gitignore.io/api/osx,node,windows,serverless,sublimetext,visualstudiocode
