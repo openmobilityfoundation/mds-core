@@ -1,9 +1,21 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, PROPULSION_TYPE, VEHICLE_TYPE } from '@mds-core/mds-types'
-import { RecordedEntity } from './recorded-entity'
+import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { Nullable } from './types'
+
+export interface DeviceModel extends RecordedModel {
+  device_id: UUID
+  provider_id: UUID
+  vehicle_id: string
+  type: VEHICLE_TYPE
+  propulsion: PROPULSION_TYPE[]
+  year: Nullable<number>
+  mfgr: Nullable<string>
+  model: Nullable<string>
+}
 
 @Entity('devices')
-export class DeviceEntity extends RecordedEntity {
+export class DeviceEntity extends RecordedEntity implements DeviceModel {
   @Column('uuid', { primary: true })
   device_id: UUID
 
@@ -20,11 +32,11 @@ export class DeviceEntity extends RecordedEntity {
   propulsion: PROPULSION_TYPE[]
 
   @Column('smallint', { nullable: true })
-  year: number
+  year: Nullable<number>
 
   @Column('varchar', { length: 127, nullable: true })
-  mfgr: string
+  mfgr: Nullable<string>
 
   @Column('varchar', { length: 127, nullable: true })
-  model: string
+  model: Nullable<string>
 }

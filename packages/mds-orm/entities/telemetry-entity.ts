@@ -1,37 +1,51 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp } from '@mds-core/mds-types'
-import { RecordedEntity } from './recorded-entity'
-import { BigintTransformer } from '../transformers'
+import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { BigintTransformer } from './transformers'
+import { Nullable } from './types'
+
+export interface TelemetryModel extends RecordedModel {
+  device_id: UUID
+  provider_id: UUID
+  timestamp: Timestamp
+  lat: number
+  lng: number
+  speed: Nullable<number>
+  heading: Nullable<number>
+  accuracy: Nullable<number>
+  altitude: Nullable<number>
+  charge: Nullable<number>
+}
 
 @Entity('telemetry')
-export class TelemetryEntity extends RecordedEntity {
-  @Column('uuid', { primary: true, nullable: false })
+export class TelemetryEntity extends RecordedEntity implements TelemetryModel {
+  @Column('uuid', { primary: true })
   device_id: UUID
 
-  @Column('uuid', { nullable: false })
+  @Column('uuid')
   provider_id: UUID
 
-  @Column('bigint', { primary: true, transformer: BigintTransformer, nullable: false })
+  @Column('bigint', { primary: true, transformer: BigintTransformer })
   timestamp: Timestamp
 
-  @Column('double precision', { nullable: false })
+  @Column('double precision')
   lat: number
 
-  @Column('double precision', { nullable: false })
+  @Column('double precision')
   lng: number
 
   @Column('real', { nullable: true })
-  speed: number
+  speed: Nullable<number>
 
   @Column('real', { nullable: true })
-  heading: number
+  heading: Nullable<number>
 
   @Column('real', { nullable: true })
-  accuracy: number
+  accuracy: Nullable<number>
 
   @Column('real', { nullable: true })
-  altitude: number
+  altitude: Nullable<number>
 
   @Column('real', { nullable: true })
-  charge: number
+  charge: Nullable<number>
 }

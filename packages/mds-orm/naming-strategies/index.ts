@@ -1,1 +1,1 @@
-export { MdsOrmNamingStrategy } from './mds-orm-naming-strategy'
+export { MdsNamingStrategy } from './mds-naming-strategy'

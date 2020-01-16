@@ -1,16 +1,27 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { FeatureCollection } from 'geojson'
-import { IdentityEntity } from './identity-entity'
-import { BigintTransformer } from '../transformers'
+import { IdentityEntity, IdentityModel } from './identity-entity'
+import { BigintTransformer } from './transformers'
+import { Nullable } from './types'
+
+export interface GeographyModel extends IdentityModel {
+  description: Nullable<string>
+  effective_date: Nullable<Timestamp>
+  geography_id: UUID
+  geography_json: FeatureCollection
+  publish_date: Nullable<string>
+  prev_geographies: Nullable<UUID[]>
+  name: Nullable<string>
+}
 
 @Entity('geographies')
-export class GeographyEntity extends IdentityEntity {
+export class GeographyEntity extends IdentityEntity implements GeographyModel {
   @Column('varchar', { length: 255, nullable: true })
-  description: string
+  description: Nullable<string>
 
   @Column('bigint', { transformer: BigintTransformer, nullable: true })
-  effective_date: Timestamp
+  effective_date: Nullable<Timestamp>
 
   @Column('uuid', { primary: true })
   geography_id: UUID
@@ -19,11 +30,11 @@ export class GeographyEntity extends IdentityEntity {
   geography_json: FeatureCollection
 
   @Column('bigint', { transformer: BigintTransformer, nullable: true })
-  publish_date: string
+  publish_date: Nullable<string>
 
   @Column('uuid', { array: true, nullable: true })
-  prev_geographies: UUID[]
+  prev_geographies: Nullable<UUID[]>
 
   @Column('varchar', { length: 255, nullable: true })
-  name: string
+  name: Nullable<string>
 }

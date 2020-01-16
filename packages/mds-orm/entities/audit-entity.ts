@@ -1,10 +1,23 @@
 import { Entity, Column } from 'typeorm'
 import { UUID } from '@mds-core/mds-types'
-import { BigintTransformer } from '../transformers'
-import { RecordedEntity } from './recorded-entity'
+import { BigintTransformer } from './transformers'
+import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { Nullable } from './types'
+
+export interface AuditModel extends RecordedModel {
+  audit_trip_id: UUID
+  audit_device_id: UUID
+  audit_subject_id: string
+  provider_id: UUID
+  provider_name: string
+  provider_vehicle_id: string
+  provider_device_id: UUID
+  timestamp: number
+  deleted: Nullable<number>
+}
 
 @Entity('audits')
-export class AuditEntity extends RecordedEntity {
+export class AuditEntity extends RecordedEntity implements AuditModel {
   @Column('uuid', { primary: true })
   audit_trip_id: UUID
 
@@ -30,5 +43,5 @@ export class AuditEntity extends RecordedEntity {
   timestamp: number
 
   @Column('bigint', { nullable: true, transformer: BigintTransformer })
-  deleted: number
+  deleted: Nullable<number>
 }

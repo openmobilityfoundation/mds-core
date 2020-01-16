@@ -1,7 +1,7 @@
 import { types as PostgresTypes } from 'pg'
 import * as entities from './entities'
 import * as migrations from './migrations'
-import { MdsOrmNamingStrategy } from './naming-strategies'
+import { MdsNamingStrategy } from './naming-strategies'
 
 // Use parseInt for bigint columns so the values get returned as numbers instead of strings
 PostgresTypes.setTypeParser(20, Number)
@@ -15,7 +15,7 @@ module.exports = {
   username: PG_USER,
   password: PG_PASS,
   database: PG_NAME,
-  namingStrategy: new MdsOrmNamingStrategy(),
+  namingStrategy: new MdsNamingStrategy(),
   entities: Object.values(entities),
   migrations: Object.values(migrations),
   cli: {
