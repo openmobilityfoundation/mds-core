@@ -19,6 +19,7 @@ module.exports = {
   entities: Object.values(entities),
   migrations: Object.values(migrations),
   cli: {
-    migrationsDir: 'packages/mds-orm/migrations'
+    entitiesDir: './entities',
+    migrationsDir: './migrations'
   }
 }
