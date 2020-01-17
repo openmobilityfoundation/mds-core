@@ -1,9 +1,9 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, VehicleTypeCost, VehicleTypeCount } from '@mds-core/mds-types'
-import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { RecordedEntity, RecordedPersistenceModel } from './recorded-entity'
 import { Nullable } from './types'
 
-export interface StopModel extends RecordedModel {
+export interface StopPersistenceModel extends RecordedPersistenceModel {
   stop_id: UUID
   stop_name: string
   short_name: Nullable<string>
@@ -26,7 +26,7 @@ export interface StopModel extends RecordedModel {
 }
 
 @Entity('stops')
-export class StopEntity extends RecordedEntity implements StopModel {
+export class StopEntity extends RecordedEntity implements StopPersistenceModel {
   @Column('uuid', { primary: true })
   stop_id: UUID
 

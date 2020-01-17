@@ -1,9 +1,9 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, PROPULSION_TYPE, VEHICLE_TYPE } from '@mds-core/mds-types'
-import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { RecordedEntity, RecordedPersistenceModel } from './recorded-entity'
 import { Nullable } from './types'
 
-export interface DeviceModel extends RecordedModel {
+export interface DevicePersistenceModel extends RecordedPersistenceModel {
   device_id: UUID
   provider_id: UUID
   vehicle_id: string
@@ -15,7 +15,7 @@ export interface DeviceModel extends RecordedModel {
 }
 
 @Entity('devices')
-export class DeviceEntity extends RecordedEntity implements DeviceModel {
+export class DeviceEntity extends RecordedEntity implements DevicePersistenceModel {
   @Column('uuid', { primary: true })
   device_id: UUID
 

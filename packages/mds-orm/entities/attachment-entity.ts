@@ -1,9 +1,9 @@
 import { Entity, Column } from 'typeorm'
 import { UUID } from '@mds-core/mds-types'
-import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { RecordedEntity, RecordedPersistenceModel } from './recorded-entity'
 import { Nullable } from './types'
 
-export interface AttachmentModel extends RecordedModel {
+export interface AttachmentPersistenceModel extends RecordedPersistenceModel {
   attachment_filename: string
   attachment_id: UUID
   base_url: string
@@ -14,7 +14,7 @@ export interface AttachmentModel extends RecordedModel {
 }
 
 @Entity('attachments')
-export class AttachmentEntity extends RecordedEntity implements AttachmentModel {
+export class AttachmentEntity extends RecordedEntity implements AttachmentPersistenceModel {
   @Column('varchar', { length: 64 })
   attachment_filename: string
 
