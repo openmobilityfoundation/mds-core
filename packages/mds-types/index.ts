@@ -605,6 +605,10 @@ export interface Provider {
   gbfs_api_url?: string
 }
 
+export type VehicleTypeDictionary<T> = Partial<{ [S in VEHICLE_TYPE]: T }>
+export type VehicleTypeCount = VehicleTypeDictionary<number>
+export type VehicleTypeCost = VehicleTypeDictionary<number>
+
 export interface Stop {
   stop_id: UUID
   stop_name: string
@@ -617,14 +621,14 @@ export interface Stop {
   address?: string
   post_code?: string
   rental_methods?: string // TOOD: enum?
-  capacity: Partial<{ [S in VEHICLE_TYPE]: number }>
+  capacity: VehicleTypeCount
   location_type?: string // TODO: enum?
   timezone?: string
   cross_street?: string
-  num_vehicles_available: Partial<{ [S in VEHICLE_TYPE]: number }>
-  num_vehicles_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
-  num_spots_available: Partial<{ [S in VEHICLE_TYPE]: number }>
-  num_spots_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
+  num_vehicles_available: VehicleTypeCount
+  num_vehicles_disabled?: VehicleTypeCount
+  num_spots_available: VehicleTypeCount
+  num_spots_disabled?: VehicleTypeCount
   wheelchair_boarding?: boolean
-  reservation_cost?: Partial<{ [S in VEHICLE_TYPE]: number }> // Cost to reserve a spot per vehicle_type
+  reservation_cost?: VehicleTypeCost // Cost to reserve a spot per vehicle_type
 }
