@@ -138,12 +138,57 @@ export interface VehicleCountMetricObj {
   dead: number | null
 }
 
+export interface MetricBadEvents {
+  /** Number of invalid events (not matching event state machine). */
+  invalid_count: number | null
+  /** Number of duplicate events submitted. */
+  duplicate_count: number | null
+  /** Number of out-of-order events submitted (according to state machine). */
+  out_of_order_count: number | null
+}
+
+export interface MetricSla {
+  /** Maximum number of deployed vehicles for provider. Comes from Policy rules. */
+  // Typical SLA: 500-2000 vehicles
+  max_vehicle_cap: number
+  /** Minimum number of registered vehicles for provider. */
+  // Typical SLA: 100 vehicles
+  min_registered: number
+  /** Minumum number of trip_start events. */
+  // Typical SLA: 100 events???
+  // TODO: per day???
+  min_trip_start_count: number
+  /** Minumum number of trip_end events. */
+  // Typical SLA: 100 events???
+  // TODO: per day???
+  min_trip_end_count: number
+  /** Minumum number of telemetry events. */
+  // Typical SLA: 1000 events???
+  // TODO: per day???
+  min_telemetry_count: number
+  /** Maximum time between trip_start or trip_end event and submission to server. */
+  // Typical SLA: 30 seconds
+  // TODO: per day???
+  max_start_end_time: number
+  /** Maximum time between trip_enter or trip_leave event and submission to server. */
+  // Typical SLA: 30 seconds
+  max_enter_leave_time: number
+  /** Maximum time between telemetry event and submission to server. */
+  // Typical SLA: 1680 seconds
+  max_telemetry_time: number
+  /** Maximum distance between telemetry events when on-trip. */
+  // Typical SLA: 100 meters
+  max_telemetry_distance: number
+}
+
+export type MetricBinSize = 'hour' | 'day'
+
 export interface MetricsTableRow {
   recorded: Timestamp
   /** Timestamp for start of bin (currently houry bins). */
   start_time: Timestamp
   /** Bin size. */
-  bin_size: 'hour' | 'day'
+  bin_size: MetricBinSize
   /** Geography this row applies to.  `null` = the entire organization. */
   geography: null | string // TODO: May be geography 'name', may be 'id'. ???
   /** Serice provider id */
@@ -164,49 +209,10 @@ export interface MetricsTableRow {
   telemetry_distance_violations: MetricCount
   /** Number of event anomalies. */
   // TODO:  break into object like so
-  bad_events: {
-    /** Number of invalid events (not matching event state machine). */
-    invalid_count: number | null
-    /** Number of duplicate events submitted. */
-    duplicate_count: number | null
-    /** Number of out-of-order events submitted (according to state machine). */
-    out_of_order_count: number | null
-  }
+  bad_events: MetricBadEvents
   /** SLA values used in these calculations, as of start of bin. */
   // TODO:  break into object like so:
-  sla: {
-    /** Maximum number of deployed vehicles for provider. Comes from Policy rules. */
-    // Typical SLA: 500-2000 vehicles
-    max_vehicle_cap: number
-    /** Minimum number of registered vehicles for provider. */
-    // Typical SLA: 100 vehicles
-    min_registered: number
-    /** Minumum number of trip_start events. */
-    // Typical SLA: 100 events???
-    // TODO: per day???
-    min_trip_start_count: number
-    /** Minumum number of trip_end events. */
-    // Typical SLA: 100 events???
-    // TODO: per day???
-    min_trip_end_count: number
-    /** Minumum number of telemetry events. */
-    // Typical SLA: 1000 events???
-    // TODO: per day???
-    min_telemetry_count: number
-    /** Maximum time between trip_start or trip_end event and submission to server. */
-    // Typical SLA: 30 seconds
-    // TODO: per day???
-    max_start_end_time: number
-    /** Maximum time between trip_enter or trip_leave event and submission to server. */
-    // Typical SLA: 30 seconds
-    max_enter_leave_time: number
-    /** Maximum time between telemetry event and submission to server. */
-    // Typical SLA: 1680 seconds
-    max_telemetry_time: number
-    /** Maximum distance between telemetry events when on-trip. */
-    // Typical SLA: 100 meters
-    max_telemetry_distance: number
-  }
+  sla: MetricSla
 }
 
 export const PROPULSION_TYPES = Enum('human', 'electric', 'electric_assist', 'hybrid', 'combustion')
