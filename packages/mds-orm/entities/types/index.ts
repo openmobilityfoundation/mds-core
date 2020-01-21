@@ -8,6 +8,4 @@ export type JsonObject = {
   [property: string]: Nullable<JsonValue>
 }
 
-export type JsonArray = Nullable<JsonValue>[]
-
-export type JsonValue = string | number | boolean | JsonObject | JsonArray
+export type JsonValue = string | number | boolean | Record<string, any> | any[] | null

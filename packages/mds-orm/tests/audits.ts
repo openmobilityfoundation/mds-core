@@ -37,7 +37,9 @@ export default () =>
           .returning('*')
           .onConflict('DO NOTHING')
           .execute()
-        test.value(returning.length).is(records)
+        for (const audit of returning) {
+          test.value(audit.id).isNot(undefined)
+        }
       } finally {
         await connection.close()
       }
