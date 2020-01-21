@@ -88,6 +88,8 @@ export interface TripTelemetry {
 
 export type TripsTelemetry = { [trip_id: string]: TripTelemetry[] }
 
+export type TripTelemetryField = { [timestamp: number]: TripTelemetry[] }
+
 export interface TripEntry {
   vehicle_type: VEHICLE_TYPE
   trip_id: UUID
@@ -105,7 +107,7 @@ export interface TripEntry {
   min_violation_dist: number | null
   avg_violation_dist: number | null
   events: TripEvent[]
-  telemetry: TripTelemetry[][]
+  telemetry: { [event: number]: TripTelemetry[] }
 }
 
 export interface ProviderStreamData {

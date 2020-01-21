@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { TripEvent, Timestamp, TripTelemetry, GpsData } from '@mds-core/mds-types'
+import { TripEvent, Timestamp, TripTelemetry, TripTelemetryField } from '@mds-core/mds-types'
 import { calcDistance, routeDistance } from '@mds-core/mds-utils'
 import * as procTripUtils from '../src/utils'
 
@@ -82,10 +82,10 @@ describe('Proc Trip', () => {
     it('Maps telemtry points to trip events', () => {
       const telemetryMap = getMockedTripTelemetryMap()
       const events = getMockedTripEventMap()
-      const expected: TripTelemetry[][] = [
-        [getMockedTripTelemetry(42), getMockedTripTelemetry(43)],
-        [getMockedTripTelemetry(44)]
-      ]
+      const expected: { [event: number]: TripTelemetry[] } = {
+        '42': [getMockedTripTelemetry(42), getMockedTripTelemetry(43)],
+        '44': [getMockedTripTelemetry(44)]
+      }
       const result = procTripUtils.createTelemetryMap(events['trip-one'], telemetryMap, 'trip-one')
       assert.deepStrictEqual(result, expected)
     })
@@ -93,26 +93,32 @@ describe('Proc Trip', () => {
 
   describe('calcDistance()', () => {
     it('Calculates distance between telemetries', () => {
-      const tripTelemetry: TripTelemetry[][] = [
-        [getMockedTripTelemetryWithGPS(42, 0, 100), getMockedTripTelemetryWithGPS(43, 100, 100)]
-      ]
-      const startGPS: GpsData = { lat: 0, lng: 0 } as GpsData
+      const tripTelemetry: TripTelemetryField = {
+        '42': [getMockedTripTelemetryWithGPS(42, 0, 0), getMockedTripTelemetryWithGPS(43, 0, 100)],
+        '44': [getMockedTripTelemetryWithGPS(44, 100, 100)]
+      }
       const expected = {
         distance:
-          routeDistance([startGPS, { lat: 0, lng: 100 }]) +
+          routeDistance([
+            { lat: 0, lng: 0 },
+            { lat: 0, lng: 100 }
+          ]) +
           routeDistance([
             { lat: 0, lng: 100 },
             { lat: 100, lng: 100 }
           ]),
         points: [
-          routeDistance([startGPS, { lat: 0, lng: 100 }]),
+          routeDistance([
+            { lat: 0, lng: 0 },
+            { lat: 0, lng: 100 }
+          ]),
           routeDistance([
             { lat: 0, lng: 100 },
             { lat: 100, lng: 100 }
           ])
         ]
       }
-      const result = calcDistance(tripTelemetry, startGPS)
+      const result = calcDistance(tripTelemetry)
       assert.deepStrictEqual(result, expected)
     })
   })

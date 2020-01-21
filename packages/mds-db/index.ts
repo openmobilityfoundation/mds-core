@@ -83,6 +83,7 @@ import {
 } from './attachments'
 
 import {
+  getVehicleType,
   getStates,
   getTrips,
   getTripCount,
@@ -212,6 +213,7 @@ export = {
   readAuditAttachments,
   writeAttachment,
   writeAuditAttachment,
+  getVehicleType,
   getStates,
   getTrips,
   getTripCount,
