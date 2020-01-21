@@ -1,5 +1,6 @@
 import { createConnection, Connection, ConnectionOptions } from 'typeorm'
 import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
+import { PostgresDriver } from 'typeorm/driver/postgres/PostgresDriver'
 
 const loggingOption = (options: string): LoggerOptions => {
   return ['false', 'true', 'all'].includes(options) ? options !== 'false' : (options.split(' ') as LoggerOptions)
@@ -31,6 +32,10 @@ const getConnection = async (name: ConnectionName, entities: Function[]) => {
   })
 
   if (!connection) throw Error('Connection Error')
+
+  // Use parseInt for bigint columns so the values get returned as numbers instead of strings
+  const { postgres } = connection.driver as PostgresDriver
+  postgres.types.setTypeParser(20, Number)
 
   return connection
 }
