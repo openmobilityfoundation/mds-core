@@ -56,6 +56,9 @@ async function calcVehicleCounts(
 ): Promise<VehicleCountMetricObj> {
   // Calculate total number of registered vehicles at start of bin
   // TODO: cache value to query only bin size
+  const registeredVehicles = await cache.readKeys('device:*:device')
+  const registeredCount = registeredVehicles?.length ?? 0
+
   const events = await db.getStates(providerID, vehicleType, startTime, endTime)
   const histRegistered = events.filter(event => {
     return event.event_type === VEHICLE_EVENTS.register
@@ -63,7 +66,8 @@ async function calcVehicleCounts(
   const histDeregistered = events.filter(event => {
     return event.event_type === VEHICLE_EVENTS.deregister
   }).length
-  const registered = histRegistered && histDeregistered ? histRegistered - histDeregistered : null
+  const registeredLastHour = histRegistered - histDeregistered
+  const registered = registeredCount + registeredLastHour
 
   // Calculate total number of vehicle in Right of way
   // TODO: 48 hour filtering

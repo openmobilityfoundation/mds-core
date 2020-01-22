@@ -1,9 +1,10 @@
 import Sinon from 'sinon'
 import assert from 'assert'
 import cache from '@mds-core/mds-cache'
-import { StateEntry, TripEvent, Timestamp } from '@mds-core/mds-types'
+import { StateEntry, TripEvent, Timestamp, GpsData } from '@mds-core/mds-types'
 import * as procEvent from '../src/proc-event'
 import * as procEventUtils from '../src/utils'
+import * as annotation from '../src/annotation'
 
 const getMockedTripEvent = (event_type: string, timestamp: Timestamp) => {
   const tripStartA = ({ event_type, timestamp } as unknown) as TripEvent
@@ -23,6 +24,38 @@ const getMockedTripData = () => {
 }
 
 describe('Proc Event', () => {
+  describe('getAnnotationData()', () => {
+    it('Returns no service area given gps coords', () => {
+      const expected = { in_bound: false, areas: [] }
+      const gpsData: GpsData = { lng: 42, lat: 42 }
+      const result = annotation.getAnnotationData(gpsData)
+      assert.deepStrictEqual(result, expected)
+    })
+
+    it('Returns correct service area given gps coords', () => {
+      const expected = {
+        in_bound: true,
+        areas: [
+          {
+            id: '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49',
+            type: 'district'
+          },
+          {
+            id: '8cfe393c-4dc8-4a1d-922e-034f8577c507',
+            type: 'district'
+          },
+          {
+            id: '3abf8e10-a380-45bb-bfd4-ec5b21b1b0b6',
+            type: 'district'
+          }
+        ]
+      }
+      const gpsData: GpsData = { lng: -118.456185290317, lat: 33.9624723998019 }
+      const result = annotation.getAnnotationData(gpsData)
+      assert.deepStrictEqual(result, expected)
+    })
+  })
+
   describe('findTripStart()', () => {
     it('Errors out if no trip start events are found', () => {
       assert.throws(() => {

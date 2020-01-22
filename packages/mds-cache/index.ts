@@ -137,7 +137,8 @@ async function info() {
 }
 
 async function hget(key: string, field: UUID): Promise<CachedItem | CachedHashItem | null> {
-  const flat = await (await getClient()).hgetAsync(decorateKey(key), field)
+  const client = await getClient()
+  const flat = await client.hgetAsync(decorateKey(key), field)
   if (flat) {
     return unflatten(flat)
   }
@@ -145,16 +146,18 @@ async function hget(key: string, field: UUID): Promise<CachedItem | CachedHashIt
 }
 
 async function hgetall(key: string): Promise<CachedItem | CachedHashItem | null> {
-  const flat = await (await getClient()).hgetallAsync(decorateKey(key))
+  const client = await getClient()
+  const flat = await client.hgetallAsync(decorateKey(key))
   if (flat) {
     return unflatten(flat)
   }
   return null
 }
 
-async function getVehicleType(keyID: UUID): Promise<VEHICLE_TYPE> {
-  // TODO: Fix type entry into cache so we don't need to do this unkown conversion
-  return ((await getClient()).hgetAsync(decorateKey(`device:${keyID}:device`), 'type') as unknown) as VEHICLE_TYPE
+async function getVehicleType(keyID: UUID): Promise<VEHICLE_TYPE | null> {
+  const client = await getClient()
+  const type = await client.hgetAsync(decorateKey(`device:${keyID}:device`), 'type')
+  return (type as VEHICLE_TYPE) ?? null
 }
 
 async function readDeviceState(field: UUID): Promise<StateEntry | null> {

@@ -65,15 +65,15 @@ async function processTrip(
     // Calculate trip metrics
     const telemetry = createTelemetryMap(events, telemetryMap, trip_id)
     const duration = tripEndEvent.timestamp - tripStartEvent.timestamp
-    const distMeasure = tripStartEvent.gps ? calcDistance(telemetry, tripStartEvent.gps) : null
+    const distMeasure = tripStartEvent.gps ? calcDistance(telemetry) : null
     const distance = distMeasure ? distMeasure.distance : null
     const points = distMeasure ? distMeasure.points : []
     const violationArray = points.filter(dist => {
       return dist > config.compliance_sla.max_telemetry_distance
     })
     const violation_count = violationArray.length
-    const max_violation_dist = violation_count ? Math.min(...violationArray) : null
-    const min_violation_dist = violation_count ? Math.max(...violationArray) : null
+    const max_violation_dist = violation_count ? Math.max(...violationArray) : null
+    const min_violation_dist = violation_count ? Math.min(...violationArray) : null
     const avg_violation_dist = violation_count ? violationArray.reduce((a, b) => a + b) / violationArray.length : null
 
     const tripData: TripEntry = {
@@ -110,8 +110,6 @@ export async function tripProcessor() {
     Object.keys(tripsMap).map(async vehicleID => {
       const [provider_id, device_id] = vehicleID.split(':')
       const tripsEvents = tripsMap[vehicleID]
-      const unprocessedTripsEvents = tripsEvents
-
       const results = await Promise.all(
         Object.keys(tripsEvents).map(tripID => {
           try {
@@ -123,11 +121,11 @@ export async function tripProcessor() {
       )
 
       results.map(response => {
-        if (isUUID(response) && unprocessedTripsEvents[response]) delete unprocessedTripsEvents[response]
+        if (isUUID(response) && tripsEvents[response]) delete tripsEvents[response]
       })
 
       // Update or clear cache
-      if (Object.keys(unprocessedTripsEvents).length) return cache.writeTripsEvents(vehicleID, unprocessedTripsEvents)
+      if (Object.keys(tripsEvents).length) return cache.writeTripsEvents(vehicleID, tripsEvents)
       return cache.deleteTripsEvents(vehicleID)
     })
   )

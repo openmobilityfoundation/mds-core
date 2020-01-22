@@ -16,7 +16,6 @@ import {
   isStringifiedCacheReadDeviceResult
 } from '@mds-core/mds-schema-validators'
 
-import log from '@mds-core/mds-logger'
 import { ParseError } from '@mds-core/mds-utils'
 import {
   StringifiedEvent,
@@ -76,7 +75,7 @@ function parseAllDeviceStates(allDeviceStates: StringifiedAllDeviceStates): { [v
   }
 }
 
-async function parseTripsEvents(tripsEventsStr: StringifiedTripsEvents): Promise<TripsEvents> {
+function parseTripsEvents(tripsEventsStr: StringifiedTripsEvents): TripsEvents {
   try {
     const trips: TripsEvents = {}
     // TODO: fix awkward cast/parsing, should be unnecessary with typing
@@ -112,12 +111,11 @@ async function parseTripsEvents(tripsEventsStr: StringifiedTripsEvents): Promise
     })
     return trips
   } catch (err) {
-    await log.error(err)
-    throw new ParseError(`unable to parse tripsEvents: ${tripsEventsStr}`)
+    throw new ParseError(`unable to parse tripsEvents: ${tripsEventsStr}: ${err}`)
   }
 }
 
-async function parseTripsTelemetry(tripsTelemetryStr: StringifiedTripsTelemetry): Promise<TripsTelemetry> {
+function parseTripsTelemetry(tripsTelemetryStr: StringifiedTripsTelemetry): TripsTelemetry {
   try {
     const trips: TripsTelemetry = {}
     const tripsTelemetry: StringifiedTripsTelemetry = JSON.parse(String(tripsTelemetryStr))
@@ -141,16 +139,11 @@ async function parseTripsTelemetry(tripsTelemetryStr: StringifiedTripsTelemetry)
     })
     return trips
   } catch (err) {
-    await log.error(err)
-    throw new ParseError(`unable to parse tripsTelemetry: ${tripsTelemetryStr}`)
+    throw new ParseError(`unable to parse tripsTelemetry: ${tripsTelemetryStr}: ${err}`)
   }
 }
 
-async function parseAllTripsEvents(
-  allTripsEvents: StringifiedAllTripsEvents
-): Promise<{
-  [vehicle_id: string]: TripsEvents
-}> {
+function parseAllTripsEvents(allTripsEvents: StringifiedAllTripsEvents): { [vehicle_id: string]: TripsEvents } {
   try {
     const allTrips: { [vehicle_id: string]: TripsEvents } = Object.keys(allTripsEvents).reduce((acc, vehicle_id) => {
       return Object.assign(acc, { [vehicle_id]: parseTripsEvents(allTripsEvents[vehicle_id]) })

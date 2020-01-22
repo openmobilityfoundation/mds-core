@@ -18,8 +18,12 @@ export const EventServer = <TData, TResult>(
   const TENANT_REGEXP = new RegExp(`^${TENANT_ID}\\.`)
 
   const parseCloudEvent = (req: express.Request): Cloudevent => {
-    const event = receiver.parse(req.body, req.headers)
-    return event.type(event.getType().replace(TENANT_REGEXP, ''))
+    try {
+      const event = receiver.parse(req.body, req.headers)
+      return event.type(event.getType().replace(TENANT_REGEXP, ''))
+    } catch {
+      throw new Error('Malformed CE')
+    }
   }
 
   // Middleware
@@ -39,7 +43,10 @@ export const EventServer = <TData, TResult>(
       return res.status(200).send({ result })
     } catch (error) /* istanbul ignore next */ {
       await logger.error('Cloud Event', error, { method, headers, body })
-      return res.status(500).send({ error })
+      if (String(error).includes('Malformed CE')) {
+        return res.status(500).send({ error })
+      }
+      return res.status(202).send({ error })
     }
   })
 

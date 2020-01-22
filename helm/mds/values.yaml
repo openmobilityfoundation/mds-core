@@ -1,9 +1,4 @@
 apis:
-  mds-provider:
-    enabled: true
-    pathPrefix: /provider
-    version: latest
-    migration: false
   mds-agency:
     enabled: true
     pathPrefix: /agency

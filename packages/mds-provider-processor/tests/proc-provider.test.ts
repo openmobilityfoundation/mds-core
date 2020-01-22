@@ -97,6 +97,8 @@ describe('Metrics', () => {
 
   describe('calcVehicleCounts()', () => {
     it('Returns counts of devices in certain states', async () => {
+      const fakeRegisteredVehicles = Sinon.fake.resolves(null)
+      Sinon.replace(cache, 'readKeys', fakeRegisteredVehicles)
       const states = getMockedGetStates()
       const fakeGetStates = Sinon.fake.resolves(states)
       Sinon.replace(db, 'getStates', fakeGetStates)

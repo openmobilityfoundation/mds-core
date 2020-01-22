@@ -135,6 +135,14 @@ export async function eventProcessor(type: string, data: VehicleEvent & Telemetr
   const { timestamp, device_id, provider_id, recorded } = data
   const lastState = await cache.readDeviceState(`${provider_id}:${device_id}`)
   // Construct state
+  let vehicleType = await cache.getVehicleType(device_id)
+  if (!vehicleType) {
+    vehicleType = await db.getVehicleType(device_id)
+    if (!vehicleType) {
+      throw new Error(`DEVICE ${device_id} NOT FOUND`)
+    }
+  }
+
   const baseDeviceState: {
     vehicle_type: VEHICLE_TYPE
     type: string
@@ -144,7 +152,7 @@ export async function eventProcessor(type: string, data: VehicleEvent & Telemetr
     recorded: Timestamp
     annotation_version: number
   } = {
-    vehicle_type: await cache.getVehicleType(device_id),
+    vehicle_type: vehicleType,
     type,
     timestamp,
     device_id,
@@ -224,7 +232,7 @@ export async function eventProcessor(type: string, data: VehicleEvent & Telemetr
     }
 
     default: {
-      throw new Error('Not a valid cloudevent type')
+      throw new Error('NOT A VALID CLOUDEVENT TYPE')
     }
   }
 }
