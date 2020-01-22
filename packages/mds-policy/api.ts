@@ -94,9 +94,11 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
+    log.info('read policy', JSON.stringify(req.params))
     const { policy_id } = req.params
     if (!isUUID(policy_id)) {
       res.status(400).send({ error: 'bad_param' })
+      return
     }
     try {
       const policy = await db.readPolicy(policy_id)
@@ -116,6 +118,7 @@ function api(app: express.Express): express.Express {
     const { geography_id } = req.params
     if (!isUUID(geography_id)) {
       res.status(400).send({ error: 'bad_param' })
+      return
     }
     log.info('read geo', geography_id)
     try {

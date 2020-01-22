@@ -105,28 +105,6 @@ describe('Tests app', () => {
       })
   })
 
-  it('tries to read non-existant policy', done => {
-    request
-      .get('/policies/notarealgeography')
-      .set('Authorization', AUTH)
-      .expect(400)
-      .end((err, result) => {
-        test.value(result.body.result === 'not found')
-        done(err)
-      })
-  })
-
-  it('tries to read non-existant geography', done => {
-    request
-      .get('/geographies/notarealgeography')
-      .set('Authorization', AUTH)
-      .expect(400)
-      .end((err, result) => {
-        test.value(result.body.result === 'not found')
-        done(err)
-      })
-  })
-
   it('read back one policy', async () => {
     await db.writePolicy(POLICY_JSON)
     await db.publishPolicy(POLICY_UUID)
@@ -245,6 +223,31 @@ describe('Tests app', () => {
         const body = result.body
         log('read back nonexistant geography response:', body)
         test.value(result).hasHeader('content-type', APP_JSON)
+        done(err)
+      })
+  })
+
+  it('tries to read non-UUID geography', done => {
+    console.log('hurb ----------------------------')
+    request
+      .get('/geographies/notarealgeography')
+      .set('Authorization', AUTH)
+      .expect(400)
+      .end((err, result) => {
+        test.value(result.body.result === 'not found')
+        done(err)
+      })
+  })
+
+  it('tries to read non-UUID policy', done => {
+    console.log('bruh ----------------------------')
+    request
+      .get('/policies/notarealpolicy')
+      .set('Authorization', AUTH)
+      .expect(400)
+      .end((err, result) => {
+        console.log('***---', typeof err, JSON.stringify(err), JSON.stringify(result))
+        test.value(result.body.result === 'not found')
         done(err)
       })
   })
