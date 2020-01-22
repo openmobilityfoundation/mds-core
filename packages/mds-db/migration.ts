@@ -11,7 +11,8 @@ const MIGRATIONS = [
   'alterPreviousGeographiesColumn',
   'dropDeprecatedProviderTables',
   'dropReadOnlyGeographyColumn',
-  'dropAuditEventsColumns'
+  'dropAuditEventsColumns',
+  'alterReportsTripsMigration'
 ] as const
 type MIGRATION = typeof MIGRATIONS[number]
 

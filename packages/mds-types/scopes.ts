@@ -18,9 +18,7 @@ export const AccessTokenScopes = [
   'policies:write',
   'providers:read',
   'service_areas:read',
-  'status_changes:read',
   'telemetry:write:provider',
-  'trips:read',
   'vehicles:read',
   'vehicles:read:provider',
   'vehicles:write:provider'
@@ -46,9 +44,7 @@ export const ScopeDescriptions: { [S in AccessTokenScope]: string } = {
   'policies:write': 'Write Policies',
   'providers:read': 'Read Providers',
   'service_areas:read': 'Read Service Areas',
-  'status_changes:read': 'Read Status Changes',
   'telemetry:write:provider': 'Write Telemetry (Provider Access)',
-  'trips:read': 'Read Trips',
   'vehicles:read': 'Read Vehicles',
   'vehicles:read:provider': 'Read Vehicles (Provider Access)',
   'vehicles:write:provider': 'Write Vehicles (Provider Access)'

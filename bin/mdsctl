@@ -132,7 +132,6 @@ declare -A apps=(
   ["mds-daily"]="https://localhost:[port]/daily,mds,app"
   ["mds-native"]="https://localhost:[port]/native,mds,app"
   ["mds-policy"]="https://localhost:[port]/policy,mds,app"
-  ["mds-provider"]="https://localhost:[port]/provider,mds,app"
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
   ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
@@ -242,7 +241,6 @@ where app in:
   mds-daily
   mds-native
   mds-policy
-  mds-provider
   mds-policy-author
   mds-postgresql
   mds-redis-headless

@@ -10,7 +10,6 @@
     { "path": "../../packages/mds-db/tsconfig.build.json" },
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
     { "path": "../../packages/mds-policy/tsconfig.build.json" },
-    { "path": "../../packages/mds-provider/tsconfig.build.json" },
     { "path": "../../packages/mds-stream/tsconfig.build.json" },
     { "path": "../../packages/mds-test-data/tsconfig.build.json" },
     { "path": "../../packages/mds-types/tsconfig.build.json" },
