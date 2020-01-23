@@ -17,7 +17,7 @@
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
     "express": "4.17.1",
-    "uuid": "3.3.3"
+    "uuid": "3.4.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
