@@ -33,6 +33,7 @@ import {
 } from '@mds-core/mds-providers'
 
 import { VehicleCountResponse, VehicleCountRow } from './types'
+import { MAX_TIMEOUT_MS } from './utils'
 
 // The list of providers ids on which to report
 const reportProviders = [
@@ -103,7 +104,8 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
       client_secret: process.env.CLIENT_SECRET,
       audience: process.env.AUDIENCE
     },
-    json: true
+    json: true,
+    timeout: MAX_TIMEOUT_MS
   }
 
   try {
@@ -111,7 +113,8 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
     const counts_options = {
       uri: 'https://api.ladot.io/daily/admin/vehicle_counts',
       headers: { authorization: `Bearer ${token.access_token}` },
-      json: true
+      json: true,
+      timeout: MAX_TIMEOUT_MS
     }
 
     const counts: VehicleCountResponse = await requestPromise(counts_options)
