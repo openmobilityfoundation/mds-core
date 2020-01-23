@@ -12,11 +12,11 @@ import schema from './schema'
 import { vals_sql, cols_sql, vals_list, logSql, SqlVals } from './sql-utils'
 import { getWriteableClient, makeReadOnlyQuery } from './client'
 
-export async function getVehicleType(device_id: UUID): Promise<VEHICLE_TYPE | null>{
+export async function getVehicleType(device_id: UUID): Promise<VEHICLE_TYPE | null> {
   const vals = new SqlVals()
   const query = `SELECT type FROM devices WHERE device_id = ${vals.add(device_id)}`
   await logSql(query, vals)
-  const [queryResult]  = await makeReadOnlyQuery(query, vals)
+  const [queryResult] = await makeReadOnlyQuery(query, vals)
   return queryResult?.type ?? null
 }
 

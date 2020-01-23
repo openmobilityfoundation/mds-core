@@ -28,7 +28,7 @@ import {
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
 import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
-import { requestPromiseExceptionHelper } from './utils'
+import { requestPromiseExceptionHelper, MAX_TIMEOUT_MS } from './utils'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow, VehicleCountRow } from './types'
 
 // The list of providers ids on which to report
@@ -170,19 +170,22 @@ export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[
       client_secret: process.env.CLIENT_SECRET,
       audience: process.env.AUDIENCE
     },
-    json: true
+    json: true,
+    timeout: MAX_TIMEOUT_MS
   }
   try {
     const token = await requestPromiseExceptionHelper(token_options)
     const counts_options = {
       url: 'https://api.ladot.io/daily/admin/vehicle_counts',
       headers: { authorization: `Bearer ${token.access_token}` },
-      json: true
+      json: true,
+      timeout: MAX_TIMEOUT_MS
     }
     const last_options = {
       url: 'https://api.ladot.io/daily/admin/last_day_stats_by_provider',
       headers: { authorization: `Bearer ${token.access_token}` },
-      json: true
+      json: true,
+      timeout: MAX_TIMEOUT_MS
     }
 
     const counts: VehicleCountResponse = await requestPromiseExceptionHelper(counts_options)
