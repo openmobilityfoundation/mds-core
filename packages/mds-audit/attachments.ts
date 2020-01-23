@@ -35,18 +35,20 @@ const s3ACL = String(env.ATTACHMENTS_ACL)
 const s3 = new aws.S3()
 const memoryStorage = multer.memoryStorage()
 
-/* eslint-disable-next-line */
-aws.config.getCredentials(async (err) => {
-  if (err) {
-    await log.error('Error getting AWS credentials', err.stack || err)
-  } else if (aws.config.credentials) {
-    aws.config.update({
-      secretAccessKey: aws.config.credentials.secretAccessKey,
-      accessKeyId: aws.config.credentials.accessKeyId,
-      region: s3Region
-    })
-  }
-})
+if (env.ATTACHMENTS_BUCKET) {
+  /* eslint-disable-next-line */
+  aws.config.getCredentials(async err => {
+    if (err) {
+      await log.error('Error getting AWS credentials', err.stack || err)
+    } else if (aws.config.credentials) {
+      aws.config.update({
+        secretAccessKey: aws.config.credentials.secretAccessKey,
+        accessKeyId: aws.config.credentials.accessKeyId,
+        region: s3Region
+      })
+    }
+  })
+}
 
 export const multipartFormUpload = multer({ storage: memoryStorage }).single('file')
 
