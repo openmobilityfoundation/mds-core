@@ -19,10 +19,11 @@ const getPolicies = async (req: PolicyApiRequest, res: PolicyApiResponse) => {
         result:
           'Cannot set both get_unpublished and get_published to be true. If you want all policies, set both params to false or do not send them.'
       })
+    } else {
+      res.status(404).send({
+        result: 'not found'
+      })
     }
-    res.status(404).send({
-      result: 'not found'
-    })
   }
 }
 
