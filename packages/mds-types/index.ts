@@ -57,6 +57,8 @@ export interface StateEntry {
   trip_id?: UUID | null // telemetry entries will be null
 }
 
+export type DeviceStates = { [vehicle_id: string]: StateEntry }
+
 export interface AnnotationData {
   in_bound: boolean
   /* eslint-reason TODO: areas have not been defined yet within the scope of MJ */
@@ -75,7 +77,7 @@ export interface TripEvent {
   service_area_id?: UUID | null
 }
 
-export type TripsEvents = { [trip_id: string]: TripEvent[] }
+export type TripsEvents = { [id: string]: TripEvent[] }
 
 export interface TripTelemetry {
   timestamp: Timestamp
@@ -85,8 +87,6 @@ export interface TripTelemetry {
   annotation: AnnotationData | null
   service_area_id?: UUID | null
 }
-
-export type TripsTelemetry = { [trip_id: string]: TripTelemetry[] }
 
 export type TripTelemetryField = { [timestamp: number]: TripTelemetry[] }
 
