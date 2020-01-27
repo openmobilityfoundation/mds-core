@@ -1,7 +1,7 @@
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import log from '@mds-core/mds-logger'
-import { calcDistance, isUUID, now } from '@mds-core/mds-utils'
+import { calcDistance, now } from '@mds-core/mds-utils'
 import { TripEvent, TripEntry, UUID, Timestamp } from '@mds-core/mds-types'
 import { eventValidation, createTelemetryMap } from './utils'
 import { getConfig } from './configuration'
@@ -24,7 +24,7 @@ async function processTrip(
   trip_id: UUID,
   events: TripEvent[],
   curTime: Timestamp
-): Promise<UUID | null> {
+): Promise<boolean> {
   const config = await getConfig()
   /*
     Add telemetry and meta data into database when a trip ends
@@ -39,16 +39,16 @@ async function processTrip(
     We must compute these metrics here due to the potential of up to 24hr delay of telemetry data
   */
 
-  // Validation
+  /* Validation */
   events.sort((a, b) => a.timestamp - b.timestamp)
   if (!eventValidation(events, curTime, config.compliance_sla.max_telemetry_time)) {
-    return null
+    return false
   }
 
-  // Calculate event binned trip telemetry data
-  const telemetryMap = await cache.readTripsTelemetry(`${provider_id}:${device_id}`)
-  if (telemetryMap) {
-    // Get trip metadata
+  /* Calculate event binned trip telemetry data */
+  const telemetryList = await cache.readTripTelemetry(`${provider_id}:${device_id}:${trip_id}`)
+  if (telemetryList) {
+    /* Get trip metadata */
     const tripStartEvent = events[0]
     const tripEndEvent = events[events.length - 1]
     const baseTripData = {
@@ -62,8 +62,8 @@ async function processTrip(
       start_service_area_id: tripStartEvent.service_area_id,
       end_service_area_id: tripEndEvent.service_area_id
     }
-    // Calculate trip metrics
-    const telemetry = createTelemetryMap(events, telemetryMap, trip_id)
+    /* Calculate trip metrics */
+    const telemetry = createTelemetryMap(events, telemetryList)
     const duration = tripEndEvent.timestamp - tripStartEvent.timestamp
     const distMeasure = tripStartEvent.gps ? calcDistance(telemetry) : null
     const distance = distMeasure ? distMeasure.distance : null
@@ -89,16 +89,14 @@ async function processTrip(
     }
 
     await db.insertTrips(tripData)
-    // Delete all processed telemetry data and update cache
-    delete telemetryMap[trip_id]
-    await cache.writeTripsTelemetry(`${provider_id}:${device_id}`, telemetryMap)
-
-    return trip_id
+    await cache.deleteTripEvents(`${provider_id}:${device_id}:${trip_id}`)
+    await cache.deleteTripTelemetry(`${provider_id}:${device_id}:${trip_id}`)
+    return true
   }
   throw new Error('TELEMETRY NOT FOUND')
 }
 
-export async function tripProcessor() {
+export async function tripProcessor(): Promise<void> {
   await Promise.all([db.startup(), cache.startup(), getConfig()])
   const curTime = now()
   const tripsMap = await cache.readAllTripsEvents()
@@ -107,26 +105,14 @@ export async function tripProcessor() {
     return
   }
   await Promise.all(
-    Object.keys(tripsMap).map(async vehicleID => {
-      const [provider_id, device_id] = vehicleID.split(':')
-      const tripsEvents = tripsMap[vehicleID]
-      const results = await Promise.all(
-        Object.keys(tripsEvents).map(tripID => {
-          try {
-            return processTrip(provider_id, device_id, tripID, tripsEvents[tripID], curTime)
-          } catch (err) {
-            return err
-          }
-        })
-      )
-
-      results.map(response => {
-        if (isUUID(response) && tripsEvents[response]) delete tripsEvents[response]
-      })
-
-      // Update or clear cache
-      if (Object.keys(tripsEvents).length) return cache.writeTripsEvents(vehicleID, tripsEvents)
-      return cache.deleteTripsEvents(vehicleID)
+    Object.keys(tripsMap).map(tripUUID => {
+      const [provider_id, device_id, trip_id] = tripUUID.split(':')
+      const tripEvents = tripsMap[tripUUID]
+      try {
+        return processTrip(provider_id, device_id, trip_id, tripEvents, curTime)
+      } catch (err) {
+        return err
+      }
     })
   )
 }

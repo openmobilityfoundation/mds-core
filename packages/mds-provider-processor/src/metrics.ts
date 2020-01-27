@@ -54,8 +54,7 @@ async function calcVehicleCounts(
   startTime: Timestamp,
   endTime: Timestamp
 ): Promise<VehicleCountMetricObj> {
-  // Calculate total number of registered vehicles at start of bin
-  // TODO: cache value to query only bin size
+  /* Calculate total number of registered vehicles at start of bin */
   const registeredVehicles = await cache.readKeys('device:*:device')
   const registeredCount = registeredVehicles?.length ?? 0
 
@@ -69,8 +68,10 @@ async function calcVehicleCounts(
   const registeredLastHour = histRegistered - histDeregistered
   const registered = registeredCount + registeredLastHour
 
-  // Calculate total number of vehicle in Right of way
-  // TODO: 48 hour filtering
+  /*
+  Calculate total number of vehicle in Right of way
+  TODO: 48 hour filtering
+  */
   const stateCache = await cache.readAllDeviceStates()
   const deployed = stateCache
     ? Object.values(stateCache).filter(vehicle => {
@@ -186,7 +187,7 @@ async function calcTelemDistViolationCount(
   startTime: Timestamp,
   endTime: Timestamp
 ): Promise<MetricCount> {
-  // Calculating for trips that ended 24 hours ago in bin size
+  /* Calculating for trips that ended 24 hours ago in bin size */
   const trips = await db.getTrips(providerID, vehicleType, startTime, endTime)
 
   const countArray = trips

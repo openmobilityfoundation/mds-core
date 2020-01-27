@@ -580,6 +580,16 @@ describe('Tests app', () => {
     //     })
     // })
 
+    it('throws an exception if both get_unpublished and get_published are submitted', done => {
+      request
+        .get(`/policies?get_unpublished=true&get_published=true`)
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(400)
+        .end(async policies_err => {
+          done(policies_err)
+        })
+    })
+
     it('can GET all unpublished policies', done => {
       request
         .get(`/policies?get_unpublished=true`)
@@ -587,16 +597,6 @@ describe('Tests app', () => {
         .expect(200)
         .end(async (policies_err, policies_result) => {
           test.assert(policies_result.body.length === 2)
-          done(policies_err)
-        })
-    })
-
-    it('throws an exception if both get_unpublished and get_published are submitted', done => {
-      request
-        .get(`/policies?get_unpublished=true&get_published=true`)
-        .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(400)
-        .end(async policies_err => {
           done(policies_err)
         })
     })

@@ -21,10 +21,11 @@ async function processProvider(providerID: UUID, curTime: Timestamp) {
     Add provider metadata into PG database.
     These metrics should be computed here on an interval basis rather than being event triggered.
   */
-  // Only processing at organization level for scooters now
-  // TODO: add providerMap back when streaming logic is added back to proc-event
-  // const providersMap = await cache.hgetall('provider:state')
-  // const providerData: ProviderStreamData = providersMap ? providersMap[providerID] : null
+  /*
+  TODO: add providerMap back when streaming logic is added back to proc-event
+  const providersMap = await cache.hgetall('provider:state')
+  const providerData: ProviderStreamData = providersMap ? providersMap[providerID] : null
+  */
 
   const binStart = curTime - 3600000
   const binStartYesterday = binStart - 86400000

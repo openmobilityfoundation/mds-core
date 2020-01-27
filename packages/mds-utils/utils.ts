@@ -29,8 +29,8 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
   BBox,
-  TripTelemetry,
   TripTelemetryField,
+  TripTelemetry,
   VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import { TelemetryRecord } from '@mds-core/mds-db/types'

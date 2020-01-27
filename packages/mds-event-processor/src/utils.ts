@@ -28,7 +28,7 @@ export async function getTripId(deviceState: StateEntry): Promise<string | null>
     Return trip_id for telemetery entry by associating timestamps
   */
   const { provider_id, device_id, timestamp } = deviceState
-  const tripsEvents = await cache.readTripsEvents(`${provider_id}:${device_id}`)
+  const tripsEvents = await cache.readDeviceTripsEvents(`${provider_id}:${device_id}:*`)
   if (!tripsEvents) {
     log.info(`NO PRIOR TRIP EVENTS FOUND for ${provider_id}:${device_id}`)
     return null

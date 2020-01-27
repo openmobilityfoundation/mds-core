@@ -34,20 +34,14 @@ const getMockedTripEventMap = () => {
   return trips
 }
 
-const getMockedTripTelemetryMap = () => {
+const getMockedTripTelemetryList = () => {
   const telemetryA = getMockedTripTelemetry(42)
   const telemetryB = getMockedTripTelemetry(43)
   const telemetryC = getMockedTripTelemetry(44)
-  const telemetryD = getMockedTripTelemetry(52)
-  const telemetryE = getMockedTripTelemetry(53)
-  const telemetryF = getMockedTripTelemetry(54)
 
-  const trips = {
-    'trip-one': [telemetryA, telemetryB, telemetryC],
-    'trip-two': [telemetryD, telemetryE, telemetryF]
-  }
+  const telemetry = [telemetryA, telemetryB, telemetryC]
 
-  return trips
+  return telemetry
 }
 
 describe('Proc Trip', () => {
@@ -73,20 +67,20 @@ describe('Proc Trip', () => {
 
   describe('createTelemetryMap()', () => {
     it('Errors out if trip telemetry does not exist', () => {
-      const telemetryMap = getMockedTripTelemetryMap()
+      const telemetryMap = getMockedTripTelemetryList()
       assert.throws(() => {
-        procTripUtils.createTelemetryMap([], telemetryMap, 'fake-trip-id')
+        procTripUtils.createTelemetryMap([], telemetryMap)
       })
     })
 
     it('Maps telemtry points to trip events', () => {
-      const telemetryMap = getMockedTripTelemetryMap()
+      const telemetryMap = getMockedTripTelemetryList()
       const events = getMockedTripEventMap()
-      const expected: { [event: number]: TripTelemetry[] } = {
+      const expected: TripTelemetryField = {
         '42': [getMockedTripTelemetry(42), getMockedTripTelemetry(43)],
         '44': [getMockedTripTelemetry(44)]
       }
-      const result = procTripUtils.createTelemetryMap(events['trip-one'], telemetryMap, 'trip-one')
+      const result = procTripUtils.createTelemetryMap(events['trip-one'], telemetryMap)
       assert.deepStrictEqual(result, expected)
     })
   })

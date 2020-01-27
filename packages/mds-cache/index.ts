@@ -23,10 +23,12 @@ import {
   Timestamp,
   Device,
   VehicleEvent,
+  TripEvent,
   TripsEvents,
-  TripsTelemetry,
+  TripTelemetry,
   Telemetry,
   StateEntry,
+  DeviceStates,
   BoundingBox,
   EVENT_STATUS_MAP,
   VEHICLE_STATUSES,
@@ -38,8 +40,8 @@ import bluebird from 'bluebird'
 import {
   parseDeviceState,
   parseAllDeviceStates,
-  parseTripsEvents,
-  parseTripsTelemetry,
+  parseTripEvents,
+  parseTripTelemetry,
   parseAllTripsEvents,
   parseTelemetry,
   parseEvent,
@@ -56,8 +58,8 @@ import {
   StringifiedEvent,
   StringifiedStateEntry,
   StringifiedAllDeviceStates,
-  StringifiedTripsEvents,
-  StringifiedTripsTelemetry,
+  StringifiedTripEvents,
+  StringifiedTripTelemetries,
   StringifiedAllTripsEvents
 } from './types'
 
@@ -73,6 +75,7 @@ declare module 'redis' {
     hdelAsync: (...args: (string | number)[]) => Promise<number>
     hgetallAsync: (arg1: string) => Promise<{ [key: string]: string }>
     hgetAsync: (key: string, field: string) => Promise<string>
+    hscanAsync: (key: string, cursor: number, condition: string, pattern: string) => Promise<[string, string[]]>
     hsetAsync: (key: string, field: string, value: string) => Promise<number>
     hmsetAsync: (...args: unknown[]) => Promise<'OK'>
     infoAsync: () => Promise<string>
@@ -154,6 +157,16 @@ async function hgetall(key: string): Promise<CachedItem | CachedHashItem | null>
   return null
 }
 
+/* TODO: explore alternatives to pattern match on field */
+async function hscan(key: string, pattern: string): Promise<string[] | null> {
+  /* hscanAsync returns contain an array of two elements, a string representing the cursor and a sub-array containing an array of alternating key/values */
+  const [, entry] = await (await getClient()).hscanAsync(decorateKey(key), 0, 'MATCH', pattern)
+  if (entry.length > 0) {
+    return entry
+  }
+  return null
+}
+
 async function getVehicleType(keyID: UUID): Promise<VEHICLE_TYPE | null> {
   const client = await getClient()
   const type = await client.hgetAsync(decorateKey(`device:${keyID}:device`), 'type')
@@ -165,8 +178,8 @@ async function readDeviceState(field: UUID): Promise<StateEntry | null> {
   return deviceState ? parseDeviceState(deviceState as StringifiedStateEntry) : null
 }
 
-// TODO: Increase performance with provider pattern based fetch
-async function readAllDeviceStates(): Promise<{ [vehicle_id: string]: StateEntry } | null> {
+/* TODO: Increase performance with provider pattern based fetch */
+async function readAllDeviceStates(): Promise<DeviceStates | null> {
   const allDeviceStates = await hgetall('device:state')
   return allDeviceStates ? parseAllDeviceStates(allDeviceStates as StringifiedAllDeviceStates) : null
 }
@@ -175,31 +188,55 @@ async function writeDeviceState(field: UUID, data: StateEntry) {
   return (await getClient()).hsetAsync(decorateKey('device:state'), field, JSON.stringify(data))
 }
 
-async function readTripsEvents(field: UUID): Promise<TripsEvents | null> {
-  const tripsEvents = await hget(decorateKey('trips:events'), field)
-  return tripsEvents ? parseTripsEvents(tripsEvents as StringifiedTripsEvents) : null
+async function readTripEvents(field: UUID): Promise<TripEvent[] | null> {
+  const tripEvents = await hget(decorateKey('trips:events'), field)
+  return tripEvents ? parseTripEvents(tripEvents as StringifiedTripEvents) : null
 }
 
-async function readAllTripsEvents(): Promise<{ [vehicle_id: string]: TripsEvents } | null> {
+/* TODO: Investigate alternatives, this should be used temporarily. O(n) runtime for streaming is not ideal. */
+async function readDeviceTripsEvents(pattern: string): Promise<TripsEvents | null> {
+  /*
+    hscan returns list of alternating key and value strings (i.e. [keyA, valueA, keyB, valueB])
+    Here we must construct an object of StringifiedAllTripsEvents from such list to pass to our unflattener method
+  */
+  const allFilteredTripEventsList = await hscan('trips:events', pattern)
+  if (allFilteredTripEventsList) {
+    const allFilteredTripEvents = allFilteredTripEventsList.reduce((acc, entry, index) => {
+      if (index % 2 === 1) {
+        const key = allFilteredTripEventsList[index - 1]
+        acc[key] = entry
+      }
+      return acc
+    }, {} as StringifiedAllTripsEvents)
+    return parseAllTripsEvents(allFilteredTripEvents)
+  }
+  return null
+}
+
+async function readAllTripsEvents(): Promise<TripsEvents | null> {
   const allTripsEvents = await hgetall('trips:events')
   return allTripsEvents ? parseAllTripsEvents(allTripsEvents as StringifiedAllTripsEvents) : null
 }
 
-async function writeTripsEvents(field: UUID, data: TripsEvents) {
+async function writeTripEvents(field: UUID, data: TripEvent[]) {
   return (await getClient()).hsetAsync(decorateKey('trips:events'), field, JSON.stringify(data))
 }
 
-async function deleteTripsEvents(field: UUID) {
+async function deleteTripEvents(field: UUID) {
   return (await getClient()).hdelAsync(decorateKey('trips:events'), field)
 }
 
-async function readTripsTelemetry(field: UUID): Promise<TripsTelemetry | null> {
-  const tripsTelemetry = await hget(decorateKey('trips:telemetry'), field)
-  return tripsTelemetry ? parseTripsTelemetry(tripsTelemetry as StringifiedTripsTelemetry) : null
+async function readTripTelemetry(field: UUID): Promise<TripTelemetry[] | null> {
+  const tripTelemetry = await hget(decorateKey('trips:telemetry'), field)
+  return tripTelemetry ? parseTripTelemetry(tripTelemetry as StringifiedTripTelemetries) : null
 }
 
-async function writeTripsTelemetry(field: UUID, data: TripsTelemetry) {
+async function writeTripTelemetry(field: UUID, data: TripTelemetry[]) {
   return (await getClient()).hsetAsync(decorateKey('trips:telemetry'), field, JSON.stringify(data))
+}
+
+async function deleteTripTelemetry(field: UUID) {
+  return (await getClient()).hdelAsync(decorateKey('trips:telemetry'), field)
 }
 
 // update the ordered list of (device_id, timestamp) tuples
@@ -705,12 +742,14 @@ export = {
   readDeviceState,
   readAllDeviceStates,
   writeDeviceState,
-  readTripsEvents,
+  readTripEvents,
+  readDeviceTripsEvents,
   readAllTripsEvents,
-  writeTripsEvents,
-  deleteTripsEvents,
-  readTripsTelemetry,
-  writeTripsTelemetry,
+  writeTripEvents,
+  deleteTripEvents,
+  readTripTelemetry,
+  writeTripTelemetry,
+  deleteTripTelemetry,
   seed,
   reset,
   startup,

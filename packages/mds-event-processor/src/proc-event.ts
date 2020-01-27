@@ -69,16 +69,13 @@ export async function processTripTelemetry(deviceState: StateEntry): Promise<boo
     service_area_id
   }
 
-  // Check if associated to an event or telemetry post
+  /* Check if associated to an event or telemetry post */
   const tripId = type === 'telemetry' ? await getTripId(deviceState) : trip_id
   if (tripId) {
-    const tripsCache = await cache.readTripsTelemetry(`${provider_id}:${device_id}`)
-    const trips = tripsCache || {}
-    if (!trips[tripId]) {
-      trips[tripId] = []
-    }
-    trips[tripId].push(tripTelemetry)
-    await cache.writeTripsTelemetry(`${provider_id}:${device_id}`, trips)
+    const tripCache = await cache.readTripTelemetry(`${provider_id}:${device_id}:${trip_id}`)
+    const trip = tripCache || []
+    trip.push(tripTelemetry)
+    await cache.writeTripTelemetry(`${provider_id}:${device_id}:${trip_id}`, trip)
     return true
   }
   return false
@@ -117,15 +114,12 @@ export async function processTripEvent(deviceState: StateEntry): Promise<boolean
     service_area_id
   }
 
-  // Either append to existing trip or create new entry
+  /* Either append to existing trip or create new entry */
   if (trip_id) {
-    const tripsCache = await cache.readTripsEvents(`${provider_id}:${device_id}`)
-    const trips = tripsCache || {}
-    if (!trips[trip_id]) {
-      trips[trip_id] = []
-    }
-    trips[trip_id].push(tripEvent)
-    await cache.writeTripsEvents(`${provider_id}:${device_id}`, trips)
+    const tripCache = await cache.readTripEvents(`${provider_id}:${device_id}:${trip_id}`)
+    const trip = tripCache || []
+    trip.push(tripEvent)
+    await cache.writeTripEvents(`${provider_id}:${device_id}:${trip_id}`, trip)
     return true
   }
   return false
@@ -134,7 +128,7 @@ export async function processTripEvent(deviceState: StateEntry): Promise<boolean
 export async function eventProcessor(type: string, data: VehicleEvent & Telemetry): Promise<void> {
   const { timestamp, device_id, provider_id, recorded } = data
   const lastState = await cache.readDeviceState(`${provider_id}:${device_id}`)
-  // Construct state
+  /* Construct state */
   let vehicleType = await cache.getVehicleType(device_id)
   if (!vehicleType) {
     vehicleType = await db.getVehicleType(device_id)
@@ -178,7 +172,7 @@ export async function eventProcessor(type: string, data: VehicleEvent & Telemetr
         event_type_reason,
         trip_id
       }
-      // Take necessary steps on event trasitions
+      /* Take necessary steps on event trasitions */
       switch (data.event_type) {
         case VEHICLE_EVENTS.trip_start: {
           await processTripEvent(deviceState)
@@ -204,7 +198,7 @@ export async function eventProcessor(type: string, data: VehicleEvent & Telemetr
           log.info('Not a trip transition state')
         }
       }
-      // Only update cache (device:state) with most recent event
+      /* Only update cache (device:state) with most recent event */
       if (!lastState || lastState.timestamp < deviceState.timestamp) {
         await cache.writeDeviceState(`${provider_id}:${device_id}`, deviceState)
       }
