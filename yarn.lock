@@ -4097,10 +4097,10 @@ cipher-base@^1.0.0, cipher-base@^1.0.1, cipher-base@^1.0.3:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-circle-to-polygon@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/circle-to-polygon/-/circle-to-polygon-2.0.0.tgz#69c4155aa9960f4e87da025447d52946447c1b64"
-  integrity sha512-lZBaTsg35jQX8BUn1uEFOG2gmf3JP7EzO5GqGYEPW/Km0wwzwR5H+xQemdmusXiNz4tO1WULol97/SXm1OtBCA==
+circle-to-polygon@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/circle-to-polygon/-/circle-to-polygon-1.0.2.tgz#48e9079e6e96cf34d183ff314039de6a59f60a60"
+  integrity sha512-JuGRbis6++Emc4IAKzQjhq/ltRQ2F1mn1YsQaabYhHeWx8nSRBOevMc/Tf4W7+WFOLl8GbTvcX6+k2p9swxWVg==
 
 class-utils@^0.3.5:
   version "0.3.6"
