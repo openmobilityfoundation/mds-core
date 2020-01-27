@@ -3463,10 +3463,10 @@ atob@^2.1.2:
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
   integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
 
-aws-sdk@2.609.0:
-  version "2.609.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.609.0.tgz#a58394e05869d00b12ef3e1d0be0dffaf4f2a260"
-  integrity sha512-JCe8OtwnhDwklY8S65IXkA8vcyRFjrCCQ3L1v01Aj8swEPEOG8/rxyZ4lrHN9hQ9u3BbA+0ySUbRWkJV5PpGBw==
+aws-sdk@2.610.0:
+  version "2.610.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.610.0.tgz#a8633204bed83df763095824f8110ced4a717d2a"
+  integrity sha512-kqcoCTKjbxrUo2KeLQR2Jw6l4PvkbHXSDk8KqF2hXcpHibiOcMXZZPVe9X+s90RC/B2+qU95M7FImp9ByMcw7A==
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -4097,10 +4097,10 @@ cipher-base@^1.0.0, cipher-base@^1.0.1, cipher-base@^1.0.3:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-circle-to-polygon@1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/circle-to-polygon/-/circle-to-polygon-1.0.2.tgz#48e9079e6e96cf34d183ff314039de6a59f60a60"
-  integrity sha512-JuGRbis6++Emc4IAKzQjhq/ltRQ2F1mn1YsQaabYhHeWx8nSRBOevMc/Tf4W7+WFOLl8GbTvcX6+k2p9swxWVg==
+circle-to-polygon@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/circle-to-polygon/-/circle-to-polygon-2.0.0.tgz#69c4155aa9960f4e87da025447d52946447c1b64"
+  integrity sha512-lZBaTsg35jQX8BUn1uEFOG2gmf3JP7EzO5GqGYEPW/Km0wwzwR5H+xQemdmusXiNz4tO1WULol97/SXm1OtBCA==
 
 class-utils@^0.3.5:
   version "0.3.6"
@@ -4672,10 +4672,10 @@ cyclist@^1.0.1:
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-1.0.1.tgz#596e9698fd0c80e12038c2b82d6eb1b35b6224d9"
   integrity sha1-WW6WmP0MgOEgOMK4LW6xs1tiJNk=
 
-cypress@3.8.2:
-  version "3.8.2"
-  resolved "https://registry.yarnpkg.com/cypress/-/cypress-3.8.2.tgz#58fa96e1e7dae712403b0f4e8af1efe35442ff7a"
-  integrity sha512-aTs0u3+dfEuLe0Ct0FVO5jD1ULqxbuqWUZwzBm0rxdLgLxIAOI/A9f/WkgY5Cfy1TEXe8pKC6Wal0ZpnkdGRSw==
+cypress@3.8.3:
+  version "3.8.3"
+  resolved "https://registry.yarnpkg.com/cypress/-/cypress-3.8.3.tgz#e921f5482f1cbe5814891c878f26e704bbffd8f4"
+  integrity sha512-I9L/d+ilTPPA4vq3NC1OPKmw7jJIpMKNdyfR8t1EXYzYCjyqbc59migOm1YSse/VRbISLJ+QGb5k4Y3bz2lkYw==
   dependencies:
     "@cypress/listr-verbose-renderer" "0.4.1"
     "@cypress/xvfb" "1.2.4"
@@ -8251,10 +8251,10 @@ mkdirp@*, mkdirp@0.5.1, mkdirp@^0.5.0, mkdirp@^0.5.1:
   dependencies:
     minimist "0.0.8"
 
-mocha@7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/mocha/-/mocha-7.0.0.tgz#c60d14bf3de9601f549b3ff5be657eb8381c54bf"
-  integrity sha512-CirsOPbO3jU86YKjjMzFLcXIb5YiGLUrjrXFHoJ3e2z9vWiaZVCZQ2+gtRGMPWF+nFhN6AWwLM/juzAQ6KRkbA==
+mocha@7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/mocha/-/mocha-7.0.1.tgz#276186d35a4852f6249808c6dd4a1376cbf6c6ce"
+  integrity sha512-9eWmWTdHLXh72rGrdZjNbG3aa1/3NRPpul1z0D979QpEnFdCG0Q5tv834N+94QEN2cysfV72YocQ3fn87s70fg==
   dependencies:
     ansi-colors "3.2.3"
     browser-stdout "1.3.1"
