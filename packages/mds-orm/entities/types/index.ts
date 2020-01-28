@@ -4,10 +4,14 @@ export type AsEntity<T> = {
 
 export type Nullable<T> = T | null
 
-export type JsonObject = {
-  [property: string]: Nullable<JsonValue>
+// eslint-reason recursive declarations require interfaces
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface JsonArray extends Array<Json> {}
+
+export interface JsonObject {
+  [property: string]: Json
 }
 
-export type JsonArray = Nullable<JsonValue>[]
+export type JsonValue = string | number | boolean | JsonArray | JsonObject
 
-export type JsonValue = string | number | boolean | JsonObject | JsonArray
+export type Json = Nullable<JsonValue>

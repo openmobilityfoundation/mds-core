@@ -1,10 +1,10 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp } from '@mds-core/mds-types'
-import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { RecordedEntity, RecordedPersistenceModel } from './recorded-entity'
 import { BigintTransformer } from './transformers'
 import { Nullable } from './types'
 
-export interface TelemetryModel extends RecordedModel {
+export interface TelemetryPersistenceModel extends RecordedPersistenceModel {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
@@ -18,7 +18,7 @@ export interface TelemetryModel extends RecordedModel {
 }
 
 @Entity('telemetry')
-export class TelemetryEntity extends RecordedEntity implements TelemetryModel {
+export class TelemetryEntity extends RecordedEntity implements TelemetryPersistenceModel {
   @Column('uuid', { primary: true })
   device_id: UUID
 

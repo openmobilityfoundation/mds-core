@@ -1,10 +1,10 @@
 import { Entity, Column } from 'typeorm'
 import { UUID } from '@mds-core/mds-types'
 import { BigintTransformer } from './transformers'
-import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { RecordedEntity, RecordedPersistenceModel } from './recorded-entity'
 import { Nullable } from './types'
 
-export interface AuditModel extends RecordedModel {
+export interface AuditPersistenceModel extends RecordedPersistenceModel {
   audit_trip_id: UUID
   audit_device_id: UUID
   audit_subject_id: string
@@ -17,7 +17,7 @@ export interface AuditModel extends RecordedModel {
 }
 
 @Entity('audits')
-export class AuditEntity extends RecordedEntity implements AuditModel {
+export class AuditEntity extends RecordedEntity implements AuditPersistenceModel {
   @Column('uuid', { primary: true })
   audit_trip_id: UUID
 

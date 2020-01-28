@@ -17,7 +17,7 @@
     "@mds-core/mds-web-sockets": "0.0.1",
     "express": "4.17.1",
     "ladot-service-areas": "0.1.9",
-    "uuid": "3.3.3"
+    "uuid": "3.4.0"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "0.1.26"

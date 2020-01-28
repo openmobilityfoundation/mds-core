@@ -253,7 +253,7 @@ function pointInGeometry(pt: [number, number], shape: Geometry): boolean {
     return pointInPolygon(pt, shape)
   }
   if (shape.type === 'Point') {
-    if (pointInPolygon(pt, circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES))) {
+    if (pointInPolygon(pt, circleToPolygon(shape.coordinates.slice(0, 2), RADIUS, NUMBER_OF_EDGES))) {
       return true
     }
     return false
@@ -271,7 +271,7 @@ function pointInShape(
 ): boolean {
   const point: [number, number] = Array.isArray(pt) ? pt : [pt.lng, pt.lat]
   if (shape.type === 'Point') {
-    if (pointInPolygon(point, circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES))) {
+    if (pointInPolygon(point, circleToPolygon(shape.coordinates.slice(0, 2), RADIUS, NUMBER_OF_EDGES))) {
       return true
     }
     return false
@@ -297,7 +297,8 @@ function makePointInShape(shape: Geometry): { lat: number; lng: number } {
     throw new Error('no shape')
   }
 
-  const shapeToCreate = shape.type === 'Point' ? circleToPolygon(shape.coordinates, RADIUS, NUMBER_OF_EDGES) : shape
+  const shapeToCreate =
+    shape.type === 'Point' ? circleToPolygon(shape.coordinates.slice(0, 2), RADIUS, NUMBER_OF_EDGES) : shape
 
   const bbox = calcBBox(shapeToCreate)
   let tries = 0

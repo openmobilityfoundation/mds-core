@@ -1,11 +1,11 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { FeatureCollection } from 'geojson'
-import { IdentityEntity, IdentityModel } from './identity-entity'
+import { IdentityEntity, IdentityPersistenceModel } from './identity-entity'
 import { BigintTransformer } from './transformers'
 import { Nullable } from './types'
 
-export interface GeographyModel extends IdentityModel {
+export interface GeographyPersistenceModel extends IdentityPersistenceModel {
   description: Nullable<string>
   effective_date: Nullable<Timestamp>
   geography_id: UUID
@@ -16,7 +16,7 @@ export interface GeographyModel extends IdentityModel {
 }
 
 @Entity('geographies')
-export class GeographyEntity extends IdentityEntity implements GeographyModel {
+export class GeographyEntity extends IdentityEntity implements GeographyPersistenceModel {
   @Column('varchar', { length: 255, nullable: true })
   description: Nullable<string>
 

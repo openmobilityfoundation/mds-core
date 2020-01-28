@@ -1,10 +1,10 @@
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp, VEHICLE_EVENT, AUDIT_EVENT_TYPE } from '@mds-core/mds-types'
 import { BigintTransformer } from './transformers'
-import { RecordedEntity, RecordedModel } from './recorded-entity'
+import { RecordedEntity, RecordedPersistenceModel } from './recorded-entity'
 import { Nullable } from './types'
 
-export interface AuditEventModel extends RecordedModel {
+export interface AuditEventPersistenceModel extends RecordedPersistenceModel {
   audit_trip_id: UUID
   audit_event_id: UUID
   audit_event_type: AUDIT_EVENT_TYPE | VEHICLE_EVENT
@@ -22,7 +22,7 @@ export interface AuditEventModel extends RecordedModel {
 }
 
 @Entity('audit_events')
-export class AuditEventEntity extends RecordedEntity implements AuditEventModel {
+export class AuditEventEntity extends RecordedEntity implements AuditEventPersistenceModel {
   @Column('uuid', { primary: true })
   audit_trip_id: UUID
 

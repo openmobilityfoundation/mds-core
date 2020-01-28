@@ -6,5 +6,6 @@
   "references": [
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
     { "path": "../../packages/mds-providers/tsconfig.build.json" }
+    { "path": "../../packages/mds-test-data/tsconfig.build.json" }
   ]
 }
