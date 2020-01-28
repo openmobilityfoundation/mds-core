@@ -1,0 +1,30 @@
+{
+  "name": "@mds-core/mds-orm",
+  "version": "0.0.1",
+  "description": "Mobility Data Specification ORM",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "keywords": [
+    "mds",
+    "database"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "yarn typeorm schema:sync && DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json",
+    "typeorm": "DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config ../../node_modules/typeorm/cli.js"
+  },
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-providers": "0.1.26",
+    "pg": "7.17.1",
+    "typeorm": "0.2.22"
+  },
+  "devDependencies": {}
+}

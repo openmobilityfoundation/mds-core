@@ -329,6 +329,34 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Tests: mds-orm",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config",
+        "--timeout",
+        "999999",
+        "--colors",
+        "--recursive",
+        "--timeout",
+        "5000",
+        "'tests/**/*.ts'"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-orm",
+      "env": {
+        "DOTENV_CONFIG_PATH": "../../.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Tests: mds-policy",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
