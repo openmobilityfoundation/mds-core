@@ -743,13 +743,6 @@ describe('Testing API', () => {
         errReason: `Missing file extension in filename samplepng`
       },
       {
-        name: 'missing extension',
-        file: 'samplepng.',
-        status: 400,
-        errName: 'ValidationError',
-        errReason: `Missing file extension in filename samplepng.`
-      },
-      {
         name: 'unsupported mimetype',
         file: 'sample.gif',
         status: 415,
