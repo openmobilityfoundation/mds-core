@@ -151,15 +151,15 @@ Start Docker-Desktop:
 Lastly, configure Kubernetes:
 
 ```txt
-open Docker-Desktop preferences
-select the Resources option
+select the 'Preferences' option
+select the 'Resources' option
   apply the following minimal resource changes:
     CPUs: 6
     Memory: 8G
     Swap: 1G
-select the Kubernetes option
-  select Enable Kubernetes option
-select Apply & Restart
+select the 'Kubernetes' option
+  select 'Enable Kubernetes' option
+select 'Apply & Restart'
 ```
 
 Verify:
