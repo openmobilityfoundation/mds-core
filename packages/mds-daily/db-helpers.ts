@@ -29,9 +29,9 @@ export const getTripCountsSince = async ({ start_time, end_time, provider_info, 
 export const getTimeSinceLastEvent = async ({ provider_info, fail }: DbHelperArgs) => {
   try {
     const start = now()
-    await cache.getMostRecentEventByProvider()
-    const rows = await db.getMostRecentEventByProvider()
-    // TODO fall back to DB if we're missing providers
+    const rows = await cache.getMostRecentEventByProvider()
+    /* FIXME fall back to DB if we're missing providers
+       await db.getMostRecentEventByProvider() */
     const finish = now()
     const timeElapsed = finish - start
     await log.info(`MDS-DAILY cache.getMostRecentEventByProvider() time elapsed: ${timeElapsed}`)
