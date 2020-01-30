@@ -1,3 +1,29 @@
+{{- $natsNamespace := default "nats" .Values.natsNamespace }}
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: nats
+  namespace: {{ .Release.Namespace }}
+spec:
+  hosts:
+  - {{ printf "nats.%s.svc.cluster.local" $natsNamespace }}
+  ports:
+  - number: 4222
+    name: client
+    protocol: TCP
+  location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nats
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: {{ printf "*.%s.svc.cluster.local" $natsNamespace | quote }}
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
 {{- if (eq .Values.postgresql.internal false) }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry

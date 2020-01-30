@@ -14,14 +14,15 @@
     limitations under the License.
  */
 
-import { EventServer } from '@mds-core/mds-event-server'
-import processor from '@mds-core/mds-provider-processor'
-import { env } from '@container-images/env-inject'
+import providerProcessor from '@mds-core/mds-provider-processor'
 
-const { npm_package_name, npm_package_version, npm_package_git_commit, PORT = 5001 } = env()
-
-EventServer(processor).listen(PORT, () =>
-  /* eslint-reason avoids import of logger */
-  /* eslint-disable-next-line no-console */
-  console.log(`${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) running on port ${PORT}`)
-)
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+providerProcessor()
+  .then(() => {
+    return process.exit(0)
+  })
+  // eslint-disable-next-line promise/prefer-await-to-callbacks
+  .catch(err => {
+    console.log(err)
+    return process.exit(1)
+  })

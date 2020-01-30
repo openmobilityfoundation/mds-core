@@ -1,12 +1,22 @@
 #!/usr/bin/env bash
 
-osx=Darwin
-linux=Linux
+osx=darwin
+linux=linux
 
-[ ! -f ~/.bashrc ] && touch ~/.bashrc
+lower() {
+  echo "${1}" | tr '[:upper:]' '[:lower:]'
+}
+
+os() {
+  os=${MDS_OS:-$(uname)}
+  case "$(lower ${os})" in
+    ${osx} | ${linux}) echo $(lower ${os});;
+    *) echo "unsupported";;
+  esac; unset os
+}
 
 hash brew > /dev/null 2>&1 || {
-  case "${MDS_OS:-$(uname)}" in
+  case "$(os)" in
     ${osx})
       hash brew > /dev/null 2>&1 || \
         /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)";;
@@ -24,7 +34,7 @@ hash brew > /dev/null 2>&1 || {
 }
 
 if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
-  case "${MDS_OS:-$(uname)}" in
+  case "$(os)" in
     ${osx} | ${linux})
       brew install bash
       exec ${0} ${@} &
@@ -52,26 +62,30 @@ declare -A os=(
   ["osx"]="${osx}"
   ["linux"]="${linux}")
 declare -A configs=(
-  ["local-context"]="${MDS_LOCACL_CONTEXT:-docker-desktop|docker-for-desktop}"
+  ["local-context"]="${MDS_LOCACL_CONTEXT:-docker-desktop|docker-for-desktop|minikube}"
   ["home"]="${MDS_HOME:-$(installDir)}"
   ["os"]="${MDS_OS:-`uname`}"
   ["provider"]="${MDS_PROVIDER:-}"
-  ["rc"]="${MDS_RC:-~/.bashrc ~/.zshrc}"
+  ["nvm-version"]="${MDS_NVM_VERSION:-12.14.1}"
   ["workdir"]="/tmp/mds/tools"
-  ["brew"]="${MDS_BREW:-oq jq envsubst yarn nvm helm k9s git go}"
+  # fixme: consider removing envsubst in favor of sed
+  ["brew"]="${MDS_BREW:-oq jq envsubst yarn nvm helm k9s kubectx git awscli}"
   ["brew-envsubst"]="gettext"
   ["brew-helm"]="helm@2"
   ["brew-k9s"]="derailed/k9s/k9s"
   ["brew-oq"]="blacksmoke16/tap"
+  ["brew-cask"]="${MDS_BREW_CASK:-gcloud}"
+  ["brew-cask-gcloud"]="google-cloud-sdk"
+  ["helm-version"]="${MDS_HELM_VERSION:-2.14.1}"
+  ["helm-distribution"]="${MDS_HELM_DISTRIBUTION:-https://get.helm.sh/helm-v${configs[helm-version]}-{os\}-amd64.tar.gz}"
   ["paths"]="${MDS_PATHS:-envsubst helm}"
   ["tools"]="${MDS_TOOLCHAIN:-helm,pgcli}"
   ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
-  ["natss-repository"]="${MDS_NATSS_REPOSITORY:-https://github.com/knative/eventing-contrib}"
-  ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio,knative,natss}"
+  ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio,nats,stan}"
   ["install"]="${MDS_INSTALL:-mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
-  ["uninstall"]="${MDS_UNINSTALL:-logging,mds,istio,helm}"
+  ["uninstall"]="${MDS_UNINSTALL:-logging,mds,stan,nats,istio,helm}"
   ["forward"]="${MDS_FORWARD:-default}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
@@ -80,11 +94,6 @@ declare -A configs=(
   # note: fails when installing istio-nodeagent (i.e. -istio-sds-auth)
   ["istio-profile"]="${MDS_ISTIO_PROFILE:-}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
-  ["knative-version"]="${MDS_KNATIVE_VERSION:-0.11.0}"
-  # note: supports knative module (monitoring, serving), e.g.: :-eventing monitoring serving}
-  ["knative-components"]="${MDS_KNATIVE_COMPONENTS:-eventing}"
-  ["natss"]="${MDS_NATSS_PATH:-${configs[workdir]}/src/knative.dev/eventing-contrib}"
-  ["natss-version"]="${MDS_NATSS_VERSION:-${configs[knative-version]}}"
   ["grafana-plugins"]="${MDS_GRAFANA_PLUGINS:-devopsprodigy-kubegraf-app}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
@@ -92,33 +101,31 @@ declare -A configs=(
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
-  ["values-natss"]="${MDS_VALUES_NATSS:-}"
   ["presets"]="${MDS_PRESETS:-}"
   ["presets-mds-database-password"]="${MDS_PRESETS_MDS_DATABASE_PASSWORD:-Password123#}"
   ["presets-mds"]="${MDS_PRESETS_MDS:-postgresql.password=${configs[presets-mds-database-password]},apis.mds-agency.migration=true}"
-  ["presets-natss"]="${MDS_PRESETS_NATSS:-resourcesLimitsMemory=32M}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-}"
   # todo: try scaling down istio's resource requirements (e.g. local dev): pilot.resources.requests.memory=512Mi}
   ["sets-istio"]="${MDS_SETS_ISTIO:-}"
-  ["sets-natss"]="${MDS_SETS_NATSS:-}"
   ["sets-logging"]="${MDS_SETS_LOGGING:-fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
   ["sets-simulator"]="${MDS_SETS_SIMULATOR:-registry=,jwt.enabled=false}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
-  ["setfiles-natss"]="${MDS_SET_FILES_NATSS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
   ["namespace-metrics-adapter"]="${MDS_NAMESPACE_METRICS_ADAPTER:-util}"
   ["namespace-dashboard"]="${MDS_NAMESPACE_LOGGING:-dashboard}"
   ["namespace-logging"]="${MDS_NAMESPACE_LOGGING:-util}"
   ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["namespace-simulator"]="${MDS_NAMESPACE_SIMULATOR:-${configs[namespace-mds]}}"
-  ["namespace-knative"]="${MDS_NAMESPACE_KNATIVE:-knative-eventing}"
-  ["namespace-natss"]="${MDS_NAMESPACE_NATSS:-natss}"
-  ["namespace-dns-lookup"]="${MDS_NAMESPACE_DNS_LOOKUP:-default}"
+  ["namespace-nats"]="${MDS_NAMESPACE_NATS:-nats}"
+  ["namespace-stan"]="${MDS_NAMESPACE_NATS:-${configs[namespace-nats]}}"
+  ["namespace-nats-box"]="${MDS_NAMESPACE_NATS_BOX:-${configs[namespace-nats]}}"
+  ["namespace-dns"]="${MDS_NAMESPACE_DNS:-default}"
   ["namespace-curl"]="${MDS_NAMESPACE_CURL:-default}"
   ["dryrun"]="${MDS_DRY_RUN:-}"
-  ["quiet"]="${MDS_QUIET:-}")
+  ["quiet"]="${MDS_QUIET:-}"
+  ["keep-cache"]="${MDS_KEEP_CACHE:-}")
 declare -A helmRepositories=(
   ["stable"]="https://kubernetes-charts.storage.googleapis.com"
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/${configs[istio-version]}/charts"
@@ -148,6 +155,23 @@ initialize() {
   for p in ${configs[paths]}; do
     export PATH=$(brew --prefix ${configs[brew-${p}]:-${p}})/bin:${PATH}
   done; unset p
+
+  # fixme: make minimal-version test more flexible; may not be required when helm:3 is supported more broadly
+  # fixme: add conditional `hash helm`
+  # if [[ ! "$(helm version --short | grep -i client | cut -d ':' -f 2)" == *"${configs[helm-version]}"* ]]; then
+    os=$(os)
+
+    if [[ ! -x ${configs[workdir]}/helm/${os}-amd64 ]]; then
+      mkdir -p ${configs[workdir]}/helm
+      curl -o ${configs[workdir]}/helm/helm-v${helmVersion}.tgz ${configs[helm-distribution]/{os\}/${os}} > /dev/null 2>&1
+      (cd ${configs[workdir]}/helm; tar zxvf ${configs[workdir]}/helm/helm-v${helmVersion}.tgz > /dev/null 2>&1)
+    fi
+
+    export PATH=${configs[workdir]}/helm/${os}-amd64:${PATH}
+    unset os
+  # fi
+
+  export NVM_DIR=${HOME}/.nvm
 }
 
 warn() {
@@ -229,9 +253,9 @@ where service in:
   logging
   metrics
   nats
-  natss
+  stan
   grafana
-  dnslookup
+  dns
   curl
 
 where app in:
@@ -263,39 +287,47 @@ EOF
 bootstrap() {
   check ${FUNCNAME[0]}
 
-  for l in ${configs[brew]}; do
-    lc=${configs[brew-${l}]:-${l}}
+  for r in ${configs[brew]}; do
+    rc=${configs[brew-${r}]:-${r}}
 
-    hash ${l} > /dev/null 2>&1 || {
-      case ${l} in
-        oq) brew tap ${lc};;
-        *) brew install ${lc};;
+    hash ${r} > /dev/null 2>&1 || {
+      case ${r} in
+        oq) brew tap ${rc}; rc=${r};&
+        *) brew install ${rc};;
       esac
 
       # todo: unable to detect nvm install via subshell given it is an alias
-      case ${l} in
+      case ${r} in
         nvm)
+          # todo: normalize-nvm env
           [ ! -d ~/.nmv ] && mkdir -p ~/.nvm
-          [ $(grep -Fxq "export NMV_DIR=\"\${HOME}/.nvm\"" ~/.bashrc; echo $?) == "1" ] && \
-            echo "export NMV_DIR=\"\${HOME}/.nvm\"" >> ~/.bashrc
-          [ $(grep -Fxq "eval . \$(brew --prefix nvm)/nvm.sh" ~/.bashrc; echo $?) == "1" ] && \
-            echo "eval . \$(brew --prefix nvm)/nvm.sh" >> ~/.bashrc
+          export NVM_DIR=${HOME}/.nvm
           . $(brew --prefix nvm)/nvm.sh
+          nvm install ${configs[nvm-version]}
+          nvm alias default ${configs[nvm-version]}
+          nvm use --delete-prefix v${configs[nvm-version]}
           nvm install node
-          nvm use node
-          nvm install 12.14.1
-          nvm alias default 12.14.1;;
+          nvm use node;;
         envsubst) brew link --force ${lc};;
       esac
     }
-  done; unset l lc
+  done; unset r rc
+
+  for r in ${configs[brew-cask]}; do
+    rc=${configs[brew-cask-${r}]:-${r}}
+
+    hash ${r} > /dev/null 2>&1 || {
+      brew cask install ${rc}
+    }
+  done; unset c rc
 
   initialize
 
-  # fixme: impl
-  hash ko > /dev/null 2>&1 || {
-    GO111MODULE=on go get github.com/google/ko/cmd/ko
-  }
+  # todo: normalize nvm-env
+  . $(brew --prefix nvm)/nvm.sh
+  [ -s "$NVM_DIR/nvm.sh" ] && . ${NVM_DIR}/nvm.sh
+  nvm install ${configs[nvm-version]}
+  nvm alias default ${configs[nvm-version]}
 
   for p in lerna cypress mocha chai mochawesome; do
     yarn ${p} --version > /dev/null 2>&1 || yarn add -W ${p}
@@ -308,14 +340,14 @@ services() {
   echo $(oq -i yaml -r '.apis | keys[]' ${configs[home]}/helm/mds/values.yaml)
 }
 
-processors() {
-  echo $(oq -i yaml -r '.processors | keys[]' ${configs[home]}/helm/mds/values.yaml)
+cronJobs() {
+  echo $(oq -i yaml -r '.cronjobs | keys[]' ${configs[home]}/helm/mds/values.yaml)
 }
 
 build() {
   check ${FUNCNAME[0]}
 
-  for s in $(services) $(processors); do
+  for s in $(services) $(cronJobs); do
     for i in $(docker images --filter=reference="${s}" -q); do
       [ ${#i} -ge 1 ] && docker rmi -f ${i}
     done; unset i
@@ -323,6 +355,12 @@ build() {
 
   # todo: provide build-config-option for progressive builds, ie no-clean
   (cd ${configs[home]};
+    # todo: normalize nvm-env
+    . $(brew --prefix nvm)/nvm.sh;
+    [ -s "$NVM_DIR/nvm.sh" ] && . ${NVM_DIR}/nvm.sh;
+    nvm install ${configs[nvm-version]};
+    nvm alias default ${configs[nvm-version]};
+    [ -z "${configs[keep-cache]}" ] && yarn clean;
     yarn clean;
     yarn;
     yarn image)
@@ -492,6 +530,7 @@ installIstio() {
     (cd ${configs[workdir]}; curl -L https://git.io/getLatestIstio | ISTIO_VERSION=${configs[istio-version]} sh -)
   fi
 
+# fixme: disable prometheus
   kubectl get namespace istio-system > /dev/null 2>&1 || {
     ${configs[istio]}/bin/istioctl verify-install || error "istio verify installation failure"
 
@@ -529,7 +568,8 @@ installIstio() {
           ${configs[sets-istio]:+$(helmOptions set ${configs[sets-istio]})} \
           ${configs[dryrun]:+--dry-run};;
     esac
-    labelNamespaceIstioInjection default
+    # labelNamespaceIstioInjection default
+    pause 20
   }
 }
 
@@ -538,6 +578,12 @@ labelNamespaceIstioInjection() {
 
   kubectl get namespace ${1} > /dev/null 2>&1 && \
     kubectl label namespace ${1} istio-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
+}
+
+unlabelNamespacesIstioInjection() {
+  check ${FUNCNAME[0]}
+
+  kubectl label namespaces --all istio-injection-
 }
 
 installLogging() {
@@ -575,12 +621,22 @@ installGrafana() {
   }
 }
 
+imageTag() {
+  case "${configs[provider],,}" in
+    aws) aws ecr describe-images --repository-name ${1} --output text \
+      --query 'sort_by(imageDetails,& imagePushedAt)[*].imageTags[*]' | tr '\t' '\n' | tail -1;;
+    gcp) gcloud container images list-tags --limit=1 --format='get(TAGS)' ${configs[image-repository]}/${1};;
+    *) docker images ${1} --format {{.Tag}};;
+  esac
+}
+
 imageVersion() {
   for s in $(services); do
-    is+="${is:+,}sets-mds+=apis.${s}.version=$(docker images ${s} --format {{.Tag}})"
+    is+="${is:+,}sets-mds+=apis.${s}.version=$(imageTag ${s})"
   done; unset s
-  for s in $(processors); do
-    is+="${is:+,}sets-mds+=processors.${s}.version=$(docker images ${s} --format {{.Tag}})"
+
+  for s in $(cronJobs); do
+    is+="${is:+,}sets-mds+=cronjobs.${s}.version=$(imageTag ${s})"
   done; unset s
 
   echo ${is}
@@ -593,9 +649,11 @@ installMds() {
   kubectl get namespace ${configs[namespace-mds]} > /dev/null 2>&1 || {
     installNamespace ${configs[namespace-mds]}
     labelNamespaceIstioInjection ${configs[namespace-mds]}
-    labelNamespaceKnativeEventingInjection ${configs[namespace-mds]}
-    [ -z "${configs[image-repository]}" ] &&
+    # note: remote registries may require image-version overrides
+    [ -z "${configs[image-repository]}" ] && \
       configure $(imageVersion) || configure sets-mds+=registry=${configs[image-repository]}
+      # configure $(imageVersion) || configure sets-mds+=registry=${configs[image-repository]}
+
     pause 5
     # kubectl -n ${configs[namespace-mds]} wait --for=condition=complete job --all
     helm install ${configs[home]}/helm/mds --name ${configs[namespace-mds]} \
@@ -684,137 +742,42 @@ installSimulator() {
       ${configs[dryrun]:+--dry-run --debug})
 }
 
-labelNamespaceKnativeEventingInjection() {
-  check ${FUNCNAME[0]}
-  kubectl get namespace ${1} > /dev/null 2>&1 && \
-    kubectl label namespace ${1} knative-eventing-injection=enabled --overwrite=true ${configs[dryrun]:+--dry-run}
-}
-
-installKnative() {
+installNats() {
   check ${FUNCNAME[0]}
 
-  for c in ${configs[knative-components]}; do
-    kubectl get namespace knative-${c} > /dev/null 2>&1 || {
-      if [ -d ${configs[home]}/helm/knative-${c}/${configs[knative-version]} ]; then
-        helm install ${configs[home]}/helm/knative-${c}-init/${configs[knative-version]} \
-          --name knative-${c}-init #--namespace knative-${c} \
-          ${configs[values]:+$(helmOptions values ${configs[values]})} \
-          ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
-          ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-          ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-          ${configs[dryrun]:+--dry-run --debug}
-        helm install ${configs[home]}/helm/knative-${c}/${configs[knative-version]} \
-          --name knative-${c} #--namespace knative-${c} \
-          ${configs[values]:+$(helmOptions values ${configs[values]})} \
-          ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
-          ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-          ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-          ${configs[dryrun]:+--dry-run --debug}
-      else
-        for s in knative.dev/crd-install=true ''; do
-          case ${c} in
-            eventing) cy=release;;
-            monitoring) cy=${c}; cc=serving;;
-            serving) cy=${c};;
-          esac
-          echo "kubectl apply ${s:+--selector ${s}} \
-            --filename https://github.com/knative/${cc}/releases/download/v${configs[knative-version]}/${cy}.yaml \
-            ${configs[dryrun]:+--dry-run --debug}"
-          unset cc
-          pause 5
-        done; unset s
-      fi
-    }
-  done; unset c
-
-  pause 8
+  for n in nats-init nats-operator nats-cluster; do
+    [[ "$(helm list --short ${configs[namespace-nats]}-${n})" = "${configs[namespace-nats]}-${n}" ]] || \
+      helm install ${configs[home]}/helm/${n} --name ${configs[namespace-nats]}-${n} --namespace ${configs[namespace-nats]}
+  done; unset n
 }
 
-buildNatss() {
-  [ -z "${1}" ] || {
-    d=${1}
-    (cd ${configs[natss]}/natss;
-      export GOPATH=${configs[workdir]};
-      export KO_DOCKER_REPO=ko.local;
-      # fixme: do better
-      ${GO_HOME:-~/go}/bin/ko publish -BL ./cmd/${d})
-  }; unset d
-}
-
-installNatss() {
+installNatsbox() {
   check ${FUNCNAME[0]}
 
-  kubectl get namespace ${configs[namespace-natss]} > /dev/null 2>&1 || {
-    if [ -d ${configs[home]}/helm/natss/${configs[natss-version]} ]; then
-      helm install ${configs[home]}/helm/natss/${configs[natss-version]} \
-        --name natss \
-        ${configs[values]:+$(helmOptions values ${configs[values]})} \
-        ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
-        ${configs[presets-natss]:+$(helmOptions set ${configs[presets-natss]})} \
-        ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-        ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-        ${configs[dryrun]:+--dry-run --debug}
-    else
-      if [ ! -d ${configs[natss]} ]; then
-        mkdir -p ${configs[natss]}
-        (cd ${configs[natss]};
-          git clone ${configs[natss-repository]} .;
-          git remote add upstream ${configs[natss-repository]};
-          git remote set-url --push upstream no_push
-          sed -i.bak "s/image: nats-streaming:.*$/image: nats-streaming:0.16.2/" ${configs[natss]}/natss/config/broker/natss.yaml)
-      fi
-
-      # fixme: classic install
-      kubectl get namespace ${configs[namespace-natss]} > /dev/null 2>&1 || {
-        installNamespace ${configs[namespace-natss]}
-        # kubectl label namespace ${configs[namespace-natss]} knative-eventing-injection=enabled
-      }
-
-      # kubectl apply -n ${configs[namespace-natss]} -f ${configs[natss]}/natss/config/broker/natss.yaml
-      kubectl apply -f ${configs[natss]}/natss/config/broker/natss.yaml
-    fi
-
-    if [ -d ${configs[home]}/helm/knative-eventing-contrib-natss/${configs[natss-version]} ]; then
-      helm install ${configs[home]}/helm/knative-eventing-contrib-natss/${configs[natss-version]} \
-        --name knative-eventing-contrib-natss \
-        ${configs[values]:+$(helmOptions values ${configs[values]})} \
-        ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
-        ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-        ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-        ${configs[dryrun]:+--dry-run --debug}
-    else
-      for d in $(find ${configs[natss]}/natss/cmd/* -type d -maxdepth 1 -exec sh -c 'echo $(basename {})' \;); do
-        $(docker inspect --type=image ko.local/${d} > /dev/null 2>&1) || buildNatss ${d}
-      done; unset d
-
-      for c in controller dispatcher; do
-        for t in $(docker images ko.local/channel_${c} --format '{{.Tag}}'); do
-          if [ "${t}" != "latest" ]; then
-            sed -i.bak "s/image: knative.dev\/eventing-contrib\/natss\/cmd\/channel_${c}/image: ko.local\/channel_${c}:${t}/" ${configs[natss]}/natss/config/500-${c}.yaml
-            break
-          fi
-        done; unset t
-      done; unset c
-
-      # fixme: test for deployment
-      kubectl apply -f ${configs[natss]}/natss/config
-    fi
-  }
-
-  # fixme: do better
-  pause 7
+  [[ "$(helm list --short ${configs[namespace-nats-box]}-nats-box)" = "${configs[namespace-nats-box]}-nats-box" ]] || \
+    helm install ${configs[home]}/helm/nats-box --name ${configs[namespace-nats-box]}-nats-box --namespace ${configs[namespace-nats-box]}
 }
 
-installDnslookup() {
-  (( $(helm list --short dns-lookup | wc -l) == 0 )) && {
-    helm install ./helm/dns --name dns-lookup --namespace ${configs[namespace-dns-lookup]}
-  }
+installStan() {
+  check ${FUNCNAME[0]}
+
+  [[ "$(helm list --short ${configs[namespace-stan]}-nats-streaming-server)" = "${configs[namespace-stan]}-nats-streaming-server" ]] || \
+    helm install ${configs[home]}/helm/nats-streaming-server --name ${configs[namespace-stan]}-nats-streaming-server \
+      --namespace ${configs[namespace-stan]}
+}
+
+installDns() {
+  check ${FUNCNAME[0]}
+
+  [[ "$(helm list --short ${configs[namespace-dns]}-dns)" = "${configs[namespace-dns]}-dns" ]] || \
+    helm install ./helm/dns --name ${configs[namespace-dns]}-dns --namespace ${configs[namespace-dns]}
 }
 
 installCurl() {
-  (( $(helm list --short curl | wc -l) == 0 )) && {
-    helm install ./helm/curl --name curl --namespace ${configs[namespace-curl]}
-  }
+  check ${FUNCNAME[0]}
+
+  [[ "$(helm list --short ${configs[namespace-curl]}-curl)" = "${configs[namespace-curl]}-curl" ]] || \
+    helm install ./helm/curl --name ${configs[namespace-curl]}-curl --namespace ${configs[namespace-curl]}
 }
 
 testUnit() {
@@ -952,7 +915,10 @@ uninstallSimulator() {
   check ${FUNCNAME[0]}
 
   helm del --purge trackgen
-  [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
+
+  if [ -z "${configs[keep-cache]}" ]; then
+    [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
+  fi
 }
 
 uninstallFallbackCertificate() {
@@ -989,67 +955,39 @@ uninstallMds() {
   uninstallNamespace ${configs[namespace-mds]}
 }
 
-uninstallKnative() {
+uninstallStan() {
   check ${FUNCNAME[0]}
 
-  for c in ${configs[knative-components]}; do
-    case "${c}" in
-      eventing)
-        kubectl get namespace knative-eventing > /dev/null 2>&1 && {
-          if [ -d ${configs[home]}/helm/knative-eventing/${configs[knative-version]} ]; then
-            helm delete --purge knative-eventing ${configs[dryrun]:+--dry-run --debug}
-          else
-            for s in knative.dev/crd-install=true ''; do
-              kubectl delete ${s:+--selector ${s}} \
-                --filename https://github.com/knative/eventing/releases/download/v${configs[knative-version]}/release.yaml \
-                ${configs[dryrun]:+--dry-run --debug}
-              pause 5
-            done; unset s
-          fi
-        };;
-    esac
-  done; unset c
+  [[ "$(helm list --short ${configs[namespace-stan]}-nats-streaming-server)" = "${configs[namespace-stan]}-nats-streaming-server" ]] && \
+    helm delete --purge ${configs[namespace-stan]}-nats-streaming-server
 }
 
-uninstallNatss() {
+uninstallNatsbox() {
   check ${FUNCNAME[0]}
 
-  kubectl get namespace ${configs[namespace-natss]} > /dev/null 2>&1 && {
-    if [ -d ${configs[home]}/helm/natss/${configs[natss-version]} ]; then
-      helm delete --purge natss
-    else
-      kubectl delete namespace natss
-      [ -d ${configs[natss]} ] && /bin/rm -rf ${configs[natss]}
-    fi
-
-    if [ -d ${configs[home]}/helm/knative-eventing-contrib-natss/${configs[natss-version]} ]; then
-      helm delete --purge knative-eventing-contrib-natss
-    else
-      kubectl delete -f ${configs[natss]}/natss/config
-      # fixme: knative-eventing failed to resoncile with distinct namespace deployments
-      # helm delete --purge ${configs[namespace-natss]}-nats
-      # helm delete --purge ${configs[namespace-nats-knative]}-nats-knative
-      # helm delete --purge ${configs[namespace-nats-tenant]}-nats-tenant
-
-      # # fixme: deleteing a shared namespace is not right
-      # for ns in ${configs[namespace-natss]} ${configs[namespace-tenant]}; do # ${configs[namespace-nats-knative]}; do
-      #   [ "${ns}" != "${configs[namespace-mds]}" ] && uninstallNamespace ${ns}
-      # done; unset ns
-      [ -d ${configs[natss]} ] && /bin/rm -rf ${configs[natss]}
-    fi
-  }
+  [[ "$(helm list --short ${configs[namespace-nats-box]}-nats-box)" = "${configs[namespace-nats-box]}-nats-box" ]] && \
+    helm delete --purge ${configs[namespace-nats-box]}-nats-box
 }
 
-uninstallDnslookup() {
-  (( $(helm list --short dns-lookup | wc -l) == 1 )) && {
-    helm delete --purge dns-lookup
-  }
+uninstallNats() {
+  check ${FUNCNAME[0]}
+
+  for n in nats-init nats-operator nats-cluster; do
+    [[ "$(helm list --short ${configs[namespace-nats]}-${n})" = "${configs[namespace-nats]}-${n}" ]] && \
+      helm delete --purge ${configs[namespace-nats]}-${n}
+  done; unset n
+
+  kubectl delete namespace ${configs[namespace-nats]}
+}
+
+uninstallDns() {
+  [[ "$(helm list --short ${configs[namespace-dns]}-dns)" = "${configs[namespace-dns]}-dns" ]] && \
+    helm delete --purge ${configs[namespace-dns]}-dns
 }
 
 uninstallCurl() {
-  (( $(helm list --short curl | wc -l) == 1 )) && {
-    helm delete --purge curl
-  }
+  [[ "$(helm list --short ${configs[namespace-curl]}-curl)" = "${configs[namespace-curl]}-curl" ]] && \
+    helm delete --purge ${configs[namespace-curl]}-curl
 }
 
 uninstallMetrics() {
@@ -1094,8 +1032,12 @@ uninstallIstio() {
           ${configs[dryrun]:+--dry-run} > /dev/null;;
     esac
     kubectl delete namespace istio-system
+    unlabelNamespacesIstioInjection
   }
-  [[ -d ${configs[istio]} && -z "${configs[dryrun]}" ]] && echo "/bin/rm -rf ${configs[istio]}"
+
+  if [ -z "${configs[keep-cache]}" ]; then
+    [[ -d ${configs[istio]} && -z "${configs[dryrun]}" ]] && /bin/rm -rf ${configs[istio]}
+  fi
 }
 
 uninstallTiller() {
@@ -1182,13 +1124,15 @@ forwardIfNeeded() {
   unset gp
 }
 
+localContext() {
+  [[ "$(lower $(kubectl config current-context))" =~ ^(${configs[local-context]})$ ]] && echo true || echo false
+}
+
 context() {
-  [[ -z ${context+x} ]] && {
-    [[ "$(lower $(kubectl config current-context))" =~ ^(${configs[local-context]})$ ]] || {
-      v=yes
-      [[ "$(prompt "confirm you want to proceed: [${v}/no] ")" != "${v}" ]] && usage "opted to exit" || context=true
-      unset v
-    }
+  [ -z ${context+x} ] && [ "$(localContext)" != "true" ] && {
+    v=yes
+    [[ "$(prompt "confirm you want to proceed: [${v}/no] ")" != "${v}" ]] && usage "opted to exit" || context=true
+    unset v
   }
 }
 
@@ -1200,7 +1144,7 @@ check() {
     $(basename ${0}))
       for rc in ${configs[rc]}; do
         if [[ -f ${rc} && $(grep -q "\\\*${configs[home]}/bin\\\*" ${rc}; echo $?) != 0 ]]; then
-            echo "export PATH=${configs[home]}/bin:\${PATH}" >> ${rc}
+          echo "export PATH=${configs[home]}/bin:\${PATH}" >> ${rc}
         fi
       done; unset rc
 
@@ -1211,29 +1155,24 @@ check() {
       #kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster"
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
-    installNatss)
-      [ ! "${configs[natss-repository]}" ] && usage "unspecified natss repository"
-      kubectl get namespace ${configs[namespace-knative]} > /dev/null 2>&1 || installKnative;;
+    installNats) ;;
+    installStan) installNats;;
     # installImages)
     #   [ "${configs[image-repository]}" ] || \
     #     warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
     installMds)
       hash helm > /dev/null 2>&1 || bootstrap
-      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio
-      kubectl get namespace ${configs[namespace-natss]} > /dev/null 2>&1 || installNatss;;
+      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
+      # fixme: ??? || installStan
     installMetrics) kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;&
-    installHelm | installIstio | installKnative | installLogging | installMetricsAdapter | testUnit | \
+    installHelm | installIstio | installLogging | installMetricsAdapter | testUnit | \
       uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
       hash helm > /dev/null 2>&1 || bootstrap;;
     installSimulator)
       [[ ! -d ${configs[simulator]} && ! "${configs[simulator-repository]}" ]] && usage "unspecified simulator repository";;
     app:*) forwardIfNeeded ${1##*:};;
     cliPostgresql) ;;
-      # hash pgcli > /dev/null 2>&1 || bootstrap
-      # forwardIfNeeded mds-postgresql;;
     cliRedis) ;;
-      # hash redis-cli > /dev/null 2>&1 || bootstrap
-      # forwardIfNeeded mds-redis;;
   esac
 }
 
@@ -1255,7 +1194,7 @@ configure() {
       [[ "${k}" == *"+" ]] && configs[${k%+}]+="${configs[${k%+}]:+,}${v}" ||
 	  configs[${k}]="${v}"
     done; unset c k v
-  else
+  elif [[ ! -z "${1}" ]]; then
     configs[${1}]=
   fi
 }
@@ -1267,8 +1206,8 @@ preset() {
         for s in $(services); do
           is+="${is:+,}presets-mds+=apis.${s}.enabled=false"
         done; unset s
-        for p in $(processors); do
-          is+="${is:+,}presets-mds+=processors.${p}.enabled=false"
+        for p in $(cronJobs); do
+          is+="${is:+,}presets-mds+=cronjobs.${p}.enabled=false"
         done; unset p;;
       local)
         is+="${is:+,}presets-mds+=resourcesLimitsCpu=200m"
@@ -1347,7 +1286,7 @@ for arg in "${@:$OPTIND}"; do
     install:namespace=*) installNamespace "$(normalize ${arg} =)";;
     install) arg="${configs[install]}";&
     install:*) invoke install "$(normalize ${arg})";;
-    cycle) s=$(services); p=$(processors); arg="${s// /,},${p// /,}"; unset s p;&
+    cycle) s=$(services); p=$(cronjobs); arg="${s// /,},${p// /,}"; unset s p;&
     cycle:*) cycle "$(normalize ${arg})";;
     test) arg="${configs[test]}";&
     test:*) invoke test "$(normalize ${arg})";;

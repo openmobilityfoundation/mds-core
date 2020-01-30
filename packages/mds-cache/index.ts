@@ -96,7 +96,7 @@ let cachedClient: redis.RedisClient | null
 
 // optionally prefix a 'tenantId' key given the redis is a shared service across deployments
 function decorateKey(key: string): string {
-  return env.TENANT_ID ? `${env.TENANT_ID}:$key` : key
+  return env.TENANT_ID ? `${env.TENANT_ID}:${key}` : key
 }
 
 async function getClient() {

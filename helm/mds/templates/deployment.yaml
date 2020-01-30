@@ -24,10 +24,8 @@ spec:
             name: mds-config-files
       containers:
       - name: {{ $name }}
+        image: {{ if $.Values.registry }}{{ printf "%s/" $.Values.registry }}{{- end}}{{ $name }}:{{ $api.version }}
         {{- if $.Values.registry }}
-        image: {{ $.Values.registry }}/{{ $name }}:{{ $api.version }}
-        {{- else }}
-        image: {{ $name }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
         resources:
@@ -86,15 +84,15 @@ spec:
           {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          - name: EVENT_SOURCE
-            value: cloudevents
-          - name: CE_NAME
-            value: {{ $name }}
-          - name: SINK
-            value: http://natss-broker.{{ $.Release.Namespace }}.svc.cluster.local
-          {{- if not (empty $.Values.tenantId) }}
+          - name: NATS
+            value: nats.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
+          - name: STAN_CLUSTER
+            value: nats-streaming
           - name: TENANT_ID
+          {{- if hasKey $.Values "tenantId" }}
             value: {{ $.Values.tenantId }}
+          {{- else }}
+            value: {{ $.Release.Namespace }}
           {{- end }}
           {{- if $.Values.slack.channel }}
           - name: SLACK_CHANNEL
