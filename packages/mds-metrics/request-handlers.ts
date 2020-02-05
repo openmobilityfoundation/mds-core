@@ -214,7 +214,13 @@ export async function getAll(req: MetricsApiRequest, res: GetAllResponse) {
   const { query } = req
   const bin_size = getBinSize(query.bin_size)
 
-  const { start_time, end_time } = parseRelative(query.start || 'today', query.end || 'now')
+  let time_result
+  try {
+    time_result = parseRelative(query.start || 'today', query.end || 'now')
+  } catch (err) {
+    return res.status(400).send(err)
+  }
+  const { start_time, end_time } = time_result
   const slices = bin_size
     .map(currBinSize => {
       return getTimeBins({

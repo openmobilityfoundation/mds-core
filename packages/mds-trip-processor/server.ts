@@ -14,14 +14,14 @@
     limitations under the License.
  */
 
-// Express local
-import { EventServer } from '@mds-core/mds-event-server'
 import processor from './index'
 
-const {
-  env: { npm_package_name, PORT = 5002 }
-} = process
-
-/* eslint-reason avoids import of logger */
-/* eslint-disable-next-line no-console */
-EventServer(processor).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
+processor()
+  .then(() => {
+    return process.exit(0)
+  })
+  // eslint-disable-next-line promise/prefer-await-to-callbacks
+  .catch(err => {
+    console.log(err)
+    return process.exit(1)
+  })

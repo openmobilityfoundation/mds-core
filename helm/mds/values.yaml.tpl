@@ -49,22 +49,19 @@ apis:
     pathPrefix: /web-sockets
     version: ${WEB_SOCKETS_VERSION}
     migration: false
-processors:
   mds-event-processor:
     enabled: true
+    pathPrefix: /event-processor
     version: ${EVENT_PROCESSOR_VERSION}
     migration: false
-    triggeredBy:
-      trigger: [event, telemetry]
+cronjobs:
   mds-trip-processor:
     enabled: true
     version: ${TRIP_PROCESSOR_VERSION}
     migration: false
-    triggeredBy:
-      cron: '0 * * * *'
+    schedule: '0 * * * *'
   mds-provider-processor:
     enabled: true
     version: ${PROVIDER_PROCESSOR_VERSION}
     migration: false
-    triggeredBy:
-      cron: '0 * * * *'
+    schedule: '0 * * * *'

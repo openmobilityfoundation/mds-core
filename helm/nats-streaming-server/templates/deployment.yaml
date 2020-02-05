@@ -1,0 +1,179 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-streaming-config
+  namespace: {{ $.Release.Namespace | default "default" }}
+data:
+  # Used to set cluster id in deployment
+  # Look for $(NATS_CLUSTER) usage below
+  NATS_CLUSTER: nats-streaming
+  # This is the NATS hostname to connect to
+  NATS_HOST: nats://nats:4222
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-streaming-svc
+  namespace: {{ $.Release.Namespace | default "default" }}
+  labels:
+    app: nats-streaming-svc
+spec:
+  selector:
+    matchLabels:
+      app: nats-streaming-svc
+  clusterIP: None
+  ports:
+  # Port 4222 is exposed from the NATS cluster and service
+  - port: 4222
+    name: client
+    protocol: TCP
+  #
+  # You can access the management urls:
+  # curl http://nats-streaming-svc:8222/streaming/clientsz
+  # curl http://nats-streaming-svc:8222/streaming/channelsz
+  #
+  - port: 7777
+    name: metrics
+    protocol: TCP
+#  - port: 8222
+#    name: management
+#    protocol: TCP
+  selector:
+    app: nats-streaming-stateful
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats-streaming-stateful
+  namespace: {{ $.Release.Namespace | default "default" }}
+spec:
+  selector:
+    matchLabels:
+      app: nats-streaming-stateful
+  serviceName: nats-streaming-svc
+  # Adjust as needed but no less then 3 for cluster quorum
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nats-streaming-stateful
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        # Management port is enabled at default 8222
+      - command:
+          - /nats-streaming-server
+          - -ns
+          - "$(NATS_HOST)"
+          - -cluster_id
+          - "$(NATS_CLUSTER)"
+          - -m
+          - "8222"
+          - --store
+          - file
+          - --max_msgs
+          - "0"
+          - --max_bytes
+          - "0"
+          - -clustered
+          - --cluster_node_id
+          - "$(POD_NAME)"
+          - -cluster_log_path
+          - /opt/stan-logs
+          - -dir
+          - /opt/stan-data
+          # This is the ugly part. Update this with your replica count
+          - --cluster_peers
+          - "nats-streaming-stateful-0,nats-streaming-stateful-1,nats-streaming-stateful-2"
+          # Do not boostrap cluster in a stateful set or you will end up with 3 masters
+          # Let the nodes select a leader
+          # - -cluster_bootstrap
+        # See: https://hub.docker.com/_/nats-streaming
+        # This docker image contains both nats and nats-streaming
+        # Version I used here contains nats 2.0 internally
+        name: nats-streaming-stateful
+        image: nats-streaming:0.16.2
+        env:
+        # POD name is used for node id
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NATS_CLUSTER
+          valueFrom:
+            configMapKeyRef:
+              name: nats-streaming-config
+              key:  NATS_CLUSTER
+        - name: NATS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: nats-streaming-config
+              key:  NATS_HOST
+        ports:
+        - containerPort: 4222
+          name: client
+        - containerPort: 8222
+          name: management
+        # We need 2 volume mounts
+        volumeMounts:
+          # Contains message payload data, channels, subscriptions
+        - name: stan-pvc-data
+          mountPath: /opt/stan-data
+          # RAFT logs for cluster support
+        - name: stan-pvc-logs
+          mountPath: /opt/stan-logs
+        # This check is used by kubernetes to check if the pod still alive
+        livenessProbe:
+          httpGet:
+            path: /
+            port: management
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        # This check is used by kubernetes to check if the pod is ready to run
+        readinessProbe:
+          httpGet:
+            path: /
+            port: management
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+      # This is important to spread pods across nodes
+      # If we don't do this a node upgrade might take down more then 1 pod
+      # which would compromise quorum
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - nats-streaming-stateful
+              topologyKey: kubernetes.io/hostname
+  # These were auto-created on my kubernetes cluser (GKE)
+  # Claims should persist re-deploy or upgrade
+  volumeClaimTemplates:
+  - metadata:
+      name: stan-pvc-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          # Adjust as needed value chosen here is arbitrary
+          storage: 20Gi
+  - metadata:
+      name: stan-pvc-logs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          # Adjust as needed value chosen here is arbitrary
+          storage: 20Gi

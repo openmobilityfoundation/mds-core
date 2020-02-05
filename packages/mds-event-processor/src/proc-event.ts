@@ -226,7 +226,7 @@ export async function eventProcessor(type: string, data: VehicleEvent & Telemetr
     }
 
     default: {
-      throw new Error('NOT A VALID CLOUDEVENT TYPE')
+      throw new Error(`NOT A VALID CLOUDEVENT TYPE, ${baseDeviceState.type}`)
     }
   }
 }

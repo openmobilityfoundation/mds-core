@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 /*
     Copyright 2019 City of Los Angeles.
 
@@ -14,14 +15,16 @@
     limitations under the License.
  */
 
-import { EventServer } from '@mds-core/mds-event-server'
 import processor from '@mds-core/mds-event-processor'
-import { env } from '@container-images/env-inject'
+import { initializeStanSubscriber, EventServer } from '@mds-core/mds-event-server'
 
-const { npm_package_name, npm_package_version, npm_package_git_commit, PORT = 5000 } = env()
+const {
+  env: { NATS = 'localhost', STAN_CLUSTER = 'nats-streaming', STAN_CREDS, TENANT_ID = 'mds' }
+} = process
 
-EventServer(processor).listen(PORT, () =>
-  /* eslint-reason avoids import of logger */
-  /* eslint-disable-next-line no-console */
-  console.log(`${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) running on port ${PORT}`)
+Promise.all([initializeStanSubscriber({ NATS, STAN_CLUSTER, STAN_CREDS, TENANT_ID, processor }), EventServer()]).catch(
+  // eslint-disable-next-line promise/prefer-await-to-callbacks
+  err => {
+    console.log(err)
+  }
 )

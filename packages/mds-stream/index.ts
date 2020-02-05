@@ -17,8 +17,10 @@
 import logger from '@mds-core/mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
+import stan from 'node-nats-streaming'
 import { BinaryHTTPEmitter, event as cloudevent } from 'cloudevents-sdk/v1'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
+import uuid from 'uuid'
 import {
   Stream,
   StreamItem,
@@ -30,6 +32,8 @@ import {
 } from './types'
 
 const { env } = process
+
+let nats: stan.Stan
 
 let binding: BinaryHTTPEmitter | null = null
 
@@ -43,20 +47,42 @@ const getBinding = () => {
   return binding
 }
 
+const getNats = () => {
+  if (!nats) {
+    nats = stan.connect(env.STAN_CLUSTER || 'stan', `mds-agency-${uuid()}`, {
+      url: `nats://${env.NATS}:4222`,
+      userCreds: env.STAN_CREDS,
+      reconnect: true
+    })
+  }
+
+  return nats
+}
+
+/* Currently unused code, keeping it in the case that we decide to switch back to Knative Eventing */
 async function writeCloudEvent(type: string, data: string) {
-  if (!env.SINK || !env.CE_NAME) {
+  if (!env.SINK || !env.NATS) {
     return
   }
 
   // fixme: unable to set-and-propgate additional ce headers, eg: ce.addExtension('foo', 'bar')
   const event = cloudevent()
-    .type(`${env.TENANT_ID ?? 'mds'}.${type}`)
-    .source(env.CE_NAME)
+    .type(`${env.TENANT_ID || 'mds'}.${type}`)
+    .source(env.NATS)
     .data(data)
 
   return getBinding().emit(event)
 }
 
+async function writeNatsEvent(type: string, data: string) {
+  if (env.NATS) {
+    const event = cloudevent()
+      .type(`${env.TENANT_ID || 'mds'}.${type}`)
+      .source(env.NATS)
+      .data(data)
+    getNats().publish(`${env.TENANT_ID || 'mds'}.${type}`, JSON.stringify(event))
+  }
+}
 declare module 'redis' {
   interface RedisClient {
     dbsizeAsync: () => Promise<number>
@@ -168,23 +194,23 @@ async function writeStreamBatch(stream: Stream, field: string, values: unknown[]
 
 // put basics of vehicle in the cache
 async function writeDevice(device: Device) {
-  if (env.SINK) {
-    return writeCloudEvent('device', JSON.stringify(device))
+  if (env.NATS) {
+    return writeNatsEvent('device', JSON.stringify(device))
   }
   return writeStream(DEVICE_INDEX_STREAM, 'data', device)
 }
 
 async function writeEvent(event: VehicleEvent) {
-  if (env.SINK) {
-    return writeCloudEvent('event', JSON.stringify(event))
+  if (env.NATS) {
+    return writeNatsEvent('event', JSON.stringify(event))
   }
   return writeStream(DEVICE_RAW_STREAM, 'event', event)
 }
 
 // put latest locations in the cache
 async function writeTelemetry(telemetry: Telemetry[]) {
-  if (env.SINK) {
-    await Promise.all(telemetry.map(item => writeCloudEvent('telemetry', JSON.stringify(item))))
+  if (env.NATS) {
+    await Promise.all(telemetry.map(item => writeNatsEvent('telemetry', JSON.stringify(item))))
     return
   }
   const start = now()

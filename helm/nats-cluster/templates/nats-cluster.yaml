@@ -1,0 +1,10 @@
+apiVersion: "nats.io/v1alpha2"
+kind: "NatsCluster"
+metadata:
+  name: "nats"
+  namespace: {{ $.Release.Namespace | default "nats" }}
+spec:
+  size: 3
+  pod:
+    annotations:
+      sidecar.istio.io/inject: "false"

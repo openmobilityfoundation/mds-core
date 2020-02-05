@@ -27,6 +27,7 @@
   "dependencies": {
     "@mds-core/mds-cache": "0.1.26",
     "@mds-core/mds-db": "0.1.26",
+    "@mds-core/mds-event-server": "0.1.0",
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
@@ -34,7 +35,8 @@
     "@turf/helpers": "6.1.4",
     "@turf/turf": "5.1.6",
     "loglevel": "1.6.6",
-    "uuid": "3.4.0"
+    "node-nats-streaming": "0.2.6",
+    "uuid": "3.3.3"
   },
   "devDependencies": {}
 }

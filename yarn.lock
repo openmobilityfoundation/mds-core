@@ -6458,6 +6458,11 @@ google-p12-pem@^0.1.0:
   dependencies:
     node-forge "^0.7.1"
 
+google-protobuf@^3.11.2, google-protobuf@^3.9.0:
+  version "3.11.2"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.11.2.tgz#43272974521a5cec35a21f62730cf517a5a8e38c"
+  integrity sha512-T4fin7lcYLUPj2ChUZ4DvfuuHtg3xi1621qeRZt2J7SvOQusOzq+sDT4vbotWTCjUXJoR36CA016LlhtPy80uQ==
+
 google-spreadsheet@2.0.8:
   version "2.0.8"
   resolved "https://registry.yarnpkg.com/google-spreadsheet/-/google-spreadsheet-2.0.8.tgz#4c52c13bec439010010d9123ebc3cd06f43a51c0"
@@ -8464,6 +8469,14 @@ napi-build-utils@^1.0.1:
   resolved "https://registry.yarnpkg.com/napi-build-utils/-/napi-build-utils-1.0.1.tgz#1381a0f92c39d66bf19852e7873432fc2123e508"
   integrity sha512-boQj1WFgQH3v4clhu3mTNfP+vOBxorDlE8EKiMjUlLG3C4qAESnn9AxIOkFgTR2c9LtzNjPrjS60cT27ZKBhaA==
 
+nats@^1.3.0, nats@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/nats/-/nats-1.3.2.tgz#e80c8fbb31f9e664c6293a7f444d846b9e7659ef"
+  integrity sha512-4BVDo3aT+x+ac/RgW1GXBLkjS7iXYrmQymFgQ33/bYn8VuU65M8gd7yxra+7Dr5J3RRN6+Bt0KhoG9ugzmL0rQ==
+  dependencies:
+    nuid "^1.0.0"
+    ts-nkeys "^1.0.8"
+
 natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
@@ -8579,6 +8592,24 @@ node-libs-browser@^2.2.1:
     url "^0.11.0"
     util "^0.11.0"
     vm-browserify "^1.0.1"
+
+node-nats-streaming@0.2.6:
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/node-nats-streaming/-/node-nats-streaming-0.2.6.tgz#c5db3c58a034a5cb61a284691b1fe19b60bc4c4d"
+  integrity sha512-UTS/tHextk+qdXl0fiSKFPU12eWsRkeRzbzo1zk6ZbXu/PnszKtnSwzxhVRYveU7VjDebYsAFpde1MjC5Y3Nvw==
+  dependencies:
+    google-protobuf "^3.9.0"
+    nats "^1.3.0"
+    nuid "^1.1.0"
+
+node-nats-streaming@0.3.0-2:
+  version "0.3.0-2"
+  resolved "https://registry.yarnpkg.com/node-nats-streaming/-/node-nats-streaming-0.3.0-2.tgz#6a062ad371172da77528d6169a2f13e011d5d606"
+  integrity sha512-Ku+X4Fyzm6mvHwJT2AhLltoGgwxpSebbATsX67HVnGdpWBt0L60ga6EJdtFIFf0AV9QwM8TNN7sMhI0i/BZU0Q==
+  dependencies:
+    google-protobuf "^3.11.2"
+    nats "^1.3.2"
+    nuid "^1.1.0"
 
 node-preload@^0.2.0:
   version "0.2.1"
@@ -8725,6 +8756,11 @@ npmlog@^4.0.1, npmlog@^4.1.2:
     console-control-strings "~1.1.0"
     gauge "~2.7.3"
     set-blocking "~2.0.0"
+
+nuid@^1.0.0, nuid@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/nuid/-/nuid-1.1.0.tgz#e0c5746350a25562f58283197f34c50861f44675"
+  integrity sha512-C/JdZ6PtCqKsCEs4ni76nhBsdmuQgLAT/CTLNprkcLViDAnkk7qx5sSA8PVC2vmSsdBlSsFuGb52v6pwn1oaeg==
 
 number-is-nan@^1.0.0:
   version "1.0.1"
@@ -11464,6 +11500,13 @@ ts-mocha@6.0.0:
   optionalDependencies:
     tsconfig-paths "^3.5.0"
 
+ts-nkeys@^1.0.8:
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/ts-nkeys/-/ts-nkeys-1.0.14.tgz#3d4b61b6aa4fa952c649ecfafacdce1a4831ba57"
+  integrity sha512-WIPykDjpnOvVn5zDNv1uu6o1+Uj+CXaQOM4Od6k2SRiUF4rmhjk7nAHC0mGrWjj0GxeQnwKQv++65qtm1O6kiA==
+  dependencies:
+    tweetnacl "^1.0.1"
+
 ts-node@7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-7.0.1.tgz#9562dc2d1e6d248d24bc55f773e3f614337d9baf"
@@ -11532,6 +11575,11 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
+
+tweetnacl@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-1.0.1.tgz#2594d42da73cd036bd0d2a54683dd35a6b55ca17"
+  integrity sha512-kcoMoKTPYnoeS50tzoqjPY3Uv9axeuuFAZY9M/9zFnhoVvRfxz9K29IMPD7jGmt2c8SW7i3gT9WqDl2+nV7p4A==
 
 two-product@^1.0.2:
   version "1.0.2"

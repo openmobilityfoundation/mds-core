@@ -84,7 +84,7 @@ async function processProvider(providerID: UUID, curTime: Timestamp) {
 }
 
 export async function providerProcessor() {
-  const [{ providers }] = await Promise.all([getConfig(), db.startup()])
+  const { providers } = await getConfig()
   const curTime = now()
   await Promise.all(providers.map(provider => processProvider(provider.provider_id, curTime)))
 }

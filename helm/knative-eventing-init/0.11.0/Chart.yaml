@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: '0.4.0'
-description: Knative Eventing Initialize
-name: kne-init
-version: 0.11.0
