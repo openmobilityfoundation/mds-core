@@ -65,76 +65,59 @@ describe('Tests app', () => {
     await db.shutdown()
   })
 
-  it('reads the Policy schema', done => {
-    request
-      .get('/schema/policy')
-      .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('schema', JSON.stringify(body))
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+  it('reads the Policy schema', async () => {
+    const result = await request.get('/schema/policy').expect(200)
+    const body = result.body
+    log('schema', JSON.stringify(body))
+    test.value(result).hasHeader('content-type', APP_JSON)
   })
 
   // MAIN TESTS HERE
 
   it('read back one geography', async () => {
     await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
-    request
+    const result = await request
       .get(`/geographies/${GEOGRAPHY_UUID}`)
       .set('Authorization', AUTH)
       .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back one geo response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
-        return err
-      })
+    const body = result.body
+    log('read back one geo response:', body)
+    test.value(result).hasHeader('content-type', APP_JSON)
+    // TODO verify contents
   })
 
-  it('tries to get policy for invalid dates', done => {
-    request
+  it('tries to get policy for invalid dates', async () => {
+    const result = await request
       .get('/policies?start_date=100000&end_date=100')
       .set('Authorization', AUTH)
       .expect(400)
-      .end((err, result) => {
-        test.value(result.body.result === 'start_date after end_date')
-        done(err)
-      })
+    test.value(result.body.result === 'start_date after end_date')
   })
 
   it('read back one policy', async () => {
     await db.writePolicy(POLICY_JSON)
     await db.publishPolicy(POLICY_UUID)
-    request
+    const result = await request
       .get(`/policies/${POLICY_UUID}`)
       .set('Authorization', AUTH)
       .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back one policy response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
-        return err
-      })
+    const body = result.body
+    log('read back one policy response:', body)
+    test.value(result).hasHeader('content-type', APP_JSON)
+    // TODO verify contents
   })
 
-  it('reads back all active policies', done => {
-    request
+  it('reads back all active policies', async () => {
+    const result = await request
       .get(`/policies`)
       .set('Authorization', AUTH)
       .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back all policies response:', body)
-        test.value(body.policies.length).is(1) // only one should be currently valid
-        test.value(body.policies[0].policy_id).is(POLICY_UUID)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
-        done(err)
-      })
+    const body = result.body
+    log('read back all policies response:', body)
+    test.value(body.policies.length).is(1) // only one should be currently valid
+    test.value(body.policies[0].policy_id).is(POLICY_UUID)
+    test.value(result).hasHeader('content-type', APP_JSON)
+    // TODO verify contents
   })
 
   it('read back all published policies and no superseded ones', async () => {
@@ -150,105 +133,81 @@ describe('Tests app', () => {
     await db.writePolicy(POLICY4_JSON)
     await db.writePolicy(SUPERSEDING_POLICY_JSON)
     await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
-    request
+    const result = await request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back all published policies response:', body)
-        test.value(body.policies.length).is(3)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        const isSupersededPolicyPresent = body.policies.some((policy: Policy) => {
-          return policy.policy_id === POLICY_JSON.policy_id
-        })
-        const isSupersedingPolicyPresent = body.policies.some((policy: Policy) => {
-          return policy.policy_id === SUPERSEDING_POLICY_JSON.policy_id
-        })
-        test.value(isSupersededPolicyPresent).is(false)
-        test.value(isSupersedingPolicyPresent).is(true)
-        return err
-      })
+    const body = result.body
+    log('read back all published policies response:', body)
+    test.value(body.policies.length).is(3)
+    test.value(result).hasHeader('content-type', APP_JSON)
+    const isSupersededPolicyPresent = body.policies.some((policy: Policy) => {
+      return policy.policy_id === POLICY_JSON.policy_id
+    })
+    const isSupersedingPolicyPresent = body.policies.some((policy: Policy) => {
+      return policy.policy_id === SUPERSEDING_POLICY_JSON.policy_id
+    })
+    test.value(isSupersededPolicyPresent).is(false)
+    test.value(isSupersedingPolicyPresent).is(true)
   })
 
-  it('read back an old policy', done => {
-    request
+  it('read back an old policy', async () => {
+    const result = await request
       .get(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`)
       .set('Authorization', AUTH)
       .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back all policies response:', body)
-        test.value(body.policies.length).is(1) // only one
-        test.value(body.policies[0].policy_id).is(POLICY2_UUID)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        // TODO verify contents
-        done(err)
-      })
+    const body = result.body
+    log('read back all policies response:', body)
+    test.value(body.policies.length).is(1) // only one
+    test.value(body.policies[0].policy_id).is(POLICY2_UUID)
+    test.value(result).hasHeader('content-type', APP_JSON)
+    // TODO verify contents
   })
 
-  it('read back current and future policies', done => {
-    request
+  it('read back current and future policies', async () => {
+    const result = await request
       .get(`/policies?end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
       .expect(200)
-      .end((err, result) => {
-        const body = result.body
-        log('read back all policies response:', body)
-        test.value(body.policies.length).is(2) // current and future
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+    const body = result.body
+    log('read back all policies response:', body)
+    test.value(body.policies.length).is(2) // current and future
+    test.value(result).hasHeader('content-type', APP_JSON)
   })
 
-  it('cannot GET a nonexistant policy', done => {
-    request
+  it('cannot GET a nonexistant policy', async () => {
+    const result = await request
       .get(`/policies/${GEOGRAPHY_UUID}`) // obvs not a policy
       .set('Authorization', AUTH)
       .expect(404)
-      .end((err, result) => {
-        const body = result.body
-        log('read back nonexistant policy response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+    const body = result.body
+    log('read back nonexistant policy response:', body)
+    test.value(result).hasHeader('content-type', APP_JSON)
   })
 
-  it('read back a nonexistant geography', done => {
-    request
+  it('read back a nonexistant geography', async () => {
+    const result = await request
       .get(`/geographies/${POLICY_UUID}`) // obvs not a geography
       .set('Authorization', AUTH)
       .expect(404)
-      .end((err, result) => {
-        const body = result.body
-        log('read back nonexistant geography response:', body)
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
+    const body = result.body
+    log('read back nonexistant geography response:', body)
+    test.value(result).hasHeader('content-type', APP_JSON)
   })
 
-  it('tries to read non-UUID geography', done => {
-    console.log('hurb ----------------------------')
-    request
+  it('tries to read non-UUID geography', async () => {
+    const result = await request
       .get('/geographies/notarealgeography')
       .set('Authorization', AUTH)
       .expect(400)
-      .end((err, result) => {
-        test.value(result.body.result === 'not found')
-        done(err)
-      })
+    test.value(result.body.result === 'not found')
   })
 
-  it('tries to read non-UUID policy', done => {
-    console.log('bruh ----------------------------')
-    request
+  it('tries to read non-UUID policy', async () => {
+    const result = await request
       .get('/policies/notarealpolicy')
       .set('Authorization', AUTH)
       .expect(400)
-      .end((err, result) => {
-        console.log('***---', typeof err, JSON.stringify(err), JSON.stringify(result))
-        test.value(result.body.result === 'not found')
-        done(err)
-      })
+    test.value(result.body.result === 'not found')
   })
 })
