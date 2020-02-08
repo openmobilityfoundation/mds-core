@@ -164,6 +164,21 @@ function api(app: express.Express): express.Express {
     }
   )
 
+  app.put(
+    pathsFor('/geographies/:geography_id/publish'),
+    checkAccess(scopes => scopes.includes('policies:write')),
+    async (req, res) => {
+      const { geography_id, publish_date = Date.now() } = req.params
+      const publish_date_param = Number(publish_date)
+      try {
+        await db.publishGeography({ publish_date: publish_date_param, geography_id })
+        return res.status(200).send({ geography_id })
+      } catch (updateErr) {
+        return res.status(500).send(new ServerError())
+      }
+    }
+  )
+
   return app
 }
 

@@ -23,10 +23,14 @@
 
 /* eslint-reason extends object.prototype */
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+import should from 'should'
+import sinon from 'sinon'
 import supertest from 'supertest'
 import test from 'unit.js'
 import db from '@mds-core/mds-db'
+import uuid from 'uuid'
 import { Geography } from '@mds-core/mds-types'
+import { NotFoundError } from '@mds-core/mds-utils'
 import { ApiServer } from '@mds-core/mds-api-server'
 import {
   POLICY_UUID,
@@ -48,9 +52,15 @@ const EMPTY_SCOPE = SCOPED_AUTH([], '')
 const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
 const POLICIES_WRITE_SCOPE = SCOPED_AUTH(['policies:write'])
 const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
+const POLICIES_DELETE_SCOPE = SCOPED_AUTH(['policies:delete'])
+const sandbox = sinon.createSandbox()
 
 describe('Tests app', () => {
   describe('Geography endpoint tests', () => {
+    afterEach(function() {
+      sandbox.restore()
+    })
+
     before(async () => {
       await db.initialize()
     })
@@ -196,6 +206,16 @@ describe('Tests app', () => {
     })
 
     it('verifies PUTing geography metadata to create', async () => {
+      sandbox.stub(db, 'readBulkGeographyMetadata').callsFake(function stubAThrow() {
+        throw new Error('err')
+      })
+      await request
+        .get(`/geographies/${GEOGRAPHY_UUID}/meta`)
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(404)
+    })
+
+    it('sends the correct error code if it cannot retrieve the metadata', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
       await request
         .put(`/geographies/${GEOGRAPHY_UUID}/meta`)
@@ -407,6 +427,42 @@ describe('Tests app', () => {
         .expect(200)
       test.assert(result.body.length === 2)
       test.value(result).hasHeader('content-type', APP_JSON)
+    })
+
+    it('can publish a geography (correct auth)', async () => {
+      const result = await request
+        .put(`/geographies/${GEOGRAPHY2_UUID}/publish`)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
+        .expect(200)
+      test.value(result).hasHeader('content-type', APP_JSON)
+      test.assert(result.body.geography_id === GEOGRAPHY2_UUID)
+    })
+
+    it('cannot publish a geography (wrong auth)', async () => {
+      sandbox.stub(db, 'publishGeography').callsFake(function stubAThrow() {
+        throw new Error('err')
+      })
+      await request
+        .put(`/geographies/${GEOGRAPHY2_UUID}/publish`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+    })
+
+    it('cannot delete a geography (incorrect auth)', async () => {
+      await request
+        .delete(`/geographies/${GEOGRAPHY2_UUID}`)
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(403)
+    })
+
+    it('can delete a geography (correct auth)', async () => {
+      const testUUID = uuid()
+      await db.writeGeography({ geography_id: testUUID, geography_json: LA_CITY_BOUNDARY, name: 'testafoo' })
+      await request
+        .delete(`/geographies/${testUUID}`)
+        .set('Authorization', POLICIES_DELETE_SCOPE)
+        .expect(200)
+      await db.readSingleGeography(testUUID).should.be.rejectedWith(NotFoundError)
     })
   })
 })
