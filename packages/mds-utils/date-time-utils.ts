@@ -151,12 +151,4 @@ const parseRelative = (
   throw new BadParamsError(`Both start_offset and end_offset cannot be relative to each other`)
 }
 
-export {
-  parseOperator,
-  parseCount,
-  parseUnit,
-  parseOffset,
-  parseAnchorPoint,
-  parseRelative,
-  parseIsRelative
-}
+export { parseOperator, parseCount, parseUnit, parseOffset, parseAnchorPoint, parseRelative, parseIsRelative }
