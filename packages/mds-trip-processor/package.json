@@ -34,8 +34,8 @@
     "@turf/boolean-point-in-polygon": "6.0.1",
     "@turf/helpers": "6.1.4",
     "cloudevents-sdk": "1.0.0",
-    "loglevel": "1.6.6",
-    "uuid": "3.3.3"
+    "loglevel": "1.6.7",
+    "uuid": "3.4.0"
   },
   "devDependencies": {}
 }

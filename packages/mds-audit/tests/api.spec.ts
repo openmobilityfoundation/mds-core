@@ -798,7 +798,7 @@ describe('Testing API', () => {
         .attach('file', `./tests/sample.png`)
         .expect(500)
         .end((err, result) => {
-          test.value(result.error.status).is(500)
+          test.value(result.body.error.name).is('ServerError')
           done(err)
         })
     })

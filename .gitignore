@@ -3,6 +3,10 @@ mds-*.zip
 dist
 helm/mds/files/mds-config
 
+# This project uses Yarn. Ignore npm lock files
+package-lock.json
+npm-shrinkwrap.json
+
 # Created by https://www.gitignore.io/api/osx,node,windows,serverless,sublimetext,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=osx,node,windows,serverless,sublimetext,visualstudiocode
 

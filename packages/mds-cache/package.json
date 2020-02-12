@@ -19,7 +19,7 @@
     "@mds-core/mds-utils": "0.1.26",
     "bluebird": "3.7.2",
     "flat": "5.0.0",
-    "redis": "2.8.0"
+    "redis": "3.0.2"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
