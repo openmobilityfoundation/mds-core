@@ -151,7 +151,7 @@ export async function insertMetrics(metric: MetricsTableRow) {
   return { ...metric, ...recorded_metric }
 }
 
-interface GetAllMetricsArgs {
+export interface GetAllMetricsArgs {
   start_time: Timestamp
   end_time: Timestamp
   provider_ids: UUID[]

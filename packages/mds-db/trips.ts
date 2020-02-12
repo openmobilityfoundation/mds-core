@@ -8,12 +8,12 @@ import { logSql, SqlVals } from './sql-utils'
 
 import { getReadOnlyClient, makeReadOnlyQuery } from './client'
 
-interface ReadTripIdsResult {
+export interface ReadTripIdsResult {
   count: number
   tripIds: UUID[]
 }
 
-interface ReadTripIdsQueryParams {
+export interface ReadTripIdsQueryParams {
   skip: number
   take: number
   device_id: UUID
