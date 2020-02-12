@@ -64,3 +64,21 @@ spec:
   {{- end }}
     hosts:
     - {{ .Values.domain | quote }}
+---
+# see https://github.com/istio/istio/issues/13848
+# "Node.js has 5 sec default connection idleTimeout, and envoy has the same one.
+# In rare time it generate this error - envoy send reqest in the moment when nodejs closing it."
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: mds-resolve-timeout-race
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: {{ printf "*.%s.svc.cluster.local" .Release.Namespace | quote }}
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    connectionPool:
+      http:
+        idleTimeout: 3s
+        maxRetries: 3
