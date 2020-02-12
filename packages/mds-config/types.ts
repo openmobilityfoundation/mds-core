@@ -19,12 +19,22 @@ import { Params, ParamsDictionary } from 'express-serve-static-core'
 export type ConfigApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 export interface ConfigApiResponse extends ApiResponse {
   locals: ApiResponseLocals & {
-    properties: string | string[]
+    properties: string[]
   }
 }
 
-export type ConfigApiGetSettingsRequest = ConfigApiRequest<{ property: string }>
+interface ConfigApiGetSettingsQueryParameters {
+  partial: string
+}
+
+export interface ConfigApiGetSettingsRequest extends ConfigApiRequest<{ property: string }> {
+  query: Partial<ConfigApiGetSettingsQueryParameters>
+}
+
+interface ConfigApiGetMergedSettingsQueryParameters extends ConfigApiGetSettingsQueryParameters {
+  p: string | string[]
+}
 
 export interface ConfigApiGetMergedSettingsRequest extends ConfigApiRequest {
-  query: Partial<{ [P in 'p']: string | string[] }>
+  query: Partial<ConfigApiGetMergedSettingsQueryParameters>
 }

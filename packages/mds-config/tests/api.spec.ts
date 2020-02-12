@@ -29,9 +29,9 @@ describe('Testing API', () => {
     process.env.MDS_CONFIG_PATH = './'
   })
 
-  it(`Single Settings File (404)`, done => {
+  it(`Default Settings File (missing)`, done => {
     request
-      .get(`/config/settings/missing`)
+      .get(`/config/settings`)
       .expect(404)
       .end((err, result) => {
         test.value(result.body.name).is('NotFoundError')
@@ -39,7 +39,37 @@ describe('Testing API', () => {
       })
   })
 
-  it(`Single Settings File (200)`, done => {
+  it(`Default Settings File (partial)`, done => {
+    request
+      .get(`/config/settings?partial=true`)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result.body.settings).is(null)
+        done(err)
+      })
+  })
+
+  it(`Single Settings File (missing)`, done => {
+    request
+      .get(`/config/settings?p=missing`)
+      .expect(404)
+      .end((err, result) => {
+        test.value(result.body.name).is('NotFoundError')
+        done(err)
+      })
+  })
+
+  it(`Single Settings File (partial)`, done => {
+    request
+      .get(`/config/settings/missing?partial=true`)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result.body.missing).is(null)
+        done(err)
+      })
+  })
+
+  it(`Single Settings File`, done => {
     request
       .get(`/config/settings/package`)
       .expect(200)
@@ -49,7 +79,7 @@ describe('Testing API', () => {
       })
   })
 
-  it(`Multiple Settings File (404)`, done => {
+  it(`Multiple Settings File (missing)`, done => {
     request
       .get(`/config/settings?p=package&p=missing`)
       .expect(404)
@@ -59,7 +89,18 @@ describe('Testing API', () => {
       })
   })
 
-  it(`Multiple Settings Files (200)`, done => {
+  it(`Multiple Settings File (partial)`, done => {
+    request
+      .get(`/config/settings?p=package&p=missing&partial=true`)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result.body.name).is('@mds-core/mds-config')
+        test.value(result.body.missing).is(null)
+        done(err)
+      })
+  })
+
+  it(`Multiple Settings Files`, done => {
     request
       .get(`/config/settings?p=package&p=tsconfig.build`)
       .expect(200)

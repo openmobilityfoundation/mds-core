@@ -9,4 +9,4 @@ interface TripProcessorConfig {
 
 const manager = ConfigurationManager<TripProcessorConfig>(['compliance_sla'])
 
-export const getConfig = async () => manager.configuration()
+export const getConfig = async () => manager.settings()
