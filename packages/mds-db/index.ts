@@ -5,96 +5,29 @@ import { dropTables, updateSchema } from './migration'
 import { MDSPostgresClient } from './sql-utils'
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
-import {
-  readDevicesByVehicleId,
-  readDeviceIds,
-  readDevice,
-  readDeviceList,
-  writeDevice,
-  updateDevice,
-  wipeDevice,
-  getVehicleCountsPerProvider,
-  getNumVehiclesRegisteredLast24HoursByProvider
-} from './devices'
+import * as devices from './devices'
 
-import {
-  writeEvent,
-  readEvent,
-  readEvents,
-  readEventsForStatusChanges,
-  readHistoricalEvents,
-  getEventCountsPerProviderSince,
-  getEventsLast24HoursPerProvider,
-  getNumEventsLast24HoursByProvider,
-  getMostRecentEventByProvider,
-  readEventsWithTelemetry
-} from './events'
+import * as events from './events'
 
-import {
-  readPolicies,
-  writePolicy,
-  readPolicy,
-  findPoliciesByGeographyID,
-  editPolicy,
-  deletePolicy,
-  writePolicyMetadata,
-  updatePolicyMetadata,
-  readBulkPolicyMetadata,
-  readSinglePolicyMetadata,
-  publishPolicy,
-  readRule,
-  isPolicyPublished
-} from './policies'
+import * as policies from './policies'
 
-import {
-  writeGeographyMetadata,
-  updateGeographyMetadata,
-  readSingleGeographyMetadata,
-  readSingleGeography,
-  readBulkGeographyMetadata,
-  readGeographies,
-  readGeographySummaries,
-  writeGeography,
-  publishGeography,
-  deleteGeography,
-  isGeographyPublished,
-  editGeography
-} from './geographies'
+import * as geographies from './geographies'
 
-import { readAudit, readAudits, writeAudit, deleteAudit, readAuditEvents, writeAuditEvent } from './audits'
+import * as audit from './audits'
 
-import { readTripIds, getTripEventsLast24HoursByProvider, getTripCountsPerProviderSince } from './trips'
+import * as trips from './trips'
 
-import {
-  readTelemetry,
-  writeTelemetry,
-  getTelemetryCountsPerProviderSince,
-  getMostRecentTelemetryByProvider
-} from './telemetry'
+import * as telemetry from './telemetry'
 
-import { writeStop, readStop, readStops } from './stops'
-import {
-  deleteAttachment,
-  deleteAuditAttachment,
-  readAttachmentsForAudit,
-  readAuditAttachments,
-  writeAttachment,
-  writeAuditAttachment
-} from './attachments'
+import * as stops from './stops'
 
-import {
-  getVehicleType,
-  getStates,
-  getTrips,
-  getTripCount,
-  getVehicleTripCount,
-  getLateEventCount,
-  getLateTelemetryCount,
-  insertDeviceStates,
-  insertTrips,
-  insertMetrics,
-  getAllMetrics
-} from './processors'
+import * as attachments from './attachments'
+
+import * as processors from './processors'
+
+const { writeDevice } = devices
+const { writeTelemetry } = telemetry
+const { writeEvent } = events
 
 async function initialize() {
   const client: MDSPostgresClient = await getWriteableClient()
@@ -188,81 +121,14 @@ export = {
   seed,
   startup,
   shutdown,
-  readDevicesByVehicleId,
-  readDeviceIds,
-  readDevice,
-  readDeviceList,
-  writeDevice,
-  updateDevice,
-  readEvent,
-  readEvents,
-  readHistoricalEvents,
-  writeEvent,
-  readTelemetry,
-  writeTelemetry,
-  wipeDevice,
-  readAudit,
-  readAudits,
-  writeAudit,
-  deleteAudit,
-  readAuditEvents,
-  writeAuditEvent,
-  deleteAttachment,
-  deleteAuditAttachment,
-  readAttachmentsForAudit,
-  readAuditAttachments,
-  writeAttachment,
-  writeAuditAttachment,
-  getVehicleType,
-  getStates,
-  getTrips,
-  getTripCount,
-  getVehicleTripCount,
-  getLateEventCount,
-  getLateTelemetryCount,
-  insertDeviceStates,
-  insertTrips,
-  insertMetrics,
-  readGeographies,
-  readGeographySummaries,
-  writeGeography,
-  publishGeography,
-  deleteGeography,
-  isGeographyPublished,
-  editGeography,
-  readPolicies,
-  findPoliciesByGeographyID,
-  writePolicy,
-  readPolicy,
-  editPolicy,
-  deletePolicy,
-  writeGeographyMetadata,
-  updateGeographyMetadata,
-  readSingleGeographyMetadata,
-  readSingleGeography,
-  readBulkGeographyMetadata,
-  writePolicyMetadata,
-  updatePolicyMetadata,
-  readBulkPolicyMetadata,
-  readSinglePolicyMetadata,
-  publishPolicy,
-  isPolicyPublished,
-  readRule,
-  getEventCountsPerProviderSince,
-  getTelemetryCountsPerProviderSince,
-  getTripCountsPerProviderSince,
-  getNumVehiclesRegisteredLast24HoursByProvider,
-  getMostRecentEventByProvider,
-  getVehicleCountsPerProvider,
-  getNumEventsLast24HoursByProvider,
-  getMostRecentTelemetryByProvider,
-  getTripEventsLast24HoursByProvider,
-  getEventsLast24HoursPerProvider,
-  readEventsWithTelemetry,
-  readTripIds,
-  readEventsForStatusChanges,
-  getAllMetrics,
-  writeStop,
-  readStop,
-  readStops
+  ...devices,
+  ...events,
+  ...policies,
+  ...geographies,
+  ...audit,
+  ...trips,
+  ...telemetry,
+  ...stops,
+  ...attachments,
+  ...processors
 }
