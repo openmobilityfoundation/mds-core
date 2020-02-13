@@ -5,13 +5,14 @@ kind: CronJob
 metadata:
   name: {{ $name }}-cron
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    sidecar.istio.io/inject: "false"
 spec:
   schedule: {{ $cronjob.schedule | quote }}
   jobTemplate:
     spec:
       template:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "false"
         spec:
           volumes:
           - name: mds-config-files
