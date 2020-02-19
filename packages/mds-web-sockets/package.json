@@ -17,6 +17,8 @@
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
+    "jsonwebtoken": "8.5.1",
+    "jwks-rsa": "1.6.1",
     "ws-heartbeat": "1.1.0"
   },
   "scripts": {
