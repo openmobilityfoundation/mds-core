@@ -3,16 +3,15 @@ import { seconds } from '@mds-core/mds-utils'
 import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
 import { Telemetry, VehicleEvent } from '@mds-core/mds-types'
-import { ApiServer } from '@mds-core/mds-api-server'
+import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { Clients } from './clients'
 import { ENTITY_TYPE } from './types'
 
-const {
-  env: { npm_package_name, PORT = 4009 }
-} = process
-
 export const WebSocketServer = () => {
-  const server = ApiServer(app => app).listen(PORT, () => log.info(`${npm_package_name} running on port ${PORT}`))
+  const server = HttpServer(
+    process.env.PORT ?? 4009,
+    ApiServer(app => app)
+  )
 
   log.info('Creating WS server')
   const wss = new WebSocket.Server({ server })

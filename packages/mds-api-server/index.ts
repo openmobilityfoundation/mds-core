@@ -106,6 +106,29 @@ export const HealthRequestHandler = async (req: ApiRequest, res: ApiResponse) =>
   })
 }
 
+export const HttpServer = (port: string | number, api: express.Express) => {
+  const {
+    npm_package_name,
+    npm_package_version,
+    npm_package_git_commit,
+    HTTP_KEEP_ALIVE_TIMEOUT = 15000,
+    HTTP_HEADERS_TIMEOUT = 20000
+  } = process.env
+
+  const server = api.listen(Number(port), () => {
+    logger.info(
+      `${npm_package_name} v${npm_package_version} (${npm_package_git_commit ??
+        'local'}) running on port ${port}; Timeouts(${HTTP_KEEP_ALIVE_TIMEOUT}/${HTTP_HEADERS_TIMEOUT})`
+    )
+  })
+
+  // Increase default timeout values to mitigate spurious 503 errors from Istio
+  server.keepAliveTimeout = Number(HTTP_KEEP_ALIVE_TIMEOUT)
+  server.headersTimeout = Number(HTTP_HEADERS_TIMEOUT)
+
+  return server
+}
+
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
   { handleCors, authorizer }: Partial<CorsMiddlewareOptions & AuthorizerMiddlewareOptions> = {},

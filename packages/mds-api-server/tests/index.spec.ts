@@ -18,9 +18,11 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { ApiServer } from '../index'
+import { ApiServer, HttpServer } from '../index'
 
-const request = supertest(ApiServer(app => app))
+const api = ApiServer(app => app)
+
+const request = supertest(api)
 
 const APP_JSON = 'application/json; charset=utf-8'
 
@@ -117,5 +119,18 @@ describe('Testing API Server', () => {
       .end(err => {
         done(err)
       })
+  })
+
+  it('verifies keepAliveTimeout setting', done => {
+    let error
+    process.env.HTTP_KEEP_ALIVE_TIMEOUT = '3000'
+    const server = HttpServer(4000, api)
+    try {
+      test.value(server.keepAliveTimeout).is(Number(process.env.HTTP_KEEP_ALIVE_TIMEOUT))
+    } catch (err) {
+      error = err
+    }
+    server.close()
+    done(error)
   })
 })

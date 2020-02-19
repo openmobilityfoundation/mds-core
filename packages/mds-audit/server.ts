@@ -14,14 +14,7 @@
     limitations under the License.
  */
 
-// Express local
-import { ApiServer } from '@mds-core/mds-api-server'
+import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from './api'
 
-const {
-  env: { npm_package_name, PORT = 4002 }
-} = process
-
-/* eslint-reason avoids import of logger */
-/* eslint-disable-next-line no-console */
-ApiServer(api, { handleCors: true }).listen(PORT, () => console.log(`${npm_package_name} running on port ${PORT}`))
+HttpServer(process.env.PORT ?? 4002, ApiServer(api))
