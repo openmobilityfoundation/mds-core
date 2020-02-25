@@ -1,10 +1,29 @@
 # Overview
 
-Repo for LADOT MDS implementation for contribution to the Open Mobility Foundation.  It represents what is currently up and running for Los Angeles production MDS as well as new features under development.  Includes the following:
+Repo for LADOT MDS implementation for contribution to the Open Mobility Foundation.  It represents what is currently up and running for Los Angeles production MDS as well as new features under development.
 
-* A current LADOT implementation of all MDS endpoints
-* Development versions of mds-audit, mds-policy, and mds-compliance
-* MDS logging (mds-logger), daily metrics (mds-daily) and Google sheet reporting app for technical compliance.
+## Contents
+
+### Stable Content
+#### APIs
+1. MDS-Agency 0.4.0 Implementation
+2. MDS-Policy 0.4.0 Implementation
+
+### Experimental Content
+#### APIs
+1. MDS-Agency `/stops` [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/430)
+2. MDS-Audit [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/326)
+3. MDS-Compliance [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/333)
+4. MDS-Config
+5. MDS-Daily
+6. MDS-Metrics
+7. MDS-Metrics-Sheet
+8. MDS-Policy-Author
+9. MDS-Web-Sockets
+#### Backend Services
+1. MDS-Event-Processor
+2. MDS-Provider-Processor
+3. MDS-Trip-Processor
 
 ## Installation
 
