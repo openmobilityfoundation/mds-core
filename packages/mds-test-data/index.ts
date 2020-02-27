@@ -49,7 +49,7 @@ import {
 
 import { serviceAreaMap } from 'ladot-service-areas'
 
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 
 import log from '@mds-core/mds-logger'
 

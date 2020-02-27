@@ -18,7 +18,7 @@
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
     "ladot-service-areas": "0.1.9",
-    "uuid": "3.4.0"
+    "uuid": "7.0.1"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",

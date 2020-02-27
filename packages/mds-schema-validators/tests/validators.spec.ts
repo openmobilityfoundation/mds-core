@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers' // map of uuids -> obj
 import {

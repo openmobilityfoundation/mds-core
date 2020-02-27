@@ -1,6 +1,6 @@
 import Sinon from 'sinon'
 import assert from 'assert'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
 import { AgencyApiRequest, AgencyApiResponse } from '../types'

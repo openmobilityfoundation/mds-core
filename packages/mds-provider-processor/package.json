@@ -34,7 +34,7 @@
     "@turf/helpers": "6.1.4",
     "cloudevents-sdk": "1.0.0",
     "loglevel": "1.6.7",
-    "uuid": "3.4.0"
+    "uuid": "7.0.1"
   },
   "devDependencies": {}
 }

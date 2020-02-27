@@ -15,7 +15,7 @@
  */
 
 import express from 'express'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import db from '@mds-core/mds-db'
 import {
   pathsFor,

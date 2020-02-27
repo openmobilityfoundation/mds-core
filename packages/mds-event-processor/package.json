@@ -36,7 +36,7 @@
     "@turf/turf": "5.1.6",
     "loglevel": "1.6.7",
     "node-nats-streaming": "0.2.6",
-    "uuid": "3.4.0"
+    "uuid": "7.0.1"
   },
   "devDependencies": {}
 }

@@ -19,7 +19,7 @@ import log from '@mds-core/mds-logger'
 import aws from 'aws-sdk'
 import path from 'path'
 import sharp from 'sharp'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { Attachment, AttachmentSummary, AuditAttachment, Recorded, UUID } from '@mds-core/mds-types'
 import { UnsupportedTypeError, ValidationError } from '@mds-core/mds-utils'
 

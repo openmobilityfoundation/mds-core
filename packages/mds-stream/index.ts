@@ -20,7 +20,7 @@ import bluebird from 'bluebird'
 import stan from 'node-nats-streaming'
 import { BinaryHTTPEmitter, event as cloudevent } from 'cloudevents-sdk/v1'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import {
   Stream,
   StreamItem,

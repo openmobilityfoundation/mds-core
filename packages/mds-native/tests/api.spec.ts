@@ -11,7 +11,7 @@ import db from '@mds-core/mds-db'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { providers, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 

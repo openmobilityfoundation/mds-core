@@ -2,7 +2,7 @@ import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
 import { now } from '@mds-core/mds-utils'
 import { VEHICLE_EVENTS, VEHICLE_EVENT, VEHICLE_TYPES } from '@mds-core/mds-types'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import assert from 'assert'
 import metric from '../src/metrics'
 

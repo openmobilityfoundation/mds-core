@@ -1,5 +1,5 @@
 import assert from 'assert'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import Sinon from 'sinon'
 import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent, getProviderMetrics } from '../metrics-log'
 import { VehicleCountRow, LastDayStatsResponse } from '../types'

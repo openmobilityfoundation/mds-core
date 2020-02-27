@@ -27,7 +27,7 @@ import {
 } from '@mds-core/mds-types'
 import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import { la_city_boundary } from './la-city-boundary'
