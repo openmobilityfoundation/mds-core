@@ -124,7 +124,10 @@ function api(app: express.Express): express.Express {
               last_id: events.length === 0 ? cursor.last_id : events[events.length - 1].id
             })
           ).toString('base64'),
-          events: events.map(({ id, service_area_id, ...event }) => event)
+          events: events.map(({ id, service_area_id, event_type_reason, ...event }) => ({
+            ...event,
+            event_type_reason: event_type_reason || null
+          }))
         })
       } catch (err) {
         if (err instanceof ValidationError) {
