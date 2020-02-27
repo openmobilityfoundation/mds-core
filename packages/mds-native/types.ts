@@ -14,21 +14,22 @@
     limitations under the License.
  */
 
-import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
+import { ApiRequest, ApiVersionedResponse, ApiVersionedResponseLocals } from '@mds-core/mds-api-server'
 import { UUID, VehicleEvent, Recorded, Device, Provider } from '@mds-core/mds-types'
 import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 // Place newer versions at the beginning of the list
-const NATIVE_API_VERSIONS = ['0.1.0'] as const
-type NATIVE_API_VERSION = typeof NATIVE_API_VERSIONS[number]
-export const [NativeApiCurrentVersion] = NATIVE_API_VERSIONS
+export const NATIVE_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
+export type NATIVE_API_SUPPORTED_VERSION = typeof NATIVE_API_SUPPORTED_VERSIONS[number]
+export const [NATIVE_API_DEFAULT_VERSION] = NATIVE_API_SUPPORTED_VERSIONS
 
 // Allow adding type definitions for Express Request objects
 export type NativeApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 
 // Allow adding type definitions for Express Response objects
-export interface NativeApiResponse<T extends NativeApiResponseBody> extends ApiResponse<T> {
-  locals: ApiResponseLocals & {
+export interface NativeApiResponse<TBody extends NativeApiResponseBody>
+  extends ApiVersionedResponse<NATIVE_API_SUPPORTED_VERSION, TBody> {
+  locals: ApiVersionedResponseLocals<NATIVE_API_SUPPORTED_VERSION> & {
     provider_id: UUID
   }
 }
@@ -43,7 +44,7 @@ export interface NativeApiGetEventsRequest extends NativeApiRequest<{ cursor: st
 }
 
 interface NativeApiResponseBody {
-  version: NATIVE_API_VERSION
+  version: NATIVE_API_SUPPORTED_VERSION
 }
 
 interface NativeApiGetEventsReponseBody extends NativeApiResponseBody {

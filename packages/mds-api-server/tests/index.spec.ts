@@ -18,9 +18,20 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { ApiServer, HttpServer } from '../index'
+import { ApiServer, HttpServer, ApiVersionMiddleware, ApiVersionedResponse } from '../index'
 
-const api = ApiServer(app => app)
+const TEST_API_MIME_TYPE = 'application/vnd.mds.test+json'
+const TEST_API_VERSIONS = ['0.1.0', '0.2.0'] as const
+type TEST_API_VERSION = typeof TEST_API_VERSIONS[number]
+const [DEFAULT_TEST_API_VERSION, ALTERNATE_TEST_API_VERSION] = TEST_API_VERSIONS
+
+const api = ApiServer(app => {
+  app.use(ApiVersionMiddleware(TEST_API_MIME_TYPE, TEST_API_VERSIONS).withDefaultVersion(DEFAULT_TEST_API_VERSION))
+  app.get('/api-version-middleware-test', (req, res: ApiVersionedResponse<TEST_API_VERSION>) =>
+    res.status(200).send({ version: res.locals.version })
+  )
+  return app
+})
 
 const request = supertest(api)
 
@@ -132,5 +143,51 @@ describe('Testing API Server', () => {
     }
     server.close()
     done(error)
+  })
+
+  it('verifies version middleware (default version)', done => {
+    request
+      .get('/api-version-middleware-test')
+      .expect(200)
+      .end((err, result) => {
+        test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE}; charset=utf-8; version=0.1`)
+        test.value(result.body.version).is(DEFAULT_TEST_API_VERSION)
+        done(err)
+      })
+  })
+
+  it('verifies version middleware (with versions)', done => {
+    request
+      .get('/api-version-middleware-test')
+      .set('accept', `${TEST_API_MIME_TYPE};version=0.2`)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE}; charset=utf-8; version=0.2`)
+        test.value(result.body.version).is(ALTERNATE_TEST_API_VERSION)
+        done(err)
+      })
+  })
+
+  it('verifies version middleware (versions with q)', done => {
+    request
+      .get('/api-version-middleware-test')
+      .set('accept', `${TEST_API_MIME_TYPE};version=0.2;q=.9,${TEST_API_MIME_TYPE};version=0.1;`)
+      .expect(200)
+      .end((err, result) => {
+        test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE}; charset=utf-8; version=0.1`)
+        test.value(result.body.version).is(DEFAULT_TEST_API_VERSION)
+        done(err)
+      })
+  })
+
+  it('verifies version middleware (version not acceptable)', done => {
+    request
+      .get('/api-version-middleware-test')
+      .set('accept', `${TEST_API_MIME_TYPE};version=0.4;q=.9,${TEST_API_MIME_TYPE};version=0.5;`)
+      .expect(406)
+      .end((err, result) => {
+        test.value(result.text).is('Not Acceptable')
+        done(err)
+      })
   })
 })

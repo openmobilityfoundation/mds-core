@@ -29,7 +29,7 @@ import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers'
-import { ApiResponse, ApiRequest, checkAccess } from '@mds-core/mds-api-server'
+import { ApiResponse, ApiRequest, checkAccess, ApiVersionMiddleware } from '@mds-core/mds-api-server'
 
 import {
   NativeApiGetEventsRequest,
@@ -38,7 +38,8 @@ import {
   NativeApiGetVehiclesResponse,
   NativeApiGetProvidersRequest,
   NativeApiGetProvidersResponse,
-  NativeApiCurrentVersion
+  NATIVE_API_DEFAULT_VERSION,
+  NATIVE_API_SUPPORTED_VERSIONS
 } from './types'
 
 /* istanbul ignore next */
@@ -50,6 +51,13 @@ const InternalServerError = async <T>(req: ApiRequest, res: ApiResponse<T>, err?
 
 function api(app: express.Express): express.Express {
   // ///////////////////// begin middleware ///////////////////////
+
+  app.use(
+    ApiVersionMiddleware('application/vnd.mds.native+json', NATIVE_API_SUPPORTED_VERSIONS).withDefaultVersion(
+      NATIVE_API_DEFAULT_VERSION
+    )
+  )
+
   app.use(async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
     if (!(req.path.includes('/health') || req.path === '/')) {
       if (!res.locals.claims) {
@@ -58,6 +66,7 @@ function api(app: express.Express): express.Express {
     }
     return next()
   })
+
   // ///////////////////// begin middleware ///////////////////////
 
   type NativeApiGetEventsCursor = Partial<{
@@ -108,7 +117,7 @@ function api(app: express.Express): express.Express {
         const { cursor, limit } = getRequestParameters(req)
         const events = await db.readEventsWithTelemetry({ ...cursor, limit })
         return res.status(200).send({
-          version: NativeApiCurrentVersion,
+          version: res.locals.version,
           cursor: Buffer.from(
             JSON.stringify({
               ...cursor,
@@ -136,7 +145,7 @@ function api(app: express.Express): express.Express {
       try {
         if (isValidDeviceId(device_id)) {
           const { id, ...vehicle } = await db.readDevice(device_id)
-          return res.status(200).send({ version: NativeApiCurrentVersion, vehicle })
+          return res.status(200).send({ version: res.locals.version, vehicle })
         }
       } catch (err) {
         if (err instanceof ValidationError) {
@@ -158,7 +167,7 @@ function api(app: express.Express): express.Express {
     checkAccess(scopes => scopes.includes('providers:read')),
     async (req: NativeApiGetProvidersRequest, res: NativeApiGetProvidersResponse) =>
       res.status(200).send({
-        version: NativeApiCurrentVersion,
+        version: res.locals.version,
         providers: Object.values(providers)
       })
   )

@@ -15,7 +15,7 @@ import uuid from 'uuid'
 import { PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_TYPES } from '@mds-core/mds-types'
 import { api } from '../api'
 
-const APP_JSON = 'application/json; charset=utf-8'
+const CONTENT_TYPE = 'application/vnd.mds.native+json; charset=utf-8; version=0.1'
 
 const provider_id = MOCHA_PROVIDER_ID
 const device_id = uuid()
@@ -75,7 +75,7 @@ describe('Verify API', () => {
       .get('/native/events')
       .expect(401)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -86,7 +86,7 @@ describe('Verify API', () => {
       .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -97,7 +97,7 @@ describe('Verify API', () => {
       .set('Authorization', EVENTS_READ_SCOPE)
       .expect(200)
       .end((err1, result1) => {
-        test.value(result1).hasHeader('content-type', APP_JSON)
+        test.value(result1).hasHeader('content-type', CONTENT_TYPE)
         test.object(result1.body).hasProperty('version')
         test.object(result1.body).hasProperty('events')
         test.value(result1.body.events.length).is(3)
@@ -112,7 +112,7 @@ describe('Verify API', () => {
             .set('Authorization', EVENTS_READ_SCOPE)
             .expect(200)
             .end((err2, result2) => {
-              test.value(result2).hasHeader('content-type', APP_JSON)
+              test.value(result2).hasHeader('content-type', CONTENT_TYPE)
               test.object(result2.body).hasProperty('version')
               test.object(result2.body).hasProperty('events')
               test.value(result2.body.events.length).is(0)
@@ -125,7 +125,7 @@ describe('Verify API', () => {
                   .set('Authorization', EVENTS_READ_SCOPE)
                   .expect(400)
                   .end(err3 => {
-                    test.value(result2).hasHeader('content-type', APP_JSON)
+                    test.value(result2).hasHeader('content-type', CONTENT_TYPE)
                     done(err3)
                   })
               }
@@ -140,7 +140,7 @@ describe('Verify API', () => {
       .set('Authorization', EVENTS_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -151,7 +151,7 @@ describe('Verify API', () => {
       .set('Authorization', EVENTS_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -161,7 +161,7 @@ describe('Verify API', () => {
       .get(`/native/vehicles/${device_id}`)
       .expect(401)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -172,7 +172,7 @@ describe('Verify API', () => {
       .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -183,7 +183,7 @@ describe('Verify API', () => {
       .set('Authorization', VEHICLES_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('vehicle')
         test.object(result.body.vehicle).hasProperty('device_id', device_id)
@@ -197,7 +197,7 @@ describe('Verify API', () => {
       .set('Authorization', VEHICLES_READ_SCOPE)
       .expect(404)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -208,7 +208,7 @@ describe('Verify API', () => {
       .set('Authorization', VEHICLES_READ_SCOPE)
       .expect(400)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -218,7 +218,7 @@ describe('Verify API', () => {
       .get(`/native/providers`)
       .expect(401)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -229,7 +229,7 @@ describe('Verify API', () => {
       .set('Authorization', EMPTY_SCOPE)
       .expect(403)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         done(err)
       })
   })
@@ -240,7 +240,7 @@ describe('Verify API', () => {
       .set('Authorization', PROVIDERS_READ_SCOPE)
       .expect(200)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.value(result).hasHeader('content-type', CONTENT_TYPE)
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('providers')
         test.value(result.body.providers.length).is(Object.keys(providers).length)
