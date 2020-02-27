@@ -123,7 +123,7 @@ declare module 'redis' {
 
   interface Multi {
     xadd: (...args: unknown[]) => string
-    execAsync: () => Promise<string[]>
+    execAsync: () => Promise<object[]>
   }
 }
 

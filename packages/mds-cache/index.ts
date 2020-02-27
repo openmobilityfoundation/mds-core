@@ -296,33 +296,21 @@ async function hreads(
   // bleah
   const multi = (await getClient()).multi()
 
-  suffixes.map(suffix =>
-    ids.map(async id => {
-      await multi.hgetallAsync(decorateKey(`${prefix}:${id}:${suffix}`))
-    })
+  await Promise.all(
+    suffixes.map(suffix =>
+      ids.map(id => {
+        return multi.hgetallAsync(decorateKey(`${prefix}:${id}:${suffix}`))
+      })
+    )
   )
 
-  /* eslint-reason external lib weirdness */
-  /* eslint-disable-next-line promise/avoid-new */
-  return new Promise((resolve, reject) => {
-    /* eslint-reason external lib weirdness */
-    /* eslint-disable-next-line promise/prefer-await-to-callbacks */
-    multi.exec(async (err, replies) => {
-      if (err) {
-        await log.error('hreads', err)
-        reject(err)
-      } else {
-        resolve(
-          replies.map((flat, index) => {
-            if (flat) {
-              const flattened = { ...flat, [`${prefix}_id`]: ids[index % ids.length] }
-              return unflatten(flattened)
-            }
-            return unflatten(null)
-          })
-        )
-      }
-    })
+  const replies = await multi.execAsync()
+  return replies.map((flat, index) => {
+    if (flat) {
+      const flattened = { ...flat, [`${prefix}_id`]: ids[index % ids.length] }
+      return unflatten(flattened)
+    }
+    return unflatten(null)
   })
 }
 
