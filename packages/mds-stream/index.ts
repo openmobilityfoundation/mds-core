@@ -54,6 +54,10 @@ const getNats = () => {
       userCreds: env.STAN_CREDS,
       reconnect: true
     })
+
+    nats.on('error', async message => {
+      await logger.error(message)
+    })
   }
 
   return nats
