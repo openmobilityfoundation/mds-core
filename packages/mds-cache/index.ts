@@ -86,6 +86,7 @@ declare module 'redis' {
   }
   interface Multi {
     hgetallAsync: (arg1: string) => Promise<{ [key: string]: string }>
+    execAsync: () => Promise<object[]>
   }
 }
 
