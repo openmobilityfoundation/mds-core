@@ -7,11 +7,10 @@ const gitRevisionPlugin = new GitRevisionPlugin({
 
 module.exports = ({ env, argv, dirname, bundles }) => {
   const { npm_package_name, npm_package_version } = env
-  const [, package] = npm_package_name.split('/')
   const dist = `${dirname}/dist`
   return bundles.map(bundle => ({
     entry: { [bundle]: `${dirname}/${bundle}.ts` },
-    output: { path: dist, filename: `${bundle}.js` },
+    output: { path: dist, filename: `${bundle}.js`, libraryTarget: 'commonjs' },
     module: {
       rules: [
         {
@@ -22,23 +21,37 @@ module.exports = ({ env, argv, dirname, bundles }) => {
       ]
     },
     plugins: [
-      // Ignore optional Postgres dependency
-      new webpack.IgnorePlugin(/^pg-native$/),
-      // Ignore optional Redis dependency
-      new webpack.IgnorePlugin(/^hiredis$/),
-      // Ignore optional bufferutil/utf-8-validate dependencies
-      // https://github.com/adieuadieu/serverless-chrome/issues/103#issuecomment-358261003
-      new webpack.IgnorePlugin(/^bufferutil$/),
-      new webpack.IgnorePlugin(/^utf-8-validate$/),
       // Ignore Critical Dependency Warnings
       // https://medium.com/tomincode/hiding-critical-dependency-warnings-from-webpack-c76ccdb1f6c1
-      new webpack.ContextReplacementPlugin(
-        /node_modules\/express\/lib|node_modules\/optional|node_modules\/google-spreadsheet/,
-        data => {
-          delete data.dependencies[0].critical
-          return data
-        }
+      ...['app-root-path', 'express', 'google-spreadsheet', 'optional', 'typeorm'].map(
+        module =>
+          new webpack.ContextReplacementPlugin(new RegExp(`node_modules/${module}`), data => {
+            data.dependencies = data.dependencies.map(dependency => {
+              delete dependency.critical
+              return dependency
+            })
+          })
       ),
+      // Ignore Optional Dependencies,
+      ...[
+        'pg-native', // Postgres
+        'hiredis', // Redis
+        ...['bufferutil', 'utf-8-validate'], // https://github.com/adieuadieu/serverless-chrome/issues/103#issuecomment-358261003
+        ...[
+          '@sap/hdbext',
+          'ioredis',
+          'mongodb',
+          'mssql',
+          'mysql',
+          'mysql2',
+          'oracledb',
+          'pg-query-stream',
+          'react-native-sqlite-storage',
+          'sql.js',
+          'sqlite3',
+          'typeorm-aurora-data-api-driver'
+        ] // TypeORM
+      ].map(dependency => new webpack.IgnorePlugin(new RegExp(`^${dependency}$`))),
       // Make npm package name/version available to bundle
       new webpack.DefinePlugin({
         NPM_PACKAGE_NAME: JSON.stringify(npm_package_name),
@@ -50,9 +63,6 @@ module.exports = ({ env, argv, dirname, bundles }) => {
     ],
     resolve: {
       extensions: ['.ts', '.js']
-    },
-    output: {
-      libraryTarget: 'commonjs'
     },
     externals: {
       sharp: 'commonjs sharp'

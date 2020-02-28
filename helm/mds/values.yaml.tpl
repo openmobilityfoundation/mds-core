@@ -24,6 +24,11 @@ apis:
     pathPrefix: /daily
     version: ${DAILY_VERSION}
     migration: false
+  mds-jurisdiction:
+    enabled: true
+    pathPrefix: /jurisdiction
+    version: ${JURISDICTION_VERSION}
+    migration: false
   mds-metrics:
     enabled: true
     pathPrefix: /metrics

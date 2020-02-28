@@ -33,7 +33,7 @@
     "@mds-core/mds-utils": "0.1.26",
     "@types/multer": "1.4.2",
     "@types/sharp": "0.24.0",
-    "aws-sdk": "2.627.0",
+    "aws-sdk": "2.628.0",
     "express": "4.17.1",
     "multer": "1.4.2",
     "sharp": "0.24.1",

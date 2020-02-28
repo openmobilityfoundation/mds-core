@@ -29,7 +29,8 @@ import {
   UUID,
   Timestamp,
   Telemetry,
-  Stop
+  Stop,
+  Jurisdiction
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
@@ -247,13 +248,21 @@ const stopSchema = Joi.object().keys({
   reservation_cost: vehicleTypesCountMapSchema.optional()
 })
 
+const jurisdictionSchema = Joi.object().keys({
+  jurisdiction_id: uuidSchema,
+  agency_key: stringSchema,
+  agency_name: stringSchema,
+  geography_id: uuidSchema,
+  timestamp: timestampSchema
+})
+
 const Format = (property: string, error: Joi.ValidationError): string => {
   const [{ message, path }] = error.details
   const [, ...details] = message.split(' ')
   return `${[property, ...path].join('.')} ${details.join(' ')}`
 }
 
-const Validate = (value: unknown, schema: Joi.Schema, options: Partial<ValidatorOptions>): boolean => {
+const Validate = <T = unknown>(value: unknown, schema: Joi.Schema, options: Partial<ValidatorOptions>): value is T => {
   const { assert = true, required = true, property = 'value' } = options
   const { error } = Joi.validate(value, schema, { presence: required ? 'required' : 'optional' })
   if (error && assert) {
@@ -348,6 +357,13 @@ export const isStringifiedEventWithTelemetry = (event: unknown): event is String
 
 export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
   HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
+
+export const isValidJurisdiction = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Jurisdiction =>
+  Validate(value, jurisdictionSchema, { property: 'jurisdiction', ...options })
+
+export const validateJurisdiction = (value: unknown, options: Partial<ValidatorOptions> = {}): void => {
+  isValidJurisdiction(value, options)
+}
 
 export function validatePolicies(policies: unknown): policies is Policy[] {
   const { error } = Joi.validate(policies, policiesSchema)

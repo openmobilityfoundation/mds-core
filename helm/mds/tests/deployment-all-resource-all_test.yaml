@@ -20,6 +20,11 @@ tests:
           resourcesLimitsMemory: 258Mi
           resourcesRequestsCpu: 7m
           resourcesRequestsMemory: 15Mi
+        mds-jurisdiction:
+          resourcesLimitsCpu: 254m
+          resourcesLimitsMemory: 260Mi
+          resourcesRequestsCpu: 9m
+          resourcesRequestsMemory: 17Mi
         mds-daily:
           resourcesLimitsCpu: 253m
           resourcesLimitsMemory: 259Mi

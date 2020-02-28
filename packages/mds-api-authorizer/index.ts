@@ -7,11 +7,13 @@ export interface AuthorizerClaims {
   scope: string
   provider_id: UUID | null
   user_email: string | null
+  jurisdictions: string | null
 }
 
 const {
   TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id',
-  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email'
+  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email',
+  TOKEN_JURISDICTIONS_CLAIM = 'https://ladot.io/jurisdictions'
 } = process.env
 
 export type Authorizer = (authorization: string) => AuthorizerClaims | null
@@ -24,15 +26,23 @@ const decoders: { [scheme: string]: (token: string) => AuthorizerClaims } = {
       scope,
       [TOKEN_PROVIDER_ID_CLAIM]: provider_id = null,
       [TOKEN_USER_EMAIL_CLAIM]: user_email = null,
+      [TOKEN_JURISDICTIONS_CLAIM]: jurisdictions = null,
       ...claims
     } = decode(token)
-    return { principalId, scope, provider_id, user_email, ...claims }
+    return {
+      principalId,
+      scope,
+      provider_id,
+      user_email,
+      jurisdictions,
+      ...claims
+    }
   },
   basic: (token: string) => {
     const [principalId, scope] = Buffer.from(token, 'base64')
       .toString()
       .split('|')
-    return { principalId, scope, provider_id: principalId, user_email: null }
+    return { principalId, scope, provider_id: principalId, user_email: principalId, jurisdictions: principalId }
   }
 }
 

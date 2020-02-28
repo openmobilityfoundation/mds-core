@@ -137,6 +137,7 @@ declare -A apps=(
   ["mds-audit"]="https://localhost:[port]/audit,mds,app"
   ["mds-compliance"]="https://localhost:[port]/compliance,mds,app"
   ["mds-daily"]="https://localhost:[port]/daily,mds,app"
+  ["mds-jurisdiction"]="https://localhost:[port]/jurisdiction,mds,app"
   ["mds-native"]="https://localhost:[port]/native,mds,app"
   ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"

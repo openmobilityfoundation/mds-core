@@ -55,6 +55,22 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Server: mds-compliance",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-compliance",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-compliance",
+        "PATH_PREFIX": "/compliance"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Server: mds-daily",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
       "args": ["server.ts"],
@@ -71,17 +87,17 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Server: mds-compliance",
+      "name": "Server: mds-jursidiction",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-compliance",
+      "cwd": "${workspaceFolder}/packages/mds-jurisdiction",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-compliance",
-        "PATH_PREFIX": "/compliance"
+        "npm_package_name": "@mds-core/mds-jurisdiction",
+        "PATH_PREFIX": "/jurisdiction"
       }
     },
     {
@@ -295,6 +311,20 @@
         "npm_package_name": "mds-event-server",
         "npm_package_version": "0.0.0",
         "DOTENV_CONFIG_PATH": "../../.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-jurisdiction-service",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-jurisdiction-service",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {

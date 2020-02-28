@@ -630,3 +630,11 @@ export interface Stop {
   wheelchair_boarding?: boolean
   reservation_cost?: Partial<{ [S in VEHICLE_TYPE]: number }> // Cost to reserve a spot per vehicle_type
 }
+
+export interface Jurisdiction {
+  jurisdiction_id: UUID
+  agency_key: string
+  agency_name: string
+  geography_id: UUID
+  timestamp: Timestamp
+}
