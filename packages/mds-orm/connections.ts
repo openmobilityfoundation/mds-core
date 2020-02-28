@@ -14,7 +14,16 @@ export type ConnectionName = typeof ConnectionNames[number]
 // Use parseInt for bigint columns so the values get returned as numbers instead of strings
 PostgresTypes.setTypeParser(20, Number)
 
-const { PG_HOST, PG_HOST_READER, PG_PORT, PG_USER, PG_PASS, PG_NAME, PG_DEBUG = 'false' } = process.env
+const {
+  PG_HOST,
+  PG_HOST_READER,
+  PG_PORT,
+  PG_USER,
+  PG_PASS,
+  PG_NAME,
+  PG_DEBUG = 'false',
+  PG_MIGRATIONS = 'true' // Enable migrations by default
+} = process.env
 
 export const Connections = (options: Partial<PostgresConnectionOptions> = {}): ConnectionOptions[] =>
   ConnectionNames.map(name => ({
@@ -29,9 +38,8 @@ export const Connections = (options: Partial<PostgresConnectionOptions> = {}): C
     maxQueryExecutionTime: 3000,
     logger: 'simple-console',
     synchronize: false,
-    migrationsRun: true,
+    migrationsRun: PG_MIGRATIONS === 'true' && name === 'rw',
     migrationsTableName: 'migration_history',
-
     namingStrategy: new MdsNamingStrategy(),
     cli: {
       entitiesDir: './entities',
