@@ -84,19 +84,23 @@ const createJurisdictions = async (
 ): Promise<JurisdictionServiceResult<Jurisdiction[], ValidationError | ConflictError>> => {
   try {
     const connection = await manager.getReadWriteConnection()
-    const { raw: entities }: InsertReturning<JurisdictionEntity> = await connection
-      .getRepository(JurisdictionEntity)
-      .createQueryBuilder()
-      .insert()
-      .values(jurisdictions.map(AsJurisdictionEntity))
-      .returning('*')
-      .execute()
-    return Success(
-      entities.map(AsJurisdiction()).filter((jurisdiction): jurisdiction is Jurisdiction => jurisdiction !== null)
-    )
+    try {
+      const { raw: entities }: InsertReturning<JurisdictionEntity> = await connection
+        .getRepository(JurisdictionEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(jurisdictions.map(AsJurisdictionEntity))
+        .returning('*')
+        .execute()
+      return Success(
+        entities.map(AsJurisdiction()).filter((jurisdiction): jurisdiction is Jurisdiction => jurisdiction !== null)
+      )
+    } catch (error) {
+      await logger.error(error.message)
+      return Failure(error instanceof ValidationError ? error : new ConflictError(error))
+    }
   } catch (error) {
-    await logger.error(error.message)
-    return Failure(error instanceof ValidationError ? error : new ConflictError(error))
+    return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
 
@@ -112,17 +116,21 @@ const getAllJurisdictions = async ({
 }: Partial<GetJurisdictionOptions> = {}): Promise<JurisdictionServiceResult<Jurisdiction[], ServerError>> => {
   try {
     const connection = await manager.getReadOnlyConnection()
-    const entities = await connection
-      .getRepository(JurisdictionEntity)
-      .createQueryBuilder()
-      .getMany()
-    const jurisdictions = entities
-      .map(AsJurisdiction(effective))
-      .filter((jurisdiction): jurisdiction is Jurisdiction => jurisdiction !== null)
-    return Success(jurisdictions)
+    try {
+      const entities = await connection
+        .getRepository(JurisdictionEntity)
+        .createQueryBuilder()
+        .getMany()
+      const jurisdictions = entities
+        .map(AsJurisdiction(effective))
+        .filter((jurisdiction): jurisdiction is Jurisdiction => jurisdiction !== null)
+      return Success(jurisdictions)
+    } catch (error) {
+      await logger.error(error.message)
+      return Failure(error)
+    }
   } catch (error) {
-    await logger.error(error.message)
-    return Failure(error)
+    return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
 
@@ -132,18 +140,22 @@ const getOneJurisdiction = async (
 ): Promise<JurisdictionServiceResult<Jurisdiction, NotFoundError>> => {
   try {
     const connection = await manager.getReadOnlyConnection()
-    const entity = await connection
-      .getRepository(JurisdictionEntity)
-      .createQueryBuilder()
-      .where({ jurisdiction_id })
-      .getOne()
-    const [jurisdiction] = [entity].map(AsJurisdiction(effective))
-    return jurisdiction
-      ? Success(jurisdiction)
-      : Failure(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id, effective }))
+    try {
+      const entity = await connection
+        .getRepository(JurisdictionEntity)
+        .createQueryBuilder()
+        .where({ jurisdiction_id })
+        .getOne()
+      const [jurisdiction] = [entity].map(AsJurisdiction(effective))
+      return jurisdiction
+        ? Success(jurisdiction)
+        : Failure(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id, effective }))
+    } catch (error) {
+      await logger.error(error.message, error)
+      return Failure(error)
+    }
   } catch (error) {
-    await logger.error(error.message, error)
-    return Failure(error)
+    return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
 
