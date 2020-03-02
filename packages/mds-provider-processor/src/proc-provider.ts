@@ -41,7 +41,7 @@ async function processProvider(providerID: UUID, curTime: Timestamp) {
         provider_id: providerID,
         vehicle_type: vehicleType as VEHICLE_TYPE,
         event_counts: await metric.calcEventCounts(providerID, vehicleType as VEHICLE_TYPE, binStart, curTime),
-        vehicle_counts: await metric.calcVehicleCounts(providerID, vehicleType as VEHICLE_TYPE, binStart, curTime),
+        vehicle_counts: await metric.calcVehicleCounts(providerID, vehicleType as VEHICLE_TYPE),
         trip_count: await metric.calcTripCount(providerID, vehicleType as VEHICLE_TYPE, binStart, curTime),
         vehicle_trips_count: await metric.calcVehicleTripCount(
           providerID,

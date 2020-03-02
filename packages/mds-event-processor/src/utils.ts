@@ -38,7 +38,7 @@ export async function getTripId(deviceState: StateEntry): Promise<string | null>
     const match = sortedStartEvents.find(tripStartData => {
       return timestamp >= tripStartData.tripStart.timestamp
     })
-    return match?.tripId || null
+    return match?.tripId ?? null
   } catch (err) {
     await log.error(err)
     return null
