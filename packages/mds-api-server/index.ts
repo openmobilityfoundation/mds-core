@@ -24,7 +24,8 @@ export interface ApiVersionedResponseLocals<TVersion extends string> extends Api
   version: TVersion
 }
 
-export interface ApiVersionedResponse<TVersion extends string, TBody = unknown> extends ApiResponse<TBody> {
+export interface ApiVersionedResponse<TVersion extends string, TBody = unknown>
+  extends ApiResponse<TBody & { version: TVersion }> {
   locals: ApiVersionedResponseLocals<TVersion>
 }
 
