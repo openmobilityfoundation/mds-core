@@ -44,7 +44,7 @@ describe('Tests MDS-Web-Sockets', () => {
       }
 
       client.on('message', data => {
-        if (data === 'Authentication success!') {
+        if (data === 'AUTH%{"status":"Success"}') {
           client.close()
           return done()
         }

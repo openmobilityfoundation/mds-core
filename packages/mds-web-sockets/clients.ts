@@ -40,7 +40,6 @@ export class Clients {
 
   public saveClient(entities: string[], client: WebSocket) {
     if (!this.authenticatedClients.includes(client)) {
-      client.send('Not authenticated!')
       return
     }
 
@@ -73,9 +72,9 @@ export class Clients {
 
       if (scopes.includes('admin:all')) {
         this.authenticatedClients.push(client)
-        client.send('Authentication success!')
+        client.send(`AUTH%${JSON.stringify({ status: 'Success' })}`)
       } else {
-        client.send(JSON.stringify({ err: new AuthorizationError() }))
+        client.send(`AUTH%${JSON.stringify({ status: 'Failure' })}`)
       }
     } catch (err) {
       await log.warn(err)
