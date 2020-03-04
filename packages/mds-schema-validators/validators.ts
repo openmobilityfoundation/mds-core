@@ -269,13 +269,14 @@ const stopSchema = Joi.object().keys({
   reservation_cost: vehicleTypesCountMapSchema.optional()
 })
 
-const jurisdictionSchema = Joi.object().keys({
-  jurisdiction_id: uuidSchema,
-  agency_key: stringSchema,
-  agency_name: stringSchema,
-  geography_id: uuidSchema,
-  timestamp: timestampSchema
-})
+const jurisdictionSchema = (max: Timestamp = Date.now()) =>
+  Joi.object().keys({
+    jurisdiction_id: uuidSchema,
+    agency_key: stringSchema,
+    agency_name: stringSchema,
+    geography_id: uuidSchema,
+    timestamp: timestampSchema.max(max)
+  })
 
 const deviceSchema = Joi.object().keys({
   device_id: uuidSchema.required(),
@@ -401,7 +402,7 @@ export const isStringifiedCacheReadDeviceResult = (device: unknown): device is S
   HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
 
 export const isValidJurisdiction = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Jurisdiction =>
-  Validate(value, jurisdictionSchema, { property: 'jurisdiction', ...options })
+  Validate(value, jurisdictionSchema(), { property: 'jurisdiction', ...options })
 
 export const validateJurisdiction = (value: unknown, options: Partial<ValidatorOptions> = {}): void => {
   isValidJurisdiction(value, options)

@@ -1,4 +1,4 @@
-import { InsertResult } from 'typeorm'
+import { InsertResult, UpdateResult } from 'typeorm'
 
 export type Nullable<T> = T | null
 
@@ -15,5 +15,9 @@ export type JsonValue = string | number | boolean | JsonArray | JsonObject
 export type Json = Nullable<JsonValue>
 
 export interface InsertReturning<T> extends InsertResult {
+  raw: T[]
+}
+
+export interface UpdateReturning<T> extends UpdateResult {
   raw: T[]
 }

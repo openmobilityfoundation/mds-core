@@ -18,7 +18,13 @@ import express from 'express'
 import { pathsFor } from '@mds-core/mds-utils'
 import { checkAccess } from '@mds-core/mds-api-server'
 import { JurisdictionApiVersionMiddleware } from './middleware'
-import { GetAllJurisdictionsHandler, GetOneJurisdictionHandler, CreateJurisdictionHandler } from './handlers'
+import {
+  CreateJurisdictionHandler,
+  DeleteJurisdictionHandler,
+  GetAllJurisdictionsHandler,
+  GetOneJurisdictionHandler,
+  UpdateJurisdictionHandler
+} from './handlers'
 
 export const api = (app: express.Express): express.Express =>
   app
@@ -37,4 +43,14 @@ export const api = (app: express.Express): express.Express =>
       pathsFor('/jurisdictions'),
       checkAccess(scopes => scopes.includes('jurisdictions:write')),
       CreateJurisdictionHandler
+    )
+    .put(
+      pathsFor('/jurisdictions/:jurisdiction_id'),
+      checkAccess(scopes => scopes.includes('jurisdictions:write')),
+      UpdateJurisdictionHandler
+    )
+    .delete(
+      pathsFor('/jurisdictions/:jurisdiction_id'),
+      checkAccess(scopes => scopes.includes('jurisdictions:write')),
+      DeleteJurisdictionHandler
     )

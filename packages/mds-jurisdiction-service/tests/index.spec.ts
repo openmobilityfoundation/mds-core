@@ -106,25 +106,71 @@ describe('Write/Read Jurisdictions', () => {
     test.value(jurisdiction).is(null)
   })
 
+  it('Update One Jurisdiction (invalid jurisdiction_id)', async () => {
+    const [error, jurisdiction] = await JurisdictionService.updateJurisdiction(JURISDICTION_ID, {
+      jurisdiction_id: uuid(),
+      agency_name: 'Some New Name',
+      timestamp: TODAY
+    })
+    test
+      .value(error)
+      .isNot(null)
+      .isInstanceOf(ValidationError)
+    test.value(jurisdiction).is(null)
+  })
+
+  it('Update One Jurisdiction (invalid timestamp)', async () => {
+    const [error, jurisdiction] = await JurisdictionService.updateJurisdiction(JURISDICTION_ID, {
+      agency_name: 'Some New Name',
+      timestamp: LAST_WEEK
+    })
+    test
+      .value(error)
+      .isNot(null)
+      .isInstanceOf(ValidationError)
+    test.value(jurisdiction).is(null)
+  })
+
+  it('Update One Jurisdiction (not found)', async () => {
+    const [error, jurisdiction] = await JurisdictionService.updateJurisdiction(uuid(), {
+      agency_name: 'Some New Name',
+      timestamp: TODAY
+    })
+    test
+      .value(error)
+      .isNot(null)
+      .isInstanceOf(NotFoundError)
+    test.value(jurisdiction).is(null)
+  })
+
+  it('Update One Jurisdiction', async () => {
+    const [error, jurisdiction] = await JurisdictionService.updateJurisdiction(JURISDICTION_ID, {
+      agency_name: 'Some New Name',
+      timestamp: TODAY
+    })
+    test.value(jurisdiction).isNot(null)
+    test.value(jurisdiction?.jurisdiction_id).is(JURISDICTION_ID)
+    test.value(jurisdiction?.timestamp).is(TODAY)
+    test.value(error).is(null)
+  })
+
   it('Read Specific Jurisdiction (current version)', async () => {
     const [error, jurisdiction] = await JurisdictionService.getOneJurisdiction(JURISDICTION_ID)
+    test.value(jurisdiction).isNot(null)
+    test.value(jurisdiction?.jurisdiction_id).is(JURISDICTION_ID)
+    test.value(jurisdiction?.timestamp).is(TODAY)
+    test.value(error).is(null)
+  })
+
+  it('Read Specific Jurisdiction (prior version)', async () => {
+    const [error, jurisdiction] = await JurisdictionService.getOneJurisdiction(JURISDICTION_ID, {
+      effective: YESTERDAY
+    })
     test.value(jurisdiction).isNot(null)
     test.value(jurisdiction?.jurisdiction_id).is(JURISDICTION_ID)
     test.value(jurisdiction?.timestamp).is(YESTERDAY)
     test.value(error).is(null)
   })
-
-  // Requires updateJurisdiction
-  //
-  // it('Read Specific Jurisdiction (prior version)', async () => {
-  //   const [error, jurisdiction] = await JurisdictionService.getOneJurisdiction(JURISDICTION_ID, {
-  //     effective: YESTERDAY
-  //   })
-  //   test.value(jurisdiction).isNot(null)
-  //   test.value(jurisdiction?.jurisdiction_id).is(JURISDICTION_ID)
-  //   test.value(jurisdiction?.timestamp).is(YESTERDAY)
-  //   test.value(error).is(null)
-  // })
 
   it('Read Specific Jurisdiction (no version)', async () => {
     const [error, jurisdiction] = await JurisdictionService.getOneJurisdiction(JURISDICTION_ID, {
@@ -144,6 +190,22 @@ describe('Write/Read Jurisdictions', () => {
       .isNot(null)
       .isInstanceOf(NotFoundError)
     test.value(jurisdiction).is(null)
+  })
+
+  it('Delete One Jurisdiction', async () => {
+    const [error, result] = await JurisdictionService.deleteJurisdiction(JURISDICTION_ID)
+    test.value(result).isNot(null)
+    test.value(result?.jurisdiction_id).is(JURISDICTION_ID)
+    test.value(error).is(null)
+  })
+
+  it('Delete One Jurisdiction (not found)', async () => {
+    const [error, result] = await JurisdictionService.deleteJurisdiction(JURISDICTION_ID)
+    test
+      .value(error)
+      .isNot(null)
+      .isInstanceOf(NotFoundError)
+    test.value(result).is(null)
   })
 
   after(async () => {
