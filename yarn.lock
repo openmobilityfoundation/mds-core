@@ -11098,7 +11098,7 @@ sinon-test@^2.4.0:
   resolved "https://registry.yarnpkg.com/sinon-test/-/sinon-test-2.4.3.tgz#1353565ee2e8b5f6bb0d7d47f0b69c1fa470ffd7"
   integrity sha512-si0GRSeYtEFj67t/nyR5BKTWhFTerFJ7Xw88EIhUT5G99bpJ0HOxZiHuJ1DFqS6S7i0RqU23H9GaVxAVf/hxow==
 
-sinon@^7.5.0:
+sinon@7.5.0, sinon@^7.5.0:
   version "7.5.0"
   resolved "https://registry.yarnpkg.com/sinon/-/sinon-7.5.0.tgz#e9488ea466070ea908fd44a3d6478fd4923c67ec"
   integrity sha512-AoD0oJWerp0/rY9czP/D6hDTTUYGpObhZjMpd7Cl/A6+j0xBE+ayL/ldfggkBXUs0IkvIiM1ljM8+WkOc5k78Q==

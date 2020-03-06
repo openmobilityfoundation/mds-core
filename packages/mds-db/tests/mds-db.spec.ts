@@ -380,11 +380,14 @@ if (pg_info.database) {
         assert.deepEqual(result.geography_json, LAGeography.geography_json)
         assert.deepEqual(result.geography_id, LAGeography.geography_id)
 
-        const noGeos = await MDSDBPostgres.readGeographies({ get_read_only: true })
+        const noGeos = await MDSDBPostgres.readGeographies({ get_published: true })
         assert.deepEqual(noGeos.length, 0)
 
-        await MDSDBPostgres.publishGeography({ geography_id: LAGeography.geography_id, publish_date: now() })
-        const writeableGeographies = await MDSDBPostgres.readGeographies({ get_read_only: false })
+        await MDSDBPostgres.publishGeography({
+          geography_id: LAGeography.geography_id,
+          publish_date: now()
+        })
+        const writeableGeographies = await MDSDBPostgres.readGeographies({ get_published: false })
         assert.deepEqual(writeableGeographies.length, 1)
       })
 
@@ -394,6 +397,18 @@ if (pg_info.database) {
         assert.deepEqual(publishedResult, true)
         const unpublishedResult = await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id)
         assert.deepEqual(unpublishedResult, false)
+      })
+
+      it('.readGeographies understands all its parameters', async () => {
+        const publishedResult = await MDSDBPostgres.readGeographies({ get_published: true })
+        assert.deepEqual(publishedResult.length, 1)
+        assert.deepEqual(!!publishedResult[0].publish_date, true)
+        const unpublishedResult = await MDSDBPostgres.readGeographies({ get_unpublished: true })
+        assert.deepEqual(unpublishedResult.length, 1)
+        assert.deepEqual(!!unpublishedResult[0].publish_date, false)
+        const withIDsResult = await MDSDBPostgres.readGeographies({ geography_ids: [LAGeography.geography_id] })
+        assert.deepEqual(withIDsResult.length, 1)
+        assert.deepEqual(withIDsResult[0].geography_id, LAGeography.geography_id)
       })
 
       it('can edit a Geography', async () => {
@@ -461,6 +476,15 @@ if (pg_info.database) {
         const policies = await MDSDBPostgres.findPoliciesByGeographyID(LAGeography.geography_id)
         assert.deepEqual(policies[0].policy_id, POLICY3_JSON.policy_id)
       })
+
+      it('throws if both get_published and get_unpublished are true for bulk geo reads', async () => {
+        await assert.rejects(
+          async () => {
+            await MDSDBPostgres.readGeographies({ get_published: true, get_unpublished: true })
+          },
+          { name: 'BadParamsError' }
+        )
+      })
     })
 
     describe('Geography metadata', () => {
@@ -477,24 +501,44 @@ if (pg_info.database) {
           geography_id: GEOGRAPHY_UUID,
           geography_metadata: { foo: 'afoo' }
         }
-        try {
-          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
-          throw new Error('Should have thrown')
-        } catch (err) {
-          await MDSDBPostgres.writeGeography(LAGeography)
-          await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
-          const geographyMetadataResult = await MDSDBPostgres.readSingleGeographyMetadata(GEOGRAPHY_UUID)
-          assert.deepEqual(geographyMetadataResult, geographyMetadata)
-        }
+        await assert.rejects(
+          async () => {
+            await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
+          },
+          { name: 'DependencyMissingError' }
+        )
+        await MDSDBPostgres.writeGeography(LAGeography)
+        await MDSDBPostgres.writeGeographyMetadata(geographyMetadata)
+        const geographyMetadataResult = await MDSDBPostgres.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+        assert.deepEqual(geographyMetadataResult, geographyMetadata)
       })
 
       it('can do bulk GeographyMetadata reads', async () => {
         const all = await MDSDBPostgres.readBulkGeographyMetadata()
         assert.deepEqual(all.length, 1)
-        const readOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_read_only: true })
+        const readOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_published: true })
         assert.deepEqual(readOnlyResult.length, 0)
-        const notReadOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_read_only: false })
+        const notReadOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_published: false })
         assert.deepEqual(notReadOnlyResult.length, 1)
+      })
+
+      it('updates GeographyMetadata', async () => {
+        const geographyMetadata = {
+          geography_id: GEOGRAPHY_UUID,
+          geography_metadata: { foo: 'notafoo' }
+        }
+        const res = await MDSDBPostgres.updateGeographyMetadata(geographyMetadata)
+        assert.deepEqual(res.geography_metadata.foo, 'notafoo')
+      })
+
+      it('deletes GeographyMetadata', async () => {
+        await MDSDBPostgres.deleteGeographyMetadata(GEOGRAPHY_UUID)
+        await assert.rejects(
+          async () => {
+            await MDSDBPostgres.readSingleGeographyMetadata(GEOGRAPHY_UUID)
+          },
+          { name: 'NotFoundError' }
+        )
       })
     })
   })

@@ -59,6 +59,11 @@ apis:
     pathPrefix: /event-processor
     version: ${EVENT_PROCESSOR_VERSION}
     migration: false
+  mds-geography-author:
+    enabled: true
+    pathPrefix: /geography-author
+    version: ${GEOGRAPHY_AUTHOR_VERSION}
+    migration: false
 cronjobs:
   mds-trip-processor:
     enabled: true

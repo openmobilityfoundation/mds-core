@@ -73,3 +73,15 @@ export class ParseError extends BaseError {
     super('ParseError', reason(error), info)
   }
 }
+
+export class DependencyMissingError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('DependencyMissingError', reason(error), info)
+  }
+}
+
+export class InsufficientPermissionsError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('InsufficientPermissionsError', reason(error), info)
+  }
+}
