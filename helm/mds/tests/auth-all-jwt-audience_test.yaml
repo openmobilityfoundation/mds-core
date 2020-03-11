@@ -14,4 +14,4 @@ tests:
           - audience-2
     asserts:
       - hasDocuments:
-          count: 8
+          count: 12

@@ -1,0 +1,17 @@
+suite: test authetication disabled
+templates:
+  - auth.yaml
+tests:
+  - it: doc 1
+    release:
+      namespace: mds
+    set:
+      jwt:
+        issuer: my-issuer
+        enabled: false
+        audiences:
+          - audience-1
+          - audience-2
+    asserts:
+      - hasDocuments:
+          count: 0

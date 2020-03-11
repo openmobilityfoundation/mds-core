@@ -1,0 +1,90 @@
+suite: test autoscaler metrics
+templates:
+  - autoscaler.yaml
+tests:
+  - it: doc 3
+    release:
+      namespace: mds
+    asserts:
+      - isAPIVersion:
+          of: autoscaling/v2beta1
+        documentIndex: 8
+      - isKind:
+          of: HorizontalPodAutoscaler
+        documentIndex: 8
+      - equal:
+          path: metadata.name
+          value: mds-metrics-hpa
+        documentIndex: 8
+      - equal:
+          path: metadata.namespace
+          value: mds
+        documentIndex: 8
+      - equal:
+          path: metadata.annotations.metric-config\.object\.istio-requests-total\.prometheus/per-replica
+          value: "true"
+        documentIndex: 8
+      - equal:
+          path: metadata.annotations.metric-config\.object\.istio-requests-total\.prometheus/query
+          value: |
+            sum(
+              rate(
+                istio_requests_total{
+                  destination_workload="mds-metrics",
+                  destination_workload_namespace="mds"
+                }[1m]
+              )
+            ) /
+            count(
+              count(
+                container_memory_usage_bytes{
+                  namespace="mds",
+                  pod_name=~"mds-metrics.*"
+                }
+              ) by (pod_name)
+            )
+        documentIndex: 8
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+        documentIndex: 8
+      - equal:
+          path: spec.minReplicas
+          value: 1
+        documentIndex: 8
+      - equal:
+          path: spec.scaleTargetRef.apiVersion
+          value: apps/v1
+        documentIndex: 8
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+        documentIndex: 8
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: mds-metrics
+        documentIndex: 8
+      - equal:
+          path: spec.metrics[0].type
+          value: Object
+        documentIndex: 8
+      - equal:
+          path: spec.metrics[0].object.metricName
+          value: istio-requests-total
+        documentIndex: 8
+      - equal:
+          path: spec.metrics[0].object.target.apiVersion
+          value: v1
+        documentIndex: 8
+      - equal:
+          path: spec.metrics[0].object.target.kind
+          value: Pod
+        documentIndex: 8
+      - equal:
+          path: spec.metrics[0].object.target.name
+          value: mds-metrics
+        documentIndex: 8
+      - equal:
+          path: spec.metrics[0].object.targetValue
+          value: 10
+        documentIndex: 8

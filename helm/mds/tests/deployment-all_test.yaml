@@ -1,0 +1,10 @@
+suite: test deployment all default
+templates:
+  - deployment.yaml
+tests:
+  - it: all
+    release:
+      namespace: mds
+    asserts:
+      - hasDocuments:
+          count: 14

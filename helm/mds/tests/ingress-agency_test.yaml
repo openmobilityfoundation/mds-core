@@ -29,16 +29,16 @@ tests:
           value: mds-gateway
         documentIndex: 0
       - equal:
-          path: spec.http[0].match[0].uri.prefix
-          value: /agency
-        documentIndex: 0
-      - equal:
-          path: spec.http[0].route[0].destination.port.number
-          value: 4001
+          path: spec.http[0].match[0].uri.regex
+          value: "^/agency($|/.*$)"
         documentIndex: 0
       - equal:
           path: spec.http[0].route[0].destination.host
           value: mds-agency.mds.svc.cluster.local
+        documentIndex: 0
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 4000
         documentIndex: 0
       - equal:
           path: spec.http[0].corsPolicy.allowOrigin[0]

@@ -451,7 +451,7 @@ updateHelmDependencies() {
 installHelm() {
   check ${FUNCNAME[0]}
 
-  helm init --upgrade || usage "helm intialization failure"
+  helm init --force-upgrade || usage "helm intialization failure"
   pause 5
 
   for r in "${!helmRepositories[@]}"; do
@@ -789,9 +789,7 @@ testUnit() {
 # todo: enable when tests don't block
 #  yarn test
 
-  for c in $(find ${configs[home]}/helm -type d -depth 1); do
-    helm unittest ${configs[home]} g/helm/$(basename ${c})
-  done; unset c
+  helm unittest ${configs[home]}/helm/mds
 }
 
 testIntegration() {
@@ -1153,9 +1151,9 @@ check() {
 
       for d in docker kubectl; do
         hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
-      done; unset d;;
+      done; unset d
       # todo: include cluster connection check where needed if not globally
-      #kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster"
+      kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
     build | testIntegration)
       hash yarn > /dev/null 2>&1 || bootstrap;;
     installNats) ;;

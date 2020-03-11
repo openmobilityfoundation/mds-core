@@ -12,72 +12,72 @@ tests:
         hostReader: postgresql-host-reader
     asserts:
       - hasDocuments:
-          count: 2
+          count: 4
       - isAPIVersion:
           of: networking.istio.io/v1alpha3
-        documentIndex: 0
+        documentIndex: 2
       - isKind:
           of: ServiceEntry
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: metadata.name
           value: pg-rw-external
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: metadata.namespace
           value: mds
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: spec.hosts[0]
           value: postgresql-host
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: spec.ports[0].number
           value: 5432
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: spec.ports[0].name
           value: tcp
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: spec.ports[0].protocol
           value: TCP
-        documentIndex: 0
+        documentIndex: 2
       - equal:
           path: spec.location
           value: MESH_EXTERNAL
-        documentIndex: 0
+        documentIndex: 2
       - isAPIVersion:
           of: networking.istio.io/v1alpha3
-        documentIndex: 1
+        documentIndex: 3
       - isKind:
           of: ServiceEntry
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: metadata.name
           value: pg-ro-external
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: metadata.namespace
           value: mds
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: spec.hosts[0]
           value: postgresql-host-reader
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: spec.ports[0].number
           value: 5432
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: spec.ports[0].name
           value: tcp
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: spec.ports[0].protocol
           value: TCP
-        documentIndex: 1
+        documentIndex: 3
       - equal:
           path: spec.location
           value: MESH_EXTERNAL
-        documentIndex: 1
+        documentIndex: 3

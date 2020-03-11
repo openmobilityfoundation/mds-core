@@ -1,0 +1,64 @@
+suite: test authetication config jwt audience
+templates:
+  - auth.yaml
+tests:
+  - it: doc 3
+    release:
+      namespace: mds
+    set:
+      jwt:
+        issuer: my-issuer
+        enabled: true
+        audiences:
+          - audience-1
+          - audience-2
+    asserts:
+      - isAPIVersion:
+          of: authentication.istio.io/v1alpha1
+        documentIndex: 3
+      - isKind:
+          of: Policy
+        documentIndex: 3
+      - equal:
+          path: metadata.name
+          value: mds-config-auth
+        documentIndex: 3
+      - equal:
+          path: metadata.namespace
+          value: mds
+        documentIndex: 3
+      - equal:
+          path: spec.targets[0].name
+          value: mds-config
+        documentIndex: 3
+      - isEmpty:
+          path: spec.peers[0].mtls
+        documentIndex: 3
+      - equal:
+          path: spec.origins[0].jwt.audiences[0]
+          value: audience-1
+        documentIndex: 3
+      - equal:
+          path: spec.origins[0].jwt.audiences[1]
+          value: audience-2
+        documentIndex: 3
+      - equal:
+          path: spec.origins[0].jwt.issuer
+          value: "my-issuer"
+        documentIndex: 3
+      - equal:
+          path: spec.origins[0].jwt.jwksUri
+          value: my-issuer.well-known/jwks.json
+        documentIndex: 3
+      - equal:
+          path: spec.origins[0].jwt.trigger_rules[0].excluded_paths[0].exact
+          value: /config/health
+        documentIndex: 3
+      - equal:
+          path: spec.origins[0].jwt.trigger_rules[0].excluded_paths[1].exact
+          value: /health
+        documentIndex: 3
+      - equal:
+          path: spec.principalBinding
+          value: USE_ORIGIN
+        documentIndex: 3

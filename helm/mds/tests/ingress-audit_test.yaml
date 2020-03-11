@@ -29,16 +29,16 @@ tests:
           value: mds-gateway
         documentIndex: 1
       - equal:
-          path: spec.http[0].match[0].uri.prefix
-          value: /audit
-        documentIndex: 1
-      - equal:
-          path: spec.http[0].route[0].destination.port.number
-          value: 4002
+          path: spec.http[0].match[0].uri.regex
+          value: "^/audit($|/.*$)"
         documentIndex: 1
       - equal:
           path: spec.http[0].route[0].destination.host
           value: mds-audit.mds.svc.cluster.local
+        documentIndex: 1
+      - equal:
+          path: spec.http[0].route[0].destination.port.number
+          value: 4000
         documentIndex: 1
       - equal:
           path: spec.http[0].corsPolicy.allowOrigin[0]

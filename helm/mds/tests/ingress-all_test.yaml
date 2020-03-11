@@ -1,0 +1,10 @@
+suite: test ingress all
+templates:
+  - ingress.yaml
+tests:
+  - it: all
+    release:
+      namespace: mds
+    asserts:
+      - hasDocuments:
+          count: 15
