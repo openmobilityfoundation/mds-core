@@ -4,6 +4,7 @@ import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
 import { Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
+import { initializeStanSubscriber } from '@mds-core/mds-event-server'
 import { Clients } from './clients'
 import { ENTITY_TYPE } from './types'
 
@@ -65,6 +66,7 @@ export const WebSocketServer = () => {
         .split('%')
       const [header, ...args] = message
 
+      /* Testing message, also useful in a NATS-less environment */
       if (header === 'PUSH') {
         if (clients.isAuthenticated(ws)) {
           if (args.length === 2) {
@@ -104,4 +106,26 @@ export const WebSocketServer = () => {
       return ws.send('Invalid request!')
     })
   })
+
+  const {
+    env: { NATS = 'localhost', STAN_CLUSTER = 'nats-streaming', STAN_CREDS, TENANT_ID = 'mds' }
+  } = process
+
+  const processor = async (type: string, data: VehicleEvent | Telemetry) => {
+    switch (type) {
+      case 'event': {
+        await writeEvent(data as VehicleEvent)
+        return
+      }
+      case 'telemetry': {
+        await writeTelemetry(data as Telemetry)
+        return
+      }
+      default:
+        await log.error(`Unprocessable entity of type: ${type} and data: ${JSON.stringify(data)}`)
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  initializeStanSubscriber({ NATS, STAN_CLUSTER, STAN_CREDS, TENANT_ID, processor })
 }

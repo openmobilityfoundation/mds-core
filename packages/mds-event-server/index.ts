@@ -65,7 +65,7 @@ const initializeNatsClient = ({
   STAN_CLUSTER: string
   STAN_CREDS?: string
 }) => {
-  return stan.connect(STAN_CLUSTER, `mds-event-processor-${uuid()}`, {
+  return stan.connect(STAN_CLUSTER, `mds-event-consumer-${uuid()}`, {
     url: `nats://${NATS}:4222`,
     userCreds: STAN_CREDS,
     reconnect: true
@@ -108,6 +108,11 @@ export const initializeStanSubscriber = async <TData, TResult>({
           return natsSubscriber({ nats, processor, TENANT_ID, type })
         })
       )
+    })
+
+    /* istanbul ignore next */
+    nats.on('error', async err => {
+      await log.error(err)
     })
   } catch (err) {
     await log.error(err)

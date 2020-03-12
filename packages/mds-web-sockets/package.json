@@ -14,6 +14,8 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
+    "@mds-core/mds-api-server": "0.1.26",
+    "@mds-core/mds-event-server": "0.1.0",
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
@@ -26,6 +28,7 @@
     "server": "yarn watch launch_server",
     "client": "yarn watch client",
     "test": "yarn test:eslint && yarn test:unit",
+    "start": "yarn watch launch_server",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 50 ts-mocha --project ../../tsconfig.json --exit",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
