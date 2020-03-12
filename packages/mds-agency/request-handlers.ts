@@ -336,13 +336,13 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
     // make a note of the service area
     event.service_area_id = getServiceArea(event)
 
-    // database write is crucial; failures of cache/stream should be noted and repaired
-    const recorded_event = await db.writeEvent(event)
-    const { telemetry } = recorded_event
-
+    const { telemetry } = event
     if (telemetry) {
       await db.writeTelemetry(normalizeToArray(telemetry))
     }
+
+    // database write is crucial; failures of cache/stream should be noted and repaired
+    const recorded_event = await db.writeEvent(event)
 
     try {
       await Promise.all([
