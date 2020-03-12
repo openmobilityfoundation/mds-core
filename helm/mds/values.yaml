@@ -59,6 +59,11 @@ apis:
     pathPrefix: /event-processor
     version: latest
     migration: false
+  mds-geography:
+    enabled: true
+    pathPrefix: /geography
+    version: latest
+    migration: false
   mds-geography-author:
     enabled: true
     pathPrefix: /geography-author

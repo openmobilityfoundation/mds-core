@@ -113,22 +113,6 @@ function api(app: express.Express): express.Express {
     }
   })
 
-  app.get(pathsFor('/geographies/:geography_id'), async (req, res) => {
-    log.info('read geo', JSON.stringify(req.params))
-    const { geography_id } = req.params
-    if (!isUUID(geography_id)) {
-      res.status(400).send({ error: 'bad_param' })
-      return
-    }
-    log.info('read geo', geography_id)
-    try {
-      const geography = await db.readSingleGeography(geography_id)
-      res.status(200).send({ geography })
-    } catch (err) {
-      res.status(404).send({ result: 'not found' })
-    }
-  })
-
   app.get(pathsFor('/schema/policy'), (req, res) => {
     res.status(200).send(policySchemaJson)
   })

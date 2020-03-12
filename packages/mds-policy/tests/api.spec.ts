@@ -59,6 +59,7 @@ const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toS
 describe('Tests app', () => {
   before('Initialize the DB', async () => {
     await db.initialize()
+    await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
   })
 
   after('Shutdown the DB', async () => {
@@ -73,18 +74,6 @@ describe('Tests app', () => {
   })
 
   // MAIN TESTS HERE
-
-  it('read back one geography', async () => {
-    await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
-    const result = await request
-      .get(`/geographies/${GEOGRAPHY_UUID}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-    const body = result.body
-    log('read back one geo response:', body)
-    test.value(result).hasHeader('content-type', APP_JSON)
-    // TODO verify contents
-  })
 
   it('tries to get policy for invalid dates', async () => {
     const result = await request
@@ -185,23 +174,6 @@ describe('Tests app', () => {
     test.value(result).hasHeader('content-type', APP_JSON)
   })
 
-  it('read back a nonexistant geography', async () => {
-    const result = await request
-      .get(`/geographies/${POLICY_UUID}`) // obvs not a geography
-      .set('Authorization', AUTH)
-      .expect(404)
-    const body = result.body
-    log('read back nonexistant geography response:', body)
-    test.value(result).hasHeader('content-type', APP_JSON)
-  })
-
-  it('tries to read non-UUID geography', async () => {
-    const result = await request
-      .get('/geographies/notarealgeography')
-      .set('Authorization', AUTH)
-      .expect(400)
-    test.value(result.body.result === 'not found')
-  })
 
   it('tries to read non-UUID policy', async () => {
     const result = await request
