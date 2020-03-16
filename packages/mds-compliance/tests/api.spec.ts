@@ -210,7 +210,7 @@ const COUNT_POLICY_JSON_5: Policy = {
   ],
   end_date: null,
   policy_id: '25851571-b53f-4426-a033-f375be0e7957',
-  start_date: 1552678594428,
+  start_date: Date.now(),
   description:
     'Prohibited areas for dockless vehicles within the City of Los Angeles for the LADOT Dockless On-Demand Personal Mobility Program',
   prev_policies: null
