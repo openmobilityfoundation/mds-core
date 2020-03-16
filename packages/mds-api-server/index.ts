@@ -50,7 +50,7 @@ const about = () => {
   }
 }
 
-export const RequestLoggingMiddleware = () =>
+export const RequestLoggingMiddleware = (): express.RequestHandler =>
   morgan(
     (tokens, req: ApiRequest, res: ApiResponse) =>
       [

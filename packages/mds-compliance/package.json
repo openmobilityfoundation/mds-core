@@ -34,8 +34,8 @@
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.28",
-    "uuid": "7.0.1",
-    "yargs": "15.1.0"
+    "uuid": "7.0.2",
+    "yargs": "15.3.0"
   },
   "devDependencies": {
     "@mds-core/mds-agency": "0.0.28",
