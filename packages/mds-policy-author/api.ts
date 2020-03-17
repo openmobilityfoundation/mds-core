@@ -152,9 +152,17 @@ function api(app: express.Express): express.Express {
     checkAccess(scopes => scopes.includes('policies:read')),
     async (req, res) => {
       const { get_published = null, get_unpublished = null } = req.query
+      const params = { get_published, get_unpublished }
+      if (get_published) {
+        params.get_published = get_published === 'true'
+      }
+      if (get_unpublished) {
+        params.get_unpublished = get_unpublished === 'true'
+      }
+
       log.info('read /policies/meta', req.query)
       try {
-        const metadata = await db.readBulkPolicyMetadata({ get_published, get_unpublished })
+        const metadata = await db.readBulkPolicyMetadata(params)
 
         res.status(200).send(metadata)
       } catch (err) {
