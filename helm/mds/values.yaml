@@ -29,11 +29,6 @@ apis:
     pathPrefix: /jurisdiction
     version: latest
     migration: false
-  mds-metrics:
-    enabled: true
-    pathPrefix: /metrics
-    version: latest
-    migration: false
   mds-native:
     enabled: true
     pathPrefix: /native
@@ -54,11 +49,6 @@ apis:
     pathPrefix: /web-sockets
     version: latest
     migration: false
-  mds-event-processor:
-    enabled: true
-    pathPrefix: /event-processor
-    version: latest
-    migration: false
   mds-geography:
     enabled: true
     pathPrefix: /geography
@@ -69,17 +59,6 @@ apis:
     pathPrefix: /geography-author
     version: latest
     migration: false
-cronjobs:
-  mds-trip-processor:
-    enabled: true
-    version: latest
-    migration: false
-    schedule: '0 * * * *'
-  mds-provider-processor:
-    enabled: true
-    version: latest
-    migration: false
-    schedule: '0 * * * *'
 tenantId:
 timezone: America/Los_Angeles
 registry:

@@ -16,14 +16,9 @@ Repo for LADOT MDS implementation for contribution to the Open Mobility Foundati
 3. MDS-Compliance [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/333)
 4. MDS-Config
 5. MDS-Daily
-6. MDS-Metrics
-7. MDS-Metrics-Sheet
-8. MDS-Policy-Author
-9. MDS-Web-Sockets
-#### Backend Services
-1. MDS-Event-Processor
-2. MDS-Provider-Processor
-3. MDS-Trip-Processor
+6. MDS-Metrics-Sheet
+7. MDS-Policy-Author
+8. MDS-Web-Sockets
 
 ## Installation
 

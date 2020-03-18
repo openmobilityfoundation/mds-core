@@ -14,54 +14,23 @@
     limitations under the License.
  */
 import {
-  StateEntry,
-  TripEvent,
   Device,
   VehicleEvent,
-  TripTelemetry,
   Timestamp,
   Telemetry,
   Stringify,
   TelemetryData,
-  GpsData,
-  AnnotationData,
   PROPULSION_TYPE
 } from '@mds-core/mds-types'
 
-export type StringifiedStateEntry = Stringify<Omit<Omit<StateEntry, 'annotation'>, 'gps'>> & {
-  annotation: Stringify<AnnotationData>
-  gps: Stringify<GpsData>
-}
-export type StringifiedAllDeviceStates = { [vehicle_id: string]: StringifiedStateEntry }
-export type StringifiedTripEvent = Stringify<Omit<Omit<TripEvent, 'annotation'>, 'gps'>> & {
-  annotation: Stringify<AnnotationData> | null
-  gps: Stringify<GpsData> | null
-}
-/* TODO: structure more specfic typedef for StringifiedTripEvents & StringifiedTripTelemetries */
-export type StringifiedTripEvents = string
-export type StringifiedAllTripsEvents = { [id: string]: StringifiedTripEvents }
-export type StringifiedTripTelemetry = Stringify<Omit<TripTelemetry, 'annotation'>> & {
-  annotation: Stringify<AnnotationData>
-}
 export type StringifiedEvent = Stringify<Omit<VehicleEvent, 'telemetry'>>
 export type StringifiedTelemetry = Stringify<Omit<Telemetry, 'gps'>> & {
   gps: Stringify<Omit<TelemetryData, 'charge'>>
 }
-export type StringifiedTripTelemetries = string
 export type StringifiedEventWithTelemetry = StringifiedEvent & { telemetry?: StringifiedTelemetry }
 
 export type StringifiedCacheReadDeviceResult = Stringify<CacheReadDeviceResult & { timestamp?: Timestamp }> & {
   propulsion: PROPULSION_TYPE[]
 }
 export type CacheReadDeviceResult = Device & { updated?: Timestamp | null; telemetry?: Telemetry | null }
-export type CachedItem =
-  | StringifiedCacheReadDeviceResult
-  | StringifiedTelemetry
-  | StringifiedEvent
-  | StringifiedStateEntry
-
-export type CachedHashItem =
-  | StringifiedAllTripsEvents
-  | StringifiedAllDeviceStates
-  | StringifiedTripEvents
-  | StringifiedTripTelemetries
+export type CachedItem = StringifiedCacheReadDeviceResult | StringifiedTelemetry | StringifiedEvent

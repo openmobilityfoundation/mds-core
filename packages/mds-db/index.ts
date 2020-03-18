@@ -23,8 +23,6 @@ import * as stops from './stops'
 
 import * as attachments from './attachments'
 
-import * as processors from './processors'
-
 const { writeDevice } = devices
 const { writeTelemetry } = telemetry
 const { writeEvent } = events
@@ -129,6 +127,5 @@ export = {
   ...trips,
   ...telemetry,
   ...stops,
-  ...attachments,
-  ...processors
+  ...attachments
 }

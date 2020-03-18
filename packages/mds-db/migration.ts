@@ -184,11 +184,6 @@ async function dropAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
   await exec(`ALTER TABLE ${schema.TABLE.audit_events} DROP COLUMN provider_event_type_reason`)
 }
 
-async function alterReportsTripsMigration(exec: SqlExecuterFunction) {
-  await exec(`ALTER TABLE ${schema.TABLE.reports_trips} RENAME COLUMN min_violoation_dist TO min_violation_dist`)
-  await exec(`ALTER TABLE ${schema.TABLE.reports_trips} ALTER COLUMN telemetry TYPE json USING telemetry[0]::json`)
-}
-
 async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
   await doMigration(exec, 'alterGeographiesColumns', alterGeographiesColumnsMigration)
@@ -197,7 +192,6 @@ async function doMigrations(client: MDSPostgresClient) {
   await doMigration(exec, 'dropDeprecatedProviderTables', dropDeprecatedProviderTablesMigration)
   await doMigration(exec, 'dropReadOnlyGeographyColumn', dropReadOnlyGeographyColumnMigration)
   await doMigration(exec, 'dropAuditEventsColumns', dropAuditEventsColumnsMigration)
-  await doMigration(exec, 'alterReportsTripsMigration', alterReportsTripsMigration)
 }
 
 async function updateSchema(client: MDSPostgresClient) {

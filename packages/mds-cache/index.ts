@@ -23,44 +23,22 @@ import {
   Timestamp,
   Device,
   VehicleEvent,
-  TripEvent,
-  TripsEvents,
-  TripTelemetry,
   Telemetry,
-  StateEntry,
-  DeviceStates,
   BoundingBox,
   EVENT_STATUS_MAP,
-  VEHICLE_STATUSES,
-  VEHICLE_TYPE
+  VEHICLE_STATUSES
 } from '@mds-core/mds-types'
 import redis from 'redis'
 import bluebird from 'bluebird'
 
-import {
-  parseDeviceState,
-  parseAllDeviceStates,
-  parseTripEvents,
-  parseTripTelemetry,
-  parseAllTripsEvents,
-  parseTelemetry,
-  parseEvent,
-  parseDevice,
-  parseCachedItem
-} from './unflatteners'
+import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
 import {
   CacheReadDeviceResult,
   CachedItem,
-  CachedHashItem,
   StringifiedCacheReadDeviceResult,
   StringifiedEventWithTelemetry,
   StringifiedTelemetry,
-  StringifiedEvent,
-  StringifiedStateEntry,
-  StringifiedAllDeviceStates,
-  StringifiedTripEvents,
-  StringifiedTripTelemetries,
-  StringifiedAllTripsEvents
+  StringifiedEvent
 } from './types'
 
 const { env } = process
@@ -138,112 +116,6 @@ async function info() {
     }
   })
   return data
-}
-
-async function hget(key: string, field: UUID): Promise<CachedItem | CachedHashItem | null> {
-  const client = await getClient()
-  const flat = await client.hgetAsync(decorateKey(key), field)
-  if (flat) {
-    return unflatten(flat)
-  }
-  return null
-}
-
-async function hgetall(key: string): Promise<CachedItem | CachedHashItem | null> {
-  const client = await getClient()
-  const flat = await client.hgetallAsync(decorateKey(key))
-  if (flat) {
-    return unflatten(flat)
-  }
-  return null
-}
-
-/* TODO: explore alternatives to pattern match on field */
-async function hscan(key: string, pattern: string): Promise<string[] | null> {
-  /* hscanAsync returns contain an array of two elements, a string representing the cursor and a sub-array containing an array of alternating key/values */
-  const [, entry] = await (await getClient()).hscanAsync(decorateKey(key), 0, 'MATCH', pattern)
-  if (entry.length > 0) {
-    return entry
-  }
-  return null
-}
-
-async function getVehicleType(deviceID: UUID): Promise<VEHICLE_TYPE | null> {
-  const client = await getClient()
-  const type = await client.hgetAsync(decorateKey(`device:${deviceID}:device`), 'type')
-  return (type as VEHICLE_TYPE) ?? null
-}
-
-async function getVehicleProvider(deviceID: UUID): Promise<UUID | null> {
-  const client = await getClient()
-  const provider = await client.hgetAsync(decorateKey(`device:${deviceID}:device`), 'provider_id')
-  return (provider as UUID) ?? null
-}
-
-async function readDeviceState(field: UUID): Promise<StateEntry | null> {
-  const deviceState = await hget('device:state', field)
-  return deviceState ? parseDeviceState(deviceState as StringifiedStateEntry) : null
-}
-
-/* TODO: Increase performance with provider pattern based fetch */
-async function readAllDeviceStates(): Promise<DeviceStates | null> {
-  const allDeviceStates = await hgetall('device:state')
-  return allDeviceStates ? parseAllDeviceStates(allDeviceStates as StringifiedAllDeviceStates) : null
-}
-
-async function writeDeviceState(field: UUID, data: StateEntry) {
-  return (await getClient()).hsetAsync(decorateKey('device:state'), field, JSON.stringify(data))
-}
-
-async function readTripEvents(field: UUID): Promise<TripEvent[] | null> {
-  const tripEvents = await hget(decorateKey('trips:events'), field)
-  return tripEvents ? parseTripEvents(tripEvents as StringifiedTripEvents) : null
-}
-
-/* TODO: Investigate alternatives, this should be used temporarily. O(n) runtime for streaming is not ideal. */
-async function readDeviceTripsEvents(pattern: string): Promise<TripsEvents | null> {
-  /*
-    hscan returns list of alternating key and value strings (i.e. [keyA, valueA, keyB, valueB])
-    Here we must construct an object of StringifiedAllTripsEvents from such list to pass to our unflattener method
-  */
-  const allFilteredTripEventsList = await hscan('trips:events', pattern)
-  if (allFilteredTripEventsList) {
-    const allFilteredTripEvents = allFilteredTripEventsList.reduce((acc, entry, index) => {
-      if (index % 2 === 1) {
-        const key = allFilteredTripEventsList[index - 1]
-        acc[key] = entry
-      }
-      return acc
-    }, {} as StringifiedAllTripsEvents)
-    return parseAllTripsEvents(allFilteredTripEvents)
-  }
-  return null
-}
-
-async function readAllTripsEvents(): Promise<TripsEvents | null> {
-  const allTripsEvents = await hgetall('trips:events')
-  return allTripsEvents ? parseAllTripsEvents(allTripsEvents as StringifiedAllTripsEvents) : null
-}
-
-async function writeTripEvents(field: UUID, data: TripEvent[]) {
-  return (await getClient()).hsetAsync(decorateKey('trips:events'), field, JSON.stringify(data))
-}
-
-async function deleteTripEvents(field: UUID) {
-  return (await getClient()).hdelAsync(decorateKey('trips:events'), field)
-}
-
-async function readTripTelemetry(field: UUID): Promise<TripTelemetry[] | null> {
-  const tripTelemetry = await hget(decorateKey('trips:telemetry'), field)
-  return tripTelemetry ? parseTripTelemetry(tripTelemetry as StringifiedTripTelemetries) : null
-}
-
-async function writeTripTelemetry(field: UUID, data: TripTelemetry[]) {
-  return (await getClient()).hsetAsync(decorateKey('trips:telemetry'), field, JSON.stringify(data))
-}
-
-async function deleteTripTelemetry(field: UUID) {
-  return (await getClient()).hdelAsync(decorateKey('trips:telemetry'), field)
 }
 
 // update the ordered list of (device_id, timestamp) tuples
@@ -733,19 +605,6 @@ export = {
   initialize,
   health,
   info,
-  getVehicleType,
-  getVehicleProvider,
-  readDeviceState,
-  readAllDeviceStates,
-  writeDeviceState,
-  readTripEvents,
-  readDeviceTripsEvents,
-  readAllTripsEvents,
-  writeTripEvents,
-  deleteTripEvents,
-  readTripTelemetry,
-  writeTripTelemetry,
-  deleteTripTelemetry,
   seed,
   reset,
   startup,
