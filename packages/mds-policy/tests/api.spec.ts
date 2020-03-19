@@ -174,7 +174,6 @@ describe('Tests app', () => {
     test.value(result).hasHeader('content-type', APP_JSON)
   })
 
-
   it('tries to read non-UUID policy', async () => {
     const result = await request
       .get('/policies/notarealpolicy')

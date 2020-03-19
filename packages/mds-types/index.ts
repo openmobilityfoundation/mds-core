@@ -276,6 +276,10 @@ export interface AuditDetails extends Audit {
   }
 }
 
+export interface PolicyMessage {
+  [key: string]: string
+}
+
 interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
   name: string
   rule_id: UUID
@@ -290,7 +294,7 @@ interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
   days?: DAY_OF_WEEK[] | null
   /* eslint-reason TODO: message types haven't been defined well yet */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  messages?: any
+  messages?: PolicyMessage
   value_url?: URL | null
 }
 
@@ -304,7 +308,9 @@ export interface SpeedRule extends BaseRule<'speed'> {
   rule_units: 'kph' | 'mph'
 }
 
-export type Rule = CountRule | TimeRule | SpeedRule
+export type UserRule = BaseRule<'user'>
+
+export type Rule = CountRule | TimeRule | SpeedRule | UserRule
 
 export interface Policy {
   name: string

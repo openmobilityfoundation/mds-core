@@ -5,10 +5,17 @@ import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 const getPolicies = async (req: PolicyApiRequest, res: PolicyApiResponse) => {
   const { get_published = null, get_unpublished = null } = req.query
+  const params = { get_published, get_unpublished }
+  if (get_published) {
+    params.get_published = get_published === 'true'
+  }
+  if (get_unpublished) {
+    params.get_unpublished = get_unpublished === 'true'
+  }
   log.info('read /policies', req.query)
 
   try {
-    const policies = await db.readPolicies({ get_published, get_unpublished })
+    const policies = await db.readPolicies(params)
 
     // Let's not worry about filtering for just active policies at the moment.
     res.status(200).send(policies)
