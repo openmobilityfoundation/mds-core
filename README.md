@@ -140,6 +140,9 @@ lerna run prettier
 MDS can readily be provisioned to a [Kubernetes](https://kubernetes.io) capable cluster, be it a local or remote. The following steps describe how to build, deploy and operate against a local MDS cluster.
 
 #### Prerequisites
+[Librdkafka](https://github.com/edenhill/librdkafka)
+
+Install OpenSSL, follow the instructions [here](https://github.com/Blizzard/node-rdkafka/blob/master/README.md#Requirements) to configure the linker.
 
 Obtain a local working copy of MDS:
 

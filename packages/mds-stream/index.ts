@@ -30,6 +30,10 @@ import {
   ReadStreamOptions,
   StreamItemID
 } from './types'
+import { AgencyKafkaStream } from './kafka/agency-stream-kafka'
+
+import { KafkaStreamReader } from './kafka/read-stream'
+import { KafkaStreamWriter } from './kafka/write-stream'
 
 const { env } = process
 
@@ -161,6 +165,7 @@ async function getClient() {
 }
 
 async function initialize() {
+  AgencyKafkaStream.initialize()
   if (env.SINK) {
     getBinding()
   } else {
@@ -182,6 +187,7 @@ async function shutdown() {
     await cachedClient.quit()
     cachedClient = null
   }
+  AgencyKafkaStream.shutdown()
 }
 
 async function writeStream(stream: Stream, field: string, value: unknown) {
@@ -199,7 +205,10 @@ async function writeStreamBatch(stream: Stream, field: string, values: unknown[]
 // put basics of vehicle in the cache
 async function writeDevice(device: Device) {
   if (env.NATS) {
-    return writeNatsEvent('device', JSON.stringify(device))
+    await writeNatsEvent('device', JSON.stringify(device))
+  }
+  if (env.KAFKA_HOST) {
+    await AgencyKafkaStream.writeDevice(device)
   }
   return writeStream(DEVICE_INDEX_STREAM, 'data', device)
 }
@@ -208,6 +217,9 @@ async function writeEvent(event: VehicleEvent) {
   if (env.NATS) {
     return writeNatsEvent('event', JSON.stringify(event))
   }
+  if (env.KAFKA_HOST) {
+    await AgencyKafkaStream.writeEvent(event)
+  }
   return writeStream(DEVICE_RAW_STREAM, 'event', event)
 }
 
@@ -215,7 +227,9 @@ async function writeEvent(event: VehicleEvent) {
 async function writeTelemetry(telemetry: Telemetry[]) {
   if (env.NATS) {
     await Promise.all(telemetry.map(item => writeNatsEvent('telemetry', JSON.stringify(item))))
-    return
+  }
+  if (env.KAFKA_HOST) {
+    await AgencyKafkaStream.writeTelemetry(telemetry)
   }
   const start = now()
   await writeStreamBatch(DEVICE_RAW_STREAM, 'telemetry', telemetry)
@@ -333,5 +347,7 @@ export = {
   writeEvent,
   writeStream,
   writeStreamBatch,
-  writeTelemetry
+  writeTelemetry,
+  KafkaStreamReader,
+  KafkaStreamWriter
 }

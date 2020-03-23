@@ -20,6 +20,7 @@
     "cloudevents-sdk": "1.0.0",
     "flat": "5.0.0",
     "node-nats-streaming": "0.3.0-2",
+    "node-rdkafka": "2.7.4",
     "redis": "3.0.2"
   },
   "scripts": {

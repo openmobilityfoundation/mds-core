@@ -33,6 +33,9 @@ import {
   computeCompositeVehicleData
 } from './utils'
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+stream.initialize()
+
 export const getAllServiceAreas = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
     const serviceAreas = await areas.readServiceAreas()

@@ -133,7 +133,7 @@ const AUTH_UNKNOWN_UUID_PROVIDER = `basic ${Buffer.from(
 const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 
 before(async () => {
-  await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
+  await Promise.all([db.initialize(), cache.initialize()])
 })
 
 after(async () => {
