@@ -15,9 +15,10 @@ import { geographyValidationDetails } from '@mds-core/mds-schema-validators'
 import log from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'
+import { GeographyAuthorApiVersionMiddleware } from './middleware'
 
 function api(app: express.Express): express.Express {
-  app.get(
+  app.use(GeographyAuthorApiVersionMiddleware).get(
     pathsFor('/geographies/meta/'),
     checkAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')

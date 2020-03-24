@@ -46,7 +46,7 @@ const log = console.log.bind(console)
 
 const request = supertest(ApiServer(api))
 
-const APP_JSON = 'application/json; charset=utf-8'
+const APP_JSON = 'application/vnd.mds.geography.author+json; charset=utf-8; version=0.1'
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
 const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
 const GEOGRAPHIES_WRITE_SCOPE = SCOPED_AUTH(['geographies:write'])
