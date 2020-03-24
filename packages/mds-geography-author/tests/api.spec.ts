@@ -408,27 +408,18 @@ describe('Tests app', () => {
     })
 
     it('cannot publish a geography (wrong auth)', async () => {
-      await request
-        .put(`/geographies/${GEOGRAPHY2_UUID}/publish`)
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
+      await request.put(`/geographies/${GEOGRAPHY2_UUID}/publish`).set('Authorization', EMPTY_SCOPE).expect(403)
     })
 
     it('cannot delete a geography (incorrect auth)', async () => {
-      await request
-        .delete(`/geographies/${GEOGRAPHY2_UUID}`)
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
+      await request.delete(`/geographies/${GEOGRAPHY2_UUID}`).set('Authorization', EMPTY_SCOPE).expect(403)
     })
 
     it('can delete a geography (correct auth)', async () => {
       const testUUID = uuid()
       await db.writeGeography({ geography_id: testUUID, geography_json: LA_CITY_BOUNDARY, name: 'testafoo' })
       await db.writeGeographyMetadata({ geography_id: testUUID, geography_metadata: { foo: 'afoo' } })
-      await request
-        .delete(`/geographies/${testUUID}`)
-        .set('Authorization', GEOGRAPHIES_WRITE_SCOPE)
-        .expect(200)
+      await request.delete(`/geographies/${testUUID}`).set('Authorization', GEOGRAPHIES_WRITE_SCOPE).expect(200)
       await assert.rejects(
         async () => {
           await db.readSingleGeography(testUUID)
@@ -444,20 +435,14 @@ describe('Tests app', () => {
     })
 
     it('cannot delete a published geography (correct auth)', async () => {
-      await request
-        .delete(`/geographies/${GEOGRAPHY2_UUID}`)
-        .set('Authorization', GEOGRAPHIES_WRITE_SCOPE)
-        .expect(405)
+      await request.delete(`/geographies/${GEOGRAPHY2_UUID}`).set('Authorization', GEOGRAPHIES_WRITE_SCOPE).expect(405)
     })
 
     it('sends the correct error code if something blows up on the backend during delete', async () => {
       sandbox.stub(db, 'deleteGeography').callsFake(function stubAThrow() {
         throw new Error('random backend err')
       })
-      await request
-        .delete(`/geographies/${GEOGRAPHY_UUID}`)
-        .set('Authorization', GEOGRAPHIES_WRITE_SCOPE)
-        .expect(500)
+      await request.delete(`/geographies/${GEOGRAPHY_UUID}`).set('Authorization', GEOGRAPHIES_WRITE_SCOPE).expect(500)
     })
   })
 
@@ -623,17 +608,11 @@ describe('Tests app', () => {
     })
 
     it('cannot do bulk geography metadata reads (wrong auth)', async () => {
-      await request
-        .get(`/geographies/meta?get_unpublished=false`)
-        .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
+      await request.get(`/geographies/meta?get_unpublished=false`).set('Authorization', EVENTS_READ_SCOPE).expect(403)
     })
 
     it('cannot do bulk geography metadata reads (no auth)', async () => {
-      await request
-        .get(`/geographies/meta?get_published=false`)
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
+      await request.get(`/geographies/meta?get_published=false`).set('Authorization', EMPTY_SCOPE).expect(403)
     })
 
     it('verifies GETing a published geography metadata throws a permission error if the scope is wrong', done => {

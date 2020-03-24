@@ -1574,21 +1574,13 @@ describe('Tests Stops', async () => {
   })
 
   it('verifies failing to POST a stop (garbage data)', async () => {
-    await request
-      .post(`/stops`)
-      .set('Authorization', AUTH)
-      .send({ foo: 'bar' })
-      .expect(400)
+    await request.post(`/stops`).set('Authorization', AUTH).send({ foo: 'bar' }).expect(400)
   })
 
   it('verifies successfully POSTing a stop', async () => {
     await db.writeGeography(LAGeography)
     await db.publishGeography({ geography_id: GEOGRAPHY_UUID, publish_date: now() })
-    await request
-      .post(`/stops`)
-      .set('Authorization', AUTH)
-      .send(TEST_STOP)
-      .expect(201)
+    await request.post(`/stops`).set('Authorization', AUTH).send(TEST_STOP).expect(201)
   })
 
   it('verifies successfully GETing a stop', done => {

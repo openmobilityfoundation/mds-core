@@ -62,10 +62,7 @@ describe('Testing Event Server', () => {
   })
 
   it('verifies post event', done => {
-    const event = cloudevent()
-      .source('index.spec.ts')
-      .type('test-event')
-      .data({ value: 'value' })
+    const event = cloudevent().source('index.spec.ts').type('test-event').data({ value: 'value' })
     request
       .post('/')
       .set('ce-id', event.getId())

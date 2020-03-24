@@ -23,16 +23,10 @@ describe('Test API Authorizer', () => {
     const apiAuthorizer = AuthorizationHeaderApiAuthorizer({
       headers: { authorization: ADMIN_AUTH }
     } as express.Request)
-    test
-      .object(apiAuthorizer)
-      .hasProperty('principalId', MOCHA_PROVIDER_ID)
-      .hasProperty('scope', PROVIDER_SCOPES)
+    test.object(apiAuthorizer).hasProperty('principalId', MOCHA_PROVIDER_ID).hasProperty('scope', PROVIDER_SCOPES)
 
     const webSocketAuthorizer = WebSocketAuthorizer(ADMIN_AUTH)
-    test
-      .object(webSocketAuthorizer)
-      .hasProperty('principalId', MOCHA_PROVIDER_ID)
-      .hasProperty('scope', PROVIDER_SCOPES)
+    test.object(webSocketAuthorizer).hasProperty('principalId', MOCHA_PROVIDER_ID).hasProperty('scope', PROVIDER_SCOPES)
     done()
   })
 

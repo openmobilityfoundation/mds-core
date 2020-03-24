@@ -497,10 +497,7 @@ describe('Testing API', () => {
   const vehicles = [
     provider_vehicle_id, // test-vehicle
     provider_vehicle_id.toUpperCase(), // TEST-VEHICLE
-    provider_vehicle_id
-      .replace('-', '_')
-      .split('')
-      .join('-'), // t-e-s-t-_-v-e-h-i-c-l-e
+    provider_vehicle_id.replace('-', '_').split('').join('-'), // t-e-s-t-_-v-e-h-i-c-l-e
     provider_vehicle_id
       .split('')
       .map((char, index) => (index % 2 ? char.toLowerCase() : char.toUpperCase()))

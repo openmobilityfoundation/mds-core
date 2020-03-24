@@ -76,20 +76,14 @@ describe('Tests app', () => {
   // MAIN TESTS HERE
 
   it('tries to get policy for invalid dates', async () => {
-    const result = await request
-      .get('/policies?start_date=100000&end_date=100')
-      .set('Authorization', AUTH)
-      .expect(400)
+    const result = await request.get('/policies?start_date=100000&end_date=100').set('Authorization', AUTH).expect(400)
     test.value(result.body.result === 'start_date after end_date')
   })
 
   it('read back one policy', async () => {
     await db.writePolicy(POLICY_JSON)
     await db.publishPolicy(POLICY_UUID)
-    const result = await request
-      .get(`/policies/${POLICY_UUID}`)
-      .set('Authorization', AUTH)
-      .expect(200)
+    const result = await request.get(`/policies/${POLICY_UUID}`).set('Authorization', AUTH).expect(200)
     const body = result.body
     log('read back one policy response:', body)
     test.value(result).hasHeader('content-type', APP_JSON)
@@ -97,10 +91,7 @@ describe('Tests app', () => {
   })
 
   it('reads back all active policies', async () => {
-    const result = await request
-      .get(`/policies`)
-      .set('Authorization', AUTH)
-      .expect(200)
+    const result = await request.get(`/policies`).set('Authorization', AUTH).expect(200)
     const body = result.body
     log('read back all policies response:', body)
     test.value(body.policies.length).is(1) // only one should be currently valid
@@ -175,10 +166,7 @@ describe('Tests app', () => {
   })
 
   it('tries to read non-UUID policy', async () => {
-    const result = await request
-      .get('/policies/notarealpolicy')
-      .set('Authorization', AUTH)
-      .expect(400)
+    const result = await request.get('/policies/notarealpolicy').set('Authorization', AUTH).expect(400)
     test.value(result.body.result === 'not found')
   })
 })

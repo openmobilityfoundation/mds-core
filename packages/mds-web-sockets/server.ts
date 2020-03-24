@@ -60,10 +60,7 @@ export const WebSocketServer = () => {
 
   wss.on('connection', (ws: WebSocket) => {
     ws.on('message', async (data: WebSocket.Data) => {
-      const message = data
-        .toString()
-        .trim()
-        .split('%')
+      const message = data.toString().trim().split('%')
       const [header, ...args] = message
 
       /* Testing message, also useful in a NATS-less environment */

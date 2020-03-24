@@ -29,10 +29,7 @@ export const readJurisdiction = async (jurisdiction_id: UUID): Promise<Jurisdict
 export const readJurisdictions = async (): Promise<JurisdictionEntity[]> => {
   const connection = await manager.getReadWriteConnection()
   try {
-    const entities = await connection
-      .getRepository(JurisdictionEntity)
-      .createQueryBuilder()
-      .getMany()
+    const entities = await connection.getRepository(JurisdictionEntity).createQueryBuilder().getMany()
     return entities
   } catch (error) {
     await logger.error('readJurisdictions', error)

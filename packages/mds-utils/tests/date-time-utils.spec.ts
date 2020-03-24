@@ -64,14 +64,8 @@ describe('Date/time API utils', () => {
       Sinon.replace(dt, 'getLocalTime', Sinon.fake.returns(moment('2020-01-15').clone()))
       const result = dt.parseRelative('-7d', 'yesterday')
       assert.deepStrictEqual(result, {
-        start_time: moment('2020-01-15')
-          .clone()
-          .subtract(8, 'd')
-          .valueOf(),
-        end_time: moment('2020-01-15')
-          .clone()
-          .subtract(1, 'd')
-          .valueOf()
+        start_time: moment('2020-01-15').clone().subtract(8, 'd').valueOf(),
+        end_time: moment('2020-01-15').clone().subtract(1, 'd').valueOf()
       })
       Sinon.restore()
     })

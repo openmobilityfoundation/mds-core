@@ -184,9 +184,9 @@ const deleteJurisdiction = async (
   }
 }
 
-const getAllJurisdictions = async ({
-  effective = Date.now()
-}: Partial<GetJurisdictionOptions> = {}): Promise<JurisdictionServiceResult<Jurisdiction[], ServerError>> => {
+const getAllJurisdictions = async ({ effective = Date.now() }: Partial<GetJurisdictionOptions> = {}): Promise<
+  JurisdictionServiceResult<Jurisdiction[], ServerError>
+> => {
   try {
     try {
       const entities = await orm.readJurisdictions()
