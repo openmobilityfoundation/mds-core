@@ -1,4 +1,4 @@
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import { updateSchema } from './migration'
 import { logSql, configureClient, MDSPostgresClient, SqlVals } from './sql-utils'
@@ -29,7 +29,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     port: Number(PG_PORT) || 5432
   }
 
-  await log.info('connecting to postgres:', ...Object.keys(info).map(key => (info as { [x: string]: unknown })[key]))
+  logger.info('connecting to postgres:', ...Object.keys(info).map(key => (info as { [x: string]: unknown })[key]))
 
   const client = configureClient({ ...info, password: PG_PASS })
 
@@ -43,7 +43,7 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     client.setConnected(true)
     return client
   } catch (err) {
-    await log.error('postgres connection error', err.stack)
+    logger.error('postgres connection error', err.stack)
     client.setConnected(false)
     throw err
   }
@@ -59,7 +59,7 @@ export async function getReadOnlyClient(): Promise<MDSPostgresClient> {
     return readOnlyCachedClient
   } catch (err) {
     readOnlyCachedClient = null
-    await log.error('postgres connection error', err)
+    logger.error('postgres connection error', err)
     throw err
   }
 }
@@ -74,7 +74,7 @@ export async function getWriteableClient(): Promise<MDSPostgresClient> {
     return writeableCachedClient
   } catch (err) {
     writeableCachedClient = null
-    await log.error('postgres connection error', err)
+    logger.error('postgres connection error', err)
     throw err
   }
 }
@@ -92,7 +92,7 @@ export async function makeReadOnlyQuery(sql: string, vals?: SqlVals): Promise<an
     const result = await client.query(sql, values)
     return result.rows
   } catch (err) {
-    await log.error(`error with SQL query ${sql}`, err.stack || err)
+    logger.error(`error with SQL query ${sql}`, err.stack || err)
     throw err
   }
 }

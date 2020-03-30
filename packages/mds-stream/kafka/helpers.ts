@@ -1,5 +1,5 @@
 import Kafka, { ProducerStream, ConsumerStream } from 'node-rdkafka'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import {
   ProducerOptions,
   ProducerStreamOptions,
@@ -14,7 +14,7 @@ const {
 } = process
 
 export const defaultKafkaErrorHandler = async (err: object) => {
-  await log.error(`Kafka Error ${JSON.stringify(err)}`)
+  logger.error(`Kafka Error ${JSON.stringify(err)}`)
 }
 
 export const createWriteStreamWrapper = (

@@ -1,6 +1,6 @@
 import { UUID, Timestamp, VEHICLE_EVENT } from '@mds-core/mds-types'
 import { now, yesterday } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
 
@@ -64,7 +64,7 @@ export async function readTripIds(params: Partial<ReadTripIdsQueryParams> = {}):
       count
     }
   } catch (err) {
-    await log.error('readTripIds error', err)
+    logger.error('readTripIds error', err)
     throw err
   }
 }

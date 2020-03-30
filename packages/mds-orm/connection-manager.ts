@@ -11,7 +11,7 @@ export const ConnectionManager = (options: ConnectionOptions[] = Connections()) 
       try {
         connections = await createConnections(options)
       } catch (error) {
-        await logger.error('Database Initialization Error', error)
+        logger.error('Database Initialization Error', error)
         throw new ServerError('Database Initialization Error')
       }
     }
@@ -26,7 +26,7 @@ export const ConnectionManager = (options: ConnectionOptions[] = Connections()) 
       }
       return connection
     } catch (error) {
-      await logger.error('Database Connection Error', error)
+      logger.error('Database Connection Error', error)
       throw new ServerError('Database Connection Error')
     }
   }

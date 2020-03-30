@@ -51,7 +51,7 @@ import { serviceAreaMap } from 'ladot-service-areas'
 
 import { v4 as uuid } from 'uuid'
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import {
   JUMP_PROVIDER_ID,
@@ -278,7 +278,7 @@ function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
     [key: string]: { num_clusters: number; cluster_radii: number[]; cluster_centers: { lat: number; lng: number }[] }
   } = {}
 
-  log.info('clustering')
+  logger.info('clustering')
   serviceAreaKeys.slice(0, 1).map(key => {
     const serviceArea = serviceAreaMap[key]
     const serviceAreaMultipoly = serviceArea.area

@@ -1,6 +1,6 @@
 import WebSocket from 'ws'
 import { VehicleEvent, Telemetry } from '@mds-core/mds-types'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { setWsHeartbeat, WebSocketBase } from 'ws-heartbeat/client'
 import requestPromise from 'request-promise'
 import { ENTITY_TYPE } from './types'
@@ -34,7 +34,7 @@ async function getClient() {
     }
 
     connection.onerror = async err => {
-      return log.error(err)
+      return logger.error(err)
     }
 
     return connection
@@ -49,7 +49,7 @@ async function sendPush(entity: ENTITY_TYPE, data: VehicleEvent | Telemetry) {
     const client = await getClient()
     return client.send(`PUSH%${entity}%${JSON.stringify(data)}`)
   } catch (err) {
-    await log.warn(err)
+    logger.warn(err)
   }
 }
 

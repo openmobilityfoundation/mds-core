@@ -21,7 +21,7 @@ export const readJurisdiction = async (jurisdiction_id: UUID): Promise<Jurisdict
       .getOne()
     return entity
   } catch (error) {
-    await logger.error('readJurisdiction', { jurisdiction_id }, error)
+    logger.error('readJurisdiction', { jurisdiction_id }, error)
     throw new ServerError('Error Reading Jurisdiction', { jurisdiction_id })
   }
 }
@@ -32,7 +32,7 @@ export const readJurisdictions = async (): Promise<JurisdictionEntity[]> => {
     const entities = await connection.getRepository(JurisdictionEntity).createQueryBuilder().getMany()
     return entities
   } catch (error) {
-    await logger.error('readJurisdictions', error)
+    logger.error('readJurisdictions', error)
     throw new ServerError('Error Reading Jurisdictions')
   }
 }
@@ -51,7 +51,7 @@ export const writeJurisdictions = async (
       .execute()
     return entities
   } catch (error) {
-    await logger.error('writeJurisdictions', error)
+    logger.error('writeJurisdictions', error)
     throw new ServerError('Error Writing Jurisdictions')
   }
 }
@@ -74,7 +74,7 @@ export const updateJurisdiction = async (
       .execute()
     return entity
   } catch (error) {
-    await logger.error('updateJurisdiction', { jurisdiction_id, jurisdiction }, error)
+    logger.error('updateJurisdiction', { jurisdiction_id, jurisdiction }, error)
     throw new ServerError('Error Updating Jurisdiction', { jurisdiction_id })
   }
 }

@@ -20,7 +20,7 @@ import { Policy, UUID } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import { now, pathsFor, NotFoundError, isUUID } from '@mds-core/mds-utils'
 import { policySchemaJson } from '@mds-core/mds-schema-validators'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
 
 function api(app: express.Express): express.Express {
@@ -37,12 +37,12 @@ function api(app: express.Express): express.Express {
           // const { provider_id } = res.locals.claims
           // /* istanbul ignore next */
           // if (!provider_id) {
-          //   await log.warn('Missing provider_id in', req.originalUrl)
+          //   logger.warn('Missing provider_id in', req.originalUrl)
           //   return res.status(400).send({ result: 'missing provider_id' })
           // }
           // /* istanbul ignore next */
           // if (!isUUID(provider_id)) {
-          //   await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+          //   logger.warn(req.originalUrl, 'bogus provider_id', provider_id)
           //   return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
           // }
           // if (!isProviderId(provider_id)) {
@@ -50,14 +50,14 @@ function api(app: express.Express): express.Express {
           //     result: `invalid provider_id ${provider_id} is not a known provider`
           //   })
           // }
-          // log.info(providerName(provider_id), req.method, req.originalUrl)
+          // logger.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
       }
     } catch (err) {
       /* istanbul ignore next */
-      await log.error(req.originalUrl, 'request validation fail:', err.stack)
+      logger.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -66,7 +66,7 @@ function api(app: express.Express): express.Express {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
     const { start_date = now(), end_date = now() } = req.query
-    log.info('read /policies', req.query, start_date, end_date)
+    logger.info('read /policies', req.query, start_date, end_date)
     if (start_date > end_date) {
       res.status(400).send({ result: 'start_date after end_date' })
       return
@@ -94,7 +94,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies/:policy_id'), async (req, res) => {
-    log.info('read policy', JSON.stringify(req.params))
+    logger.info('read policy', JSON.stringify(req.params))
     const { policy_id } = req.params
     if (!isUUID(policy_id)) {
       res.status(400).send({ error: 'bad_param' })
@@ -104,7 +104,7 @@ function api(app: express.Express): express.Express {
       const policy = await db.readPolicy(policy_id)
       res.status(200).send(policy)
     } catch (err) {
-      await log.error('failed to read one policy', err)
+      logger.error('failed to read one policy', err)
       if (err instanceof NotFoundError) {
         res.status(404).send({ result: 'not found' })
       } else {

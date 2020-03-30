@@ -1,6 +1,6 @@
 import { Geography, GeographySummary, UUID, Recorded, GeographyMetadata } from '@mds-core/mds-types'
 import { BadParamsError, NotFoundError, DependencyMissingError, AlreadyPublishedError } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
 
@@ -16,7 +16,7 @@ export async function readSingleGeography(geography_id: UUID): Promise<Geography
   const { rows } = await client.query(sql)
 
   if (rows.length === 0) {
-    await log.info(`readSingleGeography failed for ${geography_id}`)
+    logger.info(`readSingleGeography failed for ${geography_id}`)
     throw new NotFoundError(`geography of id ${geography_id} not found`)
   }
 
@@ -71,7 +71,7 @@ export async function readGeographies(params: Partial<ReadGeographiesParams> = {
       return geography
     })
   } catch (err) {
-    await log.error('readGeographies', err)
+    logger.error('readGeographies', err)
     throw err
   }
 }
@@ -186,7 +186,7 @@ export async function publishGeography(params: PublishGeographiesParams): Promis
     }: { rows: Recorded<Geography>[] } = await client.query(sql, vals.values())
     return { ...recorded_geography }
   } catch (err) {
-    await log.error(err)
+    logger.error(err)
     throw err
   }
 }
@@ -249,7 +249,7 @@ export async function deleteGeographyMetadata(geography_id: UUID) {
     const sql = `DELETE FROM ${schema.TABLE.geography_metadata} WHERE geography_id = ${vals.add(geography_id)}`
     await client.query(sql, vals.values())
   } catch (err) {
-    await log.error(`deleteGeographyMetadata called on non-existent metadata for ${geography_id}`, err.stack)
+    logger.error(`deleteGeographyMetadata called on non-existent metadata for ${geography_id}`, err.stack)
     throw err
   }
   return geography_id

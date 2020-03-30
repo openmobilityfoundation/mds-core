@@ -1,7 +1,7 @@
 import { isTimestamp, now, days, inc, head, tail } from '@mds-core/mds-utils'
 import { UUID, CountMap, TripsStats, VEHICLE_EVENTS, VehicleEvent } from '@mds-core/mds-types'
 import cache from '@mds-core/mds-cache'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 // TODO move to utils?
 export function asInt(n: string | number | undefined): number | undefined {
@@ -108,9 +108,9 @@ export async function getMaps(): Promise<{
 }> {
   try {
     // const telemetry: Telemetry[] = await cache.readAllTelemetry()
-    // log.info('read telemetry')
+    // logger.info('read telemetry')
     const events = await cache.readAllEvents()
-    log.info('read events')
+    logger.info('read events')
     const eventSeed: { [s: string]: VehicleEvent } = {}
     const eventMap: { [s: string]: VehicleEvent } = events.reduce((map, event) => {
       return event ? Object.assign(map, { [event.device_id]: event }) : map

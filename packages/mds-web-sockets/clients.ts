@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { WebSocketAuthorizer } from '@mds-core/mds-api-authorizer'
 import { AuthorizationError } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import jwt from 'jsonwebtoken'
 import jwks from 'jwks-rsa'
 import { promisify } from 'util'
@@ -50,7 +50,7 @@ export class Clients {
         try {
           this.subList[entity].push(client)
         } catch {
-          return log.error(`failed to push ${entity}`)
+          return logger.error(`failed to push ${entity}`)
         }
       })
     )
@@ -77,7 +77,7 @@ export class Clients {
         client.send(`AUTH%${JSON.stringify({ status: 'Failure' })}`)
       }
     } catch (err) {
-      await log.warn(err)
+      logger.warn(err)
       client.send(JSON.stringify(err))
     }
   }
@@ -89,7 +89,7 @@ export class Clients {
       const key = (await this.getKey(header)) as string
       return jwt.verify(token, key, { audience: JWT_AUDIENCE, issuer: JWT_ISSUER })
     } catch (err) {
-      await log.warn(err)
+      logger.warn(err)
       return false
     }
   }

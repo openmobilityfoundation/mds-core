@@ -77,7 +77,7 @@ export const GetEventsHandler = async (req: GetEventsRequest, res: GetEventsResp
     })
   } catch (err) {
     if (err instanceof ValidationError) {
-      await logger.warn(req.method, req.originalUrl, err)
+      logger.warn(req.method, req.originalUrl, err)
       return res.status(400).send({ error: err })
     }
     /* istanbul ignore next */

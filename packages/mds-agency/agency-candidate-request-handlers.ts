@@ -1,5 +1,5 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { isUUID } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
 import { providerName } from '@mds-core/mds-providers'
@@ -15,7 +15,7 @@ export const readAllVehicleIds = async (req: AgencyApiRequest, res: AgencyApiRes
     })
   }
 
-  await log.info(query_provider_id ? providerName(query_provider_id) : null, 'get /vehicles')
+  logger.info(query_provider_id ? providerName(query_provider_id) : null, 'get /vehicles')
 
   const items = await db.readDeviceIds(query_provider_id)
   const data: { [s: string]: string[] } = {}

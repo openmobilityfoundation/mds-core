@@ -17,7 +17,7 @@
 import db from '@mds-core/mds-db'
 import express from 'express'
 import { v4 as uuid } from 'uuid'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import urls from 'url'
 import {
   pathsFor,
@@ -131,7 +131,7 @@ function api(app: express.Express): express.Express {
           return next()
         }
       }
-      await log.warn('Missing subject_id', req.method, req.originalUrl)
+      logger.warn('Missing subject_id', req.method, req.originalUrl)
       // 403 Forbidden
       return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
     }
@@ -155,7 +155,7 @@ function api(app: express.Express): express.Express {
         return res.status(400).send({ error: err })
       }
       // 500 Internal Server Error
-      await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+      logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
       return res.status(500).send({ error: new ServerError(err) })
     }
   })
@@ -239,7 +239,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -290,7 +290,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -336,7 +336,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -402,7 +402,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -452,7 +452,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -564,7 +564,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -590,7 +590,7 @@ function api(app: express.Express): express.Express {
           return res.status(400).send({ error: err })
         }
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -634,7 +634,7 @@ function api(app: express.Express): express.Express {
           .send({ count, audits: auditsWithAttachments, links: asJsonApiLinks(req, skip, take, count) })
       } catch (err) /* istanbul ignore next */ {
         // 500 Internal Server Error
-        await log.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
+        logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
         return res.status(500).send({ error: new ServerError(err) })
       }
     }
@@ -663,7 +663,7 @@ function api(app: express.Express): express.Express {
         const response = await getVehicles(skip, take, url, provider_id, req.query, bbox, strict)
         return res.status(200).send(response)
       } catch (err) {
-        await log.error('getVehicles fail', err)
+        logger.error('getVehicles fail', err)
         return res.status(500).send({
           error: 'server_error',
           error_description: 'an internal server error has occurred and been logged'
@@ -685,7 +685,7 @@ function api(app: express.Express): express.Express {
         res.status(404).send({ error: new NotFoundError('vehicle not found', { provider_id, vin }) })
       }
     } catch (err) {
-      await log.error('getVehicle fail', err)
+      logger.error('getVehicle fail', err)
       res.status(500).send({
         error: 'server_error',
         error_description: 'an internal server error has occurred and been logged'
@@ -718,7 +718,7 @@ function api(app: express.Express): express.Express {
         audit_trip_id
       })
     } catch (err) {
-      await log.error('post attachment fail', err)
+      logger.error('post attachment fail', err)
       return res.status(500).send({ error: new ServerError(err) })
     }
   })
@@ -732,7 +732,7 @@ function api(app: express.Express): express.Express {
       await deleteAuditAttachment(audit_trip_id, attachment_id)
       res.status(200).send({})
     } catch (err) {
-      await log.error('delete attachment error', err)
+      logger.error('delete attachment error', err)
       if (err instanceof NotFoundError) {
         return res.status(404).send({ error: err })
       }

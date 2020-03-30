@@ -26,7 +26,7 @@ import {
   AlreadyPublishedError
 } from '@mds-core/mds-utils'
 import { policyValidationDetails } from '@mds-core/mds-schema-validators'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'
 import { getPolicies } from './request-handlers'
@@ -47,7 +47,7 @@ function api(app: express.Express): express.Express {
       const details = policyValidationDetails(policy)
 
       if (details != null) {
-        await log.error('invalid policy json', details)
+        logger.error('invalid policy json', details)
         return res.status(400).send(details)
       }
 
@@ -59,7 +59,7 @@ function api(app: express.Express): express.Express {
           return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
         }
         /* istanbul ignore next */
-        await log.error('failed to write policy', err)
+        logger.error('failed to write policy', err)
         /* istanbul ignore next */
         return res.status(500).send({ error: new ServerError(err) })
       }
@@ -88,7 +88,7 @@ function api(app: express.Express): express.Express {
           return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
         }
         /* istanbul ignore next */
-        await log.error('failed to publish policy', err.stack)
+        logger.error('failed to publish policy', err.stack)
         /* istanbul ignore next */
         return res.status(404).send({ result: 'not found' })
       }
@@ -104,7 +104,7 @@ function api(app: express.Express): express.Express {
       const details = policyValidationDetails(policy)
 
       if (details != null) {
-        await log.error('invalid policy json', details)
+        logger.error('invalid policy json', details)
         return res.status(400).send(details)
       }
 
@@ -119,7 +119,7 @@ function api(app: express.Express): express.Express {
           return res.status(409).send({ error: `policy ${policy.policy_id} has already been published!` })
         }
         /* istanbul ignore next */
-        await log.error('failed to edit policy', err.stack)
+        logger.error('failed to edit policy', err.stack)
         /* istanbul ignore next */
         if (err instanceof NotFoundError) {
           res.status(404).send({ result: 'not found' })
@@ -140,7 +140,7 @@ function api(app: express.Express): express.Express {
         return res.status(200).send({ result: `successfully deleted policy of id ${policy_id}` })
       } catch (err) {
         /* istanbul ignore next */
-        await log.error('failed to delete policy', err.stack)
+        logger.error('failed to delete policy', err.stack)
         /* istanbul ignore next */
         return res.status(404).send({ result: 'policy either not found, or has already been published' })
       }
@@ -160,13 +160,13 @@ function api(app: express.Express): express.Express {
         params.get_unpublished = get_unpublished === 'true'
       }
 
-      log.info('read /policies/meta', req.query)
+      logger.info('read /policies/meta', req.query)
       try {
         const metadata = await db.readBulkPolicyMetadata(params)
 
         res.status(200).send(metadata)
       } catch (err) {
-        await log.error('failed to read policies', err)
+        logger.error('failed to read policies', err)
         if (err instanceof BadParamsError) {
           res.status(400).send({
             result:
@@ -193,7 +193,7 @@ function api(app: express.Express): express.Express {
           res.status(404).send({ result: 'not found' })
         }
       } catch (err) {
-        await log.error('failed to read one policy', err)
+        logger.error('failed to read one policy', err)
         res.status(404).send({ result: 'not found' })
       }
     }
@@ -208,7 +208,7 @@ function api(app: express.Express): express.Express {
         const result = await db.readSinglePolicyMetadata(policy_id)
         return res.status(200).send(result)
       } catch (err) {
-        await log.error('failed to read policy metadata', err.stack)
+        logger.error('failed to read policy metadata', err.stack)
         return res.status(404).send({ result: 'not found' })
       }
     }
@@ -228,7 +228,7 @@ function api(app: express.Express): express.Express {
             await db.writePolicyMetadata(policy_metadata)
             return res.status(201).send(policy_metadata)
           } catch (writeErr) {
-            await log.error('failed to write policy metadata', writeErr.stack)
+            logger.error('failed to write policy metadata', writeErr.stack)
             return res.status(500).send(new ServerError())
           }
         } else {

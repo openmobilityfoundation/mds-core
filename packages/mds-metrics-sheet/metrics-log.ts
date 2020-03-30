@@ -16,7 +16,7 @@
 
 import GoogleSpreadsheet from 'google-spreadsheet'
 import { promisify } from 'util'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
   LIME_PROVIDER_ID,
@@ -144,15 +144,15 @@ async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
   const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID)
   await promisify(doc.useServiceAccountAuth)(creds)
   const info = await promisify(doc.getInfo)()
-  log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
+  logger.info(`Loaded doc: ${info.title} by ${info.author.email}`)
   const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
-  log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
+  logger.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
   if (sheet.title === sheetName) {
     const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
-    log.info(`Wrote ${inserted.length} rows.`)
+    logger.info(`Wrote ${inserted.length} rows.`)
     return Promise.all(inserted)
   }
-  log.info('Wrong sheet!')
+  logger.info('Wrong sheet!')
 }
 
 export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
@@ -196,7 +196,7 @@ export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[
       .map(provider => mapProviderToPayload(provider, last))
     return rows
   } catch (err) {
-    await log.error(`getProviderMetrics() API call error on ${err.url}`, err)
+    logger.error(`getProviderMetrics() API call error on ${err.url}`, err)
     return getProviderMetrics(iter + 1)
   }
 }
@@ -206,6 +206,6 @@ export const MetricsLogHandler = async () => {
     const rows = await getProviderMetrics(0)
     await appendSheet('Metrics Log', rows)
   } catch (err) {
-    await log.error('MetricsLogHandler', err)
+    logger.error('MetricsLogHandler', err)
   }
 }

@@ -1,5 +1,5 @@
 import { VehicleEvent, Device, Telemetry } from '@mds-core/mds-types'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import { dropTables, updateSchema } from './migration'
 import { MDSPostgresClient } from './sql-utils'
@@ -50,7 +50,7 @@ async function health(): Promise<{
   using: string
   stats: { current_running_queries: number; cache_hit_result: { heap_read: string; heap_hit: string; ratio: string } }
 }> {
-  log.info('postgres health check')
+  logger.info('postgres health check')
   const currentQueriesSQL = `SELECT query
     FROM pg_stat_activity
     WHERE query <> '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%' AND query <> ''
@@ -84,7 +84,7 @@ async function shutdown(): Promise<void> {
     const readOnlyClient = await getReadOnlyClient()
     await readOnlyClient.end()
   } catch (err) {
-    await log.error('error during disconnection', err.stack)
+    logger.error('error during disconnection', err.stack)
   }
 }
 
@@ -97,17 +97,17 @@ async function seed(data: {
   telemetry?: Telemetry[]
 }) {
   if (data) {
-    log.info('postgres seed start')
+    logger.info('postgres seed start')
     if (data.devices) {
       await Promise.all(data.devices.map(async (device: Device) => writeDevice(device)))
     }
-    log.info('postgres devices seeded')
+    logger.info('postgres devices seeded')
     if (data.events) await Promise.all(data.events.map(async (event: VehicleEvent) => writeEvent(event)))
-    log.info('postgres events seeded')
+    logger.info('postgres events seeded')
     if (data.telemetry) {
       await writeTelemetry(data.telemetry)
     }
-    log.info('postgres seed done')
+    logger.info('postgres seed done')
     return Promise.resolve()
   }
   return Promise.resolve('no data')

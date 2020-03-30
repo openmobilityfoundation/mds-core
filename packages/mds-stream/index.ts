@@ -60,7 +60,7 @@ const getNats = () => {
     })
 
     nats.on('error', async message => {
-      await logger.error(message)
+      logger.error(message)
     })
   }
 
@@ -157,7 +157,7 @@ async function getClient() {
     logger.info(`connecting to redis on ${host}:${port}`)
     cachedClient = redis.createClient(Number(port), host)
     cachedClient.on('error', async err => {
-      await logger.error(`redis error ${err}`)
+      logger.error(`redis error ${err}`)
     })
     await cachedClient.dbsizeAsync().then(size => logger.info(`redis has ${size} keys`))
   }

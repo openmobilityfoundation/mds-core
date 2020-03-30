@@ -17,7 +17,7 @@
 import express from 'express'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import {
   isUUID,
   now,
@@ -46,7 +46,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            await log.warn('Missing provider_id in', req.originalUrl)
+            logger.warn('Missing provider_id in', req.originalUrl)
             return res.status(400).send({
               result: 'missing provider_id'
             })
@@ -54,7 +54,7 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
+            logger.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -63,14 +63,14 @@ function api(app: express.Express): express.Express {
           // stash provider_id
           res.locals.provider_id = provider_id
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          logger.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send('Unauthorized')
         }
       }
     } catch (err) {
       /* istanbul ignore next */
-      await log.error(req.originalUrl, 'request validation fail:', err.stack)
+      logger.error(req.originalUrl, 'request validation fail:', err.stack)
     }
     next()
   })
@@ -81,7 +81,7 @@ function api(app: express.Express): express.Express {
 
     /* istanbul ignore next */
     async function fail(err: Error) {
-      await log.error(err.stack || err)
+      logger.error(err.stack || err)
       return res.status(500).send(new ServerError())
     }
 
@@ -160,7 +160,7 @@ function api(app: express.Express): express.Express {
     }
 
     async function fail(err: Error) {
-      await log.error(err.stack || err)
+      logger.error(err.stack || err)
       if (err.message.includes('invalid rule_id')) {
         return res.status(404).send(err.message)
       }

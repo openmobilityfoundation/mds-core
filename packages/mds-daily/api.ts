@@ -16,7 +16,7 @@
 
 import express from 'express'
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathsFor, now } from '@mds-core/mds-utils'
@@ -54,7 +54,7 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
 
         if (provider_id) {
           if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+            logger.warn(req.originalUrl, 'bogus provider_id', provider_id)
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -66,7 +66,7 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
             })
           }
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          logger.info(providerName(provider_id), req.method, req.originalUrl)
         }
       } else {
         return res.status(401).send('Unauthorized')
@@ -74,7 +74,7 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
     }
   } catch (err) {
     /* istanbul ignore next */
-    await log.error(req.originalUrl, 'request validation fail:', err.stack)
+    logger.error(req.originalUrl, 'request validation fail:', err.stack)
   }
   next()
 }
@@ -104,7 +104,7 @@ function api(app: express.Express): express.Express {
       const events = await cache.readAllEvents()
       const finish = now()
       const timeElapsed = finish - start
-      await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() time elapsed: ${timeElapsed}`)
+      logger.info(`MDS-DAILY /admin/events -> cache.readAllEvents() time elapsed: ${timeElapsed}`)
       res.status(200).send({
         events
       })

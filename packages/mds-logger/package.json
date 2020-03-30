@@ -13,10 +13,7 @@
   ],
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
-  "dependencies": {
-    "@slack/client": "5.0.2",
-    "pushover-notifications": "1.2.2"
-  },
+  "dependencies": {},
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",

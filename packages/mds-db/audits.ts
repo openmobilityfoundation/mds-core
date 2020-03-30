@@ -1,6 +1,6 @@
 import { Audit, AuditEvent, UUID, Recorded } from '@mds-core/mds-types'
 import { now } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import { ReadAuditsQueryParams } from './types'
 
@@ -20,7 +20,7 @@ export async function readAudit(audit_trip_id: UUID) {
     return result.rows[0]
   }
   const error = `readAudit db failed for ${audit_trip_id}: rows=${result.rows.length}`
-  await log.warn(error)
+  logger.warn(error)
   throw new Error(error)
 }
 
@@ -64,7 +64,7 @@ export async function readAudits(query: ReadAuditsQueryParams) {
       audits: selectResult.rows
     }
   } catch (err) {
-    await log.error('readAudits error', err.stack || err)
+    logger.error('readAudits error', err.stack || err)
     throw err
   }
 }
@@ -82,7 +82,7 @@ export async function writeAudit(audit: Audit): Promise<Recorded<Audit>> {
     rows: [recorded_audit]
   }: { rows: Recorded<Audit>[] } = await client.query(sql, values)
   const finish = now()
-  log.info(`MDS-DB writeAudit time elapsed: ${finish - start}ms`)
+  logger.info(`MDS-DB writeAudit time elapsed: ${finish - start}ms`)
   return { ...audit, ...recorded_audit }
 }
 
@@ -107,7 +107,7 @@ export async function readAuditEvents(audit_trip_id: UUID): Promise<Recorded<Aud
     const result = await client.query(sql, sqlVals)
     return result.rows
   } catch (err) {
-    await log.error('readAuditEvents error', err.stack || err)
+    logger.error('readAuditEvents error', err.stack || err)
     throw err
   }
 }
@@ -124,6 +124,6 @@ export async function writeAuditEvent(audit_event: AuditEvent): Promise<Recorded
     rows: [recorded_audit_event]
   }: { rows: Recorded<AuditEvent>[] } = await client.query(sql, values)
   const finish = now()
-  log.info(`MDS-DB writeAuditEvent time elapsed: ${finish - start}ms`)
+  logger.info(`MDS-DB writeAuditEvent time elapsed: ${finish - start}ms`)
   return { ...audit_event, ...recorded_audit_event }
 }
