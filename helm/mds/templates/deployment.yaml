@@ -88,6 +88,8 @@ spec:
             value: nats.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
           - name: STAN_CLUSTER
             value: nats-streaming
+          - name: KAFKA_HOST
+            value: host.docker.internal:9092
           - name: TENANT_ID
           {{- if hasKey $.Values "tenantId" }}
             value: {{ $.Values.tenantId }}

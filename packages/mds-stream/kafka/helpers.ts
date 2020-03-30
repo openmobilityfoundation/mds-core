@@ -1,70 +1,62 @@
-import Kafka, { ProducerStream, ConsumerStream } from 'node-rdkafka'
+import { Kafka, Producer, EachMessagePayload, Consumer } from 'kafkajs'
 import logger from '@mds-core/mds-logger'
-import {
-  ProducerOptions,
-  ProducerStreamOptions,
-  Producer,
-  Consumer,
-  ConsumerOptions,
-  ConsumerStreamOptions
-} from './types'
+import { Nullable } from '@mds-core/mds-types'
 
 const {
   env: { KAFKA_HOST = 'localhost:9092' }
 } = process
 
-export const defaultKafkaErrorHandler = async (err: object) => {
-  logger.error(`Kafka Error ${JSON.stringify(err)}`)
+export interface StreamProducerOptions {
+  clientId: string
 }
 
-export const createWriteStreamWrapper = (
-  producerOptions: Partial<ProducerOptions>,
-  streamOptions: Partial<ProducerStreamOptions>,
-  errorHandler?: (err: any) => Promise<void>
+export const createStreamProducer = async ({ clientId = 'writer' }: Partial<StreamProducerOptions> = {}) => {
+  try {
+    const kafka = new Kafka({ clientId, brokers: [KAFKA_HOST] })
+    const producer = kafka.producer()
+    await producer.connect()
+    return producer
+  } catch (err) {
+    logger.error(err)
+  }
+  return null
+}
+
+export interface StreamConsumerOptions {
+  clientId: string
+  groupId: string
+}
+
+export const createStreamConsumer = async (
+  topic: string,
+  eachMessage: (payload: EachMessagePayload) => Promise<void>,
+  { clientId = 'client', groupId = 'group' }: Partial<StreamConsumerOptions> = {}
 ) => {
-  const stream = ((Kafka.Producer as unknown) as Producer).createWriteStream(
-    { ...producerOptions, 'metadata.broker.list': KAFKA_HOST, 'queue.buffering.max.messages': 100000 },
-    {},
-    { ...streamOptions }
-  )
-
-  stream.on('error', errorHandler ?? defaultKafkaErrorHandler)
-  return stream
+  try {
+    const kafka = new Kafka({ clientId, brokers: [KAFKA_HOST] })
+    const consumer = kafka.consumer({ groupId })
+    await consumer.connect()
+    await consumer.subscribe({ topic })
+    await consumer.run({ eachMessage })
+    return consumer
+  } catch (err) {
+    logger.error(err)
+  }
+  return null
 }
 
-export const createReadStreamWrapper = (
-  consumerOptions: Partial<ConsumerOptions>,
-  streamOptions: ConsumerStreamOptions,
-  readCb: (message: Kafka.ConsumerStreamMessage) => void,
-  errorHandler?: (err: any) => Promise<void>
-) => {
-  const stream = ((Kafka.KafkaConsumer as unknown) as Consumer).createReadStream(
-    { ...consumerOptions, 'metadata.broker.list': KAFKA_HOST, 'group.id': 'default' },
-    {},
-    { ...streamOptions }
-  )
+export const isProducerReady = (stream: Nullable<Producer>): stream is Producer => stream !== null
 
-  stream.on('error', errorHandler ?? defaultKafkaErrorHandler)
-  stream.on('data', readCb)
-  return stream
-}
+export const isConsumerReady = (stream: Nullable<Consumer>): stream is Consumer => stream !== null
 
-export const isWriteStreamReady = (stream: ProducerStream | undefined): stream is ProducerStream => {
-  return stream !== undefined
-}
-
-export const isReadStreamReady = (stream: ConsumerStream | undefined): stream is ConsumerStream => {
-  return stream !== undefined
-}
-
-export const killWriteStream = (stream: ProducerStream | undefined) => {
-  if (isWriteStreamReady(stream)) {
-    stream.destroy()
+export const disconnectProducer = async (producer: Nullable<Producer>) => {
+  if (isProducerReady(producer)) {
+    await producer.disconnect()
   }
 }
 
-export const killReadStream = (stream: ConsumerStream | undefined) => {
-  if (isReadStreamReady(stream)) {
-    stream.destroy()
+export const disconnectConsumer = async (consumer: Nullable<Consumer>) => {
+  if (isConsumerReady(consumer)) {
+    await consumer.disconnect()
   }
 }

@@ -32,8 +32,8 @@ import {
 } from './types'
 import { AgencyKafkaStream } from './kafka/agency-stream-kafka'
 
-import { KafkaStreamReader } from './kafka/read-stream'
-import { KafkaStreamWriter } from './kafka/write-stream'
+import { KafkaStreamConsumer } from './kafka/stream-consumer'
+import { KafkaStreamProducer } from './kafka/stream-producer'
 
 const { env } = process
 
@@ -165,7 +165,7 @@ async function getClient() {
 }
 
 async function initialize() {
-  AgencyKafkaStream.initialize()
+  await AgencyKafkaStream.initialize()
   if (env.SINK) {
     getBinding()
   } else {
@@ -187,7 +187,7 @@ async function shutdown() {
     await cachedClient.quit()
     cachedClient = null
   }
-  AgencyKafkaStream.shutdown()
+  await AgencyKafkaStream.shutdown()
 }
 
 async function writeStream(stream: Stream, field: string, value: unknown) {
@@ -215,7 +215,7 @@ async function writeDevice(device: Device) {
 
 async function writeEvent(event: VehicleEvent) {
   if (env.NATS) {
-    return writeNatsEvent('event', JSON.stringify(event))
+    await writeNatsEvent('event', JSON.stringify(event))
   }
   if (env.KAFKA_HOST) {
     await AgencyKafkaStream.writeEvent(event)
@@ -348,6 +348,6 @@ export = {
   writeStream,
   writeStreamBatch,
   writeTelemetry,
-  KafkaStreamReader,
-  KafkaStreamWriter
+  KafkaStreamConsumer,
+  KafkaStreamProducer
 }

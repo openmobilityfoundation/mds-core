@@ -4,7 +4,7 @@ import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
 import { Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
-import { initializeStanSubscriber } from '@mds-core/mds-event-server'
+import { initializeStanSubscriber } from '@mds-core/mds-stream/nats-streaming/nats'
 import { Clients } from './clients'
 import { ENTITY_TYPE } from './types'
 

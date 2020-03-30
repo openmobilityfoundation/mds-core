@@ -1,13 +1,8 @@
-import express from 'express'
 import { v4 as uuid } from 'uuid'
 import stan from 'node-nats-streaming'
-import { pathsFor } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-import { AboutRequestHandler, HealthRequestHandler, JsonBodyParserMiddleware } from '@mds-core/mds-api-server'
-import Cloudevent, { BinaryHTTPReceiver } from 'cloudevents-sdk/v1'
 
 export type EventProcessor<TData, TResult> = (type: string, data: TData) => Promise<TResult>
-export type CEEventProcessor<TData, TResult> = (type: string, data: TData, event: Cloudevent) => Promise<TResult>
 
 const SUBSCRIPTION_TYPES = ['event', 'telemetry'] as const
 type SUBSCRIPTION_TYPE = typeof SUBSCRIPTION_TYPES[number]
@@ -117,53 +112,4 @@ export const initializeStanSubscriber = async <TData, TResult>({
   } catch (err) {
     logger.error(err)
   }
-}
-
-export const EventServer = <TData, TResult>(
-  processor?: CEEventProcessor<TData, TResult>,
-  server: express.Express = express()
-): express.Express => {
-  const receiver = new BinaryHTTPReceiver()
-  const { TENANT_ID = 'mds' } = process.env
-  const TENANT_REGEXP = new RegExp(`^${TENANT_ID}\\.`)
-
-  const parseCloudEvent = (req: express.Request): Cloudevent => {
-    try {
-      const event = receiver.parse(req.body, req.headers)
-      return event.type(event.getType().replace(TENANT_REGEXP, ''))
-    } catch {
-      throw new Error('Malformed CE')
-    }
-  }
-
-  // Disable x-powered-by header
-  server.disable('x-powered-by')
-
-  // Middleware
-  server.use(JsonBodyParserMiddleware({ limit: '1mb' }))
-
-  // Routes
-  server.get(pathsFor('/'), AboutRequestHandler)
-
-  server.get(pathsFor('/health'), HealthRequestHandler)
-
-  server.post('/', async (req, res) => {
-    const { method, headers, body } = req
-    try {
-      const event = parseCloudEvent(req)
-      logger.info('Cloud Event', method, event.format())
-      const result = processor
-        ? await processor(event.getType(), event.getData(), event)
-        : 'ERROR: No Processor Supplied'
-      return res.status(200).send({ result })
-    } catch (error) /* istanbul ignore next */ {
-      logger.error('Cloud Event', error, { method, headers, body })
-      if (String(error).includes('Malformed CE')) {
-        return res.status(500).send({ error })
-      }
-      return res.status(202).send({ error })
-    }
-  })
-
-  return server
 }

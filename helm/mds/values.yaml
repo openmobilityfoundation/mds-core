@@ -59,6 +59,10 @@ apis:
     pathPrefix: /geography-author
     version: latest
     migration: false
+  mds-event-processor:
+    enabled: true
+    version: latest
+    migration: false
 tenantId:
 timezone: America/Los_Angeles
 registry:
