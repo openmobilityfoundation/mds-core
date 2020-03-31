@@ -89,7 +89,7 @@ const parseAnchorPoint = (offset: string) => {
     return localTime.startOf('day')
   }
   if (offset === 'now') {
-    return localTime
+    return localTime.startOf('hour')
   }
   if (offset === 'yesterday') {
     return localTime.startOf('day').subtract(1, 'days')
