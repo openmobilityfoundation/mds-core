@@ -21,6 +21,7 @@
   "author": "City of Los Angeles",
   "dependencies": {
     "@container-images/env-inject": "0.1.25",
+    "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-stream-processor": "0.0.1"
   },
   "license": "Apache-2.0"

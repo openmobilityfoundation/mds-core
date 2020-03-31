@@ -14,4 +14,4 @@
     limitations under the License.
  */
 
-export * from './mds-event-processor'
+export type MessageLabeler<TMessage, TLabel> = (message: TMessage) => Promise<TLabel>

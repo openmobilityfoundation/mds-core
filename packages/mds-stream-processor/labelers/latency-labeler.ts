@@ -14,4 +14,14 @@
     limitations under the License.
  */
 
-export * from './mds-event-processor'
+import { Timestamp } from '@mds-core/mds-types'
+import { MessageLabeler } from './types'
+
+export interface LatencyLabel {
+  latency_ms: Timestamp
+}
+
+export const LatencyLabeler: () => MessageLabeler<
+  { timestamp: Timestamp; recorded: Timestamp },
+  LatencyLabel
+> = () => async ({ timestamp, recorded }) => ({ latency_ms: recorded - timestamp })

@@ -1,35 +1,19 @@
-import db from '@mds-core/mds-db'
-import { UUID, VEHICLE_TYPE, PROPULSION_TYPE, Nullable, Telemetry, Timestamp } from '@mds-core/mds-types'
+/*
+    Copyright 2019-2020 City of Los Angeles.
 
-type MessageLabeler<TMessage, TLabel> = (message: TMessage) => Promise<TLabel>
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-export interface DeviceLabel {
-  vehicle_type: VEHICLE_TYPE
-  vehicle_propulsion: PROPULSION_TYPE[]
-}
+        http://www.apache.org/licenses/LICENSE-2.0
 
-export const deviceLabeler: MessageLabeler<{ device_id: UUID }, DeviceLabel> = async ({ device_id }) => {
-  // TODO: Add device cache lookup
-  const { type: vehicle_type, propulsion: vehicle_propulsion } = await db.readDevice(device_id)
-  return { vehicle_type, vehicle_propulsion }
-}
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
 
-export interface MessageLatencyLabel {
-  message_latency_ms: Timestamp
-}
-
-export const messageLatencyLabeler: MessageLabeler<
-  { timestamp: Timestamp; recorded: Timestamp },
-  MessageLatencyLabel
-> = async ({ timestamp, recorded }) => ({ message_latency_ms: recorded - timestamp })
-
-export interface GeographiesLabel {
-  geographies: UUID[]
-}
-
-export const geographiesLabeler: MessageLabeler<{ telemetry?: Nullable<Telemetry> }, GeographiesLabel> = async ({
-  telemetry
-}) => {
-  // TODO: Add Point-in-polygon checks
-  return { geographies: [] }
-}
+export * from './device-labeler'
+export * from './geography-labeler'
+export * from './latency-labeler'

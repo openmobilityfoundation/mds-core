@@ -14,4 +14,17 @@
     limitations under the License.
  */
 
-export * from './mds-event-processor'
+import { UUID, Nullable, Telemetry } from '@mds-core/mds-types'
+import { MessageLabeler } from './types'
+
+export interface GeographyLabel {
+  geography_id: UUID[]
+}
+
+export const GeographyLabeler: () => MessageLabeler<
+  { telemetry?: Nullable<Telemetry> },
+  GeographyLabel
+> = () => async ({ telemetry }) => {
+  // TODO: Add Point-in-polygon checks
+  return { geography_id: telemetry ? [] : [] }
+}

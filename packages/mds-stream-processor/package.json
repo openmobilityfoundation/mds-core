@@ -21,6 +21,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
+    "@mds-core/mds-cache": "0.1.26",
     "@mds-core/mds-db": "0.1.26",
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-stream": "0.1.26",

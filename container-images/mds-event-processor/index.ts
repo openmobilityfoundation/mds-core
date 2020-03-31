@@ -14,21 +14,24 @@
     limitations under the License.
  */
 
-/* eslint-disable no-console */
-
 import { VehicleEventProcessor } from '@mds-core/mds-stream-processor/processors'
 import { env } from '@container-images/env-inject'
+import logger from '@mds-core/mds-logger'
 
 const { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST } = env()
 
 VehicleEventProcessor.run()
   .then(() => {
-    console.log(`${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) running on ${KAFKA_HOST}`)
+    logger.info(
+      `Running ${npm_package_name} v${npm_package_version} (${
+        npm_package_git_commit ?? 'local'
+      }) connected to Kafka on ${KAFKA_HOST}`
+    )
     return 0
   })
   .catch(error => {
-    console.log(
-      `${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) failed to start on ${KAFKA_HOST}`,
+    logger.error(
+      `${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) connected to Kafka on ${KAFKA_HOST} failed to start`,
       error
     )
     return 1
