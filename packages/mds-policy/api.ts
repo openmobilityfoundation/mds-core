@@ -22,6 +22,7 @@ import { now, pathsFor, NotFoundError, isUUID } from '@mds-core/mds-utils'
 import { policySchemaJson } from '@mds-core/mds-schema-validators'
 import log from '@mds-core/mds-logger'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
+import { PolicyApiVersionMiddleware } from './middleware'
 
 function api(app: express.Express): express.Express {
   /**
@@ -62,6 +63,8 @@ function api(app: express.Express): express.Express {
     next()
   })
 
+  app.use(PolicyApiVersionMiddleware)
+
   app.get(pathsFor('/policies'), async (req, res) => {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
@@ -85,7 +88,7 @@ function api(app: express.Express): express.Express {
         const p_end_date = p.end_date || Number.MAX_SAFE_INTEGER
         return end_date >= p_start_date && p_end_date >= start_date && !prev_policies.includes(p.policy_id)
       })
-      res.status(200).send({ policies: active })
+      res.status(200).send({ version: res.locals.version, policies: active })
     } catch (err) {
       res.status(404).send({
         result: 'not found'
@@ -102,7 +105,7 @@ function api(app: express.Express): express.Express {
     }
     try {
       const policy = await db.readPolicy(policy_id)
-      res.status(200).send(policy)
+      res.status(200).send({ version: res.locals.version, policy })
     } catch (err) {
       await log.error('failed to read one policy', err)
       if (err instanceof NotFoundError) {

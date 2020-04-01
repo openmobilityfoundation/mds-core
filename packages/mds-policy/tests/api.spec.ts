@@ -44,6 +44,7 @@ import {
 } from '@mds-core/mds-test-data'
 import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
+import { POLICY_API_DEFAULT_VERSION } from '../types'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const veniceSpecialOpsZone = require('../../ladot-service-areas/venice-special-ops-zone')
 
@@ -52,7 +53,7 @@ const log = console.log.bind(console)
 
 const request = supertest(ApiServer(api))
 
-const APP_JSON = 'application/json; charset=utf-8'
+const APP_JSON = 'application/vnd.mds.policy+json; charset=utf-8; version=0.1'
 
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
@@ -92,6 +93,7 @@ describe('Tests app', () => {
       .expect(200)
     const body = result.body
     log('read back one policy response:', body)
+    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
     // TODO verify contents
   })
@@ -105,6 +107,7 @@ describe('Tests app', () => {
     log('read back all policies response:', body)
     test.value(body.policies.length).is(1) // only one should be currently valid
     test.value(body.policies[0].policy_id).is(POLICY_UUID)
+    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
     // TODO verify contents
   })
@@ -129,6 +132,7 @@ describe('Tests app', () => {
     const body = result.body
     log('read back all published policies response:', body)
     test.value(body.policies.length).is(3)
+    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
     const isSupersededPolicyPresent = body.policies.some((policy: Policy) => {
       return policy.policy_id === POLICY_JSON.policy_id
@@ -149,6 +153,7 @@ describe('Tests app', () => {
     log('read back all policies response:', body)
     test.value(body.policies.length).is(1) // only one
     test.value(body.policies[0].policy_id).is(POLICY2_UUID)
+    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
     // TODO verify contents
   })
@@ -161,6 +166,7 @@ describe('Tests app', () => {
     const body = result.body
     log('read back all policies response:', body)
     test.value(body.policies.length).is(2) // current and future
+    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
   })
 
