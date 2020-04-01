@@ -148,7 +148,7 @@ export async function getVehicles(
       throw new Error('device in DB but not in cache')
     }
     const event = eventMap[device.device_id]
-    const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
+    const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.inactive
     const telemetry = event ? event.telemetry : null
     const updated = event ? event.timestamp : null
     return [...acc, { ...device, status, telemetry, updated }]
@@ -462,7 +462,8 @@ export function computeCompositeVehicleData(payload: VehiclePayload) {
     composite.updated = event.timestamp
     composite.status = (EVENT_STATUS_MAP[event.event_type as VEHICLE_EVENT] || 'unknown') as VEHICLE_STATUS
   } else {
-    composite.status = VEHICLE_STATUSES.removed
+    composite.status = VEHICLE_STATUSES.inactive
+    composite.prev_event = VEHICLE_EVENTS.deregister
   }
   if (telemetry) {
     if (telemetry.gps) {
@@ -479,20 +480,20 @@ const normalizeTelemetry = (telemetry: TelemetryResult) => {
   return telemetry
 }
 
-export async function readPayload(store: typeof cache | typeof db, device_id: UUID): Promise<VehiclePayload> {
+export async function readPayload(device_id: UUID): Promise<VehiclePayload> {
   const payload: VehiclePayload = {}
   try {
-    payload.device = await store.readDevice(device_id)
+    payload.device = await db.readDevice(device_id)
   } catch (err) {
     logger.error(err)
   }
   try {
-    payload.event = await store.readEvent(device_id)
-  } catch (err) {
-    logger.error(err)
-  }
-  try {
-    payload.telemetry = normalizeTelemetry(await store.readTelemetry(device_id))
+    payload.event = await cache.readEvent(device_id)
+    if (payload.event) {
+      if (payload.event.telemetry) {
+        payload.telemetry = normalizeTelemetry(payload.event.telemetry)
+      }
+    }
   } catch (err) {
     logger.error(err)
   }
