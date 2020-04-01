@@ -28,5 +28,8 @@
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26"
   },
+  "devDependencies": {
+    "sinon": "7.5.0"
+  },
   "license": "Apache-2.0"
 }

@@ -14,17 +14,30 @@
     limitations under the License.
  */
 
+import db from '@mds-core/mds-db'
 import { UUID, Nullable, Telemetry } from '@mds-core/mds-types'
+import { pointInShape } from '@mds-core/mds-utils'
 import { MessageLabeler } from './types'
 
 export interface GeographyLabel {
-  geography_id: UUID[]
+  geography_ids: UUID[]
 }
 
 export const GeographyLabeler: () => MessageLabeler<
   { telemetry?: Nullable<Telemetry> },
   GeographyLabel
 > = () => async ({ telemetry }) => {
-  // TODO: Add Point-in-polygon checks
-  return { geography_id: telemetry ? [] : [] }
+  const gps = telemetry?.gps
+  if (gps) {
+    const { lat, lng } = gps
+
+    const geographies = await db.readGeographies({ get_published: true })
+
+    const geography_ids = geographies
+      .filter(({ geography_json }) => pointInShape({ lat, lng }, geography_json))
+      .map(({ geography_id }) => geography_id)
+
+    return { geography_ids }
+  }
+  return { geography_ids: [] }
 }
