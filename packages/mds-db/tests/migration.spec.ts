@@ -2,7 +2,7 @@ import sinon from 'sinon'
 import test from 'unit.js'
 import assert from 'assert'
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { updateSchema, createTables, dropTables } from '../migration'
 import schema from '../schema'
 import { PGInfo, configureClient } from '../sql-utils'
@@ -138,9 +138,9 @@ if (pg_info.database) {
         assert.ok(err instanceof Error)
         assert.deepStrictEqual(err.message, 'err')
       }
-      log.info('hangingon')
+      logger.info('hangingon')
       await client.end()
-      log.info('hangingon')
+      logger.info('hangingon')
     })
   })
 }

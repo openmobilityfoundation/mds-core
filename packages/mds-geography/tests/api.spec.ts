@@ -336,17 +336,11 @@ describe('Tests app', () => {
     })
 
     it('cannot do bulk geography metadata reads (wrong auth)', async () => {
-      await request
-        .get(`/geographies/meta?get_unpublished=false`)
-        .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
+      await request.get(`/geographies/meta?get_unpublished=false`).set('Authorization', EVENTS_READ_SCOPE).expect(403)
     })
 
     it('cannot do bulk geography metadata reads (no auth)', async () => {
-      await request
-        .get(`/geographies/meta?get_published=false`)
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
+      await request.get(`/geographies/meta?get_published=false`).set('Authorization', EMPTY_SCOPE).expect(403)
     })
 
     it('verifies GETing a published geography metadata throws a permission error if the scope is wrong', done => {

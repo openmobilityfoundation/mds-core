@@ -70,14 +70,8 @@ const vehicleIdSchema = stringSchema.max(255)
 const telemetrySchema = Joi.object().keys({
   gps: Joi.object()
     .keys({
-      lat: numberSchema
-        .min(-90)
-        .max(90)
-        .required(),
-      lng: numberSchema
-        .min(-180)
-        .max(180)
-        .required(),
+      lat: numberSchema.min(-90).max(90).required(),
+      lng: numberSchema.min(-180).max(180).required(),
       speed: numberSchema.optional(),
       heading: numberSchema.optional(),
       accuracy: numberSchema.optional(),
@@ -95,12 +89,8 @@ const telemetrySchema = Joi.object().keys({
 
 const ruleSchema = Joi.object().keys({
   name: Joi.string().required(),
-  rule_id: Joi.string()
-    .guid()
-    .required(),
-  rule_type: Joi.string()
-    .valid(Object.values(RULE_TYPES))
-    .required(),
+  rule_id: Joi.string().guid().required(),
+  rule_type: Joi.string().valid(Object.values(RULE_TYPES)).required(),
   rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
   geographies: Joi.array().items(Joi.string().guid()),
   statuses: Joi.object()
@@ -127,34 +117,19 @@ const ruleSchema = Joi.object().keys({
 export const policySchema = Joi.object().keys({
   name: Joi.string().required(),
   description: Joi.string().required(),
-  policy_id: Joi.string()
-    .guid()
-    .required(),
-  start_date: Joi.date()
-    .timestamp('javascript')
-    .required(),
-  end_date: Joi.date()
-    .timestamp('javascript')
-    .allow(null),
-  prev_policies: Joi.array()
-    .items(Joi.string().guid())
-    .allow(null),
-  provider_ids: Joi.array()
-    .items(Joi.string().guid())
-    .allow(null),
-  rules: Joi.array()
-    .min(1)
-    .items(ruleSchema)
-    .required()
+  policy_id: Joi.string().guid().required(),
+  start_date: Joi.date().timestamp('javascript').required(),
+  end_date: Joi.date().timestamp('javascript').allow(null),
+  prev_policies: Joi.array().items(Joi.string().guid()).allow(null),
+  provider_ids: Joi.array().items(Joi.string().guid()).allow(null),
+  rules: Joi.array().min(1).items(ruleSchema).required()
 })
 
 const policiesSchema = Joi.array().items(policySchema)
 
 const featureSchema = Joi.object()
   .keys({
-    type: Joi.string()
-      .valid(['Feature'])
-      .required(),
+    type: Joi.string().valid(['Feature']).required(),
     properties: Joi.object().required(),
     geometry: Joi.object().required()
   })
@@ -162,26 +137,17 @@ const featureSchema = Joi.object()
 
 const featureCollectionSchema = Joi.object()
   .keys({
-    type: Joi.string()
-      .valid(['FeatureCollection'])
-      .required(),
-    features: Joi.array()
-      .min(1)
-      .items(featureSchema)
-      .required()
+    type: Joi.string().valid(['FeatureCollection']).required(),
+    features: Joi.array().min(1).items(featureSchema).required()
   })
   .unknown(true) // TODO
 
 export const geographySchema = Joi.object()
   .keys({
-    geography_id: Joi.string()
-      .guid()
-      .required(),
+    geography_id: Joi.string().guid().required(),
     geography_json: featureCollectionSchema,
     read_only: Joi.boolean().allow(null),
-    previous_geography_ids: Joi.array()
-      .items(Joi.string().guid())
-      .allow(null),
+    previous_geography_ids: Joi.array().items(Joi.string().guid()).allow(null),
     name: Joi.string().required()
   })
   .unknown(true)
@@ -245,14 +211,8 @@ const stopSchema = Joi.object().keys({
   short_name: stringSchema.optional(),
   platform_code: stringSchema.optional(),
   geography_id: uuidSchema.optional(),
-  lat: numberSchema
-    .min(-90)
-    .max(90)
-    .required(),
-  lng: numberSchema
-    .min(-180)
-    .max(180)
-    .required(),
+  lat: numberSchema.min(-90).max(90).required(),
+  lng: numberSchema.min(-180).max(180).required(),
   zone_id: uuidSchema.optional(),
   address: stringSchema.optional(),
   post_code: stringSchema.optional(),
@@ -283,9 +243,7 @@ const deviceSchema = Joi.object().keys({
   provider_id: uuidSchema.required(),
   vehicle_id: stringSchema.required(),
   type: vehicleTypeSchema.required(),
-  propulsion: Joi.array()
-    .items(propulsionTypeSchema)
-    .required(),
+  propulsion: Joi.array().items(propulsionTypeSchema).required(),
   year: numberSchema.optional(),
   mfgr: stringSchema.optional(),
   model: stringSchema.optional(),

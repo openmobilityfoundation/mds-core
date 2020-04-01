@@ -83,11 +83,11 @@ const createJurisdictions = async (
         entities.map(AsJurisdiction()).filter((jurisdiction): jurisdiction is Jurisdiction => jurisdiction !== null)
       )
     } catch (error) /* istanbul ignore next */ {
-      await logger.error(error.message)
+      logger.error(error.message)
       return Failure(error instanceof ValidationError ? error : new ConflictError(error))
     }
   } catch (error) /* istanbul ignore next */ {
-    await logger.error(error.message)
+    logger.error(error.message)
     return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
@@ -140,11 +140,11 @@ const updateJurisdiction = async (
       }
       return Failure(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id }))
     } catch (error) /* istanbul ignore next */ {
-      await logger.error(error.message)
+      logger.error(error.message)
       return Failure(error)
     }
   } catch (error) /* istanbul ignore next */ {
-    await logger.error(error.message)
+    logger.error(error.message)
     return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
@@ -175,18 +175,18 @@ const deleteJurisdiction = async (
       }
       return Failure(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id }))
     } catch (error) /* istanbul ignore next */ {
-      await logger.error(error.message)
+      logger.error(error.message)
       return Failure(error)
     }
   } catch (error) /* istanbul ignore next */ {
-    await logger.error(error.message)
+    logger.error(error.message)
     return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
 
-const getAllJurisdictions = async ({
-  effective = Date.now()
-}: Partial<GetJurisdictionOptions> = {}): Promise<JurisdictionServiceResult<Jurisdiction[], ServerError>> => {
+const getAllJurisdictions = async ({ effective = Date.now() }: Partial<GetJurisdictionOptions> = {}): Promise<
+  JurisdictionServiceResult<Jurisdiction[], ServerError>
+> => {
   try {
     try {
       const entities = await orm.readJurisdictions()
@@ -195,11 +195,11 @@ const getAllJurisdictions = async ({
         .filter((jurisdiction): jurisdiction is Jurisdiction => jurisdiction !== null)
       return Success(jurisdictions)
     } catch (error) /* istanbul ignore next */ {
-      await logger.error(error.message)
+      logger.error(error.message)
       return Failure(error)
     }
   } catch (error) /* istanbul ignore next */ {
-    await logger.error(error.message)
+    logger.error(error.message)
     return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }
@@ -216,11 +216,11 @@ const getOneJurisdiction = async (
         ? Success(jurisdiction)
         : Failure(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id, effective }))
     } catch (error) /* istanbul ignore next */ {
-      await logger.error(error.message, error)
+      logger.error(error.message, error)
       return Failure(error)
     }
   } catch (error) /* istanbul ignore next */ {
-    await logger.error(error.message)
+    logger.error(error.message)
     return Failure(error instanceof ServerError ? error : new ServerError(error))
   }
 }

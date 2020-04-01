@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import flatten from 'flat'
 import { NotFoundError, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
@@ -82,20 +82,20 @@ async function getClient() {
   if (!cachedClient) {
     const port = Number(env.REDIS_PORT) || 6379
     const host = env.REDIS_HOST || 'localhost'
-    log.info(`connecting to redis on ${host}:${port}`)
+    logger.info(`connecting to redis on ${host}:${port}`)
     cachedClient = redis.createClient({ port, host, password: env.REDIS_PASS })
-    log.info('redis client created')
+    logger.info('redis client created')
     cachedClient.on('connect', () => {
-      log.info('redis cache connected')
+      logger.info('redis cache connected')
     })
     cachedClient.on('error', async err => {
-      await log.error(`redis cache error ${err}`)
+      logger.error(`redis cache error ${err}`)
     })
     try {
       const size = await cachedClient.dbsizeAsync()
-      log.info(`redis cache has ${size} keys`)
+      logger.info(`redis cache has ${size} keys`)
     } catch (err) {
-      await log.error('redis failed to get dbsize', err)
+      logger.error('redis failed to get dbsize', err)
     }
   }
   return cachedClient
@@ -122,7 +122,7 @@ async function info() {
 // so that we can trivially get a list of "updated since ___" device_ids
 async function updateVehicleList(device_id: UUID, timestamp?: Timestamp) {
   const when = timestamp || now()
-  // log.info('redis zadd', device_id, when)
+  // logger.info('redis zadd', device_id, when)
   return (await getClient()).zaddAsync(decorateKey('device-ids'), when, device_id)
 }
 async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
@@ -157,7 +157,7 @@ async function getEventsInBBox(bbox: BoundingBox) {
   const events = client.georadiusAsync(decorateKey('locations'), lng, lat, radius, 'm')
   const finish = now()
   const timeElapsed = finish - start
-  log.info(`MDS-CACHE getEventsInBBox ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
+  logger.info(`MDS-CACHE getEventsInBBox ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
   return events
 }
 
@@ -196,7 +196,7 @@ async function hreads(
 // anything with a device_id, e.g. device, telemetry, etc.
 async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | VehicleEvent) {
   if (typeof item.device_id !== 'string') {
-    await log.error(`hwrite: invalid device_id ${item.device_id}`)
+    logger.error(`hwrite: invalid device_id ${item.device_id}`)
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
   const { device_id } = item
@@ -254,16 +254,16 @@ async function wipeDevice(device_id: UUID) {
     decorateKey(`device:${device_id}:device`)
   ]
   if (keys.length > 0) {
-    log.info('del', ...keys)
+    logger.info('del', ...keys)
     return (await getClient()).delAsync(...keys)
   }
-  log.info('no keys found for', device_id)
+  logger.info('no keys found for', device_id)
   return 0
 }
 
 async function writeEvent(event: VehicleEvent) {
   // FIXME cope with out-of-order -- check timestamp
-  // log.info('redis write event', event.device_id)
+  // logger.info('redis write event', event.device_id)
   try {
     if (event.event_type === 'deregister') {
       return await wipeDevice(event.device_id)
@@ -277,7 +277,7 @@ async function writeEvent(event: VehicleEvent) {
         }
         return hwrite('event', event)
       } catch (err) {
-        await log.error('hwrites', err.stack)
+        logger.error('hwrites', err.stack)
         throw err
       }
     } else {
@@ -291,20 +291,20 @@ async function writeEvent(event: VehicleEvent) {
       }
       return hwrite('event', event)
     } catch (err) {
-      await log.error('hwrites', err.stack)
+      logger.error('hwrites', err.stack)
       throw err
     }
   }
 }
 
 async function readEvent(device_id: UUID): Promise<VehicleEvent> {
-  log.info('redis read event for', device_id)
+  logger.info('redis read event for', device_id)
   const start = now()
   const rawEvent = await hread('event', device_id)
   const event = parseEvent(rawEvent as StringifiedEventWithTelemetry)
   const finish = now()
   const timeElapsed = finish - start
-  log.info(`MDS-CACHE readEvent ${device_id} time elapsed: ${timeElapsed}ms`)
+  logger.info(`MDS-CACHE readEvent ${device_id} time elapsed: ${timeElapsed}ms`)
   return event
 }
 
@@ -323,7 +323,7 @@ async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   const keys = await readKeys('device:*:event')
   let finish = now()
   let timeElapsed = finish - start
-  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() readKeys() time elapsed: ${timeElapsed}ms`)
+  logger.info(`MDS-DAILY /admin/events -> cache.readAllEvents() readKeys() time elapsed: ${timeElapsed}ms`)
   const device_ids = keys.map(key => {
     const [, device_id] = key.split(':')
     return device_id
@@ -335,7 +335,7 @@ async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
   })
   finish = now()
   timeElapsed = finish - start
-  await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() hreads() time elapsed: ${timeElapsed}ms`)
+  logger.info(`MDS-DAILY /admin/events -> cache.readAllEvents() hreads() time elapsed: ${timeElapsed}ms`)
 
   return result
 }
@@ -344,18 +344,18 @@ async function readDevice(device_id: UUID) {
   if (!device_id) {
     throw new Error('null device not legal to read')
   }
-  // log.info('redis read device', device_id)
+  // logger.info('redis read device', device_id)
   const start = now()
   const rawDevice = await hread('device', device_id)
   const device = parseDevice(rawDevice as StringifiedCacheReadDeviceResult)
   const finish = now()
   const timeElapsed = finish - start
-  log.info(`MDS-CACHE readDevice ${device_id} time elapsed: ${timeElapsed}ms`)
+  logger.info(`MDS-CACHE readDevice ${device_id} time elapsed: ${timeElapsed}ms`)
   return device
 }
 
 async function readDevices(device_ids: UUID[]) {
-  // log.info('redis read device', device_id)
+  // logger.info('redis read device', device_id)
   return ((await hreads(['device'], device_ids)) as StringifiedCacheReadDeviceResult[]).map(device => {
     return parseDevice(device)
   })
@@ -371,16 +371,21 @@ async function readDeviceStatus(device_id: UUID) {
       }
     })
   )
-  const results = await Promise.all(promises).catch(err => log.error('Error reading device status', err))
-  const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
-  results
-    .filter((item: CachedItem) => item !== undefined)
-    .map((item: CachedItem) => {
-      deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
-      Object.assign(deviceStatusMap[item.device_id], item)
-    })
-  const statuses = Object.values(deviceStatusMap)
-  return statuses.find((status: any) => status.telemetry) || statuses[0] || null
+  try {
+    const results = await Promise.all(promises)
+    const deviceStatusMap: { [device_id: string]: CachedItem | {} } = {}
+    results
+      .filter((item): item is CachedItem => item !== undefined)
+      .map(item => {
+        deviceStatusMap[item.device_id] = deviceStatusMap[item.device_id] || {}
+        Object.assign(deviceStatusMap[item.device_id], item)
+      })
+    const statuses = Object.values(deviceStatusMap)
+    return statuses.find((status: any) => status.telemetry) || statuses[0] || null
+  } catch (err) {
+    logger.error('Error reading device status', err)
+    throw err
+  }
 }
 
 /* eslint-reason redis external lib weirdness */
@@ -393,12 +398,12 @@ async function readDevicesStatus(query: {
   bbox: BoundingBox
   strict?: boolean
 }) {
-  log.info('readDevicesStatus', JSON.stringify(query), 'start')
+  logger.info('readDevicesStatus', JSON.stringify(query), 'start')
   const start = query.since || 0
   const stop = now()
   const strictChecking = query.strict
 
-  log.info('redis zrangebyscore device-ids', start, stop)
+  logger.info('redis zrangebyscore device-ids', start, stop)
   const client = await getClient()
 
   const geoStart = now()
@@ -413,7 +418,7 @@ async function readDevicesStatus(query: {
   const deviceIds = deviceIdsRes.slice(skip, skip + take)
   const geoFinish = now()
   const timeElapsed = geoFinish - geoStart
-  log.info(`MDS-CACHE readDevicesStatus bbox fetch ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
+  logger.info(`MDS-CACHE readDevicesStatus bbox fetch ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
 
   const eventsStart = now()
   const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
@@ -434,7 +439,7 @@ async function readDevicesStatus(query: {
     .filter(item => Boolean(item))
   const eventsFinish = now()
   const eventsTimeElapsed = eventsFinish - eventsStart
-  log.info(`MDS-CACHE readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`)
+  logger.info(`MDS-CACHE readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`)
 
   const devicesStart = now()
   const eventDeviceIds = events.map(event => event.device_id)
@@ -458,7 +463,7 @@ async function readDevicesStatus(query: {
   const valuesWithTelemetry = values.filter((item: any) => item.telemetry)
   const devicesFinish = now()
   const devicesTimeElapsed = devicesFinish - devicesStart
-  log.info(
+  logger.info(
     `MDS-CACHE readDevicesStatus device processing ${JSON.stringify(bbox)} time elapsed: ${devicesTimeElapsed}ms`
   )
 
@@ -466,7 +471,7 @@ async function readDevicesStatus(query: {
 }
 
 async function readTelemetry(device_id: UUID): Promise<Telemetry> {
-  // log.info('redis read telemetry for', device_id)
+  // logger.info('redis read telemetry for', device_id)
   const telemetry = await hread('telemetry', device_id)
   return parseTelemetry(telemetry as StringifiedTelemetry)
 }
@@ -480,19 +485,19 @@ async function writeOneTelemetry(telemetry: Telemetry) {
         await addGeospatialHash(telemetry.device_id, [lat, lng])
         return hwrite('telemetry', telemetry)
       } catch (err) {
-        await log.error('hwrite', err.stack)
+        logger.error('hwrite', err.stack)
         return Promise.reject(err)
       }
     } else {
       return Promise.resolve()
     }
   } catch (err) {
-    log.info('writeOneTelemetry: no prior telemetry found:', err.message)
+    logger.info('writeOneTelemetry: no prior telemetry found:', err.message)
     try {
       await addGeospatialHash(telemetry.device_id, [lat, lng])
       return hwrite('telemetry', telemetry)
     } catch (err2) {
-      await log.error('writeOneTelemetry hwrite2', err.stack)
+      logger.error('writeOneTelemetry hwrite2', err.stack)
       return Promise.reject(err2)
     }
   }
@@ -513,34 +518,34 @@ async function readAllTelemetry() {
     try {
       return [...acc, parseTelemetry(telemetry)]
     } catch (err) {
-      log.info(JSON.parse(err))
+      logger.info(JSON.parse(err))
       return acc
     }
   }, [])
 }
 
 async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; telemetry: Telemetry[] }) {
-  log.info('cache seed')
+  logger.info('cache seed')
   const data = dataParam || {
     devices: [],
     events: [],
     telemetry: []
   }
-  //  log.info('cache seed redis', Object.keys(data).map(key => `${key} (${data[key].length})`))
-  //  log.info('cache seed redis', Object.keys(data).forEach(key => `${key} (${data[key].length})`))
+  //  logger.info('cache seed redis', Object.keys(data).map(key => `${key} (${data[key].length})`))
+  //  logger.info('cache seed redis', Object.keys(data).forEach(key => `${key} (${data[key].length})`))
 
   await data.devices.map(writeDevice)
   await data.events.map(writeEvent)
   if (data.telemetry.length !== 0) {
     await writeTelemetry(data.telemetry.sort((a, b) => a.timestamp - b.timestamp))
   }
-  log.info('cache seed redis done')
+  logger.info('cache seed redis done')
 }
 
 async function reset() {
-  log.info('cache reset')
+  logger.info('cache reset')
   await (await getClient()).flushdbAsync()
-  return log.info('redis flushed')
+  return logger.info('redis flushed')
 }
 
 async function initialize() {
@@ -569,7 +574,7 @@ async function health() {
 async function cleanup() {
   try {
     const keys = await readKeys('device:*')
-    await log.warn('cleanup: read', keys.length)
+    logger.warn('cleanup: read', keys.length)
     const report: { telemetry: number; device: number; event: number; [suffix: string]: number } = {
       telemetry: 0,
       device: 0,
@@ -592,11 +597,11 @@ async function cleanup() {
       report.deleted = result
       return report
     } catch (ex) {
-      await log.error('cleanup: exception', ex)
+      logger.error('cleanup: exception', ex)
       throw ex
     }
   } catch (ex) {
-    await log.error('cleanup: exception', ex)
+    logger.error('cleanup: exception', ex)
     return Promise.reject(ex)
   }
 }

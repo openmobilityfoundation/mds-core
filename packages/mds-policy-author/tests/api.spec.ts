@@ -190,11 +190,7 @@ describe('Tests app', () => {
     it('edits one current policy', async () => {
       const policy = clone(POLICY_JSON)
       policy.name = 'a shiny new name'
-      await request
-        .put(`/policies/${POLICY_UUID}`)
-        .set('Authorization', POLICIES_WRITE_SCOPE)
-        .send(policy)
-        .expect(200)
+      await request.put(`/policies/${POLICY_UUID}`).set('Authorization', POLICIES_WRITE_SCOPE).send(policy).expect(200)
 
       const [result] = await db.readPolicies({ policy_id: policy.policy_id, get_unpublished: true })
       test.value(result.name).is('a shiny new name')
@@ -458,24 +454,15 @@ describe('Tests app', () => {
     })
 
     it('cannot GET policy metadata (no auth)', async () => {
-      await request
-        .get(`/policies/meta`)
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
+      await request.get(`/policies/meta`).set('Authorization', EMPTY_SCOPE).expect(403)
     })
 
     it('cannot GET policy metadata (wrong auth)', async () => {
-      await request
-        .get(`/policies/meta`)
-        .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
+      await request.get(`/policies/meta`).set('Authorization', EVENTS_READ_SCOPE).expect(403)
     })
 
     it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
-      const result = await request
-        .get(`/policies/meta`)
-        .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(200)
+      const result = await request.get(`/policies/meta`).set('Authorization', POLICIES_READ_SCOPE).expect(200)
       test.assert(result.body.length === 1)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
@@ -523,17 +510,11 @@ describe('Tests app', () => {
     })
 
     it('cannot GET all active policies (no auth)', async () => {
-      await request
-        .get(`/policies`)
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
+      await request.get(`/policies`).set('Authorization', EMPTY_SCOPE).expect(403)
     })
 
     it('cannot GET all active policies (wrong auth)', async () => {
-      await request
-        .get(`/policies`)
-        .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
+      await request.get(`/policies`).set('Authorization', EVENTS_READ_SCOPE).expect(403)
     })
 
     it('can GET all active policies', async () => {

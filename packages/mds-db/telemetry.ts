@@ -7,7 +7,7 @@ import {
   days,
   yesterday
 } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { TelemetryRecord } from './types'
 
 import schema from './schema'
@@ -40,7 +40,7 @@ export async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded
 
     const delta = now() - start
     if (delta >= 300) {
-      await log.info(
+      logger.info(
         `pg db writeTelemetry ${telemetries.length} rows, success in ${delta} ms with ${recorded_telemetries.length} unique`
       )
     }
@@ -56,7 +56,7 @@ export async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded
         }) as Recorded<Telemetry>
     )
   } catch (err) {
-    await log.error('pg write telemetry error', err)
+    logger.error('pg write telemetry error', err)
     throw err
   }
 }
@@ -88,7 +88,7 @@ export async function readTelemetry(
       return convertTelemetryRecordToTelemetry(row) as Recorded<Telemetry>
     })
   } catch (err) {
-    await log.error('read telemetry error', err)
+    logger.error('read telemetry error', err)
     throw err
   }
 }

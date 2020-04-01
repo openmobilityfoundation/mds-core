@@ -1,5 +1,5 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
 import { ServerError } from '@mds-core/mds-utils'
@@ -8,7 +8,7 @@ import { refresh } from './utils'
 export const getCacheInfo = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
     const details = await cache.info()
-    await log.warn('cache', details)
+    logger.warn('cache', details)
     res.status(200).send(details)
   } catch (err) {
     res.status(500).send(new ServerError())
@@ -18,11 +18,11 @@ export const getCacheInfo = async (req: AgencyApiRequest, res: AgencyApiResponse
 export const wipeDevice = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
     const { device_id } = req.params
-    await log.info('about to wipe', device_id)
+    logger.info('about to wipe', device_id)
     const cacheResult = await cache.wipeDevice(device_id)
-    await log.info('cache wiped', cacheResult)
+    logger.info('cache wiped', cacheResult)
     const dbResult = await db.wipeDevice(device_id)
-    await log.info('db wiped', dbResult)
+    logger.info('db wiped', dbResult)
     if (cacheResult >= 1) {
       res.status(200).send({
         result: `successfully wiped ${device_id}`
@@ -33,7 +33,7 @@ export const wipeDevice = async (req: AgencyApiRequest, res: AgencyApiResponse) 
       })
     }
   } catch (err) {
-    await log.error(`/admin/wipe/:device_id failed`, err)
+    logger.error(`/admin/wipe/:device_id failed`, err)
     res.status(500).send(new ServerError())
   }
 }
@@ -47,9 +47,9 @@ export const refreshCache = async (req: AgencyApiRequest, res: AgencyApiResponse
   try {
     const rows = await db.readDeviceIds()
 
-    await log.info('read', rows.length, 'device_ids. skip', skip, 'take', take)
+    logger.info('read', rows.length, 'device_ids. skip', skip, 'take', take)
     const devices = rows.slice(skip, take + skip)
-    await log.info('device_ids', devices)
+    logger.info('device_ids', devices)
 
     const promises = devices.map(device => refresh(device.device_id, device.provider_id))
     await Promise.all(promises)
@@ -57,7 +57,7 @@ export const refreshCache = async (req: AgencyApiRequest, res: AgencyApiResponse
       result: `success for ${devices.length} devices`
     })
   } catch (err) {
-    await log.error('cache refresh fail', err)
+    logger.error('cache refresh fail', err)
     res.status(500).send(new ServerError())
   }
 }

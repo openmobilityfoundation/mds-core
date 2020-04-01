@@ -20,7 +20,7 @@ import { promisify } from 'util'
 
 import requestPromise from 'request-promise'
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
   LIME_PROVIDER_ID,
@@ -56,15 +56,15 @@ async function appendSheet(sheetName: string, rows: ({ date: string; name: strin
   const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID)
   await promisify(doc.useServiceAccountAuth)(creds)
   const info = await promisify(doc.getInfo)()
-  log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
+  logger.info(`Loaded doc: ${info.title} by ${info.author.email}`)
   const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
-  log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
+  logger.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
   if (sheet.title === sheetName) {
     const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
-    log.info(`Wrote ${inserted.length} rows.`)
+    logger.info(`Wrote ${inserted.length} rows.`)
     return Promise.all(inserted)
   }
-  log.info('Wrong sheet!')
+  logger.info('Wrong sheet!')
 }
 
 export function sumColumns(keysToSummarize: string[], row: VehicleCountRow) {
@@ -123,7 +123,7 @@ async function getProviderMetrics(iter: number): Promise<({ date: string; name: 
       .map(mapRow)
     return rows
   } catch (err) {
-    await log.error('getProviderMetrics', err)
+    logger.error('getProviderMetrics', err)
     return getProviderMetrics(iter + 1)
   }
 }
@@ -133,6 +133,6 @@ export const VehicleCountsHandler = async () => {
     const rows = await getProviderMetrics(0)
     await appendSheet('Vehicle Counts', rows)
   } catch (err) {
-    await log.error('VehicleCountsHandler', err)
+    logger.error('VehicleCountsHandler', err)
   }
 }

@@ -58,10 +58,10 @@ describe('Tests Utilities', () => {
     // Can't seem to get TS to go along with Sinon.spy()
     // See https://sinonjs.org/releases/latest/spies/
 
-    // it('Calls log.warn', () => {
-    //   const spy = Sinon.spy(log.warn)
-    //   const oldLogWarn = log.warn
-    //   log.warn = spy
+    // it('Calls logger.warn', () => {
+    //   const spy = Sinon.spy(logger.warn)
+    //   const oldLogWarn = logger.warn
+    //   logger.warn = spy
 
     //   const arr = [1, 2, null, 3, undefined, 4]
     //   const actual = arr.filter(filterEmptyHelper<number>())
@@ -69,7 +69,7 @@ describe('Tests Utilities', () => {
     //   assert.deepStrictEqual(actual, expected)
     //   assert.equal(spy.calledTwice, true)
     //   Sinon.restore()
-    //   log.warn = oldLogWarn
+    //   logger.warn = oldLogWarn
     // })
   })
 

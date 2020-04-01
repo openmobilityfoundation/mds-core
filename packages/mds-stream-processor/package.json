@@ -1,0 +1,32 @@
+{
+  "name": "@mds-core/mds-stream-processor",
+  "version": "0.0.1",
+  "description": "MDS Stream Processor",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "start": "yarn watch server",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 55 ts-mocha --project ../../tsconfig.json",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
+    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "dependencies": {
+    "@mds-core/mds-cache": "0.1.26",
+    "@mds-core/mds-db": "0.1.26",
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-stream": "0.1.26",
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26"
+  },
+  "license": "Apache-2.0"
+}

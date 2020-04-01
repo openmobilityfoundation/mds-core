@@ -2,7 +2,7 @@ import express from 'express'
 import db from '@mds-core/mds-db'
 
 import { pathsFor, ServerError, NotFoundError, InsufficientPermissionsError, BadParamsError } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'
 import { GeographyApiVersionMiddleware } from './middleware'
@@ -52,7 +52,7 @@ function api(app: express.Express): express.Express {
         const geography_metadata = await db.readBulkGeographyMetadata(params)
         return res.status(200).send({ version: res.locals.version, geography_metadata })
       } catch (error) {
-        await log.error('failed to read geography metadata', error)
+        logger.error('failed to read geography metadata', error)
         /* This error is thrown if both get_published and get_unpublished are set.
          * To get all geos, neither parameter should be set.
          */
@@ -81,7 +81,7 @@ function api(app: express.Express): express.Express {
         }
         return res.status(200).send({ version: res.locals.version, geography })
       } catch (err) {
-        await log.error('failed to read geography', err.stack)
+        logger.error('failed to read geography', err.stack)
         if (err instanceof NotFoundError) {
           return res.status(404).send({ error: err })
         }
@@ -132,7 +132,7 @@ function api(app: express.Express): express.Express {
         if (error instanceof InsufficientPermissionsError) {
           return res.status(403).send({ error })
         }
-        await log.error('failed to read geographies', error.stack)
+        logger.error('failed to read geographies', error.stack)
         return res.status(500).send({ error: new ServerError() })
       }
     }
@@ -153,7 +153,7 @@ function api(app: express.Express): express.Express {
         }
         return res.status(200).send({ version: res.locals.version, geography_metadata })
       } catch (err) {
-        await log.error('failed to read geography metadata', err.stack)
+        logger.error('failed to read geography metadata', err.stack)
         if (err instanceof NotFoundError) {
           return res.status(404).send({ error: err })
         }

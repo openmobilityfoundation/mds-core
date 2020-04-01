@@ -15,7 +15,7 @@
  */
 
 import db from '@mds-core/mds-db'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import aws from 'aws-sdk'
 import path from 'path'
 import sharp from 'sharp'
@@ -39,7 +39,7 @@ if (env.ATTACHMENTS_BUCKET) {
   /* eslint-disable-next-line */
   aws.config.getCredentials(async err => {
     if (err) {
-      await log.error('Error getting AWS credentials', err.stack || err)
+      logger.error('Error getting AWS credentials', err.stack || err)
     } else if (aws.config.credentials) {
       aws.config.update({
         secretAccessKey: aws.config.credentials.secretAccessKey,
@@ -168,7 +168,7 @@ export async function deleteAuditAttachment(auditTripId: UUID, attachmentId: UUI
       }
     }
   } catch (err) {
-    await log.error('deleteAttachment error', err.stack || err)
+    logger.error('deleteAttachment error', err.stack || err)
     throw err
   }
 }

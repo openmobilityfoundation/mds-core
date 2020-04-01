@@ -1,4 +1,4 @@
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { BadParamsError } from '@mds-core/mds-utils'
 import { PolicyApiRequest, PolicyApiResponse } from './types'
@@ -12,7 +12,7 @@ const getPolicies = async (req: PolicyApiRequest, res: PolicyApiResponse) => {
   if (get_unpublished) {
     params.get_unpublished = get_unpublished === 'true'
   }
-  log.info('read /policies', req.query)
+  logger.info('read /policies', req.query)
 
   try {
     const policies = await db.readPolicies(params)
@@ -20,7 +20,7 @@ const getPolicies = async (req: PolicyApiRequest, res: PolicyApiResponse) => {
     // Let's not worry about filtering for just active policies at the moment.
     res.status(200).send(policies)
   } catch (err) {
-    await log.error('failed to read policies', err)
+    logger.error('failed to read policies', err)
     if (err instanceof BadParamsError) {
       res.status(400).send({
         result:

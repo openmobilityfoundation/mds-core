@@ -15,9 +15,8 @@
  */
 
 import { Entity, Column, Index } from 'typeorm'
-import { UUID, Timestamp } from '@mds-core/mds-types'
+import { UUID, Timestamp, Nullable } from '@mds-core/mds-types'
 import { RecordedPersistenceModel, RecordedEntity } from '@mds-core/mds-orm/entities'
-import { Nullable } from '@mds-core/mds-orm/types'
 
 export interface JurisdictionVersionedProperties {
   timestamp: Timestamp

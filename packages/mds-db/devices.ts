@@ -1,7 +1,7 @@
 import { QueryResult } from 'pg'
 import { UUID, Device, Recorded, DeviceID } from '@mds-core/mds-types'
 import { now, yesterday, isUUID, csv, NotFoundError } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
 
@@ -30,7 +30,7 @@ export async function readDevicesByVehicleId(
     const error = `device associated with vehicle ${
       vehicle_ids.length === 1 ? vehicle_id : `(${csv(vehicle_ids)})`
     } for provider ${provider_id}: rows=${result.rows.length}`
-    await log.warn(error)
+    logger.warn(error)
   }
   if (result.rows.length === 0) {
     throw new NotFoundError('No device found', { provider_id, vehicle_ids })
@@ -76,7 +76,7 @@ export async function readDevice(
   if (res.rows.length === 1) {
     return res.rows[0]
   }
-  await log.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
+  logger.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
   throw new Error(`device_id ${device_id} not found`)
 }
 

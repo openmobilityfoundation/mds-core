@@ -48,10 +48,7 @@ describe('', () => {
   })
 
   it('Create Single Jurisdiction (forbidden)', async () => {
-    await request
-      .post('/jurisdictions')
-      .send(JURISDICTION0)
-      .expect(403)
+    await request.post('/jurisdictions').send(JURISDICTION0).expect(403)
   })
 
   it('Create Single Jurisdiction (conflict)', async () => {

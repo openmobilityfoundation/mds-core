@@ -1,6 +1,6 @@
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import areas from 'ladot-service-areas'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { isUUID, now, ServerError, ValidationError, NotFoundError, normalizeToArray } from '@mds-core/mds-utils'
 import { isValidStop, isValidDevice, validateEvent, isValidTelemetry } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
@@ -33,16 +33,19 @@ import {
   computeCompositeVehicleData
 } from './utils'
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+stream.initialize()
+
 export const getAllServiceAreas = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   try {
     const serviceAreas = await areas.readServiceAreas()
-    await log.info('readServiceAreas (all)', serviceAreas.length)
+    logger.info('readServiceAreas (all)', serviceAreas.length)
     return res.status(200).send({
       service_areas: serviceAreas
     })
   } catch (err) {
     /* istanbul ignore next */
-    await log.error('failed to read service areas', err)
+    logger.error('failed to read service areas', err)
     return res.status(404).send({
       result: 'not found'
     })
@@ -62,7 +65,7 @@ export const getServiceAreaById = async (req: AgencyApiRequest, res: AgencyApiRe
     const serviceAreas = await areas.readServiceAreas(undefined, service_area_id)
 
     if (serviceAreas && serviceAreas.length > 0) {
-      await log.info('readServiceAreas (one)')
+      logger.info('readServiceAreas (one)')
       return res.status(200).send({
         service_areas: serviceAreas
       })
@@ -103,7 +106,7 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
   try {
     isValidDevice(device)
   } catch (err) {
-    log.info(`Device ValidationError for ${providerName(provider_id)}. Error: ${err}`)
+    logger.info(`Device ValidationError for ${providerName(provider_id)}. Error: ${err}`)
   }
 
   const failure = badDevice(device)
@@ -118,13 +121,13 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
     try {
       await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
     } catch (err) {
-      await log.error('failed to write device stream/cache', err)
+      logger.error('failed to write device stream/cache', err)
     }
-    await log.info('new', providerName(res.locals.provider_id), 'vehicle added', device)
+    logger.info('new', providerName(res.locals.provider_id), 'vehicle added', device)
     try {
       await writeRegisterEvent(device, recorded)
     } catch (err) {
-      await log.error('writeRegisterEvent failure', err)
+      logger.error('writeRegisterEvent failure', err)
     }
     res.status(201).send({ result: 'register device success', recorded, device })
   } catch (err) {
@@ -134,10 +137,10 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
         error_description: 'A vehicle with this device_id is already registered'
       })
     } else if (String(err).includes('db')) {
-      await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+      logger.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
       res.status(500).send(new ServerError())
     } else {
-      await log.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+      logger.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
       res.status(500).send(new ServerError())
     }
   }
@@ -150,7 +153,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
 
   const { provider_id } = res.locals.scopes.includes('vehicles:read') ? req.query : res.locals
 
-  log.info(`/vehicles/${device_id}`, cached)
+  logger.info(`/vehicles/${device_id}`, cached)
   const store = cached ? cache : db
   const payload = await readPayload(store, device_id)
   if (!payload.device || (provider_id && payload.device.provider_id !== provider_id)) {
@@ -183,7 +186,7 @@ export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyAp
     const response = await getVehicles(skip, take, url, provider_id, req.query)
     return res.status(200).send(response)
   } catch (err) {
-    await log.error('getVehicles fail', err)
+    logger.error('getVehicles fail', err)
     res.status(500).send(new ServerError())
   }
 }
@@ -208,7 +211,7 @@ export async function updateVehicleFail(
       error: 'not_found'
     })
   } else {
-    await log.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
+    logger.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
     res.status(500).send(new ServerError())
   }
 }
@@ -266,7 +269,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
   try {
     validateEvent(event)
   } catch (err) {
-    log.info(`Event ValidationError for ${providerName(provider_id)}. Error: ${err}`)
+    logger.info(`Event ValidationError for ${providerName(provider_id)}. Error: ${err}`)
   }
 
   if (event.telemetry) {
@@ -285,7 +288,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
     const delta = now() - recorded
 
     if (delta > 100) {
-      await log.info(name, 'post event took', delta, 'ms')
+      logger.info(name, 'post event took', delta, 'ms')
       fin()
     } else {
       fin()
@@ -296,19 +299,19 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
   async function fail(err: Error | Partial<{ message: string }>): Promise<void> {
     const message = err.message || String(err)
     if (message.includes('duplicate')) {
-      await log.info(name, 'duplicate event', event.event_type)
+      logger.info(name, 'duplicate event', event.event_type)
       res.status(409).send({
         error: 'duplicate_event',
         error_description: 'an event with this device_id and timestamp has already been received'
       })
     } else if (message.includes('not found') || message.includes('unregistered')) {
-      await log.info(name, 'event for unregistered', event.device_id, event.event_type)
+      logger.info(name, 'event for unregistered', event.device_id, event.event_type)
       res.status(400).send({
         error: 'unregistered',
         error_description: 'the specified device_id has not been registered'
       })
     } else {
-      await log.error('post event fail:', event, message)
+      logger.error('post event fail:', event, message)
       res.status(500).send(new ServerError())
     }
   }
@@ -320,7 +323,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
       await cache.readDevice(event.device_id)
     } catch (err) {
       await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
-      log.info('Re-adding previously deregistered device to cache', err)
+      logger.info('Re-adding previously deregistered device to cache', err)
     }
     if (event.telemetry) {
       event.telemetry.device_id = event.device_id
@@ -328,7 +331,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
     const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
     // TODO unify with fail() above
     if (failure) {
-      log.info(name, 'event failure', failure, event)
+      logger.info(name, 'event failure', failure, event)
       return res.status(400).send(failure)
     }
 
@@ -353,7 +356,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
 
       await success()
     } catch (err) {
-      await log.warn('/event exception cache/stream/socket', err)
+      logger.warn('/event exception cache/stream/socket', err)
       await success()
     }
   } catch (err) {
@@ -408,7 +411,7 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
       try {
         isValidTelemetry(telemetry)
       } catch (err) {
-        log.info(`Telemetry ValidationError for ${providerName(provider_id)}. Error: ${err}`)
+        logger.info(`Telemetry ValidationError for ${providerName(provider_id)}. Error: ${err}`)
       }
 
       const bad_telemetry: ErrorObject | null = badTelemetry(telemetry)
@@ -429,7 +432,7 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
 
       const delta = Date.now() - start
       if (delta > 300) {
-        log.info(
+        logger.info(
           name,
           'writeTelemetry',
           valid.length,
@@ -447,7 +450,7 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
           failures
         })
       } else {
-        await log.info(name, 'no unique telemetry in', data.length, 'items')
+        logger.info(name, 'no unique telemetry in', data.length, 'items')
         res.status(400).send({
           error: 'invalid_data',
           error_description: 'none of the provided data was unique',
@@ -458,7 +461,7 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
     } else {
       const body = `${JSON.stringify(req.body).substring(0, 128)} ...`
       const fails = `${JSON.stringify(failures).substring(0, 128)} ...`
-      log.info(name, 'no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
+      logger.info(name, 'no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
       res.status(400).send({
         error: 'invalid_data',
         error_description: 'none of the provided data was valid',

@@ -1,6 +1,6 @@
 import { VehicleEvent, UUID, Timestamp, Recorded } from '@mds-core/mds-types'
 import { now, isUUID, isTimestamp, seconds, yesterday } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { ReadEventsResult, ReadEventsQueryParams, ReadHistoricalEventsQueryParams } from './types'
 
 import schema from './schema'
@@ -43,7 +43,7 @@ export async function readEvent(device_id: UUID, timestamp?: Timestamp): Promise
   if (res.rows.length === 1) {
     return res.rows[0]
   }
-  log.info(`readEvent failed for ${device_id}:${timestamp || 'latest'}`)
+  logger.info(`readEvent failed for ${device_id}:${timestamp || 'latest'}`)
   throw new Error(`event for ${device_id}:${timestamp} not found`)
 }
 

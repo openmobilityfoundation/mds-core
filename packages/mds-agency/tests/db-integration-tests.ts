@@ -133,7 +133,7 @@ const AUTH_UNKNOWN_UUID_PROVIDER = `basic ${Buffer.from(
 const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 
 before(async () => {
-  await Promise.all([db.initialize(), cache.initialize(), stream.initialize()])
+  await Promise.all([db.initialize(), cache.initialize()])
 })
 
 after(async () => {
@@ -1574,21 +1574,13 @@ describe('Tests Stops', async () => {
   })
 
   it('verifies failing to POST a stop (garbage data)', async () => {
-    await request
-      .post(`/stops`)
-      .set('Authorization', AUTH)
-      .send({ foo: 'bar' })
-      .expect(400)
+    await request.post(`/stops`).set('Authorization', AUTH).send({ foo: 'bar' }).expect(400)
   })
 
   it('verifies successfully POSTing a stop', async () => {
     await db.writeGeography(LAGeography)
     await db.publishGeography({ geography_id: GEOGRAPHY_UUID, publish_date: now() })
-    await request
-      .post(`/stops`)
-      .set('Authorization', AUTH)
-      .send(TEST_STOP)
-      .expect(201)
+    await request.post(`/stops`).set('Authorization', AUTH).send(TEST_STOP).expect(201)
   })
 
   it('verifies successfully GETing a stop', done => {

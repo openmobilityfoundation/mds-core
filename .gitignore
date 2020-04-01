@@ -2,6 +2,7 @@
 mds-*.zip
 dist
 helm/mds/files/mds-config
+dump.rdb
 
 # This project uses Yarn. Ignore npm lock files
 package-lock.json

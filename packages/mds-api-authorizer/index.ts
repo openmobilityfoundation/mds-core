@@ -39,9 +39,7 @@ const decoders: { [scheme: string]: (token: string) => AuthorizerClaims } = {
     }
   },
   basic: (token: string) => {
-    const [principalId, scope] = Buffer.from(token, 'base64')
-      .toString()
-      .split('|')
+    const [principalId, scope] = Buffer.from(token, 'base64').toString().split('|')
     return { principalId, scope, provider_id: principalId, user_email: principalId, jurisdictions: principalId }
   }
 }

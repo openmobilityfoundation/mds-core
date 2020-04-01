@@ -1,6 +1,5 @@
 import { InsertResult, UpdateResult } from 'typeorm'
-
-export type Nullable<T> = T | null
+import { Nullable } from '@mds-core/mds-types'
 
 // eslint-reason recursive declarations require interfaces
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

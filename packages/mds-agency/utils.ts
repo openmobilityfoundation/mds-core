@@ -23,7 +23,7 @@ import {
   VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import { isArray } from 'util'
 import * as socket from '@mds-core/mds-web-sockets'
@@ -127,7 +127,7 @@ export async function getVehicles(
 
   const rows = await db.readDeviceIds(provider_id)
   const total = rows.length
-  log.info(`read ${total} deviceIds in /vehicles`)
+  logger.info(`read ${total} deviceIds in /vehicles`)
 
   const events = await cache.readEvents(rows.map(record => record.device_id))
   const eventMap: { [s: string]: VehicleEvent } = {}
@@ -352,7 +352,7 @@ export async function badEvent(event: VehicleEvent) {
     case VEHICLE_EVENTS.cancel_reservation:
       return null
     default:
-      await log.warn(`unsure how to validate mystery event_type ${event.event_type}`)
+      logger.warn(`unsure how to validate mystery event_type ${event.event_type}`)
       break
   }
   return null // we good
@@ -402,7 +402,7 @@ export async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
       socket.writeTelemetry(recorded_telemetry)
     ])
   } catch (err) {
-    await log.warn(`Failed to write telemetry to cache/socket/stream, ${err}`)
+    logger.warn(`Failed to write telemetry to cache/socket/stream, ${err}`)
   }
   return recorded_telemetry
 }
@@ -410,18 +410,18 @@ export async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
 export async function refresh(device_id: UUID, provider_id: UUID): Promise<string> {
   // TODO all of this back and forth between cache and db is slow
   const device = await db.readDevice(device_id, provider_id)
-  // log.info('refresh device', device)
+  // logger.info('refresh device', device)
   await cache.writeDevice(device)
   try {
     const event = await db.readEvent(device_id)
     await cache.writeEvent(event)
   } catch (err) {
-    await log.info('no events for', device_id, err)
+    logger.info('no events for', device_id, err)
   }
   try {
     await db.readTelemetry(device_id)
   } catch (err) {
-    await log.info('no telemetry for', device_id, err)
+    logger.info('no telemetry for', device_id, err)
   }
   return 'done'
 }
@@ -434,7 +434,7 @@ export async function validateDeviceId(req: express.Request, res: express.Respon
 
   /* istanbul ignore if This is never called with no device_id parameter */
   if (!device_id) {
-    await log.warn('agency: missing device_id', req.originalUrl)
+    logger.warn('agency: missing device_id', req.originalUrl)
     res.status(400).send({
       error: 'missing_param',
       error_description: 'missing device_id'
@@ -442,7 +442,7 @@ export async function validateDeviceId(req: express.Request, res: express.Respon
     return
   }
   if (device_id && !isUUID(device_id)) {
-    await log.warn('agency: bogus device_id', device_id, req.originalUrl)
+    logger.warn('agency: bogus device_id', device_id, req.originalUrl)
     res.status(400).send({
       error: 'bad_param',
       error_description: `invalid device_id ${device_id} is not a UUID`
@@ -471,10 +471,10 @@ export async function writeRegisterEvent(device: Device, recorded: number) {
       // writing to cache and stream is not fatal
       await Promise.all([cache.writeEvent(recorded_event), stream.writeEvent(recorded_event)])
     } catch (err) {
-      await log.warn('/event exception cache/stream', err)
+      logger.warn('/event exception cache/stream', err)
     }
   } catch (err) {
-    await log.error('writeRegisterEvent failure', err)
+    logger.error('writeRegisterEvent failure', err)
     throw new Error('writeEvent exception db')
   }
 }
@@ -513,17 +513,17 @@ export async function readPayload(store: typeof cache | typeof db, device_id: UU
   try {
     payload.device = await store.readDevice(device_id)
   } catch (err) {
-    await log.error(err)
+    logger.error(err)
   }
   try {
     payload.event = await store.readEvent(device_id)
   } catch (err) {
-    await log.error(err)
+    logger.error(err)
   }
   try {
     payload.telemetry = normalizeTelemetry(await store.readTelemetry(device_id))
   } catch (err) {
-    await log.error(err)
+    logger.error(err)
   }
   return payload
 }
