@@ -14,10 +14,31 @@
     limitations under the License.
  */
 
-import stream from '@mds-core/mds-stream'
 import logger from '@mds-core/mds-logger'
-import { StreamProducerOptions } from '@mds-core/mds-stream/kafka/helpers'
-import { StreamSink } from '../../processors/stream-processor'
+import stream from '@mds-core/mds-stream'
+import { StreamConsumerOptions, StreamProducerOptions } from '@mds-core/mds-stream/kafka/helpers'
+import { StreamSink, StreamSource } from './index'
+
+export const KafkaStreamSource = <TMessage>(
+  topic: string,
+  options?: Partial<StreamConsumerOptions>
+): StreamSource<TMessage> => processor => {
+  logger.info('Creating KafkaStreamSource', topic, options)
+  return stream.KafkaStreamConsumer(
+    topic,
+    payload => {
+      const {
+        partition,
+        message: { offset, value }
+      } = payload
+      if (Number(offset) % 1_000 === 0) {
+        logger.info(`KafkaStreamSource Topic: ${topic} Partition: ${partition} Offset: ${offset}`)
+      }
+      return processor(JSON.parse(value.toString()))
+    },
+    options
+  )
+}
 
 export const KafkaStreamSink = <TMessage>(
   topic: string,

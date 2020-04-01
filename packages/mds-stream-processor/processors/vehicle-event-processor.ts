@@ -26,8 +26,8 @@ import {
 } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
 import { DeviceLabel, DeviceLabeler, GeographyLabel, GeographyLabeler, LatencyLabel, LatencyLabeler } from '../labelers'
-import { StreamTransform, StreamProcessor } from './stream-processor'
-import { KafkaStreamSource, KafkaStreamSink } from '../connectors/kafka'
+import { StreamTransform, StreamProcessor } from './index'
+import { KafkaStreamSource, KafkaStreamSink } from '../connectors/kafka-connector'
 
 interface LabeledVehicleEvent extends LatencyLabel, DeviceLabel, GeographyLabel {
   device_id: UUID
