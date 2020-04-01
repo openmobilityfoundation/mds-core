@@ -14,26 +14,15 @@
     limitations under the License.
  */
 
+import stream from '@mds-core/mds-stream'
 import logger from '@mds-core/mds-logger'
-import { VehicleEventProcessor } from './index'
+import { StreamProducerOptions } from '@mds-core/mds-stream/kafka/helpers'
+import { StreamSink } from '../../processors/stream-processor'
 
-const {
-  env: { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST }
-} = process
-
-VehicleEventProcessor.start()
-  .then(() => {
-    logger.info(
-      `Running ${npm_package_name} v${npm_package_version} (${
-        npm_package_git_commit ?? 'local'
-      }) connected to Kafka on ${KAFKA_HOST}`
-    )
-    return 0
-  })
-  .catch(error => {
-    logger.error(
-      `${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) connected to Kafka on ${KAFKA_HOST} failed to start`,
-      error
-    )
-    return 1
-  })
+export const KafkaStreamSink = <TMessage>(
+  topic: string,
+  options?: Partial<StreamProducerOptions>
+): StreamSink<TMessage> => () => {
+  logger.info('Creating KafkaStreamSink', topic, options)
+  return stream.KafkaStreamProducer(topic, options)
+}

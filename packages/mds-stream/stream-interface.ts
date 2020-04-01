@@ -1,14 +1,14 @@
 import { VehicleEvent, Telemetry, Device } from '@mds-core/mds-types'
 
-export interface StreamProducer {
-  write: <T extends {}>(message: T[] | T) => Promise<void>
-  shutdown: () => Promise<void>
+export interface StreamProducer<TMessage> {
   initialize: () => Promise<void>
+  write: (message: TMessage[] | TMessage) => Promise<void>
+  shutdown: () => Promise<void>
 }
 
 export interface StreamConsumer {
-  shutdown: () => Promise<void>
   initialize: () => Promise<void>
+  shutdown: () => Promise<void>
 }
 
 export interface AgencyStream {

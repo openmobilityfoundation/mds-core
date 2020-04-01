@@ -298,13 +298,8 @@ async function writeEvent(event: VehicleEvent) {
 }
 
 async function readEvent(device_id: UUID): Promise<VehicleEvent> {
-  logger.info('redis read event for', device_id)
-  const start = now()
   const rawEvent = await hread('event', device_id)
   const event = parseEvent(rawEvent as StringifiedEventWithTelemetry)
-  const finish = now()
-  const timeElapsed = finish - start
-  logger.info(`MDS-CACHE readEvent ${device_id} time elapsed: ${timeElapsed}ms`)
   return event
 }
 
@@ -345,12 +340,8 @@ async function readDevice(device_id: UUID) {
     throw new Error('null device not legal to read')
   }
   // logger.info('redis read device', device_id)
-  const start = now()
   const rawDevice = await hread('device', device_id)
   const device = parseDevice(rawDevice as StringifiedCacheReadDeviceResult)
-  const finish = now()
-  const timeElapsed = finish - start
-  logger.info(`MDS-CACHE readDevice ${device_id} time elapsed: ${timeElapsed}ms`)
   return device
 }
 

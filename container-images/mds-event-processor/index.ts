@@ -14,13 +14,13 @@
     limitations under the License.
  */
 
-import { VehicleEventProcessor } from '@mds-core/mds-stream-processor/processors'
+import { VehicleEventProcessor } from '@mds-core/mds-stream-processor'
 import { env } from '@container-images/env-inject'
 import logger from '@mds-core/mds-logger'
 
 const { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST } = env()
 
-VehicleEventProcessor.run()
+VehicleEventProcessor.start()
   .then(() => {
     logger.info(
       `Running ${npm_package_name} v${npm_package_version} (${

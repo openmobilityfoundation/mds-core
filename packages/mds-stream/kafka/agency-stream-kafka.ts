@@ -1,23 +1,19 @@
 import { VehicleEvent, Telemetry, Device } from '@mds-core/mds-types'
-import { AgencyStream, StreamProducer } from '../stream-interface'
+import { AgencyStream } from '../stream-interface'
 import { KafkaStreamProducer } from './stream-producer'
 
-const deviceProducer: StreamProducer = KafkaStreamProducer('mds.device')
-const eventProducer: StreamProducer = KafkaStreamProducer('mds.event')
-const telemetryProducer: StreamProducer = KafkaStreamProducer('mds.telemetry')
+const deviceProducer = KafkaStreamProducer<Device>('mds.device')
+const eventProducer = KafkaStreamProducer<VehicleEvent>('mds.event')
+const telemetryProducer = KafkaStreamProducer<Telemetry>('mds.telemetry')
 
-const initialize = async () => {
-  await Promise.all([deviceProducer.initialize(), eventProducer.initialize(), telemetryProducer.initialize()])
+export const AgencyKafkaStream: AgencyStream = {
+  initialize: async () => {
+    await Promise.all([deviceProducer.initialize(), eventProducer.initialize(), telemetryProducer.initialize()])
+  },
+  writeEvent: eventProducer.write,
+  writeTelemetry: telemetryProducer.write,
+  writeDevice: deviceProducer.write,
+  shutdown: async () => {
+    await Promise.all([deviceProducer.shutdown(), eventProducer.shutdown(), telemetryProducer.shutdown()])
+  }
 }
-
-const writeTelemetry = async (telemetry: Telemetry[]) => telemetryProducer.write(telemetry)
-
-const writeEvent = async (event: VehicleEvent) => eventProducer.write(event)
-
-const writeDevice = async (device: Device) => deviceProducer.write(device)
-
-const shutdown = async () => {
-  await Promise.all([deviceProducer.shutdown(), eventProducer.shutdown(), telemetryProducer.shutdown()])
-}
-
-export const AgencyKafkaStream: AgencyStream = { initialize, writeEvent, writeTelemetry, writeDevice, shutdown }

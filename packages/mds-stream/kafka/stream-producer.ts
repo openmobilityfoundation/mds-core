@@ -4,7 +4,10 @@ import { Nullable } from '@mds-core/mds-types'
 import { StreamProducer } from '../stream-interface'
 import { createStreamProducer, isProducerReady, disconnectProducer, StreamProducerOptions } from './helpers'
 
-export const KafkaStreamProducer = (topic: string, options?: Partial<StreamProducerOptions>): StreamProducer => {
+export const KafkaStreamProducer = <TMessage>(
+  topic: string,
+  options?: Partial<StreamProducerOptions>
+): StreamProducer<TMessage> => {
   let producer: Nullable<Producer> = null
   return {
     initialize: async () => {
@@ -12,7 +15,7 @@ export const KafkaStreamProducer = (topic: string, options?: Partial<StreamProdu
         producer = await createStreamProducer(options)
       }
     },
-    write: async <T extends {}>(message: T[] | T) => {
+    write: async (message: TMessage[] | TMessage) => {
       if (isProducerReady(producer)) {
         const messages = (isArray(message) ? message : [message]).map(msg => {
           return { value: JSON.stringify(msg) }

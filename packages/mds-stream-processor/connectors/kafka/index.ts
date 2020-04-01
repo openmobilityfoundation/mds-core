@@ -14,4 +14,5 @@
     limitations under the License.
  */
 
-export * from './vehicle-event-processor'
+export * from './kafka-stream-sink'
+export * from './kafka-stream-source'
