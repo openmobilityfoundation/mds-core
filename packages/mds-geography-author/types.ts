@@ -14,20 +14,6 @@
     limitations under the License.
  */
 
-import { ApiRequest, ApiVersionedResponse, ApiVersionedResponseLocals } from '@mds-core/mds-api-server'
-import { UUID } from '@mds-core/mds-types'
-import { Params, ParamsDictionary } from 'express-serve-static-core'
-
 export const GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
 export type GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSION = typeof GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS[number]
 export const [GEOGRAPHY_AUTHOR_API_DEFAULT_VERSION] = GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS
-
-// Allow adding type definitions for Express Request objects
-export type GeographyAuthorApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
-
-export interface GeographyAuthorApiResponse<TBody extends {}>
-  extends ApiVersionedResponse<GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSION, TBody> {
-  locals: ApiVersionedResponseLocals<GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSION> & {
-    provider_id: UUID
-  }
-}
