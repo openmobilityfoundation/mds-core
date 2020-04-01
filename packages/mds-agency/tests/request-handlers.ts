@@ -1,4 +1,3 @@
-import areas, { ServiceArea } from 'ladot-service-areas'
 import Sinon from 'sinon'
 import assert from 'assert'
 import { v4 as uuid } from 'uuid'
@@ -8,8 +7,6 @@ import cache from '@mds-core/mds-cache'
 import stream from '@mds-core/mds-stream'
 import { AgencyApiRequest, AgencyApiResponse } from '../types'
 import {
-  getAllServiceAreas,
-  getServiceAreaById,
   registerVehicle,
   getVehicleById,
   getVehiclesByProvider,
@@ -25,120 +22,6 @@ function getLocals(provider_id: string) {
 }
 
 describe('Agency API request handlers', () => {
-  describe('Get all service areas', () => {
-    it('Gets all service areas', async () => {
-      const serviceAreas: ServiceArea[] = [
-        {
-          start_date: 0,
-          end_date: null,
-          prev_area: null,
-          replacement_area: null,
-          type: 'unrestricted',
-          description: 'Los Angeles',
-          area: {} as any
-        }
-      ]
-      Sinon.replace(areas, 'readServiceAreas', Sinon.fake.resolves(serviceAreas))
-      const res: AgencyApiResponse = {} as AgencyApiResponse
-      const sendHandler = Sinon.fake.returns('asdf')
-      const statusHandler = Sinon.fake.returns({
-        send: sendHandler
-      } as any)
-      res.status = statusHandler
-      await getAllServiceAreas({} as AgencyApiRequest, res)
-      assert.equal(statusHandler.calledWith(200), true)
-      assert.equal(sendHandler.calledWith({ service_areas: serviceAreas }), true)
-      Sinon.restore()
-    })
-
-    it('Handles a service area read exception', async () => {
-      Sinon.replace(areas, 'readServiceAreas', Sinon.fake.rejects('fake-rejects'))
-      const res: AgencyApiResponse = {} as AgencyApiResponse
-      const sendHandler = Sinon.fake.returns('asdf')
-      const statusHandler = Sinon.fake.returns({
-        send: sendHandler
-      } as any)
-      res.status = statusHandler
-      await getAllServiceAreas({} as AgencyApiRequest, res)
-      assert.equal(statusHandler.calledWith(404), true)
-      assert.equal(sendHandler.calledWith({ result: 'not found' }), true)
-      Sinon.restore()
-    })
-  })
-
-  describe('Get service area by id', () => {
-    it('Gets service area by id', async () => {
-      const serviceAreas: ServiceArea[] = [
-        {
-          start_date: 0,
-          end_date: null,
-          prev_area: null,
-          replacement_area: null,
-          type: 'unrestricted',
-          description: 'Los Angeles',
-          area: {} as any
-        }
-      ]
-      Sinon.replace(areas, 'readServiceAreas', Sinon.fake.resolves(serviceAreas))
-      const service_area_id = uuid()
-      const res: AgencyApiResponse = {} as AgencyApiResponse
-      const sendHandler = Sinon.fake.returns('asdf')
-      const statusHandler = Sinon.fake.returns({
-        send: sendHandler
-      } as any)
-      res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
-      assert.equal(statusHandler.calledWith(200), true)
-      assert.equal(sendHandler.calledWith({ service_areas: serviceAreas }), true)
-      Sinon.restore()
-    })
-
-    it('Handles a service area read exception', async () => {
-      Sinon.replace(areas, 'readServiceAreas', Sinon.fake.rejects('fake-rejects'))
-      const res: AgencyApiResponse = {} as AgencyApiResponse
-      const service_area_id = uuid()
-      const sendHandler = Sinon.fake.returns('asdf')
-      const statusHandler = Sinon.fake.returns({
-        send: sendHandler
-      } as any)
-      res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
-      assert.equal(statusHandler.calledWith(404), true)
-      assert.equal(sendHandler.calledWith({ result: `${service_area_id} not found` }), true)
-      Sinon.restore()
-    })
-
-    it('Handles no service areas found gracefully', async () => {
-      Sinon.replace(areas, 'readServiceAreas', Sinon.fake.resolves([]))
-      const res: AgencyApiResponse = {} as AgencyApiResponse
-      const service_area_id = uuid()
-      const sendHandler = Sinon.fake.returns('asdf')
-      const statusHandler = Sinon.fake.returns({
-        send: sendHandler
-      } as any)
-      res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
-      assert.equal(statusHandler.calledWith(404), true)
-      assert.equal(sendHandler.calledWith({ result: `${service_area_id} not found` }), true)
-      Sinon.restore()
-    })
-
-    it('Handles a non-uuid service area id gracefully', async () => {
-      Sinon.replace(areas, 'readServiceAreas', Sinon.fake.rejects('fake-rejects'))
-      const res: AgencyApiResponse = {} as AgencyApiResponse
-      const service_area_id = 'not-a-uuid'
-      const sendHandler = Sinon.fake.returns('asdf')
-      const statusHandler = Sinon.fake.returns({
-        send: sendHandler
-      } as any)
-      res.status = statusHandler
-      await getServiceAreaById({ params: { service_area_id } } as AgencyApiRequest<{ service_area_id: string }>, res)
-      assert.equal(statusHandler.calledWith(400), true)
-      assert.equal(sendHandler.calledWith({ result: `invalid service_area_id ${service_area_id} is not a UUID` }), true)
-      Sinon.restore()
-    })
-  })
-
   describe('Register vehicle', () => {
     const getFakeBody = () => {
       const device_id = uuid()

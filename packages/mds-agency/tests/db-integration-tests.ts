@@ -61,7 +61,6 @@ function now(): Timestamp {
 
 const APP_JSON = 'application/json; charset=utf-8'
 
-const LA_CITY_BOUNDARY_ID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const PROVIDER_SCOPES = 'admin:all'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
@@ -1355,72 +1354,6 @@ describe('Tests API', () => {
         done(err)
       })
   })
-
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  it('verifies reading a single service_area', done => {
-    request
-      .get(`/service_areas/${LA_CITY_BOUNDARY_ID}`)
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        if (err) {
-          log('service_area err', err)
-          test.value(err).is(undefined) // fail
-        } else {
-          // log('service_area result', Object.keys(result.body))
-          test.object(result.body).match((obj: any) => Array.isArray(obj.service_areas))
-          test.object(result.body).match((obj: any) => typeof obj.service_areas[0].service_area_id === 'string')
-        }
-        done(err)
-      })
-  })
-  /* eslint-enable @typescript-eslint/no-explicit-any */
-
-  it('tries and fails to read a non-existent service_area', done => {
-    request
-      .get('/service_areas/b4bcc213-4888-48ce-a33d-4dd6c3384bda')
-      .set('Authorization', AUTH)
-      .expect(404)
-      .end((err, result) => {
-        log(result.body)
-        if (err) {
-          log('service_area err', err)
-        } else {
-          // really only care that we got a 404
-        }
-        done(err)
-      })
-  })
-  it('verifies you cannot query service_areas that are not UUIDs', done => {
-    request
-      .get('/service_areas/definitely-not-a-UUID')
-      .set('Authorization', AUTH)
-      .expect(400)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.result).contains('invalid service_area_id')
-        done(err)
-      })
-  })
-
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  it('verifies reading all service_areas', done => {
-    request
-      .get('/service_areas')
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        if (err) {
-          log('service_areas err', err)
-        } else {
-          // log('service_areas result', Object.keys(result.body))
-          test.object(result.body).match((obj: any) => Array.isArray(obj.service_areas))
-          test.object(result.body).match((obj: any) => typeof obj.service_areas[0].service_area_id === 'string')
-        }
-        done(err)
-      })
-  })
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   it('gets cache info', done => {
     request

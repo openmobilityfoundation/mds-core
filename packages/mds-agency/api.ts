@@ -22,8 +22,6 @@ import { isUUID, pathsFor } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import { checkAccess } from '@mds-core/mds-api-server'
 import {
-  getAllServiceAreas,
-  getServiceAreaById,
   registerVehicle,
   getVehicleById,
   getVehiclesByProvider,
@@ -78,18 +76,6 @@ function api(app: express.Express): express.Express {
   })
 
   // / ////////// gets ////////////////
-
-  /**
-   * Get all service areas
-   * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#service_areas Service Areas}
-   */
-  app.get(pathsFor('/service_areas'), getAllServiceAreas)
-
-  /**
-   * Get a particular service area
-   * See {@link https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/agency#service_areas Service Areas}
-   */
-  app.get(pathsFor('/service_areas/:service_area_id'), getServiceAreaById)
 
   /**
    * Endpoint to register vehicles

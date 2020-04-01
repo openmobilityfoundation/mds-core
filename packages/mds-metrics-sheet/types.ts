@@ -7,7 +7,6 @@ export interface VehicleCountRow {
   status: { [s in VEHICLE_STATUS]: number }
   event_type: { [s in VEHICLE_EVENT]: number }
   areas: { [s: string]: number }
-  areas_48h: { [s: string]: number }
 }
 
 export type VehicleCountResponse = VehicleCountRow[]

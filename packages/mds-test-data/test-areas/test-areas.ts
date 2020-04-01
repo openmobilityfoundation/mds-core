@@ -1,3 +1,7 @@
+import { UUID, Nullable } from '@mds-core/mds-types'
+import { Geometry } from 'geojson'
+
+/* eslint-disable @typescript-eslint/no-var-requires */
 const laCityBoundary = require('./la-city-boundary')
 const restrictedAreas = require('./restricted-areas')
 const laDacs = require('./la-dacs')
@@ -5,7 +9,17 @@ const veniceSpecOps = require('./venice-special-ops-zone')
 const venice = require('./venice')
 const councilDistrict11 = require('./council-district-11')
 
-const serviceAreaMap = {
+const serviceAreaMap: {
+  [key: string]: {
+    start_date: number
+    end_date: Nullable<number>
+    prev_area: Nullable<UUID>
+    replacement_area: Nullable<UUID>
+    type: string
+    description: string
+    area: Geometry
+  }
+} = {
   // LA city boundary
   '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49': {
     start_date: 0,
@@ -95,31 +109,4 @@ const serviceAreaMap = {
   }
 }
 
-function readServiceAreas(provider_id, service_area_id) {
-  // ignore provider_id for now
-  return new Promise(resolve => {
-    // see if service_area_id is non-null
-
-    if (typeof service_area_id === 'string') {
-      const service_area_record = serviceAreaMap[service_area_id]
-      if (service_area_record) {
-        service_area_record.service_area_id = service_area_id
-        resolve([service_area_record])
-      } else {
-        resolve(null)
-      }
-    } else {
-      const areas = Object.keys(serviceAreaMap).map(key => {
-        const service_area_record = serviceAreaMap[key]
-        service_area_record.service_area_id = key
-        return service_area_record
-      })
-      resolve(areas)
-    }
-  })
-}
-
-module.exports = {
-  readServiceAreas,
-  serviceAreaMap
-}
+export { serviceAreaMap, restrictedAreas, veniceSpecOps }

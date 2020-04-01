@@ -6,13 +6,11 @@ import {
   UUID,
   VehicleEvent,
   VEHICLE_STATUSES,
-  RIGHT_OF_WAY_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_EVENT,
   TripsStats,
   Device
 } from '@mds-core/mds-types'
-import areas from 'ladot-service-areas'
 import { DailyApiRequest, DailyApiResponse, ProviderInfo } from './types'
 import {
   getTimeSinceLastEvent,
@@ -85,10 +83,6 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
       count: number
       status: { [s: string]: number }
       event_type: { [s: string]: number }
-      areas: { [s: string]: number }
-      areas_12h: { [s: string]: number }
-      areas_24h: { [s: string]: number }
-      areas_48h: { [s: string]: number }
     }[] = rows.map(row => {
       const { provider_id, count } = row
       return {
@@ -96,17 +90,10 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
         provider: providerName(provider_id),
         count,
         status: {},
-        event_type: {},
-        areas: {},
-        areas_12h: {},
-        areas_24h: {},
-        areas_48h: {}
+        event_type: {}
       }
     })
     logger.info('/admin/vehicle_counts', JSON.stringify(stats))
-    const HRS_12_AGO = now() - 43200000
-    const HRS_24_AGO = now() - 86400000
-    const HRS_48_AGO = now() - 172800000
 
     const maps = await getMaps()
     // TODO reimplement to be more efficient
@@ -125,22 +112,6 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
           inc(stat.event_type, event ? event.event_type : 'default')
           const status = event ? EVENT_STATUS_MAP[event.event_type] : VEHICLE_STATUSES.removed
           inc(stat.status, status)
-          // TODO latest-state should remove service_area_id if it's null
-          if (event && RIGHT_OF_WAY_STATUSES.includes(status) && event.service_area_id) {
-            const serviceArea = areas.serviceAreaMap[event.service_area_id]
-            if (serviceArea) {
-              inc(stat.areas, serviceArea.description)
-              if (event.timestamp >= HRS_12_AGO) {
-                inc(stat.areas_12h, serviceArea.description)
-              }
-              if (event.timestamp >= HRS_24_AGO) {
-                inc(stat.areas_24h, serviceArea.description)
-              }
-              if (event.timestamp >= HRS_48_AGO) {
-                inc(stat.areas_48h, serviceArea.description)
-              }
-            }
-          }
         })
       })
     )

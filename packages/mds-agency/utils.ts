@@ -1,7 +1,6 @@
 import express from 'express'
 
-import { isUUID, isPct, isTimestamp, isFloat, pointInShape, isInsideBoundingBox } from '@mds-core/mds-utils'
-import areas from 'ladot-service-areas'
+import { isUUID, isPct, isTimestamp, isFloat, isInsideBoundingBox } from '@mds-core/mds-utils'
 import stream from '@mds-core/mds-stream'
 import {
   UUID,
@@ -363,34 +362,6 @@ export function lower(s: string): string {
     return s.toLowerCase()
   }
   return s
-}
-
-/**
- * set the service area on an event based on its gps
- */
-export function getServiceArea(event: VehicleEvent): UUID | null {
-  const tel = event.telemetry
-  if (tel) {
-    // TODO: filter service areas by effective date and not having a replacement
-    const serviceAreaKeys = Object.keys(areas.serviceAreaMap).reverse()
-    const status = EVENT_STATUS_MAP[event.event_type]
-    switch (status) {
-      case VEHICLE_STATUSES.available:
-      case VEHICLE_STATUSES.unavailable:
-      case VEHICLE_STATUSES.reserved:
-      case VEHICLE_STATUSES.trip:
-        for (const key of serviceAreaKeys) {
-          const serviceArea = areas.serviceAreaMap[key]
-          if (pointInShape(tel.gps, serviceArea.area)) {
-            return key
-          }
-        }
-        break
-      default:
-        break
-    }
-  }
-  return null
 }
 
 export async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {

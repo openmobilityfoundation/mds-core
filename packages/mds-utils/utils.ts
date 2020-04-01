@@ -34,9 +34,6 @@ import {
 import { TelemetryRecord } from '@mds-core/mds-db/types'
 import logger from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
-import { point as turfPoint } from '@turf/helpers'
-import turf from '@turf/boolean-point-in-polygon'
-import { serviceAreaMap } from 'ladot-service-areas'
 
 import { isArray } from 'util'
 import { getNextState } from './state-machine'
@@ -569,15 +566,6 @@ function filterEmptyHelper<T>(warnOnEmpty?: boolean) {
   }
 }
 
-function findServiceAreas(lng: number, lat: number): { id: string; type: string }[] {
-  const turfPT = turfPoint([lng, lat])
-  return Object.keys(serviceAreaMap)
-    .filter(i => turf(turfPT, serviceAreaMap[i].area))
-    .map(key => {
-      return { id: key, type: 'district' }
-    })
-}
-
 function moved(latA: number, lngA: number, latB: number, lngB: number) {
   const limit = 0.00001 // arbitrary amount
   const latDiff = Math.abs(latA - latB)
@@ -636,7 +624,6 @@ export {
   routeDistance,
   clone,
   filterEmptyHelper,
-  findServiceAreas,
   moved,
   normalizeToArray,
   parseRelative,
