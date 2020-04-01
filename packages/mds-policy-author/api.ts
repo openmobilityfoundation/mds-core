@@ -29,9 +29,11 @@ import { policyValidationDetails } from '@mds-core/mds-schema-validators'
 import logger from '@mds-core/mds-logger'
 
 import { checkAccess } from '@mds-core/mds-api-server'
+import { PolicyAuthorApiVersionMiddleware } from './middleware/policy-author-api-version'
 import { getPolicies } from './request-handlers'
 
 function api(app: express.Express): express.Express {
+  app.use(PolicyAuthorApiVersionMiddleware)
   app.get(
     pathsFor('/policies'),
     checkAccess(scopes => scopes.includes('policies:read')),
@@ -53,7 +55,7 @@ function api(app: express.Express): express.Express {
 
       try {
         await db.writePolicy(policy)
-        return res.status(201).send(policy)
+        return res.status(201).send({ version: res.locals.version, policy })
       } catch (err) {
         if (err.code === '23505') {
           return res.status(409).send({ result: `policy ${policy.policy_id} already exists! Did you mean to PUT?` })
@@ -73,7 +75,9 @@ function api(app: express.Express): express.Express {
       const { policy_id } = req.params
       try {
         await db.publishPolicy(policy_id)
-        return res.status(200).send({ result: `successfully published policy of id ${policy_id}` })
+        return res
+          .status(200)
+          .send({ version: res.locals.version, result: `successfully published policy of id ${policy_id}` })
       } catch (err) {
         if (err instanceof NotFoundError) {
           if (err.message.includes('geography')) {
@@ -110,7 +114,8 @@ function api(app: express.Express): express.Express {
 
       try {
         await db.editPolicy(policy)
-        return res.status(200).send({ result: `successfully edited policy ${policy}` })
+        const result = db.readPolicy(policy.policy_id)
+        return res.status(200).send({ version: res.locals.version, policy: result })
       } catch (err) {
         if (err instanceof NotFoundError) {
           return res.status(404).send({ error: 'not found' })
@@ -137,7 +142,7 @@ function api(app: express.Express): express.Express {
       const { policy_id } = req.params
       try {
         await db.deletePolicy(policy_id)
-        return res.status(200).send({ result: `successfully deleted policy of id ${policy_id}` })
+        return res.status(200).send({ version: res.locals.version, policy_id })
       } catch (err) {
         /* istanbul ignore next */
         logger.error('failed to delete policy', err.stack)
@@ -162,9 +167,9 @@ function api(app: express.Express): express.Express {
 
       logger.info('read /policies/meta', req.query)
       try {
-        const metadata = await db.readBulkPolicyMetadata(params)
+        const policy_metadata = await db.readBulkPolicyMetadata(params)
 
-        res.status(200).send(metadata)
+        res.status(200).send({ version: res.locals.version, policy_metadata })
       } catch (err) {
         logger.error('failed to read policies', err)
         if (err instanceof BadParamsError) {
@@ -188,7 +193,7 @@ function api(app: express.Express): express.Express {
       try {
         const policies = await db.readPolicies({ policy_id })
         if (policies.length > 0) {
-          res.status(200).send(policies[0])
+          res.status(200).send({ version: res.locals.version, policy: policies[0] })
         } else {
           res.status(404).send({ result: 'not found' })
         }
@@ -206,7 +211,7 @@ function api(app: express.Express): express.Express {
       const { policy_id } = req.params
       try {
         const result = await db.readSinglePolicyMetadata(policy_id)
-        return res.status(200).send(result)
+        return res.status(200).send({ version: res.locals.version, policy_metadata: result })
       } catch (err) {
         logger.error('failed to read policy metadata', err.stack)
         return res.status(404).send({ result: 'not found' })
@@ -221,12 +226,12 @@ function api(app: express.Express): express.Express {
       const policy_metadata = req.body
       try {
         await db.updatePolicyMetadata(policy_metadata)
-        return res.status(200).send(policy_metadata)
+        return res.status(200).send({ version: res.locals.version, policy_metadata })
       } catch (updateErr) {
         if (updateErr instanceof NotFoundError) {
           try {
             await db.writePolicyMetadata(policy_metadata)
-            return res.status(201).send(policy_metadata)
+            return res.status(201).send({ version: res.locals.version, policy_metadata })
           } catch (writeErr) {
             logger.error('failed to write policy metadata', writeErr.stack)
             return res.status(500).send(new ServerError())

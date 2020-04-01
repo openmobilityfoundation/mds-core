@@ -1,9 +1,9 @@
 import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
 import { BadParamsError } from '@mds-core/mds-utils'
-import { PolicyApiRequest, PolicyApiResponse } from './types'
+import { PolicyAuthorApiRequest, PolicyAuthorApiResponse } from './types'
 
-const getPolicies = async (req: PolicyApiRequest, res: PolicyApiResponse) => {
+const getPolicies = async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
   const { get_published = null, get_unpublished = null } = req.query
   const params = { get_published, get_unpublished }
   if (get_published) {
@@ -18,7 +18,7 @@ const getPolicies = async (req: PolicyApiRequest, res: PolicyApiResponse) => {
     const policies = await db.readPolicies(params)
 
     // Let's not worry about filtering for just active policies at the moment.
-    res.status(200).send(policies)
+    res.status(200).send({ version: res.locals.version, policies })
   } catch (err) {
     logger.error('failed to read policies', err)
     if (err instanceof BadParamsError) {

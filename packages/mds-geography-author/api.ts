@@ -224,9 +224,10 @@ function api(app: express.Express): express.Express {
           logger.info(`Unable to delete nonexistent metadata for ${geography_id}`)
         }
         await db.deleteGeography(geography_id)
-        return res
-          .status(200)
-          .send({ version: res.locals.version, result: `Successfully deleted geography and/or geography metadata of id ${geography_id}` })
+        return res.status(200).send({
+          version: res.locals.version,
+          result: `Successfully deleted geography and/or geography metadata of id ${geography_id}`
+        })
       } catch (err) {
         logger.error('failed to delete geography', err.stack)
         if (err instanceof NotFoundError) {

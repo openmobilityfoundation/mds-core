@@ -46,13 +46,14 @@ import {
   SCOPED_AUTH
 } from '@mds-core/mds-test-data'
 import { api } from '../api'
+import { POLICY_AUTHOR_API_DEFAULT_VERSION } from '../types'
 
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
 const request = supertest(ApiServer(api))
 
-const APP_JSON = 'application/json; charset=utf-8'
+const APP_JSON = 'application/vnd.mds.policy-author+json; charset=utf-8; version=0.1'
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
 const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
 const POLICIES_WRITE_SCOPE = SCOPED_AUTH(['policies:write'])
@@ -159,6 +160,7 @@ describe('Tests app', () => {
         .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
+          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
           done(err)
         })
     })
@@ -190,7 +192,13 @@ describe('Tests app', () => {
     it('edits one current policy', async () => {
       const policy = clone(POLICY_JSON)
       policy.name = 'a shiny new name'
-      await request.put(`/policies/${POLICY_UUID}`).set('Authorization', POLICIES_WRITE_SCOPE).send(policy).expect(200)
+      const apiResult = await request
+        .put(`/policies/${POLICY_UUID}`)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
+        .send(policy)
+        .expect(200)
+
+      test.value(apiResult.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
 
       const [result] = await db.readPolicies({ policy_id: policy.policy_id, get_unpublished: true })
       test.value(result.name).is('a shiny new name')
@@ -205,6 +213,7 @@ describe('Tests app', () => {
         .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
+          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
           done(err)
         })
     })
@@ -219,6 +228,7 @@ describe('Tests app', () => {
         .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
+          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
           done(err)
         })
     })
@@ -354,6 +364,7 @@ describe('Tests app', () => {
           const body = result.body
           log('read back nonexistent policy response:', body)
           test.value(result).hasHeader('content-type', APP_JSON)
+          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
           await db.readPolicies({ policy_id: POLICY2_UUID }).should.be.fulfilledWith([])
           done(err)
         })
@@ -389,22 +400,24 @@ describe('Tests app', () => {
 
     it('verifies PUTing policy metadata to create', async () => {
       const metadata = { some_arbitrary_thing: 'boop' }
-      await request
+      const apiResult = await request
         .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
         .expect(201)
+      test.value(apiResult.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
       const result = await db.readSinglePolicyMetadata(POLICY_UUID)
       test.assert(result.policy_metadata.some_arbitrary_thing === 'boop')
     })
 
     it('verifies PUTing policy metadata to edit', async () => {
       const metadata = { some_arbitrary_thing: 'beep' }
-      await request
+      const apiResult = await request
         .put(`/policies/${POLICY_UUID}/meta`)
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
         .expect(200)
+      test.value(apiResult.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
       const result = await db.readSinglePolicyMetadata(POLICY_UUID)
       test.assert(result.policy_metadata.some_arbitrary_thing === 'beep')
     })
@@ -435,7 +448,8 @@ describe('Tests app', () => {
         .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.policy_metadata.some_arbitrary_thing === 'beep')
+          test.value(result.body.policy_metadata.some_arbitrary_thing, 'beep')
+          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -463,7 +477,8 @@ describe('Tests app', () => {
 
     it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
       const result = await request.get(`/policies/meta`).set('Authorization', POLICIES_READ_SCOPE).expect(200)
-      test.assert(result.body.length === 1)
+      test.assert(result.body.policy_metadata.length === 1)
+      test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
 
@@ -487,16 +502,11 @@ describe('Tests app', () => {
         })
     })
 
-    it('can GET a single policy', done => {
-      request
-        .get(`/policies/${POLICY_UUID}`)
-        .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(200)
-        .end(async (err, result) => {
-          test.assert(result.body.policy_id === POLICY_UUID)
-          test.assert(result.body.description === POLICY_JSON.description)
-          done(err)
-        })
+    it('can GET a single policy', async () => {
+      const result = await request.get(`/policies/${POLICY_UUID}`).set('Authorization', POLICIES_READ_SCOPE)
+      test.assert(result.body.policy.policy_id === POLICY_UUID)
+      test.assert(result.body.policy.description === POLICY_JSON.description)
+      test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
     })
 
     it('cannot GET a single nonexistent policy', done => {
@@ -555,15 +565,12 @@ describe('Tests app', () => {
         })
     })
 
-    it('can GET all unpublished policies', done => {
-      request
+    it('can GET all unpublished policies', async () => {
+      const result = await request
         .get(`/policies?get_unpublished=true`)
         .set('Authorization', POLICIES_READ_SCOPE)
         .expect(200)
-        .end(async (policies_err, policies_result) => {
-          test.assert(policies_result.body.length === 2)
-          done(policies_err)
-        })
+      test.assert(result.body.policies.length === 2)
     })
 
     it('generates a UUID for a policy that has no UUID', done => {
@@ -574,7 +581,8 @@ describe('Tests app', () => {
         .expect(201)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
-          test.assert(isUUID(result.body.policy_id))
+          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
+          test.assert(isUUID(result.body.policy.policy_id))
           done(err)
         })
     })
