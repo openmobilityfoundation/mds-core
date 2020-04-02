@@ -103,22 +103,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Server: mds-native",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
-      "args": ["server.ts"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-native",
-      "env": {
-        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-native",
-        "PATH_PREFIX": "/native"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Server: mds-policy",
       "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
       "args": ["server.ts"],
@@ -146,6 +130,22 @@
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "npm_package_name": "@mds-core/mds-policy-author",
         "PATH_PREFIX": "/policy-author"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-metrics",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-metrics",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-metrics",
+        "PATH_PREFIX": "/metrics"
       }
     },
     {
@@ -284,6 +284,22 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Tests: mds-event-server",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-event-server",
+      "env": {
+        "npm_package_name": "mds-event-server",
+        "npm_package_version": "0.0.0",
+        "DOTENV_CONFIG_PATH": "../../.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Tests: mds-jurisdiction",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
@@ -321,21 +337,6 @@
       "cwd": "${workspaceFolder}/packages/mds-logger",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Tests: mds-native",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-native",
-      "env": {
-        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "PATH_PREFIX": "/native"
       }
     },
     {
@@ -393,6 +394,22 @@
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-utils",
       "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-metrics",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-metrics",
+      "env": {
+        "npm_package_name": "mds-metrics",
+        "npm_package_version": "0.0.0",
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     }

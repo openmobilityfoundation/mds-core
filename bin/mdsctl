@@ -141,7 +141,6 @@ declare -A apps=(
   ["mds-geography"]="https://localhost:[port]/geography,mds,app"
   ["mds-geography-author"]="https://localhost:[port]/geography-author,mds,app"
   ["mds-jurisdiction"]="https://localhost:[port]/jurisdiction,mds,app"]
-  ["mds-native"]="https://localhost:[port]/native,mds,app"
   ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
@@ -270,7 +269,6 @@ where app in:
   mds-event-processor
   mds-geography
   mds-geography-author
-  mds-native
   mds-policy
   mds-policy-author
   mds-postgresql

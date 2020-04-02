@@ -21,8 +21,6 @@ tests:
           enabled: false
         mds-metrics:
           enabled: false
-        mds-native:
-          enabled: false
         mds-policy-author:
           enabled: false
         mds-config:

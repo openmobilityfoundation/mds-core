@@ -66,12 +66,12 @@ services:
       PG_MIGRATIONS: "true"
       REDIS_HOST: redis
 
-  native:
-    image: mds-native:$NATIVE_VERSION
+  metrics:
+    image: mds-metrics:$METRICS_VERSION
     ports:
-      - "4006"
+      - "4005"
     environment:
-      PATH_PREFIX: /native
+      PATH_PREFIX: /metrics
       PG_HOST: postgres
       PG_NAME: mds
       PG_USER: mdsadmin

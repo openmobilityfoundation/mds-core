@@ -29,10 +29,10 @@ apis:
     pathPrefix: /jurisdiction
     version: ${JURISDICTION_VERSION}
     migration: false
-  mds-native:
+  mds-metrics:
     enabled: true
-    pathPrefix: /native
-    version: ${NATIVE_VERSION}
+    pathPrefix: /metrics
+    version: ${METRICS_VERSION}
     migration: false
   mds-policy-author:
     enabled: true

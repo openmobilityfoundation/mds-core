@@ -29,9 +29,9 @@ apis:
     pathPrefix: /jurisdiction
     version: latest
     migration: false
-  mds-native:
+  mds-metrics:
     enabled: true
-    pathPrefix: /native
+    pathPrefix: /metrics
     version: latest
     migration: false
   mds-policy-author:
