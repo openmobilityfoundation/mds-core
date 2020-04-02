@@ -25,7 +25,6 @@ import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import { isArray } from 'util'
-import * as socket from '@mds-core/mds-web-sockets'
 import { VehiclePayload, TelemetryResult } from './types'
 
 export function badDevice(device: Device): Partial<{ error: string; error_description: string }> | boolean {
@@ -367,13 +366,9 @@ export function lower(s: string): string {
 export async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
   const recorded_telemetry = await db.writeTelemetry(Array.isArray(telemetry) ? telemetry : [telemetry])
   try {
-    await Promise.all([
-      cache.writeTelemetry(recorded_telemetry),
-      stream.writeTelemetry(recorded_telemetry),
-      socket.writeTelemetry(recorded_telemetry)
-    ])
+    await Promise.all([cache.writeTelemetry(recorded_telemetry), stream.writeTelemetry(recorded_telemetry)])
   } catch (err) {
-    logger.warn(`Failed to write telemetry to cache/socket/stream, ${err}`)
+    logger.warn(`Failed to write telemetry to cache/stream, ${err}`)
   }
   return recorded_telemetry
 }

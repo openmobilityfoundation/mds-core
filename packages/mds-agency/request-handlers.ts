@@ -300,7 +300,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
 
       await success()
     } catch (err) {
-      logger.warn('/event exception cache/stream/socket', err)
+      logger.warn('/event exception cache/stream', err)
       await success()
     }
   } catch (err) {

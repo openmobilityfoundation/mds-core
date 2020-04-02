@@ -4,14 +4,8 @@
     "outDir": "dist"
   },
   "references": [
-    {
-      "path": "../../container-images/env-inject/tsconfig.build.json"
-    },
-    {
-      "path": "../../packages/mds-geography/tsconfig.build.json"
-    },
-    {
-      "path": "../../packages/mds-api-server/tsconfig.build.json"
-    }
+    { "path": "../../container-images/env-inject/tsconfig.build.json" },
+    { "path": "../../packages/mds-api-server/tsconfig.build.json" },
+    { "path": "../../packages/mds-geography/tsconfig.build.json" }
   ]
 }

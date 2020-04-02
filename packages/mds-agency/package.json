@@ -15,7 +15,7 @@
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
     "express": "4.17.1",
-    "uuid": "7.0.2"
+    "uuid": "7.0.3"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "0.1.26"

@@ -5,7 +5,7 @@
   },
   "references": [
     { "path": "../../container-images/env-inject/tsconfig.build.json" },
-    { "path": "../../packages/mds-compliance/tsconfig.build.json" },
-    { "path": "../../packages/mds-api-server/tsconfig.build.json" }
+    { "path": "../../packages/mds-api-server/tsconfig.build.json" },
+    { "path": "../../packages/mds-compliance/tsconfig.build.json" }
   ]
 }

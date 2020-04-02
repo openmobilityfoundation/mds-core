@@ -8,8 +8,8 @@
     { "path": "../../packages/mds-db/tsconfig.build.json" },
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
     { "path": "../../packages/mds-providers/tsconfig.build.json" },
-    { "path": "../../packages/mds-types/tsconfig.build.json" },
     { "path": "../../packages/mds-schema-validators/tsconfig.build.json" },
+    { "path": "../../packages/mds-types/tsconfig.build.json" },
     { "path": "../../packages/mds-utils/tsconfig.build.json" }
   ]
 }
