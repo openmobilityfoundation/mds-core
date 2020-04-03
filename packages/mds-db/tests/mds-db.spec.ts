@@ -268,6 +268,7 @@ if (pg_info.database) {
         await MDSDBPostgres.writePolicy(POLICY3_JSON)
 
         await MDSDBPostgres.writeGeography(LAGeography)
+        await MDSDBPostgres.publishGeography({ geography_id: LAGeography.geography_id })
         await MDSDBPostgres.publishPolicy(POLICY_JSON.policy_id)
 
         // Read all policies, no matter whether published or not.
@@ -455,21 +456,19 @@ if (pg_info.database) {
         await MDSDBPostgres.shutdown()
       })
 
-      it('will publish a Geography if a Policy is published', async () => {
+      it('will throw an error if an attempt is made to publish a Policy but the Geography is unpublished', async () => {
         await MDSDBPostgres.writeGeography(LAGeography)
         await MDSDBPostgres.writeGeography(DistrictSeven)
         assert(!(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id)))
         assert(!(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)))
-
         await MDSDBPostgres.writePolicy(POLICY3_JSON)
-        await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
-        assert(await MDSDBPostgres.isGeographyPublished(DistrictSeven.geography_id))
-        assert(await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id))
 
-        const policy = await MDSDBPostgres.readPolicy(POLICY3_JSON.policy_id)
-        const geography = await MDSDBPostgres.readSingleGeography(DistrictSeven.geography_id)
-
-        assert.deepEqual(policy.publish_date, geography.publish_date)
+        await assert.rejects(
+          async () => {
+            await MDSDBPostgres.publishPolicy(POLICY3_JSON.policy_id)
+          },
+          { name: 'DependencyMissingError' }
+        )
       })
 
       it('can find policies using geographies by geography ID', async () => {

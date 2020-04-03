@@ -23,7 +23,8 @@ import {
   UUID_REGEX,
   NotFoundError,
   BadParamsError,
-  AlreadyPublishedError
+  AlreadyPublishedError,
+  DependencyMissingError
 } from '@mds-core/mds-utils'
 import { policyValidationDetails } from '@mds-core/mds-schema-validators'
 import logger from '@mds-core/mds-logger'
@@ -86,6 +87,9 @@ function api(app: express.Express): express.Express {
         }
         if (err instanceof AlreadyPublishedError) {
           return res.status(409).send({ error: `policy_id ${policy_id} has already been published` })
+        }
+        if (err instanceof DependencyMissingError) {
+          return res.status(404).send({ error: err })
         }
         /* istanbul ignore next */
         logger.error('failed to publish policy', err.stack)

@@ -265,8 +265,17 @@ describe('Tests app', () => {
         })
     })
 
-    it('can publish a policy', async () => {
+    it('cannot publish a policy if the geo is not published', async () => {
       await db.writeGeography({ name: 'LA', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
+      const result = await request
+        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
+        .expect(404)
+      test.value(result).hasHeader('content-type', APP_JSON)
+    })
+
+    it('can publish a policy if the geo is published', async () => {
+      await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
       const result = await request
         .post(`/policies/${POLICY_JSON.policy_id}/publish`)
         .set('Authorization', POLICIES_PUBLISH_SCOPE)

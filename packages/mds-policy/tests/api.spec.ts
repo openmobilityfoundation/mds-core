@@ -81,6 +81,7 @@ describe('Tests app', () => {
 
   it('read back one policy', async () => {
     await db.writePolicy(POLICY_JSON)
+    await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
     await db.publishPolicy(POLICY_UUID)
     const result = await request.get(`/policies/${POLICY_UUID}`).set('Authorization', AUTH).expect(200)
     const body = result.body
@@ -106,6 +107,8 @@ describe('Tests app', () => {
       geography_json: veniceSpecOps
     })
     await db.writePolicy(POLICY2_JSON)
+    await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
+    await db.publishGeography({ geography_id: GEOGRAPHY2_UUID })
     await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)
     await db.publishPolicy(POLICY3_JSON.policy_id)
