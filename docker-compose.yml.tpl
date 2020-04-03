@@ -66,19 +66,6 @@ services:
       PG_MIGRATIONS: "true"
       REDIS_HOST: redis
 
-  metrics:
-    image: mds-metrics:$METRICS_VERSION
-    ports:
-      - "4005"
-    environment:
-      PATH_PREFIX: /metrics
-      PG_HOST: postgres
-      PG_NAME: mds
-      PG_USER: mdsadmin
-      PG_PASS: "Password123#"
-      PG_MIGRATIONS: "true"
-      REDIS_HOST: redis
-
   jurisdiction:
     image: mds-jurisdiction:$JURISDICTION_VERSION
     ports:

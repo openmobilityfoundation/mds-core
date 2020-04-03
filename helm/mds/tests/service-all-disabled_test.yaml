@@ -19,8 +19,6 @@ tests:
           enabled: false
         mds-jurisdiction:
           enabled: false
-        mds-metrics:
-          enabled: false
         mds-policy-author:
           enabled: false
         mds-config:

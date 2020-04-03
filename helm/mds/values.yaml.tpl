@@ -29,11 +29,6 @@ apis:
     pathPrefix: /jurisdiction
     version: ${JURISDICTION_VERSION}
     migration: false
-  mds-metrics:
-    enabled: true
-    pathPrefix: /metrics
-    version: ${METRICS_VERSION}
-    migration: false
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author
