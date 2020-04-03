@@ -31,6 +31,9 @@ import {
   computeCompositeVehicleData
 } from './utils'
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+stream.initialize()
+
 export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   const { body } = req
   const recorded = now()
