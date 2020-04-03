@@ -23,6 +23,7 @@ export interface StreamProcessorController {
   stop: () => Promise<void>
 }
 
+// StreamProcessor - Read from source, apply transform to each message, and write to sink
 export const StreamProcessor = <TMessageIn, TMessageOut>(
   source: StreamSource<TMessageIn>,
   transform: StreamTransform<TMessageIn, TMessageOut>,
@@ -45,3 +46,7 @@ export const StreamProcessor = <TMessageIn, TMessageOut>(
     }
   }
 }
+
+// StreamTap - Read from source and write to sink (no transform)
+export const StreamTap = <TMessage>(source: StreamSource<TMessage>, sink: StreamSink<TMessage>) =>
+  StreamProcessor(source, async message => message, sink)

@@ -19,7 +19,7 @@ import stream from '@mds-core/mds-stream'
 import { StreamConsumerOptions, StreamProducerOptions } from '@mds-core/mds-stream/kafka/helpers'
 import { StreamSink, StreamSource } from './index'
 
-export const KafkaStreamSource = <TMessage>(
+export const KafkaSource = <TMessage>(
   topic: string,
   options?: Partial<StreamConsumerOptions>
 ): StreamSource<TMessage> => processor => {
@@ -40,7 +40,7 @@ export const KafkaStreamSource = <TMessage>(
   )
 }
 
-export const KafkaStreamSink = <TMessage>(
+export const KafkaSink = <TMessage>(
   topic: string,
   options?: Partial<StreamProducerOptions>
 ): StreamSink<TMessage> => () => {
