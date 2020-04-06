@@ -37,14 +37,6 @@ tests:
           value: mds-audit
         documentIndex: 1
       - equal:
-          path: spec.template.spec.volumes[0].name
-          value: mds-config-files
-        documentIndex: 1
-      - equal:
-          path: spec.template.spec.volumes[0].configMap.name
-          value: mds-config-files
-        documentIndex: 1
-      - equal:
           path: spec.template.spec.containers[0].name
           value: mds-audit
         documentIndex: 1
@@ -81,20 +73,12 @@ tests:
           value: TCP
         documentIndex: 1
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].name
-          value: mds-config-files
-        documentIndex: 1
-      - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
-          value: /mds-config/
-        documentIndex: 1
-      - equal:
           path: spec.template.spec.containers[0].env[0].name
           value: PORT
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[0].value
-          value: "4000"
+          value: '4000'
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[1].name
@@ -154,7 +138,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: "5432"
+          value: '5432'
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[8].name
@@ -170,7 +154,7 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[9].value
-          value: "6379"
+          value: '6379'
         documentIndex: 1
       - equal:
           path: spec.template.spec.containers[0].env[10].name

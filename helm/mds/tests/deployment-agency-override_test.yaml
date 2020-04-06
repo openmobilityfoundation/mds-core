@@ -68,14 +68,6 @@ tests:
           value: mds-agency
         documentIndex: 0
       - equal:
-          path: spec.template.spec.volumes[0].name
-          value: mds-config-files
-        documentIndex: 0
-      - equal:
-          path: spec.template.spec.volumes[0].configMap.name
-          value: mds-config-files
-        documentIndex: 0
-      - equal:
           path: spec.template.spec.containers[0].name
           value: mds-agency
         documentIndex: 0
@@ -112,20 +104,12 @@ tests:
           value: TCP
         documentIndex: 0
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].name
-          value: mds-config-files
-        documentIndex: 0
-      - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
-          value: /mds-config/
-        documentIndex: 0
-      - equal:
           path: spec.template.spec.containers[0].env[0].name
           value: PORT
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[0].value
-          value: "4000"
+          value: '4000'
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[1].name
@@ -193,7 +177,7 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[8].value
-          value: "1234"
+          value: '1234'
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[9].name
@@ -201,7 +185,7 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[9].value
-          value: "true"
+          value: 'true'
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[10].name
@@ -217,7 +201,7 @@ tests:
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[11].value
-          value: "5678"
+          value: '5678'
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].env[12].name

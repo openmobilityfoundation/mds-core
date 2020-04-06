@@ -21,8 +21,6 @@ tests:
           enabled: false
         mds-policy-author:
           enabled: false
-        mds-config:
-          enabled: false
         mds-web-sockets:
           enabled: false
         mds-event-processor:

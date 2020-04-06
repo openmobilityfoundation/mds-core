@@ -37,14 +37,6 @@ tests:
           value: mds-daily
         documentIndex: 4
       - equal:
-          path: spec.template.spec.volumes[0].name
-          value: mds-config-files
-        documentIndex: 4
-      - equal:
-          path: spec.template.spec.volumes[0].configMap.name
-          value: mds-config-files
-        documentIndex: 4
-      - equal:
           path: spec.template.spec.containers[0].name
           value: mds-daily
         documentIndex: 4
@@ -81,20 +73,12 @@ tests:
           value: TCP
         documentIndex: 4
       - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].name
-          value: mds-config-files
-        documentIndex: 4
-      - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
-          value: /mds-config/
-        documentIndex: 4
-      - equal:
           path: spec.template.spec.containers[0].env[0].name
           value: PORT
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[0].value
-          value: "4000"
+          value: '4000'
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[1].name
@@ -154,7 +138,7 @@ tests:
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[7].value
-          value: "5432"
+          value: '5432'
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[8].name
@@ -170,7 +154,7 @@ tests:
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[9].value
-          value: "6379"
+          value: '6379'
         documentIndex: 4
       - equal:
           path: spec.template.spec.containers[0].env[10].name
