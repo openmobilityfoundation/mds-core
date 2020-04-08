@@ -21,6 +21,7 @@ import stan from 'node-nats-streaming'
 import { BinaryHTTPEmitter, event as cloudevent } from 'cloudevents-sdk/v1'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
 import { v4 as uuid } from 'uuid'
+import { getEnvVar } from '@mds-core/mds-utils'
 import {
   Stream,
   StreamItem,
@@ -73,22 +74,24 @@ async function writeCloudEvent(type: string, data: string) {
     return
   }
 
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
+
   // fixme: unable to set-and-propgate additional ce headers, eg: ce.addExtension('foo', 'bar')
-  const event = cloudevent()
-    .type(`${env.TENANT_ID || 'mds'}.${type}`)
-    .source(env.NATS)
-    .data(data)
+  const event = cloudevent().type(`${TENANT_ID}.${type}`).source(env.NATS).data(data)
 
   return getBinding().emit(event)
 }
 
 async function writeNatsEvent(type: string, data: string) {
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
+
   if (env.NATS) {
-    const event = cloudevent()
-      .type(`${env.TENANT_ID || 'mds'}.${type}`)
-      .source(env.NATS)
-      .data(data)
-    getNats().publish(`${env.TENANT_ID || 'mds'}.${type}`, JSON.stringify(event))
+    const event = cloudevent().type(`${TENANT_ID}.${type}`).source(env.NATS).data(data)
+    getNats().publish(`${TENANT_ID}.${type}`, JSON.stringify(event))
   }
 }
 declare module 'redis' {

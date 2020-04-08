@@ -1,5 +1,5 @@
 import logger from '@mds-core/mds-logger'
-import { seconds } from '@mds-core/mds-utils'
+import { seconds, getEnvVar } from '@mds-core/mds-utils'
 import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
 import { Telemetry, VehicleEvent } from '@mds-core/mds-types'
@@ -105,8 +105,14 @@ export const WebSocketServer = () => {
   })
 
   const {
-    env: { NATS = 'localhost', STAN_CLUSTER = 'nats-streaming', STAN_CREDS, TENANT_ID = 'mds' }
+    env: { STAN_CREDS }
   } = process
+
+  const { TENANT_ID, NATS, STAN_CLUSTER } = getEnvVar({
+    TENANT_ID: 'mds',
+    NATS: 'localhost',
+    STAN_CLUSTER: 'nats-streaming'
+  })
 
   const processor = async (type: string, data: VehicleEvent | Telemetry) => {
     switch (type) {

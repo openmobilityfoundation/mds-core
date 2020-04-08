@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
 import stan from 'node-nats-streaming'
 import logger from '@mds-core/mds-logger'
+import { getEnvVar } from '@mds-core/mds-utils'
 
 export type EventProcessor<TData, TResult> = (type: string, data: TData) => Promise<TResult>
 
@@ -8,9 +9,10 @@ const SUBSCRIPTION_TYPES = ['event', 'telemetry'] as const
 type SUBSCRIPTION_TYPE = typeof SUBSCRIPTION_TYPES[number]
 
 const subscriptionCb = async <TData, TResult>(processor: EventProcessor<TData, TResult>, msg: stan.Message) => {
-  const { TENANT_ID } = process.env
-
-  const TENANT_REGEXP = new RegExp(`^${TENANT_ID || 'mds'}\\.`)
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
+  const TENANT_REGEXP = new RegExp(`^${TENANT_ID}\\.`)
 
   try {
     const {
@@ -40,7 +42,7 @@ const natsSubscriber = async <TData, TResult>({
   TENANT_ID: string
   type: SUBSCRIPTION_TYPE
 }) => {
-  const subscriber = nats.subscribe(`${TENANT_ID || 'mds'}.${type}`, {
+  const subscriber = nats.subscribe(`${TENANT_ID}.${type}`, {
     ...nats.subscriptionOptions(),
     manualAcks: true,
     maxInFlight: 1

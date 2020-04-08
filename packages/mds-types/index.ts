@@ -149,6 +149,7 @@ export type UUID = string
 export type Timestamp = number
 export type Stringify<T> = { [P in keyof T]: string }
 export type Nullable<T> = T | null
+export type NullableProperties<T extends {}> = { [P in keyof T]: Nullable<T[P]> }
 
 // Represents a row in the "devices" table
 export interface Device {
