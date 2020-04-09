@@ -145,6 +145,7 @@ declare -A apps=(
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
   ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
+  ["mds-telemetry-processor"]="http://localhost:[port]/telemetry-processor,mds,app"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],util,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
