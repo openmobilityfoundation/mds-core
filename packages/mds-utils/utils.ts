@@ -95,6 +95,13 @@ function days(n: number) {
   return hours(n) * 24
 }
 
+// Based on a bin size (in ms), calculate the start/end of
+// the frame containing the timestamp.
+function timeframe(size: Timestamp, timestamp: Timestamp) {
+  const start_time = timestamp - (timestamp % size)
+  return { start_time, end_time: start_time + size - 1 }
+}
+
 /**
  * @param  {number} minimum
  * @param  {number} maximum
@@ -616,6 +623,7 @@ export {
   hours,
   minutes,
   seconds,
+  timeframe,
   yesterday,
   csv,
   inc,

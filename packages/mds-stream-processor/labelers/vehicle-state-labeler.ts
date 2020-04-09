@@ -14,5 +14,14 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+import { VEHICLE_STATUS, VEHICLE_EVENT, EVENT_STATUS_MAP } from '@mds-core/mds-types'
+import { MessageLabeler } from './types'
+
+export interface VehicleStateLabel {
+  vehicle_state: VEHICLE_STATUS
+}
+
+export const VehicleStateLabeler: () => MessageLabeler<
+  { event_type: VEHICLE_EVENT },
+  VehicleStateLabel
+> = () => async ({ event_type }) => ({ vehicle_state: EVENT_STATUS_MAP[event_type] })

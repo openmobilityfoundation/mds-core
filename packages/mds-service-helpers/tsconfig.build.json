@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [{ "path": "../../packages/mds-utils/tsconfig.build.json" }]
+}

@@ -14,5 +14,13 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+import { ServerError } from '@mds-core/mds-utils'
+
+export type ServiceResponse<TResult, TError extends Error = Error> = [TError | ServerError, null] | [null, TResult]
+
+export const ServiceResult = <TResult>(result: TResult): ServiceResponse<TResult, never> => [null, result]
+
+export const ServiceError = <TError extends Error = Error>(error: TError): ServiceResponse<never, TError> => [
+  error instanceof Error ? error : new ServerError(error),
+  null
+]

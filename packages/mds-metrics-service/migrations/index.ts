@@ -14,5 +14,4 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+export { CreateMetricsTable1585847425124 } from './1585847425124-CreateMetricsTable'

@@ -1,7 +1,7 @@
 {
-  "name": "@mds-core/mds-jurisdiction-service",
+  "name": "@mds-core/mds-metrics-service",
   "version": "0.1.0",
-  "description": "Mobility Data Specification Jurisdiction Service",
+  "description": "Mobility Data Specification Metrics Service",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -9,7 +9,7 @@
   ],
   "keywords": [
     "mds",
-    "database"
+    "metrics"
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",

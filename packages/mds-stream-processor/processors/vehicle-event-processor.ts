@@ -15,26 +15,41 @@
  */
 
 import {
-  VehicleEvent,
-  EVENT_STATUS_MAP,
-  Timestamp,
   Nullable,
-  VEHICLE_STATUS,
+  NullableProperties,
+  Timestamp,
   UUID,
   VEHICLE_EVENT,
-  VEHICLE_REASON
+  VEHICLE_REASON,
+  VehicleEvent
 } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
 import { getEnvVar } from '@mds-core/mds-utils'
-import { DeviceLabel, DeviceLabeler, GeographyLabel, GeographyLabeler, LatencyLabel, LatencyLabeler } from '../labelers'
+import {
+  DeviceLabel,
+  DeviceLabeler,
+  GeographyLabel,
+  GeographyLabeler,
+  LatencyLabel,
+  LatencyLabeler,
+  TelemetryLabel,
+  TelemetryLabeler,
+  VehicleStateLabel,
+  VehicleStateLabeler
+} from '../labelers'
 import { StreamTransform, StreamProcessor } from './index'
 import { KafkaSource, KafkaSink } from '../connectors/kafka-connector'
-import { OptionalTelemetryLabeler } from '../labelers/telemetry-labeler'
 
 const { TENANT_ID } = getEnvVar({
   TENANT_ID: 'mds'
 })
-interface LabeledVehicleEvent extends LatencyLabel, DeviceLabel, GeographyLabel {
+
+interface LabeledVehicleEvent
+  extends DeviceLabel,
+    GeographyLabel,
+    LatencyLabel,
+    NullableProperties<TelemetryLabel>,
+    VehicleStateLabel {
   device_id: UUID
   provider_id: UUID
   event_type: VEHICLE_EVENT
@@ -42,32 +57,25 @@ interface LabeledVehicleEvent extends LatencyLabel, DeviceLabel, GeographyLabel 
   event_timestamp: Timestamp
   event_recorded: Timestamp
   trip_id: Nullable<UUID>
-  telemetry_timestamp: Nullable<Timestamp>
-  telemetry_lat: Nullable<number>
-  telemetry_lng: Nullable<number>
-  telemetry_altitude: Nullable<number>
-  telemetry_heading: Nullable<number>
-  telemetry_speed: Nullable<number>
-  telemetry_accuracy: Nullable<number>
-  telemetry_charge: Nullable<number>
-  vehicle_state: VEHICLE_STATUS
 }
 
-const [deviceLabeler, geographyLabeler, latencyLabeler, optionalTelemetryLabeler] = [
+const [deviceLabeler, geographyLabeler, latencyLabeler, telemetryLabeler, vehicleStateLabeler] = [
   DeviceLabeler(),
   GeographyLabeler(),
   LatencyLabeler(),
-  OptionalTelemetryLabeler()
+  TelemetryLabeler(),
+  VehicleStateLabeler()
 ]
 
 const processVehicleEvent: StreamTransform<VehicleEvent, LabeledVehicleEvent> = async event => {
   const { device_id, provider_id, event_type, event_type_reason, timestamp, recorded, trip_id, telemetry } = event
   try {
-    const [deviceLabel, latencyLabel, geographyLabel, telemetryLabel] = await Promise.all([
+    const [deviceLabel, geographyLabel, latencyLabel, telemetryLabel, vehicleStateLabel] = await Promise.all([
       deviceLabeler({ device_id }),
       geographyLabeler({ telemetry }),
       latencyLabeler({ timestamp, recorded }),
-      optionalTelemetryLabeler({ telemetry })
+      telemetry ? telemetryLabeler({ telemetry }) : null,
+      vehicleStateLabeler({ event_type })
     ])
     const transformed: LabeledVehicleEvent = {
       device_id,
@@ -77,11 +85,20 @@ const processVehicleEvent: StreamTransform<VehicleEvent, LabeledVehicleEvent> = 
       event_timestamp: timestamp,
       event_recorded: recorded,
       trip_id: trip_id ?? null,
-      vehicle_state: EVENT_STATUS_MAP[event_type],
-      ...telemetryLabel,
       ...deviceLabel,
       ...geographyLabel,
-      ...latencyLabel
+      ...latencyLabel,
+      ...(telemetryLabel ?? {
+        telemetry_timestamp: null,
+        telemetry_lat: null,
+        telemetry_lng: null,
+        telemetry_altitude: null,
+        telemetry_heading: null,
+        telemetry_speed: null,
+        telemetry_accuracy: null,
+        telemetry_charge: null
+      }),
+      ...vehicleStateLabel
     }
     return transformed
   } catch (error) {

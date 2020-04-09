@@ -14,30 +14,30 @@
     limitations under the License.
  */
 
-import { Telemetry, Timestamp, Nullable, UUID, TelemetryData } from '@mds-core/mds-types'
+import { Telemetry, Timestamp, UUID, TelemetryData } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
 import { getEnvVar } from '@mds-core/mds-utils'
-import { DeviceLabel, DeviceLabeler, GeographyLabel, GeographyLabeler, LatencyLabel, LatencyLabeler } from '../labelers'
+import {
+  DeviceLabel,
+  DeviceLabeler,
+  GeographyLabel,
+  GeographyLabeler,
+  LatencyLabel,
+  LatencyLabeler,
+  TelemetryLabel,
+  TelemetryLabeler
+} from '../labelers'
 import { StreamTransform, StreamProcessor } from './index'
 import { KafkaSource, KafkaSink } from '../connectors/kafka-connector'
-import { TelemetryLabeler } from '../labelers/telemetry-labeler'
 
 const { TENANT_ID } = getEnvVar({
   TENANT_ID: 'mds'
 })
 
-interface LabeledVehicleTelemetry extends LatencyLabel, DeviceLabel, GeographyLabel {
+interface LabeledVehicleTelemetry extends DeviceLabel, GeographyLabel, LatencyLabel, TelemetryLabel {
   device_id: UUID
   provider_id: UUID
   telemetry_recorded: Timestamp
-  telemetry_timestamp: Timestamp
-  telemetry_lat: number
-  telemetry_lng: number
-  telemetry_altitude: Nullable<number>
-  telemetry_heading: Nullable<number>
-  telemetry_speed: Nullable<number>
-  telemetry_accuracy: Nullable<number>
-  telemetry_charge: Nullable<number>
 }
 
 const [deviceLabeler, geographyLabeler, latencyLabeler, telemetryLabeler] = [
@@ -63,10 +63,10 @@ const processVehicleTelemetry: StreamTransform<
       device_id,
       provider_id,
       telemetry_recorded: recorded,
-      ...telemetryLabel,
       ...deviceLabel,
       ...geographyLabel,
-      ...latencyLabel
+      ...latencyLabel,
+      ...telemetryLabel
     }
     return transformed
   } catch (error) {

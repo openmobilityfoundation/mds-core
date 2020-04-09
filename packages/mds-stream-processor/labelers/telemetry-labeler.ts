@@ -1,4 +1,4 @@
-import { Timestamp, Nullable, Telemetry, NullableProperties } from '@mds-core/mds-types'
+import { Timestamp, Nullable, Telemetry } from '@mds-core/mds-types'
 import { MessageLabeler } from './types'
 
 export interface TelemetryLabel {
@@ -25,23 +25,5 @@ export const TelemetryLabeler: () => MessageLabeler<{ telemetry: Telemetry }, Te
     telemetry_speed: gps.speed ?? null,
     telemetry_accuracy: gps.accuracy ?? null,
     telemetry_charge: telemetry.charge ?? null
-  }
-}
-
-export const OptionalTelemetryLabeler: () => MessageLabeler<
-  { telemetry?: Nullable<Telemetry> },
-  NullableProperties<TelemetryLabel>
-> = () => async ({ telemetry }) => {
-  if (telemetry) return TelemetryLabeler()({ telemetry })
-
-  return {
-    telemetry_timestamp: null,
-    telemetry_lat: null,
-    telemetry_lng: null,
-    telemetry_altitude: null,
-    telemetry_heading: null,
-    telemetry_speed: null,
-    telemetry_accuracy: null,
-    telemetry_charge: null
   }
 }

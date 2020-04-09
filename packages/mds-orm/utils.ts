@@ -14,5 +14,21 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+import { SingleOrArray } from '@mds-core/mds-types'
+import { In } from 'typeorm'
+
+export const entityPropertyFilter = <T extends object, TProperty extends keyof T>(
+  property: TProperty,
+  value: SingleOrArray<T[TProperty]> | undefined
+) => {
+  if (value) {
+    if (Array.isArray(value)) {
+      if (value.length) {
+        return value.length === 1 ? { [property]: value } : { [property]: In(value) }
+      }
+    } else {
+      return { [property]: value }
+    }
+  }
+  return {}
+}

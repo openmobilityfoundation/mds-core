@@ -1,3 +1,19 @@
+/*
+    Copyright 2019-2020 City of Los Angeles.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
+
 import fs from 'fs'
 import { format, normalize } from 'path'
 import { homedir } from 'os'
@@ -5,14 +21,7 @@ import { promisify } from 'util'
 import logger from '@mds-core/mds-logger'
 import { NotFoundError, UnsupportedTypeError } from '@mds-core/mds-utils'
 import JSON5 from 'json5'
-
-type GetSettingsSuccess<TSettings extends {}> = [null, TSettings]
-const Success = <TSettings extends {}>(result: TSettings): GetSettingsSuccess<TSettings> => [null, result]
-
-type GetSettingsFailure = [Error, null]
-const Failure = (error: Error): GetSettingsFailure => [error, null]
-
-type GetSettingsResult<TSettings extends {}> = GetSettingsSuccess<TSettings> | GetSettingsFailure
+import { ServiceResponse, ServiceError, ServiceResult } from '@mds-core/mds-service-helpers'
 
 const getFilePath = (property: string, ext: '.json' | '.json5'): string => {
   const { MDS_CONFIG_PATH = '/mds-config' } = process.env
@@ -41,18 +50,18 @@ const parseJson = <TSettings extends {}>(
   }
 }
 
-const readJsonFile = async <TSettings extends {}>(property: string): Promise<GetSettingsResult<TSettings>> => {
+const readJsonFile = async <TSettings extends {}>(property: string): Promise<ServiceResponse<TSettings>> => {
   try {
     const json5 = await readFile(getFilePath(property, '.json5'))
-    return Success(
+    return ServiceResult(
       parseJson<TSettings>(json5, { parser: JSON5 })
     )
   } catch {
     try {
       const json = await readFile(getFilePath(property, '.json'))
-      return Success(parseJson<TSettings>(json))
+      return ServiceResult(parseJson<TSettings>(json))
     } catch (error) {
-      return Failure(error)
+      return ServiceError(error)
     }
   }
 }
@@ -65,7 +74,7 @@ export const client = {
   getSettings: async <TSettings extends {}>(
     properties: string[],
     { partial = false }: Partial<GetSettingsOptions> = {}
-  ): Promise<GetSettingsResult<TSettings>> => {
+  ): Promise<ServiceResponse<TSettings, NotFoundError>> => {
     const settings = await Promise.all(properties.map(property => readJsonFile<TSettings>(property)))
     const result = settings.reduce<{ found: string[]; missing: string[] }>(
       (info, [error], index) =>
@@ -75,8 +84,8 @@ export const client = {
       { found: [], missing: [] }
     )
     return result.missing.length > 0 && !partial
-      ? Failure(new NotFoundError('Settings Not Found', result))
-      : Success(
+      ? ServiceError(new NotFoundError('Settings Not Found', result))
+      : ServiceResult(
           settings.reduce<TSettings>(
             (merged, [error, setting], index) => Object.assign(merged, error ? { [properties[index]]: null } : setting),
             {} as TSettings
@@ -88,7 +97,7 @@ export const client = {
 const loadSettings = async <TSettings extends {}>(
   properties: string[],
   options: Partial<GetSettingsOptions>
-): Promise<GetSettingsResult<TSettings>> => {
+): Promise<ServiceResponse<TSettings>> => {
   const loaded = await client.getSettings<TSettings>(properties, options)
   const [error, settings] = loaded
   await (settings === null
@@ -98,7 +107,7 @@ const loadSettings = async <TSettings extends {}>(
 }
 
 export const ConfigurationManager = <TSettings>(properties: string[], options: Partial<GetSettingsOptions> = {}) => {
-  let loaded: GetSettingsResult<TSettings> | null = null
+  let loaded: ServiceResponse<TSettings> | null = null
   return {
     settings: async (): Promise<TSettings> => {
       loaded = loaded ?? (await loadSettings<TSettings>(properties, options))

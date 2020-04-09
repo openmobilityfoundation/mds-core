@@ -14,5 +14,18 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+import { Connections } from '@mds-core/mds-orm/connections'
+import * as entities from './entities'
+import * as migrations from './migrations'
+
+const connections = Connections({
+  entities: Object.values(entities),
+  migrations: Object.values(migrations),
+  migrationsTableName: 'migrations_metrics'
+})
+
+// Make connections array available for TypeScript import
+export default connections
+
+// Make connections array available to TypeORM CLI
+module.exports = connections

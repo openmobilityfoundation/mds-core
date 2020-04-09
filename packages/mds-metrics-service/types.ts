@@ -14,5 +14,16 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+import { Timestamp, UUID, VEHICLE_TYPE, SingleOrArray } from '@mds-core/mds-types'
+
+export interface ReadMetricsTimeBinParameter {
+  time_bin_size: number
+  time_bin_start: Timestamp
+  time_bin_end?: Timestamp
+}
+
+export type ReadMetricsFiltersParameter = Partial<{
+  provider_id: SingleOrArray<UUID>
+  geography_id: SingleOrArray<UUID>
+  vehicle_type: SingleOrArray<VEHICLE_TYPE>
+}>
