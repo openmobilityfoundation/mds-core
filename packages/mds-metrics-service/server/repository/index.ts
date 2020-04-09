@@ -19,19 +19,23 @@ import { InsertReturning } from '@mds-core/mds-orm/types'
 import { DeepPartial, Between } from 'typeorm'
 import { timeframe } from '@mds-core/mds-utils'
 import { entityPropertyFilter } from '@mds-core/mds-orm/utils'
-import ormconfig from './ormconfig'
+import ormconfig from './config'
 import { MetricEntity } from './entities'
-import { ReadMetricsTimeBinParameter, ReadMetricsFiltersParameter } from './types'
+import { ReadMetricsOptions } from '../../@types'
 
 const manager = ConnectionManager(ormconfig)
 
 export const initialize = async () => manager.initialize()
 
-export const readMetrics = async (
-  name: string,
-  { time_bin_size, time_bin_start, time_bin_end }: ReadMetricsTimeBinParameter,
-  { provider_id, geography_id, vehicle_type }: ReadMetricsFiltersParameter = {}
-): Promise<MetricEntity[]> => {
+export const readMetrics = async ({
+  name,
+  time_bin_size,
+  time_bin_start,
+  time_bin_end,
+  provider_id,
+  geography_id,
+  vehicle_type
+}: ReadMetricsOptions): Promise<MetricEntity[]> => {
   const connection = await manager.getReadWriteConnection()
   const entities = await connection.getRepository(MetricEntity).find({
     where: {

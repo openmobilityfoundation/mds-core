@@ -15,15 +15,28 @@
  */
 
 import { Timestamp, UUID, VEHICLE_TYPE, SingleOrArray } from '@mds-core/mds-types'
+import { ServiceResponse } from '@mds-core/mds-service-helpers'
+import { MetricEntityModel } from '../server/repository/entities/metric-entity'
 
-export interface ReadMetricsTimeBinParameter {
+export type MetricDomainModel = Omit<MetricEntityModel, 'id' | 'recorded'>
+
+export interface ReadMetricsTimeOptions {
   time_bin_size: number
   time_bin_start: Timestamp
   time_bin_end?: Timestamp
 }
 
-export type ReadMetricsFiltersParameter = Partial<{
+export interface ReadMetricsFilterOptions {
   provider_id: SingleOrArray<UUID>
   geography_id: SingleOrArray<UUID>
   vehicle_type: SingleOrArray<VEHICLE_TYPE>
-}>
+}
+
+export interface ReadMetricsOptions extends ReadMetricsTimeOptions, Partial<ReadMetricsFilterOptions> {
+  name: string
+}
+
+export interface MetricsServiceInterface {
+  writeMetrics: (metrics: MetricDomainModel[]) => Promise<ServiceResponse<MetricDomainModel[]>>
+  readMetrics: (options: ReadMetricsOptions) => Promise<ServiceResponse<MetricDomainModel[]>>
+}

@@ -2,8 +2,8 @@
   "name": "@mds-core/mds-metrics-service",
   "version": "0.1.0",
   "description": "Mobility Data Specification Metrics Service",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/client/index.js",
+  "types": "dist/client/index.d.ts",
   "files": [
     "dist/"
   ],
@@ -16,7 +16,7 @@
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "yarn typeorm schema:drop && DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json && yarn typeorm schema:drop",
-    "typeorm": "DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config ../../node_modules/typeorm/cli.js -c rw"
+    "typeorm": "DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config ../../node_modules/typeorm/cli.js -f ./server/repository/config -c rw"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
