@@ -14,22 +14,12 @@
     limitations under the License.
  */
 
-import { MetricsServiceInterface } from '../@types'
-import { WriteMetricsHandler, ReadMetricsHandler } from './handlers'
-import * as repository from './repository'
+import { ConnectionManager } from '@mds-core/mds-orm'
+import * as entities from './entities'
+import * as migrations from './migrations'
 
-interface MetricsServerInterface extends MetricsServiceInterface {
-  startup: () => Promise<void>
-  shutdown: () => Promise<void>
-}
-
-export const MetricsServer: MetricsServerInterface = {
-  startup: async () => {
-    await repository.initialize()
-  },
-  readMetrics: ReadMetricsHandler,
-  writeMetrics: WriteMetricsHandler,
-  shutdown: async () => {
-    await repository.shutdown()
-  }
-}
+export const MetricsRepositoryConnectionManager = ConnectionManager('metrics-repository', {
+  entities: Object.values(entities),
+  migrations: Object.values(migrations),
+  migrationsTableName: 'migrations_metrics'
+})

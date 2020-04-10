@@ -14,18 +14,7 @@
     limitations under the License.
  */
 
-import { Connections } from '@mds-core/mds-orm/connections'
-import * as entities from './entities'
-import * as migrations from './migrations'
+import { MetricsRepositoryConnectionManager } from './server/repository/connection-manager'
 
-const connections = Connections({
-  entities: Object.values(entities),
-  migrations: Object.values(migrations),
-  migrationsTableName: 'migrations_metrics'
-})
-
-// Make connections array available for TypeScript import
-export default connections
-
-// Make connections array available to TypeORM CLI
-module.exports = connections
+// Make connection options available to TypeORM CLI
+module.exports = MetricsRepositoryConnectionManager.getConnectionConfiguration()

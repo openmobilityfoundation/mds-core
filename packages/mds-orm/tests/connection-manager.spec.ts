@@ -17,7 +17,9 @@
 import test from 'unit.js'
 import { ConnectionManager } from '../connection-manager'
 
-const manager = ConnectionManager()
+const TEST_REPOSITORY_NAME = 'test-repository'
+
+const manager = ConnectionManager(TEST_REPOSITORY_NAME)
 
 describe('Test Connection', () => {
   before(async () => {
@@ -26,7 +28,7 @@ describe('Test Connection', () => {
 
   it('Create R/W Connection', async () => {
     const connection = await manager.getReadWriteConnection()
-    test.value(connection.name).is('rw')
+    test.value(connection.name).is(`${TEST_REPOSITORY_NAME}-rw`)
     test.value(connection.isConnected).is(true)
     await connection.close()
     test.value(connection.isConnected).is(false)
@@ -39,7 +41,7 @@ describe('Test Connection', () => {
 
   it('Create R/O Connection', async () => {
     const connection = await manager.getReadOnlyConnection()
-    test.value(connection.name).is('ro')
+    test.value(connection.name).is(`${TEST_REPOSITORY_NAME}-ro`)
     test.value(connection.isConnected).is(true)
     await connection.close()
     test.value(connection.isConnected).is(false)

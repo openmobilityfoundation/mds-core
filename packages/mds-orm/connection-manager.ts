@@ -17,15 +17,63 @@
 import { Connection, createConnections, getConnectionManager, ConnectionOptions } from 'typeorm'
 import { ServerError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-import { ConnectionName, Connections } from './connections'
+import { types as PostgresTypes } from 'pg'
+import { MdsNamingStrategy } from '@mds-core/mds-orm/naming-strategies'
+import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 
-let connections: Connection[] | null = null
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 
-export const ConnectionManager = (options: ConnectionOptions[] = Connections()) => {
+const loggingOption = (options: string): LoggerOptions => {
+  return ['false', 'true', 'all'].includes(options) ? options !== 'false' : (options.split(' ') as LoggerOptions)
+}
+
+const ConnectionModes = ['ro', 'rw'] as const
+export type ConnectionMode = typeof ConnectionModes[number]
+
+// Use parseInt for bigint columns so the values get returned as numbers instead of strings
+PostgresTypes.setTypeParser(20, Number)
+
+const {
+  PG_HOST,
+  PG_HOST_READER,
+  PG_PORT,
+  PG_USER,
+  PG_PASS,
+  PG_NAME,
+  PG_DEBUG = 'false',
+  PG_MIGRATIONS = 'true' // Enable migrations by default
+} = process.env
+
+const connectionName = (prefix: string, mode: ConnectionMode) => `${prefix}-${mode}`
+
+export const ConnectionManager = (prefix: string, options: Partial<PostgresConnectionOptions> = {}) => {
+  let connections: Connection[] | null = null
+  const getConnectionConfiguration = (): ConnectionOptions[] =>
+    ConnectionModes.map(mode => ({
+      name: connectionName(prefix, mode),
+      type: 'postgres',
+      host: (mode === 'rw' ? PG_HOST : PG_HOST_READER) || PG_HOST || 'localhost',
+      port: Number(PG_PORT) || 5432,
+      username: PG_USER,
+      password: PG_PASS,
+      database: PG_NAME,
+      logging: loggingOption(PG_DEBUG.toLowerCase()),
+      maxQueryExecutionTime: 3000,
+      logger: 'simple-console',
+      synchronize: false,
+      migrationsRun: PG_MIGRATIONS === 'true' && mode === 'rw',
+      namingStrategy: new MdsNamingStrategy(),
+      cli: {
+        entitiesDir: './entities',
+        migrationsDir: './migrations'
+      },
+      ...options
+    }))
+
   const initialize = async () => {
     if (!connections) {
       try {
-        connections = await createConnections(options)
+        connections = await createConnections(getConnectionConfiguration())
       } catch (error) {
         logger.error('Database Initialization Error', error)
         throw new ServerError('Database Initialization Error')
@@ -33,10 +81,12 @@ export const ConnectionManager = (options: ConnectionOptions[] = Connections()) 
     }
   }
 
-  const getNamedConnection = async (name: ConnectionName) => {
+  const getConnectionForMode = (mode: ConnectionMode) => async () => {
     await initialize()
     try {
-      const connection = getConnectionManager().get(name)
+      const connection =
+        connections?.find(c => c.name === connectionName(prefix, mode)) ??
+        getConnectionManager().get(connectionName(prefix, mode))
       if (!connection.isConnected) {
         await connection.connect()
       }
@@ -47,10 +97,6 @@ export const ConnectionManager = (options: ConnectionOptions[] = Connections()) 
     }
   }
 
-  const getReadOnlyConnection = async () => getNamedConnection('ro')
-
-  const getReadWriteConnection = async () => getNamedConnection('rw')
-
   const shutdown = async () => {
     if (connections) {
       await Promise.all(connections.filter(connection => connection.isConnected).map(connection => connection.close()))
@@ -60,8 +106,9 @@ export const ConnectionManager = (options: ConnectionOptions[] = Connections()) 
 
   return {
     initialize,
-    getReadOnlyConnection,
-    getReadWriteConnection,
+    getConnectionConfiguration,
+    getReadOnlyConnection: getConnectionForMode('ro'),
+    getReadWriteConnection: getConnectionForMode('rw'),
     shutdown
   }
 }

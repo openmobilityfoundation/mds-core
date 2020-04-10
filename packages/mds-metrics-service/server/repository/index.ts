@@ -14,18 +14,17 @@
     limitations under the License.
  */
 
-import { ConnectionManager } from '@mds-core/mds-orm'
 import { InsertReturning } from '@mds-core/mds-orm/types'
 import { DeepPartial, Between } from 'typeorm'
 import { timeframe } from '@mds-core/mds-utils'
 import { entityPropertyFilter } from '@mds-core/mds-orm/utils'
-import ormconfig from './config'
+import { MetricsRepositoryConnectionManager } from './connection-manager'
 import { MetricEntity } from './entities'
 import { ReadMetricsOptions } from '../../@types'
 
-const manager = ConnectionManager(ormconfig)
-
-export const initialize = async () => manager.initialize()
+export const initialize = async () => {
+  await MetricsRepositoryConnectionManager.initialize()
+}
 
 export const readMetrics = async ({
   name,
@@ -36,7 +35,7 @@ export const readMetrics = async ({
   geography_id,
   vehicle_type
 }: ReadMetricsOptions): Promise<MetricEntity[]> => {
-  const connection = await manager.getReadWriteConnection()
+  const connection = await MetricsRepositoryConnectionManager.getReadWriteConnection()
   const entities = await connection.getRepository(MetricEntity).find({
     where: {
       name,
@@ -54,7 +53,7 @@ export const readMetrics = async ({
 }
 
 export const writeMetrics = async (metrics: DeepPartial<MetricEntity>[]): Promise<MetricEntity[]> => {
-  const connection = await manager.getReadWriteConnection()
+  const connection = await MetricsRepositoryConnectionManager.getReadWriteConnection()
   const { raw: entities }: InsertReturning<MetricEntity> = await connection
     .getRepository(MetricEntity)
     .createQueryBuilder()
@@ -65,4 +64,6 @@ export const writeMetrics = async (metrics: DeepPartial<MetricEntity>[]): Promis
   return entities
 }
 
-export const shutdown = async () => manager.shutdown()
+export const shutdown = async () => {
+  await MetricsRepositoryConnectionManager.shutdown()
+}
