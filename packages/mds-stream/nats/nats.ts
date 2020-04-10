@@ -1,5 +1,4 @@
-import { v4 as uuid } from 'uuid'
-import stan from 'node-nats-streaming'
+import nats from 'nats'
 import logger from '@mds-core/mds-logger'
 import { getEnvVar } from '@mds-core/mds-utils'
 
@@ -8,7 +7,7 @@ export type EventProcessor<TData, TResult> = (type: string, data: TData) => Prom
 const SUBSCRIPTION_TYPES = ['event', 'telemetry'] as const
 type SUBSCRIPTION_TYPE = typeof SUBSCRIPTION_TYPES[number]
 
-const subscriptionCb = async <TData, TResult>(processor: EventProcessor<TData, TResult>, msg: stan.Message) => {
+const subscriptionCb = async <TData, TResult>(processor: EventProcessor<TData, TResult>, msg: string) => {
   const { TENANT_ID } = getEnvVar({
     TENANT_ID: 'mds'
   })
@@ -19,96 +18,76 @@ const subscriptionCb = async <TData, TResult>(processor: EventProcessor<TData, T
       spec: {
         payload: { data, type }
       }
-    } = JSON.parse(msg.getRawData().toString())
+    } = JSON.parse(msg)
 
     const parsedData = JSON.parse(data)
 
     await processor(type.replace(TENANT_REGEXP, ''), parsedData)
-    msg.ack()
   } catch (err) {
-    msg.ack()
     logger.error(err)
   }
 }
 
 const natsSubscriber = async <TData, TResult>({
-  nats,
+  natsClient,
   processor,
   TENANT_ID,
   type
 }: {
-  nats: stan.Stan
+  natsClient: nats.Client
   processor: EventProcessor<TData, TResult>
   TENANT_ID: string
   type: SUBSCRIPTION_TYPE
 }) => {
-  const subscriber = nats.subscribe(`${TENANT_ID}.${type}`, {
-    ...nats.subscriptionOptions(),
-    manualAcks: true,
-    maxInFlight: 1
-  })
-
-  subscriber.on('message', async (msg: stan.Message) => {
+  const subscriber = natsClient.subscribe(`${TENANT_ID}.${type}`, async (msg: string) => {
     return subscriptionCb(processor, msg)
   })
+  return subscriber
 }
 
-const initializeNatsClient = ({
-  NATS,
-  STAN_CLUSTER,
-  STAN_CREDS
-}: {
-  NATS: string
-  STAN_CLUSTER: string
-  STAN_CREDS?: string
-}) => {
-  return stan.connect(STAN_CLUSTER, `mds-event-consumer-${uuid()}`, {
-    url: `nats://${NATS}:4222`,
-    userCreds: STAN_CREDS,
-    reconnect: true
+const initializeNatsClient = () => {
+  const { NATS = 'localhost' } = process.env
+  return nats.connect(`nats://${NATS}:4222`, {
+    reconnect: true,
+    waitOnFirstConnect: true,
+    maxReconnectAttempts: -1 // Retry forever
   })
 }
 
-export const initializeStanSubscriber = async <TData, TResult>({
-  NATS,
-  STAN_CLUSTER,
-  STAN_CREDS,
+export const initializeNatsSubscriber = async <TData, TResult>({
   TENANT_ID,
   processor
 }: {
-  NATS: string
-  STAN_CLUSTER: string
-  STAN_CREDS?: string
   TENANT_ID: string
   processor: EventProcessor<TData, TResult>
 }) => {
-  const nats = initializeNatsClient({ NATS, STAN_CLUSTER, STAN_CREDS })
+  const natsClient = initializeNatsClient()
 
   try {
-    nats.on('connect', () => {
+    natsClient.on('connect', () => {
       logger.info('Connected!')
 
       /* Subscribe to all available types. Down the road, this should probably be a parameter passed in to the parent function. */
       return Promise.all(
         SUBSCRIPTION_TYPES.map(type => {
-          return natsSubscriber({ nats, processor, TENANT_ID, type })
+          return natsSubscriber({ natsClient, processor, TENANT_ID, type })
         })
       )
     })
 
-    nats.on('reconnect', () => {
+    natsClient.on('reconnect', () => {
       logger.info('Connected!')
 
       /* Subscribe to all available types. Down the road, this should probably be a parameter passed in to the parent function. */
       return Promise.all(
         SUBSCRIPTION_TYPES.map(type => {
-          return natsSubscriber({ nats, processor, TENANT_ID, type })
+          return natsSubscriber({ natsClient, processor, TENANT_ID, type })
         })
       )
     })
 
     /* istanbul ignore next */
-    nats.on('error', async err => {
+    natsClient.on('error', async err => {
       logger.error(err)
     })
   } catch (err) {
