@@ -14,7 +14,8 @@
     limitations under the License.
  */
 
-import { JurisdictionRepository } from './server/repository'
-
-// Make connection options available to TypeORM CLI
-module.exports = JurisdictionRepository.config
+export * from './entities'
+export * from './repository'
+export * from './transformers'
+export * from './utils'
+export * from './@types'

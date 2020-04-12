@@ -18,8 +18,8 @@ import test from 'unit.js'
 import { v4 as uuid } from 'uuid'
 import { minutes, timeframe, days } from '@mds-core/mds-utils'
 import { VEHICLE_TYPE } from '@mds-core/mds-types'
-import { MetricsServer } from '../server'
-import { MetricsService } from '../client'
+import { MetricsServiceProvider } from '../server'
+import { MetricsServiceClient } from '../client'
 import { MetricDomainModel, ReadMetricsOptions, ReadMetricsFilterOptions } from '../@types'
 
 // Test Constants
@@ -96,7 +96,7 @@ const testQuery = (query: () => ReadMetricsOptions & { expected: MetricDomainMod
           .join(', ')}`
       : ''
   }] (Expect ${expected.length} Match${expected.length === 1 ? '' : 'es'})`, async () => {
-    const [error, metrics] = await MetricsService.readMetrics(options)
+    const [error, metrics] = await MetricsServiceClient.readMetrics(options)
     test.value(metrics).isNot(null)
     test.value(metrics?.length).is(expected.length)
     test.value(error).is(null)
@@ -105,11 +105,11 @@ const testQuery = (query: () => ReadMetricsOptions & { expected: MetricDomainMod
 
 describe('Metrics Service', () => {
   before(async () => {
-    await MetricsServer.startup()
+    await MetricsServiceProvider.start()
   })
 
   it(`Generate ${TEST_METRICS.length} Metric${TEST_METRICS.length === 1 ? '' : 's'}`, async () => {
-    const [error, metrics] = await MetricsService.writeMetrics(TEST_METRICS)
+    const [error, metrics] = await MetricsServiceClient.writeMetrics(TEST_METRICS)
     test.value(metrics).isNot(null)
     test.value(metrics?.length).is(TEST_METRICS.length)
     test.value(error).is(null)
@@ -198,6 +198,6 @@ describe('Metrics Service', () => {
   }))
 
   after(async () => {
-    await MetricsServer.shutdown()
+    await MetricsServiceProvider.stop()
   })
 })

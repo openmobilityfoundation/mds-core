@@ -24,3 +24,8 @@ export const ServiceError = <TError extends Error = Error>(error: TError): Servi
   error instanceof Error ? error : new ServerError(error),
   null
 ]
+
+export type ServiceProvider<TServiceInterface> = TServiceInterface & {
+  start: () => Promise<void>
+  stop: () => Promise<void>
+}

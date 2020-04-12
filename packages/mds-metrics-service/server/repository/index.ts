@@ -14,28 +14,24 @@
     limitations under the License.
  */
 
-import { InsertReturning } from '@mds-core/mds-orm/types'
+import {
+  CreateRepository,
+  CreateRepositoryMethod,
+  InsertReturning,
+  entityPropertyFilter
+} from '@mds-core/mds-repository'
 import { DeepPartial, Between } from 'typeorm'
 import { timeframe } from '@mds-core/mds-utils'
-import { entityPropertyFilter } from '@mds-core/mds-orm/utils'
-import { MetricsRepositoryConnectionManager } from './connection-manager'
+
 import { MetricEntity } from './entities'
 import { ReadMetricsOptions } from '../../@types'
+import * as migrations from './migrations'
 
-export const initialize = async () => {
-  await MetricsRepositoryConnectionManager.initialize()
-}
-
-export const readMetrics = async ({
-  name,
-  time_bin_size,
-  time_bin_start,
-  time_bin_end,
-  provider_id,
-  geography_id,
-  vehicle_type
-}: ReadMetricsOptions): Promise<MetricEntity[]> => {
-  const connection = await MetricsRepositoryConnectionManager.getReadWriteConnection()
+const RepositoryReadMetrics = CreateRepositoryMethod(connect => async (options: ReadMetricsOptions): Promise<
+  MetricEntity[]
+> => {
+  const { name, time_bin_size, time_bin_start, time_bin_end, provider_id, geography_id, vehicle_type } = options
+  const connection = await connect('ro')
   const entities = await connection.getRepository(MetricEntity).find({
     where: {
       name,
@@ -50,10 +46,12 @@ export const readMetrics = async ({
     }
   })
   return entities
-}
+})
 
-export const writeMetrics = async (metrics: DeepPartial<MetricEntity>[]): Promise<MetricEntity[]> => {
-  const connection = await MetricsRepositoryConnectionManager.getReadWriteConnection()
+const RepositoryWriteMetrics = CreateRepositoryMethod(connect => async (metrics: DeepPartial<MetricEntity>[]): Promise<
+  MetricEntity[]
+> => {
+  const connection = await connect('rw')
   const { raw: entities }: InsertReturning<MetricEntity> = await connection
     .getRepository(MetricEntity)
     .createQueryBuilder()
@@ -62,8 +60,19 @@ export const writeMetrics = async (metrics: DeepPartial<MetricEntity>[]): Promis
     .returning('*')
     .execute()
   return entities
-}
+})
 
-export const shutdown = async () => {
-  await MetricsRepositoryConnectionManager.shutdown()
-}
+export const MetricsRepository = CreateRepository(
+  'metrics-repository',
+  connect => {
+    return {
+      readMetrics: RepositoryReadMetrics(connect),
+      writeMetrics: RepositoryWriteMetrics(connect)
+    }
+  },
+  {
+    entities: [MetricEntity],
+    migrations: Object.values(migrations),
+    migrationsTableName: 'migrations_metrics'
+  }
+)

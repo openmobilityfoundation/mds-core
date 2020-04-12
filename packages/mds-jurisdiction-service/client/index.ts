@@ -14,12 +14,9 @@
     limitations under the License.
  */
 
-import { ConnectionManager } from '@mds-core/mds-orm'
-import * as entities from './entities'
-import * as migrations from './migrations'
+import { JurisdictionServiceProvider } from '../server'
+import { JurisdictionServiceInterface } from '../@types'
 
-export const JurisdictionRepositoryConnectionManager = ConnectionManager('jurisdiction-repository', {
-  entities: Object.values(entities),
-  migrations: Object.values(migrations),
-  migrationsTableName: 'migrations_jurisdictions'
-})
+const { start, stop, ...client } = JurisdictionServiceProvider
+
+export const JurisdictionServiceClient: JurisdictionServiceInterface = client

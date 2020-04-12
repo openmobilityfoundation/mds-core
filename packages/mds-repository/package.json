@@ -1,5 +1,5 @@
 {
-  "name": "@mds-core/mds-orm",
+  "name": "@mds-core/mds-repository",
   "version": "0.1.0",
   "description": "Mobility Data Specification ORM",
   "main": "dist/index.js",
@@ -24,7 +24,7 @@
     "@mds-core/mds-providers": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "pg": "8.0.0",
+    "pg": "8.0.2",
     "typeorm": "0.2.24"
   },
   "devDependencies": {

@@ -16,8 +16,7 @@
 
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp, Nullable, VEHICLE_TYPE } from '@mds-core/mds-types'
-import { RecordedEntityModel, RecordedEntity } from '@mds-core/mds-orm/entities'
-import { BigintTransformer } from '@mds-core/mds-orm/transformers'
+import { RecordedEntityModel, RecordedEntity, BigintTransformer } from '@mds-core/mds-repository'
 
 export interface MetricEntityModel extends RecordedEntityModel {
   name: string

@@ -14,12 +14,5 @@
     limitations under the License.
  */
 
-import { ConnectionManager } from '@mds-core/mds-orm'
-import * as entities from './entities'
-import * as migrations from './migrations'
-
-export const MetricsRepositoryConnectionManager = ConnectionManager('metrics-repository', {
-  entities: Object.values(entities),
-  migrations: Object.values(migrations),
-  migrationsTableName: 'migrations_metrics'
-})
+export * from './@types'
+export * from './client'

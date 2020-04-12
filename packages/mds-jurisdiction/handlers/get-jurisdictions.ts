@@ -15,27 +15,38 @@
  */
 
 import { JurisdictionServiceClient } from '@mds-core/mds-jurisdiction-service'
-import { Jurisdiction, UUID } from '@mds-core/mds-types'
-import { NotFoundError } from '@mds-core/mds-utils'
+import { Jurisdiction } from '@mds-core/mds-types'
+import { HasJurisdictionClaim, UnexpectedServiceError } from './utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
-import { UnexpectedServiceError } from './utils'
 
-type DeleteJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: UUID }>
+interface GetJurisdictionsRequest extends JurisdictionApiRequest {
+  // Query string parameters always come in as strings
+  query: Partial<
+    {
+      [P in 'effective']: string
+    }
+  >
+}
 
-type DeleteJurisdictionResponse = JurisdictionApiResponse<Pick<Jurisdiction, 'jurisdiction_id'>>
+type GetJurisdictionsResponse = JurisdictionApiResponse<{
+  jurisdictions: Jurisdiction[]
+}>
 
-export const DeleteJurisdictionHandler = async (req: DeleteJurisdictionRequest, res: DeleteJurisdictionResponse) => {
-  const [error, result] = await JurisdictionServiceClient.deleteJurisdiction(req.params.jurisdiction_id)
+export const GetAllJurisdictionsHandler = async (req: GetJurisdictionsRequest, res: GetJurisdictionsResponse) => {
+  const { effective } = req.query
+
+  const [error, jurisdictions] = await JurisdictionServiceClient.getJurisdictions({
+    effective: effective ? Number(effective) : undefined
+  })
 
   // Handle result
-  if (result) {
-    return res.status(200).send({ version: res.locals.version, ...result })
+  if (jurisdictions) {
+    return res.status(200).send({
+      version: res.locals.version,
+      jurisdictions: jurisdictions.filter(HasJurisdictionClaim(res))
+    })
   }
 
   // Handle errors
-  if (error instanceof NotFoundError) {
-    return res.status(404).send({ error })
-  }
-
   return res.status(500).send({ error: UnexpectedServiceError(error) })
 }

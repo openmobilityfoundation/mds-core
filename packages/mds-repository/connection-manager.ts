@@ -18,10 +18,10 @@ import { Connection, createConnections, getConnectionManager, ConnectionOptions 
 import { ServerError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { types as PostgresTypes } from 'pg'
-import { MdsNamingStrategy } from '@mds-core/mds-orm/naming-strategies'
 import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
+import { MdsNamingStrategy } from './naming-strategies'
 
 const loggingOption = (options: string): LoggerOptions => {
   return ['false', 'true', 'all'].includes(options) ? options !== 'false' : (options.split(' ') as LoggerOptions)
@@ -44,36 +44,38 @@ const {
   PG_MIGRATIONS = 'true' // Enable migrations by default
 } = process.env
 
-const connectionName = (prefix: string, mode: ConnectionMode) => `${prefix}-${mode}`
+const connectionName = (name: string, mode: ConnectionMode) => `${name}-${mode}`
 
-export const ConnectionManager = (prefix: string, options: Partial<PostgresConnectionOptions> = {}) => {
+export type ConnectionManagerOptions = Partial<PostgresConnectionOptions>
+
+export const ConnectionManager = (name: string, options: ConnectionManagerOptions = {}) => {
   let connections: Connection[] | null = null
-  const getConnectionConfiguration = (): ConnectionOptions[] =>
-    ConnectionModes.map(mode => ({
-      name: connectionName(prefix, mode),
-      type: 'postgres',
-      host: (mode === 'rw' ? PG_HOST : PG_HOST_READER) || PG_HOST || 'localhost',
-      port: Number(PG_PORT) || 5432,
-      username: PG_USER,
-      password: PG_PASS,
-      database: PG_NAME,
-      logging: loggingOption(PG_DEBUG.toLowerCase()),
-      maxQueryExecutionTime: 3000,
-      logger: 'simple-console',
-      synchronize: false,
-      migrationsRun: PG_MIGRATIONS === 'true' && mode === 'rw',
-      namingStrategy: new MdsNamingStrategy(),
-      cli: {
-        entitiesDir: './entities',
-        migrationsDir: './migrations'
-      },
-      ...options
-    }))
+
+  const config: ConnectionOptions[] = ConnectionModes.map(mode => ({
+    name: connectionName(name, mode),
+    type: 'postgres',
+    host: (mode === 'rw' ? PG_HOST : PG_HOST_READER) || PG_HOST || 'localhost',
+    port: Number(PG_PORT) || 5432,
+    username: PG_USER,
+    password: PG_PASS,
+    database: PG_NAME,
+    logging: loggingOption(PG_DEBUG.toLowerCase()),
+    maxQueryExecutionTime: 3000,
+    logger: 'simple-console',
+    synchronize: false,
+    migrationsRun: PG_MIGRATIONS === 'true' && mode === 'rw',
+    namingStrategy: new MdsNamingStrategy(),
+    cli: {
+      entitiesDir: './entities',
+      migrationsDir: './migrations'
+    },
+    ...options
+  }))
 
   const initialize = async () => {
     if (!connections) {
       try {
-        connections = await createConnections(getConnectionConfiguration())
+        connections = await createConnections(config)
       } catch (error) {
         logger.error('Database Initialization Error', error)
         throw new ServerError('Database Initialization Error')
@@ -81,12 +83,12 @@ export const ConnectionManager = (prefix: string, options: Partial<PostgresConne
     }
   }
 
-  const getConnectionForMode = (mode: ConnectionMode) => async () => {
+  const connect = async (mode: ConnectionMode) => {
     await initialize()
     try {
       const connection =
-        connections?.find(c => c.name === connectionName(prefix, mode)) ??
-        getConnectionManager().get(connectionName(prefix, mode))
+        connections?.find(c => c.name === connectionName(name, mode)) ??
+        getConnectionManager().get(connectionName(name, mode))
       if (!connection.isConnected) {
         await connection.connect()
       }
@@ -106,9 +108,8 @@ export const ConnectionManager = (prefix: string, options: Partial<PostgresConne
 
   return {
     initialize,
-    getConnectionConfiguration,
-    getReadOnlyConnection: getConnectionForMode('ro'),
-    getReadWriteConnection: getConnectionForMode('rw'),
+    config,
+    connect,
     shutdown
   }
 }

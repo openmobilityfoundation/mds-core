@@ -5,7 +5,7 @@
   },
   "references": [
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
-    { "path": "../../packages/mds-orm/tsconfig.build.json" },
+    { "path": "../../packages/mds-repository/tsconfig.build.json" },
     { "path": "../../packages/mds-schema-validators/tsconfig.build.json" },
     { "path": "../../packages/mds-service-helpers/tsconfig.build.json" },
     { "path": "../../packages/mds-types/tsconfig.build.json" },
