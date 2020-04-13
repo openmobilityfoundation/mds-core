@@ -14,18 +14,18 @@
     limitations under the License.
  */
 
-import { UUID, Jurisdiction } from '@mds-core/mds-types'
+import { UUID } from '@mds-core/mds-types'
 import { ServiceResponse, ServiceError, ServiceResult } from '@mds-core/mds-service-helpers'
 import { ValidationError, NotFoundError, ServerError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-import { UpdateJurisdictionType } from '../../@types'
+import { UpdateJurisdictionType, JurisdictionDomainModel } from '../../@types'
 import { AsJurisdiction } from './utils'
 import { JurisdictionRepository } from '../repository'
 
 export const UpdateJurisdictionHandler = async (
   jurisdiction_id: UUID,
   update: UpdateJurisdictionType
-): Promise<ServiceResponse<Jurisdiction, ValidationError | NotFoundError>> => {
+): Promise<ServiceResponse<JurisdictionDomainModel, ValidationError | NotFoundError>> => {
   if (update.jurisdiction_id && update.jurisdiction_id !== jurisdiction_id) {
     return ServiceError(new ValidationError('Invalid jurisdiction_id for update'))
   }

@@ -14,8 +14,11 @@
     limitations under the License.
  */
 
-import { JurisdictionServiceClient, CreateJurisdictionType } from '@mds-core/mds-jurisdiction-service'
-import { Jurisdiction } from '@mds-core/mds-types'
+import {
+  JurisdictionServiceClient,
+  CreateJurisdictionType,
+  JurisdictionDomainModel
+} from '@mds-core/mds-jurisdiction-service'
 import { ValidationError, ConflictError } from '@mds-core/mds-utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 import { UnexpectedServiceError } from './utils'
@@ -26,10 +29,10 @@ interface CreateJurisdictionRequest extends JurisdictionApiRequest {
 
 type CreateJurisdictionResponse = JurisdictionApiResponse<
   | {
-      jurisdiction: Jurisdiction
+      jurisdiction: JurisdictionDomainModel
     }
   | {
-      jurisdictions: Jurisdiction[]
+      jurisdictions: JurisdictionDomainModel[]
     }
 >
 

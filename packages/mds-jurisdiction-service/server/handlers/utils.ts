@@ -14,16 +14,18 @@
     limitations under the License.
  */
 
-import { Timestamp, Jurisdiction } from '@mds-core/mds-types'
+import { Timestamp } from '@mds-core/mds-types'
 import { DeepPartial } from 'typeorm'
-import { validateJurisdiction } from '@mds-core/mds-schema-validators'
 import { v4 as uuid } from 'uuid'
-import { CreateJurisdictionType } from '../../@types'
+import { filterEmptyHelper } from '@mds-core/mds-utils'
+import { ValidateSchema } from 'packages/mds-schema-validators'
+import { CreateJurisdictionType, JurisdictionDomainModel } from '../../@types'
 import { JurisdictionEntity } from '../repository/entities'
+import { jurisdictionSchema } from './schemas'
 
 export const AsJurisdiction = (effective: Timestamp = Date.now()) => (
   entity: JurisdictionEntity | undefined
-): Jurisdiction | null => {
+): JurisdictionDomainModel | null => {
   if (entity) {
     const { jurisdiction_id, agency_key, versions } = entity
     const version = versions.find(properties => effective >= properties.timestamp)
@@ -46,7 +48,10 @@ export const AsJurisdiction = (effective: Timestamp = Date.now()) => (
 export const AsJurisdictionEntity = (jurisdiction: CreateJurisdictionType): DeepPartial<JurisdictionEntity> => {
   const recorded = Date.now()
   const { jurisdiction_id = uuid(), agency_key, agency_name, geography_id, timestamp = recorded } = jurisdiction
-  validateJurisdiction({ jurisdiction_id, agency_key, agency_name, geography_id, timestamp })
+  ValidateSchema<JurisdictionDomainModel>(
+    { jurisdiction_id, agency_key, agency_name, geography_id, timestamp },
+    jurisdictionSchema()
+  )
   const entity: DeepPartial<JurisdictionEntity> = {
     jurisdiction_id,
     agency_key,
@@ -55,3 +60,5 @@ export const AsJurisdictionEntity = (jurisdiction: CreateJurisdictionType): Deep
   }
   return entity
 }
+
+export const isJurisdiction = filterEmptyHelper<JurisdictionDomainModel>()

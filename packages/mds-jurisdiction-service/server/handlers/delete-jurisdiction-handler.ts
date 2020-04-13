@@ -14,16 +14,17 @@
     limitations under the License.
  */
 
-import { UUID, Jurisdiction } from '@mds-core/mds-types'
+import { UUID } from '@mds-core/mds-types'
 import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
 import { NotFoundError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { AsJurisdiction } from './utils'
 import { JurisdictionRepository } from '../repository'
+import { JurisdictionDomainModel } from '../../@types'
 
 export const DeleteJurisdictionHandler = async (
   jurisdiction_id: UUID
-): Promise<ServiceResponse<Pick<Jurisdiction, 'jurisdiction_id'>, NotFoundError>> => {
+): Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>, NotFoundError>> => {
   try {
     const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
     if (entity) {

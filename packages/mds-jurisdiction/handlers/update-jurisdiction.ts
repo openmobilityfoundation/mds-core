@@ -14,8 +14,12 @@
     limitations under the License.
  */
 
-import { UpdateJurisdictionType, JurisdictionServiceClient } from '@mds-core/mds-jurisdiction-service'
-import { Jurisdiction, UUID } from '@mds-core/mds-types'
+import {
+  UpdateJurisdictionType,
+  JurisdictionServiceClient,
+  JurisdictionDomainModel
+} from '@mds-core/mds-jurisdiction-service'
+import { UUID } from '@mds-core/mds-types'
 import { ValidationError, NotFoundError } from '@mds-core/mds-utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 import { UnexpectedServiceError } from './utils'
@@ -25,7 +29,7 @@ interface UpdateJurisdictionRequest extends JurisdictionApiRequest<{ jurisdictio
 }
 
 type UpdateJurisdictionResponse = JurisdictionApiResponse<{
-  jurisdiction: Jurisdiction
+  jurisdiction: JurisdictionDomainModel
 }>
 
 export const UpdateJurisdictionHandler = async (req: UpdateJurisdictionRequest, res: UpdateJurisdictionResponse) => {

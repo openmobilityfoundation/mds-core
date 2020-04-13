@@ -14,8 +14,7 @@
     limitations under the License.
  */
 
-import { JurisdictionServiceClient } from '@mds-core/mds-jurisdiction-service'
-import { Jurisdiction } from '@mds-core/mds-types'
+import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { HasJurisdictionClaim, UnexpectedServiceError } from './utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
@@ -29,7 +28,7 @@ interface GetJurisdictionsRequest extends JurisdictionApiRequest {
 }
 
 type GetJurisdictionsResponse = JurisdictionApiResponse<{
-  jurisdictions: Jurisdiction[]
+  jurisdictions: JurisdictionDomainModel[]
 }>
 
 export const GetAllJurisdictionsHandler = async (req: GetJurisdictionsRequest, res: GetJurisdictionsResponse) => {

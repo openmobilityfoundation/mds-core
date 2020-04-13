@@ -15,14 +15,21 @@
  */
 
 import { ServiceResponse } from '@mds-core/mds-service-helpers'
-import { Jurisdiction, UUID, Timestamp } from '@mds-core/mds-types'
+import { UUID, Timestamp } from '@mds-core/mds-types'
 import { ValidationError, ConflictError, NotFoundError, ServerError } from '@mds-core/mds-utils'
 import { DeepPartial } from 'typeorm'
+import {
+  JurisdictionEntityModel,
+  JurisdictionVersionedProperties
+} from '../server/repository/entities/jurisdiction-entity'
 
-export type CreateJurisdictionType = Partial<Pick<Jurisdiction, 'jurisdiction_id' | 'timestamp'>> &
-  Pick<Jurisdiction, 'agency_key' | 'agency_name' | 'geography_id'>
+export type JurisdictionDomainModel = Omit<JurisdictionEntityModel, 'id' | 'recorded' | 'versions'> &
+  JurisdictionVersionedProperties
 
-export type UpdateJurisdictionType = DeepPartial<Jurisdiction>
+export type CreateJurisdictionType = Partial<Pick<JurisdictionDomainModel, 'jurisdiction_id' | 'timestamp'>> &
+  Pick<JurisdictionDomainModel, 'agency_key' | 'agency_name' | 'geography_id'>
+
+export type UpdateJurisdictionType = DeepPartial<JurisdictionDomainModel>
 
 export interface GetJurisdictionsOptions {
   effective: Timestamp
@@ -31,22 +38,22 @@ export interface GetJurisdictionsOptions {
 export interface JurisdictionServiceInterface {
   createJurisdiction: (
     jurisdiction: CreateJurisdictionType
-  ) => Promise<ServiceResponse<Jurisdiction, ValidationError | ConflictError>>
+  ) => Promise<ServiceResponse<JurisdictionDomainModel, ValidationError | ConflictError>>
   createJurisdictions: (
     jurisdictions: CreateJurisdictionType[]
-  ) => Promise<ServiceResponse<Jurisdiction[], ValidationError | ConflictError>>
+  ) => Promise<ServiceResponse<JurisdictionDomainModel[], ValidationError | ConflictError>>
   updateJurisdiction: (
     jurisdiction_id: UUID,
     update: UpdateJurisdictionType
-  ) => Promise<ServiceResponse<Jurisdiction, ValidationError | NotFoundError>>
+  ) => Promise<ServiceResponse<JurisdictionDomainModel, ValidationError | NotFoundError>>
   deleteJurisdiction: (
     jurisdiction_id: UUID
-  ) => Promise<ServiceResponse<Pick<Jurisdiction, 'jurisdiction_id'>, NotFoundError>>
+  ) => Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>, NotFoundError>>
   getJurisdictions: (
     options?: Partial<GetJurisdictionsOptions>
-  ) => Promise<ServiceResponse<Jurisdiction[], ServerError>>
+  ) => Promise<ServiceResponse<JurisdictionDomainModel[], ServerError>>
   getJurisdiction: (
     jurisdiction_id: UUID,
     options?: Partial<GetJurisdictionsOptions>
-  ) => Promise<ServiceResponse<Jurisdiction, NotFoundError>>
+  ) => Promise<ServiceResponse<JurisdictionDomainModel, NotFoundError>>
 }
