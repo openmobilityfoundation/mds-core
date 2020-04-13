@@ -21,7 +21,7 @@ const TEST_REPOSITORY_NAME = 'test-repository'
 
 const manager = ConnectionManager(TEST_REPOSITORY_NAME)
 
-describe('Test Connection', () => {
+describe('Test Connection Manager', () => {
   before(async () => {
     await manager.initialize()
   })

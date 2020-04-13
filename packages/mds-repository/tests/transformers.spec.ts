@@ -14,8 +14,17 @@
     limitations under the License.
  */
 
-import { JurisdictionRepository } from './server/repository'
+import test from 'unit.js'
+import { BigintTransformer } from '../transformers'
 
-// Make connection options available to TypeORM CLI
-const { ormconfig } = JurisdictionRepository
-module.exports = ormconfig
+describe('Test Transformers', () => {
+  it('BigIntTransformer', done => {
+    test.value(BigintTransformer.to(1)).is(1)
+    test.value(BigintTransformer.to(null)).is(null)
+    test.value(BigintTransformer.to([1, null])).is([1, null])
+    test.value(BigintTransformer.from('1')).is(1)
+    test.value(BigintTransformer.from(null)).is(null)
+    test.value(BigintTransformer.from(['1', null])).is([1, null])
+    done()
+  })
+})

@@ -17,4 +17,5 @@
 import { MetricsRepository } from './server/repository'
 
 // Make connection options available to TypeORM CLI
-module.exports = MetricsRepository.config
+const { ormconfig } = MetricsRepository
+module.exports = ormconfig
