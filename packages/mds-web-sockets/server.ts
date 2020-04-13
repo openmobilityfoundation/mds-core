@@ -1,10 +1,10 @@
 import logger from '@mds-core/mds-logger'
-import { seconds } from '@mds-core/mds-utils'
+import { seconds, getEnvVar } from '@mds-core/mds-utils'
 import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
 import { Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
-import { initializeStanSubscriber } from '@mds-core/mds-stream/nats-streaming/nats'
+import { initializeNatsSubscriber } from '@mds-core/mds-stream/nats/nats'
 import { Clients } from './clients'
 import { ENTITY_TYPE } from './types'
 
@@ -104,9 +104,9 @@ export const WebSocketServer = () => {
     })
   })
 
-  const {
-    env: { NATS = 'localhost', STAN_CLUSTER = 'nats-streaming', STAN_CREDS, TENANT_ID = 'mds' }
-  } = process
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
 
   const processor = async (type: string, data: VehicleEvent | Telemetry) => {
     switch (type) {
@@ -124,5 +124,5 @@ export const WebSocketServer = () => {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  initializeStanSubscriber({ NATS, STAN_CLUSTER, STAN_CREDS, TENANT_ID, processor })
+  initializeNatsSubscriber({ TENANT_ID, processor })
 }

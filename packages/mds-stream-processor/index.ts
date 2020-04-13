@@ -14,3 +14,4 @@
     limitations under the License.
  */
 export { VehicleEventProcessor } from './processors/vehicle-event-processor'
+export { VehicleTelemetryProcessor } from './processors/vehicle-telemetry-processor'

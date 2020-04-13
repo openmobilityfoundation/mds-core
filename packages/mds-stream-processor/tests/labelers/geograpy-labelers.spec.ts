@@ -19,7 +19,8 @@ const mockTelemetry = {
   provider_id: uuid(),
   device_id: uuid(),
   timestamp: utils.now(),
-  gps: { lat: 34.0522, lng: 118.2437 }
+  gps: { lat: 34.0522, lng: 118.2437 },
+  recorded: utils.now()
 }
 
 describe('GeographyLabeler tests', async () => {

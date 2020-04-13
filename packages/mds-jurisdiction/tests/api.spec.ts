@@ -18,9 +18,9 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { v4 as uuid } from 'uuid'
-import { JurisdictionService } from '@mds-core/mds-jurisdiction-service'
+import { JurisdictionServiceProvider } from '@mds-core/mds-jurisdiction-service/server'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { Jurisdiction } from '@mds-core/mds-types'
+import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { api } from '../api'
 import { JURISDICTION_API_DEFAULT_VERSION } from '../types'
 
@@ -34,7 +34,9 @@ const [JURISDICTION0, JURISDICTION1, JURISDICTION2] = [uuid(), uuid(), uuid()].m
 }))
 
 describe('', () => {
-  before(async () => JurisdictionService.initialize())
+  before(async () => {
+    await JurisdictionServiceProvider.start()
+  })
 
   it('Create Single Jurisdiction', async () => {
     const result = await request
@@ -77,7 +79,7 @@ describe('', () => {
     test.object(result.body).hasProperty('version', JURISDICTION_API_DEFAULT_VERSION)
     test.object(result.body.jurisdictions).hasProperty('length', 2)
     test
-      .value(result.body.jurisdictions.map((jurisdiction: Jurisdiction) => jurisdiction.jurisdiction_id))
+      .value(result.body.jurisdictions.map((jurisdiction: JurisdictionDomainModel) => jurisdiction.jurisdiction_id))
       .is([JURISDICTION1.jurisdiction_id, JURISDICTION2.jurisdiction_id])
   })
 
@@ -145,7 +147,7 @@ describe('', () => {
     test.object(result.body).hasProperty('version', JURISDICTION_API_DEFAULT_VERSION)
     test
       .value(
-        (result.body.jurisdictions as Jurisdiction[])
+        (result.body.jurisdictions as JurisdictionDomainModel[])
           .map(jurisdiction => jurisdiction.jurisdiction_id)
           .filter(jurisdiction_id =>
             [JURISDICTION0, JURISDICTION1, JURISDICTION2]
@@ -166,7 +168,7 @@ describe('', () => {
       .set('Authorization', SCOPED_AUTH(['jurisdictions:read:claim']))
       .expect(200)
     test.object(result.body).hasProperty('version', JURISDICTION_API_DEFAULT_VERSION)
-    test.value((result.body.jurisdictions as Jurisdiction[]).length).is(0)
+    test.value((result.body.jurisdictions as JurisdictionDomainModel[]).length).is(0)
   })
 
   it('Get Multiple Jurisdictions (jurisdictions claim)', async () => {
@@ -175,7 +177,7 @@ describe('', () => {
       .set('Authorization', SCOPED_AUTH(['jurisdictions:read:claim'], JURISDICTION2.agency_key))
       .expect(200)
     test.object(result.body).hasProperty('version', JURISDICTION_API_DEFAULT_VERSION)
-    test.value((result.body.jurisdictions as Jurisdiction[]).length).is(1)
+    test.value((result.body.jurisdictions as JurisdictionDomainModel[]).length).is(1)
   })
 
   it('Delete One Jurisdiction', async () => {
@@ -200,5 +202,7 @@ describe('', () => {
       .expect(404)
   })
 
-  after(async () => JurisdictionService.shutdown())
+  after(async () => {
+    await JurisdictionServiceProvider.stop()
+  })
 })

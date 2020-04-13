@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../../container-images/env-inject/tsconfig.build.json" },
+    { "path": "../../packages/mds-logger/tsconfig.build.json" },
+    { "path": "../../packages/mds-stream-processor/tsconfig.build.json" }
+  ]
+}

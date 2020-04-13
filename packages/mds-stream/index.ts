@@ -17,10 +17,10 @@
 import logger from '@mds-core/mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import stan from 'node-nats-streaming'
+import nats from 'nats'
 import { BinaryHTTPEmitter, event as cloudevent } from 'cloudevents-sdk/v1'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
-import { v4 as uuid } from 'uuid'
+import { getEnvVar } from '@mds-core/mds-utils'
 import {
   Stream,
   StreamItem,
@@ -37,7 +37,9 @@ import { KafkaStreamProducer } from './kafka/stream-producer'
 
 const { env } = process
 
-let nats: stan.Stan
+const { NATS } = getEnvVar({ NATS: 'localhost' })
+
+let natsClient: nats.Client
 
 let binding: BinaryHTTPEmitter | null = null
 
@@ -52,19 +54,17 @@ const getBinding = () => {
 }
 
 const getNats = () => {
-  if (!nats) {
-    nats = stan.connect(env.STAN_CLUSTER || 'stan', `mds-agency-${uuid()}`, {
-      url: `nats://${env.NATS}:4222`,
-      userCreds: env.STAN_CREDS,
+  if (!natsClient) {
+    natsClient = nats.connect(`nats://${NATS}:4222`, {
       reconnect: true
     })
 
-    nats.on('error', async message => {
+    natsClient.on('error', async message => {
       logger.error(message)
     })
   }
 
-  return nats
+  return natsClient
 }
 
 /* Currently unused code, keeping it in the case that we decide to switch back to Knative Eventing */
@@ -73,22 +73,24 @@ async function writeCloudEvent(type: string, data: string) {
     return
   }
 
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
+
   // fixme: unable to set-and-propgate additional ce headers, eg: ce.addExtension('foo', 'bar')
-  const event = cloudevent()
-    .type(`${env.TENANT_ID || 'mds'}.${type}`)
-    .source(env.NATS)
-    .data(data)
+  const event = cloudevent().type(`${TENANT_ID}.${type}`).source(env.NATS).data(data)
 
   return getBinding().emit(event)
 }
 
 async function writeNatsEvent(type: string, data: string) {
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
+
   if (env.NATS) {
-    const event = cloudevent()
-      .type(`${env.TENANT_ID || 'mds'}.${type}`)
-      .source(env.NATS)
-      .data(data)
-    getNats().publish(`${env.TENANT_ID || 'mds'}.${type}`, JSON.stringify(event))
+    const event = cloudevent().type(`${TENANT_ID}.${type}`).source(NATS).data(data)
+    getNats().publish(`${TENANT_ID}.${type}`, JSON.stringify(event))
   }
 }
 declare module 'redis' {

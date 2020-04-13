@@ -1,11 +1,11 @@
 import { VehicleEvent, Telemetry, Device } from '@mds-core/mds-types'
+import { getEnvVar } from '@mds-core/mds-utils'
 import { AgencyStream } from '../stream-interface'
 import { KafkaStreamProducer } from './stream-producer'
 
-const {
-  env: { TENANT_ID = 'mds' }
-} = process
-
+const { TENANT_ID } = getEnvVar({
+  TENANT_ID: 'mds'
+})
 const deviceProducer = KafkaStreamProducer<Device>(`${TENANT_ID}.device`)
 const eventProducer = KafkaStreamProducer<VehicleEvent>(`${TENANT_ID}.event`)
 const telemetryProducer = KafkaStreamProducer<Telemetry>(`${TENANT_ID}.telemetry`)

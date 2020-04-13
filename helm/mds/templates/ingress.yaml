@@ -1,5 +1,6 @@
 {{- range $name, $api := .Values.apis }}
 {{- if $api.enabled }}
+{{- if hasKey $api "pathPrefix" }}
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
@@ -36,6 +37,7 @@ spec:
       - Authorization
       maxAge: "10m"
 ---
+{{- end }}
 {{- end }}
 {{- end }}
 apiVersion: networking.istio.io/v1alpha3

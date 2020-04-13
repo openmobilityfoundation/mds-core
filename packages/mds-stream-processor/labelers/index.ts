@@ -17,3 +17,5 @@
 export * from './device-labeler'
 export * from './geography-labeler'
 export * from './latency-labeler'
+export * from './telemetry-labeler'
+export * from './vehicle-state-labeler'

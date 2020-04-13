@@ -16,12 +16,13 @@
 
 import logger from '@mds-core/mds-logger'
 import { VehicleEventProcessor } from './index'
+import { VehicleTelemetryProcessor } from './processors/vehicle-telemetry-processor'
 
 const {
   env: { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST }
 } = process
 
-VehicleEventProcessor.start()
+Promise.all([VehicleEventProcessor.start(), VehicleTelemetryProcessor.start()])
   .then(() => {
     logger.info(
       `Running ${npm_package_name} v${npm_package_version} (${

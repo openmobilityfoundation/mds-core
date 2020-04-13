@@ -53,6 +53,10 @@ apis:
     enabled: true
     version: latest
     migration: false
+  mds-telemetry-processor:
+    enabled: true
+    version: latest
+    migration: false
 tenantId:
 timezone: America/Los_Angeles
 registry:

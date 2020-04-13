@@ -30,7 +30,6 @@ import {
   Timestamp,
   Telemetry,
   Stop,
-  Jurisdiction,
   PROPULSION_TYPES,
   VEHICLE_STATUSES,
   Device
@@ -54,16 +53,16 @@ interface ValidatorOptions {
 }
 
 // Convert empty string to undefined so required/optional works as expected
-const stringSchema = Joi.string().empty('')
+export const stringSchema = Joi.string().empty('')
 
 // Don't allow type conversion
-const numberSchema = Joi.number().options({ convert: false })
+export const numberSchema = Joi.number().options({ convert: false })
 
-const uuidSchema = stringSchema.guid()
+export const uuidSchema = stringSchema.guid()
 
-const timestampSchema = numberSchema.min(1420099200000)
+export const timestampSchema = numberSchema.min(1420099200000)
 
-const providerIdSchema = uuidSchema.valid(Object.keys(providers))
+export const providerIdSchema = uuidSchema.valid(Object.keys(providers))
 
 const vehicleIdSchema = stringSchema.max(255)
 
@@ -229,15 +228,6 @@ const stopSchema = Joi.object().keys({
   reservation_cost: vehicleTypesCountMapSchema.optional()
 })
 
-const jurisdictionSchema = (max: Timestamp = Date.now()) =>
-  Joi.object().keys({
-    jurisdiction_id: uuidSchema,
-    agency_key: stringSchema,
-    agency_name: stringSchema,
-    geography_id: uuidSchema,
-    timestamp: timestampSchema.max(max)
-  })
-
 const deviceSchema = Joi.object().keys({
   device_id: uuidSchema.required(),
   provider_id: uuidSchema.required(),
@@ -257,7 +247,11 @@ const Format = (property: string, error: Joi.ValidationError): string => {
   return `${[property, ...path].join('.')} ${details.join(' ')}`
 }
 
-const Validate = <T = unknown>(value: unknown, schema: Joi.Schema, options: Partial<ValidatorOptions>): value is T => {
+export const ValidateSchema = <T = unknown>(
+  value: unknown,
+  schema: Joi.Schema,
+  options: Partial<ValidatorOptions> = {}
+): value is T => {
   const { assert = true, required = true, property = 'value', allowUnknown = false } = options
   const { error } = Joi.validate(value, schema, { presence: required ? 'required' : 'optional', allowUnknown })
   if (error && assert) {
@@ -275,7 +269,7 @@ interface NumberValidatorOptions extends ValidatorOptions {
 }
 
 export const isValidNumber = (value: unknown, options: Partial<NumberValidatorOptions> = {}): value is number =>
-  Validate(
+  ValidateSchema(
     value,
     numberSchema
       .min(options.min === undefined ? Number.MIN_SAFE_INTEGER : options.min)
@@ -286,7 +280,7 @@ export const isValidNumber = (value: unknown, options: Partial<NumberValidatorOp
 export const isValidAuditTripId = (
   audit_trip_id: unknown,
   options: Partial<ValidatorOptions> = {}
-): audit_trip_id is UUID => Validate(audit_trip_id, uuidSchema, { property: 'audit_trip_id', ...options })
+): audit_trip_id is UUID => ValidateSchema(audit_trip_id, uuidSchema, { property: 'audit_trip_id', ...options })
 
 interface AuditEventValidatorOptions extends ValidatorOptions {
   accept: AUDIT_EVENT_TYPE[]
@@ -304,48 +298,49 @@ export const isValidStop = (value: unknown): value is Stop => {
 }
 
 export const isValidDeviceId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
-  Validate(value, uuidSchema, { property: 'device_id', ...options })
+  ValidateSchema(value, uuidSchema, { property: 'device_id', ...options })
 
 export const isValidAuditEventType = (
   value: unknown,
   { accept, ...options }: Partial<AuditEventValidatorOptions> = {}
 ): value is AUDIT_EVENT_TYPE =>
-  Validate(value, auditEventTypeSchema(accept), { property: 'audit_event_type', ...options })
+  ValidateSchema(value, auditEventTypeSchema(accept), { property: 'audit_event_type', ...options })
 
 export const isValidTimestamp = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Timestamp =>
-  Validate(value, timestampSchema, { property: 'timestamp', ...options })
+  ValidateSchema(value, timestampSchema, { property: 'timestamp', ...options })
 
 export const isValidProviderId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
-  Validate(value, providerIdSchema, { property: 'provider_id', ...options })
+  ValidateSchema(value, providerIdSchema, { property: 'provider_id', ...options })
 
 export const isValidProviderVehicleId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
-  Validate(value, vehicleIdSchema, { property: 'provider_vehicle_id', ...options })
+  ValidateSchema(value, vehicleIdSchema, { property: 'provider_vehicle_id', ...options })
 
 export const isValidAuditEventId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
-  Validate(value, uuidSchema, { property: 'audit_event_id', ...options })
+  ValidateSchema(value, uuidSchema, { property: 'audit_event_id', ...options })
 
 export const isValidAuditDeviceId = (value: unknown, options: Partial<ValidatorOptions> = {}): value is UUID =>
-  Validate(value, uuidSchema, { property: 'audit_device_id', ...options })
+  ValidateSchema(value, uuidSchema, { property: 'audit_device_id', ...options })
 
 export const isValidTelemetry = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Telemetry =>
-  Validate(value, telemetrySchema, { property: 'telemetry', ...options })
+  ValidateSchema(value, telemetrySchema, { property: 'telemetry', ...options })
 
 export const isValidDevice = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Device =>
-  Validate(value, deviceSchema, options)
+  ValidateSchema(value, deviceSchema, options)
 
 export const isValidEvent = (value: unknown, options: Partial<ValidatorOptions> = {}): value is VehicleEvent =>
-  Validate(value, eventSchema, options)
+  ValidateSchema(value, eventSchema, options)
 
 export const isValidVehicleEventType = (
   value: unknown,
   options: Partial<ValidatorOptions> = {}
-): value is VEHICLE_EVENT => Validate(value, vehicleEventTypeSchema, { property: 'vehicle_event_type', ...options })
+): value is VEHICLE_EVENT =>
+  ValidateSchema(value, vehicleEventTypeSchema, { property: 'vehicle_event_type', ...options })
 
 export const isValidAuditIssueCode = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
-  Validate(value, auditIssueCodeSchema, { property: 'audit_issue_code', ...options })
+  ValidateSchema(value, auditIssueCodeSchema, { property: 'audit_issue_code', ...options })
 
 export const isValidAuditNote = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
-  Validate(value, auditNoteSchema, { property: 'note', ...options })
+  ValidateSchema(value, auditNoteSchema, { property: 'note', ...options })
 
 const HasPropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
   typeof obj === 'object' && obj !== null && props.every(prop => prop in obj)
@@ -358,13 +353,6 @@ export const isStringifiedEventWithTelemetry = (event: unknown): event is String
 
 export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
   HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
-
-export const isValidJurisdiction = (value: unknown, options: Partial<ValidatorOptions> = {}): value is Jurisdiction =>
-  Validate(value, jurisdictionSchema(), { property: 'jurisdiction', ...options })
-
-export const validateJurisdiction = (value: unknown, options: Partial<ValidatorOptions> = {}): void => {
-  isValidJurisdiction(value, options)
-}
 
 export function validatePolicies(policies: unknown): policies is Policy[] {
   const { error } = Joi.validate(policies, policiesSchema)
@@ -419,13 +407,13 @@ export function rawValidatePolicy(policy: Policy): Joi.ValidationResult<Policy> 
   return Joi.validate(policy, policySchema)
 }
 
-const validateTripEvent = (event: VehicleEvent) => Validate(event, tripEventSchema, {})
+const validateTripEvent = (event: VehicleEvent) => ValidateSchema(event, tripEventSchema, {})
 
-const validateProviderPickUpEvent = (event: VehicleEvent) => Validate(event, providerPickUpEventSchema, {})
+const validateProviderPickUpEvent = (event: VehicleEvent) => ValidateSchema(event, providerPickUpEventSchema, {})
 
-const validateServiceEndEvent = (event: VehicleEvent) => Validate(event, serviceEndEventSchema, {})
+const validateServiceEndEvent = (event: VehicleEvent) => ValidateSchema(event, serviceEndEventSchema, {})
 
-const validateDeregisterEvent = (event: VehicleEvent) => Validate(event, deregisterEventSchema, {})
+const validateDeregisterEvent = (event: VehicleEvent) => ValidateSchema(event, deregisterEventSchema, {})
 
 export const validateEvent = (event: unknown) => {
   if (isValidEvent(event, { allowUnknown: true })) {
@@ -451,8 +439,10 @@ export const validateEvent = (event: unknown) => {
       return validateDeregisterEvent(event)
     }
 
-    return Validate(event, eventSchema, {})
+    return ValidateSchema(event, eventSchema, {})
   }
 }
 
 export const policySchemaJson = joiToJsonSchema(policySchema)
+
+export const SchemaBuilder = Joi

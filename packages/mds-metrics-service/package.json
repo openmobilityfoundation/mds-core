@@ -1,0 +1,34 @@
+{
+  "name": "@mds-core/mds-metrics-service",
+  "version": "0.1.0",
+  "description": "Mobility Data Specification Metrics Service",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "keywords": [
+    "mds",
+    "metrics"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "yarn typeorm schema:drop && DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json && yarn typeorm schema:drop",
+    "typeorm": "DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config ../../node_modules/typeorm/cli.js -c metrics-repository-rw"
+  },
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-repository": "0.1.0",
+    "@mds-core/mds-schema-validators": "0.1.2",
+    "@mds-core/mds-service-helpers": "0.1.0",
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26",
+    "typeorm": "0.2.24",
+    "uuid": "7.0.3"
+  },
+  "devDependencies": {}
+}

@@ -95,6 +95,13 @@ function days(n: number) {
   return hours(n) * 24
 }
 
+// Based on a bin size (in ms), calculate the start/end of
+// the frame containing the timestamp.
+function timeframe(size: Timestamp, timestamp: Timestamp) {
+  const start_time = timestamp - (timestamp % size)
+  return { start_time, end_time: start_time + size - 1 }
+}
+
 /**
  * @param  {number} minimum
  * @param  {number} maximum
@@ -583,6 +590,14 @@ function normalizeToArray<T>(elementToNormalize: T | T[] | undefined): T[] {
   return [elementToNormalize]
 }
 
+const getEnvVar = <TProps extends { [name: string]: string }>(props: TProps): TProps =>
+  Object.keys(props).reduce((env, key) => {
+    return {
+      ...env,
+      [key]: process.env[key] || props[key]
+    }
+  }, {} as TProps)
+
 export {
   UUID_REGEX,
   isUUID,
@@ -608,6 +623,7 @@ export {
   hours,
   minutes,
   seconds,
+  timeframe,
   yesterday,
   csv,
   inc,
@@ -627,5 +643,6 @@ export {
   moved,
   normalizeToArray,
   parseRelative,
-  getCurrentDate
+  getCurrentDate,
+  getEnvVar
 }

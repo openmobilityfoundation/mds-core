@@ -39,6 +39,11 @@ apis:
     pathPrefix: /web-sockets
     version: ${WEB_SOCKETS_VERSION}
     migration: false
+  mds-geography:
+    enabled: true
+    pathPrefix: /geography
+    version: ${GEOGRAPHY_VERSION}
+    migration: false
   mds-geography-author:
     enabled: true
     pathPrefix: /geography-author

@@ -281,6 +281,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Tests: mds-metrics-service",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-metrics-service",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Tests: mds-policy",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
@@ -306,6 +320,20 @@
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/policy-author"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-repository",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": ["--project", "${workspaceFolder}/tsconfig.json", "-r", "ts-node/register", "--timeout", "0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-repository",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {

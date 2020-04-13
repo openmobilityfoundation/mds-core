@@ -149,6 +149,10 @@ export type UUID = string
 export type Timestamp = number
 export type Stringify<T> = { [P in keyof T]: string }
 export type Nullable<T> = T | null
+export type NullableProperties<T extends object> = {
+  [P in keyof T]-?: T[P] extends null ? T[P] : Nullable<T[P]>
+}
+export type SingleOrArray<T> = T | T[]
 
 // Represents a row in the "devices" table
 export interface Device {
@@ -459,12 +463,4 @@ export interface Stop {
   num_spots_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
   wheelchair_boarding?: boolean
   reservation_cost?: Partial<{ [S in VEHICLE_TYPE]: number }> // Cost to reserve a spot per vehicle_type
-}
-
-export interface Jurisdiction {
-  jurisdiction_id: UUID
-  agency_key: string
-  agency_name: string
-  geography_id: UUID
-  timestamp: Timestamp
 }

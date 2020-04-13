@@ -27,6 +27,8 @@ tests:
           enabled: false
         mds-geography-author:
           enabled: false
+        mds-telemetry-processor:
+          enabled: false
     asserts:
       - hasDocuments:
           count: 0
