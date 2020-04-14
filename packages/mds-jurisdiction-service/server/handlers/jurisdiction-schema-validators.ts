@@ -14,10 +14,18 @@
     limitations under the License.
  */
 
-import { SchemaBuilder, uuidSchema, stringSchema, timestampSchema } from '@mds-core/mds-schema-validators'
+import {
+  uuidSchema,
+  stringSchema,
+  timestampSchema,
+  ValidateSchema,
+  ValidationError,
+  SchemaBuilder
+} from '@mds-core/mds-schema-validators'
 import { Timestamp } from '@mds-core/mds-types'
+import { JurisdictionDomainModel } from 'packages/mds-jurisdiction-service/@types'
 
-export const jurisdictionSchema = (max: Timestamp = Date.now()) =>
+const jurisdictionSchema = (max: Timestamp = Date.now()) =>
   SchemaBuilder.object().keys({
     jurisdiction_id: uuidSchema,
     agency_key: stringSchema,
@@ -25,3 +33,12 @@ export const jurisdictionSchema = (max: Timestamp = Date.now()) =>
     geography_id: uuidSchema,
     timestamp: timestampSchema.max(max)
   })
+
+export const ValidateJurisdiction = (jurisdiction: JurisdictionDomainModel): JurisdictionDomainModel => {
+  try {
+    ValidateSchema<JurisdictionDomainModel>(jurisdiction, jurisdictionSchema(Date.now()))
+    return jurisdiction
+  } catch (error) {
+    throw new ValidationError('Invalid Jurisdiction', { jurisdiction, error })
+  }
+}

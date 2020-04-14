@@ -36,3 +36,7 @@ export interface InsertReturning<T> extends InsertResult {
 export interface UpdateReturning<T> extends UpdateResult {
   raw: T[]
 }
+
+export interface ModelMapper<FromModel, ToModel> {
+  map: (from: FromModel[]) => ToModel[]
+}

@@ -19,7 +19,7 @@ import { ServiceResponse, ServiceError, ServiceResult } from '@mds-core/mds-serv
 import { ValidationError, NotFoundError, ServerError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { UpdateJurisdictionType, JurisdictionDomainModel } from '../../@types'
-import { AsJurisdiction } from './utils'
+import { JurisdictionMappers } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
 
 export const UpdateJurisdictionHandler = async (
@@ -32,8 +32,9 @@ export const UpdateJurisdictionHandler = async (
   try {
     const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
     if (entity) {
-      const current = AsJurisdiction()(entity)
-      if (current) {
+      const versions = JurisdictionMappers.EntityModel.to.DomainModel({ effective: Date.now() }).map([entity])
+      if (versions.length) {
+        const [current] = versions
         const timestamp = update.timestamp ?? Date.now()
         if (timestamp <= current.timestamp) {
           return ServiceError(new ValidationError('Invalid timestamp for update'))
@@ -54,7 +55,7 @@ export const UpdateJurisdictionHandler = async (
                 ].sort((a, b) => b.timestamp - a.timestamp)
               : entity.versions
         })
-        const jurisdiction = AsJurisdiction(timestamp)(updated)
+        const [jurisdiction] = JurisdictionMappers.EntityModel.to.DomainModel({ effective: timestamp }).map([updated])
         return jurisdiction
           ? ServiceResult(jurisdiction)
           : ServiceError(new ServerError('Unexpected error during update'))

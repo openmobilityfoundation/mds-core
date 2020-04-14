@@ -17,16 +17,29 @@
 import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
 import { ValidationError, ConflictError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
+import { v4 as uuid } from 'uuid'
 import { CreateJurisdictionType, JurisdictionDomainModel } from '../../@types'
-import { AsJurisdictionEntity, AsJurisdiction, isJurisdiction } from './utils'
+import { JurisdictionMappers } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
+import { ValidateJurisdiction } from './jurisdiction-schema-validators'
 
 export const CreateJurisdictionsHandler = async (
   jurisdictions: CreateJurisdictionType[]
 ): Promise<ServiceResponse<JurisdictionDomainModel[], ValidationError | ConflictError>> => {
+  const recorded = Date.now()
   try {
-    const entities = await JurisdictionRepository.writeJurisdictions(jurisdictions.map(AsJurisdictionEntity))
-    return ServiceResult(entities.map(AsJurisdiction()).filter(isJurisdiction))
+    const entities = await JurisdictionRepository.writeJurisdictions(
+      JurisdictionMappers.DomainModel.to.EntityModel({ recorded }).map(
+        jurisdictions.map(({ jurisdiction_id = uuid(), timestamp = recorded, ...jurisdiction }) =>
+          ValidateJurisdiction({
+            jurisdiction_id,
+            timestamp,
+            ...jurisdiction
+          })
+        )
+      )
+    )
+    return ServiceResult(JurisdictionMappers.EntityModel.to.DomainModel({ effective: recorded }).map(entities))
   } catch (error) /* istanbul ignore next */ {
     logger.error('Error Creating Jurisdictions', error)
     return ServiceError(error instanceof ValidationError ? error : new ConflictError(error))

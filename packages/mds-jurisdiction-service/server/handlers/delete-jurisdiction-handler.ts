@@ -18,7 +18,7 @@ import { UUID } from '@mds-core/mds-types'
 import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
 import { NotFoundError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-import { AsJurisdiction } from './utils'
+import { JurisdictionMappers } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
 import { JurisdictionDomainModel } from '../../@types'
 
@@ -28,8 +28,9 @@ export const DeleteJurisdictionHandler = async (
   try {
     const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
     if (entity) {
-      const current = AsJurisdiction()(entity)
-      if (current) {
+      const versions = JurisdictionMappers.EntityModel.to.DomainModel({ effective: Date.now() }).map([entity])
+      if (versions.length) {
+        const [current] = versions
         // "Soft" delete the jursidiction by updating it with a new version containing a null geography_id
         await JurisdictionRepository.updateJurisdiction(jurisdiction_id, {
           ...entity,

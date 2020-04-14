@@ -21,6 +21,11 @@ export interface IdentityEntityModel {
   id: number
 }
 
+export type CreateIdentityEntityModel<TIdentityEntityModel extends IdentityEntityModel> = Omit<
+  TIdentityEntityModel,
+  keyof IdentityEntityModel
+>
+
 export abstract class IdentityEntity implements IdentityEntityModel {
   @Column('bigint', { generated: 'increment', transformer: BigintTransformer })
   @Index({ unique: true })

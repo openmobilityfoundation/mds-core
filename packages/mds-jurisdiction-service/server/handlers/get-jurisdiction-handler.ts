@@ -19,7 +19,7 @@ import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-serv
 import { NotFoundError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { GetJurisdictionsOptions, JurisdictionDomainModel } from '../../@types'
-import { AsJurisdiction } from './utils'
+import { JurisdictionMappers } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
 
 export const GetJurisdictionHandler = async (
@@ -28,10 +28,14 @@ export const GetJurisdictionHandler = async (
 ): Promise<ServiceResponse<JurisdictionDomainModel, NotFoundError>> => {
   try {
     const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
-    const [jurisdiction] = [entity].map(AsJurisdiction(effective))
-    return jurisdiction
-      ? ServiceResult(jurisdiction)
-      : ServiceError(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id, effective }))
+    if (entity) {
+      const versions = JurisdictionMappers.EntityModel.to.DomainModel({ effective }).map([entity])
+      if (versions.length) {
+        const [jurisdiction] = versions
+        return ServiceResult(jurisdiction)
+      }
+    }
+    return ServiceError(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id, effective }))
   } catch (error) /* istanbul ignore next */ {
     logger.error('Error Reading Jurisdiction', error)
     return ServiceError(error)
