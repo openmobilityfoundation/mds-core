@@ -46,7 +46,7 @@ const connectionName = (prefix: string, mode: ConnectionMode) => `${prefix}-${mo
 
 export type ConnectionManagerOptions = Partial<PostgresConnectionOptions>
 
-export const ConnectionManager = (prefix: string, options: ConnectionManagerOptions = {}) => {
+export const ConnectionManager = (prefix: string, options: Omit<ConnectionManagerOptions, 'cli'> = {}) => {
   let connections: Connection[] | null = null
 
   const [ro, rw]: ConnectionOptions[] = ConnectionModes.map(mode => ({
@@ -63,10 +63,6 @@ export const ConnectionManager = (prefix: string, options: ConnectionManagerOpti
     synchronize: false,
     migrationsRun: PG_MIGRATIONS === 'true' && mode === 'rw',
     namingStrategy: new MdsNamingStrategy(),
-    cli: {
-      entitiesDir: './entities',
-      migrationsDir: './migrations'
-    },
     ...options
   }))
 
@@ -112,12 +108,13 @@ export const ConnectionManager = (prefix: string, options: ConnectionManagerOpti
     }
   }
 
-  // Make the "rw" connection the default for the TypeORM CLI by removing the connection name
-  const { name, ...ormconfig } = rw
-
   return {
     initialize,
-    ormconfig,
+    cli: (cli: Partial<ConnectionManagerOptions['cli']> = {}) => {
+      // Make the "rw" connection the default for the TypeORM CLI by removing the connection name
+      const { name, ...ormconfig } = rw
+      return { ...ormconfig, cli }
+    },
     connect,
     shutdown
   }
