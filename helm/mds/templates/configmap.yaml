@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mds-config-files
-  namespace: {{ .Release.Namespace }}
-data:
-{{ (.Files.Glob (printf "files/mds-config/%s/*.{json,json5}" .Release.Namespace) ).AsConfig | indent 2 }}

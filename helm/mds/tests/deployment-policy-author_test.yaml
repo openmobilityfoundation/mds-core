@@ -37,14 +37,6 @@ tests:
           value: mds-policy-author
         documentIndex: 11
       - equal:
-          path: spec.template.spec.volumes[0].name
-          value: mds-config-files
-        documentIndex: 11
-      - equal:
-          path: spec.template.spec.volumes[0].configMap.name
-          value: mds-config-files
-        documentIndex: 11
-      - equal:
           path: spec.template.spec.containers[0].name
           value: mds-policy-author
         documentIndex: 11
@@ -79,14 +71,6 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].ports[0].protocol
           value: TCP
-        documentIndex: 11
-      - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].name
-          value: mds-config-files
-        documentIndex: 11
-      - equal:
-          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
-          value: /mds-config/
         documentIndex: 11
       - equal:
           path: spec.template.spec.containers[0].env[0].name
