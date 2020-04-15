@@ -23,7 +23,7 @@ import {
   SchemaBuilder
 } from '@mds-core/mds-schema-validators'
 import { Timestamp } from '@mds-core/mds-types'
-import { JurisdictionDomainModel } from 'packages/mds-jurisdiction-service/@types'
+import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 
 const jurisdictionSchema = (max: Timestamp = Date.now()) =>
   SchemaBuilder.object().keys({

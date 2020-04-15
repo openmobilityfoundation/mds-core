@@ -19,7 +19,7 @@ import { ValidationError, ConflictError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { v4 as uuid } from 'uuid'
 import { CreateJurisdictionType, JurisdictionDomainModel } from '../../@types'
-import { JurisdictionMappers } from '../repository/model-mappers'
+import { JursidictionMapper } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
 import { ValidateJurisdiction } from './jurisdiction-schema-validators'
 
@@ -29,7 +29,7 @@ export const CreateJurisdictionsHandler = async (
   const recorded = Date.now()
   try {
     const entities = await JurisdictionRepository.writeJurisdictions(
-      JurisdictionMappers.DomainModel.to.EntityModel({ recorded }).map(
+      JursidictionMapper.fromDomainModel(
         jurisdictions.map(({ jurisdiction_id = uuid(), timestamp = recorded, ...jurisdiction }) =>
           ValidateJurisdiction({
             jurisdiction_id,
@@ -37,9 +37,9 @@ export const CreateJurisdictionsHandler = async (
             ...jurisdiction
           })
         )
-      )
+      ).toEntityModel({ recorded })
     )
-    return ServiceResult(JurisdictionMappers.EntityModel.to.DomainModel({ effective: recorded }).map(entities))
+    return ServiceResult(JursidictionMapper.fromEntityModel(entities).toDomainModel({ effective: recorded }))
   } catch (error) /* istanbul ignore next */ {
     logger.error('Error Creating Jurisdictions', error)
     return ServiceError(error instanceof ValidationError ? error : new ConflictError(error))

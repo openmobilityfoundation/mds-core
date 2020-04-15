@@ -15,46 +15,34 @@
  */
 
 import { Timestamp } from '@mds-core/mds-types'
-import { ModelMapper, CreateIdentityEntityModel } from 'packages/mds-repository'
+import { CreateIdentityEntityModel } from '@mds-core/mds-repository'
 import { MetricEntityModel } from './entities/metric-entity'
 import { MetricDomainModel } from '../../@types'
 
-type MetricEntityModelMapper<ToModel> = ModelMapper<MetricEntityModel, ToModel>
-
-type MetricDomainModelMapper<ToModel> = ModelMapper<MetricDomainModel, ToModel>
+const MetricEntityModelMapper = (models: MetricEntityModel[]) => ({
+  toDomainModel: (): MetricDomainModel[] => {
+    return models.map(model => {
+      const { id, recorded, ...domain } = model
+      return domain
+    })
+  }
+})
 
 interface MetricDomainToEntityModelMapperOptions {
   recorded: Timestamp
 }
 
-export const MetricMappers = {
-  EntityModel: {
-    to: {
-      DomainModel: (): MetricEntityModelMapper<MetricDomainModel> => {
-        return {
-          map: models =>
-            models.map(model => {
-              const { id, recorded, ...domain } = model
-              return domain
-            })
-        }
-      }
-    }
-  },
-  DomainModel: {
-    to: {
-      EntityModel: (
-        options: MetricDomainToEntityModelMapperOptions
-      ): MetricDomainModelMapper<CreateIdentityEntityModel<MetricEntityModel>> => {
-        const { recorded } = options
-        return {
-          map: models =>
-            models.map(model => {
-              const entity = { ...model, recorded }
-              return entity
-            })
-        }
-      }
-    }
+const MetricDomainModelMapper = (models: MetricDomainModel[]) => ({
+  toEntityModel: (options: MetricDomainToEntityModelMapperOptions): CreateIdentityEntityModel<MetricEntityModel>[] => {
+    const { recorded } = options
+    return models.map(model => {
+      const entity = { ...model, recorded }
+      return entity
+    })
   }
+})
+
+export const MetricMapper = {
+  fromDomainModel: MetricDomainModelMapper,
+  fromEntityModel: MetricEntityModelMapper
 }

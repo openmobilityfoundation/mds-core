@@ -16,77 +16,63 @@
 
 import { Timestamp, Nullable } from '@mds-core/mds-types'
 import { filterEmptyHelper } from '@mds-core/mds-utils'
-import { CreateIdentityEntityModel, ModelMapper } from '@mds-core/mds-repository'
+import { CreateIdentityEntityModel } from '@mds-core/mds-repository'
 import { JurisdictionDomainModel } from '../../@types'
 import { JurisdictionEntityModel } from './entities/jurisdiction-entity'
 
-export const isJurisdiction = filterEmptyHelper<JurisdictionDomainModel>()
+const isEffectiveJurisdiction = filterEmptyHelper<JurisdictionDomainModel>()
 
-type JurisdictionEntityModelMapper<ToModel> = ModelMapper<JurisdictionEntityModel, ToModel>
-
-interface JurisdictionEntityToDomainModelMapperOptions {
+interface JurisdictionDomainModelMapperOptions {
   effective: Timestamp
 }
 
-type JurisdictionDomainModelMapper<ToModel> = ModelMapper<JurisdictionDomainModel, ToModel>
+const JurisdictionEntityModelMapper = (models: JurisdictionEntityModel[]) => ({
+  toDomainModel: (options: JurisdictionDomainModelMapperOptions): JurisdictionDomainModel[] => {
+    const { effective } = options
+    return models
+      .map<Nullable<JurisdictionDomainModel>>(model => {
+        const { jurisdiction_id, agency_key, versions } = model
+        const version = versions.find(properties => effective >= properties.timestamp)
+        if (version) {
+          const { agency_name, geography_id, timestamp } = version
+          if (geography_id !== null) {
+            return {
+              jurisdiction_id,
+              agency_key,
+              agency_name,
+              geography_id,
+              timestamp
+            }
+          }
+        }
+        return null
+      })
+      .filter(isEffectiveJurisdiction)
+  }
+})
 
-interface JurisdictionDomainToEntityModelMapperOptions {
+interface JurisdictionEntityModelMapperOptions {
   recorded: Timestamp
 }
 
-export const JurisdictionMappers = {
-  DomainModel: {
-    to: {
-      EntityModel: (
-        options: JurisdictionDomainToEntityModelMapperOptions
-      ): JurisdictionDomainModelMapper<CreateIdentityEntityModel<JurisdictionEntityModel>> => {
-        const { recorded } = options
-        return {
-          map: models => {
-            const entities = models.map(model => {
-              const { jurisdiction_id, agency_key, agency_name, geography_id, timestamp } = model
-              return {
-                jurisdiction_id,
-                agency_key,
-                versions: [{ timestamp, agency_name, geography_id }],
-                recorded
-              }
-            })
-            return entities
-          }
-        }
+const JurisdictionDomainModelMapper = (models: JurisdictionDomainModel[]) => ({
+  toEntityModel: (
+    options: JurisdictionEntityModelMapperOptions
+  ): CreateIdentityEntityModel<JurisdictionEntityModel>[] => {
+    const { recorded } = options
+    return models.map(model => {
+      const { jurisdiction_id, agency_key, agency_name, geography_id, timestamp } = model
+      return {
+        jurisdiction_id,
+        agency_key,
+        versions: [{ timestamp, agency_name, geography_id }],
+        recorded
       }
-    }
-  },
-  EntityModel: {
-    to: {
-      DomainModel: (
-        options: JurisdictionEntityToDomainModelMapperOptions
-      ): JurisdictionEntityModelMapper<JurisdictionDomainModel> => {
-        const { effective } = options
-        return {
-          map: entities => {
-            const models = entities.map<Nullable<JurisdictionDomainModel>>(entity => {
-              const { jurisdiction_id, agency_key, versions } = entity
-              const version = versions.find(properties => effective >= properties.timestamp)
-              if (version) {
-                const { agency_name, geography_id, timestamp } = version
-                if (geography_id !== null) {
-                  return {
-                    jurisdiction_id,
-                    agency_key,
-                    agency_name,
-                    geography_id,
-                    timestamp
-                  }
-                }
-              }
-              return null
-            })
-            return models.filter(isJurisdiction)
-          }
-        }
-      }
-    }
+    })
   }
+})
+
+export const JursidictionMapper = {
+  fromDomainModel: JurisdictionDomainModelMapper,
+  fromEntityModel: JurisdictionEntityModelMapper
 }
