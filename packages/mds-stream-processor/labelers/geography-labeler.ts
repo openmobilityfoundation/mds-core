@@ -15,29 +15,56 @@
  */
 
 import db from '@mds-core/mds-db'
-import { UUID, Nullable, Telemetry } from '@mds-core/mds-types'
+import { UUID, Nullable, Telemetry, Geography } from '@mds-core/mds-types'
 import { pointInShape } from '@mds-core/mds-utils'
+import getBbox from '@turf/bbox'
+import { BBox } from '@turf/helpers'
 import { MessageLabeler } from './types'
 
 export interface GeographyLabel {
   geography_ids: UUID[]
 }
 
-export const GeographyLabeler: () => MessageLabeler<
-  { telemetry?: Nullable<Telemetry> },
-  GeographyLabel
-> = () => async ({ telemetry }) => {
-  const gps = telemetry?.gps
-  if (gps) {
-    const { lat, lng } = gps
+type WithBbox<T> = T & { bbox: BBox }
 
-    const geographies = await db.readGeographies({ get_published: true })
+export const pointInBbox = ({ lat, lng }: { lat: number; lng: number }, bbox: BBox) => {
+  const [bottomLeftLng, bottomLeftLat, topRightLng, topRightLat] = bbox
 
-    const geography_ids = geographies
-      .filter(({ geography_json }) => pointInShape({ lat, lng }, geography_json))
-      .map(({ geography_id }) => geography_id)
+  return bottomLeftLng <= lng && bottomLeftLat <= lat && topRightLng >= lng && topRightLat >= lat
+}
 
-    return { geography_ids }
+const computeBbox = (geography: Geography) => {
+  return getBbox(geography.geography_json)
+}
+
+const newGeos = (cachedGeos: Map<UUID, boolean>, readGeos: Geography[]) =>
+  readGeos.filter(readGeo => !cachedGeos.has(readGeo.geography_id))
+
+export const GeographyLabeler: () => MessageLabeler<{ telemetry?: Nullable<Telemetry> }, GeographyLabel> = () => {
+  const cachedGeos: WithBbox<Geography>[] = []
+  const cachedGeosMap: Map<UUID, boolean> = new Map()
+
+  return async ({ telemetry }) => {
+    const gps = telemetry?.gps
+    if (gps) {
+      const { lat, lng } = gps
+
+      const readGeos = await db.readGeographies({ get_published: true })
+
+      const uncachedGeos = newGeos(cachedGeosMap, readGeos).map(geo => ({ bbox: computeBbox(geo), ...geo }))
+
+      if (uncachedGeos.length) {
+        cachedGeos.push(...uncachedGeos)
+        uncachedGeos.forEach(({ geography_id }) => cachedGeosMap.set(geography_id, true))
+      }
+
+      const geography_ids = cachedGeos
+        .filter(({ bbox }) => pointInBbox({ lat, lng }, bbox))
+        .filter(({ geography_json }) => pointInShape({ lat, lng }, geography_json))
+        .map(({ geography_id }) => geography_id)
+
+      return { geography_ids }
+    }
+    return { geography_ids: [] }
   }
-  return { geography_ids: [] }
 }
