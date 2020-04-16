@@ -27,7 +27,7 @@ import {
 } from './handlers'
 
 export const JurisdictionServiceProvider: ServiceProvider<JurisdictionServiceInterface> = {
-  start: async () => {
+  initialize: async () => {
     await JurisdictionRepository.initialize()
   },
   createJurisdictions: CreateJurisdictionsHandler,
@@ -36,7 +36,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionServiceInt
   deleteJurisdiction: DeleteJurisdictionHandler,
   getJurisdictions: GetJurisdictionsHandler,
   getJurisdiction: GetJurisdictionHandler,
-  stop: async () => {
+  shutdown: async () => {
     await JurisdictionRepository.shutdown()
   }
 }

@@ -47,5 +47,9 @@ export const GetAllJurisdictionsHandler = async (req: GetJurisdictionsRequest, r
   }
 
   // Handle errors
-  return res.status(500).send({ error: UnexpectedServiceError(error) })
+  if (error) {
+    return res.status(500).send({ error })
+  }
+
+  return res.status(500).send(UnexpectedServiceError)
 }

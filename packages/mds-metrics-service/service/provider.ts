@@ -20,12 +20,12 @@ import { WriteMetricsHandler, ReadMetricsHandler } from './handlers'
 import { MetricsRepository } from './repository'
 
 export const MetricsServiceProvider: ServiceProvider<MetricsServiceInterface> = {
-  start: async () => {
+  initialize: async () => {
     await MetricsRepository.initialize()
   },
   readMetrics: ReadMetricsHandler,
   writeMetrics: WriteMetricsHandler,
-  stop: async () => {
+  shutdown: async () => {
     await MetricsRepository.shutdown()
   }
 }

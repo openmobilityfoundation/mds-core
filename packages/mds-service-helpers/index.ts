@@ -14,18 +14,28 @@
     limitations under the License.
  */
 
-import { ServerError } from '@mds-core/mds-utils'
+type ServiceErrorType = 'ServiceException' | 'NotFoundError' | 'ConflictError' | 'ValidationError'
 
-export type ServiceResponse<TResult, TError extends Error = Error> = [TError | ServerError, null] | [null, TResult]
+interface ServiceErrorDescriptor {
+  type: ServiceErrorType
+  message: string
+  details?: string
+}
 
-export const ServiceResult = <TResult>(result: TResult): ServiceResponse<TResult, never> => [null, result]
+export type ServiceResponse<TResult> = [ServiceErrorDescriptor, null] | [null, TResult]
 
-export const ServiceError = <TError extends Error = Error>(error: TError): ServiceResponse<never, TError> => [
-  error instanceof Error ? error : new ServerError(error),
-  null
-]
+export const ServiceResult = <TResult>(result: TResult): ServiceResponse<TResult> => [null, result]
+
+export const ServiceError = (error: ServiceErrorDescriptor): ServiceResponse<never> => [error, null]
+
+export const ServiceException = (message: string, error?: Error): ServiceResponse<never> =>
+  ServiceError({
+    type: 'ServiceException',
+    message,
+    details: (error instanceof Error && error.message) || undefined
+  })
 
 export type ServiceProvider<TServiceInterface> = TServiceInterface & {
-  start: () => Promise<void>
-  stop: () => Promise<void>
+  initialize: () => Promise<void>
+  shutdown: () => Promise<void>
 }

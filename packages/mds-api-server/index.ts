@@ -17,7 +17,7 @@ export interface ApiResponseLocals {
 
 export interface ApiResponse<TBody = unknown> extends express.Response {
   locals: ApiResponseLocals
-  send: (body: TBody | { error: Error }) => this
+  send: (body: TBody | { error: unknown }) => this
 }
 
 export interface ApiVersionedResponseLocals<TVersion extends string> extends ApiResponseLocals {

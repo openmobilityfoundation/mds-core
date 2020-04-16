@@ -16,8 +16,6 @@
 
 import { SingleOrArray } from '@mds-core/mds-types'
 import { In } from 'typeorm'
-import logger from '@mds-core/mds-logger'
-import { RuntimeError } from '@mds-core/mds-utils'
 
 export const entityPropertyFilter = <T extends object, TProperty extends keyof T>(
   property: TProperty,
@@ -33,9 +31,4 @@ export const entityPropertyFilter = <T extends object, TProperty extends keyof T
     }
   }
   return {}
-}
-
-export const RepositoryError = (message: string, error?: unknown) => {
-  logger.error(message, error)
-  return new RuntimeError(message, error)
 }

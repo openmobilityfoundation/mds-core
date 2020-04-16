@@ -15,7 +15,13 @@
  */
 
 import { UUID } from '@mds-core/mds-types'
-import { InsertReturning, UpdateReturning, CreateRepository, CreateRepositoryMethod } from '@mds-core/mds-repository'
+import {
+  InsertReturning,
+  UpdateReturning,
+  CreateRepository,
+  CreateRepositoryMethod,
+  RepositoryError
+} from '@mds-core/mds-repository'
 import { DeepPartial } from 'typeorm'
 
 import { JurisdictionEntity } from './entities'
@@ -24,27 +30,39 @@ import * as migrations from './migrations'
 const RepositoryReadJurisdiction = CreateRepositoryMethod(connect => async (jurisdiction_id: UUID): Promise<
   JurisdictionEntity | undefined
 > => {
-  const connection = await connect('ro')
-  return connection.getRepository(JurisdictionEntity).findOne({ where: { jurisdiction_id } })
+  try {
+    const connection = await connect('ro')
+    return connection.getRepository(JurisdictionEntity).findOne({ where: { jurisdiction_id } })
+  } catch (error) {
+    throw RepositoryError.create(error)
+  }
 })
 
 const RepositoryReadJurisdictions = CreateRepositoryMethod(connect => async (): Promise<JurisdictionEntity[]> => {
-  const connection = await connect('ro')
-  const entities = await connection.getRepository(JurisdictionEntity).find()
-  return entities
+  try {
+    const connection = await connect('ro')
+    const entities = await connection.getRepository(JurisdictionEntity).find()
+    return entities
+  } catch (error) {
+    throw RepositoryError.create(error)
+  }
 })
 
 const RepositoryWriteJurisdictions = CreateRepositoryMethod(
   connect => async (jurisdictions: DeepPartial<JurisdictionEntity>[]): Promise<JurisdictionEntity[]> => {
-    const connection = await connect('rw')
-    const { raw: entities }: InsertReturning<JurisdictionEntity> = await connection
-      .getRepository(JurisdictionEntity)
-      .createQueryBuilder()
-      .insert()
-      .values(jurisdictions)
-      .returning('*')
-      .execute()
-    return entities
+    try {
+      const connection = await connect('rw')
+      const { raw: entities }: InsertReturning<JurisdictionEntity> = await connection
+        .getRepository(JurisdictionEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(jurisdictions)
+        .returning('*')
+        .execute()
+      return entities
+    } catch (error) {
+      throw RepositoryError.create(error)
+    }
   }
 )
 
@@ -53,18 +71,22 @@ const RepositoryUpdateJurisdiction = CreateRepositoryMethod(
     jurisdiction_id: UUID,
     { id, ...jurisdiction }: JurisdictionEntity
   ): Promise<JurisdictionEntity> => {
-    const connection = await connect('rw')
-    const {
-      raw: [entity]
-    }: UpdateReturning<JurisdictionEntity> = await connection
-      .getRepository(JurisdictionEntity)
-      .createQueryBuilder()
-      .update()
-      .set(jurisdiction)
-      .where('jurisdiction_id = :jurisdiction_id', { jurisdiction_id })
-      .returning('*')
-      .execute()
-    return entity
+    try {
+      const connection = await connect('rw')
+      const {
+        raw: [entity]
+      }: UpdateReturning<JurisdictionEntity> = await connection
+        .getRepository(JurisdictionEntity)
+        .createQueryBuilder()
+        .update()
+        .set(jurisdiction)
+        .where('jurisdiction_id = :jurisdiction_id', { jurisdiction_id })
+        .returning('*')
+        .execute()
+      return entity
+    } catch (error) {
+      throw RepositoryError.create(error)
+    }
   }
 )
 

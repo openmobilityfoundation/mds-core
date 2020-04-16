@@ -19,7 +19,6 @@ import {
   CreateJurisdictionType,
   JurisdictionDomainModel
 } from '@mds-core/mds-jurisdiction-service'
-import { ValidationError, ConflictError } from '@mds-core/mds-utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 import { UnexpectedServiceError } from './utils'
 
@@ -51,12 +50,15 @@ export const CreateJurisdictionHandler = async (req: CreateJurisdictionRequest, 
   }
 
   // Handle errors
-  if (error instanceof ValidationError) {
-    return res.status(400).send({ error })
-  }
-  if (error instanceof ConflictError) {
-    return res.status(409).send({ error })
+  if (error) {
+    if (error.type === 'ValidationError') {
+      return res.status(400).send({ error })
+    }
+    if (error.type === 'ConflictError') {
+      return res.status(409).send({ error })
+    }
+    return res.status(500).send({ error })
   }
 
-  return res.status(500).send({ error: UnexpectedServiceError(error) })
+  return res.status(500).send(UnexpectedServiceError)
 }

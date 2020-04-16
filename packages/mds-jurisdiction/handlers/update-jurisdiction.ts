@@ -20,7 +20,6 @@ import {
   JurisdictionDomainModel
 } from '@mds-core/mds-jurisdiction-service'
 import { UUID } from '@mds-core/mds-types'
-import { ValidationError, NotFoundError } from '@mds-core/mds-utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 import { UnexpectedServiceError } from './utils'
 
@@ -41,12 +40,18 @@ export const UpdateJurisdictionHandler = async (req: UpdateJurisdictionRequest, 
   }
 
   // Handle errors
-  if (error instanceof ValidationError) {
-    return res.status(400).send({ error })
-  }
-  if (error instanceof NotFoundError) {
-    return res.status(404).send({ error })
+  if (error) {
+    if (error.type === 'ValidationError') {
+      return res.status(400).send({ error })
+    }
+    if (error.type === 'NotFoundError') {
+      return res.status(404).send({ error })
+    }
+    if (error.type === 'ConflictError') {
+      return res.status(409).send({ error })
+    }
+    return res.status(500).send({ error })
   }
 
-  return res.status(500).send({ error: UnexpectedServiceError(error) })
+  return res.status(500).send(UnexpectedServiceError)
 }

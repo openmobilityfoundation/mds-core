@@ -15,6 +15,7 @@
  */
 
 export * from './entities'
+export * from './exceptions'
 export * from './repository'
 export * from './transformers'
 export * from './utils'

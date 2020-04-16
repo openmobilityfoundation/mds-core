@@ -16,7 +16,6 @@
 
 import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { UUID } from '@mds-core/mds-types'
-import { NotFoundError } from '@mds-core/mds-utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 import { UnexpectedServiceError } from './utils'
 
@@ -33,9 +32,12 @@ export const DeleteJurisdictionHandler = async (req: DeleteJurisdictionRequest, 
   }
 
   // Handle errors
-  if (error instanceof NotFoundError) {
-    return res.status(404).send({ error })
+  if (error) {
+    if (error.type === 'NotFoundError') {
+      return res.status(404).send({ error })
+    }
+    return res.status(500).send({ error })
   }
 
-  return res.status(500).send({ error: UnexpectedServiceError(error) })
+  return res.status(500).send(UnexpectedServiceError)
 }

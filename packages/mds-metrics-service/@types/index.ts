@@ -16,7 +16,7 @@
 
 import { Timestamp, UUID, VEHICLE_TYPE, SingleOrArray } from '@mds-core/mds-types'
 import { ServiceResponse } from '@mds-core/mds-service-helpers'
-import { MetricEntityModel } from '../server/repository/entities/metric-entity'
+import { MetricEntityModel } from '../service/repository/entities/metric-entity'
 
 export type MetricDomainModel = Omit<MetricEntityModel, 'id' | 'recorded'>
 

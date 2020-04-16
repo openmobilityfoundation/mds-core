@@ -15,8 +15,7 @@
  */
 
 import { UUID } from '@mds-core/mds-types'
-import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
-import { NotFoundError } from '@mds-core/mds-utils'
+import { ServiceResponse, ServiceResult, ServiceError, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { JursidictionMapper } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
@@ -24,7 +23,7 @@ import { JurisdictionDomainModel } from '../../@types'
 
 export const DeleteJurisdictionHandler = async (
   jurisdiction_id: UUID
-): Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>, NotFoundError>> => {
+): Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>> => {
   try {
     const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
     if (entity) {
@@ -46,9 +45,9 @@ export const DeleteJurisdictionHandler = async (
         return ServiceResult({ jurisdiction_id })
       }
     }
-    return ServiceError(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id }))
+    return ServiceError({ type: 'NotFoundError', message: `Jurisdiction ${jurisdiction_id} Not Found` })
   } catch (error) /* istanbul ignore next */ {
     logger.error('Error Deleting Jurisdiction', error)
-    return ServiceError(error)
+    return ServiceException('Error Deleting Jurisdiction', error)
   }
 }

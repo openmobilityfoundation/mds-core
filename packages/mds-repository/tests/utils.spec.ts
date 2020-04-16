@@ -15,15 +15,15 @@
  */
 
 import test from 'unit.js'
-import { RuntimeError } from '@mds-core/mds-utils'
 import { FindOperator } from 'typeorm'
-import { RepositoryError, entityPropertyFilter } from '../utils'
+import { entityPropertyFilter } from '../utils'
+import { RepositoryError } from '../exceptions'
 
 describe('Test Repository Utilities', () => {
   it('RepositoryError', done => {
-    const error = RepositoryError('Error Message')
-    test.value(error instanceof RuntimeError).is(true)
-    test.value(error.message).is('Error Message')
+    const error = RepositoryError.create(Error('Some Caught Error'))
+    test.value(RepositoryError.is.repositoryError(error)).is(true)
+    test.value(error.code).is(undefined)
     done()
   })
 

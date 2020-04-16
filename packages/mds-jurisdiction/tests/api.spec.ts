@@ -18,7 +18,7 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { v4 as uuid } from 'uuid'
-import { JurisdictionServiceProvider } from '@mds-core/mds-jurisdiction-service/server'
+import { JurisdictionServiceProvider } from '@mds-core/mds-jurisdiction-service/service/provider'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { api } from '../api'
@@ -35,7 +35,7 @@ const [JURISDICTION0, JURISDICTION1, JURISDICTION2] = [uuid(), uuid(), uuid()].m
 
 describe('', () => {
   before(async () => {
-    await JurisdictionServiceProvider.start()
+    await JurisdictionServiceProvider.initialize()
   })
 
   it('Create Single Jurisdiction', async () => {
@@ -83,11 +83,19 @@ describe('', () => {
       .is([JURISDICTION1.jurisdiction_id, JURISDICTION2.jurisdiction_id])
   })
 
-  it('Update Single Jurisdiction (validation error)', async () => {
+  it('Update Single Jurisdiction (conflict error)', async () => {
     await request
       .put(`/jurisdictions/${JURISDICTION1.jurisdiction_id}`)
       .set('Authorization', SCOPED_AUTH(['jurisdictions:write']))
       .send({ ...JURISDICTION1, jurisdiction_id: uuid() })
+      .expect(409)
+  })
+
+  it('Update Single Jurisdiction (validation error)', async () => {
+    await request
+      .put(`/jurisdictions/${JURISDICTION1.jurisdiction_id}`)
+      .set('Authorization', SCOPED_AUTH(['jurisdictions:write']))
+      .send({ ...JURISDICTION1, timestamp: 0 })
       .expect(400)
   })
 
@@ -203,6 +211,6 @@ describe('', () => {
   })
 
   after(async () => {
-    await JurisdictionServiceProvider.stop()
+    await JurisdictionServiceProvider.shutdown()
   })
 })

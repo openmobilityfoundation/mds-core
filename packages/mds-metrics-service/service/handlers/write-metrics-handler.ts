@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
+import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { MetricsRepository } from '../repository'
 import { MetricDomainModel } from '../../@types'
@@ -30,6 +30,6 @@ export const WriteMetricsHandler = async (
     return ServiceResult(MetricMapper.fromEntityModel(entities).toDomainModel())
   } catch (error) /* istanbul ignore next */ {
     logger.error('Error Writing Metrics', error)
-    return ServiceError(error)
+    return ServiceException('Error Writing Metrics', error)
   }
 }

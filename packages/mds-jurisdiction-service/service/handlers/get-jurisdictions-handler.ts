@@ -14,30 +14,20 @@
     limitations under the License.
  */
 
-import { UUID } from '@mds-core/mds-types'
-import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
-import { NotFoundError } from '@mds-core/mds-utils'
+import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { GetJurisdictionsOptions, JurisdictionDomainModel } from '../../@types'
 import { JursidictionMapper } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
 
-export const GetJurisdictionHandler = async (
-  jurisdiction_id: UUID,
-  { effective = Date.now() }: Partial<GetJurisdictionsOptions> = {}
-): Promise<ServiceResponse<JurisdictionDomainModel, NotFoundError>> => {
+export const GetJurisdictionsHandler = async ({
+  effective = Date.now()
+}: Partial<GetJurisdictionsOptions> = {}): Promise<ServiceResponse<JurisdictionDomainModel[]>> => {
   try {
-    const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
-    if (entity) {
-      const versions = JursidictionMapper.fromEntityModel([entity]).toDomainModel({ effective })
-      if (versions.length) {
-        const [jurisdiction] = versions
-        return ServiceResult(jurisdiction)
-      }
-    }
-    return ServiceError(new NotFoundError('Jurisdiction Not Found', { jurisdiction_id, effective }))
+    const entities = await JurisdictionRepository.readJurisdictions()
+    return ServiceResult(JursidictionMapper.fromEntityModel(entities).toDomainModel({ effective }))
   } catch (error) /* istanbul ignore next */ {
-    logger.error('Error Reading Jurisdiction', error)
-    return ServiceError(error)
+    logger.error('Error Reading Jurisdicitons', error)
+    return ServiceException('Error Reading Jurisdicitons', error)
   }
 }

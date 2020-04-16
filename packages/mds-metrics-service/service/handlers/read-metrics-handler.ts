@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { ServiceResponse, ServiceResult, ServiceError } from '@mds-core/mds-service-helpers'
+import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { MetricDomainModel, ReadMetricsOptions } from '../../@types'
 import { MetricsRepository } from '../repository'
@@ -28,6 +28,6 @@ export const ReadMetricsHandler = async (
     return ServiceResult(MetricMapper.fromEntityModel(entities).toDomainModel())
   } catch (error) /* istanbul ignore next */ {
     logger.error('Error Reading Metrics', error)
-    return ServiceError(error)
+    return ServiceException('Error Reading Metrics', error)
   }
 }

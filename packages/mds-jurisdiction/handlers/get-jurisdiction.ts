@@ -16,7 +16,7 @@
 
 import { UUID } from '@mds-core/mds-types'
 import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
-import { AuthorizationError, NotFoundError } from '@mds-core/mds-utils'
+import { AuthorizationError } from '@mds-core/mds-utils'
 import { JurisdictionApiResponse, JurisdictionApiRequest } from '../types'
 import { HasJurisdictionClaim, UnexpectedServiceError } from './utils'
 
@@ -52,9 +52,12 @@ export const GetOneJurisdictionHandler = async (req: GetJurisdictionRequest, res
   }
 
   // Handle errors
-  if (error instanceof NotFoundError) {
-    return res.status(404).send({ error })
+  if (error) {
+    if (error.type === 'NotFoundError') {
+      return res.status(404).send({ error })
+    }
+    return res.status(500).send({ error })
   }
 
-  return res.status(500).send({ error: UnexpectedServiceError(error) })
+  return res.status(500).send(UnexpectedServiceError)
 }
