@@ -57,6 +57,9 @@ apis:
     enabled: true
     version: latest
     migration: false
+nats:
+  enabled: true
+  credentials: false
 tenantId:
 timezone: America/Los_Angeles
 registry:

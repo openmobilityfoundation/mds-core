@@ -9,6 +9,13 @@ spec:
     # This could be any image that we can SSH into and has curl.
   - image: radial/busyboxplus:curl
     imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: {{ $.Values.resourcesLimitsCpu | default "500m" }}
+        memory: {{ $.Values.resourcesLimitsMemory | default "512Mi" }}
+      requests:
+        cpu: {{ $.Values.resourcesRequestsCpu | default "50m" }}
+        memory: {{ $.Values.resourcesRequestsMemory | default "128Mi" }}
     name: curl
     resources: {}
     stdin: true

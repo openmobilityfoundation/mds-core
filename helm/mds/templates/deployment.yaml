@@ -18,6 +18,12 @@ spec:
       labels:
         app: {{ $name }}
     spec:
+      volumes:
+        {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
+        - name: creds-volume
+          secret:
+            secretName: nats-creds
+        {{- end }}
       containers:
       - name: {{ $name }}
         image: {{ if $.Values.registry }}{{ printf "%s/" $.Values.registry }}{{- end}}{{ $name }}:{{ $api.version }}
@@ -35,6 +41,11 @@ spec:
         - containerPort: 4000
           name: user-port
           protocol: TCP
+        volumeMounts:
+        {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
+        - name: creds-volume
+          mountPath: /var/run/nats/secrets
+        {{- end }}
         env:
           - name: PORT
             value: "4000"
@@ -53,7 +64,7 @@ spec:
                 key: postgresql-password
           - name: PG_HOST
           {{- if $.Values.postgresql.internal }}
-            value: {{ $.Release.Namespace }}-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Name }}-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
           {{- else }}
             value: {{ $.Values.postgresql.host }}
           {{- end }}
@@ -71,16 +82,17 @@ spec:
           {{- end }}
           - name: REDIS_HOST
           {{- if $.Values.redis.internal }}
-            value: {{ $.Release.Namespace }}-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Name }}-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
           {{- else }}
             value: {{ $.Values.redis.host }}
           {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
+          {{- if $.Values.nats.enabled }}
           - name: NATS
-            value: nats.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
-          - name: STAN_CLUSTER
-            value: nats-streaming
+            value: {{ default "nats" $.Values.natsNamespace }}-nats-server.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
+#            value: nats-cluster-mgmt.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
+          {{- end }}
           - name: KAFKA_HOST
             value: host.docker.internal:9092
           - name: TENANT_ID
@@ -122,3 +134,14 @@ data:
   postgresql-password: {{ .Values.postgresql.password | b64enc }}
   {{- end }}
 type: Opaque
+{{- if and $.Values.nats.enabled $.Values.nats.credentials }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nats-creds
+  namespace: {{ $.Release.Namespace }}
+data:
+  sys.creds: {{ $.Values.nats | b64enc }}
+type: Opaque
+{{- end }}

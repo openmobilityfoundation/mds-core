@@ -56,7 +56,7 @@
     "husky": "4.2.5",
     "lerna": "3.20.2",
     "mocha": "7.1.1",
-    "mochawesome": "6.0.0",
+    "mochawesome": "6.1.0",
     "mockdate": "2.0.5",
     "node-rsa": "1.0.8",
     "nodemon": "2.0.3",

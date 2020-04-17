@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: '0.4.0'
-description: NATS cluster
-name: nats-cluster
-version: 2.1.2

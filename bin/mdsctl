@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
-
+ 
+[[ -f ~/.mdsctl ]] && . ~/.mdsctl
 osx=darwin
 linux=linux
+
+exists() {
+  hash ${1} > /dev/null 2>&1
+  echo $?
+}
 
 lower() {
   echo "${1}" | tr '[:upper:]' '[:lower:]'
@@ -15,19 +21,18 @@ os() {
   esac; unset os
 }
 
-hash brew > /dev/null 2>&1 || {
+[[ "$(exists brew)" != "0" ]] && {
   case "$(os)" in
     ${osx})
-      hash brew > /dev/null 2>&1 || \
-        /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)";;
+      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)";;
     ${linux})
       mkdir -p ~/.linuxbrew/bin
-      hash git > /dev/null 2>&1 || (apt-get update; apt-get install -y git)
+      [[ "$(exists git)" != "0" ]] && (apt-get update; apt-get install -y git)
       git clone https://github.com/Homebrew/brew ~/.linuxbrew/Homebrew
       ln -s ~/.linuxbrew/Homebrew/bin/brew ~/.linuxbrew/bin
       [ $(grep -Fxq "eval \$(~/.linuxbrew/bin/brew shellenv)" ~/.bashrc; echo $?) == "1" ] && \
         echo "eval \$(~/.linuxbrew/bin/brew shellenv)" >> ~/.bashrc
-      hash curl > /dev/null 2>&1 || (apt-get update; apt-get install -y curl)
+      [[ "$(exists curl)" != "0" ]] && (apt-get update; apt-get install -y curl)
       eval $(~/.linuxbrew/bin/brew shellenv);;
     *) usage "unsupported os: $(uname)";;
   esac
@@ -37,8 +42,7 @@ if [[ "$(bash -c 'echo $BASH_VERSION')" == 3* ]]; then
   case "$(os)" in
     ${osx} | ${linux})
       brew install bash
-      exec ${0} ${@} &
-      exit;;
+      $(brew --prefix bash)/bin/bash -c "${0} ${@}";;
     *) usage "unsupported os: $(uname)";;
   esac
 fi
@@ -62,6 +66,7 @@ declare -A os=(
   ["osx"]="${osx}"
   ["linux"]="${linux}")
 declare -A configs=(
+  ["profiles"]="${MDS_PROFILE:-}"
   ["local-context"]="${MDS_LOCACL_CONTEXT:-docker-desktop|docker-for-desktop|minikube}"
   ["home"]="${MDS_HOME:-$(installDir)}"
   ["os"]="${MDS_OS:-`uname`}"
@@ -69,47 +74,64 @@ declare -A configs=(
   ["nvm-version"]="${MDS_NVM_VERSION:-12.14.1}"
   ["workdir"]="/tmp/mds/tools"
   # fixme: consider removing envsubst in favor of sed
-  ["brew"]="${MDS_BREW:-oq jq envsubst yarn nvm helm k9s kubectx git awscli}"
+  ["brew"]="${MDS_BREW:-oq jq envsubst yarn nvm helm k9s kubectx git aws nsc sops}"
   ["brew-envsubst"]="gettext"
   ["brew-helm"]="helm@2"
   ["brew-k9s"]="derailed/k9s/k9s"
+  ["brew-aws"]="awscli"
   ["brew-oq"]="blacksmoke16/tap"
+  ["brew-nsc"]="nats-io/nats-tools"
   ["brew-cask"]="${MDS_BREW_CASK:-gcloud}"
   ["brew-cask-gcloud"]="google-cloud-sdk"
   ["helm-version"]="${MDS_HELM_VERSION:-2.14.1}"
   ["helm-distribution"]="${MDS_HELM_DISTRIBUTION:-https://get.helm.sh/helm-v${configs[helm-version]}-{os\}-amd64.tar.gz}"
+  ["helm-secrets"]="${MDS_HELM_SECRETS:-}"
+  ["helm-upgrade-release"]="${MDS_HELM_UPGRADE_RELEASE:-}"
+  ["helm-cluster"]="${MDS_HELM_CLUSTER:-}"
+  ["helm-environment"]="${MDS_HELM_ENVIRONMENT:-}"
+  ["helm-mds"]="${MDS_HELM_MDS=:-}"
+  ["interactive"]="${MDS_INTERACTIVE:-}"
   ["paths"]="${MDS_PATHS:-envsubst helm}"
   ["tools"]="${MDS_TOOLCHAIN:-helm,pgcli}"
   ["image-repository"]="${MDS_IMAGE_REPOSITORY:-}"
   ["simulator-repository"]="${MDS_SIMULATOR_REPOSITORY:-}"
-  ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio,nats,stan}"
+  ["operations-repository"]="${MDS_OPERATIONS_REPOSITORY:-}"
+  ["credentials-repository"]="${MDS_CREDENTIALS_REPOSITORY:-}"
+  ["bootstrap"]="${MDS_BOOTSTRAP:-helm,istio,nats}"
   ["install"]="${MDS_INSTALL:-mds}"
   ["test"]="${MDS_TEST:-unit,integration}"
-  ["uninstall"]="${MDS_UNINSTALL:-logging,mds,stan,nats,istio,helm}"
+  ["uninstall"]="${MDS_UNINSTALL:-logging,mds,nats,operations,simulator,istio,helm}"
   ["forward"]="${MDS_FORWARD:-default}"
   ["reinstall"]="${MDS_REINSTALL:-mds}"
   ["pause"]="${MDS_PAUSE:-3}"
+  ["pause-kubectl"]="${MDS_PAUSE_KUBECTL:-45}"
   # note: istio-version=1.4.2 (latest) has been verified for development environments
   ["istio-version"]="${MDS_ISTIO_VERSION:-1.3.6}"
   # note: fails when installing istio-nodeagent (i.e. -istio-sds-auth)
   ["istio-profile"]="${MDS_ISTIO_PROFILE:-}"
   ["istio"]="${MDS_ISTIO_PATH:-${configs[workdir]}/istio-${configs[istio-version]}}"
+  ["nats"]="${MDS_NATS_PATH:-${configs[workdir]}/nats}"
   ["grafana-plugins"]="${MDS_GRAFANA_PLUGINS:-devopsprodigy-kubegraf-app}"
   ["simulator"]="${MDS_SIMULATOR:-${configs[workdir]}/simulator}"
+  ["operations"]="${MDS_OPERATIONS:-${configs[workdir]}/operations}"
+  ["credentials"]="${MDS_CREDENTIALS:-${configs[workdir]}/credentials}"
   ["ingress-domain"]="${MDS_INGRESS_DOMAIN:-}"
   ["ingress-gateway-key-path"]="${MDS_INGRESS_GATEWAY_KEY_PATH:-}"
   ["ingress-gateway-certificate-path"]="${MDS_INGRESS_GATEWAY_CERTIFICATE_PATH:-}"
   ["values"]="${MDS_VALUES:-}"
   ["values-mds"]="${MDS_VALUES_MDS:-}"
+  ["values-nats"]="${MDS_VALUES_NATS:-}"
   ["presets"]="${MDS_PRESETS:-}"
   ["presets-mds-database-password"]="${MDS_PRESETS_MDS_DATABASE_PASSWORD:-Password123#}"
   ["presets-mds"]="${MDS_PRESETS_MDS:-postgresql.password=${configs[presets-mds-database-password]},apis.mds-agency.migration=true}"
+  ["presets-nats"]="${MDS_PRESETS_NATS:-cluster.enabled=true}" #,natsbox.enabled=false}"
   ["sets"]="${MDS_SETS:-}"
   ["sets-mds"]="${MDS_SETS_MDS:-}"
+  ["sets-nats"]="${MDS_SETS_NATS:-}"
   # todo: try scaling down istio's resource requirements (e.g. local dev): pilot.resources.requests.memory=512Mi}
   ["sets-istio"]="${MDS_SETS_ISTIO:-}"
   ["sets-logging"]="${MDS_SETS_LOGGING:-fluentbit.backend.es.host=elasticsearch-master.util,fluentbit.backend.es.port=9200,fluentbit.backend.es.tls=off,kibana.env.ELASTICSEARCH_URL=http:elasticsearch-master.util:9200}"
-  ["sets-simulator"]="${MDS_SETS_SIMULATOR:-registry=,jwt.enabled=false}"
+  ["sets-simulator"]="${MDS_SETS_SIMULATOR:-jwt.enabled=false,registry=}"
   ["setfiles"]="${MDS_SET_FILES:-}"
   ["setfiles-mds"]="${MDS_SET_FILES_MDS:-}"
   ["namespace"]="${MDS_NAMESPACE:-default}"
@@ -119,7 +141,8 @@ declare -A configs=(
   ["namespace-mds"]="${MDS_NAMESPACE_MDS:-mds}"
   ["namespace-simulator"]="${MDS_NAMESPACE_SIMULATOR:-${configs[namespace-mds]}}"
   ["namespace-nats"]="${MDS_NAMESPACE_NATS:-nats}"
-  ["namespace-stan"]="${MDS_NAMESPACE_NATS:-${configs[namespace-nats]}}"
+  ["namespace-nats-init"]="${MDS_NAMESPACE_NATS_INIT:-nats-admin}"
+  ["namespace-nats-account-server"]="${MDS_NAMESPACE_NATS_ACCOUNT_SERVER:-${configs[namespace-nats]}}"
   ["namespace-nats-box"]="${MDS_NAMESPACE_NATS_BOX:-${configs[namespace-nats]}}"
   ["namespace-dns"]="${MDS_NAMESPACE_DNS:-default}"
   ["namespace-curl"]="${MDS_NAMESPACE_CURL:-default}"
@@ -131,7 +154,17 @@ declare -A helmRepositories=(
   ["istio.io"]="https://storage.googleapis.com/istio-release/releases/${configs[istio-version]}/charts"
   ["banzaicloud-stable"]="https://kubernetes-charts.banzaicloud.com"
   ["elastic"]="https://helm.elastic.co"
-  ["bitnami"]="https://charts.bitnami.com/bitnami")
+  ["bitnami"]="https://charts.bitnami.com/bitnami"
+  ["nats"]=" https://nats-io.github.io/k8s/helm/charts")
+declare -A helmPlugins=(
+  ["unittest"]=https://github.com/lrills/helm-unittest
+  ["secrets"]=https://github.com/futuresimple/helm-secrets
+  ["diff"]="https://github.com/databus23/helm-diff --version master"
+  ["monitor"]="https://github.com/ContainerSolutions/helm-monitor"
+  ["edit"]="https://github.com/mstrzele/helm-edit"
+  ["last"]="https://github.com/adamreese/helm-last"
+  ["env"]="https://github.com/adamreese/helm-env"
+)
 declare -A apps=(
   ["mds-agency"]="https://localhost:[port]/agency,mds,app"
   ["mds-audit"]="https://localhost:[port]/audit,mds,app"
@@ -165,7 +198,7 @@ initialize() {
   # if [[ ! "$(helm version --short | grep -i client | cut -d ':' -f 2)" == *"${configs[helm-version]}"* ]]; then
     os=$(os)
 
-    if [[ ! -x ${configs[workdir]}/helm/${os}-amd64 ]]; then
+    if [[ ! -x ${configs[workdir]}/helm/${os}-amd64/helm ]]; then
       mkdir -p ${configs[workdir]}/helm
       curl -o ${configs[workdir]}/helm/helm-v${helmVersion}.tgz ${configs[helm-distribution]/{os\}/${os}} > /dev/null 2>&1
       (cd ${configs[workdir]}/helm; tar zxvf ${configs[workdir]}/helm/helm-v${helmVersion}.tgz > /dev/null 2>&1)
@@ -257,7 +290,6 @@ where service in:
   logging
   metrics
   nats
-  stan
   grafana
   dns
   curl
@@ -296,11 +328,13 @@ bootstrap() {
   for r in ${configs[brew]}; do
     rc=${configs[brew-${r}]:-${r}}
 
-    hash ${r} > /dev/null 2>&1 || {
+    [[ "$(exists ${r})" != "0" ]] && {
       case ${r} in
-        oq) brew tap ${rc}; rc=${r};&
-        *) brew install ${rc};;
+        oq) brew tap ${rc}; rc=${r};;
+        nsc) brew tap ${rc}; rc=${rc}/${r};;
       esac
+
+      brew install ${rc}
 
       # todo: unable to detect nvm install via subshell given it is an alias
       case ${r} in
@@ -322,7 +356,7 @@ bootstrap() {
   for r in ${configs[brew-cask]}; do
     rc=${configs[brew-cask-${r}]:-${r}}
 
-    hash ${r} > /dev/null 2>&1 || {
+    [[ "$(exists ${r})" != "0" ]] && {
       brew cask install ${rc}
     }
   done; unset c rc
@@ -331,7 +365,7 @@ bootstrap() {
 
   # todo: normalize nvm-env
   . $(brew --prefix nvm)/nvm.sh
-  [ -s "$NVM_DIR/nvm.sh" ] && . ${NVM_DIR}/nvm.sh
+  [ -s "${NVM_DIR}/nvm.sh" ] && . ${NVM_DIR}/nvm.sh
   nvm install ${configs[nvm-version]}
   nvm alias default ${configs[nvm-version]}
 
@@ -359,13 +393,14 @@ build() {
   (cd ${configs[home]};
     # todo: normalize nvm-env
     . $(brew --prefix nvm)/nvm.sh;
-    [ -s "$NVM_DIR/nvm.sh" ] && . ${NVM_DIR}/nvm.sh;
+    [ -s "${NVM_DIR}/nvm.sh" ] && . ${NVM_DIR}/nvm.sh;
     nvm install ${configs[nvm-version]};
     nvm alias default ${configs[nvm-version]};
     [ -z "${configs[keep-cache]}" ] && yarn clean;
     yarn clean;
     yarn;
-    yarn image)
+    yarn image;
+    yarn values)
 
   installImages
 }
@@ -374,6 +409,12 @@ installImages() {
   check ${FUNCNAME[0]}
 
   if [ "${configs[image-repository]}" ]; then
+    case "${configs[provider],,}" in
+      aws) eval $(aws ecr get-login --no-include-email);;
+      gcp) ;;
+      *) ;;
+    esac
+
     for i in $(docker images --filter "reference=mds-*" --format '{{.Repository}}:{{.Tag}}'); do
       docker tag ${i} ${configs[image-repository]}/${i}
       docker push ${configs[image-repository]}/${i}
@@ -454,12 +495,16 @@ installHelm() {
   pause 5
 
   for r in "${!helmRepositories[@]}"; do
-    helm repo add ${r} ${helmRepositories[${r}]}
+    [[ $(helm repo list | grep ".*${r}.*${helmRepositories[${r}]}.*"  > /dev/null 2>&1; echo $?)  == "1" ]] && {
+      helm repo add ${r} ${helmRepositories[${r}]}
+    }
   done; unset r
 
   updateHelmDependencies
 
-  [[ $(helm plugin list | grep unittest) ]] || helm plugin install https://github.com/lrills/helm-unittest
+  for p in "${!helmPlugins[@]}"; do
+    [[ $(helm plugin list | grep ${p}) ]] || helm plugin install ${helmPlugins[${p}]}
+  done; unset p
 
   case "${configs[provider],,}" in
     aws | gcp) installTiller;;
@@ -570,8 +615,12 @@ installIstio() {
           ${configs[sets-istio]:+$(helmOptions set ${configs[sets-istio]})} \
           ${configs[dryrun]:+--dry-run};;
     esac
+
     # labelNamespaceIstioInjection default
-    pause 20
+    # pause 20
+    kubectl --namespace istio-system wait --for=condition=Ready \
+      $(kubectl -n istio-system get pod --selector app=istio-ingressgateway --output name --no-headers) \
+      --timeout=$((${configs[pause-kubectl]}+30))s || error "istio installation error"
   }
 }
 
@@ -643,19 +692,38 @@ imageVersion() {
 installMds() {
   check ${FUNCNAME[0]}
 
-  installFallbackCertificate
-  kubectl get namespace ${configs[namespace-mds]} > /dev/null 2>&1 || {
+  # installFallbackCertificate
+
+  (cd ${configs[home]}/helm/mds; /bin/rm -rf tmpcharts; helm dependency update)
+
+  # todo: don't lock on namespace existence
+  [[ "$(helm list --short ${configs[namespace-mds]}-mds${configs[helm-upgrade-release]})" = "${configs[namespace-mds]}-mds${configs[helm-upgrade-release]}" ]] || {
     installNamespace ${configs[namespace-mds]}
     labelNamespaceIstioInjection ${configs[namespace-mds]}
     # note: remote registries may require image-version overrides
     [ -z "${configs[image-repository]}" ] && \
       configure $(imageVersion) || configure sets-mds+=registry=${configs[image-repository]}
-      # configure $(imageVersion) || configure sets-mds+=registry=${configs[image-repository]}
 
     pause 5
     # kubectl -n ${configs[namespace-mds]} wait --for=condition=complete job --all
-    helm install ${configs[home]}/helm/mds --name ${configs[namespace-mds]} \
+
+    [[ -d ${configs[operations]}/${configs[helm-cluster]} && "${configs[helm-environment]}" ]] && {
+      for f in \
+        ${configs[operations]}/${configs[helm-cluster]}/values.yaml \
+        ${configs[operations]}/${configs[helm-cluster]}/secrets.yaml \
+        ${configs[operations]}/${configs[helm-cluster]}/secrets.${configs[helm-environment]}.yaml \
+        ${configs[operations]}/${configs[helm-cluster]}/env.${configs[helm-environment]}.yaml; do
+        [[ -f ${f} && -r ${f} ]] && cv+="${cv:+ }${f}"
+      done; unset f
+    }
+
+    # fixme: impl upgrade, interactive (diff)
+    op=install #$([ $(helm list --short | grep ${configs[namespace-mds]}-mds${configs[helm-upgrade-release]}) ] && echo upgrade || echo install)
+
+    helm ${configs[helm-secrets]:+secrets} ${op} ${configs[home]}/helm/mds \
+      --name ${configs[namespace-mds]}-mds${configs[helm-upgrade-release]} \
       --namespace ${configs[namespace-mds]} \
+      ${cv:+$(helmOptions values ${cv})} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
       ${configs[values-mds]:+$(helmOptions values ${configs[values-mds]})} \
       ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
@@ -665,6 +733,8 @@ installMds() {
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
       ${configs[setfiles-mds]:+$(helmOptions set-file ${configs[setfiles-mds]})} \
       ${configs[dryrun]:+--dry-run --debug}
+
+    unset op cv
     pause 12
     # kubectl -n ${configs[namespace-mds]} wait --for=condition=complete job --all
   }
@@ -723,59 +793,285 @@ installSimulator() {
   if [[ ! -d ${configs[simulator]} ]]; then
     mkdir -p ${configs[workdir]}
     (cd ${configs[workdir]};
-      git clone ${configs[simulator-repository]} ${configs[simulator]};
+      git clone ${configs[simulator-repository]} ${configs[simulator]} || \
+        usage "invalid repository: ${configs[simulator-repository]}";
       cd ${configs[simulator]};
       git pull)
   fi
 
-  (cd ${configs[simulator]};
-    docker build -t trackgen .;
-    helm install ${configs[simulator]}/helm --name trackgen \
-      ${configs[namespace-simulator]:+--namespace ${configs[namespace-simulator]}} \
+  [[ "$(helm list --short ${configs[namespace-simulator]}-trackgen)" = "${configs[namespace-simulator]}-trackgen" ]] || {
+    for i in $(docker images --filter=reference="trackgen" -q); do
+      docker rmi -f ${i}
+    done; unset i
+    (cd ${configs[simulator]};
+      export version=0.0.1$(getBranchSuffix)$(getCommitHash);
+      docker build -t trackgen:${version} .;
+      [[ "${configs[image-repository]}" ]] && {
+        docker tag trackgen:${version} ${configs[image-repository]}/trackgen:${version};
+        docker push ${configs[image-repository]}/trackgen:${version};
+      }
+      helm install ${configs[simulator]}/helm --name ${configs[namespace-simulator]}-trackgen \
+        ${configs[namespace-simulator]:+--namespace ${configs[namespace-simulator]}} \
+        --set version=${version} \
+        ${configs[values]:+$(helmOptions values ${configs[values]})} \
+        ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+        ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+        ${configs[sets-simulator]:+$(helmOptions set ${configs[sets-simulator]})} \
+        ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+        ${configs[dryrun]:+--dry-run --debug})
+  }
+}
+
+installOperations() {
+  check ${FUNCNAME[0]}
+
+  if [[ ! -d ${configs[operations]} ]]; then
+    mkdir -p ${configs[workdir]}
+    (cd ${configs[workdir]};
+      git clone ${configs[operations-repository]} ${configs[operations]} || \
+        usage "invalid repository: ${configs[operations-repository]}";
+      cd ${configs[operations]};
+      git pull)
+  fi
+}
+
+installCredentials() {
+  check ${FUNCNAME[0]}
+
+  [[ ! -d ${configs[credentials]} && -n "${configs[credentials-repository]}" ]] && {
+    mkdir -p ${configs[workdir]}
+    (cd ${configs[workdir]};
+      git clone ${configs[credentials-repository]} ${configs[credentials]} || \
+        usage "invalid repository: ${configs[credentials-repository]}";
+      cd ${configs[credentials]};
+      git pull)
+  } || return 0
+}
+
+nkeysPath() {
+  echo $([[ -d ${configs[credentials]}/nats/nsc/nkeys ]] && \
+    echo ${configs[credentials]}/nats/nsc/nkeys || echo ${HOME}/.nkeys)
+}
+
+nscHome() {
+  echo $([[ -d ${configs[credentials]}/nats/nsc/nsc/nats ]] && \
+    echo ${configs[credentials]}/nats/nsc/nsc/nats || echo ${HOME}/.nsc/nats)
+}
+
+installNsc() {
+  check ${FUNCNAME[0]}
+
+  (export NKEYS_PATH=$(nkeysPath)
+    export NSC_HOME=$(nscHome)
+    cd ${NSC_HOME}
+    nsc init --name KO > /dev/null 2>&1 || echo "trusted operator already exists"
+    nsc describe operator --name KO > /dev/null 2>&1 || nsc add operator --name KO
+    nsc describe account --name SYS > /dev/null 2>&1 || nsc add account --name SYS
+    nsc describe user --account SYS --name sys > /dev/null 2>&1 || nsc add user --account SYS --name sys)
+
+  [[ ! -f ${configs[nats]}/resolver.conf ]] &&
+    (export NKEYS_PATH=$(nkeysPath)
+      export NSC_HOME=$(nscHome)
+      cd ${NSC_HOME}
+      mkdir -p ${configs[nats]}
+      nsc generate config --mem-resolver --sys-account sys > ${configs[nats]}/resolver.conf)
+}
+
+installNas() {
+  check ${FUNCNAME[0]}
+
+  releaseName="${configs[nats-namespace-account-server]}-nats-account-server}"
+  releases="$(helm list --quiet)"
+
+  if ! echo $releases | grep -E -q "(^| )$releaseName($| )"; then # this release has not yet been installed
+    nscOperatorData=${configs[nats]}/nats-operator-data.zip
+
+    [[ ! -f ${nscOperatorData} ]] && (cd $(nscHome); zip -r ${nscOperatorData} .)
+    # [[ ! -f helm/nats-account-server/nats-operator-data.zip ]] && ln -s ${nscOperatorData} helm/nats-account-server/nats-operator-data.zip
+
+    helm install ${configs[home]}/helm/nats-account-server --name ${configs[namespace-nats-account-server]}-nats-account-server \
+      ${configs[namespace-nats-account-server]:+--namespace ${configs[namespace-nats-account-server]}} \
       ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
       ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
       ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
-      ${configs[sets-simulator]:+$(helmOptions set ${configs[sets-simulator]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
       ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
-      ${configs[dryrun]:+--dry-run --debug})
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      # $(helmOptions set nscOperatorData=nats-operator-data.zip) \
+      ${configs[dryrun]:+--dry-run --debug}
+    # fixme: push to helm chart
+    kubectl --namespace ${configs[namespace-nats-account-server]} create configmap nats-operator-data --from-file ${nscOperatorData}
+
+    kubectl --namespace ${configs[namespace-nats-account-server]} wait --for=condition=Ready pod --selector=app=nats-account-server \
+        --timeout=${configs[pause-kubectl]}s || error "nas installation error"
+    pause 3
+  fi
+}
+
+installNatsInit() {
+  check ${FUNCNAME[0]}
+
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-init)" = "${configs[namespace-nats]}-nats-init" ]] || {
+    helm install ${configs[home]}/helm/nats-init --name ${configs[namespace-nats]}-nats-init \
+      ${configs[namespace-nats]:+--namespace ${configs[namespace-nats]}}
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug} # > /dev/null 2>&1
+    # fixme: do better; wait for crd(natsclusters.nats.io, natsservicerles.nats.io)
+    pause 3
+  }
 }
 
 installNats() {
   check ${FUNCNAME[0]}
 
-  for n in nats-init nats-operator nats-cluster; do
-    [[ "$(helm list --short ${configs[namespace-nats]}-${n})" = "${configs[namespace-nats]}-${n}" ]] || \
-      helm install ${configs[home]}/helm/${n} --name ${configs[namespace-nats]}-${n} --namespace ${configs[namespace-nats]}
-  done; unset n
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-server)" = "${configs[namespace-nats]}-nats-server" ]] || {
+    systemAccount=$(nsc describe account --name SYS | grep "Account ID" | awk '{print $5}')
+    operatorJwt=$(< $(nscHome)/KO/KO.jwt)
+
+    helm install ${configs[home]}/helm/nats-server --name ${configs[namespace-nats]}-nats-server \
+      ${configs[namespace-nats]:+--namespace ${configs[namespace-nats]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      $(helmOptions set systemAccount=${systemAccount}) \
+      $(helmOptions set operatorJwt=${operatorJwt}) \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug}
+
+    pause 1
+    # fixme: check on nats pod status
+    kubectl --namespace ${configs[namespace-nats]} wait --for=condition=Ready pods \
+      --selector=app=${configs[namespace-nats]}-nats-server --timeout=${configs[pause-kubectl]}s || \
+      error "nats-server installation error"
+  }
 }
 
 installNatsbox() {
   check ${FUNCNAME[0]}
 
   [[ "$(helm list --short ${configs[namespace-nats-box]}-nats-box)" = "${configs[namespace-nats-box]}-nats-box" ]] || \
-    helm install ${configs[home]}/helm/nats-box --name ${configs[namespace-nats-box]}-nats-box --namespace ${configs[namespace-nats-box]}
+    helm install ${configs[home]}/helm/nats-box --name ${configs[namespace-nats-box]}-nats-box \
+      ${configs[namespace-nats-box]:+--namespace ${configs[namespace-nats-box]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug}
 }
 
-installStan() {
-  check ${FUNCNAME[0]}
+installSurveyor() {
+  [[ "$(helm list --short ${configs[namespace-nats]}-prometheus-operator)" = "${configs[namespace-nats]}-prometheus-operator" ]] || {
+    helm install ${configs[home]}/helm/prometheus-operator --name ${configs[namespace-nats]}-prometheus-operator \
+      ${configs[namespace-nats]:+--namespace ${configs[namespace-nats]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug}
 
-  [[ "$(helm list --short ${configs[namespace-stan]}-nats-streaming-server)" = "${configs[namespace-stan]}-nats-streaming-server" ]] || \
-    helm install ${configs[home]}/helm/nats-streaming-server --name ${configs[namespace-stan]}-nats-streaming-server \
-      --namespace ${configs[namespace-stan]}
+    kubectl --namespace ${configs[namespace-nats]} wait --for=condition=Available deployment.apps/prometheus-operator \
+      --timeout=${configs[pause-kubectl]}s || error "prometheus-operator installation error"
+  }
+
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-prometheus)" = "${configs[namespace-nats]}-nats-prometheus" ]] || {
+    helm install ${configs[home]}/helm/nats-prometheus --name ${configs[namespace-nats]}-nats-prometheus \
+      ${configs[namespace-nats]:+--namespace ${configs[namespace-nats]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug}
+
+    # todo: fix block
+    # kubectl --namespace ${configs[namespace-nats]} wait --for=condition=Available deployment.apps/nats-surveyor-grafana \
+    #   --timeout=${configs[pause-kubectl]}s || error "nats-prometheus installation error"
+  }
+
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-surveyor-grafana)" = "${configs[namespace-nats]}-nats-surveyor-grafana" ]] || {
+    helm install ${configs[home]}/helm/nats-surveyor-grafana --name ${configs[namespace-nats]}-nats-surveyor-grafana \
+      ${configs[namespace-nats]:+--namespace ${configs[namespace-nats]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug}
+
+    # todo: fix block
+    # kubectl --namespace ${configs[namespace-nats]} wait --for=condition=Ready pod --selector=app=nats-surveyor-grafana \
+      # --timeout=${configs[pause-kubectl]}s || error "nats-surveyor-grafana installation error"
+  }
+
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-surveyor)" = "${configs[namespace-nats]}-nats-surveyor" ]] || {
+    helm install ${configs[home]}/helm/nats-surveyor --name ${configs[namespace-nats]}-nats-surveyor \
+      ${configs[namespace-nats]:+--namespace ${configs[namespace-nats]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[values-nats]:+$(helmOptions values ${configs[values-nats]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[presets-nats]:+$(helmOptions set ${configs[presets-nats]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[sets-nats]:+$(helmOptions set ${configs[sets-nats]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[setfiles-nats]:+$(helmOptions set-file ${configs[setfiles-nats]})} \
+      ${configs[dryrun]:+--dry-run --debug}
+
+    # kubectl --namespace ${configs[namespace-nats]} wait --for=condition=Ready pod --selector=app=nats-surveyor \
+    #   --timeout=${configs[pause-kubectl]}s || error "nats-surveyor installation error"
+  }
 }
 
 installDns() {
   check ${FUNCNAME[0]}
 
   [[ "$(helm list --short ${configs[namespace-dns]}-dns)" = "${configs[namespace-dns]}-dns" ]] || \
-    helm install ./helm/dns --name ${configs[namespace-dns]}-dns --namespace ${configs[namespace-dns]}
+    helm install ./helm/dns --name ${configs[namespace-dns]}-dns \
+      ${configs[namespace-dns]:+--namespace ${configs[namespace-dns]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[dryrun]:+--dry-run --debug}
 }
 
 installCurl() {
   check ${FUNCNAME[0]}
 
   [[ "$(helm list --short ${configs[namespace-curl]}-curl)" = "${configs[namespace-curl]}-curl" ]] || \
-    helm install ./helm/curl --name ${configs[namespace-curl]}-curl --namespace ${configs[namespace-curl]}
+    helm install ./helm/curl --name ${configs[namespace-curl]}-curl \
+      ${configs[namespace-curl]:+--namespace ${configs[namespace-curl]}} \
+      ${configs[values]:+$(helmOptions values ${configs[values]})} \
+      ${configs[presets]:+$(helmOptions set ${configs[presets]})} \
+      ${configs[sets]:+$(helmOptions set ${configs[sets]})} \
+      ${configs[setfiles]:+$(helmOptions set-file ${configs[setfiles]})} \
+      ${configs[dryrun]:+--dry-run --debug}
 }
 
 testUnit() {
@@ -910,11 +1206,30 @@ uninstallHelm() {
 uninstallSimulator() {
   check ${FUNCNAME[0]}
 
-  helm del --purge trackgen
+  [[ "$(helm list --short ${configs[namespace-simulator]}-trackgen)" = "${configs[namespace-simulator]}-trackgen" ]] && {
+    helm del --purge ${configs[namespace-simulator]}-trackgen
+
+    if [ -z "${configs[keep-cache]}" ]; then
+      [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
+    fi
+  }
+}
+
+uninstallOperations() {
+  check ${FUNCNAME[0]}
 
   if [ -z "${configs[keep-cache]}" ]; then
-    [ -d ${configs[simulator]} ] && /bin/rm -rf ${configs[simulator]}
+    [ -d ${configs[operations]} ] && /bin/rm -rf ${configs[operations]}
   fi
+}
+
+uninstallCredentials() {
+  check ${FUNCNAME[0]}
+
+  # todo: not sure we want to rm local creds repo just yet
+  # if [ -z "${configs[keep-cache]}" ]; then
+  #   [ -d ${configs[credentials]} ] && /bin/rm -rf ${configs[credentials]}
+  # fi
 }
 
 uninstallFallbackCertificate() {
@@ -947,15 +1262,17 @@ uninstallGrafana() {
 uninstallMds() {
   check ${FUNCNAME[0]}
 
-  helm delete --purge ${configs[namespace-mds]} ${configs[dryrun]:+--dry-run}
-  uninstallNamespace ${configs[namespace-mds]}
+  [[ "$(helm list --short ${configs[namespace-mds]}-mds${configs[helm-upgrade-release]})" = "${configs[namespace-mds]}-mds${configs[helm-upgrade-release]}" ]] && {
+    helm delete --purge ${configs[namespace-mds]}-mds${configs[helm-upgrade-release]} ${configs[dryrun]:+--dry-run}
+    uninstallNamespace ${configs[namespace-mds]}
+  }
 }
 
-uninstallStan() {
-  check ${FUNCNAME[0]}
-
-  [[ "$(helm list --short ${configs[namespace-stan]}-nats-streaming-server)" = "${configs[namespace-stan]}-nats-streaming-server" ]] && \
-    helm delete --purge ${configs[namespace-stan]}-nats-streaming-server
+uninstallSurveyor() {
+  for n in prometheus-operator nats-prometheus nats-surveyor-grafana nats-surveyor; do
+    [[ "$(helm list --short ${configs[namespace-nats]}-${n})" = "${configs[namespace-nats]}-${n}" ]] && \
+      helm delete --purge ${configs[namespace-nats]}-${n}
+  done; unset n
 }
 
 uninstallNatsbox() {
@@ -965,15 +1282,47 @@ uninstallNatsbox() {
     helm delete --purge ${configs[namespace-nats-box]}-nats-box
 }
 
+uninstallNas() {
+  check ${FUNCNAME[0]}
+
+  [[ "$(helm list --short ${configs[namespace-nats-account-server]}-nats-account-server)" = "${configs[namespace-nats-account-server]}-nats-account-server" ]] && \
+    helm delete --purge ${configs[namespace-nats-account-server]}-nats-account-server
+
+  kubectl --namespace ${configs[namespace-nats-account-server]} delete configmap nats-operator-data
+}
+
+uninstallNatsInit() {
+  check ${FUNCNAME[0]}
+
+  uninstallNas
+
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-init)" = "${configs[namespace-nats]}-nats-init" ]] && \
+      helm delete --purge ${configs[namespace-nats]}-nats-init
+
+  for c in crd/natsclusters.nats.io crd/natsserviceroles.nats.io; do
+    kubectl delete ${c}
+  done; unset c
+}
+
 uninstallNats() {
   check ${FUNCNAME[0]}
 
-  for n in nats-init nats-operator nats-cluster; do
-    [[ "$(helm list --short ${configs[namespace-nats]}-${n})" = "${configs[namespace-nats]}-${n}" ]] && \
-      helm delete --purge ${configs[namespace-nats]}-${n}
-  done; unset n
+  # (creds) uninstallNas
+
+  [[ "$(helm list --short ${configs[namespace-nats]}-nats-server)" = "${configs[namespace-nats]}-nats-server" ]] && \
+      helm delete --purge ${configs[namespace-nats]}-nats-server
 
   kubectl delete namespace ${configs[namespace-nats]}
+  # for n in enpoints/nats-server secret/default-token-* secret/istio.default serviceaccount/default do
+  #   kubectl -n ${configs[namespace-nats]} delete ${n}
+  # done; unset n
+}
+
+uninstallNsc() {
+  # todo: rm ~/{.nkeys,nsc}
+  if [ -z "${configs[keep-cache]}" ]; then
+    [[ -d ${configs[nats]} ]] && /bin/rm -rf ${configs[nats]}
+  fi
 }
 
 uninstallDns() {
@@ -1108,7 +1457,7 @@ forwardIfNeeded() {
   gp=$(getPort ${1})
 
   if [ ${gp} -eq "-1" ]; then
-    hash install${1^} > /dev/null 2>&1 && invoke install ${1}
+    [[ "$(exists install${1^})" == "0" ]] && invoke install ${1}
     pause 3
     gp=$(getPort ${1})
   fi
@@ -1145,25 +1494,35 @@ check() {
       done; unset rc
 
       for d in docker kubectl; do
-        hash ${d} > /dev/null 2>&1 || usage "install: ${d}"
+        [[ "$(exists ${d})" != "0" ]] && usage "install: ${d}"
       done; unset d
       # todo: include cluster connection check where needed if not globally
       kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
     build | testIntegration)
-      hash yarn > /dev/null 2>&1 || bootstrap;;
-    installNats) ;;
-    installStan) installNats;;
+      [[ "$(exists yarn)" != "0" ]] && bootstrap;;
+    installCredentials) ;;
+    installNsc) installCredentials;;
+    installNas) installNsc;;
+    installNatsInit) ;;
+    installNats) ;; # (creds) installNas; installNatsInit;;
     # installImages)
     #   [ "${configs[image-repository]}" ] || \
     #     warn "configure an image-repository; eg ' ... -c:image-repository=[image-repository-url] ...'";;
+    # installNas) installNats;;
     installMds)
-      hash helm > /dev/null 2>&1 || bootstrap
-      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;;
-      # fixme: ??? || installStan
+      [[ "$(exists helm)" != "0" ]] && bootstrap
+      kubectl get namespace istio-system > /dev/null 2>&1 || installIstio
+      # fixme: test ${configs[helm-environment]}
+      # (creds) installNsc;;
+      [ "${configs[helm-environment]}" ] && installOperations
+      # fixme: better operations pre-check
+      #[ ! -d ${configs[operations]}/${configs[helm-cluster]} ] && usage "unspecified cluster"
+      ;;
     installMetrics) kubectl get namespace istio-system > /dev/null 2>&1 || installIstio;&
     installHelm | installIstio | installLogging | installMetricsAdapter | testUnit | \
       uninstallMds | uninstallMetrics | uninstallLogging | uninstallIstio)
-      hash helm > /dev/null 2>&1 || bootstrap;;
+      [[ "$(exists helm)" != "0" ]] && bootstrap;;
+    uninstallNats) ;; # (creds) uninstallNas;;
     installSimulator)
       [[ ! -d ${configs[simulator]} && ! "${configs[simulator-repository]}" ]] && usage "unspecified simulator repository";;
     app:*) forwardIfNeeded ${1##*:};;
@@ -1187,8 +1546,7 @@ configure() {
     for c in $(echo ${1} | tr ',' ' '); do
       k=$(echo ${c} | cut -d '=' -f 1)
       v=$(echo ${c} | cut -d '=' -f 2-)
-      [[ "${k}" == *"+" ]] && configs[${k%+}]+="${configs[${k%+}]:+,}${v}" ||
-	  configs[${k}]="${v}"
+      [[ "${k}" == *"+" ]] && configs[${k%+}]+="${configs[${k%+}]:+,}${v}" || configs[${k}]="${v}"
     done; unset c k v
   elif [[ ! -z "${1}" ]]; then
     configs[${1}]=
@@ -1203,10 +1561,15 @@ preset() {
           is+="${is:+,}presets-mds+=apis.${s}.enabled=false"
         done; unset s;;
       local)
-        is+="${is:+,}presets-mds+=resourcesLimitsCpu=200m"
-        is+="${is:+,}presets-mds+=resourcesLimitsMemory=200Mi"
-        is+="${is:+,}presets-mds+=resourcesRequestsCpu=20m"
-        is+="${is:+,}presets-mds+=resourcesRequestsMemory=32Mi";;
+        is+="${is:+,}presets+=resourcesLimitsCpu=200m"
+        is+="${is:+,}presets+=resourcesLimitsMemory=200Mi"
+        is+="${is:+,}presets+=resourcesRequestsCpu=20m"
+        is+="${is:+,}presets+=resourcesRequestsMemory=32Mi"
+        is+="${is:+,}presets-nats+=cluster.size=1"
+        is+="${is:+,}presets-nats+=maximumAge=4h"
+        is+="${is:+,}presets-nats+=maximumBytes=1GB"
+        is+="${is:+,}presets-nats+=cluster.size=1"
+        is+="${is:+,}presets-nats+=clusterSize=1";;
       no-persistence)
         is+="${is:+,}sets-mds+=postgresql.persistence.enabled=false"
         is+="${is:+,}sets-mds+=postgresql.volumePermissions.enabled=true"
@@ -1223,6 +1586,8 @@ preset() {
         is+="${is:+,}sets-mds+=postgresql.hostReader=host.docker.internal"
         is+="${is:+,}sets-mds+=redis.internal=false"
         is+="${is:+,}sets-mds+=redis.host=host.docker.internal";;
+      helm-secrets)
+        is+="${is:+,}helm-secrets=true";;
     esac
   done; unset p
 
@@ -1230,6 +1595,7 @@ preset() {
   unset is
 }
 
+[[ -z ${configs[profiles]} ]] & preset "$(normalize ${configs[profiles]})"
 initialize
 check $(basename ${0})
 
@@ -1237,8 +1603,8 @@ while getopts ":w:s:c:p:q-:h-:" opt; do
   case "${opt}" in
     -)
       case "${OPTARG}" in
-        configure) configure "$(echo ${!OPTIND} | cut -d ':' -f 2-)"; OPTIND=$(( ${OPTIND} + 1 ));;
-        configure=*) configure "$(echo "${OPTARG#*=}" | cut -d ':' -f 2-)";;
+        configure) configure "$(echo ${!OPTIND})"; OPTIND=$(( ${OPTIND} + 1 ));;
+        configure=*) configure "$(echo ${OPTARG#*=})";;
         preset) preset "$(normalize ${!OPTIND})"; OPTIND=$(( ${OPTIND} + 1 ));;
         preset=*) preset "$(normalize ${OPTARG#*=})";;
         workdir) configs[workdir]="${!OPTIND}"; OPTIND=$(( ${OPTIND} + 1 ));;
@@ -1249,7 +1615,7 @@ while getopts ":w:s:c:p:q-:h-:" opt; do
         help) usage;;
         *) [ "${OPTERR}" = 1 ] && [ "${optspec:0:1}" != ":" ] && error "unknown option --${OPTARG}";;
       esac;;
-    c) configure "$(echo ${OPTARG} | cut -d ':' -f 2-)";;
+    c) configure "$(echo ${OPTARG})";;
     p) preset "$(normalize ${OPTARG})";;
     w) configs[workdir]=${OPTARG};;
     s) configs[pause]=${OPTARG};;
