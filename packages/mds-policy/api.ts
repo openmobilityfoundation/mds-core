@@ -72,7 +72,7 @@ function api(app: express.Express): express.Express {
       return
     }
     try {
-      const policies = await db.readPolicies({ get_published: true })
+      const policies = await db.readPolicies({ get_published: true, get_unpublished: null })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)

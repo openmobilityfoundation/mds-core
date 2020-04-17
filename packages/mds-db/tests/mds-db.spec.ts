@@ -257,7 +257,11 @@ if (pg_info.database) {
         await MDSDBPostgres.writePolicy(POLICY_JSON)
         assert(!(await MDSDBPostgres.isPolicyPublished(policy_id)))
         await MDSDBPostgres.deletePolicy(policy_id)
-        const policy_result = await MDSDBPostgres.readPolicies({ policy_id })
+        const policy_result = await MDSDBPostgres.readPolicies({
+          policy_id,
+          get_published: null,
+          get_unpublished: null
+        })
         assert.deepEqual(policy_result, [])
       })
 
@@ -274,9 +278,9 @@ if (pg_info.database) {
         // Read all policies, no matter whether published or not.
         const policies = await MDSDBPostgres.readPolicies()
         assert.deepEqual(policies.length, 3)
-        const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true })
+        const unpublishedPolicies = await MDSDBPostgres.readPolicies({ get_unpublished: true, get_published: null })
         assert.deepEqual(unpublishedPolicies.length, 2)
-        const publishedPolicies = await MDSDBPostgres.readPolicies({ get_published: true })
+        const publishedPolicies = await MDSDBPostgres.readPolicies({ get_published: true, get_unpublished: null })
         assert.deepEqual(publishedPolicies.length, 1)
       })
 
@@ -301,7 +305,11 @@ if (pg_info.database) {
         const policy = clone(POLICY2_JSON)
         policy.name = 'a shiny new name'
         await MDSDBPostgres.editPolicy(policy)
-        const result = await MDSDBPostgres.readPolicies({ policy_id: POLICY2_JSON.policy_id, get_unpublished: true })
+        const result = await MDSDBPostgres.readPolicies({
+          policy_id: POLICY2_JSON.policy_id,
+          get_unpublished: true,
+          get_published: null
+        })
         assert.deepEqual(result[0].name, 'a shiny new name')
       })
 
@@ -348,7 +356,11 @@ if (pg_info.database) {
 
         const noParamsResult = await MDSDBPostgres.readBulkPolicyMetadata()
         assert.deepEqual(noParamsResult.length, 3)
-        const withStartDateResult = await MDSDBPostgres.readBulkPolicyMetadata({ start_date: now() })
+        const withStartDateResult = await MDSDBPostgres.readBulkPolicyMetadata({
+          start_date: now(),
+          get_published: null,
+          get_unpublished: null
+        })
         assert.deepEqual(withStartDateResult.length, 1)
         assert.deepEqual(withStartDateResult[0].policy_metadata.name, 'policy3_json')
       })
@@ -515,9 +527,15 @@ if (pg_info.database) {
       it('can do bulk GeographyMetadata reads', async () => {
         const all = await MDSDBPostgres.readBulkGeographyMetadata()
         assert.deepEqual(all.length, 1)
-        const readOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_published: true })
+        const readOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({
+          get_published: true,
+          get_unpublished: false
+        })
         assert.deepEqual(readOnlyResult.length, 0)
-        const notReadOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({ get_published: false })
+        const notReadOnlyResult = await MDSDBPostgres.readBulkGeographyMetadata({
+          get_published: null,
+          get_unpublished: null
+        })
         assert.deepEqual(notReadOnlyResult.length, 1)
       })
 

@@ -1,4 +1,4 @@
-import { UUID, Policy, Timestamp, Recorded, Rule, PolicyMetadata } from '@mds-core/mds-types'
+import { UUID, Policy, Timestamp, Recorded, Rule, PolicyMetadata, Nullable } from '@mds-core/mds-types'
 import { now, NotFoundError, BadParamsError, AlreadyPublishedError, DependencyMissingError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
@@ -14,8 +14,8 @@ export async function readPolicies(params?: {
   name?: string
   description?: string
   start_date?: Timestamp
-  get_unpublished?: boolean
-  get_published?: boolean
+  get_unpublished: Nullable<boolean>
+  get_published: Nullable<boolean>
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -61,8 +61,8 @@ export async function readBulkPolicyMetadata(params?: {
   name?: string
   description?: string
   start_date?: Timestamp
-  get_unpublished?: boolean
-  get_published?: boolean
+  get_unpublished: Nullable<boolean>
+  get_published: Nullable<boolean>
 }): Promise<PolicyMetadata[]> {
   const policies = await readPolicies(params)
   const policy_ids = policies.map(policy => {
@@ -137,7 +137,7 @@ export async function editPolicy(policy: Policy) {
     throw new AlreadyPublishedError('Cannot edit published policy')
   }
 
-  const result = await readPolicies({ policy_id, get_unpublished: true })
+  const result = await readPolicies({ policy_id, get_unpublished: true, get_published: false })
   if (result.length === 0) {
     throw new NotFoundError(`no policy of id ${policy_id} was found`)
   }
@@ -166,7 +166,7 @@ export async function publishPolicy(policy_id: UUID) {
       throw new AlreadyPublishedError('Cannot re-publish existing policy')
     }
 
-    const policy = (await readPolicies({ policy_id, get_unpublished: true }))[0]
+    const policy = (await readPolicies({ policy_id, get_unpublished: true, get_published: null }))[0]
     if (!policy) {
       throw new NotFoundError('cannot publish nonexistent policy')
     }

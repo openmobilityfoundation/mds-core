@@ -50,11 +50,11 @@ describe('Sandbox admin request handlers', () => {
       Sinon.replace(cache, 'wipeDevice', Sinon.fake.rejects('it-failed'))
       Sinon.replace(db, 'wipeDevice', Sinon.fake.rejects('it-failed'))
       await wipeDevice(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest<{ device_id: string }>,
+        } as unknown) as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)
@@ -73,11 +73,11 @@ describe('Sandbox admin request handlers', () => {
       Sinon.replace(cache, 'wipeDevice', Sinon.fake.resolves(1))
       Sinon.replace(db, 'wipeDevice', Sinon.fake.resolves('it-worked'))
       await wipeDevice(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest<{ device_id: string }>,
+        } as unknown) as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -98,11 +98,11 @@ describe('Sandbox admin request handlers', () => {
       Sinon.replace(db, 'readDeviceIds', Sinon.fake.resolves([1]))
       Sinon.replace(utils, 'refresh', Sinon.fake.resolves([1]))
       await refreshCache(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest<{ device_id: string }>,
+        } as unknown) as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
@@ -122,11 +122,11 @@ describe('Sandbox admin request handlers', () => {
       Sinon.replace(db, 'readDeviceIds', Sinon.fake.rejects('it-fails'))
       Sinon.replace(utils, 'refresh', Sinon.fake.rejects('it-fails'))
       await refreshCache(
-        {
+        ({
           params: { device_id },
           query: { cached: false },
           get: Sinon.fake.returns('foo') as any
-        } as AgencyApiRequest<{ device_id: string }>,
+        } as unknown) as AgencyApiRequest<{ device_id: string }>,
         res
       )
       assert.equal(statusHandler.calledWith(500), true)

@@ -16,6 +16,7 @@
 
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'
+import { Query } from 'express-serve-static-core'
 import {
   Audit,
   AuditEvent,
@@ -198,10 +199,10 @@ export async function getVehicles(
   skip: number,
   take: number,
   url: string,
-  provider_id: string,
-  reqQuery: { [x: string]: string },
+  reqQuery: Query,
   bbox: BoundingBox,
-  strict = true
+  strict = true,
+  provider_id?: string
 ) {
   function fmt(query: { skip: number; take: number }): string {
     const flat: { [key: string]: number } = { ...reqQuery, ...query }

@@ -7,7 +7,8 @@ import {
   VEHICLE_TYPE,
   PROPULSION_TYPE,
   PROVIDER_EVENT,
-  PROVIDER_REASON
+  PROVIDER_REASON,
+  Nullable
 } from '@mds-core/mds-types'
 import { Feature, FeatureCollection } from 'geojson'
 
@@ -96,8 +97,8 @@ export interface VehicleEventCountResult {
 }
 
 export interface ReadGeographiesParams {
-  get_published?: boolean
-  get_unpublished?: boolean
+  get_published: Nullable<boolean>
+  get_unpublished: Nullable<boolean>
   geography_ids?: UUID[]
 }
 

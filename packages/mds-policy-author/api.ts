@@ -155,13 +155,10 @@ function api(app: express.Express): express.Express {
     pathsFor('/policies/meta/'),
     checkAccess(scopes => scopes.includes('policies:read')),
     async (req, res) => {
-      const { get_published = null, get_unpublished = null } = req.query
-      const params = { get_published, get_unpublished }
-      if (get_published) {
-        params.get_published = get_published === 'true'
-      }
-      if (get_unpublished) {
-        params.get_unpublished = get_unpublished === 'true'
+      const { get_published, get_unpublished } = req.query
+      const params = {
+        get_published: get_published ? get_published === 'true' : null,
+        get_unpublished: get_unpublished ? get_unpublished === 'true' : null
       }
 
       logger.info('read /policies/meta', req.query)
@@ -190,7 +187,7 @@ function api(app: express.Express): express.Express {
     async (req, res) => {
       const { policy_id } = req.params
       try {
-        const policies = await db.readPolicies({ policy_id })
+        const policies = await db.readPolicies({ policy_id, get_published: null, get_unpublished: null })
         if (policies.length > 0) {
           res.status(200).send(policies[0])
         } else {

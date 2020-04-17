@@ -31,6 +31,7 @@ import {
 import { Geography, Device, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_SYSTEMS_PROVIDER_ID, providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
+import { parseQuery } from '@mds-core/mds-api-helpers'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
 
@@ -77,7 +78,10 @@ function api(app: express.Express): express.Express {
 
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
     const { provider_id } = res.locals
-    const { provider_id: queried_provider_id } = req.query
+    const { provider_id: queried_provider_id, end_date: query_end_date } = {
+      ...parseQuery(req.query).keys('provider_id'),
+      ...parseQuery(req.query, Number).keys('end_date')
+    }
 
     /* istanbul ignore next */
     async function fail(err: Error) {
@@ -86,16 +90,15 @@ function api(app: express.Express): express.Express {
     }
 
     const { policy_uuid } = req.params
-    const { end_date: query_end_date } = req.query
 
     if (!isUUID(policy_uuid)) {
       return res.status(400).send({ err: 'bad_param' })
     }
     const { start_date, end_date } = query_end_date
-      ? { end_date: parseInt(query_end_date), start_date: parseInt(query_end_date) - days(365) }
+      ? { end_date: query_end_date, start_date: query_end_date - days(365) }
       : { end_date: now() + days(365), start_date: now() - days(365) }
     try {
-      const all_policies = await db.readPolicies({ start_date })
+      const all_policies = await db.readPolicies({ start_date, get_published: null, get_unpublished: null })
       const policy = compliance_engine.filterPolicies(all_policies).find(p => {
         return p.policy_id === policy_uuid
       })
@@ -110,6 +113,7 @@ function api(app: express.Express): express.Express {
           (AllowedProviderIDs.includes(provider_id) &&
             ((policy.provider_ids &&
               policy.provider_ids.length !== 0 &&
+              queried_provider_id &&
               policy.provider_ids.includes(queried_provider_id)) ||
               !policy.provider_ids ||
               policy.provider_ids.length === 0)))

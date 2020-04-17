@@ -192,7 +192,11 @@ describe('Tests app', () => {
       policy.name = 'a shiny new name'
       await request.put(`/policies/${POLICY_UUID}`).set('Authorization', POLICIES_WRITE_SCOPE).send(policy).expect(200)
 
-      const [result] = await db.readPolicies({ policy_id: policy.policy_id, get_unpublished: true })
+      const [result] = await db.readPolicies({
+        policy_id: policy.policy_id,
+        get_unpublished: true,
+        get_published: null
+      })
       test.value(result.name).is('a shiny new name')
     })
 
@@ -363,7 +367,9 @@ describe('Tests app', () => {
           const body = result.body
           log('read back nonexistent policy response:', body)
           test.value(result).hasHeader('content-type', APP_JSON)
-          await db.readPolicies({ policy_id: POLICY2_UUID }).should.be.fulfilledWith([])
+          await db
+            .readPolicies({ policy_id: POLICY2_UUID, get_published: null, get_unpublished: null })
+            .should.be.fulfilledWith([])
           done(err)
         })
     })

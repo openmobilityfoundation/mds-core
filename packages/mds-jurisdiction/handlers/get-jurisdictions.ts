@@ -18,14 +18,7 @@ import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/md
 import { HasJurisdictionClaim, UnexpectedServiceError } from './utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
-interface GetJurisdictionsRequest extends JurisdictionApiRequest {
-  // Query string parameters always come in as strings
-  query: Partial<
-    {
-      [P in 'effective']: string
-    }
-  >
-}
+type GetJurisdictionsRequest = JurisdictionApiRequest<{}, Partial<'effective'>>
 
 type GetJurisdictionsResponse = JurisdictionApiResponse<{
   jurisdictions: JurisdictionDomainModel[]
