@@ -16,28 +16,26 @@
 
 import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { UUID } from '@mds-core/mds-types'
+import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
-import { UnexpectedServiceError } from './utils'
 
 type DeleteJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: UUID }>
 
 type DeleteJurisdictionResponse = JurisdictionApiResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>
 
 export const DeleteJurisdictionHandler = async (req: DeleteJurisdictionRequest, res: DeleteJurisdictionResponse) => {
-  const [error, result] = await JurisdictionServiceClient.deleteJurisdiction(req.params.jurisdiction_id)
-
-  // Handle result
-  if (result) {
-    return res.status(200).send({ version: res.locals.version, ...result })
-  }
-
-  // Handle errors
-  if (error) {
-    if (error.type === 'NotFoundError') {
-      return res.status(404).send({ error })
+  const { jurisdiction_id } = req.params
+  HandleServiceResponse(
+    await JurisdictionServiceClient.deleteJurisdiction(jurisdiction_id),
+    error => {
+      if (error.type === 'NotFoundError') {
+        return res.status(404).send({ error })
+      }
+      return res.status(500).send({ error })
+    },
+    result => {
+      const { version } = res.locals
+      return res.status(200).send({ version, ...result })
     }
-    return res.status(500).send({ error })
-  }
-
-  return res.status(500).send(UnexpectedServiceError)
+  )
 }

@@ -15,34 +15,46 @@
  */
 
 import test from 'unit.js'
-import { ServiceResult, ServiceError, ServiceException } from '../index'
+import { ServiceResult, ServiceError, ServiceException, HandleServiceResponse } from '../index'
 
 describe('Tests Service Helpers', () => {
-  it('Test ServiceResult', done => {
-    const [failure, result] = ServiceResult('success')
-    test.value(failure).is(null)
-    test.value(result).is('success')
-    done()
-  })
+  it('Test ServiceResult', async () =>
+    HandleServiceResponse(
+      ServiceResult('success'),
+      error => test.value(error).is(null),
+      result => test.value(result).is('success')
+    ))
 
-  it('Test ServiceError', done => {
-    const [error, result] = ServiceError({ type: 'ValidationError', message: 'Validation Error' })
-    test.value(result).is(null)
-    test.value(error).isNot(null)
-    test.value(error?.type).is('ValidationError')
-    test.value(error?.message).is('Validation Error')
-    test.value(error?.details).is(undefined)
-    done()
-  })
+  it('Test ServiceError', async () =>
+    HandleServiceResponse(
+      ServiceError({ type: 'ValidationError', message: 'Validation Error' }),
+      error => {
+        test.value(error.type).is('ValidationError')
+        test.value(error.message).is('Validation Error')
+        test.value(error.details).is(undefined)
+      },
+      result => test.value(result).is(null)
+    ))
 
-  it('Test ServiceException', done => {
-    const exception = Error('Error Message')
-    const [error, result] = ServiceException('Validation Error', exception)
-    test.value(result).is(null)
-    test.value(error).isNot(null)
-    test.value(error?.type).is('ServiceException')
-    test.value(error?.message).is('Validation Error')
-    test.value(error?.details).is(exception.message)
-    done()
-  })
+  it('Test ServiceException', async () =>
+    HandleServiceResponse(
+      ServiceException('Validation Error'),
+      error => {
+        test.value(error.type).is('ServiceException')
+        test.value(error.message).is('Validation Error')
+        test.value(error.details).is(undefined)
+      },
+      result => test.value(result).is(null)
+    ))
+
+  it('Test ServiceException (with Error)', async () =>
+    HandleServiceResponse(
+      ServiceException('Validation Error', Error('Error Message')),
+      error => {
+        test.value(error.type).is('ServiceException')
+        test.value(error.message).is('Validation Error')
+        test.value(error.details).is('Error Message')
+      },
+      result => test.value(result).is(null)
+    ))
 })

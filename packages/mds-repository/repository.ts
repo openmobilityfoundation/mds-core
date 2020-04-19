@@ -23,14 +23,14 @@ export const CreateRepositoryMethod: <TMethod>(
   method: RepositoryMethod<TMethod>
 ) => RepositoryMethod<TMethod> = method => method
 
-export type RepositoryOptions = Pick<ConnectionManagerOptions, 'entities' | 'migrations' | 'migrationsTableName'>
+export type RepositoryOptions = Pick<ConnectionManagerOptions, 'entities' | 'migrations'>
 
 export const CreateRepository = <TRepositoryMethods>(
   name: string,
   methods: (connect: (mode: ConnectionMode) => Promise<Connection>) => TRepositoryMethods,
   options: RepositoryOptions = {}
 ) => {
-  const { connect, ...manager } = ConnectionManager(name, options)
+  const { connect, ...manager } = ConnectionManager(name, { migrationsTableName: `${name}-migrations`, ...options })
   return {
     ...manager,
     ...methods(connect)

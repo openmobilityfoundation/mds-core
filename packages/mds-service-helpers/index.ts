@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /*
     Copyright 2019-2020 City of Los Angeles.
 
@@ -14,21 +15,34 @@
     limitations under the License.
  */
 
-type ServiceErrorType = 'ServiceException' | 'NotFoundError' | 'ConflictError' | 'ValidationError'
-
 interface ServiceErrorDescriptor {
-  type: ServiceErrorType
+  type: 'ServiceException' | 'NotFoundError' | 'ConflictError' | 'ValidationError'
   message: string
   details?: string
 }
 
-export type ServiceResponse<TResult> = [ServiceErrorDescriptor, null] | [null, TResult]
+interface ServiceErrorType {
+  error: ServiceErrorDescriptor
+}
 
-export const ServiceResult = <TResult>(result: TResult): ServiceResponse<TResult> => [null, result]
+interface ServiceResultType<R> {
+  error: null
+  result: R
+}
 
-export const ServiceError = (error: ServiceErrorDescriptor): ServiceResponse<never> => [error, null]
+export type ServiceResponse<R> = ServiceErrorType | ServiceResultType<R>
 
-export const ServiceException = (message: string, error?: Error): ServiceResponse<never> =>
+export const ServiceResult = <R>(result: R): ServiceResultType<R> => ({ error: null, result })
+
+export const ServiceError = (error: ServiceErrorDescriptor): ServiceErrorType => ({ error })
+
+export const HandleServiceResponse = <R>(
+  response: ServiceResponse<R>,
+  onerror: (error: ServiceErrorDescriptor) => void,
+  onresult: (result: R) => void
+) => (response.error ? onerror(response.error) : onresult(response.result))
+
+export const ServiceException = (message: string, error?: Error) =>
   ServiceError({
     type: 'ServiceException',
     message,

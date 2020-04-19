@@ -3,7 +3,7 @@ import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-cache'
 import db from '@mds-core/mds-db'
 import { ServerError } from '@mds-core/mds-utils'
-import { parseQuery } from '@mds-core/mds-api-helpers'
+import { parseRequest } from '@mds-core/mds-api-helpers'
 import { refresh } from './utils'
 
 export const getCacheInfo = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
@@ -41,7 +41,7 @@ export const wipeDevice = async (req: AgencyApiRequest, res: AgencyApiResponse) 
 
 export const refreshCache = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   // wipe the cache and rebuild from db
-  const { skip = 0, take = 10000000000 } = parseQuery(req.query, Number).keys('skip', 'take')
+  const { skip = 0, take = 10000000000 } = parseRequest(req, Number).query('skip', 'take')
 
   try {
     const rows = await db.readDeviceIds()

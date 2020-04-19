@@ -31,7 +31,7 @@ import {
 import { Geography, Device, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_SYSTEMS_PROVIDER_ID, providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
-import { parseQuery } from '@mds-core/mds-api-helpers'
+import { parseRequest } from '@mds-core/mds-api-helpers'
 import * as compliance_engine from './mds-compliance-engine'
 import { ComplianceApiRequest, ComplianceApiResponse } from './types'
 
@@ -79,8 +79,8 @@ function api(app: express.Express): express.Express {
   app.get(pathsFor('/snapshot/:policy_uuid'), async (req: ComplianceApiRequest, res: ComplianceApiResponse) => {
     const { provider_id } = res.locals
     const { provider_id: queried_provider_id, end_date: query_end_date } = {
-      ...parseQuery(req.query).keys('provider_id'),
-      ...parseQuery(req.query, Number).keys('end_date')
+      ...parseRequest(req).query('provider_id'),
+      ...parseRequest(req, Number).query('end_date')
     }
 
     /* istanbul ignore next */

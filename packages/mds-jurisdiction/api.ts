@@ -21,8 +21,8 @@ import { JurisdictionApiVersionMiddleware } from './middleware'
 import {
   CreateJurisdictionHandler,
   DeleteJurisdictionHandler,
-  GetAllJurisdictionsHandler,
-  GetOneJurisdictionHandler,
+  GetJurisdictionsHandler,
+  GetJurisdictionHandler,
   UpdateJurisdictionHandler
 } from './handlers'
 
@@ -32,12 +32,12 @@ export const api = (app: express.Express): express.Express =>
     .get(
       pathsFor('/jurisdictions'),
       checkAccess(scopes => scopes.includes('jurisdictions:read') || scopes.includes('jurisdictions:read:claim')),
-      GetAllJurisdictionsHandler
+      GetJurisdictionsHandler
     )
     .get(
       pathsFor('/jurisdictions/:jurisdiction_id'),
       checkAccess(scopes => scopes.includes('jurisdictions:read') || scopes.includes('jurisdictions:read:claim')),
-      GetOneJurisdictionHandler
+      GetJurisdictionHandler
     )
     .post(
       pathsFor('/jurisdictions'),

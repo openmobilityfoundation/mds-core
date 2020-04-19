@@ -91,7 +91,7 @@ const RepositoryUpdateJurisdiction = CreateRepositoryMethod(
 )
 
 export const JurisdictionRepository = CreateRepository(
-  'jurisdiction-repository',
+  'jurisdictions',
   connect => {
     return {
       readJurisdiction: RepositoryReadJurisdiction(connect),
@@ -102,7 +102,6 @@ export const JurisdictionRepository = CreateRepository(
   },
   {
     entities: [JurisdictionEntity],
-    migrations: Object.values(migrations),
-    migrationsTableName: 'migrations_jurisdictions'
+    migrations: Object.values(migrations)
   }
 )

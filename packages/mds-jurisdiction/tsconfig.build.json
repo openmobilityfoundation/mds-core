@@ -8,6 +8,7 @@
     { "path": "../../packages/mds-api-server/tsconfig.build.json" },
     { "path": "../../packages/mds-jurisdiction-service/tsconfig.build.json" },
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
+    { "path": "../../packages/mds-service-helpers/tsconfig.build.json" },
     { "path": "../../packages/mds-test-data/tsconfig.build.json" }
   ]
 }

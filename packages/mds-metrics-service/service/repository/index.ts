@@ -72,7 +72,7 @@ const RepositoryWriteMetrics = CreateRepositoryMethod(connect => async (metrics:
 })
 
 export const MetricsRepository = CreateRepository(
-  'metrics-repository',
+  'metrics',
   connect => {
     return {
       readMetrics: RepositoryReadMetrics(connect),
@@ -81,7 +81,6 @@ export const MetricsRepository = CreateRepository(
   },
   {
     entities: [MetricEntity],
-    migrations: Object.values(migrations),
-    migrationsTableName: 'migrations_metrics'
+    migrations: Object.values(migrations)
   }
 )

@@ -55,7 +55,7 @@ import {
   TelemetryData,
   VEHICLE_EVENT
 } from '@mds-core/mds-types'
-import { asPagingParams, asJsonApiLinks, parseQuery } from '@mds-core/mds-api-helpers'
+import { asPagingParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
 import { checkAccess } from '@mds-core/mds-api-server'
 import {
   AuditApiAuditEndRequest,
@@ -511,7 +511,7 @@ function api(app: express.Express): express.Express {
                 }
               }, {})
 
-            const { event_viewport_adjustment = seconds(30) } = parseQuery(req.query, x => seconds(Number(x))).keys(
+            const { event_viewport_adjustment = seconds(30) } = parseRequest(req, x => seconds(Number(x))).query(
               'event_viewport_adjustment'
             )
 
@@ -652,8 +652,8 @@ function api(app: express.Express): express.Express {
     async (req, res) => {
       const { skip, take } = { skip: 0, take: 10000 }
       const { strict = true, bbox, provider_id } = {
-        ...parseQuery(req.query, JSON.parse).keys('strict', 'bbox'),
-        ...parseQuery(req.query).keys('provider_id')
+        ...parseRequest(req, JSON.parse).query('strict', 'bbox'),
+        ...parseRequest(req).query('provider_id')
       }
 
       const url = urls.format({

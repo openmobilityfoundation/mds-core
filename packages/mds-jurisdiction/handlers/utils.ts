@@ -17,8 +17,6 @@
 import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { JurisdictionApiResponse } from '../types'
 
-export const UnexpectedServiceError = { error: 'Unexected Service Error' }
-
 export const HasJurisdictionClaim = <TBody extends {}>(res: JurisdictionApiResponse<TBody>) => (
   jurisdiction: JurisdictionDomainModel
 ): boolean =>

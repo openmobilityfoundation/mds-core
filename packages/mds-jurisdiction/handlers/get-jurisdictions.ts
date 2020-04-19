@@ -15,7 +15,9 @@
  */
 
 import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
-import { HasJurisdictionClaim, UnexpectedServiceError } from './utils'
+import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
+import { parseRequest } from '@mds-core/mds-api-helpers'
+import { HasJurisdictionClaim } from './utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
 type GetJurisdictionsRequest = JurisdictionApiRequest<{}, Partial<'effective'>>
@@ -24,25 +26,16 @@ type GetJurisdictionsResponse = JurisdictionApiResponse<{
   jurisdictions: JurisdictionDomainModel[]
 }>
 
-export const GetAllJurisdictionsHandler = async (req: GetJurisdictionsRequest, res: GetJurisdictionsResponse) => {
-  const { effective } = req.query
-
-  const [error, jurisdictions] = await JurisdictionServiceClient.getJurisdictions({
-    effective: effective ? Number(effective) : undefined
-  })
-
-  // Handle result
-  if (jurisdictions) {
-    return res.status(200).send({
-      version: res.locals.version,
-      jurisdictions: jurisdictions.filter(HasJurisdictionClaim(res))
-    })
-  }
-
-  // Handle errors
-  if (error) {
-    return res.status(500).send({ error })
-  }
-
-  return res.status(500).send(UnexpectedServiceError)
+export const GetJurisdictionsHandler = async (req: GetJurisdictionsRequest, res: GetJurisdictionsResponse) => {
+  const { effective } = parseRequest(req, Number).query('effective')
+  HandleServiceResponse(
+    await JurisdictionServiceClient.getJurisdictions({ effective }),
+    error => {
+      return res.status(500).send({ error })
+    },
+    jurisdictions => {
+      const { version } = res.locals
+      return res.status(200).send({ version, jurisdictions: jurisdictions.filter(HasJurisdictionClaim(res)) })
+    }
+  )
 }

@@ -18,6 +18,7 @@ import test from 'unit.js'
 import { v4 as uuid } from 'uuid'
 import { minutes, timeframe, days } from '@mds-core/mds-utils'
 import { VEHICLE_TYPE } from '@mds-core/mds-types'
+import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { MetricsServiceProvider } from '../service/provider'
 import { MetricDomainModel, ReadMetricsOptions, ReadMetricsFilterOptions } from '../@types'
 
@@ -94,12 +95,12 @@ const testQuery = (query: () => ReadMetricsOptions & { expected: MetricDomainMod
           .map(key => (Array.isArray(filters[key as keyof ReadMetricsFilterOptions]) ? `${key}[]` : key))
           .join(', ')}`
       : ''
-  }] (Expect ${expected.length} Match${expected.length === 1 ? '' : 'es'})`, async () => {
-    const [error, metrics] = await MetricsServiceProvider.readMetrics(options)
-    test.value(metrics).isNot(null)
-    test.value(metrics?.length).is(expected.length)
-    test.value(error).is(null)
-  })
+  }] (Expect ${expected.length} Match${expected.length === 1 ? '' : 'es'})`, async () =>
+    HandleServiceResponse(
+      await MetricsServiceProvider.readMetrics(options),
+      error => test.value(error).is(null),
+      metrics => test.value(metrics.length).is(expected.length)
+    ))
 }
 
 describe('Metrics Service', () => {
@@ -107,12 +108,12 @@ describe('Metrics Service', () => {
     await MetricsServiceProvider.initialize()
   })
 
-  it(`Generate ${TEST_METRICS.length} Metric${TEST_METRICS.length === 1 ? '' : 's'}`, async () => {
-    const [error, metrics] = await MetricsServiceProvider.writeMetrics(TEST_METRICS)
-    test.value(metrics).isNot(null)
-    test.value(metrics?.length).is(TEST_METRICS.length)
-    test.value(error).is(null)
-  })
+  it(`Generate ${TEST_METRICS.length} Metric${TEST_METRICS.length === 1 ? '' : 's'}`, async () =>
+    HandleServiceResponse(
+      await MetricsServiceProvider.writeMetrics(TEST_METRICS),
+      error => test.value(error).is(null),
+      metrics => test.value(metrics.length).is(TEST_METRICS.length)
+    ))
 
   testQuery(() => ({
     name: TEST_METRIC_NAME,
