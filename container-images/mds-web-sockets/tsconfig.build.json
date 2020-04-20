@@ -5,6 +5,7 @@
   },
   "references": [
     { "path": "../../container-images/env-inject/tsconfig.build.json" },
-    { "path": "../../packages/mds-web-sockets/tsconfig.build.json" }
+    { "path": "../../packages/mds-web-sockets/tsconfig.build.json" },
+    { "path": "../../packages/mds-webpack-config/tsconfig.build.json" }
   ]
 }

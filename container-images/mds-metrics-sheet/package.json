@@ -21,5 +21,8 @@
   "dependencies": {
     "@mds-core/mds-metrics-sheet": "0.0.27"
   },
+  "devDependencies": {
+    "@mds-core/mds-webpack-config": "0.1.0"
+  },
   "license": "Apache-2.0"
 }
