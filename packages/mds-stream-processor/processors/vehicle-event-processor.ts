@@ -40,10 +40,6 @@ import {
 import { StreamTransform, StreamProcessor } from './index'
 import { KafkaSource, KafkaSink } from '../connectors/kafka-connector'
 
-const { TENANT_ID } = getEnvVar({
-  TENANT_ID: 'mds'
-})
-
 interface LabeledVehicleEvent
   extends DeviceLabel,
     GeographyLabel,
@@ -59,56 +55,62 @@ interface LabeledVehicleEvent
   trip_id: Nullable<UUID>
 }
 
-const [deviceLabeler, geographyLabeler, latencyLabeler, telemetryLabeler, vehicleStateLabeler] = [
-  DeviceLabeler(),
-  GeographyLabeler(),
-  LatencyLabeler(),
-  TelemetryLabeler(),
-  VehicleStateLabeler()
-]
+export const VehicleEventProcessor = () => {
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
 
-const processVehicleEvent: StreamTransform<VehicleEvent, LabeledVehicleEvent> = async event => {
-  const { device_id, provider_id, event_type, event_type_reason, timestamp, recorded, trip_id, telemetry } = event
-  try {
-    const [deviceLabel, geographyLabel, latencyLabel, telemetryLabel, vehicleStateLabel] = await Promise.all([
-      deviceLabeler({ device_id }),
-      geographyLabeler({ telemetry }),
-      latencyLabeler({ timestamp, recorded }),
-      telemetry ? telemetryLabeler({ telemetry }) : null,
-      vehicleStateLabeler({ event_type })
-    ])
-    const transformed: LabeledVehicleEvent = {
-      device_id,
-      provider_id,
-      event_type,
-      event_type_reason: event_type_reason ?? null,
-      event_timestamp: timestamp,
-      event_recorded: recorded,
-      trip_id: trip_id ?? null,
-      ...deviceLabel,
-      ...geographyLabel,
-      ...latencyLabel,
-      ...(telemetryLabel ?? {
-        telemetry_timestamp: null,
-        telemetry_lat: null,
-        telemetry_lng: null,
-        telemetry_altitude: null,
-        telemetry_heading: null,
-        telemetry_speed: null,
-        telemetry_accuracy: null,
-        telemetry_charge: null
-      }),
-      ...vehicleStateLabel
+  const [deviceLabeler, geographyLabeler, latencyLabeler, telemetryLabeler, vehicleStateLabeler] = [
+    DeviceLabeler(),
+    GeographyLabeler(),
+    LatencyLabeler(),
+    TelemetryLabeler(),
+    VehicleStateLabeler()
+  ]
+
+  const processVehicleEvent: StreamTransform<VehicleEvent, LabeledVehicleEvent> = async event => {
+    const { device_id, provider_id, event_type, event_type_reason, timestamp, recorded, trip_id, telemetry } = event
+    try {
+      const [deviceLabel, geographyLabel, latencyLabel, telemetryLabel, vehicleStateLabel] = await Promise.all([
+        deviceLabeler({ device_id }),
+        geographyLabeler({ telemetry }),
+        latencyLabeler({ timestamp, recorded }),
+        telemetry ? telemetryLabeler({ telemetry }) : null,
+        vehicleStateLabeler({ event_type })
+      ])
+      const transformed: LabeledVehicleEvent = {
+        device_id,
+        provider_id,
+        event_type,
+        event_type_reason: event_type_reason ?? null,
+        event_timestamp: timestamp,
+        event_recorded: recorded,
+        trip_id: trip_id ?? null,
+        ...deviceLabel,
+        ...geographyLabel,
+        ...latencyLabel,
+        ...(telemetryLabel ?? {
+          telemetry_timestamp: null,
+          telemetry_lat: null,
+          telemetry_lng: null,
+          telemetry_altitude: null,
+          telemetry_heading: null,
+          telemetry_speed: null,
+          telemetry_accuracy: null,
+          telemetry_charge: null
+        }),
+        ...vehicleStateLabel
+      }
+      return transformed
+    } catch (error) {
+      logger.error('Error processing event', event)
     }
-    return transformed
-  } catch (error) {
-    logger.error('Error processing event', event)
+    return null
   }
-  return null
-}
 
-export const VehicleEventProcessor = StreamProcessor(
-  KafkaSource<VehicleEvent>(`${TENANT_ID}.event`, { groupId: 'mds-event-processor' }),
-  processVehicleEvent,
-  KafkaSink<LabeledVehicleEvent>(`${TENANT_ID}.event.annotated`, { clientId: 'mds-event-processor' })
-)
+  return StreamProcessor(
+    KafkaSource<VehicleEvent>(`${TENANT_ID}.event`, { groupId: 'mds-event-processor' }),
+    processVehicleEvent,
+    KafkaSink<LabeledVehicleEvent>(`${TENANT_ID}.event.annotated`, { clientId: 'mds-event-processor' })
+  )
+}

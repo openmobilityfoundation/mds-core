@@ -22,7 +22,9 @@ const {
   env: { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST }
 } = process
 
-Promise.all([VehicleEventProcessor.start(), VehicleTelemetryProcessor.start()])
+const processors = [VehicleEventProcessor(), VehicleTelemetryProcessor()]
+
+Promise.all(processors.map(processor => processor.start()))
   .then(() => {
     logger.info(
       `Running ${npm_package_name} v${npm_package_version} (${

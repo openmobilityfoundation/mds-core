@@ -30,55 +30,57 @@ import {
 import { StreamTransform, StreamProcessor } from './index'
 import { KafkaSource, KafkaSink } from '../connectors/kafka-connector'
 
-const { TENANT_ID } = getEnvVar({
-  TENANT_ID: 'mds'
-})
-
 interface LabeledVehicleTelemetry extends DeviceLabel, GeographyLabel, LatencyLabel, TelemetryLabel {
   device_id: UUID
   provider_id: UUID
   telemetry_recorded: Timestamp
 }
 
-const [deviceLabeler, geographyLabeler, latencyLabeler, telemetryLabeler] = [
-  DeviceLabeler(),
-  GeographyLabeler(),
-  LatencyLabeler(),
-  TelemetryLabeler()
-]
+export const VehicleTelemetryProcessor = () => {
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
 
-const processVehicleTelemetry: StreamTransform<
-  Telemetry & { recorded: Timestamp },
-  LabeledVehicleTelemetry
-> = async telemetry => {
-  const { device_id, provider_id, timestamp, recorded } = telemetry
-  try {
-    const [deviceLabel, latencyLabel, geographyLabel, telemetryLabel] = await Promise.all([
-      deviceLabeler({ device_id }),
-      geographyLabeler({ telemetry }),
-      latencyLabeler({ timestamp, recorded }),
-      telemetryLabeler({ telemetry })
-    ])
-    const transformed: LabeledVehicleTelemetry = {
-      device_id,
-      provider_id,
-      telemetry_recorded: recorded,
-      ...deviceLabel,
-      ...geographyLabel,
-      ...latencyLabel,
-      ...telemetryLabel
+  const [deviceLabeler, geographyLabeler, latencyLabeler, telemetryLabeler] = [
+    DeviceLabeler(),
+    GeographyLabeler(),
+    LatencyLabeler(),
+    TelemetryLabeler()
+  ]
+
+  const processVehicleTelemetry: StreamTransform<
+    Telemetry & { recorded: Timestamp },
+    LabeledVehicleTelemetry
+  > = async telemetry => {
+    const { device_id, provider_id, timestamp, recorded } = telemetry
+    try {
+      const [deviceLabel, latencyLabel, geographyLabel, telemetryLabel] = await Promise.all([
+        deviceLabeler({ device_id }),
+        geographyLabeler({ telemetry }),
+        latencyLabeler({ timestamp, recorded }),
+        telemetryLabeler({ telemetry })
+      ])
+      const transformed: LabeledVehicleTelemetry = {
+        device_id,
+        provider_id,
+        telemetry_recorded: recorded,
+        ...deviceLabel,
+        ...geographyLabel,
+        ...latencyLabel,
+        ...telemetryLabel
+      }
+      return transformed
+    } catch (error) {
+      logger.error('Error processing telemetry', telemetry)
     }
-    return transformed
-  } catch (error) {
-    logger.error('Error processing telemetry', telemetry)
+    return null
   }
-  return null
-}
 
-export const VehicleTelemetryProcessor = StreamProcessor(
-  KafkaSource<Telemetry & { gps: TelemetryData } & { recorded: Timestamp }>(`${TENANT_ID}.telemetry`, {
-    groupId: 'mds-telemetry-processor'
-  }),
-  processVehicleTelemetry,
-  KafkaSink<LabeledVehicleTelemetry>(`${TENANT_ID}.telemetry.annotated`, { clientId: 'mds-telemetry-processor' })
-)
+  return StreamProcessor(
+    KafkaSource<Telemetry & { gps: TelemetryData } & { recorded: Timestamp }>(`${TENANT_ID}.telemetry`, {
+      groupId: 'mds-telemetry-processor'
+    }),
+    processVehicleTelemetry,
+    KafkaSink<LabeledVehicleTelemetry>(`${TENANT_ID}.telemetry.annotated`, { clientId: 'mds-telemetry-processor' })
+  )
+}

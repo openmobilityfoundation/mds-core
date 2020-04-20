@@ -20,7 +20,8 @@ import logger from '@mds-core/mds-logger'
 
 const { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST } = env()
 
-VehicleEventProcessor.start()
+VehicleEventProcessor()
+  .start()
   .then(() => {
     logger.info(
       `Running ${npm_package_name} v${npm_package_version} (${

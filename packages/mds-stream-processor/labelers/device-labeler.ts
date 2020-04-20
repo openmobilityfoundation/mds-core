@@ -30,7 +30,6 @@ const MemCache = <TKey extends keyof T, T>(
   { size = 1000 }: Partial<MemCacheOptions> = {}
 ) => {
   const memcache = new Map<T[TKey], T>()
-  logger.info('MapCache Initialized', { size })
   return async (key: T[TKey]): Promise<T | undefined> => {
     const value = memcache.get(key) ?? (await load(key))
     if (value) {
