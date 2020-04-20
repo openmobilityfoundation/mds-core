@@ -122,7 +122,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
 export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
   const PAGE_SIZE = 1000
 
-  const { skip = 0, take = PAGE_SIZE } = parseRequest(req, Number).query('skip', 'take')
+  const { skip = 0, take = PAGE_SIZE } = parseRequest(req, { parser: Number }).query('skip', 'take')
 
   const url = urls.format({
     protocol: req.get('x-forwarded-proto') || req.protocol,

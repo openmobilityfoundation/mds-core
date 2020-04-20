@@ -30,7 +30,7 @@ type GetJurisdictionResponse = JurisdictionApiResponse<{
 
 export const GetJurisdictionHandler = async (req: GetJurisdictionRequest, res: GetJurisdictionResponse) => {
   const { jurisdiction_id } = req.params
-  const { effective } = parseRequest(req, Number).query('effective')
+  const { effective } = parseRequest(req, { parser: Number }).query('effective')
   HandleServiceResponse(
     await JurisdictionServiceClient.getJurisdiction(jurisdiction_id, { effective }),
     error => {

@@ -80,7 +80,7 @@ function api(app: express.Express): express.Express {
     const { provider_id } = res.locals
     const { provider_id: queried_provider_id, end_date: query_end_date } = {
       ...parseRequest(req).query('provider_id'),
-      ...parseRequest(req, Number).query('end_date')
+      ...parseRequest(req, { parser: Number }).query('end_date')
     }
 
     /* istanbul ignore next */
