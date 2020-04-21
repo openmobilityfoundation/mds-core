@@ -78,8 +78,11 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
 
   const connect = async (mode: ConnectionMode) => {
     if (!connections) {
-      /* istanbul ignore next */
-      throw RepositoryError.create(Error('Connection manager not initialized'))
+      await initialize()
+      if (!connections) {
+        /* istanbul ignore next */
+        throw RepositoryError.create(Error('Connection manager not initialized'))
+      }
     }
     const connection = connections.find(c => c.name === connectionName(prefix, mode))
     if (!connection) {
