@@ -55,7 +55,7 @@ import {
   TelemetryData,
   VEHICLE_EVENT
 } from '@mds-core/mds-types'
-import { asPagingParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
+import { parsePagingQueryParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import {
   AuditApiAuditEndRequest,
@@ -610,7 +610,7 @@ function api(app: express.Express): express.Express {
     checkAuditApiAccess(scopes => scopes.includes('audits:read')),
     async (req: AuditApiGetTripsRequest, res: AuditApiResponse) => {
       try {
-        const { skip, take } = asPagingParams(req.query)
+        const { skip, take } = parsePagingQueryParams(req)
 
         const query = {
           ...parseRequest(req, { parser: Number }).query('start_time', 'end_time'),

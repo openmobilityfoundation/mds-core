@@ -18,4 +18,4 @@ import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from '@mds-core/mds-audit'
 import { env } from '@container-images/env-inject'
 
-HttpServer(env().PORT ?? 4002, ApiServer(api))
+HttpServer(ApiServer(api), { port: env().AUDIT_API_PORT })

@@ -14,11 +14,22 @@
     limitations under the License.
  */
 
-import { Timestamp, UUID, VEHICLE_TYPE, SingleOrArray } from '@mds-core/mds-types'
+import { Timestamp, UUID, VEHICLE_TYPE, SingleOrArray, Nullable } from '@mds-core/mds-types'
 import { ServiceResponse } from '@mds-core/mds-service-helpers'
-import { MetricEntityModel } from '../service/repository/entities/metric-entity'
 
-export type MetricDomainModel = Omit<MetricEntityModel, 'id' | 'recorded'>
+export interface MetricDomainModel {
+  name: string
+  time_bin_size: Timestamp
+  time_bin_start: Timestamp
+  provider_id: UUID
+  geography_id: Nullable<UUID>
+  vehicle_type: VEHICLE_TYPE
+  count: number
+  sum: number
+  min: number
+  max: number
+  avg: number
+}
 
 export interface ReadMetricsTimeOptions {
   time_bin_size: number

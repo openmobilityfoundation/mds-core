@@ -23,18 +23,6 @@ interface PagingParams {
   take: number
 }
 
-export const asPagingParams: <T extends Partial<{ [P in keyof PagingParams]: unknown }>>(
-  params: T
-) => T & PagingParams = params => {
-  const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
-  const [skip, take] = [params.skip, params.take].map(Number)
-  return {
-    ...params,
-    skip: Number.isNaN(skip) || skip <= 0 ? 0 : skip,
-    take: Number.isNaN(take) || take <= 0 ? DEFAULT_PAGE_SIZE : Math.min(take, MAX_PAGE_SIZE)
-  }
-}
-
 const jsonApiLink = (req: express.Request, skip: number, take: number): string =>
   urls.format({
     protocol: req.get('x-forwarded-proto') || req.protocol,
@@ -60,4 +48,13 @@ export const parseRequest = <T = string>(req: express.Request, options?: ParseOb
   const { keys: query } = parseObjectProperties<T>(req.query, options)
   const { keys: params } = parseObjectProperties<T>(req.params, options)
   return { params, query }
+}
+
+export const parsePagingQueryParams = (req: express.Request) => {
+  const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
+  const { skip = 0, take = DEFAULT_PAGE_SIZE } = parseRequest(req, { parser: Number }).query('skip', 'take')
+  return {
+    skip: Number.isNaN(skip) ? 0 : Math.max(0, skip),
+    take: Number.isNaN(take) ? DEFAULT_PAGE_SIZE : Math.min(take, MAX_PAGE_SIZE)
+  }
 }

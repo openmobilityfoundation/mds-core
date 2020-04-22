@@ -1,7 +1,7 @@
 import morgan from 'morgan'
 import bodyParser from 'body-parser'
 import express from 'express'
-import cors from 'cors'
+import CorsMiddleware from 'cors'
 import logger from '@mds-core/mds-logger'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, AuthorizerClaims } from '@mds-core/mds-api-authorizer'
@@ -9,7 +9,7 @@ import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 export type ApiRequest<P extends Params = ParamsDictionary> = express.Request<P>
 
-export type ApiQuery<Q extends string> = Partial<{ query: { [P in Q]: string | string[] } }>
+export type ApiQuery<Q extends string> ={ query:  Partial<{ [P in Q]: string | string[] }> }
 
 export interface ApiResponse<L = unknown, B = unknown> extends express.Response<B | { error: unknown }> {
   locals: L
@@ -73,15 +73,6 @@ export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): exp
   )
 
 export const JsonBodyParserMiddleware = (options: bodyParser.OptionsJson) => bodyParser.json(options)
-
-type CorsMiddlewareOptions = { handleCors: boolean }
-export const CorsMiddleware = ({ handleCors = false }: Partial<CorsMiddlewareOptions> = {}) =>
-  handleCors
-    ? cors() // Server handles CORS
-    : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-        res.header('Access-Control-Allow-Origin', '*')
-        next()
-      }
 
 export const MaintenanceModeMiddleware = () => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
   if (process.env.MAINTENANCE) {
@@ -188,20 +179,25 @@ export const HealthRequestHandler = async (req: ApiRequest, res: ApiResponse) =>
   })
 }
 
-export const HttpServer = (port: string | number, api: express.Express) => {
-  const {
-    npm_package_name,
-    npm_package_version,
-    npm_package_git_commit,
-    HTTP_KEEP_ALIVE_TIMEOUT = 15000,
-    HTTP_HEADERS_TIMEOUT = 20000
-  } = process.env
+const serverVersion = () => {
+  const { npm_package_name, npm_package_version, npm_package_git_commit } = process.env
+  return npm_package_name && npm_package_version
+    ? `${npm_package_name} v${npm_package_version} (${npm_package_git_commit || 'local'})`
+    : 'Server'
+}
 
-  const server = api.listen(Number(port), () => {
+type HttpServerOptions = Partial<{
+  port: string | number
+}>
+
+export const HttpServer = (api: express.Express, options: HttpServerOptions = {}) => {
+  const { HTTP_KEEP_ALIVE_TIMEOUT = 15000, HTTP_HEADERS_TIMEOUT = 20000 } = process.env
+
+  const port = Number(options.port || process.env.PORT || 4000)
+
+  const server = api.listen(port, () => {
     logger.info(
-      `${npm_package_name} v${npm_package_version} (${
-        npm_package_git_commit ?? 'local'
-      }) running on port ${port}; Timeouts(${HTTP_KEEP_ALIVE_TIMEOUT}/${HTTP_HEADERS_TIMEOUT})`
+      `${serverVersion()} running on port ${port}; Timeouts(${HTTP_KEEP_ALIVE_TIMEOUT}/${HTTP_HEADERS_TIMEOUT})`
     )
   })
 
@@ -212,9 +208,11 @@ export const HttpServer = (port: string | number, api: express.Express) => {
   return server
 }
 
+type CorsMiddlewareOptions = CorsMiddleware.CorsOptions
+
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
-  { handleCors, authorizer }: Partial<CorsMiddlewareOptions & AuthorizerMiddlewareOptions> = {},
+  { authorizer, ...corsOptions }: Partial<AuthorizerMiddlewareOptions & CorsMiddlewareOptions> = {},
   app: express.Express = express()
 ): express.Express => {
   // Disable x-powered-by header
@@ -223,8 +221,8 @@ export const ApiServer = (
   // Middleware
   app.use(
     RequestLoggingMiddleware(),
+    CorsMiddleware(corsOptions),
     JsonBodyParserMiddleware({ limit: '5mb' }),
-    CorsMiddleware({ handleCors }),
     MaintenanceModeMiddleware(),
     AuthorizerMiddleware({ authorizer })
   )

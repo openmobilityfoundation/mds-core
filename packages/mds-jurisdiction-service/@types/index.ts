@@ -17,13 +17,14 @@
 import { ServiceResponse } from '@mds-core/mds-service-helpers'
 import { UUID, Timestamp } from '@mds-core/mds-types'
 import { DeepPartial } from 'typeorm'
-import {
-  JurisdictionEntityModel,
-  JurisdictionVersionedProperties
-} from '../service/repository/entities/jurisdiction-entity'
 
-export type JurisdictionDomainModel = Omit<JurisdictionEntityModel, 'id' | 'recorded' | 'versions'> &
-  JurisdictionVersionedProperties
+export interface JurisdictionDomainModel {
+  jurisdiction_id: UUID
+  agency_key: string
+  agency_name: string
+  geography_id: UUID
+  timestamp: Timestamp
+}
 
 export type CreateJurisdictionType = Partial<Pick<JurisdictionDomainModel, 'jurisdiction_id' | 'timestamp'>> &
   Pick<JurisdictionDomainModel, 'agency_key' | 'agency_name' | 'geography_id'>

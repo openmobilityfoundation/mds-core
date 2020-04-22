@@ -18,4 +18,4 @@ import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from '@mds-core/mds-daily'
 import { env } from '@container-images/env-inject'
 
-HttpServer(env().PORT ?? 4005, ApiServer(api))
+HttpServer(ApiServer(api), { port: env().DAILY_API_PORT })

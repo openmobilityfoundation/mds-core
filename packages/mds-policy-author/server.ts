@@ -14,4 +14,4 @@
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from './api'
 
-HttpServer(process.env.PORT ?? 4007, ApiServer(api, { handleCors: true }))
+HttpServer(ApiServer(api), { port: process.env.POLICY_AUTHOR_API_PORT })

@@ -38,7 +38,7 @@ before(() => {
 describe('Tests MDS-Web-Sockets', () => {
   describe('Tests Authentication', () => {
     it('Tests admin:all scoped tokens can authenticate successfully', done => {
-      const client = new WebSocket('ws://localhost:4009')
+      const client = new WebSocket(`ws://localhost:${process.env.PORT || 4000}`)
       client.onopen = () => {
         client.send(`AUTH%${ADMIN_AUTH}`)
       }
@@ -62,7 +62,7 @@ describe('Tests MDS-Web-Sockets', () => {
 
       const BAD_AUTH = `Bearer ${badToken}`
 
-      const client = new WebSocket('ws://localhost:4009')
+      const client = new WebSocket(`ws://localhost:${process.env.PORT || 4000}`)
       client.onopen = () => {
         client.send(`AUTH%${BAD_AUTH}`)
       }

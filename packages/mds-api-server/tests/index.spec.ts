@@ -135,7 +135,7 @@ describe('Testing API Server', () => {
   it('verifies keepAliveTimeout setting', done => {
     let error
     process.env.HTTP_KEEP_ALIVE_TIMEOUT = '3000'
-    const server = HttpServer(4000, api)
+    const server = HttpServer(api)
     try {
       test.value(server.keepAliveTimeout).is(Number(process.env.HTTP_KEEP_ALIVE_TIMEOUT))
     } catch (err) {
