@@ -36,11 +36,7 @@ import {
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
 import joiToJsonSchema from 'joi-to-json-schema'
-import {
-  StringifiedTelemetry,
-  StringifiedEventWithTelemetry,
-  StringifiedCacheReadDeviceResult
-} from '@mds-core/mds-cache/types'
+
 import { ValidationError } from '@mds-core/mds-utils'
 
 export { ValidationError }
@@ -342,17 +338,8 @@ export const isValidAuditIssueCode = (value: unknown, options: Partial<Validator
 export const isValidAuditNote = (value: unknown, options: Partial<ValidatorOptions> = {}): value is string =>
   ValidateSchema(value, auditNoteSchema, { property: 'note', ...options })
 
-const HasPropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
+export const HasPropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
   typeof obj === 'object' && obj !== null && props.every(prop => prop in obj)
-
-export const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry =>
-  HasPropertyAssertion<StringifiedTelemetry>(telemetry, 'gps')
-
-export const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry =>
-  HasPropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_type', 'telemetry')
-
-export const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
-  HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
 
 export function validatePolicies(policies: unknown): policies is Policy[] {
   const { error } = Joi.validate(policies, policiesSchema)

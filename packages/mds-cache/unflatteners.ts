@@ -1,12 +1,14 @@
 import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS, Device, Telemetry, VehicleEvent } from '@mds-core/mds-types'
-import {
-  isStringifiedTelemetry,
-  isStringifiedEventWithTelemetry,
-  isStringifiedCacheReadDeviceResult
-} from '@mds-core/mds-schema-validators'
 
 import { ParseError } from '@mds-core/mds-utils'
-import { StringifiedEvent, StringifiedTelemetry, StringifiedCacheReadDeviceResult, CachedItem } from './types'
+import { HasPropertyAssertion } from '@mds-core/mds-schema-validators'
+import {
+  StringifiedEvent,
+  StringifiedEventWithTelemetry,
+  StringifiedTelemetry,
+  StringifiedCacheReadDeviceResult,
+  CachedItem
+} from './types'
 
 function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {
   try {
@@ -71,6 +73,15 @@ function parseDevice(device: StringifiedCacheReadDeviceResult): Device {
   }
   return device
 }
+
+const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTelemetry =>
+  HasPropertyAssertion<StringifiedTelemetry>(telemetry, 'gps')
+
+const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry =>
+  HasPropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_type', 'telemetry')
+
+const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
+  HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
 
 function parseCachedItem(item: CachedItem): Device | Telemetry | VehicleEvent {
   if (isStringifiedTelemetry(item)) {
