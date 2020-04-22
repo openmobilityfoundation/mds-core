@@ -20,7 +20,7 @@ import logger from '@mds-core/mds-logger'
 import { isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathsFor } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
-import { checkAccess } from '@mds-core/mds-api-server'
+import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import {
   registerVehicle,
   getVehicleById,
@@ -35,6 +35,10 @@ import {
 import { readAllVehicleIds } from './agency-candidate-request-handlers'
 import { getCacheInfo, wipeDevice, refreshCache } from './sandbox-admin-request-handlers'
 import { validateDeviceId } from './utils'
+import { AgencyApiAccessTokenScopes } from './types'
+
+const checkAgencyApiAccess = (validator: AccessTokenScopeValidator<AgencyApiAccessTokenScopes>) =>
+  checkAccess(validator)
 
 function api(app: express.Express): express.Express {
   /**
@@ -115,7 +119,7 @@ function api(app: express.Express): express.Express {
    */
   app.get(
     pathsFor('/admin/vehicle_ids'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     readAllVehicleIds
   )
 
@@ -123,27 +127,27 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/admin/cache/info'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     getCacheInfo
   )
 
   // wipe a device -- sandbox or admin use only
   app.get(
     pathsFor('/admin/wipe/:device_id'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     validateDeviceId,
     wipeDevice
   )
 
   app.get(
     pathsFor('/admin/cache/refresh'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     refreshCache
   )
 
   app.post(
     pathsFor('/stops'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     registerStop
   )
 

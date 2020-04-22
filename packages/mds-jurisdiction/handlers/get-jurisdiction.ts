@@ -19,10 +19,11 @@ import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/md
 import { AuthorizationError } from '@mds-core/mds-utils'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { parseRequest } from '@mds-core/mds-api-helpers'
+import { ApiQuery } from '@mds-core/mds-api-server'
 import { JurisdictionApiResponse, JurisdictionApiRequest } from '../types'
 import { HasJurisdictionClaim } from './utils'
 
-type GetJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: UUID }, Partial<'effective'>>
+type GetJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: UUID }> & ApiQuery<'effective'>
 
 type GetJurisdictionResponse = JurisdictionApiResponse<{
   jurisdiction: JurisdictionDomainModel

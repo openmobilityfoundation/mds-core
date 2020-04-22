@@ -17,10 +17,11 @@
 import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { parseRequest } from '@mds-core/mds-api-helpers'
+import { ApiQuery } from '@mds-core/mds-api-server'
 import { HasJurisdictionClaim } from './utils'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
-type GetJurisdictionsRequest = JurisdictionApiRequest<{}, Partial<'effective'>>
+type GetJurisdictionsRequest = JurisdictionApiRequest & ApiQuery<'effective'>
 
 type GetJurisdictionsResponse = JurisdictionApiResponse<{
   jurisdictions: JurisdictionDomainModel[]

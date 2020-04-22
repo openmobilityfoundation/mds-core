@@ -15,13 +15,13 @@
  */
 
 import { Audit, Telemetry, Timestamp, UUID } from '@mds-core/mds-types'
-import { ApiRequest, ApiResponse, ApiResponseLocals, ApiQuery } from '@mds-core/mds-api-server'
+import { ApiRequest, ApiResponse, ApiQuery, ApiClaims } from '@mds-core/mds-api-server'
 import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 // Allow adding type definitions for Express Request objects
 export type AuditApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 
-export type AuditApiTripRequest<Q extends string = ''> = AuditApiRequest<{ audit_trip_id: UUID }> & ApiQuery<Q>
+export type AuditApiTripRequest = AuditApiRequest<{ audit_trip_id: UUID }>
 
 export interface AuditApiAuditStartRequest extends AuditApiTripRequest {
   body: {
@@ -74,11 +74,9 @@ export interface AuditApiAuditEndRequest extends AuditApiTripRequest {
 }
 
 export type AuditApiGetTripsRequest = AuditApiRequest &
-  ApiQuery<
-    Partial<'skip' | 'take' | 'provider_id' | 'provider_vehicle_id' | 'audit_subject_id' | 'start_time' | 'end_time'>
-  >
+  ApiQuery<'skip' | 'take' | 'provider_id' | 'provider_vehicle_id' | 'audit_subject_id' | 'start_time' | 'end_time'>
 
-export type AuditApiGetTripRequest = AuditApiTripRequest<Partial<'event_viewport_adjustment'>>
+export type AuditApiGetTripRequest = AuditApiTripRequest & ApiQuery<'event_viewport_adjustment'>
 
 export interface AuditApiGetVehicleRequest extends AuditApiRequest {
   params: {
@@ -87,12 +85,15 @@ export interface AuditApiGetVehicleRequest extends AuditApiRequest {
   }
 }
 
+export type AuditApiAccessTokenScopes = 'audits:write' | 'audits:read' | 'audits:delete' | 'audits:vehicles:read'
+
 // Allow adding type definitions for Express Response objects
-export interface AuditApiResponse<T = {}> extends ApiResponse<T> {
-  locals: ApiResponseLocals & {
+export type AuditApiResponse<T = unknown> = ApiResponse<
+  ApiClaims<AuditApiAccessTokenScopes> & {
     audit_subject_id: string
     audit_trip_id: UUID
     audit: Audit | null
     recorded: Timestamp
-  }
-}
+  },
+  T
+>

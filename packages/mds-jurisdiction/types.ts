@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { ApiRequest, ApiVersionedResponse, ApiQuery } from '@mds-core/mds-api-server'
+import { ApiRequest, ApiVersionedResponse, ApiClaims } from '@mds-core/mds-api-server'
 import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 export const JURISDICTION_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
@@ -22,7 +22,12 @@ export type JURISDICTION_API_SUPPORTED_VERSION = typeof JURISDICTION_API_SUPPORT
 export const [JURISDICTION_API_DEFAULT_VERSION] = JURISDICTION_API_SUPPORTED_VERSIONS
 
 // Allow adding type definitions for Express Request objects
-export type JurisdictionApiRequest<P extends Params = ParamsDictionary, Q extends string = ''> = ApiRequest<P> &
-  ApiQuery<Q>
+export type JurisdictionApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
 
-export type JurisdictionApiResponse<TBody extends {}> = ApiVersionedResponse<JURISDICTION_API_SUPPORTED_VERSION, TBody>
+export type JurisdictionApiAccessTokenScopes = 'jurisdictions:read' | 'jurisdictions:read:claim' | 'jurisdictions:write'
+
+export type JurisdictionApiResponse<TBody extends {}> = ApiVersionedResponse<
+  JURISDICTION_API_SUPPORTED_VERSION,
+  ApiClaims<JurisdictionApiAccessTokenScopes>,
+  TBody
+>

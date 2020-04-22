@@ -56,7 +56,7 @@ import {
   VEHICLE_EVENT
 } from '@mds-core/mds-types'
 import { asPagingParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
-import { checkAccess } from '@mds-core/mds-api-server'
+import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -68,7 +68,8 @@ import {
   AuditApiResponse,
   AuditApiTripRequest,
   AuditApiVehicleEventRequest,
-  AuditApiVehicleTelemetryRequest
+  AuditApiVehicleTelemetryRequest,
+  AuditApiAccessTokenScopes
 } from './types'
 import {
   deleteAudit,
@@ -110,6 +111,8 @@ function flattenTelemetry(telemetry?: Telemetry): TelemetryData {
         charge: null
       }
 }
+
+const checkAuditApiAccess = (validator: AccessTokenScopeValidator<AuditApiAccessTokenScopes>) => checkAccess(validator)
 
 function api(app: express.Express): express.Express {
   /**
@@ -168,7 +171,7 @@ function api(app: express.Express): express.Express {
    */
   app.post(
     pathsFor('/trips/:audit_trip_id/start'),
-    checkAccess(scopes => scopes.includes('audits:write')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:write')),
     async (req: AuditApiAuditStartRequest, res: AuditApiResponse) => {
       try {
         const { audit_trip_id, audit, audit_subject_id, recorded } = res.locals
@@ -252,7 +255,7 @@ function api(app: express.Express): express.Express {
    */
   app.post(
     pathsFor('/trips/:audit_trip_id/vehicle/event'),
-    checkAccess(scopes => scopes.includes('audits:write')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:write')),
     async (req: AuditApiVehicleEventRequest, res: AuditApiResponse) => {
       try {
         const { audit_trip_id, audit_subject_id, audit, recorded } = res.locals
@@ -302,7 +305,7 @@ function api(app: express.Express): express.Express {
    */
   app.post(
     pathsFor('/trips/:audit_trip_id/vehicle/telemetry'),
-    checkAccess(scopes => scopes.includes('audits:write')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:write')),
     async (req: AuditApiVehicleTelemetryRequest, res: AuditApiResponse) => {
       try {
         const { audit_trip_id, audit_subject_id, audit, recorded } = res.locals
@@ -348,7 +351,7 @@ function api(app: express.Express): express.Express {
    */
   app.post(
     [...pathsFor('/trips/:audit_trip_id/note'), ...pathsFor('/trips/:audit_trip_id/event')],
-    checkAccess(scopes => scopes.includes('audits:write')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:write')),
     async (req: AuditApiAuditNoteRequest, res: AuditApiResponse) => {
       try {
         const { audit_trip_id, audit, audit_subject_id, recorded } = res.locals
@@ -414,7 +417,7 @@ function api(app: express.Express): express.Express {
    */
   app.post(
     pathsFor('/trips/:audit_trip_id/end'),
-    checkAccess(scopes => scopes.includes('audits:write')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:write')),
     async (req: AuditApiAuditEndRequest, res: AuditApiResponse) => {
       try {
         const { audit_trip_id, audit, audit_subject_id, recorded } = res.locals
@@ -464,7 +467,7 @@ function api(app: express.Express): express.Express {
    */
   app.get(
     pathsFor('/trips/:audit_trip_id'),
-    checkAccess(scopes => scopes.includes('audits:read')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:read')),
     async (req: AuditApiGetTripRequest, res: AuditApiResponse<AuditDetails>) => {
       try {
         const { audit_trip_id, audit } = res.locals
@@ -575,7 +578,7 @@ function api(app: express.Express): express.Express {
 
   app.delete(
     pathsFor('/trips/:audit_trip_id'),
-    checkAccess(scopes => scopes.includes('audits:delete')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:delete')),
     async (req: AuditApiTripRequest, res: AuditApiResponse) => {
       try {
         const { audit_trip_id, audit } = res.locals
@@ -604,7 +607,7 @@ function api(app: express.Express): express.Express {
    */
   app.get(
     pathsFor('/trips'),
-    checkAccess(scopes => scopes.includes('audits:read')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:read')),
     async (req: AuditApiGetTripsRequest, res: AuditApiResponse) => {
       try {
         const { start_time, end_time } = req.query
@@ -648,7 +651,7 @@ function api(app: express.Express): express.Express {
    */
   app.get(
     pathsFor('/vehicles'),
-    checkAccess(scopes => scopes.includes('audits:vehicles:read')),
+    checkAuditApiAccess(scopes => scopes.includes('audits:vehicles:read')),
     async (req, res) => {
       const { skip, take } = { skip: 0, take: 10000 }
       const { strict = true, bbox, provider_id } = {

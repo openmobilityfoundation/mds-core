@@ -1,12 +1,15 @@
 import { MatchedVehicle, VehicleEvent, UUID } from '@mds-core/mds-types'
-import { ApiRequest, ApiResponse, ApiResponseLocals } from '@mds-core/mds-api-server'
+import { ApiRequest, ApiResponse, ApiClaims } from '@mds-core/mds-api-server'
 
 export type ComplianceApiRequest = ApiRequest
-export interface ComplianceApiResponse extends ApiResponse {
-  locals: ApiResponseLocals & {
+
+export type ComplianceApiAccessTokenScopes = never
+
+export type ComplianceApiResponse = ApiResponse<
+  ApiClaims<ComplianceApiAccessTokenScopes> & {
     provider_id: UUID
   }
-}
+>
 
 export type MatchedVehiclePlusRule = MatchedVehicle & { rule_id: UUID }
 

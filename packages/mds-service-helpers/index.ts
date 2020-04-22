@@ -40,7 +40,14 @@ export const HandleServiceResponse = <R>(
   response: ServiceResponse<R>,
   onerror: (error: ServiceErrorDescriptor) => void,
   onresult: (result: R) => void
-) => (response.error ? onerror(response.error) : onresult(response.result))
+): ServiceResponse<R> => {
+  if (response.error) {
+    onerror(response.error)
+  } else {
+    onresult(response.result)
+  }
+  return response
+}
 
 export const ServiceException = (message: string, error?: Error) =>
   ServiceError({

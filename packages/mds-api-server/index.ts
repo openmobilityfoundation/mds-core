@@ -5,30 +5,27 @@ import cors from 'cors'
 import logger from '@mds-core/mds-logger'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
 import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, AuthorizerClaims } from '@mds-core/mds-api-authorizer'
-import { AccessTokenScope } from '@mds-core/mds-types'
 import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 export type ApiRequest<P extends Params = ParamsDictionary> = express.Request<P>
-export type ApiQuery<Q extends string> = { query: { [P in Q]: string } }
 
-export interface ApiResponseLocals {
+export type ApiQuery<Q extends string> = { query: Partial<{ [P in Q]: string }> }
+
+export interface ApiResponse<L = unknown, B = unknown> extends express.Response<B | { error: unknown }> {
+  locals: L
+}
+
+export type ApiClaims<AccessTokenScope extends string> = {
   claims: AuthorizerClaims | null
   scopes: AccessTokenScope[]
 }
 
-export interface ApiResponse<TBody = unknown> extends express.Response {
-  locals: ApiResponseLocals
-  send: (body: TBody | { error: unknown }) => this
-}
+export type ApiVersion<TVersion extends string> = { version: TVersion }
 
-export interface ApiVersionedResponseLocals<TVersion extends string> extends ApiResponseLocals {
-  version: TVersion
-}
-
-export interface ApiVersionedResponse<TVersion extends string, TBody = unknown>
-  extends ApiResponse<TBody & { version: TVersion }> {
-  locals: ApiVersionedResponseLocals<TVersion>
-}
+export type ApiVersionedResponse<TVersion extends string, L = unknown, TBody = unknown> = ApiResponse<
+  L & ApiVersion<TVersion>,
+  TBody & ApiVersion<TVersion>
+>
 
 const about = () => {
   const {
@@ -51,9 +48,9 @@ const about = () => {
   }
 }
 
-export const RequestLoggingMiddleware = (): express.RequestHandler =>
+export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): express.RequestHandler =>
   morgan(
-    (tokens, req: ApiRequest, res: ApiResponse) =>
+    (tokens, req: ApiRequest, res: ApiResponse<ApiClaims<AccessTokenScope>>) =>
       [
         ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
         tokens.method(req, res),
@@ -96,7 +93,11 @@ export const MaintenanceModeMiddleware = () => (req: ApiRequest, res: ApiRespons
 type AuthorizerMiddlewareOptions = { authorizer: ApiAuthorizer }
 export const AuthorizerMiddleware = ({
   authorizer = AuthorizationHeaderApiAuthorizer
-}: Partial<AuthorizerMiddlewareOptions> = {}) => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+}: Partial<AuthorizerMiddlewareOptions> = {}) => <AccessTokenScope extends string>(
+  req: ApiRequest,
+  res: ApiResponse<ApiClaims<AccessTokenScope>>,
+  next: express.NextFunction
+) => {
   const claims = authorizer(req)
   res.locals.claims = claims
   res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
@@ -235,15 +236,20 @@ export const ApiServer = (
   return api(app)
 }
 
+export type AccessTokenScopeValidator<AccessTokenScope extends string = never> = (
+  scopes: AccessTokenScope[],
+  claims: AuthorizerClaims | null
+) => boolean | Promise<boolean>
+
 /* istanbul ignore next */
-export const checkAccess = (
-  validator: (scopes: AccessTokenScope[], claims: AuthorizerClaims | null) => boolean | Promise<boolean>
+export const checkAccess = <AccessTokenScope extends string = never>(
+  validator: AccessTokenScopeValidator<AccessTokenScope>
 ) =>
   process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false'
-    ? async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+    ? async (req: ApiRequest, res: ApiResponse<ApiClaims<AccessTokenScope>>, next: express.NextFunction) => {
         next() // Bypass
       }
-    : async (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+    : async (req: ApiRequest, res: ApiResponse<ApiClaims<AccessTokenScope>>, next: express.NextFunction) => {
         const { scopes, claims } = res.locals
         const valid = await validator(scopes, claims)
         return valid

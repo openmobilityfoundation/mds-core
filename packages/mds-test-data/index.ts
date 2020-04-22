@@ -29,8 +29,7 @@ import {
   PROVIDER_EVENT,
   PROVIDER_REASON,
   PROVIDER_EVENTS,
-  PROVIDER_REASONS,
-  AccessTokenScope
+  PROVIDER_REASONS
 } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 import { StatusChange, Trip } from '@mds-core/mds-db/types'
@@ -552,7 +551,7 @@ function makeTrip(device: Device): Trip {
   }
 }
 
-const SCOPED_AUTH = (scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
+const SCOPED_AUTH = <AccessTokenScope extends string>(scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
   `basic ${Buffer.from(`${principalId}|${scopes.join(' ')}`).toString('base64')}`
 
 export {

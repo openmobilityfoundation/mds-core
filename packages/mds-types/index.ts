@@ -15,8 +15,6 @@
  */
 import { FeatureCollection } from 'geojson'
 
-export { AccessTokenScope, AccessTokenScopes, ScopeDescriptions } from './scopes'
-
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(
     keys.reduce((e, key) => {

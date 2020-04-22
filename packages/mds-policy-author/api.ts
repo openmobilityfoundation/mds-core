@@ -29,20 +29,24 @@ import {
 import { policyValidationDetails } from '@mds-core/mds-schema-validators'
 import logger from '@mds-core/mds-logger'
 
-import { checkAccess } from '@mds-core/mds-api-server'
+import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { getPolicies } from './request-handlers'
+import { PolicyAuthorApiRequest, PolicyAuthorApiResponse, PolicyAuthorApiAccessTokenScopes } from './types'
+
+const checkPolicyAuthorApiAccess = (validator: AccessTokenScopeValidator<PolicyAuthorApiAccessTokenScopes>) =>
+  checkAccess(validator)
 
 function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/policies'),
-    checkAccess(scopes => scopes.includes('policies:read')),
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
     getPolicies
   )
 
   app.post(
     pathsFor('/policies'),
-    checkAccess(scopes => scopes.includes('policies:write')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const policy = { policy_id: uuid(), ...req.body }
 
       const details = policyValidationDetails(policy)
@@ -69,8 +73,8 @@ function api(app: express.Express): express.Express {
 
   app.post(
     pathsFor('/policies/:policy_id/publish'),
-    checkAccess(scopes => scopes.includes('policies:publish')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:publish')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const { policy_id } = req.params
       try {
         await db.publishPolicy(policy_id)
@@ -101,8 +105,8 @@ function api(app: express.Express): express.Express {
 
   app.put(
     pathsFor('/policies/:policy_id'),
-    checkAccess(scopes => scopes.includes('policies:write')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const policy = req.body
 
       const details = policyValidationDetails(policy)
@@ -136,8 +140,8 @@ function api(app: express.Express): express.Express {
 
   app.delete(
     pathsFor('/policies/:policy_id'),
-    checkAccess(scopes => scopes.includes('policies:delete')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:delete')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const { policy_id } = req.params
       try {
         await db.deletePolicy(policy_id)
@@ -153,8 +157,8 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies/meta/'),
-    checkAccess(scopes => scopes.includes('policies:read')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const { get_published, get_unpublished } = req.query
       const params = {
         get_published: get_published ? get_published === 'true' : null,
@@ -183,8 +187,8 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies/:policy_id'),
-    checkAccess(scopes => scopes.includes('policies:read')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const { policy_id } = req.params
       try {
         const policies = await db.readPolicies({ policy_id, get_published: null, get_unpublished: null })
@@ -202,8 +206,8 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies/:policy_id/meta'),
-    checkAccess(scopes => scopes.includes('policies:read')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const { policy_id } = req.params
       try {
         const result = await db.readSinglePolicyMetadata(policy_id)
@@ -217,8 +221,8 @@ function api(app: express.Express): express.Express {
 
   app.put(
     pathsFor('/policies/:policy_id/meta'),
-    checkAccess(scopes => scopes.includes('policies:write')),
-    async (req, res) => {
+    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
+    async (req: PolicyAuthorApiRequest, res: PolicyAuthorApiResponse) => {
       const policy_metadata = req.body
       try {
         await db.updatePolicyMetadata(policy_metadata)
