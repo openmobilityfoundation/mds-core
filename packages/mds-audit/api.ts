@@ -610,16 +610,13 @@ function api(app: express.Express): express.Express {
     checkAuditApiAccess(scopes => scopes.includes('audits:read')),
     async (req: AuditApiGetTripsRequest, res: AuditApiResponse) => {
       try {
-        const { start_time, end_time } = req.query
         const { skip, take } = asPagingParams(req.query)
 
-        // Construct the query params
         const query = {
-          ...req.query,
+          ...parseRequest(req, { parser: Number }).query('start_time', 'end_time'),
+          ...parseRequest(req).query('provider_id', 'provider_vehicle_id', 'audit_subject_id'),
           skip,
-          take,
-          start_time: start_time ? Number(start_time) : undefined,
-          end_time: end_time ? Number(end_time) : undefined
+          take
         }
 
         // Query the audits
