@@ -1167,7 +1167,7 @@ app() {
         *) usage "unsupported os: ${configs[os]}";;
       esac
     else
-      usage "unknown application: ${a}"
+      invoke app ${a}
     fi
   done; unset a
 }
