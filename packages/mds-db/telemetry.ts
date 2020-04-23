@@ -1,12 +1,5 @@
 import { UUID, Recorded, Telemetry, Timestamp } from '@mds-core/mds-types'
-import {
-  convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry,
-  now,
-  csv,
-  days,
-  yesterday
-} from '@mds-core/mds-utils'
+import { now, csv, days, yesterday } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { TelemetryRecord } from './types'
 
@@ -15,6 +8,32 @@ import schema from './schema'
 import { cols_sql, vals_list, SqlVals, logSql, to_sql } from './sql-utils'
 
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
+
+export function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
+  const {
+    gps: { lat, lng, altitude, heading, speed, accuracy },
+    recorded = now(),
+    ...props
+  } = telemetry
+  return {
+    ...props,
+    lat,
+    lng,
+    altitude,
+    heading,
+    speed,
+    accuracy,
+    recorded
+  }
+}
+
+export function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Telemetry {
+  const { lat, lng, altitude, heading, speed, accuracy, ...props } = telemetryRecord
+  return {
+    ...props,
+    gps: { lat, lng, altitude, heading, speed, accuracy }
+  }
+}
 
 export async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded<Telemetry>[]> {
   if (telemetries.length === 0) {
