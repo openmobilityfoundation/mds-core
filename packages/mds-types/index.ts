@@ -76,25 +76,6 @@ export const VEHICLE_REASONS = Enum(
 )
 export type VEHICLE_REASON = keyof typeof VEHICLE_REASONS
 
-export const PROVIDER_EVENTS = Enum('available', 'reserved', 'unavailable', 'removed')
-export type PROVIDER_EVENT = keyof typeof PROVIDER_EVENTS
-
-export const PROVIDER_REASONS = Enum(
-  'service_start',
-  'user_drop_off',
-  'rebalance_drop_off',
-  'maintenance_drop_off',
-  'agency_drop_off',
-  'user_pick_up',
-  'maintenance',
-  'low_battery',
-  'service_end',
-  'rebalance_pick_up',
-  'maintenance_pick_up',
-  'agency_pick_up'
-)
-export type PROVIDER_REASON = keyof typeof PROVIDER_REASONS
-
 export const AUDIT_EVENT_TYPES = Enum('start', 'note', 'summary', 'issue', 'telemetry', 'end')
 export type AUDIT_EVENT_TYPE = keyof typeof AUDIT_EVENT_TYPES
 

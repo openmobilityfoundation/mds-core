@@ -25,14 +25,9 @@ import {
   Timestamp,
   Telemetry,
   VehicleEvent,
-  Policy,
-  PROVIDER_EVENT,
-  PROVIDER_REASON,
-  PROVIDER_EVENTS,
-  PROVIDER_REASONS
+  Policy
 } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
-import { StatusChange, Trip } from '@mds-core/mds-db/types'
 
 import {
   addDistanceBearing,
@@ -40,7 +35,6 @@ import {
   makePointInShape,
   now,
   pointInShape,
-  randomElement,
   range,
   rangeRandom,
   rangeRandomInt
@@ -50,13 +44,7 @@ import { v4 as uuid } from 'uuid'
 
 import logger from '@mds-core/mds-logger'
 
-import {
-  JUMP_PROVIDER_ID,
-  LIME_PROVIDER_ID,
-  BIRD_PROVIDER_ID,
-  TEST1_PROVIDER_ID,
-  providerName
-} from '@mds-core/mds-providers'
+import { JUMP_PROVIDER_ID, LIME_PROVIDER_ID, BIRD_PROVIDER_ID, TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { serviceAreaMap, restrictedAreas, veniceSpecOps } from './test-areas/test-areas'
 
 import { LA_CITY_BOUNDARY } from './la-city-boundary'
@@ -494,63 +482,6 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
   return devices
 }
 
-function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
-  const event_type = randomElement(Object.keys(PROVIDER_EVENTS) as PROVIDER_EVENT[])
-  const event_type_reason = randomElement(Object.keys(PROVIDER_REASONS) as PROVIDER_REASON[])
-
-  return {
-    provider_id: device.provider_id,
-    provider_name: providerName(device.provider_id),
-    device_id: device.device_id,
-    vehicle_id: device.vehicle_id,
-    event_type,
-    event_type_reason,
-    event_location: null,
-    battery_pct: rangeRandomInt(1, 100),
-    associated_trip: uuid(),
-    event_time: timestamp,
-    vehicle_type: device.type,
-    propulsion_type: device.propulsion,
-    recorded: now()
-  }
-}
-
-function makeTrip(device: Device): Trip {
-  return {
-    provider_id: device.provider_id,
-    provider_name: providerName(device.provider_id),
-    device_id: device.device_id,
-    vehicle_id: device.vehicle_id,
-    vehicle_type: device.type,
-    propulsion_type: device.propulsion,
-    provider_trip_id: uuid(),
-    trip_duration: rangeRandomInt(5),
-    trip_distance: rangeRandomInt(5),
-    route: {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {
-            timestamp: now()
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [Math.random() * 10, Math.random() * 10]
-          }
-        }
-      ]
-    },
-    accuracy: Math.random() * 3,
-    trip_start: now() - 1000 * Math.random(),
-    trip_end: now(),
-    parking_verification_url: 'http://iamverified.com',
-    standard_cost: rangeRandomInt(5),
-    actual_cost: rangeRandomInt(5),
-    recorded: now()
-  }
-}
-
 const SCOPED_AUTH = <AccessTokenScope extends string>(scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
   `basic ${Buffer.from(`${principalId}|${scopes.join(' ')}`).toString('base64')}`
 
@@ -584,8 +515,6 @@ export {
   makeTelemetryInArea,
   makeTelemetryInShape,
   makeTelemetryStream,
-  makeStatusChange,
-  makeTrip,
   SCOPED_AUTH,
   serviceAreaMap,
   restrictedAreas,
