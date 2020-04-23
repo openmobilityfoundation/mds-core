@@ -4,8 +4,6 @@
     "outDir": "dist"
   },
   "references": [
-    { "path": "../../container-images/env-inject/tsconfig.build.json" },
-    { "path": "../../packages/mds-api-server/tsconfig.build.json" },
     { "path": "../../packages/mds-jurisdiction/tsconfig.build.json" },
     { "path": "../../packages/mds-webpack-config/tsconfig.build.json" }
   ]

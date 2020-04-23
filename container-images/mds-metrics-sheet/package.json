@@ -2,6 +2,7 @@
   "name": "@container-images/mds-metrics-sheet",
   "version": "0.1.27",
   "description": "Docker Image for MDS Metrics Sheet",
+  "private": true,
   "main": "dist/index.js",
   "files": [
     "dist/"

@@ -2,6 +2,7 @@
   "name": "@container-images/mds-agency",
   "version": "0.1.26",
   "description": "Docker Image for MDS Agency API",
+  "private": true,
   "main": "dist/index.js",
   "files": [
     "dist/"
@@ -20,9 +21,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.25",
-    "@mds-core/mds-agency": "0.0.28",
-    "@mds-core/mds-api-server": "0.1.26"
+    "@mds-core/mds-agency": "0.0.28"
   },
   "devDependencies": {
     "@mds-core/mds-webpack-config": "0.1.0"

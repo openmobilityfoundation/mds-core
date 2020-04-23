@@ -9,4 +9,4 @@ COPY dist/* /mds/
 
 WORKDIR /mds
 
-ENTRYPOINT ["/sbin/tini", "node", "--no-deprecation", "index.js"]
+ENTRYPOINT ["/sbin/tini", "node", "--no-deprecation", "server.js"]

@@ -15,10 +15,5 @@
  */
 
 import { WebSocketServer } from '@mds-core/mds-web-sockets'
-import { env } from '@container-images/env-inject'
-
-const { npm_package_name, npm_package_version, npm_package_git_commit, PORT = 4009 } = env()
 
 WebSocketServer()
-
-console.log(`${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) running on port ${PORT}`)

@@ -2,6 +2,7 @@
   "name": "@container-images/mds-audit",
   "version": "0.1.27",
   "description": "Docker Image for MDS Audit API",
+  "private": true,
   "main": "dist/index.js",
   "files": [
     "dist/"
@@ -20,8 +21,6 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@container-images/env-inject": "0.1.25",
-    "@mds-core/mds-api-server": "0.1.26",
     "@mds-core/mds-audit": "0.1.38"
   },
   "devDependencies": {
