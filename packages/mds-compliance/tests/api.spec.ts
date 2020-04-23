@@ -681,7 +681,7 @@ describe('Tests Compliance API:', () => {
   describe('Verifies venice beach spec ops', () => {
     before(done => {
       const veniceSpecOpsPointIds: UUID[] = []
-      const geographies: Geography[] = veniceSpecOps.features.map((feature: Feature) => {
+      const geographies = (veniceSpecOps.features.map((feature: Feature) => {
         if (feature.geometry.type === 'Point') {
           const geography_id = uuid()
           veniceSpecOpsPointIds.push(geography_id)
@@ -694,7 +694,7 @@ describe('Tests Compliance API:', () => {
           geography_id: 'e0e4a085-7a50-43e0-afa4-6792ca897c5a',
           geography_json: feature.geometry
         }
-      })
+      }) as unknown) as Geography[]
 
       const VENICE_SPEC_OPS_POLICY: Policy = {
         name: 'Venice Special Operations Zone',

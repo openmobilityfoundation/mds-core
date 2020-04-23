@@ -1,6 +1,8 @@
 // data obtained from https://data.lacity.org/A-Well-Run-City/Council-Districts/5v3h-vptv
 
-module.exports = {
+import { FeatureCollection } from 'geojson'
+
+export default {
   type: 'FeatureCollection',
   features: [
     {
@@ -21697,4 +21699,4 @@ module.exports = {
       }
     }
   ]
-}
+} as FeatureCollection

@@ -1,13 +1,12 @@
 import { UUID, Nullable } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-const laCityBoundary = require('./la-city-boundary')
-const restrictedAreas = require('./restricted-areas')
-const laDacs = require('./la-dacs')
-const veniceSpecOps = require('./venice-special-ops-zone')
-const venice = require('./venice')
-const councilDistrict11 = require('./council-district-11')
+import laCityBoundary from './la-city-boundary'
+import restrictedAreas from './restricted-areas'
+import laDacs from './la-dacs'
+import veniceSpecOps from './venice-special-ops-zone'
+import venice from './venice'
+import councilDistrict11 from './council-district-11'
 
 const serviceAreaMap: {
   [key: string]: {

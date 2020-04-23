@@ -1,4 +1,6 @@
-module.exports = {
+import { FeatureCollection } from 'geojson'
+
+export default {
   type: 'FeatureCollection',
   features: [
     {
@@ -85,4 +87,4 @@ module.exports = {
       }
     }
   ]
-}
+} as FeatureCollection

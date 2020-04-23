@@ -1,4 +1,6 @@
-module.exports = {
+import { FeatureCollection } from 'geojson'
+
+export default {
   type: 'FeatureCollection',
   crs: {
     type: 'name',
@@ -2516,4 +2518,4 @@ module.exports = {
       }
     }
   ]
-}
+} as FeatureCollection
