@@ -1,3 +1,3 @@
 import webpack from '@mds-core/mds-webpack-config'
 
-export default webpack.CreateBundle('server').From('../../packages/mds-agency/server.ts').UsingDefaultConfig()
+export default webpack.Bundle('../../packages/mds-agency/server.ts').UsingDefaultConfig()

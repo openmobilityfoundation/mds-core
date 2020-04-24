@@ -18,13 +18,13 @@ import { Configuration, ConfigurationFactory, ContextReplacementPlugin, IgnorePl
 import GitRevisionPlugin from 'git-revision-webpack-plugin'
 import WrapperWebpackPlugin from 'wrapper-webpack-plugin'
 import WebpackMerge from 'webpack-merge'
-import { resolve } from 'path'
+import { parse, resolve } from 'path'
 
 const gitRevisionPlugin = new GitRevisionPlugin({ commithashCommand: 'rev-parse --short HEAD' })
 
 type CustomConfiguration = Omit<Configuration, 'entry'>
 
-const MergeConfigurations = (config: CustomConfiguration, name: string, path?: string): ConfigurationFactory => (
+const MergeConfigurations = (name: string, path: string, config: CustomConfiguration = {}): ConfigurationFactory => (
   env,
   argv
 ) => {
@@ -118,16 +118,26 @@ const MergeConfigurations = (config: CustomConfiguration, name: string, path?: s
   )
 }
 
-const ConfigMethods = (name: string, path?: string) => ({
-  UsingDefaultConfig: () => MergeConfigurations({}, name, path),
-  UsingCustomConfig: (config: CustomConfiguration) => MergeConfigurations(config, name, path)
-})
+type WebpackConfigurationBuilderOptions = Partial<{
+  name: string
+}>
+
+class WebpackConfigurationBuilder {
+  private name: string
+
+  constructor(private path: string, { name }: WebpackConfigurationBuilderOptions = {}) {
+    this.name = name || parse(path).name
+  }
+
+  public UsingDefaultConfig() {
+    return MergeConfigurations(this.name, this.path)
+  }
+
+  public UsingCustomConfig(config: CustomConfiguration) {
+    return MergeConfigurations(this.name, this.path, config)
+  }
+}
 
 export default {
-  CreateBundle: (name = 'index') => ({
-    ...ConfigMethods(name),
-    From: (path: string) => ({
-      ...ConfigMethods(name, path)
-    })
-  })
+  Bundle: (path: string, options?: WebpackConfigurationBuilderOptions) => new WebpackConfigurationBuilder(path, options)
 }

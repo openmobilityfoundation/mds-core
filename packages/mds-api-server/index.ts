@@ -9,7 +9,18 @@ import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 export type ApiRequest<P extends Params = ParamsDictionary> = express.Request<P>
 
-export type ApiQuery<Q extends string> = { query: Partial<{ [P in Q]: string | string[] }> }
+export type ApiQuery<Q1 extends string, Q2 extends string[] = never> = {
+  query: Partial<
+    {
+      [P in Q1]: string
+    }
+  > &
+    Partial<
+      {
+        [P in Q2[number]]: string | string[]
+      }
+    > & { [x: string]: never }
+}
 
 export interface ApiResponse<L = unknown, B = unknown>
   extends express.Response<B | { error: unknown } | { errors: unknown[] }> {
