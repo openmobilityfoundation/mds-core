@@ -1537,6 +1537,12 @@ invoke() {
   done; unset ia
 }
 
+invokeAny() {
+  for ia in ${1}; do
+    ${ia} || warn "${ia} error: ${ia}"
+  done; unset ia
+}
+
 normalize() {
   echo ${1} | cut -d ${2:-:} -f 2- | tr ',' ' '
 }
@@ -1659,6 +1665,6 @@ for arg in "${@:$OPTIND}"; do
     invoke install "$(normalize ${arg})";;
     home) echo ${configs[home]};;
     completion) cat ${configs[home]}/bin/mdsctl-completion.bash;;
-    *) error "unknown command: ${arg}"
+    *) invokeAny "$(normalize ${arg})";; #error "unknown command: ${arg}"
   esac
 done; unset arg
