@@ -36,4 +36,4 @@ const info = (...args: unknown[]) => log('info', ...args)
 const warn = (...args: unknown[]) => log('warn', ...args)
 const error = (...args: unknown[]) => log('error', ...args)
 
-export = { log, info, warn, error }
+export default { log, info, warn, error }

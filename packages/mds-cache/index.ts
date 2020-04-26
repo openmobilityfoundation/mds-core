@@ -597,7 +597,7 @@ async function cleanup() {
   }
 }
 
-export = {
+export default {
   initialize,
   health,
   info,

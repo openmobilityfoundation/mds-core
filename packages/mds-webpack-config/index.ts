@@ -46,8 +46,8 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
         rules: [
           {
             test: /\.ts$/,
-            use: 'ts-loader',
-            exclude: /node_modules/
+            loader: 'ts-loader',
+            options: { onlyCompileBundledFiles: true }
           }
         ]
       },

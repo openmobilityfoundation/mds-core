@@ -82,8 +82,8 @@
   "scripts": {
     "build": "yarn run:concurrent build",
     "bundle": "yarn run:concurrent bundle",
-    "image": "yarn run:concurrent image",
     "clean": "git clean -fdX -e '!.env' -e '!helm/mds/charts/*' -e '!helm/mds/files/*' -e '!helm/util/charts/*' && yarn",
+    "image": "yarn run:concurrent image",
     "run:concurrent": "lerna run --stream",
     "run:sequential": "lerna run --stream --concurrency 1",
     "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",

@@ -14,18 +14,12 @@
     limitations under the License.
  */
 
-export type ReadStreamOptions = Partial<{
-  count: number
-  block: number
-  noack: boolean
-}>
+import { VehicleEvent, Telemetry, Device } from '@mds-core/mds-types'
 
-export const Streams = ['device:index', 'device:raw'] as const
-export const [DEVICE_INDEX_STREAM, DEVICE_RAW_STREAM] = Streams
-export type Stream = typeof Streams[number]
-
-export type StreamItemID = string
-export type StreamItemType = string
-export type StreamItemData = string
-export type StreamItem = [StreamItemID, [StreamItemType, StreamItemData]]
-export type ReadStreamResult = [Stream, StreamItem[]]
+export interface AgencyStreamInterface {
+  writeEvent: (event: VehicleEvent) => Promise<void>
+  writeTelemetry: (telemetry: Telemetry[]) => Promise<void>
+  writeDevice: (device: Device) => Promise<void>
+  shutdown: () => Promise<void>
+  initialize: () => Promise<void>
+}

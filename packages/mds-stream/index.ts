@@ -30,10 +30,10 @@ import {
   ReadStreamOptions,
   StreamItemID
 } from './types'
-import { AgencyKafkaStream } from './kafka/agency-stream-kafka'
+import { AgencyStreamKafka } from './kafka/agency-stream-kafka'
+import { KafkaStreamConsumer, KafkaStreamProducer } from './kafka'
 
-import { KafkaStreamConsumer } from './kafka/stream-consumer'
-import { KafkaStreamProducer } from './kafka/stream-producer'
+export { KafkaStreamConsumerOptions, KafkaStreamProducerOptions } from './kafka'
 
 const { env } = process
 
@@ -167,7 +167,7 @@ async function getClient() {
 }
 
 async function initialize() {
-  await AgencyKafkaStream.initialize()
+  await AgencyStreamKafka.initialize()
   if (env.SINK) {
     getBinding()
   } else {
@@ -189,7 +189,7 @@ async function shutdown() {
     await cachedClient.quit()
     cachedClient = null
   }
-  await AgencyKafkaStream.shutdown()
+  await AgencyStreamKafka.shutdown()
 }
 
 async function writeStream(stream: Stream, field: string, value: unknown) {
@@ -210,7 +210,7 @@ async function writeDevice(device: Device) {
     await writeNatsEvent('device', JSON.stringify(device))
   }
   if (env.KAFKA_HOST) {
-    await AgencyKafkaStream.writeDevice(device)
+    await AgencyStreamKafka.writeDevice(device)
   }
   return writeStream(DEVICE_INDEX_STREAM, 'data', device)
 }
@@ -220,7 +220,7 @@ async function writeEvent(event: VehicleEvent) {
     await writeNatsEvent('event', JSON.stringify(event))
   }
   if (env.KAFKA_HOST) {
-    await AgencyKafkaStream.writeEvent(event)
+    await AgencyStreamKafka.writeEvent(event)
   }
   return writeStream(DEVICE_RAW_STREAM, 'event', event)
 }
@@ -231,7 +231,7 @@ async function writeTelemetry(telemetry: Telemetry[]) {
     await Promise.all(telemetry.map(item => writeNatsEvent('telemetry', JSON.stringify(item))))
   }
   if (env.KAFKA_HOST) {
-    await AgencyKafkaStream.writeTelemetry(telemetry)
+    await AgencyStreamKafka.writeTelemetry(telemetry)
   }
   const start = now()
   await writeStreamBatch(DEVICE_RAW_STREAM, 'telemetry', telemetry)
@@ -334,7 +334,7 @@ async function health() {
   return { using: 'redis', status }
 }
 
-export = {
+export default {
   createStreamGroup,
   getStreamInfo,
   health,

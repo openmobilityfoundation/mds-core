@@ -1,12 +1,53 @@
-import { Producer } from 'kafkajs'
+/*
+    Copyright 2019 City of Los Angeles.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
+
+import { Kafka, Producer } from 'kafkajs'
 import { isArray } from 'util'
 import { Nullable } from '@mds-core/mds-types'
+import logger from '@mds-core/mds-logger'
 import { StreamProducer } from '../stream-interface'
-import { createStreamProducer, isProducerReady, disconnectProducer, StreamProducerOptions } from './helpers'
+import { getKafkaBrokers } from './helpers'
+
+export interface KafkaStreamProducerOptions {
+  clientId: string
+}
+
+const createStreamProducer = async ({ clientId = 'writer' }: Partial<KafkaStreamProducerOptions> = {}) => {
+  try {
+    const kafka = new Kafka({ clientId, brokers: getKafkaBrokers() })
+    const producer = kafka.producer()
+    await producer.connect()
+    return producer
+  } catch (err) {
+    logger.error(err)
+  }
+  return null
+}
+
+const isProducerReady = (stream: Nullable<Producer>): stream is Producer => stream !== null
+
+const disconnectProducer = async (producer: Nullable<Producer>) => {
+  if (isProducerReady(producer)) {
+    await producer.disconnect()
+  }
+}
 
 export const KafkaStreamProducer = <TMessage>(
   topic: string,
-  options?: Partial<StreamProducerOptions>
+  options?: Partial<KafkaStreamProducerOptions>
 ): StreamProducer<TMessage> => {
   let producer: Nullable<Producer> = null
   return {

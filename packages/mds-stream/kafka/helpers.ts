@@ -1,62 +1,22 @@
-import { Kafka, Producer, EachMessagePayload, Consumer } from 'kafkajs'
-import logger from '@mds-core/mds-logger'
-import { Nullable } from '@mds-core/mds-types'
+/*
+    Copyright 2019 City of Los Angeles.
 
-const {
-  env: { KAFKA_HOST = 'localhost:9092' }
-} = process
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-export interface StreamProducerOptions {
-  clientId: string
-}
+        http://www.apache.org/licenses/LICENSE-2.0
 
-export const createStreamProducer = async ({ clientId = 'writer' }: Partial<StreamProducerOptions> = {}) => {
-  try {
-    const kafka = new Kafka({ clientId, brokers: [KAFKA_HOST] })
-    const producer = kafka.producer()
-    await producer.connect()
-    return producer
-  } catch (err) {
-    logger.error(err)
-  }
-  return null
-}
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
 
-export interface StreamConsumerOptions {
-  clientId: string
-  groupId: string
-}
-
-export const createStreamConsumer = async (
-  topic: string,
-  eachMessage: (payload: EachMessagePayload) => Promise<void>,
-  { clientId = 'client', groupId = 'group' }: Partial<StreamConsumerOptions> = {}
-) => {
-  try {
-    const kafka = new Kafka({ clientId, brokers: [KAFKA_HOST] })
-    const consumer = kafka.consumer({ groupId })
-    await consumer.connect()
-    await consumer.subscribe({ topic })
-    await consumer.run({ eachMessage })
-    return consumer
-  } catch (err) {
-    logger.error(err)
-  }
-  return null
-}
-
-export const isProducerReady = (stream: Nullable<Producer>): stream is Producer => stream !== null
-
-export const isConsumerReady = (stream: Nullable<Consumer>): stream is Consumer => stream !== null
-
-export const disconnectProducer = async (producer: Nullable<Producer>) => {
-  if (isProducerReady(producer)) {
-    await producer.disconnect()
-  }
-}
-
-export const disconnectConsumer = async (consumer: Nullable<Consumer>) => {
-  if (isConsumerReady(consumer)) {
-    await consumer.disconnect()
-  }
+export const getKafkaBrokers = () => {
+  const {
+    env: { KAFKA_HOST = 'localhost:9092' }
+  } = process
+  return [KAFKA_HOST]
 }
