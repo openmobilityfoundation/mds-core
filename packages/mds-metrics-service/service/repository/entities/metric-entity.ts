@@ -28,14 +28,14 @@ export interface MetricEntityModel extends IdentityEntityModel, RecordedEntityMo
   name: string
   time_bin_size: Timestamp
   time_bin_start: Timestamp
-  provider_id: UUID
+  provider_id: Nullable<UUID>
   geography_id: Nullable<UUID>
-  vehicle_type: VEHICLE_TYPE
-  count: number
-  sum: number
-  min: number
-  max: number
-  avg: number
+  vehicle_type: Nullable<VEHICLE_TYPE>
+  count: Nullable<number>
+  sum: Nullable<number>
+  min: Nullable<number>
+  max: Nullable<number>
+  avg: Nullable<number>
 }
 
 @Entity('metrics')
@@ -49,27 +49,27 @@ export class MetricEntity extends IdentityEntity(RecordedEntity(class {})) imple
   @Column('bigint', { primary: true, transformer: BigintTransformer })
   time_bin_start: Timestamp
 
-  @Column('uuid', { primary: true })
-  provider_id: UUID
+  @Column('uuid', { primary: true, nullable: true })
+  provider_id: Nullable<UUID>
 
   @Column('uuid', { primary: true, nullable: true })
   geography_id: Nullable<UUID>
 
-  @Column('varchar', { primary: true, length: 31 })
-  vehicle_type: VEHICLE_TYPE
+  @Column('varchar', { primary: true, length: 31, nullable: true })
+  vehicle_type: Nullable<VEHICLE_TYPE>
 
-  @Column('bigint', { transformer: BigintTransformer })
-  count: number
+  @Column('bigint', { transformer: BigintTransformer, nullable: true })
+  count: Nullable<number>
 
-  @Column('double precision')
-  sum: number
+  @Column('double precision', { nullable: true })
+  sum: Nullable<number>
 
-  @Column('double precision')
-  min: number
+  @Column('double precision', { nullable: true })
+  min: Nullable<number>
 
-  @Column('double precision')
-  max: number
+  @Column('double precision', { nullable: true })
+  max: Nullable<number>
 
-  @Column('double precision')
-  avg: number
+  @Column('double precision', { nullable: true })
+  avg: Nullable<number>
 }
