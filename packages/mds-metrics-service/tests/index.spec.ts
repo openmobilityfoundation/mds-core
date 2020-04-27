@@ -15,8 +15,7 @@
  */
 
 import test from 'unit.js'
-import { v4 as uuid } from 'uuid'
-import { minutes, timeframe, days } from '@mds-core/mds-utils'
+import { uuid, minutes, timeframe, days } from '@mds-core/mds-utils'
 import { VEHICLE_TYPE } from '@mds-core/mds-types'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { MetricsServiceProvider } from '../service/provider'

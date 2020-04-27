@@ -21,9 +21,8 @@ import { RepositoryError } from '../exceptions'
 
 describe('Test Repository Utilities', () => {
   it('RepositoryError', done => {
-    const error = RepositoryError.create(Error('Some Caught Error'))
-    test.value(RepositoryError.is.repositoryError(error)).is(true)
-    test.value(error.code).is(undefined)
+    const error = RepositoryError(Error('Some Caught Error'))
+    test.value(error instanceof Error).is(true)
     done()
   })
 

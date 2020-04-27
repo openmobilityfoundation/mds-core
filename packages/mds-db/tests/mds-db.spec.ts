@@ -2,7 +2,6 @@ import assert from 'assert'
 /* eslint-reason extends object.prototype */
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import should from 'should'
-
 import { FeatureCollection } from 'geojson'
 import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS, Geography } from '@mds-core/mds-types'
 import {
@@ -19,12 +18,9 @@ import {
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN
 } from '@mds-core/mds-test-data'
-import { now, clone, NotFoundError, rangeRandomInt } from '@mds-core/mds-utils'
-
+import { now, clone, NotFoundError, rangeRandomInt, uuid } from '@mds-core/mds-utils'
 import { isNullOrUndefined } from 'util'
-import { v4 as uuid } from 'uuid'
 import MDSDBPostgres from '../index'
-
 import { dropTables, createTables, updateSchema } from '../migration'
 import { Trip } from '../types'
 import { configureClient, MDSPostgresClient, PGInfo } from '../sql-utils'

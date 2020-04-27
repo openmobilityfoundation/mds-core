@@ -15,16 +15,24 @@
  */
 
 import { Column, Index } from 'typeorm'
+import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
+import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
 import { Timestamp } from '@mds-core/mds-types'
+import { EntityConstructor } from '../@types'
 import { BigintTransformer } from '../transformers'
-import { IdentityEntity, IdentityEntityModel } from './identity-entity'
 
-export interface RecordedEntityModel extends IdentityEntityModel {
+export interface RecordedEntityModel {
   recorded: Timestamp
 }
 
-export abstract class RecordedEntity extends IdentityEntity implements RecordedEntityModel {
-  @Column('bigint', { transformer: BigintTransformer })
-  @Index()
-  recorded: Timestamp
+export function RecordedEntity<TEntityClass extends EntityConstructor>(
+  EntityClass: TEntityClass,
+  options: ColumnWithWidthOptions & ColumnCommonOptions = {}
+) {
+  abstract class RecordedEntityMixin extends EntityClass implements RecordedEntityModel {
+    @Column('bigint', { transformer: BigintTransformer, ...options })
+    @Index()
+    recorded: Timestamp
+  }
+  return RecordedEntityMixin
 }

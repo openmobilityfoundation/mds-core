@@ -16,10 +16,8 @@
 
 import db from '@mds-core/mds-db'
 import express from 'express'
-import { v4 as uuid } from 'uuid'
-import logger from '@mds-core/mds-logger'
-import urls from 'url'
 import {
+  uuid,
   pathsFor,
   seconds,
   AuthorizationError,
@@ -28,6 +26,8 @@ import {
   ServerError,
   UnsupportedTypeError
 } from '@mds-core/mds-utils'
+import logger from '@mds-core/mds-logger'
+import urls from 'url'
 
 import {
   isValidAuditDeviceId,

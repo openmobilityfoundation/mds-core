@@ -34,6 +34,7 @@ import { AgencyStreamKafka } from './kafka/agency-stream-kafka'
 import { KafkaStreamConsumer, KafkaStreamProducer } from './kafka'
 
 export { KafkaStreamConsumerOptions, KafkaStreamProducerOptions } from './kafka'
+export { StreamConsumer, StreamProducer } from './stream-interface'
 
 const { env } = process
 

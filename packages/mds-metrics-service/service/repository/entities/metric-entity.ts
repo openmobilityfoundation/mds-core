@@ -16,9 +16,15 @@
 
 import { Entity, Column } from 'typeorm'
 import { UUID, Timestamp, Nullable, VEHICLE_TYPE } from '@mds-core/mds-types'
-import { RecordedEntityModel, RecordedEntity, BigintTransformer } from '@mds-core/mds-repository'
+import {
+  BigintTransformer,
+  IdentityEntity,
+  IdentityEntityModel,
+  RecordedEntity,
+  RecordedEntityModel
+} from '@mds-core/mds-repository'
 
-export interface MetricEntityModel extends RecordedEntityModel {
+export interface MetricEntityModel extends IdentityEntityModel, RecordedEntityModel {
   name: string
   time_bin_size: Timestamp
   time_bin_start: Timestamp
@@ -33,7 +39,7 @@ export interface MetricEntityModel extends RecordedEntityModel {
 }
 
 @Entity('metrics')
-export class MetricEntity extends RecordedEntity implements MetricEntityModel {
+export class MetricEntity extends IdentityEntity(RecordedEntity(class {})) implements MetricEntityModel {
   @Column('varchar', { primary: true, length: 255 })
   name: string
 

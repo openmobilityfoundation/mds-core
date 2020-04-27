@@ -23,11 +23,10 @@
 
 import db from '@mds-core/mds-db'
 import { Attachment, AuditAttachment, Recorded } from '@mds-core/mds-types'
-import { isUUID, NotFoundError } from '@mds-core/mds-utils'
+import { isUUID, NotFoundError, uuid } from '@mds-core/mds-utils'
 import assert from 'assert'
 import fs from 'fs'
 import Sinon from 'sinon'
-import { v4 as uuid } from 'uuid'
 import { attachmentSummary, deleteAuditAttachment, readAttachments, writeAttachment } from '../attachments'
 import { getWriteableClient } from '../../mds-db/client'
 import schema from '../../mds-db/schema'

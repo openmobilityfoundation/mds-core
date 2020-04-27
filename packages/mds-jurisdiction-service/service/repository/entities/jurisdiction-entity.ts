@@ -16,7 +16,7 @@
 
 import { Entity, Column, Index } from 'typeorm'
 import { UUID, Timestamp, Nullable } from '@mds-core/mds-types'
-import { RecordedEntityModel, RecordedEntity } from '@mds-core/mds-repository'
+import { RecordedEntity, IdentityEntity, IdentityEntityModel, RecordedEntityModel } from '@mds-core/mds-repository'
 
 export interface JurisdictionVersionedProperties {
   timestamp: Timestamp
@@ -24,14 +24,14 @@ export interface JurisdictionVersionedProperties {
   geography_id: Nullable<UUID>
 }
 
-export interface JurisdictionEntityModel extends RecordedEntityModel {
+export interface JurisdictionEntityModel extends IdentityEntityModel, RecordedEntityModel {
   jurisdiction_id: UUID
   agency_key: string
   versions: JurisdictionVersionedProperties[]
 }
 
 @Entity('jurisdictions')
-export class JurisdictionEntity extends RecordedEntity implements JurisdictionEntityModel {
+export class JurisdictionEntity extends IdentityEntity(RecordedEntity(class {})) implements JurisdictionEntityModel {
   @Column('uuid', { primary: true })
   jurisdiction_id: UUID
 

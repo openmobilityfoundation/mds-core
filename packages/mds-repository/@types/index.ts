@@ -36,3 +36,7 @@ export interface InsertReturning<T> extends InsertResult {
 export interface UpdateReturning<T> extends UpdateResult {
   raw: T[]
 }
+
+// eslint-reason A mixin class must have a constructor with a single rest parameter of type 'any[]'.ts(2545)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type EntityConstructor<T = {}> = new (...args: any[]) => T

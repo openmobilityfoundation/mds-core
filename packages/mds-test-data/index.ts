@@ -37,10 +37,9 @@ import {
   pointInShape,
   range,
   rangeRandom,
-  rangeRandomInt
+  rangeRandomInt,
+  uuid
 } from '@mds-core/mds-utils'
-
-import { v4 as uuid } from 'uuid'
 
 import logger from '@mds-core/mds-logger'
 

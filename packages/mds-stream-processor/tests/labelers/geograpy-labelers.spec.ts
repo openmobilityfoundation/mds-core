@@ -4,7 +4,7 @@ import * as utils from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
 import Sinon from 'sinon'
 import { Geography } from '@mds-core/mds-types'
-import { v4 as uuid } from 'uuid'
+import { uuid } from '@mds-core/mds-utils'
 import assert from 'assert'
 import { BBox2d } from '@turf/helpers/lib/geojson'
 

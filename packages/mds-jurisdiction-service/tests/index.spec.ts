@@ -15,8 +15,7 @@
  */
 
 import test from 'unit.js'
-import { v4 as uuid } from 'uuid'
-import { days } from '@mds-core/mds-utils'
+import { uuid, days } from '@mds-core/mds-utils'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionServiceProvider } from '../service/provider'
 

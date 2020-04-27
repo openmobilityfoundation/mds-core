@@ -14,40 +14,21 @@
     limitations under the License.
  */
 
-import { ServiceResponse, ServiceResult, ServiceError, ServiceException } from '@mds-core/mds-service-helpers'
-import { ValidationError } from '@mds-core/mds-utils'
+import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
-import { v4 as uuid } from 'uuid'
 import { RepositoryError } from '@mds-core/mds-repository'
 import { CreateJurisdictionType, JurisdictionDomainModel } from '../../@types'
-import { JursidictionMapper } from '../repository/model-mappers'
 import { JurisdictionRepository } from '../repository'
-import { ValidateJurisdiction } from './jurisdiction-schema-validators'
 
 export const CreateJurisdictionHandler = async (
   jurisdiction: CreateJurisdictionType
 ): Promise<ServiceResponse<JurisdictionDomainModel>> => {
-  const recorded = Date.now()
   try {
-    const entities = await JurisdictionRepository.writeJurisdictions(
-      JursidictionMapper.fromDomainModel([
-        ValidateJurisdiction({
-          jurisdiction_id: uuid(),
-          timestamp: recorded,
-          ...jurisdiction
-        })
-      ]).toEntityModel({ recorded })
-    )
-    const [created] = JursidictionMapper.fromEntityModel(entities).toDomainModel({ effective: recorded })
+    const [created] = await JurisdictionRepository.createJurisdictions([jurisdiction])
     return ServiceResult(created)
   } catch (error) /* istanbul ignore next */ {
-    logger.error('Error Creating Jurisdiction', error)
-    if (error instanceof ValidationError) {
-      return ServiceError({ type: 'ValidationError', message: 'Error Creating Jurisdiction', details: error.message })
-    }
-    if (RepositoryError.is.uniqueViolationError(error)) {
-      return ServiceError({ type: 'ConflictError', message: 'Error Creating Jurisdiction', details: error.message })
-    }
-    return ServiceException('Error Creating Jurisdiction', error)
+    const exception = ServiceException('Error Creating Jurisdiction', RepositoryError(error))
+    logger.error(exception, error)
+    return exception
   }
 }

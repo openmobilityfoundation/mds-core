@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { v4 as uuid } from 'uuid'
+import { uuid } from '@mds-core/mds-utils'
 import Sinon from 'sinon'
 import { mapProviderToPayload, eventCountsToStatusCounts, sum, percent, getProviderMetrics } from '../metrics-log'
 import { VehicleCountRow, LastDayStatsResponse } from '../types'

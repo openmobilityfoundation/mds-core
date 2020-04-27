@@ -71,7 +71,7 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
       try {
         connections = await createConnections([ro, rw])
       } catch (error) /* istanbul ignore next */ {
-        throw RepositoryError.create(error)
+        throw RepositoryError(error)
       }
     }
   }
@@ -81,19 +81,19 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
       await initialize()
       if (!connections) {
         /* istanbul ignore next */
-        throw RepositoryError.create(Error('Connection manager not initialized'))
+        throw RepositoryError(Error('Connection manager not initialized'))
       }
     }
     const connection = connections.find(c => c.name === connectionName(prefix, mode))
     if (!connection) {
       /* istanbul ignore next */
-      throw RepositoryError.create(Error(`Connection ${connectionName(prefix, mode)} not found`))
+      throw RepositoryError(Error(`Connection ${connectionName(prefix, mode)} not found`))
     }
     if (!connection.isConnected) {
       try {
         await connection.connect()
       } catch (error) /* istanbul ignore next */ {
-        throw RepositoryError.create(error)
+        throw RepositoryError(error)
       }
     }
     return connection

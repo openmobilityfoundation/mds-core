@@ -21,15 +21,16 @@ import {
   entityPropertyFilter,
   RepositoryError
 } from '@mds-core/mds-repository'
-import { DeepPartial, Between } from 'typeorm'
+import { Between } from 'typeorm'
 import { timeframe } from '@mds-core/mds-utils'
 
 import { MetricEntity } from './entities'
-import { ReadMetricsOptions } from '../../@types'
+import { ReadMetricsOptions, MetricDomainModel } from '../../@types'
 import * as migrations from './migrations'
+import { MetricEntityToDomainModel, MetricDomainToEntityModel } from './mappers'
 
 const RepositoryReadMetrics = CreateRepositoryMethod(connect => async (options: ReadMetricsOptions): Promise<
-  MetricEntity[]
+  MetricDomainModel[]
 > => {
   try {
     const { name, time_bin_size, time_bin_start, time_bin_end, provider_id, geography_id, vehicle_type } = options
@@ -47,14 +48,14 @@ const RepositoryReadMetrics = CreateRepositoryMethod(connect => async (options: 
         ...entityPropertyFilter<MetricEntity, 'vehicle_type'>('vehicle_type', vehicle_type)
       }
     })
-    return entities
+    return entities.map(MetricEntityToDomainModel.mapper())
   } catch (error) {
-    throw RepositoryError.create(error)
+    throw RepositoryError(error)
   }
 })
 
-const RepositoryWriteMetrics = CreateRepositoryMethod(connect => async (metrics: DeepPartial<MetricEntity>[]): Promise<
-  MetricEntity[]
+const RepositoryWriteMetrics = CreateRepositoryMethod(connect => async (metrics: MetricDomainModel[]): Promise<
+  MetricDomainModel[]
 > => {
   try {
     const connection = await connect('rw')
@@ -62,12 +63,12 @@ const RepositoryWriteMetrics = CreateRepositoryMethod(connect => async (metrics:
       .getRepository(MetricEntity)
       .createQueryBuilder()
       .insert()
-      .values(metrics)
+      .values(metrics.map(MetricDomainToEntityModel.mapper()))
       .returning('*')
       .execute()
     return entities
   } catch (error) {
-    throw RepositoryError.create(error)
+    throw RepositoryError(error)
   }
 })
 

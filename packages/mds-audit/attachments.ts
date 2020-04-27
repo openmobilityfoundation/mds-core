@@ -19,9 +19,8 @@ import logger from '@mds-core/mds-logger'
 import aws from 'aws-sdk'
 import path from 'path'
 import sharp from 'sharp'
-import { v4 as uuid } from 'uuid'
+import { uuid, UnsupportedTypeError, ValidationError } from '@mds-core/mds-utils'
 import { Attachment, AttachmentSummary, AuditAttachment, Recorded, UUID } from '@mds-core/mds-types'
-import { UnsupportedTypeError, ValidationError } from '@mds-core/mds-utils'
 
 /* eslint-disable-next-line */
 const multer = require('multer')

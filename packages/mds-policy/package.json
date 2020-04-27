@@ -16,8 +16,7 @@
     "@mds-core/mds-schema-validators": "0.1.2",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "express": "4.17.1",
-    "uuid": "7.0.3"
+    "express": "4.17.1"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

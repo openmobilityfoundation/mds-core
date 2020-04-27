@@ -1,6 +1,6 @@
 import Sinon from 'sinon'
 import assert from 'assert'
-import { v4 as uuid } from 'uuid'
+import { uuid } from '@mds-core/mds-utils'
 import { Device, VEHICLE_TYPES } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-cache'

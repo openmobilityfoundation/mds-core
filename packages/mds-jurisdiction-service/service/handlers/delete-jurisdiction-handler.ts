@@ -15,9 +15,9 @@
  */
 
 import { UUID } from '@mds-core/mds-types'
-import { ServiceResponse, ServiceResult, ServiceError, ServiceException } from '@mds-core/mds-service-helpers'
+import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
-import { JursidictionMapper } from '../repository/model-mappers'
+import { RepositoryError } from '@mds-core/mds-repository'
 import { JurisdictionRepository } from '../repository'
 import { JurisdictionDomainModel } from '../../@types'
 
@@ -25,29 +25,11 @@ export const DeleteJurisdictionHandler = async (
   jurisdiction_id: UUID
 ): Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>> => {
   try {
-    const entity = await JurisdictionRepository.readJurisdiction(jurisdiction_id)
-    if (entity) {
-      const versions = JursidictionMapper.fromEntityModel([entity]).toDomainModel({ effective: Date.now() })
-      if (versions.length) {
-        const [current] = versions
-        // "Soft" delete the jursidiction by updating it with a new version containing a null geography_id
-        await JurisdictionRepository.updateJurisdiction(jurisdiction_id, {
-          ...entity,
-          versions: [
-            {
-              agency_name: current.agency_name,
-              geography_id: null,
-              timestamp: Date.now()
-            },
-            ...entity.versions
-          ].sort((a, b) => b.timestamp - a.timestamp)
-        })
-        return ServiceResult({ jurisdiction_id })
-      }
-    }
-    return ServiceError({ type: 'NotFoundError', message: `Jurisdiction ${jurisdiction_id} Not Found` })
+    const deleted = await JurisdictionRepository.deleteJurisdiction(jurisdiction_id)
+    return ServiceResult(deleted)
   } catch (error) /* istanbul ignore next */ {
-    logger.error('Error Deleting Jurisdiction', error)
-    return ServiceException('Error Deleting Jurisdiction', error)
+    const exception = ServiceException('Error Deleting Jurisdiction', RepositoryError(error))
+    logger.error(exception, error)
+    return exception
   }
 }

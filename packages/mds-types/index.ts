@@ -132,6 +132,7 @@ export type NullableProperties<T extends object> = {
   [P in keyof T]-?: T[P] extends null ? T[P] : Nullable<T[P]>
 }
 export type SingleOrArray<T> = T | T[]
+export type Optional<T, P extends keyof T> = Omit<T, P> & Partial<Pick<T, P>>
 
 // Represents a row in the "devices" table
 export interface Device {

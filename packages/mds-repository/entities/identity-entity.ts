@@ -15,7 +15,10 @@
  */
 
 import { Column, Index } from 'typeorm'
+import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
+import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
 import { BigintTransformer } from '../transformers'
+import { EntityConstructor } from '../@types'
 
 export interface IdentityEntityModel {
   id: number
@@ -26,8 +29,15 @@ export type CreateIdentityEntityModel<TIdentityEntityModel extends IdentityEntit
   keyof IdentityEntityModel
 >
 
-export abstract class IdentityEntity implements IdentityEntityModel {
-  @Column('bigint', { generated: 'increment', transformer: BigintTransformer })
-  @Index({ unique: true })
-  id: number
+export function IdentityEntity<TEntityClass extends EntityConstructor>(
+  EntityClass: TEntityClass,
+  options: ColumnWithWidthOptions & ColumnCommonOptions = {}
+) {
+  abstract class IdentityEntityMixin extends EntityClass implements IdentityEntityModel {
+    @Column('bigint', { generated: 'increment', transformer: BigintTransformer, ...options })
+    @Column('bigint')
+    @Index({ unique: true })
+    id: number
+  }
+  return IdentityEntityMixin
 }
