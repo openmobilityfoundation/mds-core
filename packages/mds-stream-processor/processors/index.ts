@@ -48,5 +48,5 @@ export const StreamProcessor = <TMessageIn, TMessageOut>(
 }
 
 // StreamTap - Read from source and write to sink (no transform)
-export const StreamTap = <TMessage>(source: StreamSource<TMessage>, sink: StreamSink<TMessage>) =>
-  StreamProcessor(source, async message => message, sink)
+export const StreamForwarder = <TMessage>(source: StreamSource<TMessage>, sink: StreamSink<TMessage>) =>
+  StreamProcessor(source, message => Promise.resolve(message), sink)

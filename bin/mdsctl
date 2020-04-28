@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
- 
+
 [[ -f ~/.mdsctl ]] && . ~/.mdsctl
 osx=darwin
 linux=linux
@@ -174,6 +174,7 @@ declare -A apps=(
   ["mds-geography"]="https://localhost:[port]/geography,mds,app"
   ["mds-geography-author"]="https://localhost:[port]/geography-author,mds,app"
   ["mds-jurisdiction"]="https://localhost:[port]/jurisdiction,mds,app"]
+  ["mds-metrics-processor"]="https://localhost:[port]/metrics-processor,mds,app"
   ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
@@ -302,10 +303,12 @@ where app in:
   mds-event-processor
   mds-geography
   mds-geography-author
+  mds-metrics-processor
   mds-policy
   mds-policy-author
   mds-postgresql
   mds-redis-headless
+  mds-telemetry-processor
   grafana                                             : grafana; see: https://grafana.com
   kibana                                              : kibana; see https://www.elastic.co/products/kibana
   prometheus                                          : prometheus; see https://prometheus.io

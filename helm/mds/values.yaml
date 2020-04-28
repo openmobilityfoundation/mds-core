@@ -57,6 +57,10 @@ apis:
     enabled: true
     version: latest
     migration: false
+  mds-metrics-processor:
+    enabled: true
+    version: latest
+    migration: false
 nats:
   enabled: true
   credentials: false
@@ -64,7 +68,7 @@ tenantId:
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
-domain: '*'
+domain: "*"
 tls:
   enabled: false
   domain:

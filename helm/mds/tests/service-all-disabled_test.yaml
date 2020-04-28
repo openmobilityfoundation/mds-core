@@ -29,6 +29,8 @@ tests:
           enabled: false
         mds-telemetry-processor:
           enabled: false
+        mds-metrics-processor:
+          enabled: false
     asserts:
       - hasDocuments:
           count: 0

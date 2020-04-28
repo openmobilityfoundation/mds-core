@@ -14,25 +14,36 @@
     limitations under the License.
  */
 
-import { VehicleTelemetryProcessor } from '@mds-core/mds-stream-processor'
 import logger from '@mds-core/mds-logger'
+import { StreamProcessorController } from './processors'
 
-const { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST } = process.env
+const launch = async (processor: StreamProcessorController) => {
+  const {
+    env: { npm_package_name, npm_package_version, npm_package_git_commit, KAFKA_HOST }
+  } = process
 
-VehicleTelemetryProcessor()
-  .start()
-  .then(() => {
+  try {
+    await processor.start()
     logger.info(
       `Running ${npm_package_name} v${npm_package_version} (${
         npm_package_git_commit ?? 'local'
       }) connected to Kafka on ${KAFKA_HOST}`
     )
-    return 0
-  })
-  .catch(error => {
+  } catch (error) {
     logger.error(
-      `${npm_package_name} v${npm_package_version} (${npm_package_git_commit}) connected to Kafka on ${KAFKA_HOST} failed to start`,
+      `${npm_package_name} v${npm_package_version} (${
+        npm_package_git_commit ?? 'local'
+      }) connected to Kafka on ${KAFKA_HOST} failed to start`,
       error
     )
     return 1
-  })
+  }
+  return 0
+}
+
+export const ProcessorController = {
+  start: (processor: StreamProcessorController) => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    launch(processor)
+  }
+}

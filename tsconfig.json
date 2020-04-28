@@ -5,6 +5,7 @@
     "paths": {
       "@container-images/*": ["container-images/*/index.ts"],
       "@mds-core/*": ["packages/*/index.ts"],
+      "packages/*": ["/dev/null"],
       "*": ["@types/*", "*"]
     }
   }
