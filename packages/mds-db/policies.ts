@@ -197,11 +197,15 @@ export async function publishPolicy(policy_id: UUID) {
     })
 
     // Only publish the policy if the geographies are successfully published first
-    const publishPolicySQL = `UPDATE ${schema.TABLE.policies} SET policy_json = policy_json::jsonb || '{"publish_date": ${publish_date}}' where policy_id='${policy_id}'`
-    await client.query(publishPolicySQL).catch(err => {
+    const publishPolicySQL = `UPDATE ${schema.TABLE.policies}
+     SET policy_json = policy_json::jsonb || '{"publish_date": ${publish_date}}'
+     where policy_id='${policy_id}' RETURNING *`
+    const {
+      rows: [published_policy]
+    }: { rows: Policy[] } = await client.query(publishPolicySQL).catch(err => {
       throw err
     })
-    return policy_id
+    return { ...published_policy }
   } catch (err) {
     logger.error(err)
     throw err
