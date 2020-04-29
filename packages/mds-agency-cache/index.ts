@@ -157,7 +157,7 @@ async function getEventsInBBox(bbox: BoundingBox) {
   const events = client.georadiusAsync(decorateKey('locations'), lng, lat, radius, 'm')
   const finish = now()
   const timeElapsed = finish - start
-  logger.info(`MDS-CACHE getEventsInBBox ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
+  logger.info(`mds-agency-cache getEventsInBBox ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
   return events
 }
 
@@ -409,7 +409,7 @@ async function readDevicesStatus(query: {
   const deviceIds = deviceIdsRes.slice(skip, skip + take)
   const geoFinish = now()
   const timeElapsed = geoFinish - geoStart
-  logger.info(`MDS-CACHE readDevicesStatus bbox fetch ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
+  logger.info(`mds-agency-cache readDevicesStatus bbox fetch ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
 
   const eventsStart = now()
   const events = ((await hreads(['event'], deviceIds)) as StringifiedEvent[])
@@ -430,7 +430,7 @@ async function readDevicesStatus(query: {
     .filter(item => Boolean(item))
   const eventsFinish = now()
   const eventsTimeElapsed = eventsFinish - eventsStart
-  logger.info(`MDS-CACHE readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`)
+  logger.info(`mds-agency-cache readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`)
 
   const devicesStart = now()
   const eventDeviceIds = events.map(event => event.device_id)
@@ -455,7 +455,7 @@ async function readDevicesStatus(query: {
   const devicesFinish = now()
   const devicesTimeElapsed = devicesFinish - devicesStart
   logger.info(
-    `MDS-CACHE readDevicesStatus device processing ${JSON.stringify(bbox)} time elapsed: ${devicesTimeElapsed}ms`
+    `mds-agency-cache readDevicesStatus device processing ${JSON.stringify(bbox)} time elapsed: ${devicesTimeElapsed}ms`
   )
 
   return valuesWithTelemetry

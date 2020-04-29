@@ -15,7 +15,7 @@
  */
 
 import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import { UUID, VEHICLE_TYPE, PROPULSION_TYPE, Device } from '@mds-core/mds-types'
 import { NotFoundError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'

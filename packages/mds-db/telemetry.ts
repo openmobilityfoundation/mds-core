@@ -126,7 +126,7 @@ export async function getTelemetryCountsPerProviderSince(
   return makeReadOnlyQuery(sql, vals)
 }
 
-// TODO way too slow to be useful -- move into mds-cache
+// TODO way too slow to be useful -- move into mds-agency-cache
 export async function getMostRecentTelemetryByProvider(): Promise<{ provider_id: UUID; max: number }[]> {
   const sql = `select provider_id, max(recorded) from ${schema.TABLE.telemetry} group by provider_id`
   return makeReadOnlyQuery(sql)

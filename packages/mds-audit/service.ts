@@ -15,7 +15,7 @@
  */
 
 import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import { Query } from 'express-serve-static-core'
 import {
   Audit,

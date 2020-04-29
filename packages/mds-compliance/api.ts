@@ -15,7 +15,7 @@
  */
 
 import express from 'express'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import {

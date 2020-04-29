@@ -1,6 +1,6 @@
 import { isTimestamp, now, days, inc, head, tail } from '@mds-core/mds-utils'
 import { UUID, CountMap, TripsStats, VEHICLE_EVENTS, VehicleEvent } from '@mds-core/mds-types'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import logger from '@mds-core/mds-logger'
 
 // TODO move to utils?

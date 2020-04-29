@@ -1,5 +1,5 @@
 {
-  "name": "@mds-core/mds-cache",
+  "name": "@mds-core/mds-agency-cache",
   "version": "0.1.26",
   "description": "Mobility Data Specification cache interface",
   "main": "dist/index.js",

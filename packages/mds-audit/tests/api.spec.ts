@@ -37,7 +37,7 @@ import {
 } from '@mds-core/mds-types'
 import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { NotFoundError, now, rangeRandomInt, uuid } from '@mds-core/mds-utils'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'

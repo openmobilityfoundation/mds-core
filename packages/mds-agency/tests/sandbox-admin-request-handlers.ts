@@ -1,7 +1,7 @@
 import Sinon from 'sinon'
 import assert from 'assert'
 import { uuid } from '@mds-core/mds-utils'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
 import { AgencyApiRequest, AgencyApiResponse } from '../types'
 import { getCacheInfo, wipeDevice, refreshCache } from '../sandbox-admin-request-handlers'

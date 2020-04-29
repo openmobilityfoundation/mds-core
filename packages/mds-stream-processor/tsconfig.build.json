@@ -4,7 +4,7 @@
     "outDir": "dist"
   },
   "references": [
-    { "path": "../../packages/mds-cache/tsconfig.build.json" },
+    { "path": "../../packages/mds-agency-cache/tsconfig.build.json" },
     { "path": "../../packages/mds-db/tsconfig.build.json" },
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
     { "path": "../../packages/mds-stream/tsconfig.build.json" },

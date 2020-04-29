@@ -24,7 +24,7 @@ import {
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import { isArray } from 'util'
 import { VehiclePayload, TelemetryResult } from './types'
 

@@ -17,7 +17,7 @@
 import express from 'express'
 
 import logger from '@mds-core/mds-logger'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathsFor, now } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'

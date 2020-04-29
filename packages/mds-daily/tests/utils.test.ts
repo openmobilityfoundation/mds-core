@@ -1,5 +1,5 @@
 import assert from 'assert'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import Sinon from 'sinon'
 import { categorizeTrips, TripsData, asInt, getMaps } from '../utils'
 

@@ -1,6 +1,6 @@
 import logger from '@mds-core/mds-logger'
 import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-cache'
+import cache from '@mds-core/mds-agency-cache'
 import { VehicleEvent } from '@mds-core/mds-types'
 import { now, isStateTransitionValid } from '@mds-core/mds-utils'
 import { DbHelperArgs } from './types'
