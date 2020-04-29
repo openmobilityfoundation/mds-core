@@ -19,7 +19,7 @@ import { types as PostgresTypes } from 'pg'
 import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 import { Nullable, UUID } from '@mds-core/mds-types'
-import { uuid } from '@mds-core/mds-utils'
+import { uuid, pluralize } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import AwaitLock from 'await-lock'
 import { MdsNamingStrategy } from './naming-strategies'
@@ -107,7 +107,7 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
       if (PG_MIGRATIONS === 'true' && rw.options.migrationsTableName) {
         const migrations = await rw.runMigrations({ transaction: 'all' })
         logger.info(
-          `Ran ${migrations.length} ${migrations.length === 1 ? 'migration' : 'migrations'} (${
+          `Ran ${migrations.length} ${pluralize(migrations.length, 'migration', 'migrations')} (${
             options.migrationsTableName
           })${migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''}`
         )

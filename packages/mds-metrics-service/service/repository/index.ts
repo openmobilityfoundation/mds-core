@@ -27,7 +27,7 @@ import { timeframe } from '@mds-core/mds-utils'
 import { MetricEntity } from './entities'
 import { ReadMetricsOptions, MetricDomainModel } from '../../@types'
 import * as migrations from './migrations'
-import { MetricEntityToDomainModel, MetricDomainToEntityModel } from './mappers'
+import { MetricEntityToDomain, MetricDomainToEntityCreate } from './mappers'
 
 const RepositoryReadMetrics = CreateRepositoryMethod(connect => async (options: ReadMetricsOptions): Promise<
   MetricDomainModel[]
@@ -48,7 +48,7 @@ const RepositoryReadMetrics = CreateRepositoryMethod(connect => async (options: 
         ...entityPropertyFilter<MetricEntity, 'vehicle_type'>('vehicle_type', vehicle_type)
       }
     })
-    return entities.map(MetricEntityToDomainModel.mapper())
+    return entities.map(MetricEntityToDomain.mapper())
   } catch (error) {
     throw RepositoryError(error)
   }
@@ -63,7 +63,7 @@ const RepositoryWriteMetrics = CreateRepositoryMethod(connect => async (metrics:
       .getRepository(MetricEntity)
       .createQueryBuilder()
       .insert()
-      .values(metrics.map(MetricDomainToEntityModel.mapper()))
+      .values(metrics.map(MetricDomainToEntityCreate.mapper()))
       .returning('*')
       .execute()
     return entities

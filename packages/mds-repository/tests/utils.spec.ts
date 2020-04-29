@@ -17,15 +17,8 @@
 import test from 'unit.js'
 import { FindOperator } from 'typeorm'
 import { entityPropertyFilter } from '../utils'
-import { RepositoryError } from '../exceptions'
 
 describe('Test Repository Utilities', () => {
-  it('RepositoryError', done => {
-    const error = RepositoryError(Error('Some Caught Error'))
-    test.value(error instanceof Error).is(true)
-    done()
-  })
-
   it('entityPropertyFilter', done => {
     test
       .value(

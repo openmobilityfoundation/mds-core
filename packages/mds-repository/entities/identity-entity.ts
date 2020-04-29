@@ -24,7 +24,7 @@ export interface IdentityEntityModel {
   id: number
 }
 
-export type CreateIdentityEntityModel<TIdentityEntityModel extends IdentityEntityModel> = Omit<
+export type IdentityEntityCreateModel<TIdentityEntityModel extends IdentityEntityModel> = Omit<
   TIdentityEntityModel,
   keyof IdentityEntityModel
 >

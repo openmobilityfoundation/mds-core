@@ -15,7 +15,7 @@
  */
 
 import {
-  UpdateJurisdictionType,
+  UpdateJurisdictionDomainModel,
   JurisdictionServiceClient,
   JurisdictionDomainModel
 } from '@mds-core/mds-jurisdiction-service'
@@ -24,7 +24,7 @@ import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
 interface UpdateJurisdictionRequest extends JurisdictionApiRequest<{ jurisdiction_id: UUID }> {
-  body: UpdateJurisdictionType
+  body: UpdateJurisdictionDomainModel
 }
 
 type UpdateJurisdictionResponse = JurisdictionApiResponse<{

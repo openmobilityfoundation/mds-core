@@ -16,14 +16,14 @@
 
 import {
   JurisdictionServiceClient,
-  CreateJurisdictionType,
+  CreateJurisdictionDomainModel,
   JurisdictionDomainModel
 } from '@mds-core/mds-jurisdiction-service'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
 interface CreateJurisdictionRequest extends JurisdictionApiRequest {
-  body: CreateJurisdictionType | CreateJurisdictionType[]
+  body: CreateJurisdictionDomainModel | CreateJurisdictionDomainModel[]
 }
 
 type CreateJurisdictionResponse = JurisdictionApiResponse<

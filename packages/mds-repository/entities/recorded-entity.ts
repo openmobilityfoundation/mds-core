@@ -25,12 +25,22 @@ export interface RecordedEntityModel {
   recorded: Timestamp
 }
 
+export type RecordedEntityCreateModel<TRecordedEntityModel extends RecordedEntityModel> = Omit<
+  TRecordedEntityModel,
+  keyof RecordedEntityModel
+> &
+  Partial<RecordedEntityModel>
+
 export function RecordedEntity<TEntityClass extends EntityConstructor>(
   EntityClass: TEntityClass,
   options: ColumnWithWidthOptions & ColumnCommonOptions = {}
 ) {
   abstract class RecordedEntityMixin extends EntityClass implements RecordedEntityModel {
-    @Column('bigint', { transformer: BigintTransformer, ...options })
+    @Column('bigint', {
+      transformer: BigintTransformer,
+      default: () => '(extract(epoch from now()) * 1000)::bigint',
+      ...options
+    })
     @Index()
     recorded: Timestamp
   }

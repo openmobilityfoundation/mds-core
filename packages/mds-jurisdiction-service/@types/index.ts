@@ -25,20 +25,22 @@ export interface JurisdictionDomainModel {
   timestamp: Timestamp
 }
 
-export type CreateJurisdictionType = Optional<JurisdictionDomainModel, 'jurisdiction_id' | 'timestamp'>
+export type CreateJurisdictionDomainModel = Optional<JurisdictionDomainModel, 'jurisdiction_id' | 'timestamp'>
 
-export type UpdateJurisdictionType = Partial<JurisdictionDomainModel>
+export type UpdateJurisdictionDomainModel = Partial<JurisdictionDomainModel>
 
 export type GetJurisdictionsOptions = Partial<{
   effective: Timestamp
 }>
 
 export interface JurisdictionServiceInterface {
-  createJurisdiction: (jurisdiction: CreateJurisdictionType) => Promise<ServiceResponse<JurisdictionDomainModel>>
-  createJurisdictions: (jurisdictions: CreateJurisdictionType[]) => Promise<ServiceResponse<JurisdictionDomainModel[]>>
+  createJurisdiction: (jurisdiction: CreateJurisdictionDomainModel) => Promise<ServiceResponse<JurisdictionDomainModel>>
+  createJurisdictions: (
+    jurisdictions: CreateJurisdictionDomainModel[]
+  ) => Promise<ServiceResponse<JurisdictionDomainModel[]>>
   updateJurisdiction: (
     jurisdiction_id: UUID,
-    update: UpdateJurisdictionType
+    update: UpdateJurisdictionDomainModel
   ) => Promise<ServiceResponse<JurisdictionDomainModel>>
   deleteJurisdiction: (
     jurisdiction_id: UUID

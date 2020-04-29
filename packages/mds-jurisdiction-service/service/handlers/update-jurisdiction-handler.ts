@@ -18,12 +18,12 @@ import { UUID } from '@mds-core/mds-types'
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { RepositoryError } from '@mds-core/mds-repository'
-import { UpdateJurisdictionType, JurisdictionDomainModel } from '../../@types'
+import { UpdateJurisdictionDomainModel, JurisdictionDomainModel } from '../../@types'
 import { JurisdictionRepository } from '../repository'
 
 export const UpdateJurisdictionHandler = async (
   jurisdiction_id: UUID,
-  jurisdiction: UpdateJurisdictionType
+  jurisdiction: UpdateJurisdictionDomainModel
 ): Promise<ServiceResponse<JurisdictionDomainModel>> => {
   try {
     const updated = await JurisdictionRepository.updateJurisdiction(jurisdiction_id, jurisdiction)

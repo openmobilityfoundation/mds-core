@@ -15,7 +15,7 @@
  */
 
 import { Connection } from 'typeorm'
-import { ConnectionManager, ConnectionManagerOptions, ConnectionMode } from './connection-manager'
+import { ConnectionManager, ConnectionManagerOptions, ConnectionMode } from './connection'
 import { CreateRepositoryMigration } from './migration'
 
 type RepositoryMethod<TMethod> = (connect: (mode: ConnectionMode) => Promise<Connection>) => TMethod

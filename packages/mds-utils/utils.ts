@@ -592,6 +592,8 @@ const parseObjectProperties = <T = string>(
 
 const asArray = <T>(value: SingleOrArray<T>): T[] => (Array.isArray(value) ? value : [value])
 
+const pluralize = (count: number, singular: string, plural: string) => (count === 1 ? singular : plural)
+
 export {
   UUID_REGEX,
   isUUID,
@@ -638,5 +640,6 @@ export {
   getCurrentDate,
   getEnvVar,
   parseObjectProperties,
-  asArray
+  asArray,
+  pluralize
 }

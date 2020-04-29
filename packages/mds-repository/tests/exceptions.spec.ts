@@ -14,10 +14,13 @@
     limitations under the License.
  */
 
-export * from './entities'
-export * from './exceptions'
-export * from './mapper'
-export * from './repository'
-export * from './transformers'
-export * from './utils'
-export * from './@types'
+import test from 'unit.js'
+import { RepositoryError } from '../exceptions'
+
+describe('Test Exceptions', () => {
+  it('RepositoryError', done => {
+    const error = RepositoryError(Error('Some Caught Error'))
+    test.value(error instanceof Error).is(true)
+    done()
+  })
+})

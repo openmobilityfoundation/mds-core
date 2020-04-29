@@ -17,17 +17,18 @@
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { RepositoryError } from '@mds-core/mds-repository'
-import { CreateJurisdictionType, JurisdictionDomainModel } from '../../@types'
+import { CreateJurisdictionDomainModel, JurisdictionDomainModel } from '../../@types'
 import { JurisdictionRepository } from '../repository'
+import { ValidateJurisdictionForCreate } from '../validators'
 
 export const CreateJurisdictionsHandler = async (
-  jurisdictions: CreateJurisdictionType[]
+  models: CreateJurisdictionDomainModel[]
 ): Promise<ServiceResponse<JurisdictionDomainModel[]>> => {
   try {
-    const created = await JurisdictionRepository.createJurisdictions(jurisdictions)
-    return ServiceResult(created)
+    const jurisdictions = await JurisdictionRepository.createJurisdictions(models.map(ValidateJurisdictionForCreate))
+    return ServiceResult(jurisdictions)
   } catch (error) /* istanbul ignore next */ {
-    const exception = ServiceException('Error Creating Jurisdiction', RepositoryError(error))
+    const exception = ServiceException('Error Creating Jurisdictions', RepositoryError(error))
     logger.error(exception, error)
     return exception
   }

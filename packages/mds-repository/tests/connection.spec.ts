@@ -15,13 +15,13 @@
  */
 
 import test from 'unit.js'
-import { ConnectionManager } from '../connection-manager'
+import { ConnectionManager } from '../connection'
 
 const TEST_REPOSITORY_NAME = 'test-repository'
 
 const manager = ConnectionManager(TEST_REPOSITORY_NAME)
 
-describe('Test Connection Manager', () => {
+describe('Test Connections', () => {
   before(async () => {
     await manager.initialize()
   })

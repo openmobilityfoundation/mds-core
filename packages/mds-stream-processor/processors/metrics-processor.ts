@@ -17,6 +17,7 @@ import { getEnvVar, asArray } from '@mds-core/mds-utils'
 import { MetricDomainModel } from '@mds-core/mds-metrics-service'
 import { MetricsServiceProvider } from '@mds-core/mds-metrics-service/service/provider'
 import logger from '@mds-core/mds-logger'
+import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { StreamForwarder } from './index'
 import { KafkaSource } from '../connectors/kafka-connector'
 import { StreamSink } from '../connectors'
@@ -33,12 +34,12 @@ export const MetricsProcessor = () => {
         await MetricsServiceProvider.initialize()
       },
       write: async message => {
-        try {
+        HandleServiceResponse(
           // TODO: Switch to MetricsServiceClient
-          await MetricsServiceProvider.writeMetrics(asArray(message))
-        } catch (error) {
-          logger.error('Error processing metrics message', error)
-        }
+          await MetricsServiceProvider.writeMetrics(asArray(message)),
+          error => logger.error('Error processing metrics message', error),
+          metrics => logger.info(`Wrote ${metrics.length} ${metrics.length === 1} ? 'metrics' : 'metric`)
+        )
       },
       shutdown: async () => {
         // TODO: This won't be necessary when the service provider is a separate process

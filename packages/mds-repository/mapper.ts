@@ -14,10 +14,12 @@
     limitations under the License.
  */
 
-export * from './entities'
-export * from './exceptions'
-export * from './mapper'
-export * from './repository'
-export * from './transformers'
-export * from './utils'
-export * from './@types'
+export const ModelMapper = <From, To, Options = Partial<{}>>(
+  map: (model: From, options?: Options) => To
+): {
+  map: (model: From, options?: Options) => To
+  mapper: (options?: Options) => (model: From) => To
+} => ({
+  map,
+  mapper: options => model => map(model, options)
+})

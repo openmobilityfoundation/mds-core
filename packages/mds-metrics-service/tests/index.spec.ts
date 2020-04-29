@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import { uuid, minutes, timeframe, days } from '@mds-core/mds-utils'
+import { uuid, minutes, timeframe, days, pluralize } from '@mds-core/mds-utils'
 import { VEHICLE_TYPE } from '@mds-core/mds-types'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { MetricsServiceProvider } from '../service/provider'
@@ -94,7 +94,7 @@ const testQuery = (query: () => ReadMetricsOptions & { expected: MetricDomainMod
           .map(key => (Array.isArray(filters[key as keyof ReadMetricsFilterOptions]) ? `${key}[]` : key))
           .join(', ')}`
       : ''
-  }] (Expect ${expected.length} Match${expected.length === 1 ? '' : 'es'})`, async () =>
+  }] (Expect ${expected.length} ${pluralize(expected.length, 'Match', 'Matches')})`, async () =>
     HandleServiceResponse(
       await MetricsServiceProvider.readMetrics(options),
       error => test.value(error).is(null),
@@ -107,7 +107,7 @@ describe('Metrics Service', () => {
     await MetricsServiceProvider.initialize()
   })
 
-  it(`Generate ${TEST_METRICS.length} Metric${TEST_METRICS.length === 1 ? '' : 's'}`, async () =>
+  it(`Generate ${TEST_METRICS.length} ${pluralize(TEST_METRICS.length, 'Metric', 'Metrics')}`, async () =>
     HandleServiceResponse(
       await MetricsServiceProvider.writeMetrics(TEST_METRICS),
       error => test.value(error).is(null),
