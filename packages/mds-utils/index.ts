@@ -1,3 +1,7 @@
+import { v4 } from 'uuid'
+import { UUID } from '@mds-core/mds-types'
+
 export * from './exceptions'
 export * from './utils'
-export { v4 as uuid } from 'uuid'
+
+export const uuid = (): UUID => v4()

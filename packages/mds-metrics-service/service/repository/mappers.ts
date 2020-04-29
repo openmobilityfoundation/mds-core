@@ -19,11 +19,11 @@ import { CreateIdentityEntityModel } from '@mds-core/mds-repository'
 import { MetricEntityModel } from './entities/metric-entity'
 import { MetricDomainModel } from '../../@types'
 
-type MapMertricEntityToDomainModelOptions = Partial<{}>
+type MapMetricEntityToDomainModelOptions = Partial<{}>
 
 const MapMetricEntityToDomainModel = (
   model: MetricEntityModel,
-  options: MapMertricEntityToDomainModelOptions = {}
+  options: MapMetricEntityToDomainModelOptions = {}
 ): MetricDomainModel => {
   const { id, recorded, ...domain } = model
   return domain
@@ -31,7 +31,7 @@ const MapMetricEntityToDomainModel = (
 
 export const MetricEntityToDomainModel = {
   map: MapMetricEntityToDomainModel,
-  mapper: (options: MapMertricEntityToDomainModelOptions = {}) => (model: MetricEntityModel) =>
+  mapper: (options: MapMetricEntityToDomainModelOptions = {}) => (model: MetricEntityModel) =>
     MapMetricEntityToDomainModel(model, options)
 }
 

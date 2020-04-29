@@ -54,17 +54,21 @@ export const HandleServiceResponse = <R>(
 export const ServiceException = (message: string, error?: unknown) => {
   const details = (error instanceof Error && error.message) || undefined
 
+  /* istanbul ignore if */
   if (error instanceof NotFoundError) {
     return ServiceError({ type: 'NotFoundError', message, details })
   }
 
+  /* istanbul ignore if */
   if (error instanceof ValidationError) {
     return ServiceError({ type: 'ValidationError', message, details })
   }
 
+  /* istanbul ignore if */
   if (error instanceof ConflictError) {
     return ServiceError({ type: 'ConflictError', message, details })
   }
+
   return ServiceError({ type: 'ServiceException', message, details })
 }
 

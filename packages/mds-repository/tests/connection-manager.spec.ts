@@ -28,7 +28,7 @@ describe('Test Connection Manager', () => {
 
   it('Create R/W Connection', async () => {
     const rw = await manager.connect('rw')
-    test.value(rw.name).is(`${TEST_REPOSITORY_NAME}-rw`)
+    test.value(rw.name).startsWith(`${TEST_REPOSITORY_NAME}-rw`)
     test.value(rw.isConnected).is(true)
     await rw.close()
     test.value(rw.isConnected).is(false)
@@ -40,7 +40,7 @@ describe('Test Connection Manager', () => {
 
   it('Create R/O Connection', async () => {
     const ro = await manager.connect('ro')
-    test.value(ro.name).is(`${TEST_REPOSITORY_NAME}-ro`)
+    test.value(ro.name).startsWith(`${TEST_REPOSITORY_NAME}-ro`)
     test.value(ro.isConnected).is(true)
     await ro.close()
     test.value(ro.isConnected).is(false)

@@ -16,6 +16,7 @@
 
 import { Connection } from 'typeorm'
 import { ConnectionManager, ConnectionManagerOptions, ConnectionMode } from './connection-manager'
+import { CreateRepositoryMigration } from './migration'
 
 type RepositoryMethod<TMethod> = (connect: (mode: ConnectionMode) => Promise<Connection>) => TMethod
 
@@ -28,9 +29,14 @@ export type RepositoryOptions = Pick<ConnectionManagerOptions, 'entities' | 'mig
 export const CreateRepository = <TRepositoryMethods>(
   name: string,
   methods: (connect: (mode: ConnectionMode) => Promise<Connection>) => TRepositoryMethods,
-  options: RepositoryOptions = {}
+  { entities = [], migrations = [] }: RepositoryOptions = {}
 ) => {
-  const { connect, ...manager } = ConnectionManager(name, { migrationsTableName: `${name}-migrations`, ...options })
+  const migrationsTableName = `${name}-migrations`
+  const { connect, ...manager } = ConnectionManager(name, {
+    migrationsTableName,
+    entities,
+    migrations: [CreateRepositoryMigration(migrationsTableName), ...migrations]
+  })
   return {
     ...manager,
     ...methods(connect)

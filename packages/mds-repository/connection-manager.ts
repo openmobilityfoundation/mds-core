@@ -14,10 +14,14 @@
     limitations under the License.
  */
 
-import { Connection, createConnections, ConnectionOptions } from 'typeorm'
+import { Connection, ConnectionOptions, createConnection } from 'typeorm'
 import { types as PostgresTypes } from 'pg'
 import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
+import { Nullable, UUID } from '@mds-core/mds-types'
+import { uuid } from '@mds-core/mds-utils'
+import logger from '@mds-core/mds-logger'
+import AwaitLock from 'await-lock'
 import { MdsNamingStrategy } from './naming-strategies'
 import { RepositoryError } from './exceptions'
 
@@ -42,15 +46,16 @@ const {
   PG_MIGRATIONS = 'true' // Enable migrations by default
 } = process.env
 
-const connectionName = (prefix: string, mode: ConnectionMode) => `${prefix}-${mode}`
-
 export type ConnectionManagerOptions = Partial<PostgresConnectionOptions>
 
 export const ConnectionManager = (prefix: string, options: Omit<ConnectionManagerOptions, 'cli'> = {}) => {
-  let connections: Connection[] | null = null
+  const lock = new AwaitLock()
+  const connections: { [mode in ConnectionMode]: Nullable<Connection> } = { ro: null, rw: null }
 
-  const [ro, rw]: ConnectionOptions[] = ConnectionModes.map(mode => ({
-    name: connectionName(prefix, mode),
+  const connectionName = ((instance: UUID) => (mode: ConnectionMode) => `${prefix}-${mode}-${instance}`)(uuid())
+
+  const connectionOptions = (mode: ConnectionMode): ConnectionOptions => ({
+    name: connectionName(mode),
     type: 'postgres',
     host: (mode === 'rw' ? PG_HOST : PG_HOST_READER) || PG_HOST || 'localhost',
     port: Number(PG_PORT) || 5432,
@@ -61,33 +66,29 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
     maxQueryExecutionTime: 3000,
     logger: 'simple-console',
     synchronize: false,
-    migrationsRun: PG_MIGRATIONS === 'true' && mode === 'rw',
+    migrationsRun: false,
     namingStrategy: new MdsNamingStrategy(),
     ...options
-  }))
+  })
 
-  const initialize = async () => {
-    if (!connections) {
-      try {
-        connections = await createConnections([ro, rw])
-      } catch (error) /* istanbul ignore next */ {
-        throw RepositoryError(error)
+  const getConnection = async (mode: ConnectionMode) => {
+    await lock.acquireAsync()
+    try {
+      if (!connections[mode]) {
+        connections[mode] = await createConnection(connectionOptions(mode))
+        logger.info(`Created ${mode} connection: ${connections[mode]?.options.name}`)
       }
+    } finally {
+      lock.release()
     }
+    return connections[mode]
   }
 
   const connect = async (mode: ConnectionMode) => {
-    if (!connections) {
-      await initialize()
-      if (!connections) {
-        /* istanbul ignore next */
-        throw RepositoryError(Error('Connection manager not initialized'))
-      }
-    }
-    const connection = connections.find(c => c.name === connectionName(prefix, mode))
+    const connection = await getConnection(mode)
     if (!connection) {
       /* istanbul ignore next */
-      throw RepositoryError(Error(`Connection ${connectionName(prefix, mode)} not found`))
+      throw RepositoryError(Error(`Connection ${connectionName(mode)} not found`))
     }
     if (!connection.isConnected) {
       try {
@@ -99,15 +100,34 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
     return connection
   }
 
-  const shutdown = async () => {
-    if (connections) {
-      try {
-        await Promise.all(
-          connections.filter(connection => connection.isConnected).map(connection => connection.close())
+  const initialize = async () => {
+    try {
+      const [, rw] = await Promise.all(ConnectionModes.map(mode => connect(mode)))
+      /* istanbul ignore if */
+      if (PG_MIGRATIONS === 'true' && rw.options.migrationsTableName) {
+        const migrations = await rw.runMigrations({ transaction: 'all' })
+        logger.info(
+          `Ran ${migrations.length} ${migrations.length === 1 ? 'migration' : 'migrations'} (${
+            options.migrationsTableName
+          })${migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''}`
         )
-      } finally {
-        connections = null
       }
+    } catch (error) /* istanbul ignore next */ {
+      throw RepositoryError(error)
+    }
+  }
+
+  const shutdown = async () => {
+    try {
+      if (connections.ro?.isConnected) {
+        await connections.ro.close()
+      }
+      if (connections.rw?.isConnected) {
+        await connections.rw.close()
+      }
+    } finally {
+      connections.ro = null
+      connections.rw = null
     }
   }
 
@@ -115,7 +135,7 @@ export const ConnectionManager = (prefix: string, options: Omit<ConnectionManage
     initialize,
     cli: (cli: Partial<ConnectionManagerOptions['cli']> = {}) => {
       // Make the "rw" connection the default for the TypeORM CLI by removing the connection name
-      const { name, ...ormconfig } = rw
+      const { name, ...ormconfig } = connectionOptions('rw')
       return { ...ormconfig, cli }
     },
     connect,
