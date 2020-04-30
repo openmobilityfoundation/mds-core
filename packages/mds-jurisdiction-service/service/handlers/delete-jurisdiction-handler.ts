@@ -14,15 +14,14 @@
     limitations under the License.
  */
 
-import { UUID } from '@mds-core/mds-types'
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { RepositoryError } from '@mds-core/mds-repository'
 import { JurisdictionRepository } from '../repository'
-import { JurisdictionDomainModel } from '../../@types'
+import { JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 
 export const DeleteJurisdictionHandler = async (
-  jurisdiction_id: UUID
+  jurisdiction_id: JurisdictionIdType
 ): Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>> => {
   try {
     const deleted = await JurisdictionRepository.deleteJurisdiction(jurisdiction_id)

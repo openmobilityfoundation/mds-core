@@ -14,15 +14,14 @@
     limitations under the License.
  */
 
-import { UUID } from '@mds-core/mds-types'
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
 import { RepositoryError } from '@mds-core/mds-repository'
-import { GetJurisdictionsOptions, JurisdictionDomainModel } from '../../@types'
+import { GetJurisdictionsOptions, JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 import { JurisdictionRepository } from '../repository'
 
 export const GetJurisdictionHandler = async (
-  jurisdiction_id: UUID,
+  jurisdiction_id: JurisdictionIdType,
   options?: GetJurisdictionsOptions
 ): Promise<ServiceResponse<JurisdictionDomainModel>> => {
   try {

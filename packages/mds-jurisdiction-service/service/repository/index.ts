@@ -14,8 +14,7 @@
     limitations under the License.
  */
 
-import { UUID } from '@mds-core/mds-types'
-import { InsertReturning, UpdateReturning, CreateRepository, CreateRepositoryMethod } from '@mds-core/mds-repository'
+import { InsertReturning, UpdateReturning, ReadWriteRepository } from '@mds-core/mds-repository'
 
 import { filterEmptyHelper, ValidationError, ConflictError, NotFoundError } from '@mds-core/mds-utils'
 
@@ -25,38 +24,18 @@ import {
   JurisdictionDomainModel,
   GetJurisdictionsOptions,
   UpdateJurisdictionDomainModel,
-  CreateJurisdictionDomainModel
+  CreateJurisdictionDomainModel,
+  JurisdictionIdType
 } from '../../@types'
 import { JurisdictionEntityToDomain, JurisdictionDomainToEntityCreate } from './mappers'
 
-const ReadJurisdiction = CreateRepositoryMethod(
-  connect => async (jurisdiction_id: UUID, options?: GetJurisdictionsOptions): Promise<JurisdictionDomainModel> => {
-    const connection = await connect('ro')
-    const entity = await connection.getRepository(JurisdictionEntity).findOne({ where: { jurisdiction_id } })
-    if (!entity) {
-      throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
-    }
-    const jurisdiction = JurisdictionEntityToDomain.map(entity, options)
-    if (!jurisdiction) {
-      throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
-    }
-    return jurisdiction
-  }
-)
-
 const isEffectiveJurisdiction = filterEmptyHelper<JurisdictionDomainModel>()
 
-const ReadJurisdictions = CreateRepositoryMethod(connect => async (options?: GetJurisdictionsOptions): Promise<
-  JurisdictionDomainModel[]
-> => {
-  const connection = await connect('ro')
-  const entities = await connection.getRepository(JurisdictionEntity).find()
-  return entities.map(JurisdictionEntityToDomain.mapper(options)).filter(isEffectiveJurisdiction)
-})
-
-const CreateJurisdictions = CreateRepositoryMethod(
-  connect => async (jurisdictions: CreateJurisdictionDomainModel[]): Promise<JurisdictionDomainModel[]> => {
-    const connection = await connect('rw')
+class JurisdictionReadWriteRepository extends ReadWriteRepository {
+  public createJurisdictions = async (
+    jurisdictions: CreateJurisdictionDomainModel[]
+  ): Promise<JurisdictionDomainModel[]> => {
+    const connection = await this.connect('rw')
 
     const { raw: entities }: InsertReturning<JurisdictionEntity> = await connection
       .getRepository(JurisdictionEntity)
@@ -68,11 +47,72 @@ const CreateJurisdictions = CreateRepositoryMethod(
 
     return entities.map(JurisdictionEntityToDomain.mapper()).filter(isEffectiveJurisdiction)
   }
-)
 
-const UpdateJurisdiction = CreateRepositoryMethod(
-  connect => async (jurisdiction_id: UUID, patch: UpdateJurisdictionDomainModel): Promise<JurisdictionDomainModel> => {
-    const connection = await connect('rw')
+  public deleteJurisdiction = async (
+    jurisdiction_id: JurisdictionIdType
+  ): Promise<Pick<JurisdictionDomainModel, 'jurisdiction_id'>> => {
+    const connection = await this.connect('rw')
+
+    const entity = await connection.getRepository(JurisdictionEntity).findOne({ where: { jurisdiction_id } })
+    if (!entity) {
+      throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
+    }
+    const { id, ...current } = entity
+
+    const jurisdiction = JurisdictionEntityToDomain.map(entity)
+    if (!jurisdiction) {
+      throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
+    }
+
+    await connection
+      .getRepository(JurisdictionEntity)
+      .createQueryBuilder()
+      .update()
+      .set({
+        ...current,
+        versions: [
+          {
+            agency_name: jurisdiction.agency_name,
+            geography_id: null,
+            timestamp: Date.now()
+          },
+          ...current.versions
+        ].sort((a, b) => b.timestamp - a.timestamp)
+      })
+      .where('jurisdiction_id = :jurisdiction_id', { jurisdiction_id })
+      .returning('*')
+      .execute()
+
+    return { jurisdiction_id }
+  }
+
+  public readJurisdiction = async (
+    jurisdiction_id: JurisdictionIdType,
+    options?: GetJurisdictionsOptions
+  ): Promise<JurisdictionDomainModel> => {
+    const connection = await this.connect('ro')
+    const entity = await connection.getRepository(JurisdictionEntity).findOne({ where: { jurisdiction_id } })
+    if (!entity) {
+      throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
+    }
+    const jurisdiction = JurisdictionEntityToDomain.map(entity, options)
+    if (!jurisdiction) {
+      throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
+    }
+    return jurisdiction
+  }
+
+  public readJurisdictions = async (options?: GetJurisdictionsOptions): Promise<JurisdictionDomainModel[]> => {
+    const connection = await this.connect('ro')
+    const entities = await connection.getRepository(JurisdictionEntity).find()
+    return entities.map(JurisdictionEntityToDomain.mapper(options)).filter(isEffectiveJurisdiction)
+  }
+
+  public updateJurisdiction = async (
+    jurisdiction_id: JurisdictionIdType,
+    patch: UpdateJurisdictionDomainModel
+  ): Promise<JurisdictionDomainModel> => {
+    const connection = await this.connect('rw')
 
     if (patch.jurisdiction_id && patch.jurisdiction_id !== jurisdiction_id) {
       throw new ConflictError(`Invalid jurisdiction_id ${patch.jurisdiction_id}. Must match ${jurisdiction_id}.`)
@@ -122,59 +162,13 @@ const UpdateJurisdiction = CreateRepositoryMethod(
 
     return { ...jurisdiction, ...JurisdictionEntityToDomain.map(updated) }
   }
-)
 
-const DeleteJurisdiction = CreateRepositoryMethod(connect => async (jurisdiction_id: UUID): Promise<
-  Pick<JurisdictionDomainModel, 'jurisdiction_id'>
-> => {
-  const connection = await connect('rw')
-
-  const entity = await connection.getRepository(JurisdictionEntity).findOne({ where: { jurisdiction_id } })
-  if (!entity) {
-    throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
-  }
-  const { id, ...current } = entity
-
-  const jurisdiction = JurisdictionEntityToDomain.map(entity)
-  if (!jurisdiction) {
-    throw new NotFoundError(`Jurisdiction ${jurisdiction_id} Not Found`)
-  }
-
-  await connection
-    .getRepository(JurisdictionEntity)
-    .createQueryBuilder()
-    .update()
-    .set({
-      ...current,
-      versions: [
-        {
-          agency_name: jurisdiction.agency_name,
-          geography_id: null,
-          timestamp: Date.now()
-        },
-        ...current.versions
-      ].sort((a, b) => b.timestamp - a.timestamp)
+  constructor() {
+    super('jurisdictions', {
+      entities: [JurisdictionEntity],
+      migrations: Object.values(migrations)
     })
-    .where('jurisdiction_id = :jurisdiction_id', { jurisdiction_id })
-    .returning('*')
-    .execute()
-
-  return { jurisdiction_id }
-})
-
-export const JurisdictionRepository = CreateRepository(
-  'jurisdictions',
-  connect => {
-    return {
-      createJurisdictions: CreateJurisdictions(connect),
-      deleteJurisdiction: DeleteJurisdiction(connect),
-      readJurisdiction: ReadJurisdiction(connect),
-      readJurisdictions: ReadJurisdictions(connect),
-      updateJurisdiction: UpdateJurisdiction(connect)
-    }
-  },
-  {
-    entities: [JurisdictionEntity],
-    migrations: Object.values(migrations)
   }
-)
+}
+
+export const JurisdictionRepository = new JurisdictionReadWriteRepository()

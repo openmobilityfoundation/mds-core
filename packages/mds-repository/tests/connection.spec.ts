@@ -19,7 +19,7 @@ import { ConnectionManager } from '../connection'
 
 const TEST_REPOSITORY_NAME = 'test-repository'
 
-const manager = ConnectionManager(TEST_REPOSITORY_NAME)
+const manager = new ConnectionManager(TEST_REPOSITORY_NAME)
 
 describe('Test Connections', () => {
   before(async () => {

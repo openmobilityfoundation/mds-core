@@ -14,12 +14,15 @@
     limitations under the License.
  */
 
-import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
-import { UUID } from '@mds-core/mds-types'
+import {
+  JurisdictionServiceClient,
+  JurisdictionDomainModel,
+  JurisdictionIdType
+} from '@mds-core/mds-jurisdiction-service'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
-type DeleteJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: UUID }>
+type DeleteJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }>
 
 type DeleteJurisdictionResponse = JurisdictionApiResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>
 

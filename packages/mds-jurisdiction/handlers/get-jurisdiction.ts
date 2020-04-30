@@ -14,8 +14,11 @@
     limitations under the License.
  */
 
-import { UUID } from '@mds-core/mds-types'
-import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
+import {
+  JurisdictionServiceClient,
+  JurisdictionDomainModel,
+  JurisdictionIdType
+} from '@mds-core/mds-jurisdiction-service'
 import { AuthorizationError } from '@mds-core/mds-utils'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { parseRequest } from '@mds-core/mds-api-helpers'
@@ -23,7 +26,7 @@ import { ApiQuery } from '@mds-core/mds-api-server'
 import { JurisdictionApiResponse, JurisdictionApiRequest } from '../types'
 import { HasJurisdictionClaim } from './utils'
 
-type GetJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: UUID }> & ApiQuery<'effective'>
+type GetJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }> & ApiQuery<'effective'>
 
 type GetJurisdictionResponse = JurisdictionApiResponse<{
   jurisdiction: JurisdictionDomainModel

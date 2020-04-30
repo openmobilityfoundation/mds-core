@@ -17,13 +17,13 @@
 import {
   UpdateJurisdictionDomainModel,
   JurisdictionServiceClient,
-  JurisdictionDomainModel
+  JurisdictionDomainModel,
+  JurisdictionIdType
 } from '@mds-core/mds-jurisdiction-service'
-import { UUID } from '@mds-core/mds-types'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
 
-interface UpdateJurisdictionRequest extends JurisdictionApiRequest<{ jurisdiction_id: UUID }> {
+interface UpdateJurisdictionRequest extends JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }> {
   body: UpdateJurisdictionDomainModel
 }
 

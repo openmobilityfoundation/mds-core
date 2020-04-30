@@ -15,29 +15,30 @@
  */
 
 import { Entity, Column, Index } from 'typeorm'
-import { UUID, Timestamp, Nullable } from '@mds-core/mds-types'
+import { Nullable } from '@mds-core/mds-types'
 import { RecordedEntity, IdentityEntity, IdentityEntityModel, RecordedEntityModel } from '@mds-core/mds-repository'
+import { JurisdictionDomainModel } from '../../../@types'
 
 export interface JurisdictionVersionedProperties {
-  timestamp: Timestamp
-  agency_name: string
-  geography_id: Nullable<UUID>
+  timestamp: JurisdictionDomainModel['timestamp']
+  agency_name: JurisdictionDomainModel['agency_name']
+  geography_id: Nullable<JurisdictionDomainModel['geography_id']>
 }
 
 export interface JurisdictionEntityModel extends IdentityEntityModel, RecordedEntityModel {
-  jurisdiction_id: UUID
-  agency_key: string
+  jurisdiction_id: JurisdictionDomainModel['jurisdiction_id']
+  agency_key: JurisdictionDomainModel['agency_key']
   versions: JurisdictionVersionedProperties[]
 }
 
 @Entity('jurisdictions')
 export class JurisdictionEntity extends IdentityEntity(RecordedEntity(class {})) implements JurisdictionEntityModel {
   @Column('uuid', { primary: true })
-  jurisdiction_id: UUID
+  jurisdiction_id: JurisdictionEntityModel['jurisdiction_id']
 
   @Column('varchar', { length: 63 })
   @Index({ unique: true })
-  agency_key: string
+  agency_key: JurisdictionEntityModel['agency_key']
 
   @Column('json')
   versions: JurisdictionVersionedProperties[]
