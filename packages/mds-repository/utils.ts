@@ -14,20 +14,20 @@
     limitations under the License.
  */
 
-import { SingleOrArray } from '@mds-core/mds-types'
-import { In } from 'typeorm'
+import { SingleOrArray, Nullable } from '@mds-core/mds-types'
+import { In, IsNull } from 'typeorm'
 
 export const entityPropertyFilter = <T extends object, TProperty extends keyof T>(
   property: TProperty,
-  value: SingleOrArray<T[TProperty]> | undefined
+  value?: Nullable<SingleOrArray<T[TProperty]>>
 ) => {
-  if (value) {
+  if (value !== undefined) {
     if (Array.isArray(value)) {
       if (value.length) {
         return value.length === 1 ? { [property]: value[0] } : { [property]: In(value) }
       }
     } else {
-      return { [property]: value }
+      return { [property]: value ?? IsNull() }
     }
   }
   return {}

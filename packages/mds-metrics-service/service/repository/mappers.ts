@@ -19,8 +19,8 @@ import { IdentityEntityCreateModel, ModelMapper, RecordedEntityCreateModel } fro
 import { MetricEntityModel } from './entities/metric-entity'
 import { MetricDomainModel } from '../../@types'
 
-export const MetricEntityToDomain = ModelMapper<MetricEntityModel, MetricDomainModel>((model, options) => {
-  const { id, recorded, ...domain } = model
+export const MetricEntityToDomain = ModelMapper<MetricEntityModel, MetricDomainModel>((entity, options) => {
+  const { id, recorded, ...domain } = entity
   return domain
 })
 
@@ -32,8 +32,8 @@ export const MetricDomainToEntityCreate = ModelMapper<
   MetricDomainModel,
   RecordedEntityCreateModel<IdentityEntityCreateModel<MetricEntityModel>>,
   MetricDomainToEntityCreateOptions
->((model, options) => {
+>((domain, options) => {
   const { recorded } = options ?? {}
-  const entity = { ...model, recorded }
+  const entity = { ...domain, recorded }
   return entity
 })

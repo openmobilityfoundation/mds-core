@@ -16,7 +16,7 @@
 
 import test from 'unit.js'
 import { uuid, minutes, timeframe, days, pluralize } from '@mds-core/mds-utils'
-import { VEHICLE_TYPE } from '@mds-core/mds-types'
+import { VEHICLE_TYPE, UUID } from '@mds-core/mds-types'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { MetricsServiceProvider } from '../service/provider'
 import { MetricDomainModel, ReadMetricsOptions, ReadMetricsFilterOptions } from '../@types'
@@ -26,9 +26,9 @@ const TEST_METRIC_NAME = 'test.metric'
 const TEST_TIME_BIN_SIZE = minutes(5)
 const TEST_TIMESTAMP = Date.now() - days(1)
 const { start_time: TEST_TIME_BIN_START, end_time: TEST_TIME_BIN_END } = timeframe(TEST_TIME_BIN_SIZE, TEST_TIMESTAMP)
-const TEST_PROVIDER_IDS = Array.from({ length: 6 }, () => uuid())
+const TEST_PROVIDER_IDS: UUID[] = Array.from({ length: 6 }, () => uuid())
 const [TEST_PROVIDER_ID1, TEST_PROVIDER_ID2, TEST_PROVIDER_ID3] = TEST_PROVIDER_IDS
-const TEST_GEOGRAPHY_IDS = Array.from({ length: 10 }, () => uuid())
+const TEST_GEOGRAPHY_IDS: UUID[] = Array.from({ length: 10 }, () => uuid())
 const [TEST_GEOGRAPHY_ID1, TEST_GEOGRAPHY_ID2, TEST_GEOGRAPHY_ID3] = TEST_GEOGRAPHY_IDS
 const TEST_VEHICLE_TYPES: VEHICLE_TYPE[] = ['scooter', 'bicycle', 'moped']
 const [TEST_VEHICLE_TYPE1, TEST_VEHICLE_TYPE2, TEST_VEHICLE_TYPE3] = TEST_VEHICLE_TYPES
@@ -65,9 +65,9 @@ function* GenerateMetrics(): Generator<MetricDomainModel> {
     { length: 12 },
     (_, index) => TEST_TIME_BIN_START + TEST_TIME_BIN_SIZE * index
   )) {
-    for (const provider_id of TEST_PROVIDER_IDS) {
-      for (const geography_id of TEST_GEOGRAPHY_IDS) {
-        for (const vehicle_type of TEST_VEHICLE_TYPES) {
+    for (const provider_id of [...TEST_PROVIDER_IDS, null]) {
+      for (const geography_id of [...TEST_GEOGRAPHY_IDS, null]) {
+        for (const vehicle_type of [...TEST_VEHICLE_TYPES, null]) {
           yield {
             name: TEST_METRIC_NAME,
             time_bin_size: TEST_TIME_BIN_SIZE,
@@ -91,7 +91,13 @@ const testQuery = (query: () => ReadMetricsOptions & { expected: MetricDomainMod
   return it(`Query Metrics Filters: [${
     filters
       ? `${Object.keys(filters)
-          .map(key => (Array.isArray(filters[key as keyof ReadMetricsFilterOptions]) ? `${key}[]` : key))
+          .map(key => {
+            const filter = filters[key as keyof ReadMetricsFilterOptions]
+            if (Array.isArray(filter)) {
+              return `${key}[]`
+            }
+            return filter === null ? `NULL ${key}` : key
+          })
           .join(', ')}`
       : ''
   }] (Expect ${expected.length} ${pluralize(expected.length, 'Match', 'Matches')})`, async () =>
@@ -195,6 +201,25 @@ describe('Metrics Service', () => {
         [TEST_GEOGRAPHY_ID2, TEST_GEOGRAPHY_ID3].includes(metric.geography_id) &&
         metric.vehicle_type &&
         [TEST_VEHICLE_TYPE2, TEST_VEHICLE_TYPE3].includes(metric.vehicle_type)
+    )
+  }))
+
+  testQuery(() => ({
+    name: TEST_METRIC_NAME,
+    time_bin_size: TEST_TIME_BIN_SIZE,
+    time_bin_start: TEST_TIMESTAMP,
+    time_bin_end: TEST_TIMESTAMP + days(1),
+    provider_id: null,
+    geography_id: null,
+    vehicle_type: null,
+    expected: TEST_METRICS.filter(
+      metric =>
+        metric.time_bin_size === TEST_TIME_BIN_SIZE &&
+        metric.time_bin_start >= TEST_TIME_BIN_START &&
+        metric.time_bin_start <= TEST_TIME_BIN_START + days(1) &&
+        metric.provider_id === null &&
+        metric.geography_id === null &&
+        metric.vehicle_type === null
     )
   }))
 

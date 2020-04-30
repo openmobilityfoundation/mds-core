@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { UUID, Timestamp, Nullable, VEHICLE_TYPE } from '@mds-core/mds-types'
 import {
   BigintTransformer,
@@ -39,7 +39,13 @@ export interface MetricEntityModel extends IdentityEntityModel, RecordedEntityMo
 }
 
 @Entity('metrics')
-export class MetricEntity extends IdentityEntity(RecordedEntity(class {})) implements MetricEntityModel {
+@Index(
+  'idx_dimensions_metrics',
+  ['name', 'time_bin_size', 'time_bin_start', 'provider_id', 'vehicle_type', 'geography_id'],
+  { unique: true }
+)
+export class MetricEntity extends IdentityEntity(RecordedEntity(class {}), { primary: true })
+  implements MetricEntityModel {
   @Column('varchar', { primary: true, length: 255 })
   name: string
 
@@ -49,13 +55,13 @@ export class MetricEntity extends IdentityEntity(RecordedEntity(class {})) imple
   @Column('bigint', { primary: true, transformer: BigintTransformer })
   time_bin_start: Timestamp
 
-  @Column('uuid', { primary: true, nullable: true })
+  @Column('uuid', { nullable: true })
   provider_id: Nullable<UUID>
 
-  @Column('uuid', { primary: true, nullable: true })
+  @Column('uuid', { nullable: true })
   geography_id: Nullable<UUID>
 
-  @Column('varchar', { primary: true, length: 31, nullable: true })
+  @Column('varchar', { length: 31, nullable: true })
   vehicle_type: Nullable<VEHICLE_TYPE>
 
   @Column('bigint', { transformer: BigintTransformer, nullable: true })

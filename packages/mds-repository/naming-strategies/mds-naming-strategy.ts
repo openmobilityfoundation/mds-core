@@ -26,4 +26,8 @@ export class MdsNamingStrategy extends DefaultNamingStrategy implements NamingSt
   indexName(tableOrName: Table | string, columnNames: string[], where?: string): string {
     return ['idx', ...columnNames, tableName(tableOrName)].join('_')
   }
+
+  uniqueConstraintName(tableOrName: Table | string, columnNames: string[]): string {
+    return ['uc', ...columnNames, tableName(tableOrName)].join('_')
+  }
 }

@@ -38,9 +38,9 @@ export interface ReadMetricsTimeOptions {
 }
 
 export interface ReadMetricsFilterOptions {
-  provider_id: SingleOrArray<UUID>
-  geography_id: SingleOrArray<UUID>
-  vehicle_type: SingleOrArray<VEHICLE_TYPE>
+  provider_id: Nullable<SingleOrArray<UUID>>
+  geography_id: Nullable<SingleOrArray<UUID>>
+  vehicle_type: Nullable<SingleOrArray<VEHICLE_TYPE>>
 }
 
 export interface ReadMetricsOptions extends ReadMetricsTimeOptions, Partial<ReadMetricsFilterOptions> {

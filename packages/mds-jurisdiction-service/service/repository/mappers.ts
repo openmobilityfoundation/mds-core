@@ -28,20 +28,21 @@ export const JurisdictionEntityToDomain = ModelMapper<
   JurisdictionEntityModel,
   Nullable<JurisdictionDomainModel>,
   MapJurisdictionEntityToDomainModelOptions
->((model, options) => {
+>((entity, options) => {
   const { effective = Date.now() } = options ?? {}
-  const { jurisdiction_id, agency_key, versions } = model
+  const { jurisdiction_id, agency_key, versions } = entity
   const version = versions.find(properties => effective >= properties.timestamp)
   if (version) {
     const { agency_name, geography_id, timestamp } = version
     if (geography_id !== null) {
-      return {
+      const domain = {
         jurisdiction_id,
         agency_key,
         agency_name,
         geography_id,
         timestamp
       }
+      return domain
     }
   }
   return null
@@ -55,13 +56,14 @@ export const JurisdictionDomainToEntityCreate = ModelMapper<
   CreateJurisdictionDomainModel,
   RecordedEntityCreateModel<IdentityEntityCreateModel<JurisdictionEntityModel>>,
   JurisdictionDomainToEntityCreateOptions
->((model, options) => {
+>((domain, options) => {
   const { recorded } = options ?? {}
-  const { jurisdiction_id = uuid(), agency_key, agency_name, geography_id, timestamp = Date.now() } = model
-  return {
+  const { jurisdiction_id = uuid(), agency_key, agency_name, geography_id, timestamp = Date.now() } = domain
+  const entity = {
     jurisdiction_id,
     agency_key,
     versions: [{ timestamp, agency_name, geography_id }],
     recorded
   }
+  return entity
 })

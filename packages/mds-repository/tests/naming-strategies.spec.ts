@@ -29,4 +29,9 @@ describe('Test Naming Strategy', () => {
     test.value(strategy.indexName('table', ['column'])).is('idx_column_table')
     done()
   })
+
+  it('Unique Constraint Naming Strategy', done => {
+    test.value(strategy.uniqueConstraintName('table', ['column'])).is('uc_column_table')
+    done()
+  })
 })
