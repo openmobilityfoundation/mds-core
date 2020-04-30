@@ -14,9 +14,26 @@
     limitations under the License.
  */
 
-import { Audit, Telemetry, Timestamp, UUID } from '@mds-core/mds-types'
-import { ApiRequest, ApiResponse, ApiQuery, ApiClaims } from '@mds-core/mds-api-server'
+import {
+  Audit,
+  Telemetry,
+  Timestamp,
+  UUID,
+  Device,
+  VehicleEvent,
+  AttachmentSummary,
+  AuditEvent,
+  WithGpsProperty,
+  VEHICLE_EVENT,
+  VEHICLE_REASON,
+  VEHICLE_STATUS
+} from '@mds-core/mds-types'
+import { ApiRequest, ApiQuery, ApiClaims, ApiVersionedResponse } from '@mds-core/mds-api-server'
 import { Params, ParamsDictionary } from 'express-serve-static-core'
+
+export const AUDIT_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
+export type AUDIT_API_SUPPORTED_VERSION = typeof AUDIT_API_SUPPORTED_VERSIONS[number]
+export const [AUDIT_API_DEFAULT_VERSION] = AUDIT_API_SUPPORTED_VERSIONS
 
 // Allow adding type definitions for Express Request objects
 export type AuditApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
@@ -87,8 +104,21 @@ export interface AuditApiGetVehicleRequest extends AuditApiRequest {
 
 export type AuditApiAccessTokenScopes = 'audits:write' | 'audits:read' | 'audits:delete' | 'audits:vehicles:read'
 
+type AuditWithAttachmentSummary = Audit & { attachments: AttachmentSummary[]; id: number }
+type AuditedDevice =
+  | Readonly<
+      Required<
+        Device & {
+          id: number
+        }
+      >
+    >
+  | (Device & {
+      updated?: number | null | undefined
+    })
 // Allow adding type definitions for Express Response objects
-export type AuditApiResponse<T = unknown> = ApiResponse<
+export type AuditApiResponse<T = unknown> = ApiVersionedResponse<
+  AUDIT_API_SUPPORTED_VERSION,
   ApiClaims<AuditApiAccessTokenScopes> & {
     audit_subject_id: string
     audit_trip_id: UUID
@@ -97,3 +127,78 @@ export type AuditApiResponse<T = unknown> = ApiResponse<
   },
   T
 >
+
+export type PostAuditTripStartResponse = AuditApiResponse<{
+  provider_id: string
+  provider_name: string
+  provider_vehicle_id: string
+  provider_device: (Device & { updated?: number | null | undefined }) | null
+}>
+
+export type PostAuditTripVehicleEventResponse = AuditApiResponse<{}>
+export type PostAuditTripTelemetryResponse = AuditApiResponse<{}>
+export type PostAuditTripNoteResponse = AuditApiResponse<{}>
+export type PostAuditTripEventResponse = AuditApiResponse<{}>
+export type PostAuditTripEndResponse = AuditApiResponse<{}>
+export type PostAuditAttachmentResponse = AuditApiResponse<AttachmentSummary & { audit_trip_id: UUID }>
+
+type ReadOnlyVehicleEvent = Readonly<Required<VehicleEvent & { id: number }>>
+type ReadOnlyAuditEvent = Readonly<Required<AuditEvent & { id: number }>>
+
+export type GetAuditTripDetailsResponse = AuditApiResponse<
+  Audit & {
+    events: WithGpsProperty<ReadOnlyAuditEvent>[]
+    attachments: AttachmentSummary[]
+    provider_event_type?: VEHICLE_EVENT
+    provider_event_type_reason?: VEHICLE_REASON | null
+    provider_status?: VEHICLE_STATUS // any //  EVENT_STATUS_MAP[providerEvent[0]?.event_type as VEHICLE_EVENT],
+    provider_telemetry?: Telemetry | null //  providerEvent[0]?.telemetry,
+    provider_event_time?: Timestamp // providerEvent[0]?.timestamp,
+    provider: {
+      device: AuditedDevice
+      events: ReadOnlyVehicleEvent[] | never[]
+      telemetry: Readonly<
+        Required<
+          Telemetry & {
+            id: number
+          }
+        >
+      >[]
+    } | null
+  }
+>
+
+export type GetAuditTripsDetailsResponse = AuditApiResponse<{
+  count: number
+  audits: AuditWithAttachmentSummary[]
+  links:
+    | Partial<{
+        first: string | undefined
+        prev: string | undefined
+        next: string | undefined
+        last: string | undefined
+      }>
+    | undefined
+}>
+
+export type GetAuditVehiclesResponse = AuditApiResponse<{
+  total: number
+  links: {
+    first: string
+    last: string
+    prev: string | null
+    next: string | null
+  }
+  vehicles: (Device & VehicleEvent)[]
+}>
+export type GetVehicleByVinResponse = AuditApiResponse<{
+  vehicles: (
+    | (Device & {
+        updated?: number | null | undefined
+      })
+    | null
+  )[]
+}>
+
+export type DeleteAuditTripResponse = AuditApiResponse<{}>
+export type DeleteAuditAttachmentResponse = AuditApiResponse<{}>

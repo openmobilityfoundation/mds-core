@@ -47,7 +47,6 @@ import {
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import {
   AUDIT_EVENT_TYPES,
-  AuditDetails,
   AuditEvent,
   EVENT_STATUS_MAP,
   Timestamp,
@@ -69,7 +68,19 @@ import {
   AuditApiTripRequest,
   AuditApiVehicleEventRequest,
   AuditApiVehicleTelemetryRequest,
-  AuditApiAccessTokenScopes
+  AuditApiAccessTokenScopes,
+  PostAuditTripStartResponse,
+  PostAuditTripVehicleEventResponse,
+  PostAuditTripTelemetryResponse,
+  PostAuditTripNoteResponse,
+  PostAuditTripEndResponse,
+  GetAuditTripDetailsResponse,
+  PostAuditTripEventResponse,
+  DeleteAuditTripResponse,
+  GetAuditVehiclesResponse,
+  GetVehicleByVinResponse,
+  PostAuditAttachmentResponse,
+  GetAuditTripsDetailsResponse
 } from './types'
 import {
   deleteAudit,
@@ -93,6 +104,7 @@ import {
   validateFile,
   writeAttachment
 } from './attachments'
+import { AuditApiVersionMiddleware } from './middleware'
 
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {
@@ -119,6 +131,8 @@ function api(app: express.Express): express.Express {
    * Audit-specific middleware to extract subject_id into locals, do some logging, etc.
    * NOTE that audit will be city-facing only, not Providers.
    */
+  app.use(AuditApiVersionMiddleware)
+
   app.use(async (req: AuditApiRequest, res: AuditApiResponse, next) => {
     if (!(req.path.includes('/health') || req.path === '/')) {
       if (res.locals.claims) {
@@ -172,7 +186,7 @@ function api(app: express.Express): express.Express {
   app.post(
     pathsFor('/trips/:audit_trip_id/start'),
     checkAuditApiAccess(scopes => scopes.includes('audits:write')),
-    async (req: AuditApiAuditStartRequest, res: AuditApiResponse) => {
+    async (req: AuditApiAuditStartRequest, res: PostAuditTripStartResponse) => {
       try {
         const { audit_trip_id, audit, audit_subject_id, recorded } = res.locals
 
@@ -226,6 +240,7 @@ function api(app: express.Express): express.Express {
 
             // 200 OK
             return res.status(200).send({
+              version: res.locals.version,
               provider_id,
               provider_name,
               provider_vehicle_id,
@@ -256,7 +271,7 @@ function api(app: express.Express): express.Express {
   app.post(
     pathsFor('/trips/:audit_trip_id/vehicle/event'),
     checkAuditApiAccess(scopes => scopes.includes('audits:write')),
-    async (req: AuditApiVehicleEventRequest, res: AuditApiResponse) => {
+    async (req: AuditApiVehicleEventRequest, res: PostAuditTripVehicleEventResponse) => {
       try {
         const { audit_trip_id, audit_subject_id, audit, recorded } = res.locals
 
@@ -281,7 +296,7 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            return res.status(200).send({})
+            return res.status(200).send({ version: res.locals.version })
           }
         } else {
           // 404 Not Found
@@ -306,7 +321,7 @@ function api(app: express.Express): express.Express {
   app.post(
     pathsFor('/trips/:audit_trip_id/vehicle/telemetry'),
     checkAuditApiAccess(scopes => scopes.includes('audits:write')),
-    async (req: AuditApiVehicleTelemetryRequest, res: AuditApiResponse) => {
+    async (req: AuditApiVehicleTelemetryRequest, res: PostAuditTripTelemetryResponse) => {
       try {
         const { audit_trip_id, audit_subject_id, audit, recorded } = res.locals
 
@@ -327,7 +342,7 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            return res.status(200).send({})
+            return res.status(200).send({ version: res.locals.version })
           }
         } else {
           // 404 Not Found
@@ -352,7 +367,7 @@ function api(app: express.Express): express.Express {
   app.post(
     [...pathsFor('/trips/:audit_trip_id/note'), ...pathsFor('/trips/:audit_trip_id/event')],
     checkAuditApiAccess(scopes => scopes.includes('audits:write')),
-    async (req: AuditApiAuditNoteRequest, res: AuditApiResponse) => {
+    async (req: AuditApiAuditNoteRequest, res: PostAuditTripNoteResponse | PostAuditTripEventResponse) => {
       try {
         const { audit_trip_id, audit, audit_subject_id, recorded } = res.locals
 
@@ -393,7 +408,7 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            return res.status(200).send({})
+            return res.status(200).send({ version: res.locals.version })
           }
         } else {
           // 404 Not Found
@@ -418,7 +433,7 @@ function api(app: express.Express): express.Express {
   app.post(
     pathsFor('/trips/:audit_trip_id/end'),
     checkAuditApiAccess(scopes => scopes.includes('audits:write')),
-    async (req: AuditApiAuditEndRequest, res: AuditApiResponse) => {
+    async (req: AuditApiAuditEndRequest, res: PostAuditTripEndResponse) => {
       try {
         const { audit_trip_id, audit, audit_subject_id, recorded } = res.locals
         if (audit) {
@@ -443,7 +458,7 @@ function api(app: express.Express): express.Express {
             })
 
             // 200 OK
-            return res.status(200).send({})
+            return res.status(200).send({ version: res.locals.version })
           }
         } else {
           // 404 Not Found
@@ -468,7 +483,7 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/trips/:audit_trip_id'),
     checkAuditApiAccess(scopes => scopes.includes('audits:read')),
-    async (req: AuditApiGetTripRequest, res: AuditApiResponse<AuditDetails>) => {
+    async (req: AuditApiGetTripRequest, res: GetAuditTripDetailsResponse) => {
       try {
         const { audit_trip_id, audit } = res.locals
 
@@ -532,6 +547,7 @@ function api(app: express.Express): express.Express {
                 limit: 1
               })
               return res.status(200).send({
+                version: res.locals.version,
                 ...audit,
                 provider_vehicle_id: device.vehicle_id,
                 provider_event_type: providerEvent[0]?.event_type,
@@ -549,6 +565,7 @@ function api(app: express.Express): express.Express {
               })
             }
             return res.status(200).send({
+              version: res.locals.version,
               ...audit,
               events: auditEvents.map(withGpsProperty),
               attachments: attachments.map(attachmentSummary),
@@ -556,6 +573,7 @@ function api(app: express.Express): express.Express {
             })
           }
           return res.status(200).send({
+            version: res.locals.version,
             ...audit,
             events: auditEvents.map(withGpsProperty),
             attachments: attachments.map(attachmentSummary),
@@ -579,14 +597,14 @@ function api(app: express.Express): express.Express {
   app.delete(
     pathsFor('/trips/:audit_trip_id'),
     checkAuditApiAccess(scopes => scopes.includes('audits:delete')),
-    async (req: AuditApiTripRequest, res: AuditApiResponse) => {
+    async (req: AuditApiTripRequest, res: DeleteAuditTripResponse) => {
       try {
         const { audit_trip_id, audit } = res.locals
         if (audit) {
           // Delete the audit
           await deleteAudit(audit_trip_id)
           // 200 OK
-          return res.status(200).send({})
+          return res.status(200).send({ version: res.locals.version })
         }
         // 404 Not Found
         return res.status(404).send({ error: new NotFoundError('audit_trip_id_not_found', { audit_trip_id }) })
@@ -608,7 +626,7 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/trips'),
     checkAuditApiAccess(scopes => scopes.includes('audits:read')),
-    async (req: AuditApiGetTripsRequest, res: AuditApiResponse) => {
+    async (req: AuditApiGetTripsRequest, res: GetAuditTripsDetailsResponse) => {
       try {
         const { skip, take } = parsePagingQueryParams(req)
 
@@ -632,9 +650,12 @@ function api(app: express.Express): express.Express {
         )
 
         // 200 OK
-        return res
-          .status(200)
-          .send({ count, audits: auditsWithAttachments, links: asJsonApiLinks(req, skip, take, count) })
+        return res.status(200).send({
+          version: res.locals.version,
+          count,
+          audits: auditsWithAttachments,
+          links: asJsonApiLinks(req, skip, take, count)
+        })
       } catch (err) /* istanbul ignore next */ {
         // 500 Internal Server Error
         logger.error(`fail ${req.method} ${req.originalUrl}`, err.stack || JSON.stringify(err))
@@ -649,7 +670,7 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/vehicles'),
     checkAuditApiAccess(scopes => scopes.includes('audits:vehicles:read')),
-    async (req, res) => {
+    async (req, res: GetAuditVehiclesResponse) => {
       const { skip, take } = { skip: 0, take: 10000 }
       const { strict = true, bbox, provider_id } = {
         ...parseRequest(req, { parser: JSON.parse }).query('strict', 'bbox'),
@@ -664,12 +685,11 @@ function api(app: express.Express): express.Express {
 
       try {
         const response = await getVehicles(skip, take, url, req.query, bbox, strict, provider_id)
-        return res.status(200).send(response)
+        return res.status(200).send({ version: res.locals.version, ...response })
       } catch (err) {
         logger.error('getVehicles fail', err)
         return res.status(500).send({
-          error: 'server_error',
-          error_description: 'an internal server error has occurred and been logged'
+          error: 'internal_server_error'
         })
       }
     }
@@ -678,53 +698,60 @@ function api(app: express.Express): express.Express {
   /**
    * read back cached information for a single vehicle
    */
-  app.get(pathsFor('/vehicles/:provider_id/vin/:vin'), async (req: AuditApiGetVehicleRequest, res) => {
-    const { provider_id, vin } = req.params
-    try {
-      const response = await getVehicle(provider_id, vin)
-      if (response) {
-        res.status(200).send({ vehicles: [response] })
-      } else {
-        res.status(404).send({ error: new NotFoundError('vehicle not found', { provider_id, vin }) })
+  app.get(
+    pathsFor('/vehicles/:provider_id/vin/:vin'),
+    async (req: AuditApiGetVehicleRequest, res: GetVehicleByVinResponse) => {
+      const { provider_id, vin } = req.params
+      try {
+        const response = await getVehicle(provider_id, vin)
+        if (response) {
+          res.status(200).send({ version: res.locals.version, vehicles: [response] })
+        } else {
+          res.status(404).send({ error: new NotFoundError('vehicle not found', { provider_id, vin }) })
+        }
+      } catch (err) {
+        logger.error('getVehicle fail', err)
+        res.status(500).send({
+          error: 'internal_server_error'
+        })
       }
-    } catch (err) {
-      logger.error('getVehicle fail', err)
-      res.status(500).send({
-        error: 'server_error',
-        error_description: 'an internal server error has occurred and been logged'
-      })
     }
-  })
+  )
 
   /**
    * attach media to an audit, uploaded as multipart/form-data
    */
-  app.post(pathsFor('/trips/:audit_trip_id/attach/:mimetype'), multipartFormUpload, async (req, res) => {
-    const { audit, audit_trip_id } = res.locals
-    if (!audit) {
-      return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
-    }
-    try {
-      validateFile(req.file)
-    } catch (err) {
-      if (err instanceof ValidationError) {
-        return res.status(400).send({ error: err })
+  app.post(
+    pathsFor('/trips/:audit_trip_id/attach/:mimetype'),
+    multipartFormUpload,
+    async (req, res: PostAuditAttachmentResponse) => {
+      const { audit, audit_trip_id } = res.locals
+      if (!audit) {
+        return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
       }
-      if (err instanceof UnsupportedTypeError) {
-        return res.status(415).send({ error: err })
+      try {
+        validateFile(req.file)
+      } catch (err) {
+        if (err instanceof ValidationError) {
+          return res.status(400).send({ error: err })
+        }
+        if (err instanceof UnsupportedTypeError) {
+          return res.status(415).send({ error: err })
+        }
+      }
+      try {
+        const attachment = await writeAttachment(req.file, audit_trip_id)
+        res.status(200).send({
+          version: res.locals.version,
+          ...attachmentSummary(attachment),
+          audit_trip_id
+        })
+      } catch (err) {
+        logger.error('post attachment fail', err)
+        return res.status(500).send({ error: new ServerError(err) })
       }
     }
-    try {
-      const attachment = await writeAttachment(req.file, audit_trip_id)
-      res.status(200).send({
-        ...attachmentSummary(attachment),
-        audit_trip_id
-      })
-    } catch (err) {
-      logger.error('post attachment fail', err)
-      return res.status(500).send({ error: new ServerError(err) })
-    }
-  })
+  )
 
   /**
    * delete media from an audit
@@ -733,7 +760,7 @@ function api(app: express.Express): express.Express {
     const { audit_trip_id, attachment_id } = req.params
     try {
       await deleteAuditAttachment(audit_trip_id, attachment_id)
-      res.status(200).send({})
+      res.status(200).send({ version: res.locals.version })
     } catch (err) {
       logger.error('delete attachment error', err)
       if (err instanceof NotFoundError) {
