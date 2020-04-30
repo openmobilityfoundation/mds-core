@@ -3,11 +3,6 @@
   "description": "MDS Policy API",
   "version": "0.0.27",
   "license": "Apache-2.0",
-  "engineStrict": true,
-  "engines": {
-    "node": ">= 8.0.0",
-    "npm": ">= 6.8.0"
-  },
   "dependencies": {
     "@mds-core/mds-api-server": "0.1.26",
     "@mds-core/mds-db": "0.1.26",
@@ -28,8 +23,8 @@
     "start": "PATH_PREFIX=/policy yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc --lines 90 ts-mocha --project ../../tsconfig.json",
-    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
-    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+    "test:unit": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env nyc ts-mocha --project ../../tsconfig.json",
+    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
   }
 }

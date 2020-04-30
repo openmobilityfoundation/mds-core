@@ -1,7 +1,7 @@
 {
   "extends": "@istanbuljs/nyc-config-typescript",
   "check-coverage": true,
-  "lines": 80,
+  "lines": 85,
   "reporter": ["text", "html"],
   "temp-directory": "./coverage/.nyc_output"
 }

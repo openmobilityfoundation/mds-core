@@ -12,9 +12,9 @@
     "@mds-core/mds-types": "0.1.23",
     "@turf/boolean-point-in-polygon": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "circle-to-polygon": "2.0.1",
+    "circle-to-polygon": "2.0.2",
     "point-in-polygon": "1.0.1",
-    "uuid": "7.0.3"
+    "uuid": "8.0.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,6 +25,6 @@
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 23 ts-mocha --project ../../tsconfig.json"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 40  ts-mocha --project ../../tsconfig.json"
   }
 }

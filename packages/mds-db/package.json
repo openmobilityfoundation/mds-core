@@ -14,7 +14,7 @@
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 55 ts-mocha --project ../../tsconfig.json"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 65  ts-mocha --project ../../tsconfig.json"
   },
   "author": "City of Los Angeles",
   "license": "Apache-2.0",

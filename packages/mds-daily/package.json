@@ -29,7 +29,7 @@
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "PATH_PREFIX=/agency DOTENV_CONFIG_PATH=../../.env nyc --lines 55 ts-mocha --project ../../tsconfig.json",
-    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
-    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
   }
 }

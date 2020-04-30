@@ -25,13 +25,13 @@
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "server": "yarn watch launch_server",
     "client": "yarn watch client",
-    "test": "yarn test:eslint && yarn test:unit",
+    "server": "yarn watch launch_server",
     "start": "yarn watch launch_server",
+    "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 50 ts-mocha --project ../../tsconfig.json --exit",
-    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn watch:exec --",
-    "watch:exec": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
   }
 }
