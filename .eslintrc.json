@@ -18,6 +18,7 @@
     "plugin:prettier/recommended",
     "prettier/@typescript-eslint"
   ],
+  "ignorePatterns": ["*.d.ts"],
   "rules": {
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/explicit-function-return-type": "off",

@@ -49,18 +49,6 @@ apis:
     pathPrefix: /geography-author
     version: latest
     migration: false
-  mds-event-processor:
-    enabled: true
-    version: latest
-    migration: false
-  mds-telemetry-processor:
-    enabled: true
-    version: latest
-    migration: false
-  mds-metrics-processor:
-    enabled: true
-    version: latest
-    migration: false
 nats:
   enabled: true
   credentials: false

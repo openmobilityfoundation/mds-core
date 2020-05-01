@@ -1,5 +1,4 @@
 {
-  "extends": "./tsconfig.settings.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -7,6 +6,16 @@
       "@mds-core/*": ["packages/*/index.ts"],
       "packages/*": ["/dev/null"],
       "*": ["@types/*", "*"]
-    }
+    },
+    "target": "ES2019",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "preserveSymlinks": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false
   }
 }

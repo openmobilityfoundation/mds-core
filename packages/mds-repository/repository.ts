@@ -18,36 +18,7 @@ import { Connection } from 'typeorm'
 import { ConnectionManager, ConnectionManagerOptions, ConnectionMode, ConnectionManagerCliOptions } from './connection'
 import { CreateRepositoryMigration } from './migration'
 
-type RepositoryMethod<TMethod> = (connect: (mode: ConnectionMode) => Promise<Connection>) => TMethod
-
-export const CreateRepositoryMethod: <TMethod>(
-  method: RepositoryMethod<TMethod>
-) => RepositoryMethod<TMethod> = method => {
-  // eslint-disable-next-line no-console
-  console.warn('CreateRepositoryMethod is deprecated. Extend ReadWriteRepository instead.')
-  return method
-}
-
 export type RepositoryOptions = Pick<ConnectionManagerOptions, 'entities' | 'migrations'>
-
-export const CreateRepository = <TRepositoryMethods>(
-  name: string,
-  methods: (connect: (mode: ConnectionMode) => Promise<Connection>) => TRepositoryMethods,
-  { entities = [], migrations = [] }: RepositoryOptions = {}
-) => {
-  // eslint-disable-next-line no-console
-  console.warn('CreateRepository is deprecated. Extend ReadWriteRepository instead.')
-  const migrationsTableName = `${name}-migrations`
-  const { connect, ...manager } = new ConnectionManager(name, {
-    migrationsTableName,
-    entities,
-    migrations: [CreateRepositoryMigration(migrationsTableName), ...migrations]
-  })
-  return {
-    ...manager,
-    ...methods(connect)
-  }
-}
 
 export abstract class ReadWriteRepository {
   private readonly manager: ConnectionManager

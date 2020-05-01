@@ -313,28 +313,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Tests: mds-event-server",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": [
-        "--project",
-        "${workspaceFolder}/tsconfig.json",
-        "-r",
-        "ts-node/register",
-        "--timeout",
-        "0"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-event-server",
-      "env": {
-        "npm_package_version": "0.0.0",
-        "DOTENV_CONFIG_PATH": "../../.env"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Tests: mds-jurisdiction",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
@@ -391,27 +369,6 @@
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-logger",
-      "env": {
-        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Tests: mds-metrics-service",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": [
-        "--project",
-        "${workspaceFolder}/tsconfig.json",
-        "-r",
-        "ts-node/register",
-        "--timeout",
-        "0"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-metrics-service",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }

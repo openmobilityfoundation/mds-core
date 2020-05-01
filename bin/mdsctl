@@ -170,16 +170,13 @@ declare -A apps=(
   ["mds-audit"]="https://localhost:[port]/audit,mds,app"
   ["mds-compliance"]="https://localhost:[port]/compliance,mds,app"
   ["mds-daily"]="https://localhost:[port]/daily,mds,app"
-  ["mds-event-processor"]="https://localhost:[port]/event-processor,mds,app"
   ["mds-geography"]="https://localhost:[port]/geography,mds,app"
   ["mds-geography-author"]="https://localhost:[port]/geography-author,mds,app"
-  ["mds-jurisdiction"]="https://localhost:[port]/jurisdiction,mds,app"]
-  ["mds-metrics-processor"]="https://localhost:[port]/metrics-processor,mds,app"
+  ["mds-jurisdiction"]="https://localhost:[port]/jurisdiction,mds,app"
   ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
   ["mds-redis"]="https://localhost:[port]/redis,mds,app,redis"
-  ["mds-telemetry-processor"]="http://localhost:[port]/telemetry-processor,mds,app"
   ["grafana"]="http://localhost:[port]/dashboard/db/istio-mesh-dashboard,istio-system,app"
   ["kibana"]="http://localhost:[port],util,app"
   ["prometheus"]="http://localhost:[port],istio-system,app"
@@ -300,15 +297,12 @@ where app in:
   mds-audit
   mds-compliance
   mds-daily
-  mds-event-processor
   mds-geography
   mds-geography-author
-  mds-metrics-processor
   mds-policy
   mds-policy-author
   mds-postgresql
   mds-redis-headless
-  mds-telemetry-processor
   grafana                                             : grafana; see: https://grafana.com
   kibana                                              : kibana; see https://www.elastic.co/products/kibana
   prometheus                                          : prometheus; see https://prometheus.io

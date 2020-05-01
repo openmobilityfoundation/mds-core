@@ -49,15 +49,3 @@ apis:
     pathPrefix: /geography-author
     version: ${GEOGRAPHY_AUTHOR_VERSION}
     migration: false
-  mds-event-processor:
-    enabled: true
-    version: ${EVENT_PROCESSOR_VERSION}
-    migration: false
-  mds-metrics-processor:
-    enabled: true
-    version: ${METRIC_PROCESSOR_VERSION}
-    migration: false
-  mds-telemetry-processor:
-    enabled: true
-    version: ${TELEMETRY_PROCESSOR_VERSION}
-    migration: false

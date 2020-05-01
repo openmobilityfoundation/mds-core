@@ -1,10 +1,1 @@
-{
-  "extends": "../../tsconfig.build.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  },
-  "references": [
-    { "path": "../../packages/mds-geography/tsconfig.build.json" },
-    { "path": "../../packages/mds-webpack-config/tsconfig.build.json" }
-  ]
-}
+{ "extends": "../../tsconfig.build.json" }

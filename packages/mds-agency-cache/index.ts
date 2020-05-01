@@ -430,7 +430,9 @@ async function readDevicesStatus(query: {
     .filter(item => Boolean(item))
   const eventsFinish = now()
   const eventsTimeElapsed = eventsFinish - eventsStart
-  logger.info(`mds-agency-cache readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`)
+  logger.info(
+    `mds-agency-cache readDevicesStatus bbox check ${JSON.stringify(bbox)} time elapsed: ${eventsTimeElapsed}ms`
+  )
 
   const devicesStart = now()
   const eventDeviceIds = events.map(event => event.device_id)
