@@ -14,10 +14,23 @@
     limitations under the License.
  */
 
-import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
-import { JURISDICTION_API_SUPPORTED_VERSIONS, JURISDICTION_API_DEFAULT_VERSION } from '../@types'
+import test from 'unit.js'
+import { ServiceManager } from '../server'
 
-export const JurisdictionApiVersionMiddleware = ApiVersionMiddleware(
-  'application/vnd.mds.jurisdiction+json',
-  JURISDICTION_API_SUPPORTED_VERSIONS
-).withDefaultVersion(JURISDICTION_API_DEFAULT_VERSION)
+describe('Tests Service Helpers', () => {
+  it('Test ServiceManager Controller', async () => {
+    let started = false
+    const controller = ServiceManager.controller({
+      initialize: async () => {
+        started = true
+      },
+      shutdown: async () => {
+        started = false
+      }
+    })
+    await controller.start()
+    test.value(started).is(true)
+    await controller.stop()
+    test.value(started).is(false)
+  })
+})

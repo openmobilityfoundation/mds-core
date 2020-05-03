@@ -20,7 +20,7 @@ import {
   JurisdictionIdType
 } from '@mds-core/mds-jurisdiction-service'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
-import { JurisdictionApiRequest, JurisdictionApiResponse } from '../types'
+import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 type DeleteJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }>
 

@@ -173,6 +173,7 @@ declare -A apps=(
   ["mds-geography"]="https://localhost:[port]/geography,mds,app"
   ["mds-geography-author"]="https://localhost:[port]/geography-author,mds,app"
   ["mds-jurisdiction"]="https://localhost:[port]/jurisdiction,mds,app"
+  ["mds-jurisdiction-service"]="https://localhost:[port]/jurisdiction-service,mds,app"
   ["mds-policy"]="https://localhost:[port]/policy,mds,app"
   ["mds-policy-author"]="https://localhost:[port]/policy-author,mds,app"
   ["mds-postgresql"]="https://localhost:[port]/postgresql,mds,app,postgresql"
@@ -299,6 +300,8 @@ where app in:
   mds-daily
   mds-geography
   mds-geography-author
+  mds-jurisdiction
+  mds-jurisdiction-service
   mds-policy
   mds-policy-author
   mds-postgresql

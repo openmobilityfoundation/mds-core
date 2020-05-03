@@ -78,7 +78,7 @@ export class ConnectionManager {
     try {
       if (!connections[mode]) {
         connections[mode] = await createConnection(connectionOptions(mode))
-        logger.info(`Created ${mode} connection: ${connections[mode]?.options.name}`)
+        logger.info(`Initializing ${mode} connection: ${connections[mode]?.options.name}`)
       }
     } finally {
       lock.release()
@@ -98,7 +98,7 @@ export class ConnectionManager {
       if (PG_MIGRATIONS === 'true' && rw.options.migrationsTableName) {
         const migrations = await rw.runMigrations({ transaction: 'all' })
         logger.info(
-          `Ran ${migrations.length} ${pluralize(migrations.length, 'migration', 'migrations')} (${
+          `Ran ${migrations.length || 'no'} ${pluralize(migrations.length, 'migration', 'migrations')} (${
             options.migrationsTableName
           })${migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''}`
         )
@@ -125,19 +125,22 @@ export class ConnectionManager {
     return connection
   }
 
-  public shutdown = async (): Promise<void> => {
+  private closeConnection = async (mode: ConnectionMode) => {
     const { connections } = this
     try {
-      if (connections.ro?.isConnected) {
-        await connections.ro.close()
-      }
-      if (connections.rw?.isConnected) {
-        await connections.rw.close()
+      const { [mode]: connection } = connections
+      if (connection?.isConnected) {
+        logger.info(`Terminating ${mode} connection: ${connection.options.name}`)
+        await connection.close()
       }
     } finally {
-      connections.ro = null
-      connections.rw = null
+      connections[mode] = null
     }
+  }
+
+  public shutdown = async (): Promise<void> => {
+    const { closeConnection } = this
+    await Promise.all(ConnectionModes.map(mode => closeConnection(mode)))
   }
 
   public cli = (options: ConnectionManagerCliOptions = {}) => {

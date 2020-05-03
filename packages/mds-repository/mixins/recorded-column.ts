@@ -18,24 +18,14 @@ import { Column, Index } from 'typeorm'
 import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
 import { Timestamp } from '@mds-core/mds-types'
-import { EntityConstructor } from '../@types'
 import { BigintTransformer } from '../transformers'
+import { AnyConstructor, Mixin } from '../@types'
 
-export interface RecordedEntityModel {
-  recorded: Timestamp
-}
-
-export type RecordedEntityCreateModel<TRecordedEntityModel extends RecordedEntityModel> = Omit<
-  TRecordedEntityModel,
-  keyof RecordedEntityModel
-> &
-  Partial<RecordedEntityModel>
-
-export function RecordedEntity<TEntityClass extends EntityConstructor>(
-  EntityClass: TEntityClass,
+export const RecordedColumn = <T extends AnyConstructor>(
+  EntityClass: T,
   options: ColumnWithWidthOptions & ColumnCommonOptions = {}
-) {
-  abstract class RecordedEntityMixin extends EntityClass implements RecordedEntityModel {
+) => {
+  abstract class RecordedColumnMixin extends EntityClass {
     @Column('bigint', {
       transformer: BigintTransformer,
       default: () => '(extract(epoch from now()) * 1000)::bigint',
@@ -44,5 +34,7 @@ export function RecordedEntity<TEntityClass extends EntityConstructor>(
     @Index()
     recorded: Timestamp
   }
-  return RecordedEntityMixin
+  return RecordedColumnMixin
 }
+
+export type RecordedColumn = Mixin<typeof RecordedColumn>

@@ -19,6 +19,8 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26"
   },
   "devDependencies": {}

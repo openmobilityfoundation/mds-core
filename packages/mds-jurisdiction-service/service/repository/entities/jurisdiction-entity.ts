@@ -16,7 +16,7 @@
 
 import { Entity, Column, Index } from 'typeorm'
 import { Nullable } from '@mds-core/mds-types'
-import { RecordedEntity, IdentityEntity, IdentityEntityModel, RecordedEntityModel } from '@mds-core/mds-repository'
+import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { JurisdictionDomainModel } from '../../../@types'
 
 export interface JurisdictionVersionedProperties {
@@ -25,14 +25,14 @@ export interface JurisdictionVersionedProperties {
   geography_id: Nullable<JurisdictionDomainModel['geography_id']>
 }
 
-export interface JurisdictionEntityModel extends IdentityEntityModel, RecordedEntityModel {
+export interface JurisdictionEntityModel extends IdentityColumn, RecordedColumn {
   jurisdiction_id: JurisdictionDomainModel['jurisdiction_id']
   agency_key: JurisdictionDomainModel['agency_key']
   versions: JurisdictionVersionedProperties[]
 }
 
 @Entity('jurisdictions')
-export class JurisdictionEntity extends IdentityEntity(RecordedEntity(class {})) implements JurisdictionEntityModel {
+export class JurisdictionEntity extends IdentityColumn(RecordedColumn(class {})) implements JurisdictionEntityModel {
   @Column('uuid', { primary: true })
   jurisdiction_id: JurisdictionEntityModel['jurisdiction_id']
 

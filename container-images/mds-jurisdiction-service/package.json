@@ -1,7 +1,7 @@
 {
-  "name": "@container-images/mds-agency",
-  "version": "0.1.26",
-  "description": "Docker Image for MDS Agency API",
+  "name": "@container-images/mds-jurisdiction-service",
+  "version": "0.0.1",
+  "description": "Docker Image for MDS Jurisdiction Service",
   "private": true,
   "main": "dist/index.js",
   "files": [
@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-agency:${npm_package_version} buildImage",
+    "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-jurisdiction-service:${npm_package_version} buildImage",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
@@ -19,7 +19,7 @@
   ],
   "author": "City of Los Angeles",
   "dependencies": {
-    "@mds-core/mds-agency": "0.0.28"
+    "@mds-core/mds-jurisdiction-service": "0.1.0"
   },
   "devDependencies": {
     "@mds-core/mds-webpack-config": "0.1.0"

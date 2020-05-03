@@ -10,7 +10,6 @@
   "scripts": {
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
     "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-daily:${npm_package_version} buildImage",
-    "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"

@@ -17,7 +17,7 @@
 import test from 'unit.js'
 import { ServiceResult, ServiceError, ServiceException, HandleServiceResponse } from '../index'
 
-describe('Tests Service Helpers', () => {
+describe('Tests Client Helpers', () => {
   it('Test ServiceResult', async () =>
     HandleServiceResponse(
       ServiceResult('success'),

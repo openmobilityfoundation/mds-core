@@ -38,5 +38,7 @@ export interface UpdateReturning<T> extends UpdateResult {
 }
 
 // eslint-reason A mixin class must have a constructor with a single rest parameter of type 'any[]'.ts(2545)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type EntityConstructor<T = {}> = new (...args: any[]) => T
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type AnyFunction<A = any> = (...args: any[]) => A
+export type AnyConstructor<A = object> = new (...args: any[]) => A
+export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>

@@ -25,7 +25,7 @@ import {
   GetJurisdictionHandler,
   UpdateJurisdictionHandler
 } from './handlers'
-import { JurisdictionApiAccessTokenScopes } from './types'
+import { JurisdictionApiAccessTokenScopes } from './@types'
 
 const checkJurisdictionApiAccess = (validator: AccessTokenScopeValidator<JurisdictionApiAccessTokenScopes>) =>
   checkAccess(validator)

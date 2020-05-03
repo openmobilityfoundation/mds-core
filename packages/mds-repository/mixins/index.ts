@@ -14,5 +14,5 @@
     limitations under the License.
  */
 
-export * from './identity-entity'
-export * from './recorded-entity'
+export * from './identity-column'
+export * from './recorded-column'

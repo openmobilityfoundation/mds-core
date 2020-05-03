@@ -14,10 +14,7 @@
     limitations under the License.
  */
 
-import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
-import { JURISDICTION_API_SUPPORTED_VERSIONS, JURISDICTION_API_DEFAULT_VERSION } from '../@types'
+import { ServiceManager } from '@mds-core/mds-service-helpers'
+import { JurisdictionServiceProvider } from '../service/provider'
 
-export const JurisdictionApiVersionMiddleware = ApiVersionMiddleware(
-  'application/vnd.mds.jurisdiction+json',
-  JURISDICTION_API_SUPPORTED_VERSIONS
-).withDefaultVersion(JURISDICTION_API_DEFAULT_VERSION)
+ServiceManager.start(JurisdictionServiceProvider)

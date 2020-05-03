@@ -23,7 +23,7 @@ import { AuthorizationError } from '@mds-core/mds-utils'
 import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiQuery } from '@mds-core/mds-api-server'
-import { JurisdictionApiResponse, JurisdictionApiRequest } from '../types'
+import { JurisdictionApiResponse, JurisdictionApiRequest } from '../@types'
 import { HasJurisdictionClaim } from './utils'
 
 type GetJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }> & ApiQuery<'effective'>

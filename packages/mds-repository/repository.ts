@@ -15,6 +15,7 @@
  */
 
 import { Connection } from 'typeorm'
+import logger from '@mds-core/mds-logger'
 import { ConnectionManager, ConnectionManagerOptions, ConnectionMode, ConnectionManagerCliOptions } from './connection'
 import { CreateRepositoryMigration } from './migration'
 
@@ -24,7 +25,11 @@ export abstract class ReadWriteRepository {
   private readonly manager: ConnectionManager
 
   public initialize = async (): Promise<void> => {
-    const { initialize } = this.manager
+    const {
+      name,
+      manager: { initialize }
+    } = this
+    logger.info(`Initializing Repostory: ${name}`)
     await initialize()
   }
 
@@ -35,7 +40,11 @@ export abstract class ReadWriteRepository {
   }
 
   public shutdown = async (): Promise<void> => {
-    const { shutdown } = this.manager
+    const {
+      name,
+      manager: { shutdown }
+    } = this
+    logger.info(`Terminating Repository: ${name}`)
     await shutdown()
   }
 

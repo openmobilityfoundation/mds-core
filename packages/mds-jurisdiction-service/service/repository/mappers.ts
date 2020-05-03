@@ -14,8 +14,8 @@
     limitations under the License.
  */
 
-import { Timestamp, Nullable } from '@mds-core/mds-types'
-import { IdentityEntityCreateModel, ModelMapper, RecordedEntityCreateModel } from '@mds-core/mds-repository'
+import { Timestamp, Nullable, Optional } from '@mds-core/mds-types'
+import { ModelMapper, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { uuid } from '@mds-core/mds-utils'
 import { JurisdictionDomainModel, CreateJurisdictionDomainModel } from '../../@types'
 import { JurisdictionEntityModel } from './entities/jurisdiction-entity'
@@ -52,9 +52,14 @@ type JurisdictionDomainToEntityCreateOptions = Partial<{
   recorded: Timestamp
 }>
 
+type JurisdictionDomainToEntityCreateModel = Omit<
+  Optional<JurisdictionEntityModel, keyof RecordedColumn>,
+  keyof IdentityColumn
+>
+
 export const JurisdictionDomainToEntityCreate = ModelMapper<
   CreateJurisdictionDomainModel,
-  RecordedEntityCreateModel<IdentityEntityCreateModel<JurisdictionEntityModel>>,
+  JurisdictionDomainToEntityCreateModel,
   JurisdictionDomainToEntityCreateOptions
 >((domain, options) => {
   const { recorded } = options ?? {}

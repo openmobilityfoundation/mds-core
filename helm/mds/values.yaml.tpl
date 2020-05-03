@@ -29,6 +29,11 @@ apis:
     pathPrefix: /jurisdiction
     version: ${JURISDICTION_VERSION}
     migration: false
+  mds-jurisdiction-service:
+    enabled: true
+    pathPrefix: /jurisdiction-service
+    version: ${JURISDICTION_SERVICE_VERSION}
+    migration: false
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author

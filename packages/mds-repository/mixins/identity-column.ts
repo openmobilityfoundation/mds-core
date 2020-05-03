@@ -18,25 +18,18 @@ import { Column, Index } from 'typeorm'
 import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
 import { BigintTransformer } from '../transformers'
-import { EntityConstructor } from '../@types'
+import { AnyConstructor, Mixin } from '../@types'
 
-export interface IdentityEntityModel {
-  id: number
-}
-
-export type IdentityEntityCreateModel<TIdentityEntityModel extends IdentityEntityModel> = Omit<
-  TIdentityEntityModel,
-  keyof IdentityEntityModel
->
-
-export function IdentityEntity<TEntityClass extends EntityConstructor>(
-  EntityClass: TEntityClass,
+export const IdentityColumn = <T extends AnyConstructor>(
+  EntityClass: T,
   options: ColumnWithWidthOptions & ColumnCommonOptions = {}
-) {
-  abstract class IdentityEntityMixin extends EntityClass implements IdentityEntityModel {
+) => {
+  abstract class IdentityColumnMixin extends EntityClass {
     @Column('bigint', { generated: 'increment', transformer: BigintTransformer, ...options })
     @Index({ unique: true })
     id: number
   }
-  return IdentityEntityMixin
+  return IdentityColumnMixin
 }
+
+export type IdentityColumn = Mixin<typeof IdentityColumn>
