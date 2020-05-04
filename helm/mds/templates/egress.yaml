@@ -8,11 +8,26 @@ metadata:
 spec:
   hosts:
   - {{ printf "%s-nats-server.%s.svc.cluster.local" $natsNamespace $natsNamespace }}
+  - "*.kafka.svc.cluster.local"
   ports:
   - number: 4222
     name: client
     protocol: TCP
+  - number: 9092
+    name: kafka-client
+    protocol: TCP
   location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: kafka
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: "*.kafka.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
