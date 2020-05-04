@@ -68,7 +68,7 @@ const ServiceMonitor = async <TServiceInterface>(
 }
 
 export const ServiceManager = {
-  start: <TServiceInterface>(service: ServiceProvider<TServiceInterface>, options: ProcessMonitorOptions = {}) => {
+  run: <TServiceInterface>(service: ServiceProvider<TServiceInterface>, options: ProcessMonitorOptions = {}) => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     ServiceMonitor(service, options)
   },

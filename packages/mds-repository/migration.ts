@@ -15,20 +15,25 @@
  */
 
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { MdsNamingStrategy } from './naming-strategies'
+
+const strategy = new MdsNamingStrategy()
 
 export const CreateRepositoryMigration = (migrationTableName: string) => {
+  const migrationIndexName = strategy.indexName(migrationTableName, ['name'])
+
   return class CreateRepository0000000000001 implements MigrationInterface {
     name = 'CreateRepository0000000000001'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
       await queryRunner.query(
-        `CREATE UNIQUE INDEX "idx_migration_table_name" ON "${migrationTableName}" ("name") `,
+        `CREATE UNIQUE INDEX "${migrationIndexName}" ON "${migrationTableName}" ("name") `,
         undefined
       )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.query(`DROP INDEX "idx_migration_table_name"`, undefined)
+      await queryRunner.query(`DROP INDEX "${migrationIndexName}"`, undefined)
     }
   }
 }

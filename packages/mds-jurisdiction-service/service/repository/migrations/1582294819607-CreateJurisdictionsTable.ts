@@ -21,19 +21,13 @@ export class CreateJurisdictionsTable1582294819607 implements MigrationInterface
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE IF NOT EXISTS "jurisdictions" ("recorded" bigint NOT NULL DEFAULT (extract(epoch from now()) * 1000)::bigint, "id" bigint GENERATED ALWAYS AS IDENTITY, "jurisdiction_id" uuid NOT NULL, "agency_key" character varying(63) NOT NULL, "versions" json NOT NULL, CONSTRAINT "jurisdictions_pkey" PRIMARY KEY ("jurisdiction_id"))`,
+      `CREATE TABLE "jurisdictions" ("recorded" bigint NOT NULL DEFAULT (extract(epoch from now()) * 1000)::bigint, "id" bigint GENERATED ALWAYS AS IDENTITY, "jurisdiction_id" uuid NOT NULL, "agency_key" character varying(63) NOT NULL, "versions" json NOT NULL, CONSTRAINT "jurisdictions_pkey" PRIMARY KEY ("jurisdiction_id"))`,
       undefined
     )
+    await queryRunner.query(`CREATE UNIQUE INDEX "idx_id_jurisdictions" ON "jurisdictions" ("id") `, undefined)
+    await queryRunner.query(`CREATE INDEX "idx_recorded_jurisdictions" ON "jurisdictions" ("recorded") `, undefined)
     await queryRunner.query(
-      `CREATE UNIQUE INDEX IF NOT EXISTS "idx_id_jurisdictions" ON "jurisdictions" ("id") `,
-      undefined
-    )
-    await queryRunner.query(
-      `CREATE INDEX IF NOT EXISTS "idx_recorded_jurisdictions" ON "jurisdictions" ("recorded") `,
-      undefined
-    )
-    await queryRunner.query(
-      `CREATE UNIQUE INDEX IF NOT EXISTS "idx_agency_key_jurisdictions" ON "jurisdictions" ("agency_key") `,
+      `CREATE UNIQUE INDEX "idx_agency_key_jurisdictions" ON "jurisdictions" ("agency_key") `,
       undefined
     )
   }

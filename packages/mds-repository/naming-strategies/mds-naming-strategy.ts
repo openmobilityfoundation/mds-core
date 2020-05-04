@@ -16,7 +16,8 @@
 
 import { NamingStrategyInterface, DefaultNamingStrategy, Table } from 'typeorm'
 
-const tableName = (tableOrName: Table | string) => (typeof tableOrName === 'string' ? tableOrName : tableOrName.name)
+const tableName = (tableOrName: Table | string) =>
+  (typeof tableOrName === 'string' ? tableOrName : tableOrName.name).replace(/-/g, '_').replace(/ /g, '')
 
 export class MdsNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
   primaryKeyName(tableOrName: Table | string, columnNames: string[]): string {

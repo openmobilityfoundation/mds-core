@@ -22,19 +22,11 @@ const TEST_REPOSITORY_NAME = 'test-repository'
 const manager = new ConnectionManager(TEST_REPOSITORY_NAME)
 
 describe('Test Connections', () => {
-  before(async () => {
-    await manager.initialize()
-  })
-
   it('Create R/W Connection', async () => {
     const rw = await manager.connect('rw')
     test.value(rw.name).startsWith(`${TEST_REPOSITORY_NAME}-rw`)
     test.value(rw.isConnected).is(true)
-    await rw.close()
-    test.value(rw.isConnected).is(false)
-    test.value(await manager.connect('rw')).is(rw)
-    test.value(rw.isConnected).is(true)
-    await rw.close()
+    await manager.disconnect('rw')
     test.value(rw.isConnected).is(false)
   })
 
@@ -42,15 +34,7 @@ describe('Test Connections', () => {
     const ro = await manager.connect('ro')
     test.value(ro.name).startsWith(`${TEST_REPOSITORY_NAME}-ro`)
     test.value(ro.isConnected).is(true)
-    await ro.close()
+    await manager.disconnect('ro')
     test.value(ro.isConnected).is(false)
-    test.value(await manager.connect('ro')).is(ro)
-    test.value(ro.isConnected).is(true)
-    await ro.close()
-    test.value(ro.isConnected).is(false)
-  })
-
-  after(async () => {
-    await manager.shutdown()
   })
 })

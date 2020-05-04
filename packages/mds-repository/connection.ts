@@ -19,7 +19,7 @@ import { types as PostgresTypes } from 'pg'
 import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
 import { Nullable, UUID } from '@mds-core/mds-types'
-import { uuid, pluralize } from '@mds-core/mds-utils'
+import { uuid } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import AwaitLock from 'await-lock'
 import { MdsNamingStrategy } from './naming-strategies'
@@ -39,7 +39,7 @@ export type ConnectionManagerOptions = Partial<Omit<PostgresConnectionOptions, '
 export type ConnectionManagerCliOptions = Partial<PostgresConnectionOptions['cli']>
 
 export class ConnectionManager {
-  private readonly connections: { [mode in ConnectionMode]: Nullable<Connection> } = { ro: null, rw: null }
+  private readonly connections: Map<ConnectionMode, Nullable<Connection>> = new Map()
 
   private readonly lock = new AwaitLock()
 
@@ -49,6 +49,8 @@ export class ConnectionManager {
     const { prefix, instance } = this
     return `${prefix}-${mode}-${instance}`
   }
+
+  private connectionMode = (mode: ConnectionMode): string => (mode === 'ro' ? 'R/O' : 'R/W')
 
   private connectionOptions = (mode: ConnectionMode): ConnectionOptions => {
     const { connectionName, options } = this
@@ -72,45 +74,19 @@ export class ConnectionManager {
     }
   }
 
-  private getConnection = async (mode: ConnectionMode): Promise<Nullable<Connection>> => {
-    const { lock, connections, connectionOptions } = this
+  public connect = async (mode: ConnectionMode): Promise<Connection> => {
+    const { lock, connections, connectionOptions, connectionMode, connectionName } = this
     await lock.acquireAsync()
     try {
-      if (!connections[mode]) {
-        connections[mode] = await createConnection(connectionOptions(mode))
-        logger.info(`Initializing ${mode} connection: ${connections[mode]?.options.name}`)
+      if (!connections.has(mode)) {
+        const options = connectionOptions(mode)
+        logger.info(`Initializing ${connectionMode(mode)} connection: ${options.name}`)
+        connections.set(mode, await createConnection(options))
       }
     } finally {
       lock.release()
     }
-    return connections[mode]
-  }
-
-  public initialize = async (): Promise<void> => {
-    const { connect, options } = this
-    const {
-      PG_MIGRATIONS = 'true' // Enable migrations by default
-    } = process.env
-
-    try {
-      const [, rw] = await Promise.all(ConnectionModes.map(mode => connect(mode)))
-      /* istanbul ignore if */
-      if (PG_MIGRATIONS === 'true' && rw.options.migrationsTableName) {
-        const migrations = await rw.runMigrations({ transaction: 'all' })
-        logger.info(
-          `Ran ${migrations.length || 'no'} ${pluralize(migrations.length, 'migration', 'migrations')} (${
-            options.migrationsTableName
-          })${migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''}`
-        )
-      }
-    } catch (error) /* istanbul ignore next */ {
-      throw RepositoryError(error)
-    }
-  }
-
-  public connect = async (mode: ConnectionMode): Promise<Connection> => {
-    const { getConnection, connectionName } = this
-    const connection = await getConnection(mode)
+    const connection = connections.get(mode)
     if (!connection) {
       /* istanbul ignore next */
       throw RepositoryError(Error(`Connection ${connectionName(mode)} not found`))
@@ -125,22 +101,21 @@ export class ConnectionManager {
     return connection
   }
 
-  private closeConnection = async (mode: ConnectionMode) => {
-    const { connections } = this
+  public disconnect = async (mode: ConnectionMode) => {
+    const { lock, connections, connectionMode } = this
     try {
-      const { [mode]: connection } = connections
-      if (connection?.isConnected) {
-        logger.info(`Terminating ${mode} connection: ${connection.options.name}`)
-        await connection.close()
+      await lock.acquireAsync()
+      const connection = connections.get(mode)
+      if (connection) {
+        if (connection.isConnected) {
+          logger.info(`Terminating ${connectionMode(mode)} connection: ${connection.options.name}`)
+          await connection.close()
+        }
+        connections.delete(mode)
       }
     } finally {
-      connections[mode] = null
+      lock.release()
     }
-  }
-
-  public shutdown = async (): Promise<void> => {
-    const { closeConnection } = this
-    await Promise.all(ConnectionModes.map(mode => closeConnection(mode)))
   }
 
   public cli = (options: ConnectionManagerCliOptions = {}) => {
