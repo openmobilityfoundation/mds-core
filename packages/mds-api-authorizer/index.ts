@@ -10,17 +10,17 @@ export interface AuthorizerClaims {
   jurisdictions: string | null
 }
 
-const {
-  TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id',
-  TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email',
-  TOKEN_JURISDICTIONS_CLAIM = 'https://ladot.io/jurisdictions'
-} = process.env
-
 export type Authorizer = (authorization: string) => AuthorizerClaims | null
 export type ApiAuthorizer = (req: express.Request) => AuthorizerClaims | null
 
 const decoders: { [scheme: string]: (token: string) => AuthorizerClaims } = {
   bearer: (token: string) => {
+    const {
+      TOKEN_PROVIDER_ID_CLAIM = 'https://ladot.io/provider_id',
+      TOKEN_USER_EMAIL_CLAIM = 'https://ladot.io/user_email',
+      TOKEN_JURISDICTIONS_CLAIM = 'https://ladot.io/jurisdictions'
+    } = process.env
+
     const {
       sub: principalId,
       scope,

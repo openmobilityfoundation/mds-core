@@ -22,7 +22,8 @@
     "jwt-decode": "2.2.0"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.26"
+    "@mds-core/mds-test-data": "0.1.26",
+    "jsonwebtoken": "8.5.1"
   },
   "license": "Apache-2.0"
 }
