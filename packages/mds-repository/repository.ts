@@ -35,9 +35,9 @@ abstract class BaseRepository<TConnectionMode extends ConnectionMode> {
 
   protected abstract shutdown(): Promise<void>
 
-  public cli = (options: ConnectionManagerCliOptions) => {
+  public cli = (mode: TConnectionMode, options?: ConnectionManagerCliOptions) => {
     const { cli } = this.manager
-    return cli(options)
+    return cli(mode, options)
   }
 
   constructor(public readonly name: string, { entities, migrations }: Required<RepositoryOptions>) {
