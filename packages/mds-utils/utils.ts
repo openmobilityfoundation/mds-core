@@ -535,9 +535,9 @@ function clone<T>(obj: T): T {
 }
 
 // T is the non-null and non-undefined type
-function filterEmptyHelper<T>(warnOnEmpty?: boolean) {
+function isDefined<T>(warnOnEmpty?: boolean) {
   // https://stackoverflow.com/a/51577579 to remove null/undefined in typesafe way
-  return (elem: T | undefined | null, idx: number): elem is T => {
+  return (elem: T | undefined | null, idx?: number): elem is T => {
     if (elem !== undefined && elem !== null) {
       return true
     }
@@ -633,7 +633,7 @@ export {
   isInStatesOrEvents,
   routeDistance,
   clone,
-  filterEmptyHelper,
+  isDefined,
   moved,
   normalizeToArray,
   parseRelative,

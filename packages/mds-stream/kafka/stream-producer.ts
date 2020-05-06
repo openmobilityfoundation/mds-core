@@ -18,6 +18,7 @@ import { Kafka, Producer } from 'kafkajs'
 import { isArray } from 'util'
 import { Nullable } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
+import { isDefined } from '@mds-core/mds-utils'
 import { StreamProducer } from '../stream-interface'
 import { getKafkaBrokers } from './helpers'
 
@@ -37,10 +38,8 @@ const createStreamProducer = async ({ clientId = 'writer' }: Partial<KafkaStream
   return null
 }
 
-const isProducerReady = (stream: Nullable<Producer>): stream is Producer => stream !== null
-
 const disconnectProducer = async (producer: Nullable<Producer>) => {
-  if (isProducerReady(producer)) {
+  if (isDefined<Producer>()(producer)) {
     await producer.disconnect()
   }
 }
@@ -57,7 +56,7 @@ export const KafkaStreamProducer = <TMessage>(
       }
     },
     write: async (message: TMessage[] | TMessage) => {
-      if (isProducerReady(producer)) {
+      if (isDefined<Producer>()(producer)) {
         const messages = (isArray(message) ? message : [message]).map(msg => {
           return { value: JSON.stringify(msg) }
         })

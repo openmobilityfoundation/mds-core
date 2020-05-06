@@ -17,6 +17,7 @@
 import { Kafka, EachMessagePayload, Consumer } from 'kafkajs'
 import { Nullable } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
+import { isDefined } from '@mds-core/mds-utils'
 import { StreamConsumer } from '../stream-interface'
 import { getKafkaBrokers } from './helpers'
 
@@ -43,10 +44,8 @@ const createStreamConsumer = async (
   return null
 }
 
-const isConsumerReady = (stream: Nullable<Consumer>): stream is Consumer => stream !== null
-
 const disconnectConsumer = async (consumer: Nullable<Consumer>) => {
-  if (isConsumerReady(consumer)) {
+  if (isDefined<Consumer>()(consumer)) {
     await consumer.disconnect()
   }
 }

@@ -16,7 +16,7 @@
 
 import { InsertReturning, UpdateReturning, ReadWriteRepository } from '@mds-core/mds-repository'
 
-import { filterEmptyHelper, ValidationError, ConflictError, NotFoundError } from '@mds-core/mds-utils'
+import { isDefined, ValidationError, ConflictError, NotFoundError } from '@mds-core/mds-utils'
 
 import { JurisdictionEntity } from './entities'
 import * as migrations from './migrations'
@@ -29,7 +29,7 @@ import {
 } from '../../@types'
 import { JurisdictionEntityToDomain, JurisdictionDomainToEntityCreate } from './mappers'
 
-const isEffectiveJurisdiction = filterEmptyHelper<JurisdictionDomainModel>()
+const isEffectiveJurisdiction = isDefined<JurisdictionDomainModel>()
 
 class JurisdictionReadWriteRepository extends ReadWriteRepository {
   public createJurisdictions = async (
