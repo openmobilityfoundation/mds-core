@@ -32,7 +32,8 @@ export const handleServiceResponse = <R>(
   return response
 }
 
-export const getServiceResult = <R>(response: ServiceResponse<R>): R => {
+export const getServiceResult = async <R>(request: Promise<ServiceResponse<R>>): Promise<R> => {
+  const response = await request
   if (response.error) {
     throw response.error
   }
