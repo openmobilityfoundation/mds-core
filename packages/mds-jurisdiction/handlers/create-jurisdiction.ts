@@ -19,7 +19,7 @@ import {
   CreateJurisdictionDomainModel,
   JurisdictionDomainModel
 } from '@mds-core/mds-jurisdiction-service'
-import { HandleServiceResponse } from '@mds-core/mds-service-helpers'
+import { handleServiceResponse } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 interface CreateJurisdictionRequest extends JurisdictionApiRequest {
@@ -36,7 +36,7 @@ type CreateJurisdictionResponse = JurisdictionApiResponse<
 >
 
 export const CreateJurisdictionHandler = async (req: CreateJurisdictionRequest, res: CreateJurisdictionResponse) => {
-  HandleServiceResponse(
+  handleServiceResponse(
     await JurisdictionServiceClient.createJurisdictions(Array.isArray(req.body) ? req.body : [req.body]),
     error => {
       if (error.type === 'ValidationError') {

@@ -15,9 +15,9 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { hours } from '@mds-core/mds-utils'
+import { hours, NotFoundError, ValidationError, ConflictError } from '@mds-core/mds-utils'
 import { Nullable } from '@mds-core/mds-types'
-import { ServiceProvider } from './@types'
+import { ServiceProvider, ServiceResultType, ServiceErrorDescriptor, ServiceErrorType } from '../@types'
 
 type ProcessMonitorOptions = Partial<{
   interval: number
@@ -88,4 +88,31 @@ export const ServiceManager = {
       }
     }
   }
+}
+
+export const ServiceResult = <R>(result: R): ServiceResultType<R> => ({ error: null, result })
+
+export const ServiceError = (error: Omit<ServiceErrorDescriptor, 'name'>): ServiceErrorType => ({
+  error: { name: '__ServiceErrorDescriptor__', ...error }
+})
+
+export const ServiceException = (message: string, error?: unknown) => {
+  const details = (error instanceof Error && error.message) || undefined
+
+  /* istanbul ignore if */
+  if (error instanceof NotFoundError) {
+    return ServiceError({ type: 'NotFoundError', message, details })
+  }
+
+  /* istanbul ignore if */
+  if (error instanceof ValidationError) {
+    return ServiceError({ type: 'ValidationError', message, details })
+  }
+
+  /* istanbul ignore if */
+  if (error instanceof ConflictError) {
+    return ServiceError({ type: 'ConflictError', message, details })
+  }
+
+  return ServiceError({ type: 'ServiceException', message, details })
 }

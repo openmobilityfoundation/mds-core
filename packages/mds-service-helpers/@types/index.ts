@@ -16,6 +16,7 @@
  */
 
 export interface ServiceErrorDescriptor {
+  name: '__ServiceErrorDescriptor__'
   type: 'ServiceException' | 'NotFoundError' | 'ConflictError' | 'ValidationError'
   message: string
   details?: string
@@ -31,10 +32,6 @@ export interface ServiceResultType<R> {
 }
 
 export type ServiceResponse<R> = ServiceErrorType | ServiceResultType<R>
-
-export const ServiceResult = <R>(result: R): ServiceResultType<R> => ({ error: null, result })
-
-export const ServiceError = (error: ServiceErrorDescriptor): ServiceErrorType => ({ error })
 
 export type ServiceProvider<TServiceInterface> = TServiceInterface & {
   initialize: () => Promise<void>

@@ -38,21 +38,21 @@ PostgresTypes.setTypeParser(20, Number)
 export type ConnectionManagerOptions = Partial<Omit<PostgresConnectionOptions, 'cli'>>
 export type ConnectionManagerCliOptions = Partial<PostgresConnectionOptions['cli']>
 
-export class ConnectionManager {
-  private readonly connections: Map<ConnectionMode, Nullable<Connection>> = new Map()
+export class ConnectionManager<TConnectionMode extends ConnectionMode> {
+  private readonly connections: Map<TConnectionMode, Nullable<Connection>> = new Map()
 
   private readonly lock = new AwaitLock()
 
   private readonly instance: UUID = uuid()
 
-  private connectionName = (mode: ConnectionMode): string => {
+  private connectionName = (mode: TConnectionMode): string => {
     const { prefix, instance } = this
     return `${prefix}-${mode}-${instance}`
   }
 
-  private connectionMode = (mode: ConnectionMode): string => (mode === 'ro' ? 'R/O' : 'R/W')
+  private connectionMode = (mode: TConnectionMode): string => (mode === 'ro' ? 'R/O' : 'R/W')
 
-  private connectionOptions = (mode: ConnectionMode): ConnectionOptions => {
+  private connectionOptions = (mode: TConnectionMode): ConnectionOptions => {
     const { connectionName, options } = this
     const { PG_HOST, PG_HOST_READER, PG_PORT, PG_USER, PG_PASS, PG_NAME, PG_DEBUG = 'false' } = process.env
 
@@ -74,7 +74,7 @@ export class ConnectionManager {
     }
   }
 
-  public connect = async (mode: ConnectionMode): Promise<Connection> => {
+  public connect = async (mode: TConnectionMode): Promise<Connection> => {
     const { lock, connections, connectionOptions, connectionMode, connectionName } = this
     await lock.acquireAsync()
     try {
@@ -101,7 +101,7 @@ export class ConnectionManager {
     return connection
   }
 
-  public disconnect = async (mode: ConnectionMode) => {
+  public disconnect = async (mode: TConnectionMode) => {
     const { lock, connections, connectionMode } = this
     try {
       await lock.acquireAsync()
@@ -118,7 +118,7 @@ export class ConnectionManager {
     }
   }
 
-  public cli = (mode: ConnectionMode, options: ConnectionManagerCliOptions = {}) => {
+  public cli = (mode: TConnectionMode, options: ConnectionManagerCliOptions = {}) => {
     const { connectionOptions } = this
     // Make the "rw" connection the default for the TypeORM CLI by removing the connection name
     const { name, ...ormconfig } = connectionOptions(mode)

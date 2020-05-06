@@ -14,10 +14,12 @@
     limitations under the License.
  */
 
-import { NotFoundError, ValidationError, ConflictError } from '@mds-core/mds-utils'
-import { ServiceResponse, ServiceErrorDescriptor, ServiceError } from './@types'
+import { ServiceResponse, ServiceErrorDescriptor } from '../@types'
 
-export const HandleServiceResponse = <R>(
+export const isServiceError = (error: unknown): error is ServiceErrorDescriptor =>
+  (error as ServiceErrorDescriptor).name === '__ServiceErrorDescriptor__'
+
+export const handleServiceResponse = <R>(
   response: ServiceResponse<R>,
   onerror: (error: ServiceErrorDescriptor) => void,
   onresult: (result: R) => void
@@ -30,23 +32,9 @@ export const HandleServiceResponse = <R>(
   return response
 }
 
-export const ServiceException = (message: string, error?: unknown) => {
-  const details = (error instanceof Error && error.message) || undefined
-
-  /* istanbul ignore if */
-  if (error instanceof NotFoundError) {
-    return ServiceError({ type: 'NotFoundError', message, details })
+export const getServiceResult = <R>(response: ServiceResponse<R>): R => {
+  if (response.error) {
+    throw response.error
   }
-
-  /* istanbul ignore if */
-  if (error instanceof ValidationError) {
-    return ServiceError({ type: 'ValidationError', message, details })
-  }
-
-  /* istanbul ignore if */
-  if (error instanceof ConflictError) {
-    return ServiceError({ type: 'ConflictError', message, details })
-  }
-
-  return ServiceError({ type: 'ServiceException', message, details })
+  return response.result
 }

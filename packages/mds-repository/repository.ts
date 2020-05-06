@@ -23,7 +23,7 @@ import { CreateRepositoryMigration } from './migration'
 export type RepositoryOptions = Pick<ConnectionManagerOptions, 'entities' | 'migrations'>
 
 abstract class BaseRepository<TConnectionMode extends ConnectionMode> {
-  protected readonly manager: ConnectionManager
+  protected readonly manager: ConnectionManager<TConnectionMode>
 
   protected abstract initialize(): Promise<void>
 
@@ -34,11 +34,6 @@ abstract class BaseRepository<TConnectionMode extends ConnectionMode> {
   }
 
   protected abstract shutdown(): Promise<void>
-
-  public cli = (mode: TConnectionMode, options?: ConnectionManagerCliOptions) => {
-    const { cli } = this.manager
-    return cli(mode, options)
-  }
 
   constructor(public readonly name: string, { entities, migrations }: Required<RepositoryOptions>) {
     const migrationsTableName = `${name}-migrations`
@@ -63,6 +58,11 @@ export abstract class ReadOnlyRepository extends BaseRepository<'ro'> {
     } = this
     logger.info(`Terminating R/O repository: ${name}`)
     await disconnect('ro')
+  }
+
+  public cli = () => {
+    const { cli } = this.manager
+    return cli('ro')
   }
 
   constructor(name: string, { entities = [] }: Omit<RepositoryOptions, 'migrations'> = {}) {
@@ -110,6 +110,11 @@ export abstract class ReadWriteRepository extends BaseRepository<'ro' | 'rw'> {
     } = this
     logger.info(`Terminating R/W repository: ${name}`)
     await Promise.all([disconnect('rw'), disconnect('ro')])
+  }
+
+  public cli = (options?: ConnectionManagerCliOptions) => {
+    const { cli } = this.manager
+    return cli('rw', options)
   }
 
   constructor(name: string, { entities = [], migrations = [] }: RepositoryOptions = {}) {
