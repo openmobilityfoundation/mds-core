@@ -534,19 +534,24 @@ function clone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj))
 }
 
-// T is the non-null and non-undefined type
-function isDefined<T>(warnOnEmpty?: boolean) {
-  // https://stackoverflow.com/a/51577579 to remove null/undefined in typesafe way
-  return (elem: T | undefined | null, idx?: number): elem is T => {
-    if (elem !== undefined && elem !== null) {
-      return true
-    }
-    if (warnOnEmpty) {
-      logger.warn(`Encountered empty element at index: ${idx}`) // eslint-disable-line @typescript-eslint/no-floating-promises
-    }
-    return false
+type isDefinedOptions = Partial<{ warnOnEmpty: boolean }>
+
+const isDefined = <T>(elem: T | undefined | null, options: isDefinedOptions = {}, index?: number): elem is T => {
+  const { warnOnEmpty } = options
+  if (elem !== undefined && elem !== null) {
+    return true
   }
+  if (warnOnEmpty) {
+    logger.warn(`Encountered empty element at index: ${index}`)
+  }
+  return false
 }
+
+const filterDefined = (options: isDefinedOptions = {}) => <T>(
+  value: T | undefined | null,
+  index: number,
+  array: (T | undefined | null)[]
+): value is T => isDefined(value, options, index)
 
 function moved(latA: number, lngA: number, latB: number, lngB: number) {
   const limit = 0.00001 // arbitrary amount
@@ -641,5 +646,6 @@ export {
   getEnvVar,
   parseObjectProperties,
   asArray,
-  pluralize
+  pluralize,
+  filterDefined
 }

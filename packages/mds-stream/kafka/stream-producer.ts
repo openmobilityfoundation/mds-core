@@ -39,7 +39,7 @@ const createStreamProducer = async ({ clientId = 'writer' }: Partial<KafkaStream
 }
 
 const disconnectProducer = async (producer: Nullable<Producer>) => {
-  if (isDefined<Producer>()(producer)) {
+  if (isDefined(producer)) {
     await producer.disconnect()
   }
 }
@@ -56,7 +56,7 @@ export const KafkaStreamProducer = <TMessage>(
       }
     },
     write: async (message: TMessage[] | TMessage) => {
-      if (isDefined<Producer>()(producer)) {
+      if (isDefined(producer)) {
         const messages = (isArray(message) ? message : [message]).map(msg => {
           return { value: JSON.stringify(msg) }
         })

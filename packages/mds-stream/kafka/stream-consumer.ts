@@ -45,7 +45,7 @@ const createStreamConsumer = async (
 }
 
 const disconnectConsumer = async (consumer: Nullable<Consumer>) => {
-  if (isDefined<Consumer>()(consumer)) {
+  if (isDefined(consumer)) {
     await consumer.disconnect()
   }
 }
