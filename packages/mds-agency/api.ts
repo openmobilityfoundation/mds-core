@@ -19,8 +19,8 @@ import express from 'express'
 import logger from '@mds-core/mds-logger'
 import { isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathsFor } from '@mds-core/mds-utils'
-import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
+import { AgencyApiRequest, AgencyApiResponse, AgencyApiAccessTokenScopes } from './types'
 import {
   registerVehicle,
   getVehicleById,
@@ -35,7 +35,6 @@ import {
 import { readAllVehicleIds } from './agency-candidate-request-handlers'
 import { getCacheInfo, wipeDevice, refreshCache } from './sandbox-admin-request-handlers'
 import { validateDeviceId } from './utils'
-import { AgencyApiAccessTokenScopes } from './types'
 
 const checkAgencyApiAccess = (validator: AccessTokenScopeValidator<AgencyApiAccessTokenScopes>) =>
   checkAccess(validator)

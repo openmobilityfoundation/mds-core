@@ -17,9 +17,9 @@
 import { Column, Index } from 'typeorm'
 import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
-import { Timestamp } from '@mds-core/mds-types'
+import { Timestamp, AnyConstructor } from '@mds-core/mds-types'
 import { BigintTransformer } from '../transformers'
-import { AnyConstructor, Mixin } from '../@types'
+import { Mixin } from '../@types'
 
 export const RecordedColumn = <T extends AnyConstructor>(
   EntityClass: T,

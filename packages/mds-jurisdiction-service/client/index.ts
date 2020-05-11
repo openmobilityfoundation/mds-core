@@ -14,9 +14,17 @@
     limitations under the License.
  */
 
+import { UnwrapServiceResult, ServiceClient } from '@mds-core/mds-service-helpers'
 import { JurisdictionServiceProvider } from '../service/provider'
-import { JurisdictionServiceInterface } from '../@types'
+import { JurisdictionService } from '../@types'
 
-const { initialize, shutdown, ...client } = JurisdictionServiceProvider
+const { initialize, shutdown, ...service } = JurisdictionServiceProvider
 
-export const JurisdictionServiceClient: JurisdictionServiceInterface = client
+export const JurisdictionServiceClient: ServiceClient<JurisdictionService> = {
+  createJurisdiction: UnwrapServiceResult(service.createJurisdiction),
+  createJurisdictions: UnwrapServiceResult(service.createJurisdictions),
+  deleteJurisdiction: UnwrapServiceResult(service.deleteJurisdiction),
+  getJurisdiction: UnwrapServiceResult(service.getJurisdiction),
+  getJurisdictions: UnwrapServiceResult(service.getJurisdictions),
+  updateJurisdiction: UnwrapServiceResult(service.updateJurisdiction)
+}

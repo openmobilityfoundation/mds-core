@@ -20,7 +20,7 @@ import {
   JurisdictionDomainModel,
   JurisdictionIdType
 } from '@mds-core/mds-jurisdiction-service'
-import { handleServiceResponse } from '@mds-core/mds-service-helpers'
+import { isServiceError } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 interface UpdateJurisdictionRequest extends JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }> {
@@ -32,10 +32,13 @@ type UpdateJurisdictionResponse = JurisdictionApiResponse<{
 }>
 
 export const UpdateJurisdictionHandler = async (req: UpdateJurisdictionRequest, res: UpdateJurisdictionResponse) => {
-  const { jurisdiction_id } = req.params
-  handleServiceResponse(
-    await JurisdictionServiceClient.updateJurisdiction(jurisdiction_id, req.body),
-    error => {
+  try {
+    const { jurisdiction_id } = req.params
+    const { version } = res.locals
+    const jurisdiction = await JurisdictionServiceClient.updateJurisdiction(jurisdiction_id, req.body)
+    return res.status(200).send({ version, jurisdiction })
+  } catch (error) {
+    if (isServiceError(error)) {
       if (error.type === 'ValidationError') {
         return res.status(400).send({ error })
       }
@@ -45,11 +48,7 @@ export const UpdateJurisdictionHandler = async (req: UpdateJurisdictionRequest, 
       if (error.type === 'ConflictError') {
         return res.status(409).send({ error })
       }
-      return res.status(500).send({ error })
-    },
-    jurisdiction => {
-      const { version } = res.locals
-      return res.status(200).send({ version, jurisdiction })
     }
-  )
+    return res.status(500).send({ error })
+  }
 }

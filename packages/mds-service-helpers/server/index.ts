@@ -15,14 +15,17 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { hours, NotFoundError, ValidationError, ConflictError } from '@mds-core/mds-utils'
+import { hours, minutes, seconds, NotFoundError, ValidationError, ConflictError } from '@mds-core/mds-utils'
 import { Nullable } from '@mds-core/mds-types'
+import retry, { Options as RetryOptions } from 'async-retry'
 import { ServiceProvider, ServiceResultType, ServiceErrorDescriptor, ServiceErrorType } from '../@types'
 
-type ProcessMonitorOptions = Partial<{
-  interval: number
-  signals: NodeJS.Signals[]
-}>
+type ProcessMonitorOptions = Partial<
+  Omit<RetryOptions, 'onRetry'> & {
+    interval: number
+    signals: NodeJS.Signals[]
+  }
+>
 
 type ProcessMonitor = {
   stop: () => Promise<void>
@@ -32,7 +35,14 @@ const ServiceMonitor = async <TServiceInterface>(
   service: ServiceProvider<TServiceInterface>,
   options: ProcessMonitorOptions = {}
 ): Promise<ProcessMonitor> => {
-  const { interval = hours(1), signals = ['SIGINT', 'SIGTERM'] } = options
+  const {
+    interval = hours(1),
+    signals = ['SIGINT', 'SIGTERM'],
+    retries = 15,
+    minTimeout = seconds(2),
+    maxTimeout = minutes(2),
+    ...retryOptions
+  } = options
 
   const {
     env: { npm_package_name, npm_package_version, npm_package_git_commit }
@@ -40,10 +50,32 @@ const ServiceMonitor = async <TServiceInterface>(
 
   const version = `${npm_package_name} v${npm_package_version} (${npm_package_git_commit ?? 'local'})`
 
-  logger.info(`Initializing service ${version}`)
-
   // Initialize the service
-  await service.initialize()
+  try {
+    await retry(
+      async () => {
+        logger.info(`Initializing service ${version}`)
+        await service.initialize()
+      },
+      {
+        retries,
+        minTimeout,
+        maxTimeout,
+
+        ...retryOptions,
+        onRetry: (error, attempt) => {
+          /* istanbul ignore next */
+          logger.error(
+            `Initializing service ${version} failed: ${error.message}, Retrying ${attempt} of ${retries}....`
+          )
+        }
+      }
+    )
+  } catch (error) /* istanbul ignore next */ {
+    logger.error(`Initializing service ${version} failed: ${error.message}, Exiting...`)
+    await service.shutdown()
+    process.exit(1)
+  }
 
   // Keep NodeJS process alive
   logger.info(`Monitoring service ${version} for ${signals.join(', ')}`)
@@ -55,6 +87,7 @@ const ServiceMonitor = async <TServiceInterface>(
     clearInterval(timeout)
     logger.info(`Terminating service ${version} on ${signal}`)
     await service.shutdown()
+    process.exit(0)
   }
 
   // Monitor process for signals

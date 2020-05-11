@@ -15,6 +15,8 @@
     limitations under the License.
  */
 
+import { AnyFunction } from '@mds-core/mds-types'
+
 export interface ServiceErrorDescriptor {
   name: '__ServiceErrorDescriptor__'
   type: 'ServiceException' | 'NotFoundError' | 'ConflictError' | 'ValidationError'
@@ -33,7 +35,13 @@ export interface ServiceResultType<R> {
 
 export type ServiceResponse<R> = ServiceErrorType | ServiceResultType<R>
 
-export type ServiceProvider<TServiceInterface> = TServiceInterface & {
+export type ServiceClient<I> = {
+  [P in keyof I]: I[P] extends AnyFunction<infer R> ? (...args: Parameters<I[P]>) => Promise<R> : never
+}
+
+export type ServiceProvider<I> = {
+  [P in keyof I]: I[P] extends AnyFunction<infer R> ? (...args: Parameters<I[P]>) => Promise<ServiceResponse<R>> : never
+} & {
   initialize: () => Promise<void>
   shutdown: () => Promise<void>
 }

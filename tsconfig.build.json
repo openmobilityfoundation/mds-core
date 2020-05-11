@@ -8,5 +8,6 @@
     "listEmittedFiles": true,
     "declaration": true,
     "composite": true
-  }
+  },
+  "exclude": ["**/tests", "**/dist"]
 }

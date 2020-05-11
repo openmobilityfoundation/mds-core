@@ -10,19 +10,16 @@
   "scripts": {
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
     "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-policy-author:${npm_package_version} buildImage",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0"
+    "test": "yarn test:eslint",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
   },
   "keywords": [
     "mds"
   ],
   "author": "City of Los Angeles",
+  "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-policy-author": "0.0.23"
-  },
-  "devDependencies": {
+    "@mds-core/mds-policy-author": "0.0.23",
     "@mds-core/mds-webpack-config": "0.1.0"
-  },
-  "license": "Apache-2.0"
+  }
 }

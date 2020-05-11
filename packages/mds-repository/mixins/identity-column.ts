@@ -17,8 +17,9 @@
 import { Column, Index } from 'typeorm'
 import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
+import { AnyConstructor } from '@mds-core/mds-types'
 import { BigintTransformer } from '../transformers'
-import { AnyConstructor, Mixin } from '../@types'
+import { Mixin } from '../@types'
 
 export const IdentityColumn = <T extends AnyConstructor>(
   EntityClass: T,

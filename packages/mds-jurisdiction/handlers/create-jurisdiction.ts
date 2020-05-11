@@ -19,7 +19,7 @@ import {
   CreateJurisdictionDomainModel,
   JurisdictionDomainModel
 } from '@mds-core/mds-jurisdiction-service'
-import { handleServiceResponse } from '@mds-core/mds-service-helpers'
+import { isServiceError } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 interface CreateJurisdictionRequest extends JurisdictionApiRequest {
@@ -36,24 +36,24 @@ type CreateJurisdictionResponse = JurisdictionApiResponse<
 >
 
 export const CreateJurisdictionHandler = async (req: CreateJurisdictionRequest, res: CreateJurisdictionResponse) => {
-  handleServiceResponse(
-    await JurisdictionServiceClient.createJurisdictions(Array.isArray(req.body) ? req.body : [req.body]),
-    error => {
+  try {
+    const jurisdictions = await JurisdictionServiceClient.createJurisdictions(
+      Array.isArray(req.body) ? req.body : [req.body]
+    )
+    const { version } = res.locals
+    if (!Array.isArray(req.body)) {
+      const [jurisdiction] = jurisdictions
+      return res.status(201).send({ version, jurisdiction })
+    }
+    return res.status(201).send({ version, jurisdictions })
+  } catch (error) {
+    if (isServiceError(error))
       if (error.type === 'ValidationError') {
         return res.status(400).send({ error })
       }
-      if (error.type === 'ConflictError') {
-        return res.status(409).send({ error })
-      }
-      return res.status(500).send({ error })
-    },
-    jurisdictions => {
-      const { version } = res.locals
-      if (!Array.isArray(req.body)) {
-        const [jurisdiction] = jurisdictions
-        return res.status(201).send({ version, jurisdiction })
-      }
-      return res.status(201).send({ version, jurisdictions })
+    if (error.type === 'ConflictError') {
+      return res.status(409).send({ error })
     }
-  )
+    return res.status(500).send({ error })
+  }
 }

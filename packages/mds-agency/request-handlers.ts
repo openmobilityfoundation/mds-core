@@ -1,4 +1,3 @@
-import { AgencyApiRequest, AgencyApiResponse } from '@mds-core/mds-agency/types'
 import logger from '@mds-core/mds-logger'
 import { isUUID, now, ServerError, ValidationError, NotFoundError, normalizeToArray } from '@mds-core/mds-utils'
 import { isValidStop, isValidDevice, validateEvent, isValidTelemetry } from '@mds-core/mds-schema-validators'
@@ -20,6 +19,7 @@ import {
 } from '@mds-core/mds-types'
 import urls from 'url'
 import { parseRequest } from '@mds-core/mds-api-helpers'
+import { AgencyApiRequest, AgencyApiResponse } from './types'
 import {
   badDevice,
   getVehicles,

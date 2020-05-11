@@ -19,52 +19,37 @@ import {
   ServiceResult,
   ServiceError,
   ServiceException,
-  handleServiceResponse,
   getServiceResult,
   isServiceError,
   ServiceManager
 } from '../index'
 
 describe('Tests Service Helpers', () => {
-  it('Handle ServiceResult', async () =>
-    handleServiceResponse(
-      ServiceResult('success'),
-      error => test.value(error).is(null),
-      result => test.value(result).is('success')
-    ))
+  it('ServiceResult', async () => {
+    const { result } = ServiceResult('success')
+    test.value(result).is('success')
+  })
 
-  it('Handle ServiceError', async () =>
-    handleServiceResponse(
-      ServiceError({ type: 'ValidationError', message: 'Validation Error' }),
-      error => {
-        test.value(error.type).is('ValidationError')
-        test.value(error.message).is('Validation Error')
-        test.value(error.details).is(undefined)
-      },
-      result => test.value(result).is(null)
-    ))
+  it('ServiceError', async () => {
+    const { error } = ServiceError({ type: 'ValidationError', message: 'Validation Error' })
+    test.value(error.type).is('ValidationError')
+    test.value(error.message).is('Validation Error')
+    test.value(error.details).is(undefined)
+  })
 
-  it('Handle ServiceException', async () =>
-    handleServiceResponse(
-      ServiceException('Validation Error'),
-      error => {
-        test.value(error.type).is('ServiceException')
-        test.value(error.message).is('Validation Error')
-        test.value(error.details).is(undefined)
-      },
-      result => test.value(result).is(null)
-    ))
+  it('ServiceException', async () => {
+    const { error } = ServiceException('Validation Error')
+    test.value(error.type).is('ServiceException')
+    test.value(error.message).is('Validation Error')
+    test.value(error.details).is(undefined)
+  })
 
-  it('Handle ServiceException (with Error)', async () =>
-    handleServiceResponse(
-      ServiceException('Validation Error', Error('Error Message')),
-      error => {
-        test.value(error.type).is('ServiceException')
-        test.value(error.message).is('Validation Error')
-        test.value(error.details).is('Error Message')
-      },
-      result => test.value(result).is(null)
-    ))
+  it('ServiceException (with Error)', async () => {
+    const { error } = ServiceException('Validation Error', Error('Error Message'))
+    test.value(error.type).is('ServiceException')
+    test.value(error.message).is('Validation Error')
+    test.value(error.details).is('Error Message')
+  })
 
   it('Get ServiceResult', async () => {
     try {

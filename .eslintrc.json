@@ -9,7 +9,7 @@
   "parserOptions": {
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "project": "tsconfig.build.json"
+    "project": "tsconfig.eslint.json"
   },
   "extends": [
     "airbnb-base",
@@ -34,7 +34,7 @@
     "consistent-return": "off",
     "eqeqeq": "error",
     "import/extensions": ["error", "ignorePackages", { "ts": "never" }],
-    "import/no-extraneous-dependencies": "off",
+    "import/no-extraneous-dependencies": "error",
     "import/no-unresolved": "off",
     "import/prefer-default-export": "off",
     "max-classes-per-file": "off",
@@ -60,5 +60,13 @@
     "promise/prefer-await-to-then": "error",
     "promise/valid-params": "error",
     "radix": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/*.spec.ts"],
+      "rules": {
+        "import/no-extraneous-dependencies": "off"
+      }
+    }
+  ]
 }

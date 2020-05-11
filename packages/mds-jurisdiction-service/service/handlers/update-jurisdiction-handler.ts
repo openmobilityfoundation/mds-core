@@ -20,7 +20,7 @@ import { RepositoryError } from '@mds-core/mds-repository'
 import { UpdateJurisdictionDomainModel, JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 import { JurisdictionRepository } from '../repository'
 
-export const UpdateJurisdictionHandler = async (
+export const updateJurisdiction = async (
   jurisdiction_id: JurisdictionIdType,
   jurisdiction: UpdateJurisdictionDomainModel
 ): Promise<ServiceResponse<JurisdictionDomainModel>> => {

@@ -19,7 +19,7 @@ import {
   JurisdictionDomainModel,
   JurisdictionIdType
 } from '@mds-core/mds-jurisdiction-service'
-import { handleServiceResponse } from '@mds-core/mds-service-helpers'
+import { isServiceError } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 type DeleteJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }>
@@ -28,17 +28,16 @@ type DeleteJurisdictionResponse = JurisdictionApiResponse<Pick<JurisdictionDomai
 
 export const DeleteJurisdictionHandler = async (req: DeleteJurisdictionRequest, res: DeleteJurisdictionResponse) => {
   const { jurisdiction_id } = req.params
-  handleServiceResponse(
-    await JurisdictionServiceClient.deleteJurisdiction(jurisdiction_id),
-    error => {
+  try {
+    const result = await JurisdictionServiceClient.deleteJurisdiction(jurisdiction_id)
+    const { version } = res.locals
+    return res.status(200).send({ version, ...result })
+  } catch (error) {
+    if (isServiceError(error)) {
       if (error.type === 'NotFoundError') {
         return res.status(404).send({ error })
       }
-      return res.status(500).send({ error })
-    },
-    result => {
-      const { version } = res.locals
-      return res.status(200).send({ version, ...result })
     }
-  )
+    return res.status(500).send({ error })
+  }
 }

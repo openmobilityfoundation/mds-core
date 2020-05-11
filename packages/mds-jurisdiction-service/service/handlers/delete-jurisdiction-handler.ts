@@ -20,7 +20,7 @@ import { RepositoryError } from '@mds-core/mds-repository'
 import { JurisdictionRepository } from '../repository'
 import { JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 
-export const DeleteJurisdictionHandler = async (
+export const deleteJurisdiction = async (
   jurisdiction_id: JurisdictionIdType
 ): Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>> => {
   try {

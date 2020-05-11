@@ -16,7 +16,7 @@
 
 import test from 'unit.js'
 import { uuid, days } from '@mds-core/mds-utils'
-import { handleServiceResponse } from '@mds-core/mds-service-helpers'
+import { JurisdictionServiceClient } from '../index'
 import { JurisdictionServiceProvider } from '../service/provider'
 
 const records = 5_000
@@ -32,8 +32,8 @@ describe('Write/Read Jurisdictions', () => {
   })
 
   it(`Write ${records} Jurisdiction${records > 1 ? 's' : ''}`, async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.createJurisdictions(
+    try {
+      const jurisdictions = await JurisdictionServiceClient.createJurisdictions(
         Array.from({ length: records }, (_, index) => ({
           jurisdiction_id: index ? uuid() : JURISDICTION_ID,
           agency_key: `agency-key-${index}`,
@@ -41,186 +41,190 @@ describe('Write/Read Jurisdictions', () => {
           timestamp: YESTERDAY,
           geography_id: uuid()
         }))
-      ),
-      error => test.value(error).is(null),
-      jurisdictions => test.value(jurisdictions[0].jurisdiction_id).is(JURISDICTION_ID)
-    )
+      )
+      test.value(jurisdictions[0].jurisdiction_id).is(JURISDICTION_ID)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it(`Read ${records} Jurisdiction${records > 1 ? 's' : ''}`, async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.getJurisdictions(),
-      error => test.value(error).is(null),
-      jurisdictions => {
-        test.value(jurisdictions.length).is(records)
-        test.value(jurisdictions[0].jurisdiction_id).is(JURISDICTION_ID)
-      }
-    )
+    try {
+      const jurisdictions = await JurisdictionServiceClient.getJurisdictions()
+      test.value(jurisdictions.length).is(records)
+      test.value(jurisdictions[0].jurisdiction_id).is(JURISDICTION_ID)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it('Write One Jurisdiction', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.createJurisdiction({
+    try {
+      const jurisdiction = await JurisdictionServiceClient.createJurisdiction({
         agency_key: 'agency-key-one',
         agency_name: 'Agency Name One',
         geography_id: uuid()
-      }),
-      error => test.value(error).is(null),
-      jurisdiction => {
-        test.value(jurisdiction).isNot(null)
-        test.value(jurisdiction.jurisdiction_id).isNot(null)
-        test.value(jurisdiction.timestamp).isNot(null)
-      }
-    )
+      })
+      test.value(jurisdiction).isNot(null)
+      test.value(jurisdiction.jurisdiction_id).isNot(null)
+      test.value(jurisdiction.timestamp).isNot(null)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it('Write One Jurisdiction (duplicate id)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.createJurisdiction({
+    try {
+      const result = await JurisdictionServiceClient.createJurisdiction({
         jurisdiction_id: JURISDICTION_ID,
         agency_key: 'agency-key-two',
         agency_name: 'Agency Name One',
         geography_id: uuid()
-      }),
-      error => test.value(error.type).is('ConflictError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('ConflictError')
+    }
   })
 
   it('Write One Jurisdiction (duplicate key)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.createJurisdiction({
+    try {
+      const result = await JurisdictionServiceClient.createJurisdiction({
         agency_key: 'agency-key-one',
         agency_name: 'Agency Name One',
         geography_id: uuid()
-      }),
-      error => test.value(error.type).is('ConflictError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('ConflictError')
+    }
   })
 
   it('Write One Jurisdiction (validation error)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.createJurisdiction({
+    try {
+      const result = await JurisdictionServiceClient.createJurisdiction({
         agency_key: '',
         agency_name: 'Agency Name One',
         geography_id: uuid()
-      }),
-      error => test.value(error.type).is('ValidationError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('ValidationError')
+    }
   })
 
   it('Update One Jurisdiction (invalid jurisdiction_id)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.updateJurisdiction(JURISDICTION_ID, {
+    try {
+      const result = await JurisdictionServiceClient.updateJurisdiction(JURISDICTION_ID, {
         jurisdiction_id: uuid(),
         agency_name: 'Some New Name',
         timestamp: TODAY
-      }),
-      error => test.value(error.type).is('ConflictError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('ConflictError')
+    }
   })
 
   it('Update One Jurisdiction (invalid timestamp)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.updateJurisdiction(JURISDICTION_ID, {
+    try {
+      const result = await JurisdictionServiceClient.updateJurisdiction(JURISDICTION_ID, {
         agency_name: 'Some New Name',
         timestamp: LAST_WEEK
-      }),
-      error => test.value(error.type).is('ValidationError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('ValidationError')
+    }
   })
 
   it('Update One Jurisdiction (not found)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.updateJurisdiction(uuid(), {
+    try {
+      const result = await JurisdictionServiceClient.updateJurisdiction(uuid(), {
         agency_name: 'Some New Name',
         timestamp: TODAY
-      }),
-      error => test.value(error.type).is('NotFoundError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('NotFoundError')
+    }
   })
 
   it('Update One Jurisdiction', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.updateJurisdiction(JURISDICTION_ID, {
+    try {
+      const jurisdiction = await JurisdictionServiceClient.updateJurisdiction(JURISDICTION_ID, {
         agency_name: 'Some New Name',
         timestamp: TODAY
-      }),
-      error => test.value(error).is(null),
-      jurisdiction => {
-        test.value(jurisdiction).isNot(null)
-        test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
-        test.value(jurisdiction.timestamp).is(TODAY)
-      }
-    )
+      })
+      test.value(jurisdiction).isNot(null)
+      test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
+      test.value(jurisdiction.timestamp).is(TODAY)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it('Read Specific Jurisdiction (current version)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.getJurisdiction(JURISDICTION_ID),
-      error => test.value(error).is(null),
-      jurisdiction => {
-        test.value(jurisdiction).isNot(null)
-        test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
-        test.value(jurisdiction.timestamp).is(TODAY)
-      }
-    )
+    try {
+      const jurisdiction = await JurisdictionServiceClient.getJurisdiction(JURISDICTION_ID)
+      test.value(jurisdiction).isNot(null)
+      test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
+      test.value(jurisdiction.timestamp).is(TODAY)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it('Read Specific Jurisdiction (prior version)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.getJurisdiction(JURISDICTION_ID, {
+    try {
+      const jurisdiction = await JurisdictionServiceClient.getJurisdiction(JURISDICTION_ID, {
         effective: YESTERDAY
-      }),
-      error => test.value(error).is(null),
-      jurisdiction => {
-        test.value(jurisdiction).isNot(null)
-        test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
-        test.value(jurisdiction.timestamp).is(YESTERDAY)
-      }
-    )
+      })
+      test.value(jurisdiction).isNot(null)
+      test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
+      test.value(jurisdiction.timestamp).is(YESTERDAY)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it('Read Specific Jurisdiction (no version)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.getJurisdiction(JURISDICTION_ID, {
+    try {
+      const result = await JurisdictionServiceClient.getJurisdiction(JURISDICTION_ID, {
         effective: LAST_WEEK
-      }),
-      error => test.value(error.type).is('NotFoundError'),
-      result => test.value(result).is(null)
-    )
+      })
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('NotFoundError')
+    }
   })
 
   it('Read Missing Jurisdiction', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.getJurisdiction(uuid()),
-      error => test.value(error.type).is('NotFoundError'),
-      result => test.value(result).is(null)
-    )
+    try {
+      const result = await JurisdictionServiceClient.getJurisdiction(uuid())
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('NotFoundError')
+    }
   })
 
   it('Delete One Jurisdiction', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.deleteJurisdiction(JURISDICTION_ID),
-      error => test.value(error).is(null),
-      jurisdiction => {
-        test.value(jurisdiction).isNot(null)
-        test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
-      }
-    )
+    try {
+      const jurisdiction = await JurisdictionServiceClient.deleteJurisdiction(JURISDICTION_ID)
+      test.value(jurisdiction).isNot(null)
+      test.value(jurisdiction.jurisdiction_id).is(JURISDICTION_ID)
+    } catch (error) {
+      test.value(error).is(null)
+    }
   })
 
   it('Delete One Jurisdiction (not found)', async () => {
-    handleServiceResponse(
-      await JurisdictionServiceProvider.deleteJurisdiction(JURISDICTION_ID),
-      error => test.value(error.type).is('NotFoundError'),
-      result => test.value(result).is(null)
-    )
+    try {
+      const result = await JurisdictionServiceClient.deleteJurisdiction(JURISDICTION_ID)
+      test.value(result).is(null)
+    } catch (error) {
+      test.value(error.type).is('NotFoundError')
+    }
   })
 
   after(async () => {

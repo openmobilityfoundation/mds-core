@@ -14,7 +14,6 @@
     limitations under the License.
  */
 
-import { ServiceResponse } from '@mds-core/mds-service-helpers'
 import { UUID, Timestamp, Optional } from '@mds-core/mds-types'
 
 export interface JurisdictionDomainModel {
@@ -35,21 +34,14 @@ export type GetJurisdictionsOptions = Partial<{
   effective: Timestamp
 }>
 
-export interface JurisdictionServiceInterface {
-  createJurisdiction: (jurisdiction: CreateJurisdictionDomainModel) => Promise<ServiceResponse<JurisdictionDomainModel>>
-  createJurisdictions: (
-    jurisdictions: CreateJurisdictionDomainModel[]
-  ) => Promise<ServiceResponse<JurisdictionDomainModel[]>>
+export interface JurisdictionService {
+  createJurisdiction: (jurisdiction: CreateJurisdictionDomainModel) => JurisdictionDomainModel
+  createJurisdictions: (jurisdictions: CreateJurisdictionDomainModel[]) => JurisdictionDomainModel[]
   updateJurisdiction: (
     jurisdiction_id: JurisdictionIdType,
     update: UpdateJurisdictionDomainModel
-  ) => Promise<ServiceResponse<JurisdictionDomainModel>>
-  deleteJurisdiction: (
-    jurisdiction_id: JurisdictionIdType
-  ) => Promise<ServiceResponse<Pick<JurisdictionDomainModel, 'jurisdiction_id'>>>
-  getJurisdictions: (options?: GetJurisdictionsOptions) => Promise<ServiceResponse<JurisdictionDomainModel[]>>
-  getJurisdiction: (
-    jurisdiction_id: JurisdictionIdType,
-    options?: GetJurisdictionsOptions
-  ) => Promise<ServiceResponse<JurisdictionDomainModel>>
+  ) => JurisdictionDomainModel
+  deleteJurisdiction: (jurisdiction_id: JurisdictionIdType) => Pick<JurisdictionDomainModel, 'jurisdiction_id'>
+  getJurisdictions: (options?: GetJurisdictionsOptions) => JurisdictionDomainModel[]
+  getJurisdiction: (jurisdiction_id: JurisdictionIdType, options?: GetJurisdictionsOptions) => JurisdictionDomainModel
 }

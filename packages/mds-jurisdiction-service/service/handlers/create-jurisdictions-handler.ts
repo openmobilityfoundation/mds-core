@@ -21,7 +21,7 @@ import { CreateJurisdictionDomainModel, JurisdictionDomainModel } from '../../@t
 import { JurisdictionRepository } from '../repository'
 import { ValidateJurisdictionForCreate } from '../validators'
 
-export const CreateJurisdictionsHandler = async (
+export const createJurisdictions = async (
   models: CreateJurisdictionDomainModel[]
 ): Promise<ServiceResponse<JurisdictionDomainModel[]>> => {
   try {

@@ -444,3 +444,8 @@ export interface Stop {
   wheelchair_boarding?: boolean
   reservation_cost?: Partial<{ [S in VEHICLE_TYPE]: number }> // Cost to reserve a spot per vehicle_type
 }
+
+// eslint-reason Function and constructor inference must use a single rest parameter of type 'any[]'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type AnyFunction<A = any> = (...args: any[]) => A
+export type AnyConstructor<A = object> = new (...args: any[]) => A

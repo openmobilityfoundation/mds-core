@@ -20,7 +20,7 @@ import { RepositoryError } from '@mds-core/mds-repository'
 import { GetJurisdictionsOptions, JurisdictionDomainModel } from '../../@types'
 import { JurisdictionRepository } from '../repository'
 
-export const GetJurisdictionsHandler = async (
+export const getJurisdictions = async (
   options?: GetJurisdictionsOptions
 ): Promise<ServiceResponse<JurisdictionDomainModel[]>> => {
   try {

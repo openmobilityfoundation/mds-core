@@ -15,7 +15,7 @@
  */
 
 import { InsertResult, UpdateResult } from 'typeorm'
-import { Nullable } from '@mds-core/mds-types'
+import { Nullable, AnyFunction } from '@mds-core/mds-types'
 
 // eslint-reason recursive declarations require interfaces
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -37,8 +37,4 @@ export interface UpdateReturning<T> extends UpdateResult {
   raw: T[]
 }
 
-// eslint-reason A mixin class must have a constructor with a single rest parameter of type 'any[]'.ts(2545)
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export type AnyFunction<A = any> = (...args: any[]) => A
-export type AnyConstructor<A = object> = new (...args: any[]) => A
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
