@@ -85,3 +85,9 @@ export class InsufficientPermissionsError extends BaseError {
     super('InsufficientPermissionsError', reason(error), info)
   }
 }
+
+export class ClientDisconnectedError extends BaseError {
+  public constructor(error?: Error | string, public info?: unknown) {
+    super('ClientDisconnectedError', reason(error), info)
+  }
+}

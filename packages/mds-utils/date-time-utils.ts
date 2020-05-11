@@ -1,6 +1,6 @@
 import { Timestamp } from '@mds-core/mds-types'
 import moment from 'moment-timezone'
-import { BadParamsError } from './exceptions'
+import { BadParamsError } from './exceptions/exceptions'
 
 export const getCurrentDate = () => {
   return new Date()
