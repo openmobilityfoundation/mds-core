@@ -186,8 +186,11 @@ export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiRespons
       await updateVehicleFail(req, res, provider_id, device_id, 'not found')
     } else {
       const device = await db.updateDevice(device_id, provider_id, update)
-      // TODO should we warn instead of fail if the cache/stream doesn't work?
-      await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+      try {
+        await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+      } catch (error) {
+        logger.warn(`Error writing to cache/stream ${error}`)
+      }
       return res.status(201).send({
         result: 'success',
         vehicle: device
