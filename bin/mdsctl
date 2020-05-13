@@ -369,7 +369,7 @@ bootstrap() {
   nvm install ${configs[nvm-version]}
   nvm alias default ${configs[nvm-version]}
 
-  for p in lerna cypress mocha chai mochawesome; do
+  for p in lerna mocha chai mochawesome; do
     yarn ${p} --version > /dev/null 2>&1 || yarn add -W ${p}
   done; unset p
 
@@ -1088,7 +1088,7 @@ testIntegration() {
 
   # todo: provide [ ui | cli ] option
   # yarn cypress open
-  yarn cypress run
+  # yarn cypress run
 }
 
 get() {
