@@ -278,8 +278,12 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
     try {
       await cache.readDevice(event.device_id)
     } catch (err) {
-      await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
-      logger.info('Re-adding previously deregistered device to cache', err)
+      try {
+        await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
+        logger.info('Re-adding previously deregistered device to cache', err)
+      } catch (error) {
+        logger.warn(`Error writing to cache/stream ${error}`)
+      }
     }
     if (event.telemetry) {
       event.telemetry.device_id = event.device_id
