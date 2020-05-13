@@ -15,14 +15,8 @@
  */
 
 import test from 'unit.js'
-import {
-  ServiceResult,
-  ServiceError,
-  ServiceException,
-  getServiceResult,
-  isServiceError,
-  ServiceManager
-} from '../index'
+import { ServiceResult, ServiceError, ServiceException, isServiceError, ServiceManager } from '../index'
+import { UnwrapServiceResult } from '../client'
 
 describe('Tests Service Helpers', () => {
   it('ServiceResult', async () => {
@@ -51,9 +45,9 @@ describe('Tests Service Helpers', () => {
     test.value(error.details).is('Error Message')
   })
 
-  it('Get ServiceResult', async () => {
+  it('UnwrapServiceResult ServiceResult', async () => {
     try {
-      const result = await getServiceResult(Promise.resolve(ServiceResult('success')))
+      const result = await UnwrapServiceResult(async () => ServiceResult('success'))()
       test.value(result).is('success')
     } catch (error) {
       test.value(error).is(null)
@@ -62,9 +56,9 @@ describe('Tests Service Helpers', () => {
 
   it('Catch ServiceError', async () => {
     try {
-      const result = await getServiceResult(
-        Promise.resolve(ServiceError({ type: 'ValidationError', message: 'Validation Error' }))
-      )
+      const result = await UnwrapServiceResult(async () =>
+        ServiceError({ type: 'ValidationError', message: 'Validation Error' })
+      )()
       test.value(result).is(null)
     } catch (error) {
       test.value(isServiceError(error)).is(true)
