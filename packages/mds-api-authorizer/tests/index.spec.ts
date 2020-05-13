@@ -3,33 +3,30 @@ import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import { uuid } from '@mds-core/mds-utils'
-import { AuthorizationHeaderApiAuthorizer, WebSocketAuthorizer } from '../index'
+import { AuthorizationHeaderApiAuthorizer, WebSocketAuthorizer, CustomClaim } from '../index'
 
-const TOKEN_PROVIDER_ID_CLAIM = 'https://test.ai/provider_id'
 const PROVIDER_SCOPES = 'admin:all'
 const PROVIDER_SUBJECT = uuid()
 const PROVIDER_EMAIL = 'user@test.ai'
 
-const Basic = `Basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const { env } = process
 
-const Bearer = `Bearer ${jwt.sign(
-  {
-    sub: PROVIDER_SUBJECT,
-    'https://ladot.io/user_email': PROVIDER_EMAIL,
-    [TOKEN_PROVIDER_ID_CLAIM]: MOCHA_PROVIDER_ID,
-    scope: PROVIDER_SCOPES
-  },
-  'secret'
-)}`
+const Basic = () => `Basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 
-let env: NodeJS.ProcessEnv
-
-process.env.TOKEN_PROVIDER_ID_CLAIM = TOKEN_PROVIDER_ID_CLAIM
+const Bearer = () =>
+  `Bearer ${jwt.sign(
+    {
+      sub: PROVIDER_SUBJECT,
+      [CustomClaim('user_email')]: PROVIDER_EMAIL,
+      [CustomClaim('provider_id')]: MOCHA_PROVIDER_ID,
+      scope: PROVIDER_SCOPES
+    },
+    'secret'
+  )}`
 
 describe('Test API Authorizer', () => {
   before(() => {
-    env = process.env
-    process.env = { TOKEN_PROVIDER_ID_CLAIM }
+    process.env = { TOKEN_CUSTOM_CLAIM_NAMESPACE: 'https://test.ai/' }
   })
 
   describe('Authorizaton Header Authorizer', () => {
@@ -51,7 +48,7 @@ describe('Test API Authorizer', () => {
       test
         .object(
           AuthorizationHeaderApiAuthorizer({
-            headers: { authorization: Basic }
+            headers: { authorization: Basic() }
           } as express.Request)
         )
         .hasProperty('principalId', MOCHA_PROVIDER_ID)
@@ -63,7 +60,7 @@ describe('Test API Authorizer', () => {
       test
         .object(
           AuthorizationHeaderApiAuthorizer({
-            headers: { authorization: Bearer }
+            headers: { authorization: Bearer() }
           } as express.Request)
         )
         .hasProperty('principalId', PROVIDER_SUBJECT)
@@ -76,7 +73,7 @@ describe('Test API Authorizer', () => {
   describe('WebSocket Authorizer', () => {
     it('Basic Authorization', async () => {
       test
-        .object(WebSocketAuthorizer(Basic))
+        .object(WebSocketAuthorizer(Basic()))
         .hasProperty('principalId', MOCHA_PROVIDER_ID)
         .hasProperty('provider_id', MOCHA_PROVIDER_ID)
         .hasProperty('scope', PROVIDER_SCOPES)
@@ -84,7 +81,7 @@ describe('Test API Authorizer', () => {
 
     it('Bearer Authorization', async () => {
       test
-        .object(WebSocketAuthorizer(Bearer))
+        .object(WebSocketAuthorizer(Bearer()))
         .hasProperty('principalId', PROVIDER_SUBJECT)
         .hasProperty('provider_id', MOCHA_PROVIDER_ID)
         .hasProperty('user_email', PROVIDER_EMAIL)

@@ -4,7 +4,14 @@ import express from 'express'
 import CorsMiddleware from 'cors'
 import logger from '@mds-core/mds-logger'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
-import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, AuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import {
+  AuthorizationHeaderApiAuthorizer,
+  ApiAuthorizer,
+  AuthorizerClaims,
+  ProviderIdClaim,
+  UserEmailClaim,
+  JurisdictionsClaim
+} from '@mds-core/mds-api-authorizer'
 import { Params, ParamsDictionary } from 'express-serve-static-core'
 
 export type ApiRequest<P extends Params = ParamsDictionary> = express.Request<P>
@@ -227,6 +234,13 @@ export const ApiServer = (
   { authorizer, ...corsOptions }: Partial<AuthorizerMiddlewareOptions & CorsMiddlewareOptions> = {},
   app: express.Express = express()
 ): express.Express => {
+  logger.info(`${serverVersion()} starting`)
+
+  // Log the custom authorization namespace/claims
+  const claims = [ProviderIdClaim, UserEmailClaim, JurisdictionsClaim]
+  claims.forEach(claim => {
+    logger.info(`${serverVersion()} using authorization claim ${claim()}`)
+  })
   // Disable x-powered-by header
   app.disable('x-powered-by')
 
