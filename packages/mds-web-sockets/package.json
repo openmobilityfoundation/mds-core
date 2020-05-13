@@ -20,6 +20,7 @@
     "@mds-core/mds-stream": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
+    "ts-nats": "1.2.14-2",
     "@types/jsonwebtoken": "8.3.9",
     "@types/node-rsa": "1.0.0",
     "@types/request-promise": "4.1.46",

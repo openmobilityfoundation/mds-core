@@ -17,10 +17,7 @@
 import logger from '@mds-core/mds-logger'
 import redis from 'redis'
 import bluebird from 'bluebird'
-import nats from 'nats'
-import { BinaryHTTPEmitter, event as cloudevent } from 'cloudevents-sdk/v1'
 import { Device, VehicleEvent, Telemetry } from '@mds-core/mds-types'
-import { getEnvVar } from '@mds-core/mds-utils'
 import {
   Stream,
   StreamItem,
@@ -33,67 +30,16 @@ import {
 import { AgencyStreamKafka } from './kafka/agency-stream-kafka'
 import { KafkaStreamConsumer, KafkaStreamProducer } from './kafka'
 
+import { NatsStreamConsumer } from './nats/stream-consumer'
+import { NatsStreamProducer } from './nats/stream-producer'
+
+import { AgencyStreamNats } from './nats/agency-stream-nats'
+
 export { KafkaStreamConsumerOptions, KafkaStreamProducerOptions } from './kafka'
 export { StreamConsumer, StreamProducer } from './stream-interface'
 
 const { env } = process
 
-const { NATS } = getEnvVar({ NATS: 'localhost' })
-
-let natsClient: nats.Client
-
-let binding: BinaryHTTPEmitter | null = null
-
-const getBinding = () => {
-  if (!binding) {
-    binding = new BinaryHTTPEmitter({
-      method: 'POST',
-      url: env.SINK
-    })
-  }
-  return binding
-}
-
-const getNats = () => {
-  if (!natsClient) {
-    natsClient = nats.connect(`nats://${NATS}:4222`, {
-      reconnect: true
-    })
-
-    natsClient.on('error', async message => {
-      logger.error(message)
-    })
-  }
-
-  return natsClient
-}
-
-/* Currently unused code, keeping it in the case that we decide to switch back to Knative Eventing */
-async function writeCloudEvent(type: string, data: string) {
-  if (!env.SINK || !env.NATS) {
-    return
-  }
-
-  const { TENANT_ID } = getEnvVar({
-    TENANT_ID: 'mds'
-  })
-
-  // fixme: unable to set-and-propgate additional ce headers, eg: ce.addExtension('foo', 'bar')
-  const event = cloudevent().type(`${TENANT_ID}.${type}`).source(env.NATS).data(data)
-
-  return getBinding().emit(event)
-}
-
-async function writeNatsEvent(type: string, data: string) {
-  const { TENANT_ID } = getEnvVar({
-    TENANT_ID: 'mds'
-  })
-
-  if (env.NATS) {
-    const event = cloudevent().type(`${TENANT_ID}.${type}`).source(NATS).data(data)
-    getNats().publish(`${TENANT_ID}.${type}`, JSON.stringify(event))
-  }
-}
 declare module 'redis' {
   interface RedisClient {
     dbsizeAsync: () => Promise<number>
@@ -169,11 +115,8 @@ async function getClient() {
 
 async function initialize() {
   await AgencyStreamKafka.initialize()
-  if (env.SINK) {
-    getBinding()
-  } else {
-    await getClient()
-  }
+  await AgencyStreamNats.initialize()
+  await getClient()
 }
 
 async function reset() {
@@ -191,6 +134,7 @@ async function shutdown() {
     cachedClient = null
   }
   await AgencyStreamKafka.shutdown()
+  await AgencyStreamNats.shutdown()
 }
 
 async function writeStream(stream: Stream, field: string, value: unknown) {
@@ -208,7 +152,7 @@ async function writeStreamBatch(stream: Stream, field: string, values: unknown[]
 // put basics of vehicle in the cache
 async function writeDevice(device: Device) {
   if (env.NATS) {
-    await writeNatsEvent('device', JSON.stringify(device))
+    await AgencyStreamNats.writeDevice(device)
   }
   if (env.KAFKA_HOST) {
     await AgencyStreamKafka.writeDevice(device)
@@ -218,7 +162,7 @@ async function writeDevice(device: Device) {
 
 async function writeEvent(event: VehicleEvent) {
   if (env.NATS) {
-    await writeNatsEvent('event', JSON.stringify(event))
+    await AgencyStreamNats.writeEvent(event)
   }
   if (env.KAFKA_HOST) {
     await AgencyStreamKafka.writeEvent(event)
@@ -229,7 +173,7 @@ async function writeEvent(event: VehicleEvent) {
 // put latest locations in the cache
 async function writeTelemetry(telemetry: Telemetry[]) {
   if (env.NATS) {
-    await Promise.all(telemetry.map(item => writeNatsEvent('telemetry', JSON.stringify(item))))
+    await AgencyStreamNats.writeTelemetry(telemetry)
   }
   if (env.KAFKA_HOST) {
     await AgencyStreamKafka.writeTelemetry(telemetry)
@@ -345,12 +289,13 @@ export default {
   reset,
   shutdown,
   startup,
-  writeCloudEvent,
   writeDevice,
   writeEvent,
   writeStream,
   writeStreamBatch,
   writeTelemetry,
   KafkaStreamConsumer,
-  KafkaStreamProducer
+  KafkaStreamProducer,
+  NatsStreamConsumer,
+  NatsStreamProducer
 }

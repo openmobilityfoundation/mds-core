@@ -6,7 +6,7 @@ import { PROVIDER_SCOPES } from '@mds-core/mds-test-data'
 import Sinon from 'sinon'
 import jwt from 'jsonwebtoken'
 import NodeRSA from 'node-rsa'
-import { WebSocketServer } from '../server'
+import { WebSocketServer } from '../ws-server'
 import { Clients } from '../clients'
 
 const JWT_AUDIENCE = 'https://example.com'
@@ -32,6 +32,7 @@ const ADMIN_AUTH = `Bearer ${goodToken}`
 
 before(() => {
   Sinon.stub(Clients, 'getKey').returns(returnRsaPublicKey())
+  /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
   WebSocketServer()
 })
 
