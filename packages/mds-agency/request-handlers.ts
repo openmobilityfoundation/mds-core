@@ -1,5 +1,5 @@
 import logger from '@mds-core/mds-logger'
-import { isUUID, now, ServerError, ValidationError, NotFoundError, normalizeToArray } from '@mds-core/mds-utils'
+import { isUUID, now, ValidationError, normalizeToArray, NotFoundError, ServerError } from '@mds-core/mds-utils'
 import { isValidStop, isValidDevice, validateEvent, isValidTelemetry } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
@@ -19,7 +19,18 @@ import {
 } from '@mds-core/mds-types'
 import urls from 'url'
 import { parseRequest } from '@mds-core/mds-api-helpers'
-import { AgencyApiRequest, AgencyApiResponse } from './types'
+import {
+  AgencyApiRequest,
+  AgencyRegisterVehicleResponse,
+  AgencyGetVehicleByIdResponse,
+  AgencyGetVehiclesByProviderResponse,
+  AgencyUpdateVehicleResponse,
+  AgencySubmitVehicleEventResponse,
+  AgencySubmitVehicleTelemetryResponse,
+  AgencyRegisterStopResponse,
+  AgencyReadStopsResponse,
+  AgencyReadStopResponse
+} from './types'
 import {
   badDevice,
   getVehicles,
@@ -34,8 +45,9 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 stream.initialize()
+const agencyServerError = { error: 'server_error', error_description: 'Unknown server error' }
 
-export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const registerVehicle = async (req: AgencyApiRequest, res: AgencyRegisterVehicleResponse) => {
   const { body } = req
   const recorded = now()
 
@@ -83,7 +95,8 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
     } catch (err) {
       logger.error('writeRegisterEvent failure', err)
     }
-    res.status(201).send({ result: 'register device success', recorded, device })
+    const { version } = res.locals
+    res.status(201).send({ version })
   } catch (err) {
     if (String(err).includes('duplicate')) {
       res.status(409).send({
@@ -92,15 +105,15 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyApiRespo
       })
     } else if (String(err).includes('db')) {
       logger.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
-      res.status(500).send(new ServerError())
+      res.status(500).send(agencyServerError)
     } else {
       logger.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
-      res.status(500).send(new ServerError())
+      res.status(500).send(agencyServerError)
     }
   }
 }
 
-export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const getVehicleById = async (req: AgencyApiRequest, res: AgencyGetVehicleByIdResponse) => {
   const { device_id } = req.params
 
   const { provider_id } = res.locals.scopes.includes('vehicles:read')
@@ -110,16 +123,15 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyApiRespon
   const payload = await readPayload(device_id)
 
   if (!payload.device || (provider_id && payload.device.provider_id !== provider_id)) {
-    res.status(404).send({
-      error: 'not_found'
-    })
+    res.status(404).send({})
     return
   }
   const compositeData = computeCompositeVehicleData(payload)
-  res.status(200).send(compositeData)
+  const { version } = res.locals
+  res.status(200).send({ version, ...compositeData })
 }
 
-export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyGetVehiclesByProviderResponse) => {
   const PAGE_SIZE = 1000
 
   const { skip = 0, take = PAGE_SIZE } = parseRequest(req, { parser: Number }).query('skip', 'take')
@@ -137,39 +149,37 @@ export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyAp
 
   try {
     const response = await getVehicles(skip, take, url, req.query, provider_id)
-    return res.status(200).send(response)
+    const { version } = res.locals
+    return res.status(200).send({ version, ...response })
   } catch (err) {
     logger.error('getVehicles fail', err)
-    return res.status(500).send(new ServerError())
+    return res.status(500).send(agencyServerError)
   }
 }
 
 export async function updateVehicleFail(
   req: AgencyApiRequest,
-  res: AgencyApiResponse,
+  res: AgencyUpdateVehicleResponse,
   provider_id: UUID,
   device_id: UUID,
   err: Error | string
 ) {
   if (String(err).includes('not found')) {
-    res.status(404).send({
-      error: 'not_found'
-    })
+    res.status(404).send({})
   } else if (String(err).includes('invalid')) {
     res.status(400).send({
-      error: 'invalid_data'
+      error: 'bad_param',
+      error_description: 'Invalid parameters for vehicle were sent'
     })
   } else if (!provider_id) {
-    res.status(404).send({
-      error: 'not_found'
-    })
+    res.status(404).send({})
   } else {
     logger.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
-    res.status(500).send(new ServerError())
+    res.status(500).send(agencyServerError)
   }
 }
 
-export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const updateVehicle = async (req: AgencyApiRequest, res: AgencyUpdateVehicleResponse) => {
   const { device_id } = req.params
 
   const { vehicle_id } = req.body
@@ -186,14 +196,15 @@ export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiRespons
       await updateVehicleFail(req, res, provider_id, device_id, 'not found')
     } else {
       const device = await db.updateDevice(device_id, provider_id, update)
+      // TODO should we warn instead of fail if the cache/stream doesn't work?
+      const { version } = res.locals
       try {
         await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
       } catch (error) {
         logger.warn(`Error writing to cache/stream ${error}`)
       }
       return res.status(201).send({
-        result: 'success',
-        vehicle: device
+        version
       })
     }
   } catch (err) {
@@ -201,7 +212,7 @@ export const updateVehicle = async (req: AgencyApiRequest, res: AgencyApiRespons
   }
 }
 
-export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencySubmitVehicleEventResponse) => {
   const { device_id } = req.params
 
   const { provider_id } = res.locals
@@ -233,10 +244,10 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
   }
 
   async function success() {
+    const { version } = res.locals
     function fin() {
       res.status(201).send({
-        result: 'success',
-        recorded,
+        version,
         device_id,
         status: EVENT_STATUS_MAP[event.event_type]
       })
@@ -256,19 +267,19 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
     const message = err.message || String(err)
     if (message.includes('duplicate')) {
       logger.info(name, 'duplicate event', event.event_type)
-      res.status(409).send({
-        error: 'duplicate_event',
-        error_description: 'an event with this device_id and timestamp has already been received'
+      res.status(400).send({
+        error: 'bad_param',
+        error_description: 'An event with this device_id and timestamp has already been received'
       })
     } else if (message.includes('not found') || message.includes('unregistered')) {
       logger.info(name, 'event for unregistered', event.device_id, event.event_type)
       res.status(400).send({
         error: 'unregistered',
-        error_description: 'the specified device_id has not been registered'
+        error_description: 'The specified device_id has not been registered'
       })
     } else {
       logger.error('post event fail:', event, message)
-      res.status(500).send(new ServerError())
+      res.status(500).send(agencyServerError)
     }
   }
 
@@ -321,7 +332,7 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencyApiRe
   }
 }
 
-export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencySubmitVehicleTelemetryResponse) => {
   const start = Date.now()
 
   const { data } = req.body
@@ -329,7 +340,7 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
   if (!provider_id) {
     res.status(400).send({
       error: 'bad_param',
-      error_description: 'bad or missing provider_id'
+      error_description: 'Bad or missing provider_id'
     })
     return
   }
@@ -400,7 +411,9 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
         )
       }
       if (recorded_telemetry.length) {
+        const { version } = res.locals
         res.status(201).send({
+          version,
           result: `telemetry success for ${valid.length} of ${data.length}`,
           recorded: now(),
           unique: recorded_telemetry.length,
@@ -410,9 +423,8 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
         logger.info(name, 'no unique telemetry in', data.length, 'items')
         res.status(400).send({
           error: 'invalid_data',
-          error_description: 'none of the provided data was unique',
-          result: 'no new valid telemetry submitted',
-          unique: 0
+          error_description: 'None of the provided data was valid',
+          error_details: failures
         })
       }
     } else {
@@ -421,65 +433,61 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyA
       logger.info(name, 'no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
       res.status(400).send({
         error: 'invalid_data',
-        error_description: 'none of the provided data was valid',
-        result: 'no valid telemetry submitted',
-        failures
+        error_description: 'None of the provided data was valid',
+        error_details: failures
       })
     }
   } catch (err) {
-    res.status(400).send({
-      error: 'invalid_data',
-      error_description: 'none of the provided data was valid',
-      result: 'no valid telemetry submitted',
-      failures: [`device_id ${data[0].device_id}: not found`]
+    res.status(500).send({
+      error: 'server_error',
+      error_description: 'None of the provided data was valid',
+      error_details: [` device_id ${data[0].device_id}: not found`]
     })
   }
 }
 
-export const registerStop = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const registerStop = async (req: AgencyApiRequest, res: AgencyRegisterStopResponse) => {
   const stop = req.body
 
   try {
     isValidStop(stop)
     const recorded_stop = await db.writeStop(stop)
-    return res.status(201).send(recorded_stop)
-  } catch (err) {
-    if (err instanceof NotFoundError) {
-      return res.status(404).send(err.message)
-    }
-    if (err instanceof ValidationError) {
-      return res.status(400).send({ error: err })
+    const { version } = res.locals
+    return res.status(201).send({ version, ...recorded_stop })
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return res.status(400).send({ error })
     }
 
-    return res.status(500).send(new ServerError())
+    return res.status(500).send({ error: new ServerError() })
   }
 }
 
-export const readStop = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const readStop = async (req: AgencyApiRequest, res: AgencyReadStopResponse) => {
   const { stop_id } = req.params
   try {
     const recorded_stop = await db.readStop(stop_id)
 
     if (!recorded_stop) {
-      return res.status(404).send(new NotFoundError())
+      return res.status(404).send({ error: new NotFoundError('Stop not found') })
     }
-
-    res.status(200).send(recorded_stop)
+    const { version } = res.locals
+    res.status(200).send({ version, ...recorded_stop })
   } catch (err) {
-    res.status(500).send(new ServerError())
+    res.status(500).send({ error: new ServerError() })
   }
 }
 
-export const readStops = async (req: AgencyApiRequest, res: AgencyApiResponse) => {
+export const readStops = async (req: AgencyApiRequest, res: AgencyReadStopsResponse) => {
   try {
     const stops = await db.readStops()
 
     if (!stops) {
-      return res.status(404).send(new NotFoundError())
+      return res.status(404).send({ error: new NotFoundError('No stops were found') })
     }
-
-    res.status(200).send(stops)
+    const { version } = res.locals
+    res.status(200).send({ version, stops })
   } catch (err) {
-    return res.status(500).send(new ServerError())
+    return res.status(500).send({ error: new ServerError() })
   }
 }

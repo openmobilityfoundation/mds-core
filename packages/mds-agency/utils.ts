@@ -17,8 +17,6 @@ import {
   PROPULSION_TYPES,
   EVENT_STATUS_MAP,
   BoundingBox,
-  Timestamp,
-  Recorded,
   VEHICLE_STATUS,
   VEHICLE_EVENT
 } from '@mds-core/mds-types'
@@ -26,9 +24,9 @@ import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
 import { isArray } from 'util'
-import { VehiclePayload, TelemetryResult } from './types'
+import { VehiclePayload, TelemetryResult, CompositeVehicle, PaginatedVehiclesList } from './types'
 
-export function badDevice(device: Device): Partial<{ error: string; error_description: string }> | boolean {
+export function badDevice(device: Device): { error: string; error_description: string } | null {
   if (!device.device_id) {
     return {
       error: 'missing_param',
@@ -100,7 +98,7 @@ export function badDevice(device: Device): Partial<{ error: string; error_descri
   //         error_description: 'missing string field "model"'
   //     }
   // }
-  return false
+  return null
 }
 
 export async function getVehicles(
@@ -110,11 +108,7 @@ export async function getVehicles(
   reqQuery: Query,
   provider_id?: string,
   bbox?: BoundingBox
-): Promise<{
-  total: number
-  links: { first: string; last: string; prev: string | null; next: string | null }
-  vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
-}> {
+): Promise<PaginatedVehiclesList> {
   function fmt(query: { skip: number; take: number }): string {
     const flat: { [key: string]: number } = { ...reqQuery, ...query }
     let s = `${url}?`
@@ -449,7 +443,7 @@ export async function writeRegisterEvent(device: Device, recorded: number) {
 export function computeCompositeVehicleData(payload: VehiclePayload) {
   const { device, event, telemetry } = payload
 
-  const composite: Partial<Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }> = {
+  const composite: CompositeVehicle = {
     ...device
   }
 

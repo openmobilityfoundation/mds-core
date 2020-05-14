@@ -5,7 +5,12 @@ import { Device, VEHICLE_TYPES } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
 import stream from '@mds-core/mds-stream'
-import { AgencyApiRequest, AgencyApiResponse } from '../types'
+import {
+  AgencyApiRequest,
+  AgencyApiResponse,
+  AGENCY_API_DEFAULT_VERSION,
+  AgencyGetVehiclesByProviderResponse
+} from '../types'
 import {
   registerVehicle,
   getVehicleById,
@@ -34,7 +39,7 @@ describe('Agency API request handlers', () => {
         type,
         propulsion,
         year: 1990,
-        mfgr: 'foo inc.',
+        mfgr: 'foo inc',
         model: 'i date one'
       }
       return body
@@ -236,14 +241,17 @@ describe('Agency API request handlers', () => {
     it('Gets vehicles by provider', async () => {
       const provider_id = uuid()
       const device_id = uuid()
-      const res: AgencyApiResponse = {} as AgencyApiResponse
+      const res: AgencyGetVehiclesByProviderResponse = {} as AgencyGetVehiclesByProviderResponse
       const sendHandler = Sinon.fake.returns('asdf')
       const statusHandler = Sinon.fake.returns({
         send: sendHandler
       } as any)
       res.status = statusHandler
       res.locals = getLocals(provider_id) as any
-      Sinon.replace(utils, 'getVehicles', Sinon.fake.resolves('it-worked'))
+      res.locals.version = AGENCY_API_DEFAULT_VERSION
+
+      const stubbedResponse = { total: 0, links: { first: '0', last: '0', prev: null, next: null }, vehicles: [] }
+      Sinon.replace(utils, 'getVehicles', Sinon.fake.resolves(stubbedResponse))
       await getVehiclesByProvider(
         ({
           params: { device_id },
@@ -253,7 +261,7 @@ describe('Agency API request handlers', () => {
         res
       )
       assert.equal(statusHandler.calledWith(200), true)
-      assert.equal(sendHandler.calledWith('it-worked'), true)
+      assert.equal(sendHandler.calledWith({ ...stubbedResponse, version: AGENCY_API_DEFAULT_VERSION }), true)
       Sinon.restore()
     })
   })
@@ -284,9 +292,7 @@ describe('Agency API request handlers', () => {
         )
         assert.equal(statusHandler.calledWith(404), true)
         assert.equal(
-          sendHandler.calledWith({
-            error: 'not_found'
-          }),
+          sendHandler.called,
           true
         )
         Sinon.restore()
@@ -317,7 +323,8 @@ describe('Agency API request handlers', () => {
         assert.equal(statusHandler.calledWith(400), true)
         assert.equal(
           sendHandler.calledWith({
-            error: 'invalid_data'
+            error: 'bad_param',
+            error_description: 'Invalid parameters for vehicle were sent'
           }),
           true
         )
@@ -348,9 +355,7 @@ describe('Agency API request handlers', () => {
         )
         assert.equal(statusHandler.calledWith(404), true)
         assert.equal(
-          sendHandler.calledWith({
-            error: 'not_found'
-          }),
+          sendHandler.called,
           true
         )
         Sinon.restore()

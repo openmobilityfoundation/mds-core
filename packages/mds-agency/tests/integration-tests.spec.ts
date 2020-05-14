@@ -49,6 +49,7 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
 
 import { api } from '../api'
+import { AGENCY_API_DEFAULT_VERSION } from '../types'
 
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
@@ -59,7 +60,7 @@ function now(): Timestamp {
   return Date.now()
 }
 
-const APP_JSON = 'application/json; charset=utf-8'
+const APP_JSON = 'application/vnd.mds.agency+json; charset=utf-8; version=0.4'
 
 const PROVIDER_SCOPES = 'admin:all'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
@@ -127,10 +128,6 @@ function deepCopy<T>(obj: T): T {
 // TODO Inherit all of these from mds-test-data
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const AUTH2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_GARBAGE_PROVIDER = `basic ${Buffer.from(`tinylittleinvalidteapot|${PROVIDER_SCOPES}`).toString('base64')}`
-const AUTH_UNKNOWN_UUID_PROVIDER = `basic ${Buffer.from(
-  `c8f984c5-62a5-4453-b1f7-3b7704a95cfe|${PROVIDER_SCOPES}`
-).toString('base64')}`
 const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 
 before(async () => {
@@ -142,30 +139,6 @@ after(async () => {
 })
 
 describe('Tests API', () => {
-  it('verifies non-uuid provider_id is rejected', done => {
-    request
-      .get('/devices')
-      .set('Authorization', AUTH_GARBAGE_PROVIDER)
-      .expect(400)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.result).contains('invalid provider_id', 'is not a UUID')
-        done(err)
-      })
-  })
-
-  it('verifies unknown provider_id is rejected', done => {
-    request
-      .get('/devices')
-      .set('Authorization', AUTH_UNKNOWN_UUID_PROVIDER)
-      .expect(400)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.string(result.body.result).contains('invalid provider_id', 'is not a known provider')
-        done(err)
-      })
-  })
-
   it('verifies unable to access admin if not scoped', done => {
     request
       .get('/admin/cache/info')
@@ -197,7 +170,6 @@ describe('Tests API', () => {
       .expect(404)
       .end((err, result) => {
         log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('not_found')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -209,7 +181,6 @@ describe('Tests API', () => {
       .expect(404)
       .end((err, result) => {
         log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('not_found')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -362,7 +333,7 @@ describe('Tests API', () => {
       .expect(201)
       .end((err, result) => {
         log('err', err, 'body', result.body)
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -374,6 +345,7 @@ describe('Tests API', () => {
       .expect(200)
       .end((err, result) => {
         // log(result.body)
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.string(result.body.vehicles[0].vehicle_id).is('test-id-1')
         test.string(result.body.vehicles[0].status).is('removed')
         test.string(result.body.links.first).contains('http')
@@ -389,6 +361,7 @@ describe('Tests API', () => {
       .expect(200)
       .end((err, result) => {
         // log('----------', result.body)
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.object(result.body).match((obj: Device) => obj.device_id === DEVICE_UUID)
         test.object(result.body).match((obj: Device) => obj.provider_id === TEST1_PROVIDER_ID)
         test.object(result.body).match((obj: Device) => obj.status === VEHICLE_STATUSES.removed)
@@ -403,6 +376,7 @@ describe('Tests API', () => {
       .expect(200)
       .end((err, result) => {
         // log('----------', result.body)
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.object(result.body).match((obj: Device) => obj.device_id === DEVICE_UUID)
         test.object(result.body).match((obj: Device) => obj.provider_id === TEST1_PROVIDER_ID)
         test.object(result.body).match((obj: Device) => obj.status === VEHICLE_STATUSES.removed)
@@ -417,7 +391,6 @@ describe('Tests API', () => {
       .expect(404)
       .end((err, result) => {
         log('err', err, 'error', result.body.error)
-        test.string(result.body.error).contains('not_found')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -429,7 +402,6 @@ describe('Tests API', () => {
       .expect(404)
       .end((err, result) => {
         log('err', err, 'error', result.body.error)
-        test.string(result.body.error).contains('not_found')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -442,7 +414,7 @@ describe('Tests API', () => {
       .expect(409)
       .end((err, result) => {
         log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('already_registered')
+        test.string(result.body.error_description).contains('already registered')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -459,6 +431,7 @@ describe('Tests API', () => {
       .end((err, result) => {
         // log('----> err', err, 'body', result.body)
         // test.string(result.body.error).contains('already_registered')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -473,7 +446,6 @@ describe('Tests API', () => {
       .expect(404)
       .end((err, result) => {
         log('----> err', err, 'body', result.body.error)
-        test.string(result.body.error).contains('not_found')
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -484,6 +456,7 @@ describe('Tests API', () => {
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.object(result.body).match((obj: Device) => obj.vehicle_id === NEW_VEHICLE_ID)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -495,6 +468,7 @@ describe('Tests API', () => {
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.object(result.body).match((obj: Device) => obj.vehicle_id === NEW_VEHICLE_ID)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
@@ -561,7 +535,7 @@ describe('Tests API', () => {
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
+        test.string(result.body.result).contains('success')
         done(err)
       })
   })
@@ -582,7 +556,7 @@ describe('Tests API', () => {
       .expect(201)
       .end((err, result) => {
         testTimestamp += 20000
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.string(result.body.status).is('available')
         done(err)
       })
@@ -595,6 +569,7 @@ describe('Tests API', () => {
       .expect(200)
       .end((err, result) => {
         log(result.body)
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.string(result.body.vehicles[0].vehicle_id).is('new-vehicle-id')
         test.string(result.body.vehicles[0].status).is('available')
         test.string(result.body.links.first).contains('http')
@@ -614,7 +589,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         test.string(result.body.status).is('unavailable')
         done(err)
       })
@@ -629,7 +604,7 @@ describe('Tests API', () => {
       .expect(201)
       .end((err, result) => {
         log('post deregister response:', JSON.stringify(result.body))
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -682,7 +657,7 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         log('post event err', result.body)
-        test.string(result.body.error).contains('unregistered')
+        test.string(result.body.error_description).contains('The specified device_id has not been registered')
         done(err)
       })
   })
@@ -731,7 +706,7 @@ describe('Tests API', () => {
       .expect(201)
       .end((err, result) => {
         // log('post event', result.body)
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -744,10 +719,12 @@ describe('Tests API', () => {
         telemetry: TEST_TELEMETRY,
         timestamp: testTimestamp - 1
       })
-      .expect(409)
+      .expect(400)
       .end((err, result) => {
         // log('post event', result.body)
-        test.string(result.body.error).contains('duplicate')
+        test
+          .string(result.body.error_description)
+          .contains('An event with this device_id and timestamp has already been received')
         done(err)
       })
   })
@@ -763,7 +740,7 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         // log('----> post event meant to fail', result.body)
-        test.string(result.body.error).contains('unregistered')
+        test.string(result.body.error_description).contains('The specified device_id has not been registered')
         done(err)
       })
   })
@@ -798,7 +775,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -830,7 +807,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -846,7 +823,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -862,7 +839,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -885,7 +862,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -901,7 +878,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -1109,7 +1086,7 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        test.string(result.body.result).contains('success')
+        test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         done(err)
       })
   })
@@ -1160,7 +1137,7 @@ describe('Tests API', () => {
           log('telemetry err', err)
         } else {
           // log('telemetry result', result)
-          test.string(result.body.result).contains('success')
+          test.object(result.body).hasProperty('version', AGENCY_API_DEFAULT_VERSION)
         }
         done(err)
       })
@@ -1178,7 +1155,7 @@ describe('Tests API', () => {
           log('telemetry err', err)
         } else {
           // log('telemetry result', result)
-          test.string(result.body.result).contains('no new valid')
+          test.string(result.body.error_description).contains('None of the provided data was valid')
         }
         done(err)
       })
@@ -1210,7 +1187,6 @@ describe('Tests API', () => {
           log('telemetry err', err)
         } else {
           log('telemetry result', result.body)
-          test.value(result.body.failures.length).is(1)
         }
         done(err)
       })
@@ -1229,10 +1205,10 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         if (err) {
-          log('telemetry err', err)
+          log('post bad telemetry err', err)
         } else {
-          log('telemetry result', result.body)
-          test.value(result.body.failures.length).is(1)
+          log('post bad telemetry result', result.body)
+          test.value(result.body.error_details.length).is(1)
         }
         done(err)
       })
@@ -1254,7 +1230,7 @@ describe('Tests API', () => {
           log('telemetry err', err)
         } else {
           log('telemetry result', result.body)
-          test.value(result.body.failures.length).is(1)
+          test.value(result.body.error_details.length).is(1)
         }
         done(err)
       })
@@ -1276,7 +1252,7 @@ describe('Tests API', () => {
           log('telemetry err', err)
         } else {
           log('telemetry result', result.body)
-          test.value(result.body.failures.length).is(1)
+          test.value(result.body.error_details.length).is(1)
         }
         done(err)
       })
@@ -1298,7 +1274,7 @@ describe('Tests API', () => {
           log('telemetry err', err)
         } else {
           log('telemetry result', result.body)
-          test.value(result.body.failures.length).is(1)
+          test.value(result.body.error_details.length).is(1)
         }
         done(err)
       })
@@ -1310,13 +1286,13 @@ describe('Tests API', () => {
       .send({
         data: [TEST_TELEMETRY]
       })
-      .expect(400)
+      .expect(500)
       .end((err, result) => {
         if (err) {
-          log('telemetry err', err)
+          log('telemetry err with mismatched provider', err)
         } else {
-          log('telemetry result', result.body)
-          test.value(result.body.failures.length).is(1)
+          log('telemetry result with mismatched provider', result.body)
+          test.value(result.body.error_details.length).is(1)
         }
         done(err)
       })
@@ -1560,8 +1536,8 @@ describe('Tests Stops', async () => {
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
-        test.assert(result.body.length === 1)
-        test.assert(result.body[0].stop_id === TEST_STOP.stop_id)
+        test.assert(result.body.stops.length === 1)
+        test.assert(result.body.stops[0].stop_id === TEST_STOP.stop_id)
         done(err)
       })
   })

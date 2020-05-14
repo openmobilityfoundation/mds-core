@@ -30,7 +30,9 @@ export type ApiQuery<Q1 extends string, Q2 extends string[] = never> = {
 }
 
 export interface ApiResponse<L = unknown, B = unknown>
-  extends express.Response<B | { error: unknown } | { errors: unknown[] }> {
+  extends express.Response<
+    B | { error: unknown; error_description?: string; error_details?: string[] } | { errors: unknown[] } | {}
+  > {
   locals: L
 }
 
