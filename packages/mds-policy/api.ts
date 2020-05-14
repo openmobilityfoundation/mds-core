@@ -20,6 +20,7 @@ import { Policy, UUID } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import { now, pathsFor, NotFoundError, isUUID } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
+import { parseRequest } from '@mds-core/mds-api-helpers'
 import { PolicyApiRequest, PolicyApiResponse, GetPoliciesResponse, GetPolicyResponse } from './types'
 import { PolicyApiVersionMiddleware } from './middleware'
 
@@ -67,13 +68,24 @@ function api(app: express.Express): express.Express {
     // TODO extract start/end applicability
     // TODO filter by start/end applicability
     const { start_date = now(), end_date = now() } = req.query
-    logger.info('read /policies', req.query, start_date, end_date)
+    const { scopes } = res.locals
+
+    /*
+      If the client is scoped to read unpublished policies,
+      they are permitted to query for both published and unpublished policies.
+      Otherwise, they can only read published.
+    */
+    const { get_published = null, get_unpublished = null } = scopes.includes('policies:read')
+      ? parseRequest(req, { parser: x => (x ? JSON.parse(x) : null) }).query('get_published', 'get_unpublished')
+      : { get_published: true }
+
     if (start_date > end_date) {
       res.status(400).send({ error: 'start_date after end_date' })
       return
     }
+
     try {
-      const policies = await db.readPolicies({ get_published: true, get_unpublished: null })
+      const policies = await db.readPolicies({ get_published, get_unpublished })
       const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: Policy) => {
         if (policy.prev_policies) {
           prev_policies_acc.push(...policy.prev_policies)
@@ -95,19 +107,37 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(pathsFor('/policies/:policy_id'), async (req: PolicyApiRequest, res: GetPolicyResponse) => {
-    logger.info('read policy', JSON.stringify(req.params))
     const { policy_id } = req.params
+    const { scopes } = res.locals
+
     if (!isUUID(policy_id)) {
       res.status(400).send({ error: 'bad_param' })
       return
     }
+
     try {
-      const policy = await db.readPolicy(policy_id)
+      /*
+        If the client is scoped to read unpublished policies,
+        they are permitted to query for both published and unpublished policies.
+        Otherwise, they can only read published.
+     */
+      const { get_published = null, get_unpublished = null } = scopes.includes('policies:read')
+        ? parseRequest(req, { parser: x => (x ? JSON.parse(x) : null) }).query('get_published', 'get_unpublished')
+        : { get_published: true }
+
+      const policies = await db.readPolicies({ policy_id, get_published, get_unpublished })
+
+      if (policies.length === 0) {
+        throw new NotFoundError(`policy_id ${policy_id} not found`)
+      }
+
+      const [policy] = policies
+
       res.status(200).send({ version: res.locals.version, policy })
-    } catch (err) {
-      logger.error('failed to read one policy', err)
-      if (err instanceof NotFoundError) {
-        res.status(404).send({ error: 'not found' })
+    } catch (error) {
+      logger.error('failed to read one policy', error)
+      if (error instanceof NotFoundError) {
+        res.status(404).send({ error })
       } else {
         res.status(500).send({ error: 'something else went wrong' })
       }

@@ -23,7 +23,7 @@ export const [POLICY_API_DEFAULT_VERSION] = POLICY_API_SUPPORTED_VERSIONS
 
 export type PolicyApiRequest = ApiRequest
 
-export type PolicyApiAccessTokenScopes = never
+export type PolicyApiAccessTokenScopes = 'policies:read'
 
 export type PolicyApiResponse<TBody = {}> = ApiVersionedResponse<
   POLICY_API_SUPPORTED_VERSION,

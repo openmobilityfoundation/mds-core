@@ -23,6 +23,8 @@ import {
   NotFoundError,
   ValidationError,
   ServerError,
+  isUUID,
+  DependencyMissingError,
   ConflictError
 } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
@@ -30,12 +32,10 @@ import db from '@mds-core/mds-db'
 import { policyValidationDetails } from '@mds-core/mds-schema-validators'
 import logger from '@mds-core/mds-logger'
 
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
+import { checkAccess, AccessTokenScopeValidator, ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import { PolicyAuthorApiVersionMiddleware } from './middleware/policy-author-api-version'
-import { getPolicies } from './request-handlers'
 import {
   PolicyAuthorApiRequest,
-  GetPolicyResponse,
   PostPolicyResponse,
   EditPolicyResponse,
   DeletePolicyResponse,
@@ -51,38 +51,30 @@ const checkPolicyAuthorApiAccess = (validator: AccessTokenScopeValidator<PolicyA
 
 function api(app: express.Express): express.Express {
   app.use(PolicyAuthorApiVersionMiddleware)
-  app.get(
-    pathsFor('/policies'),
-    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
-    getPolicies
-  )
 
   app.post(
     pathsFor('/policies'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
-    async (req: PolicyAuthorApiRequest, res: PostPolicyResponse) => {
+    async (req: PolicyAuthorApiRequest, res: PostPolicyResponse, next: express.NextFunction) => {
       const policy = { policy_id: uuid(), ...req.body }
 
       const details = policyValidationDetails(policy)
 
       if (details != null) {
-        logger.error('invalid policy json', details)
         return res.status(400).send({ error: new ValidationError(JSON.stringify(details)) })
       }
 
       try {
         await db.writePolicy(policy)
         return res.status(201).send({ version: res.locals.version, policy })
-      } catch (err) {
-        if (err.code === '23505') {
+      } catch (error) {
+        if (error.code === '23505') {
           return res
             .status(409)
             .send({ error: new ConflictError(`policy ${policy.policy_id} already exists! Did you mean to PUT?`) })
         }
         /* istanbul ignore next */
-        logger.error('failed to write policy', err)
-        /* istanbul ignore next */
-        return res.status(500).send({ error: new ServerError(err) })
+        return next(new ServerError(error))
       }
     }
   )
@@ -90,7 +82,7 @@ function api(app: express.Express): express.Express {
   app.post(
     pathsFor('/policies/:policy_id/publish'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:publish')),
-    async (req: PolicyAuthorApiRequest, res: PublishPolicyResponse) => {
+    async (req: PolicyAuthorApiRequest, res: PublishPolicyResponse, next: express.NextFunction) => {
       const { policy_id } = req.params
       try {
         const policy = await db.publishPolicy(policy_id)
@@ -100,7 +92,14 @@ function api(app: express.Express): express.Express {
         if (error instanceof AlreadyPublishedError) {
           return res.status(409).send({ error })
         }
-        return res.status(404).send({ error })
+        if (error instanceof NotFoundError) {
+          return res.status(404).send({ error })
+        }
+        if (error instanceof DependencyMissingError) {
+          return res.status(424).send({ error })
+        }
+        /* istanbul ignore next */
+        return next(new ServerError(error))
       }
     }
   )
@@ -108,13 +107,12 @@ function api(app: express.Express): express.Express {
   app.put(
     pathsFor('/policies/:policy_id'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
-    async (req: PolicyAuthorApiRequest, res: EditPolicyResponse) => {
+    async (req: PolicyAuthorApiRequest, res: EditPolicyResponse, next: express.NextFunction) => {
       const policy = req.body
 
       const details = policyValidationDetails(policy)
 
-      if (details != null) {
-        logger.error('invalid policy json', details)
+      if (details !== null) {
         return res.status(400).send({ error: new ValidationError(JSON.stringify(details)) })
       }
 
@@ -130,9 +128,7 @@ function api(app: express.Express): express.Express {
           return res.status(409).send({ error })
         }
         /* istanbul ignore next */
-        logger.error('failed to edit policy', error.stack)
-        /* istanbul ignore next */
-        return res.status(500).send({ error: new ServerError(error) })
+        return next(new ServerError(error))
       }
     }
   )
@@ -140,7 +136,7 @@ function api(app: express.Express): express.Express {
   app.delete(
     pathsFor('/policies/:policy_id'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:delete')),
-    async (req: PolicyAuthorApiRequest, res: DeletePolicyResponse) => {
+    async (req: PolicyAuthorApiRequest, res: DeletePolicyResponse, next: express.NextFunction) => {
       const { policy_id } = req.params
       try {
         await db.deletePolicy(policy_id)
@@ -150,6 +146,7 @@ function api(app: express.Express): express.Express {
         logger.error('failed to delete policy', error.stack)
         /* istanbul ignore next */
         return res.status(404).send({ error })
+        /* FIXME: Potential server-errors are caught and handled as a 404, need to add explicit error handling */
       }
     }
   )
@@ -157,48 +154,35 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/policies/meta/'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
-    async (req: PolicyAuthorApiRequest, res: GetPolicyMetadataResponse) => {
+    async (req: PolicyAuthorApiRequest, res: GetPolicyMetadataResponse, next: express.NextFunction) => {
       const { get_published, get_unpublished } = req.query
       const params = {
         get_published: get_published ? get_published === 'true' : null,
         get_unpublished: get_unpublished ? get_unpublished === 'true' : null
       }
 
-      logger.info('read /policies/meta', req.query)
       try {
         const policy_metadata = await db.readBulkPolicyMetadata(params)
 
+        if (policy_metadata.length === 0) {
+          throw new NotFoundError('No metadata found')
+        }
+
         res.status(200).send({ version: res.locals.version, policy_metadata })
-      } catch (err) {
-        logger.error('failed to read policies', err)
-        if (err instanceof BadParamsError) {
+      } catch (error) {
+        if (error instanceof BadParamsError) {
           res.status(400).send({
             error:
               'Cannot set both get_unpublished and get_published to be true. If you want all policy metadata, set both params to false or do not send them.'
           })
         }
-        res.status(404).send({
-          error: 'not found'
-        })
-      }
-    }
-  )
-
-  app.get(
-    pathsFor('/policies/:policy_id'),
-    checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
-    async (req: PolicyAuthorApiRequest, res: GetPolicyResponse) => {
-      const { policy_id } = req.params
-      try {
-        const policies = await db.readPolicies({ policy_id, get_published: null, get_unpublished: null })
-        if (policies.length > 0) {
-          res.status(200).send({ version: res.locals.version, policy: policies[0] })
-        } else {
-          res.status(404).send({ error: 'not found' })
+        if (error instanceof NotFoundError) {
+          res.status(404).send({
+            error
+          })
         }
-      } catch (err) {
-        logger.error('failed to read one policy', err)
-        res.status(404).send({ error: 'not found' })
+        /* istanbul ignore next */
+        return next(new ServerError(error))
       }
     }
   )
@@ -206,14 +190,25 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/policies/:policy_id/meta'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
-    async (req: PolicyAuthorApiRequest, res: GetPolicyMetadatumResponse) => {
+    async (req: PolicyAuthorApiRequest, res: GetPolicyMetadatumResponse, next: express.NextFunction) => {
       const { policy_id } = req.params
+
       try {
+        if (!isUUID(policy_id)) {
+          throw new BadParamsError(`${policy_id} is not a valid UUID`)
+        }
+
         const result = await db.readSinglePolicyMetadata(policy_id)
         return res.status(200).send({ version: res.locals.version, policy_metadata: result })
-      } catch (err) {
-        logger.error('failed to read policy metadata', err.stack)
-        return res.status(404).send({ error: 'not found' })
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          return res.status(404).send({ error })
+        }
+        if (error instanceof BadParamsError) {
+          return res.status(400).send({ error })
+        }
+        /* istanbul ignore next */
+        return next(new ServerError(error))
       }
     }
   )
@@ -221,7 +216,7 @@ function api(app: express.Express): express.Express {
   app.put(
     pathsFor('/policies/:policy_id/meta'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
-    async (req: PolicyAuthorApiRequest, res: EditPolicyMetadataResponse) => {
+    async (req: PolicyAuthorApiRequest, res: EditPolicyMetadataResponse, next: express.NextFunction) => {
       const policy_metadata = req.body
       try {
         await db.updatePolicyMetadata(policy_metadata)
@@ -232,15 +227,23 @@ function api(app: express.Express): express.Express {
             await db.writePolicyMetadata(policy_metadata)
             return res.status(201).send({ version: res.locals.version, policy_metadata })
           } catch (writeErr) {
-            logger.error('failed to write policy metadata', writeErr.stack)
-            return res.status(500).send({ error: new ServerError() })
+            /* istanbul ignore next */
+            return next(new ServerError(writeErr))
           }
-        } else {
-          return res.status(500).send({ error: new ServerError() })
         }
+        /* istanbul ignore next */
+        return next(new ServerError(updateErr))
       }
     }
   )
+
+  /* eslint-reason global error handling middleware */
+  /* istanbul ignore next */
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  app.use(async (error: Error, req: ApiRequest, res: ApiResponse) => {
+    await logger.error(req.method, req.originalUrl, error)
+    return res.status(500).send(error)
+  })
 
   return app
 }
