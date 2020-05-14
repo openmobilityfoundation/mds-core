@@ -20,8 +20,7 @@
     "@mds-core/mds-stream": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "ts-nats": "1.2.14-2",
-    "@types/jsonwebtoken": "8.3.9",
+    "@types/jsonwebtoken": "8.5.0",
     "@types/node-rsa": "1.0.0",
     "@types/request-promise": "4.1.46",
     "@types/ws": "7.2.4",
@@ -29,6 +28,7 @@
     "jwks-rsa": "1.8.0",
     "node-rsa": "1.0.8",
     "request-promise": "4.2.5",
+    "ts-nats": "1.2.14-2",
     "ws": "7.3.0",
     "ws-heartbeat": "1.1.0"
   },
