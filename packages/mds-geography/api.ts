@@ -1,19 +1,16 @@
 import express from 'express'
 import db from '@mds-core/mds-db'
 
-import { pathsFor, ServerError, NotFoundError, InsufficientPermissionsError, BadParamsError } from '@mds-core/mds-utils'
+import { pathsFor, ServerError, NotFoundError, InsufficientPermissionsError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { parseRequest } from '@mds-core/mds-api-helpers'
+import { checkAccess, AccessTokenScopeValidator, ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
 import { GeographyApiVersionMiddleware } from './middleware'
 import {
   GeographyApiAccessTokenScopes,
   GeographyApiRequest,
   GetGeographyResponse,
-  GetGeographyMetadataResponse,
-  GetGeographiesResponse,
-  GetGeographyMetadatumResponse
+  GetGeographiesResponse
 } from './types'
 
 const checkGeographyApiAccess = (validator: AccessTokenScopeValidator<GeographyApiAccessTokenScopes>) =>
@@ -21,66 +18,13 @@ const checkGeographyApiAccess = (validator: AccessTokenScopeValidator<GeographyA
 
 function api(app: express.Express): express.Express {
   app.use(GeographyApiVersionMiddleware)
-  app.get(
-    pathsFor('/geographies/meta/'),
-    checkGeographyApiAccess(scopes => {
-      return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
-    }),
-    async (req: GeographyApiRequest, res: GetGeographyMetadataResponse) => {
-      const { scopes } = res.locals
-      const params = {
-        ...{ get_published: null, get_unpublished: null },
-        ...parseRequest(req, { parser: x => (x ? x === 'true' : null) }).query('get_published', 'get_unpublished')
-      }
-
-      /* If the user can only read published geos, and all they want is the unpublished metadata,
-       * throw a permissions error.
-       */
-      try {
-        if (!scopes.includes('geographies:read:unpublished') && params.get_unpublished) {
-          throw new InsufficientPermissionsError(
-            'Cannot require unpublished geo metadata without geography:read:unpublished scope'
-          )
-        }
-
-        /* If the user has only the read:published scope, they should not be allowed to see
-         * unpublished geos. If they didn't supply any params, we modify them here so as to
-         * filter only for published geo metadata. We have to monkey with the params here
-         * in a way that we don't for the bulk read of the geographies since we can't filter
-         * the DB results in this layer, since metadata has no idea if the geo it's associated
-         * with is published or not.
-         */
-        if (
-          !scopes.includes('geographies:read:unpublished') &&
-          params.get_unpublished === null &&
-          params.get_published === null
-        ) {
-          params.get_published = true
-        }
-        const geography_metadata = await db.readBulkGeographyMetadata(params)
-        return res.status(200).send({ version: res.locals.version, geography_metadata })
-      } catch (error) {
-        logger.error('failed to read geography metadata', error)
-        /* This error is thrown if both get_published and get_unpublished are set.
-         * To get all geos, neither parameter should be set.
-         */
-        if (error instanceof BadParamsError) {
-          return res.status(400).send({ error })
-        }
-        if (error instanceof InsufficientPermissionsError) {
-          return res.status(403).send({ error })
-        }
-        return res.status(500).send({ error })
-      }
-    }
-  )
 
   app.get(
     pathsFor('/geographies/:geography_id'),
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
-    async (req: GeographyApiRequest, res: GetGeographyResponse) => {
+    async (req: GeographyApiRequest, res: GetGeographyResponse, next: express.NextFunction) => {
       const { geography_id } = req.params
       try {
         const geography = await db.readSingleGeography(geography_id)
@@ -88,17 +32,17 @@ function api(app: express.Express): express.Express {
           throw new InsufficientPermissionsError('permission to read unpublished geographies missing')
         }
         return res.status(200).send({ version: res.locals.version, geography })
-      } catch (err) {
-        logger.error('failed to read geography', err.stack)
-        if (err instanceof NotFoundError) {
-          return res.status(404).send({ error: err })
+      } catch (error) {
+        logger.error('failed to read geography', error.stack)
+        if (error instanceof NotFoundError) {
+          return res.status(404).send({ error })
         }
 
-        if (err instanceof InsufficientPermissionsError) {
-          return res.status(403).send({ error: err })
+        if (error instanceof InsufficientPermissionsError) {
+          return res.status(403).send({ error })
         }
 
-        return res.status(500).send({ error: new ServerError() })
+        return next(new ServerError(error))
       }
     }
   )
@@ -108,7 +52,7 @@ function api(app: express.Express): express.Express {
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
-    async (req: GeographyApiRequest, res: GetGeographiesResponse) => {
+    async (req: GeographyApiRequest, res: GetGeographiesResponse, next: express.NextFunction) => {
       const summary = req.query.summary === 'true'
       const { get_published, get_unpublished } = req.query
       const params = {
@@ -137,37 +81,18 @@ function api(app: express.Express): express.Express {
           return res.status(403).send({ error })
         }
         logger.error('failed to read geographies', error.stack)
-        return res.status(500).send({ error: new ServerError() })
+        return next(new ServerError(error))
       }
     }
   )
 
-  app.get(
-    pathsFor('/geographies/:geography_id/meta'),
-    checkGeographyApiAccess(scopes => {
-      return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
-    }),
-    async (req: GeographyApiRequest, res: GetGeographyMetadatumResponse) => {
-      const { geography_id } = req.params
-      try {
-        const geography_metadata = await db.readSingleGeographyMetadata(geography_id)
-        const geography = await db.readSingleGeography(geography_id)
-        if (!geography.publish_date && !res.locals.scopes.includes('geographies:read:unpublished')) {
-          throw new InsufficientPermissionsError('permission to read metadata of unpublished geographies missing')
-        }
-        return res.status(200).send({ version: res.locals.version, geography_metadata })
-      } catch (err) {
-        logger.error('failed to read geography metadata', err.stack)
-        if (err instanceof NotFoundError) {
-          return res.status(404).send({ error: err })
-        }
-        if (err instanceof InsufficientPermissionsError) {
-          return res.status(403).send({ error: err })
-        }
-        return res.status(500).send({ error: new ServerError() })
-      }
-    }
-  )
+  /* eslint-reason global error handling middleware */
+  /* istanbul ignore next */
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  app.use(async (error: Error, req: ApiRequest, res: ApiResponse) => {
+    await logger.error(req.method, req.originalUrl, error)
+    return res.status(500).send({ error })
+  })
 
   return app
 }

@@ -15,7 +15,7 @@
  */
 
 import { ApiRequest, ApiVersionedResponse, ApiClaims } from '@mds-core/mds-api-server'
-import { Geography, GeographyMetadata, GeographySummary } from '@mds-core/mds-types'
+import { Geography, GeographySummary } from '@mds-core/mds-types'
 
 export const GEOGRAPHY_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
 export type GEOGRAPHY_API_SUPPORTED_VERSION = typeof GEOGRAPHY_API_SUPPORTED_VERSIONS[number]
@@ -41,7 +41,3 @@ export type GetGeographyResponse = GeographyApiResponse<
 export type GetGeographiesResponse = GeographyApiResponse<{
   geographies: Geography[] | GeographySummary[]
 }>
-
-export type GetGeographyMetadatumResponse = GeographyApiResponse<{ geography_metadata: GeographyMetadata }>
-
-export type GetGeographyMetadataResponse = GeographyApiResponse<{ geography_metadata: GeographyMetadata[] }>
