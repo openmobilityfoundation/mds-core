@@ -75,7 +75,6 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
           ...['bufferutil', 'utf-8-validate'], // https://github.com/adieuadieu/serverless-chrome/issues/103#issuecomment-358261003
           ...[
             '@sap/hdbext',
-            'ioredis',
             'mongodb',
             'mssql',
             'mysql',
