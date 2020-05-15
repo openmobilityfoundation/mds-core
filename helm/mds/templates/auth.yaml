@@ -3,7 +3,6 @@
 {{- if $api.enabled }}
 {{- if hasKey $api "pathPrefix" }}
 {{- if (ne $name "mds-web-sockets") }}
----
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
 metadata:
@@ -33,6 +32,7 @@ spec:
 {{- end }}
 {{- end }}
 {{- end }}
+{{- if .Values.jwt.bypassInternal }}
 # This sets up outbound mTLS for intra-namespace requests
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -104,4 +104,18 @@ spec:
       request.auth.audiences: {{ . | quote }}
       request.auth.claims[iss]: {{ $.Values.jwt.issuer }}
   {{- end }}
+{{- if .Values.jwt.firstInstall }}
+---
+# THIS MUST BE IN PLACE FOR JWT TO FUNCTION CORRECTLY
+apiVersion: "rbac.istio.io/v1alpha1"
+kind: ClusterRbacConfig
+metadata:
+  name: default
+spec:
+  mode: 'ON_WITH_INCLUSION'
+  inclusion:
+    namespaces:
+      - {{ .Release.Namespace }}
+{{- end }}
+{{- end }}
 {{- end }}
