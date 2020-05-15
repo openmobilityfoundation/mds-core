@@ -1,5 +1,12 @@
 import { UUID, Policy, Timestamp, Recorded, Rule, PolicyMetadata, Nullable } from '@mds-core/mds-types'
-import { now, NotFoundError, BadParamsError, AlreadyPublishedError, DependencyMissingError } from '@mds-core/mds-utils'
+import {
+  now,
+  NotFoundError,
+  BadParamsError,
+  AlreadyPublishedError,
+  DependencyMissingError,
+  ConflictError
+} from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
@@ -11,11 +18,12 @@ import { getReadOnlyClient, getWriteableClient } from './client'
 
 export async function readPolicies(params?: {
   policy_id?: UUID
+  rule_id?: UUID
   name?: string
   description?: string
   start_date?: Timestamp
-  get_unpublished: Nullable<boolean>
-  get_published: Nullable<boolean>
+  get_unpublished?: Nullable<boolean>
+  get_published?: Nullable<boolean>
 }): Promise<Policy[]> {
   // use params to filter
   // query
@@ -29,6 +37,12 @@ export async function readPolicies(params?: {
   if (params) {
     if (params.policy_id) {
       conditions.push(`policy_id = ${vals.add(params.policy_id)}`)
+    }
+
+    if (params.rule_id) {
+      conditions.push(
+        `EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${params.rule_id}')`
+      )
     }
 
     if (params.get_unpublished) {
@@ -51,6 +65,21 @@ export async function readPolicies(params?: {
   if (conditions.length) {
     sql += ` WHERE ${conditions.join(' AND ')}`
   }
+  const values = vals.values()
+  const res = await client.query(sql, values)
+  return res.rows.map(row => row.policy_json)
+}
+
+export async function readActivePolicies(timestamp: Timestamp = now()): Promise<Policy[]> {
+  const client = await getReadOnlyClient()
+  const conditions = []
+  const vals = new SqlVals()
+  conditions.push(`policy_json->>'start_date' <= ${vals.add(timestamp)}`)
+  conditions.push(`(policy_json->>'end_date' >= ${vals.add(timestamp)} OR policy_json->>'end_date' IS NULL)`)
+  conditions.push(
+    `(policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= ${vals.add(timestamp)})`
+  )
+  const sql = `select * from ${schema.TABLE.policies} WHERE ${conditions.join(' AND ')}`
   const values = vals.values()
   const res = await client.query(sql, values)
   return res.rows.map(row => row.policy_json)
@@ -106,9 +135,27 @@ export async function readPolicy(policy_id: UUID): Promise<Policy> {
   throw new NotFoundError(`policy_id ${policy_id} not found`)
 }
 
+async function throwIfRulesAlreadyExist(policy: Policy) {
+  const unflattenedPolicies: Policy[][] = await Promise.all(
+    policy.rules.map(rule => {
+      return readPolicies({ rule_id: rule.rule_id })
+    })
+  )
+
+  unflattenedPolicies.map(policySubArr => {
+    policySubArr.map(p => {
+      if (p.policy_id !== policy.policy_id) {
+        throw new ConflictError(`Policies containing rules with the same id or ids already exist`)
+      }
+    })
+  })
+}
+
 export async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
   // validate TODO
   const client = await getWriteableClient()
+  await throwIfRulesAlreadyExist(policy)
+
   const sql = `INSERT INTO ${schema.TABLE.policies} (${cols_sql(schema.TABLE_COLUMNS.policies)}) VALUES (${vals_sql(
     schema.TABLE_COLUMNS.policies
   )}) RETURNING *`
@@ -141,7 +188,7 @@ export async function editPolicy(policy: Policy) {
   if (result.length === 0) {
     throw new NotFoundError(`no policy of id ${policy_id} was found`)
   }
-
+  await throwIfRulesAlreadyExist(policy)
   const client = await getWriteableClient()
   const sql = `UPDATE ${schema.TABLE.policies} SET policy_json=$1 WHERE policy_id='${policy_id}' AND policy_json->>'publish_date' IS NULL`
   await client.query(sql, [policy])

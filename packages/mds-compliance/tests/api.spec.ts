@@ -11,7 +11,8 @@ import {
   makeTelemetryInArea,
   restrictedAreas,
   veniceSpecOps,
-  LA_CITY_BOUNDARY
+  LA_CITY_BOUNDARY,
+  START_ONE_MONTH_AGO
 } from '@mds-core/mds-test-data'
 import test from 'unit.js'
 import { api as agency } from '@mds-core/mds-agency'
@@ -88,6 +89,7 @@ const COUNT_POLICY_JSON: Policy = {
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: COUNT_POLICY_UUID,
   start_date: 1558389669540,
+  publish_date: 1558389669540,
   end_date: null,
   prev_policies: null,
   provider_ids: [],
@@ -132,6 +134,7 @@ const COUNT_POLICY_JSON_2: Policy = {
   policy_id: COUNT_POLICY_UUID_2,
   start_date: 1558389669540,
   end_date: null,
+  publish_date: 1558389669540,
   prev_policies: null,
   provider_ids: [],
   rules: [
@@ -173,6 +176,7 @@ const COUNT_POLICY_JSON_4: Policy = {
   name: 'LADOT Mobility Caps',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: COUNT_POLICY_UUID_4,
+  publish_date: 1558389669540,
   start_date: 1558389669540,
   end_date: null,
   prev_policies: null,
@@ -239,7 +243,7 @@ const TIME_POLICY_JSON: Policy = {
   ]
 }
 
-const APP_JSON = 'application/json; charset=utf-8'
+const APP_JSON = 'application/vnd.mds.compliance+json; charset=utf-8; version=0.1'
 describe('Tests Compliance API:', () => {
   afterEach(async () => {
     await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
@@ -269,7 +273,6 @@ describe('Tests Compliance API:', () => {
                 await db.writeGeography(geography)
                 await db.writePolicy(COUNT_POLICY_JSON)
                 await db.publishGeography({ geography_id: geography.geography_id })
-                await db.publishPolicy(COUNT_POLICY_UUID)
                 done()
               })
           })
@@ -329,7 +332,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(COUNT_POLICY_JSON)
-          await db.publishPolicy(COUNT_POLICY_UUID)
           done()
         })
       })
@@ -342,6 +344,8 @@ describe('Tests Compliance API:', () => {
         .expect(200)
         .end((err, result) => {
           test.assert.deepEqual(result.body.total_violations, 0)
+          test.object(result.body).hasProperty('timestamp')
+          test.value(result.body.policy, COUNT_POLICY_UUID)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -432,7 +436,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(COUNT_POLICY_JSON)
-          await db.publishPolicy(COUNT_POLICY_UUID)
           done()
         })
       })
@@ -446,6 +449,8 @@ describe('Tests Compliance API:', () => {
         .end((err, result) => {
           test.assert.deepEqual(result.body.compliance[0].matches[0].measured, 10)
           test.assert.deepEqual(result.body.total_violations, 5)
+          test.object(result.body).hasProperty('timestamp')
+          test.object(result.body).hasProperty('version')
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -561,7 +566,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(COUNT_POLICY_JSON_2)
-          await db.publishPolicy(COUNT_POLICY_UUID_2)
           done()
         })
       })
@@ -813,7 +817,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
           await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
           await db.writePolicy(COUNT_POLICY_JSON_4)
-          await db.publishPolicy(COUNT_POLICY_JSON_4.policy_id)
           done()
         })
       })
@@ -821,7 +824,7 @@ describe('Tests Compliance API:', () => {
 
     it('Historical check reports 5 violations', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_4}?end_date=${yesterday + 200}`)
+        .get(`/snapshot/${COUNT_POLICY_UUID_4}?timestamp=${yesterday + 200}`)
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -845,7 +848,7 @@ describe('Tests Compliance API:', () => {
   })
 
   describe('Tests count endpoint', () => {
-    before(done => {
+    before(async () => {
       const devices_a: Device[] = makeDevices(15, now())
       const events_a = makeEventsWithTelemetry(devices_a, now(), CITY_OF_LA, 'trip_start')
       const telemetry_a: Telemetry[] = devices_a.reduce((acc: Telemetry[], device) => {
@@ -864,26 +867,35 @@ describe('Tests Compliance API:', () => {
         events: [...events_a, ...events_b],
         telemetry: [...telemetry_a, ...telemetry_b]
       }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
-        Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
-          db.writePolicy(COUNT_POLICY_JSON).then(() => {
-            db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }).then(
-              () => {
-                done()
-              }
-            )
-          })
-        })
-      })
+      await db.initialize()
+      await cache.initialize()
+      await cache.seed(seedData)
+      await db.seed(seedData)
+      await db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
+      await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
+      await db.writePolicy(COUNT_POLICY_JSON)
     })
 
-    it('Test count endpoint success', done => {
+    it('Test count endpoint, expecting events', done => {
       request
         .get(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6`)
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
           test.assert.deepEqual(result.body.count, 30)
+          test.object(result.body).hasProperty('policy')
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('Test count endpoint, expecting no events', done => {
+      request
+        .get(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6?timestamp=${START_ONE_MONTH_AGO}`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+        .end((err, result) => {
+          test.assert.deepEqual(result.body.count, 0)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

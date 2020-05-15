@@ -222,7 +222,29 @@ const POLICY4_JSON: Policy = {
   rules: [
     {
       name: 'Greater LA',
-      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
+      rule_id: uuid(),
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
+const POLICY5_JSON: Policy = {
+  policy_id: uuid(),
+  name: 'Policy 5',
+  description: 'just here to enable testing for policies by start date',
+  start_date: START_ONE_MONTH_AGO,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: uuid(),
       rule_type: 'speed',
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
@@ -243,10 +265,55 @@ const POLICY_JSON_MISSING_POLICY_ID = {
   rules: [
     {
       name: 'Greater LA',
+      rule_id: uuid(),
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [NONEXISTENT_GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
+const POLICY_WITH_DUPE_RULE: Policy = {
+  policy_id: uuid(),
+  name: 'I am a no good copycat',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: now(),
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
       rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
       rule_type: 'speed',
       rule_units: 'mph',
       geographies: [NONEXISTENT_GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
+const PUBLISHED_POLICY: Policy = {
+  policy_id: uuid(),
+  name: 'I am published but do not do much',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: START_ONE_MONTH_AGO,
+  publish_date: START_ONE_MONTH_AGO,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: uuid(),
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
       statuses: { trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 25
@@ -495,8 +562,11 @@ export {
   POLICY2_JSON,
   POLICY3_JSON,
   POLICY4_JSON,
+  POLICY5_JSON,
   POLICY_JSON_MISSING_POLICY_ID,
+  POLICY_WITH_DUPE_RULE,
   POLICY_UUID,
+  PUBLISHED_POLICY,
   SUPERSEDING_POLICY_UUID,
   POLICY2_UUID,
   POLICY3_UUID,
