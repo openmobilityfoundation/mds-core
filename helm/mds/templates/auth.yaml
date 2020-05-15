@@ -2,7 +2,7 @@
 {{- range $name, $api := .Values.apis }}
 {{- if $api.enabled }}
 {{- if hasKey $api "pathPrefix" }}
-{{ if (ne $name "mds-web-sockets") }}
+{{- if (ne $name "mds-web-sockets") }}
 ---
 apiVersion: authentication.istio.io/v1alpha1
 kind: Policy
@@ -14,6 +14,7 @@ spec:
   - name: {{ $name }}
   peers:
   - mtls: {}
+  originIsOptional: true
   origins:
   - jwt:
       audiences:
@@ -27,8 +28,80 @@ spec:
         - exact: {{ $api.pathPrefix }}/health
         - exact: /health
   principalBinding: USE_ORIGIN
+---
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
+# This sets up outbound mTLS for intra-namespace requests
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: default
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: {{ printf "*.%s.svc.cluster.local" .Release.Namespace | quote }}
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: rbac.istio.io/v1alpha1
+kind: ServiceRole
+metadata:
+  name: mds-internal-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  - services: ["*"]
+    methods: ["*"]
+    constraints:
+    - key: "destination.metadata[namespace]"
+      values:
+      - {{ .Release.Namespace }}
+---
+apiVersion: rbac.istio.io/v1alpha1
+kind: ServiceRoleBinding
+metadata:
+  name: mds-internal-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  roleRef:
+    kind: ServiceRole
+    name: "mds-internal-service"
+  subjects:
+  - properties:
+      source.namespace: {{ .Release.Namespace | quote }}
+---
+apiVersion: rbac.istio.io/v1alpha1
+kind: ServiceRole
+metadata:
+  name: mds-external-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+  - services: ["*"]
+    methods: ["*"]
+    constraints:
+    - key: "destination.metadata[namespace]"
+      values:
+      - {{ .Release.Namespace }}
+---
+apiVersion: rbac.istio.io/v1alpha1
+kind: ServiceRoleBinding
+metadata:
+  name: mds-external-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  roleRef:
+    kind: ServiceRole
+    name: mds-external-service
+  subjects:
+  {{- range .Values.jwt.audiences }}
+  # allow presenters of JWT tokens based one or more properties of the token
+  # (audience, claims, etc.)
+  # https://archive.istio.io/v1.3/docs/reference/config/authorization/constraints-and-properties/#supported-properties
+  - properties:
+      request.auth.audiences: {{ . | quote }}
+      request.auth.claims[iss]: {{ $.Values.jwt.issuer }}
+  {{- end }}
 {{- end }}
