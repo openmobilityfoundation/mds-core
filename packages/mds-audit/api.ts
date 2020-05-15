@@ -442,7 +442,6 @@ function api(app: express.Express): express.Express {
           // Validate input params
           if (
             isValidAuditEventId(audit_event_id) &&
-            isValidAuditEventId(audit_event_id) &&
             isValidTimestamp(timestamp) &&
             isValidTelemetry(telemetry, { required: false })
           ) {
