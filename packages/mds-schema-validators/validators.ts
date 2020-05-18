@@ -137,15 +137,12 @@ const featureCollectionSchema = Joi.object()
   })
   .unknown(true) // TODO
 
-export const geographySchema = Joi.object()
-  .keys({
-    geography_id: Joi.string().guid().required(),
-    geography_json: featureCollectionSchema,
-    read_only: Joi.boolean().allow(null),
-    previous_geography_ids: Joi.array().items(Joi.string().guid()).allow(null),
-    name: Joi.string().required()
-  })
-  .unknown(true)
+export const geographySchema = Joi.object().keys({
+  geography_id: Joi.string().guid().required(),
+  geography_json: featureCollectionSchema,
+  previous_geography_ids: Joi.array().items(Joi.string().guid()).allow(null),
+  name: Joi.string().required()
+})
 
 const geographiesSchema = Joi.array().items(geographySchema)
 
@@ -375,7 +372,7 @@ export function validateEvents(events: unknown): events is VehicleEvent[] {
 }
 
 export function policyValidationDetails(policy: Policy): Joi.ValidationErrorItem[] | null {
-  const { error } = Joi.validate(policy, policySchema)
+  const { error } = Joi.validate(policy, policySchema, { allowUnknown: false })
   if (error) {
     return error.details
   }
@@ -383,7 +380,7 @@ export function policyValidationDetails(policy: Policy): Joi.ValidationErrorItem
 }
 
 export function geographyValidationDetails(geography: Geography): Joi.ValidationErrorItem[] | null {
-  const { error } = Joi.validate(geography, geographySchema)
+  const { error } = Joi.validate(geography, geographySchema, { allowUnknown: false })
   if (error) {
     return error.details
   }

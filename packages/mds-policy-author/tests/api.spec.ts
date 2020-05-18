@@ -39,7 +39,8 @@ import {
   POLICY2_UUID,
   GEOGRAPHY_UUID,
   LA_CITY_BOUNDARY,
-  SCOPED_AUTH
+  SCOPED_AUTH,
+  PUBLISHED_POLICY
 } from '@mds-core/mds-test-data'
 import { api } from '../api'
 import { POLICY_AUTHOR_API_DEFAULT_VERSION } from '../types'
@@ -530,6 +531,34 @@ describe('Tests app', () => {
           test.value(result).hasHeader('content-type', APP_JSON)
           test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
           test.assert(isUUID(result.body.policy.policy_id))
+          done(err)
+        })
+    })
+
+    it('Cannot PUT a policy with publish_date set', done => {
+      request
+        .put(`/policies/${PUBLISHED_POLICY.policy_id}`)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
+        .send(PUBLISHED_POLICY)
+        .expect(400)
+        .end((err, result) => {
+          test.assert(result.body.error.name === `ValidationError`)
+          test.assert(result.body.error.reason.includes('publish_date'))
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('Cannot POST a policy with publish_date set', done => {
+      request
+        .post(`/policies`)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
+        .send(PUBLISHED_POLICY)
+        .expect(400)
+        .end((err, result) => {
+          test.assert(result.body.error.name === `ValidationError`)
+          test.assert(result.body.error.reason.includes('publish_date'))
+          test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
     })

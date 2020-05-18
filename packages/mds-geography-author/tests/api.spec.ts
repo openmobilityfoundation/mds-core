@@ -482,5 +482,45 @@ describe('Tests app', () => {
           done(err)
         })
     })
+
+    it('verifies cannot PUT geography with a publish_date', done => {
+      const geography = {
+        name: 'foo',
+        geography_id: GEOGRAPHY_UUID,
+        publish_date: 1589817834000,
+        geography_json: LA_CITY_BOUNDARY
+      }
+      request
+        .put(`/geographies/${geography.geography_id}`)
+        .set('Authorization', GEOGRAPHIES_WRITE_SCOPE)
+        .send(geography)
+        .expect(400)
+        .end((err, result) => {
+          test.assert(result.body.error.name === `ValidationError`)
+          test.assert(result.body.error.reason.includes('publish_date'))
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
+
+    it('verifies cannot POST geography with a publish_date', done => {
+      const geography = {
+        name: 'foo',
+        geography_id: GEOGRAPHY_UUID,
+        publish_date: 1589817834000,
+        geography_json: LA_CITY_BOUNDARY
+      }
+      request
+        .post(`/geographies`)
+        .set('Authorization', GEOGRAPHIES_WRITE_SCOPE)
+        .send(geography)
+        .expect(400)
+        .end((err, result) => {
+          test.assert(result.body.error.name === `ValidationError`)
+          test.assert(result.body.error.reason.includes('publish_date'))
+          test.value(result).hasHeader('content-type', APP_JSON)
+          done(err)
+        })
+    })
   })
 })
