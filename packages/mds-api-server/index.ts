@@ -172,14 +172,39 @@ export const ApiVersionMiddleware = <TVersion extends string>(mimeType: string, 
       }))
       .filter(info => info.latest !== undefined)
 
-    // Get supported version with highest q value
-    if (supported.length > 0) {
+    if (req.method === 'OPTIONS') {
+      /* If the incoming request is an OPTIONS request,
+       * immediately respond with the negotiated version.
+       * If the client did not negotiate a valid version, fall-through to a 406 response.
+       */
+      if (supported.length > 0) {
+        const [{ latest }] = supported.sort((a, b) => b.q - a.q)
+        if (latest) {
+          res.locals.version = latest
+          res.setHeader('Content-Type', `${mimeType};version=${MinorVersion(latest)}`)
+          return res.status(200).send()
+        }
+      }
+    } else if (supported.length > 0) {
+      /* If the incoming request is a non-OPTIONS request,
+       * set the negotiated version header, and forward the request to the next handler.
+       * If the client did not negotiate a valid version, fall-through to provide the "preferred" version,
+       * or, if they requested an invalid version, respond with a 406.
+       */
       const [{ latest }] = supported.sort((a, b) => b.q - a.q)
       if (latest) {
         res.locals.version = latest
         res.setHeader('Content-Type', `${mimeType};version=${MinorVersion(latest)}`)
         return next()
       }
+    } else if (values.length === 0) {
+      /*
+       * If no versions specified by the client for a non-OPTIONS request,
+       * fall-back to latest internal version supported
+       */
+      res.locals.version = preferred
+      res.setHeader('Content-Type', `${mimeType};version=${MinorVersion(preferred)}`)
+      return next()
     }
 
     // 406 - Not Acceptable
@@ -229,7 +254,7 @@ export const HttpServer = (api: express.Express, options: HttpServerOptions = {}
   return server
 }
 
-type CorsMiddlewareOptions = CorsMiddleware.CorsOptions
+type CorsMiddlewareOptions = Omit<CorsMiddleware.CorsOptions, 'preflightContinue'>
 
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
@@ -249,7 +274,7 @@ export const ApiServer = (
   // Middleware
   app.use(
     RequestLoggingMiddleware(),
-    CorsMiddleware(corsOptions),
+    CorsMiddleware({ preflightContinue: true, ...corsOptions }),
     JsonBodyParserMiddleware({ limit: '5mb' }),
     MaintenanceModeMiddleware(),
     AuthorizerMiddleware({ authorizer })
