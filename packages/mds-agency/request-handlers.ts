@@ -95,8 +95,7 @@ export const registerVehicle = async (req: AgencyApiRequest, res: AgencyRegister
     } catch (err) {
       logger.error('writeRegisterEvent failure', err)
     }
-    const { version } = res.locals
-    res.status(201).send({ version })
+    res.status(201).send({})
   } catch (err) {
     if (String(err).includes('duplicate')) {
       res.status(409).send({
@@ -127,8 +126,7 @@ export const getVehicleById = async (req: AgencyApiRequest, res: AgencyGetVehicl
     return
   }
   const compositeData = computeCompositeVehicleData(payload)
-  const { version } = res.locals
-  res.status(200).send({ version, ...compositeData })
+  res.status(200).send({ ...compositeData })
 }
 
 export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyGetVehiclesByProviderResponse) => {
@@ -149,8 +147,7 @@ export const getVehiclesByProvider = async (req: AgencyApiRequest, res: AgencyGe
 
   try {
     const response = await getVehicles(skip, take, url, req.query, provider_id)
-    const { version } = res.locals
-    return res.status(200).send({ version, ...response })
+    return res.status(200).send({ ...response })
   } catch (err) {
     logger.error('getVehicles fail', err)
     return res.status(500).send(agencyServerError)
@@ -197,15 +194,12 @@ export const updateVehicle = async (req: AgencyApiRequest, res: AgencyUpdateVehi
     } else {
       const device = await db.updateDevice(device_id, provider_id, update)
       // TODO should we warn instead of fail if the cache/stream doesn't work?
-      const { version } = res.locals
       try {
         await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
       } catch (error) {
         logger.warn(`Error writing to cache/stream ${error}`)
       }
-      return res.status(201).send({
-        version
-      })
+      return res.status(201).send({})
     }
   } catch (err) {
     await updateVehicleFail(req, res, provider_id, device_id, 'not found')
@@ -244,10 +238,8 @@ export const submitVehicleEvent = async (req: AgencyApiRequest, res: AgencySubmi
   }
 
   async function success() {
-    const { version } = res.locals
     function fin() {
       res.status(201).send({
-        version,
         device_id,
         status: EVENT_STATUS_MAP[event.event_type]
       })
@@ -411,9 +403,7 @@ export const submitVehicleTelemetry = async (req: AgencyApiRequest, res: AgencyS
         )
       }
       if (recorded_telemetry.length) {
-        const { version } = res.locals
         res.status(201).send({
-          version,
           result: `telemetry success for ${valid.length} of ${data.length}`,
           recorded: now(),
           unique: recorded_telemetry.length,
@@ -452,8 +442,7 @@ export const registerStop = async (req: AgencyApiRequest, res: AgencyRegisterSto
   try {
     isValidStop(stop)
     const recorded_stop = await db.writeStop(stop)
-    const { version } = res.locals
-    return res.status(201).send({ version, ...recorded_stop })
+    return res.status(201).send({ ...recorded_stop })
   } catch (error) {
     if (error instanceof ValidationError) {
       return res.status(400).send({ error })
@@ -471,8 +460,7 @@ export const readStop = async (req: AgencyApiRequest, res: AgencyReadStopRespons
     if (!recorded_stop) {
       return res.status(404).send({ error: new NotFoundError('Stop not found') })
     }
-    const { version } = res.locals
-    res.status(200).send({ version, ...recorded_stop })
+    res.status(200).send({ ...recorded_stop })
   } catch (err) {
     res.status(500).send({ error: new ServerError() })
   }
@@ -485,8 +473,7 @@ export const readStops = async (req: AgencyApiRequest, res: AgencyReadStopsRespo
     if (!stops) {
       return res.status(404).send({ error: new NotFoundError('No stops were found') })
     }
-    const { version } = res.locals
-    res.status(200).send({ version, stops })
+    res.status(200).send({ stops })
   } catch (err) {
     return res.status(500).send({ error: new ServerError() })
   }
