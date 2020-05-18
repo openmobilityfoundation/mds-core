@@ -70,10 +70,15 @@ describe('Tests Service Helpers', () => {
     }
   })
 
+  it('Custom ServiceError type', async () => {
+    const { error } = ServiceError({ type: 'CustomError', message: 'Custom Error Message' })
+    test.value(isServiceError(error, 'CustomError')).is(true)
+  })
+
   it('ServiceError type guard', async () => {
     try {
       const error = Error('Error')
-      test.value(isServiceError(ServiceException('Error', error))).is(true)
+      test.value(isServiceError(ServiceException('Error', error).error)).is(true)
       throw error
     } catch (error) {
       test.value(isServiceError(error)).is(false)

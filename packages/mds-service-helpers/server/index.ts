@@ -125,8 +125,10 @@ export const ServiceManager = {
 
 export const ServiceResult = <R>(result: R): ServiceResultType<R> => ({ error: null, result })
 
-export const ServiceError = (error: Omit<ServiceErrorDescriptor, 'name'>): ServiceErrorType => ({
-  error: { name: '__ServiceErrorDescriptor__', ...error }
+export const ServiceError = <E extends string>(
+  error: Omit<ServiceErrorDescriptor<E>, 'isServiceError'>
+): ServiceErrorType<E> => ({
+  error: { isServiceError: true, ...error }
 })
 
 export const ServiceException = (message: string, error?: unknown) => {

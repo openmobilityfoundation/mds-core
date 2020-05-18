@@ -15,10 +15,16 @@
  */
 
 import { AnyFunction } from '@mds-core/mds-types'
-import { ServiceResponse, ServiceErrorDescriptor } from '../@types'
+import { ServiceResponse, ServiceErrorDescriptor, ServiceErrorDescriptorType } from '../@types'
 
-export const isServiceError = (error: unknown): error is ServiceErrorDescriptor =>
-  (error as ServiceErrorDescriptor).name === '__ServiceErrorDescriptor__'
+export const isServiceError = <E extends string = ServiceErrorDescriptorType>(
+  error: unknown,
+  ...types: E[]
+): error is ServiceErrorDescriptor<E> =>
+  typeof error === 'object' &&
+  error !== null &&
+  (error as ServiceErrorDescriptor<E>).isServiceError === true &&
+  (types.length === 0 || types.includes((error as ServiceErrorDescriptor<E>).type))
 
 // eslint-reason type inference requires any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
