@@ -242,7 +242,7 @@ function api(app: express.Express): express.Express {
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   app.use(async (error: Error, req: ApiRequest, res: ApiResponse) => {
     await logger.error(req.method, req.originalUrl, error)
-    return res.status(500).send(error)
+    return res.status(500).send({ error })
   })
 
   return app
