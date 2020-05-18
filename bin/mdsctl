@@ -71,7 +71,7 @@ declare -A configs=(
   ["home"]="${MDS_HOME:-$(installDir)}"
   ["os"]="${MDS_OS:-`uname`}"
   ["provider"]="${MDS_PROVIDER:-}"
-  ["nvm-version"]="${MDS_NVM_VERSION:-12.14.1}"
+  ["nvm-version"]="${MDS_NVM_VERSION:-14.2.0}"
   ["workdir"]="/tmp/mds/tools"
   # fixme: consider removing envsubst in favor of sed
   ["brew"]="${MDS_BREW:-oq jq envsubst yarn nvm helm k9s kubectx git aws nsc sops}"
