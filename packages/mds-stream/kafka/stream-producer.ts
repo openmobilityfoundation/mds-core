@@ -65,6 +65,7 @@ export const KafkaStreamProducer = <TMessage>(
           topic,
           messages
         })
+        return
       }
       throw new ClientDisconnectedError(ExceptionMessages.INITIALIZE_CLIENT_MESSAGE)
     },
