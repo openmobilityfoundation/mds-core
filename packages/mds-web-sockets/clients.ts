@@ -28,8 +28,9 @@ export class Clients {
     return key.publicKey || key.rsaPublicKey
   }
 
-  public constructor() {
-    this.subList = { EVENTS: [], TELEMETRIES: [] }
+  public constructor(supportedEntities: readonly string[]) {
+    // Initialize subscription list with configured entities
+    this.subList = Object.fromEntries(supportedEntities.map(e => [e, []]))
     this.authenticatedClients = []
     this.saveClient = this.saveClient.bind(this)
   }
@@ -49,7 +50,9 @@ export class Clients {
       trimmedEntities.map(entity => {
         try {
           this.subList[entity].push(client)
+          client.send(`SUB%${JSON.stringify({ status: 'Success' })}`)
         } catch {
+          client.send(`SUB%${JSON.stringify({ status: 'Failure' })}`)
           return logger.error(`failed to push ${entity}`)
         }
       })

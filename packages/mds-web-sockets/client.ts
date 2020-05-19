@@ -54,11 +54,11 @@ async function sendPush(entity: ENTITY_TYPE, data: VehicleEvent | Telemetry) {
 }
 
 export function writeTelemetry(telemetries: Telemetry[]) {
-  return telemetries.map(telemetry => sendPush('TELEMETRIES', telemetry))
+  return telemetries.map(telemetry => sendPush('telemetry', telemetry))
 }
 
 export function writeEvent(event: VehicleEvent) {
-  return sendPush('EVENTS', event)
+  return sendPush('event', event)
 }
 
 export function shutdown() {

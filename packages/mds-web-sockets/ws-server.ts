@@ -2,14 +2,19 @@ import logger from '@mds-core/mds-logger'
 import { seconds, getEnvVar } from '@mds-core/mds-utils'
 import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
-import { Telemetry, VehicleEvent, Nullable } from '@mds-core/mds-types'
+import { Nullable } from '@mds-core/mds-types'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import stream from '@mds-core/mds-stream'
 import { NatsError, Msg } from 'ts-nats'
+import { ENTITY_TYPES } from './types'
 import { Clients } from './clients'
-import { ENTITY_TYPE } from './types'
 
-export const WebSocketServer = async () => {
+/**
+ * Web Socket Server that autosubscribes to Nats stream and allows socket subscription by entity type
+ * @param entityTypes - entity names to support
+ */
+export const WebSocketServer = async <T extends readonly string[]>(entityTypes?: T) => {
+  const supportedEntities = entityTypes || ENTITY_TYPES
   const server = HttpServer(ApiServer(app => app))
 
   logger.info('Creating WS server')
@@ -26,9 +31,13 @@ export const WebSocketServer = async () => {
     seconds(60)
   )
 
-  const clients = new Clients()
+  const clients = new Clients(supportedEntities)
 
-  function pushToClients(entity: ENTITY_TYPE, message: string) {
+  function isSupported(entity: string) {
+    return supportedEntities.some(e => e === entity)
+  }
+
+  function pushToClients(entity: string, message: string) {
     const staleClients: WebSocket[] = []
     if (clients.subList[entity]) {
       clients.subList[entity].forEach(client => {
@@ -47,15 +56,6 @@ export const WebSocketServer = async () => {
     staleClients.forEach(client => client.close())
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function writeTelemetry(telemetry: Telemetry) {
-    pushToClients('TELEMETRIES', JSON.stringify(telemetry))
-  }
-
-  function writeEvent(event: VehicleEvent) {
-    pushToClients('EVENTS', JSON.stringify(event))
-  }
-
   wss.on('connection', (ws: WebSocket) => {
     ws.on('message', async (data: WebSocket.Data) => {
       const message = data.toString().trim().split('%')
@@ -66,19 +66,12 @@ export const WebSocketServer = async () => {
         if (clients.isAuthenticated(ws)) {
           if (args.length === 2) {
             const [entity, payload] = args
-            switch (entity) {
-              case 'EVENTS': {
-                const event = JSON.parse(payload)
-                return writeEvent(event)
-              }
-              case 'TELEMETRIES': {
-                const telemetry = JSON.parse(payload)
-                return writeTelemetry(telemetry)
-              }
-              default: {
-                return ws.send(`Invalid entity: ${entity}`)
-              }
+            // Limit messages to only supported entities
+            if (isSupported(entity)) {
+              await pushToClients(entity, payload)
+              return
             }
+            return ws.send(`Invalid entity: ${entity}`)
           }
         }
       }
@@ -106,18 +99,12 @@ export const WebSocketServer = async () => {
     TENANT_ID: 'mds'
   })
 
-  const eventProcessor = async (err: Nullable<NatsError>, msg: Msg) => {
-    if (err) logger.error(err)
-    const data = JSON.parse(msg.data)
-    await writeEvent(data)
+  const processor = async (err: Nullable<NatsError>, msg: Msg) => {
+    const entity = msg.subject.split('.')?.[1]
+    await pushToClients(entity, JSON.stringify(msg.data))
   }
 
-  const telemetryProcessor = async (err: Nullable<NatsError>, msg: Msg) => {
-    if (err) logger.error(err)
-    const data = JSON.parse(msg.data)
-    await writeTelemetry(data)
-  }
-
-  await stream.NatsStreamConsumer(`${TENANT_ID}.event`, eventProcessor).initialize()
-  await stream.NatsStreamConsumer(`${TENANT_ID}.telemetry`, telemetryProcessor).initialize()
+  supportedEntities.forEach(async e => {
+    await stream.NatsStreamConsumer(`${TENANT_ID}.event`, processor).initialize()
+  })
 }

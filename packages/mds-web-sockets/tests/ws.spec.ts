@@ -77,5 +77,31 @@ describe('Tests MDS-Web-Sockets', () => {
         return done(data)
       })
     })
+
+    it('Subscribe and send event', done => {
+      const client = new WebSocket(`ws://localhost:${process.env.PORT || 4000}`)
+      client.onopen = () => {
+        client.send(`AUTH%${ADMIN_AUTH}`)
+      }
+
+      client.on('message', data => {
+        if (data === 'AUTH%{"status":"Success"}') {
+          client.send('SUB%event')
+          return
+        }
+
+        if (data === 'SUB%{"status":"Success"}') {
+          client.send(`PUSH%event%${JSON.stringify({ foo: 'bar' })}`)
+          return
+        }
+
+        if (data === 'event%{"foo":"bar"}') {
+          client.close()
+          return done()
+        }
+
+        return done
+      })
+    })
   })
 })
