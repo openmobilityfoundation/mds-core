@@ -194,7 +194,7 @@ function api(app: express.Express): express.Express {
         if (!geography.publish_date && !res.locals.scopes.includes('geographies:read:unpublished')) {
           throw new InsufficientPermissionsError('permission to read metadata of unpublished geographies missing')
         }
-        return res.status(200).send({ version: res.locals.version, geography_metadata })
+        return res.status(200).send({ version: res.locals.version, data: { geography_metadata } })
       } catch (err) {
         logger.error('failed to read geography metadata', err.stack)
         if (err instanceof NotFoundError) {
