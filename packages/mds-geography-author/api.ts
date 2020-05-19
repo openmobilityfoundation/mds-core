@@ -71,7 +71,7 @@ function api(app: express.Express): express.Express {
           params.get_published = true
         }
         const geography_metadata = await db.readBulkGeographyMetadata(params)
-        return res.status(200).send({ version: res.locals.version, geography_metadata })
+        return res.status(200).send({ version: res.locals.version, data: { geography_metadata } })
       } catch (error) {
         logger.error('failed to read geography metadata', error)
         /* This error is thrown if both get_published and get_unpublished are set.
@@ -101,7 +101,7 @@ function api(app: express.Express): express.Express {
         }
 
         const recorded_geography = await db.writeGeography(geography)
-        return res.status(201).send({ version: res.locals.version, geography: recorded_geography })
+        return res.status(201).send({ version: res.locals.version, data: { geography: recorded_geography } })
       } catch (err) {
         logger.error('POST /geographies failed', err.stack)
         if (err.code === '23505') {
@@ -130,7 +130,7 @@ function api(app: express.Express): express.Express {
           throw new ValidationError(JSON.stringify(details))
         }
         await db.editGeography(geography)
-        return res.status(201).send({ version: res.locals.version, geography })
+        return res.status(201).send({ version: res.locals.version, data: { geography } })
       } catch (error) {
         logger.error('failed to edit geography', error.stack)
         if (error instanceof NotFoundError) {
@@ -166,7 +166,7 @@ function api(app: express.Express): express.Express {
         await db.deleteGeography(geography_id)
         return res.status(200).send({
           version: res.locals.version,
-          result: `Successfully deleted geography and/or geography metadata of id ${geography_id}`
+          data: { geography_id }
         })
       } catch (err) {
         logger.error('failed to delete geography', err.stack)
@@ -220,7 +220,7 @@ function api(app: express.Express): express.Express {
         if (updateErr instanceof NotFoundError) {
           try {
             await db.writeGeographyMetadata(geography_metadata)
-            return res.status(201).send({ version: res.locals.version, geography_metadata })
+            return res.status(201).send({ version: res.locals.version, data: { geography_metadata } })
           } catch (writeErr) {
             logger.error('failed to write geography metadata', writeErr.stack)
             if (writeErr instanceof DependencyMissingError) {
@@ -243,7 +243,7 @@ function api(app: express.Express): express.Express {
       try {
         await db.publishGeography({ geography_id })
         const published_geo = await db.readSingleGeography(geography_id)
-        return res.status(200).send({ version: res.locals.version, geography: published_geo })
+        return res.status(200).send({ version: res.locals.version, data: { geography: published_geo } })
       } catch (updateErr) {
         if (updateErr instanceof NotFoundError) {
           return res.status(404).send({ error: `unable to find geography of ${geography_id}` })

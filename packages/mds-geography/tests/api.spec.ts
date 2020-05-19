@@ -42,7 +42,7 @@ import { GEOGRAPHY_API_DEFAULT_VERSION } from '../types'
 
 const request = supertest(ApiServer(api))
 
-const APP_JSON = 'application/vnd.mds-geography+json; charset=utf-8; version=0.1'
+const APP_JSON = 'application/vnd.mds-geography+json; charset=utf-8; version=0.4'
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
 const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
 const GEOGRAPHIES_READ_PUBLISHED_SCOPE = SCOPED_AUTH(['geographies:read:published'])
@@ -66,7 +66,7 @@ describe('Tests app', () => {
         .get(`/geographies/${GEOGRAPHY_UUID}`)
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
-      test.assert(result.body.geography.geography_id === GEOGRAPHY_UUID)
+      test.assert(result.body.data.geography.geography_id === GEOGRAPHY_UUID)
       test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
@@ -117,7 +117,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          result.body.geographies.forEach((item: Geography) => {
+          result.body.data.geographies.forEach((item: Geography) => {
             test.assert(item.geography_json)
           })
           test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
@@ -132,7 +132,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          result.body.geographies.forEach((item: Geography) => {
+          result.body.data.geographies.forEach((item: Geography) => {
             test.assert(!item.geography_json)
           })
           test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
@@ -155,7 +155,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.geography.geography_id === GEOGRAPHY_UUID)
+          test.assert(result.body.data.geography.geography_id === GEOGRAPHY_UUID)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })
@@ -167,7 +167,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.geographies.length === 2)
+          test.assert(result.body.data.geographies.length === 2)
           test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
           done(err)
         })
@@ -179,7 +179,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.geographies.length === 1)
+          test.assert(result.body.data.geographies.length === 1)
           test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
           done(err)
         })
@@ -191,7 +191,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          assert(result.body.geographies.length === 1)
+          assert(result.body.data.geographies.length === 1)
           test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
           done(err)
         })
@@ -203,7 +203,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          assert(result.body.geographies.length === 1)
+          assert(result.body.data.geographies.length === 1)
           test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
           done(err)
         })

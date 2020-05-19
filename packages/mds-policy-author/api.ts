@@ -66,7 +66,7 @@ function api(app: express.Express): express.Express {
 
       try {
         await db.writePolicy(policy)
-        return res.status(201).send({ version: res.locals.version, policy })
+        return res.status(201).send({ version: res.locals.version, data: { policy } })
       } catch (error) {
         if (error.code === '23505') {
           return res
@@ -86,7 +86,7 @@ function api(app: express.Express): express.Express {
       const { policy_id } = req.params
       try {
         const policy = await db.publishPolicy(policy_id)
-        return res.status(200).send({ version: res.locals.version, policy })
+        return res.status(200).send({ version: res.locals.version, data: { policy } })
       } catch (error) {
         logger.error('failed to publish policy', error.stack)
         if (error instanceof AlreadyPublishedError) {
@@ -119,7 +119,7 @@ function api(app: express.Express): express.Express {
       try {
         await db.editPolicy(policy)
         const result = await db.readPolicy(policy.policy_id)
-        return res.status(200).send({ version: res.locals.version, policy: result })
+        return res.status(200).send({ version: res.locals.version, data: { policy: result } })
       } catch (error) {
         if (error instanceof NotFoundError) {
           return res.status(404).send({ error })
@@ -140,7 +140,7 @@ function api(app: express.Express): express.Express {
       const { policy_id } = req.params
       try {
         await db.deletePolicy(policy_id)
-        return res.status(200).send({ version: res.locals.version, policy_id })
+        return res.status(200).send({ version: res.locals.version, data: { policy_id } })
       } catch (error) {
         /* istanbul ignore next */
         logger.error('failed to delete policy', error.stack)
@@ -168,7 +168,7 @@ function api(app: express.Express): express.Express {
           throw new NotFoundError('No metadata found')
         }
 
-        res.status(200).send({ version: res.locals.version, policy_metadata })
+        res.status(200).send({ version: res.locals.version, data: { policy_metadata } })
       } catch (error) {
         if (error instanceof BadParamsError) {
           res.status(400).send({
@@ -199,7 +199,7 @@ function api(app: express.Express): express.Express {
         }
 
         const result = await db.readSinglePolicyMetadata(policy_id)
-        return res.status(200).send({ version: res.locals.version, policy_metadata: result })
+        return res.status(200).send({ version: res.locals.version, data: { policy_metadata: result } })
       } catch (error) {
         if (error instanceof NotFoundError) {
           return res.status(404).send({ error })
@@ -220,12 +220,12 @@ function api(app: express.Express): express.Express {
       const policy_metadata = req.body
       try {
         await db.updatePolicyMetadata(policy_metadata)
-        return res.status(200).send({ version: res.locals.version, policy_metadata })
+        return res.status(200).send({ version: res.locals.version, data: { policy_metadata } })
       } catch (updateErr) {
         if (updateErr instanceof NotFoundError) {
           try {
             await db.writePolicyMetadata(policy_metadata)
-            return res.status(201).send({ version: res.locals.version, policy_metadata })
+            return res.status(201).send({ version: res.locals.version, data: { policy_metadata } })
           } catch (writeErr) {
             /* istanbul ignore next */
             return next(new ServerError(writeErr))

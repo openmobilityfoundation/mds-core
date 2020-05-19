@@ -31,7 +31,7 @@ function api(app: express.Express): express.Express {
         if (!geography.publish_date && !res.locals.scopes.includes('geographies:read:unpublished')) {
           throw new InsufficientPermissionsError('permission to read unpublished geographies missing')
         }
-        return res.status(200).send({ version: res.locals.version, geography })
+        return res.status(200).send({ version: res.locals.version, data: { geography } })
       } catch (error) {
         logger.error('failed to read geography', error.stack)
         if (error instanceof NotFoundError) {
@@ -70,9 +70,9 @@ function api(app: express.Express): express.Express {
         const geographies = summary ? await db.readGeographySummaries(params) : await db.readGeographies(params)
         if (!res.locals.scopes.includes('geographies:read:unpublished')) {
           const filteredGeos = geographies.filter(geo => !!geo.publish_date)
-          return res.status(200).send({ version: res.locals.version, geographies: filteredGeos })
+          return res.status(200).send({ version: res.locals.version, data: { geographies: filteredGeos } })
         }
-        return res.status(200).send({ version: res.locals.version, geographies })
+        return res.status(200).send({ version: res.locals.version, data: { geographies } })
       } catch (error) {
         /* We don't throw a NotFoundError if the number of results is zero, so the error handling
          * doesn't need to consider it here.

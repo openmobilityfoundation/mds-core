@@ -15,9 +15,9 @@
  */
 
 import { ApiRequest, ApiVersionedResponse, ApiClaims } from '@mds-core/mds-api-server'
-import { GeographyMetadata, Geography } from '@mds-core/mds-types'
+import { GeographyMetadata, Geography, UUID } from '@mds-core/mds-types'
 
-export const GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
+export const GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
 export type GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSION = typeof GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS[number]
 export const [GEOGRAPHY_AUTHOR_API_DEFAULT_VERSION] = GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS
 
@@ -36,14 +36,20 @@ export type GeographyAuthorApiResponse<TBody extends {}> = ApiVersionedResponse<
   TBody
 >
 
-export type GetGeographyMetadatumResponse = GeographyAuthorApiResponse<{ geography_metadata: GeographyMetadata }>
+export type GetGeographyMetadatumResponse = GeographyAuthorApiResponse<{
+  data: { geography_metadata: GeographyMetadata }
+}>
 
-export type GetGeographyMetadataResponse = GeographyAuthorApiResponse<{ geography_metadata: GeographyMetadata[] }>
+export type GetGeographyMetadataResponse = GeographyAuthorApiResponse<{
+  data: { geography_metadata: GeographyMetadata[] }
+}>
 
-export type PostGeographyResponse = GeographyAuthorApiResponse<{ geography: Geography }>
+export type PostGeographyResponse = GeographyAuthorApiResponse<{ data: { geography: Geography } }>
 
-export type PutGeographyResponse = GeographyAuthorApiResponse<{ geography: Geography }>
-export type PublishGeographyResponse = GeographyAuthorApiResponse<{ geography: Geography }>
-export type PutGeographyMetadataResponse = GeographyAuthorApiResponse<{ geography_metadata: GeographyMetadata }>
+export type PutGeographyResponse = GeographyAuthorApiResponse<{ data: { geography: Geography } }>
+export type PublishGeographyResponse = GeographyAuthorApiResponse<{ data: { geography: Geography } }>
+export type PutGeographyMetadataResponse = GeographyAuthorApiResponse<{
+  data: { geography_metadata: GeographyMetadata }
+}>
 
-export type DeleteGeographyResponse = GeographyAuthorApiResponse<{ result: string }>
+export type DeleteGeographyResponse = GeographyAuthorApiResponse<{ data: { geography_id: UUID } }>
