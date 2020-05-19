@@ -102,7 +102,7 @@ function api(app: express.Express): express.Express {
           throw new NotFoundError('No policies found!')
         }
 
-        res.status(200).send({ version: res.locals.version, policies: active })
+        res.status(200).send({ version: res.locals.version, data: { policies: active } })
       } catch (error) {
         if (error instanceof NotFoundError) {
           return res.status(404).send({ error })
@@ -143,7 +143,7 @@ function api(app: express.Express): express.Express {
 
         const [policy] = policies
 
-        res.status(200).send({ version: res.locals.version, policy })
+        res.status(200).send({ version: res.locals.version, data: { policy } })
       } catch (error) {
         if (error instanceof BadParamsError) {
           return res.status(400).send({ error })

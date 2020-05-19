@@ -17,7 +17,7 @@
 import { ApiRequest, ApiVersionedResponse, ApiClaims } from '@mds-core/mds-api-server'
 import { Policy } from '@mds-core/mds-types'
 
-export const POLICY_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
+export const POLICY_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
 export type POLICY_API_SUPPORTED_VERSION = typeof POLICY_API_SUPPORTED_VERSIONS[number]
 export const [POLICY_API_DEFAULT_VERSION] = POLICY_API_SUPPORTED_VERSIONS
 
@@ -31,5 +31,5 @@ export type PolicyApiResponse<TBody = {}> = ApiVersionedResponse<
   TBody
 >
 
-export type GetPolicyResponse = PolicyApiResponse<{ policy: Policy }>
-export type GetPoliciesResponse = PolicyApiResponse<{ policies: Policy[] }>
+export type GetPolicyResponse = PolicyApiResponse<{ data: { policy: Policy } }>
+export type GetPoliciesResponse = PolicyApiResponse<{ data: { policies: Policy[] } }>
