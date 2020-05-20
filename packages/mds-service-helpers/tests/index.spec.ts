@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import { ServiceResult, ServiceError, ServiceException, isServiceError, ServiceManager } from '../index'
+import { ServiceResult, ServiceError, ServiceException, isServiceError, ProcessManager } from '../index'
 import { UnwrapServiceResult } from '../client'
 
 describe('Tests Service Helpers', () => {
@@ -88,14 +88,14 @@ describe('Tests Service Helpers', () => {
 
   it('Test ServiceManager Controller', async () => {
     let started = false
-    const controller = ServiceManager.controller({
-      initialize: async () => {
+    const controller = ProcessManager({
+      start: async () => {
         started = true
       },
-      shutdown: async () => {
+      stop: async () => {
         started = false
       }
-    })
+    }).controller()
     await controller.start()
     test.value(started).is(true)
     await controller.stop()

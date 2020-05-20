@@ -16,6 +16,7 @@
 
 import test from 'unit.js'
 import { uuid, days } from '@mds-core/mds-utils'
+import { ProcessManager } from '@mds-core/mds-service-helpers'
 import { JurisdictionServiceClient } from '../index'
 import { JurisdictionServiceProvider } from '../service/provider'
 
@@ -26,9 +27,11 @@ const TODAY = Date.now()
 const YESTERDAY = TODAY - days(1)
 const LAST_WEEK = TODAY - days(7)
 
+const controller = ProcessManager(JurisdictionServiceProvider).controller()
+
 describe('Write/Read Jurisdictions', () => {
   before(async () => {
-    await JurisdictionServiceProvider.initialize()
+    await controller.start()
   })
 
   it(`Write ${records} Jurisdiction${records > 1 ? 's' : ''}`, async () => {
@@ -228,6 +231,6 @@ describe('Write/Read Jurisdictions', () => {
   })
 
   after(async () => {
-    await JurisdictionServiceProvider.shutdown()
+    await controller.stop()
   })
 })

@@ -49,7 +49,9 @@ export type ServiceClient<I> = {
 
 export type ServiceProvider<I> = {
   [P in keyof I]: I[P] extends AnyFunction<infer R> ? (...args: Parameters<I[P]>) => Promise<ServiceResponse<R>> : never
-} & {
-  initialize: () => Promise<void>
-  shutdown: () => Promise<void>
+}
+
+export interface ProcessController {
+  start: () => Promise<void>
+  stop: () => Promise<void>
 }

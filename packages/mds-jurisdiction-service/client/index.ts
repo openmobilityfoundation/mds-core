@@ -18,7 +18,7 @@ import { UnwrapServiceResult, ServiceClient } from '@mds-core/mds-service-helper
 import { JurisdictionServiceProvider } from '../service/provider'
 import { JurisdictionService } from '../@types'
 
-const { initialize, shutdown, ...service } = JurisdictionServiceProvider
+const { start, stop, ...service } = JurisdictionServiceProvider
 
 export const JurisdictionServiceClient: ServiceClient<JurisdictionService> = {
   createJurisdiction: UnwrapServiceResult(service.createJurisdiction),
