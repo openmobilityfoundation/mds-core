@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-api-helpers",
-  "version": "0.1.18",
+  "version": "0.1.26",
   "description": "Mobility Data Specification helper functions",
   "keywords": [
     "mds",
@@ -9,10 +9,11 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-cache": "0.1.18",
-    "@mds-core/mds-db": "0.1.18",
-    "@mds-core/mds-types": "0.1.15",
-    "@mds-core/mds-utils": "0.1.18",
+    "@mds-core/mds-agency-cache": "0.1.26",
+    "@mds-core/mds-db": "0.1.26",
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26",
+    "@types/express": "4.17.6",
     "express": "4.17.1"
   },
   "main": "dist/index.js",
@@ -23,7 +24,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
   }
 }

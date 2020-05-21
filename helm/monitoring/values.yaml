@@ -1,0 +1,221 @@
+prometheus:
+
+  serverFiles:
+    alerting_rules.yml:
+      groups:
+
+      - name: Nodes
+        rules:
+
+        - alert: NodeMemoryWarn
+          expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 20
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            identifier: "{{ $labels.kubernetes_node }}"
+            description: "Low memory on node ({{ $value }}% available)"
+
+        - alert: NodeMemoryCritical
+          expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            identifier: "{{ $labels.kubernetes_node }}"
+            description: "Low memory on node ({{ $value }}% available)"
+
+        - alert: NodeDiskWarn
+          expr: predict_linear(node_filesystem_free_bytes[1h], 4 * 3600) < 0
+          for: 5m
+          labels:
+            severity: warn
+          annotations:
+            identifier: "{{ $labels.kubernetes_node }}"
+            description: "Disk predicted to fill in under 4 hours"
+
+        - alert: NodeInodesWarn
+          expr: predict_linear(node_filesystem_files_free{mountpoint ="/"}[1h], 4 * 3600) < 0
+          for: 5m
+          labels:
+            severity: warn
+          annotations:
+            identifier: "{{ $labels.kubernetes_node }}"
+            description: "Disk predicted to run out of inodes in under 4 hours"
+
+        - alert: NodeCpuLoadWarn
+          expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            identifier: "{{ $labels.kubernetes_node }}"
+            description: "High CPU usage on node ({{ $value }}%)"
+
+        - alert: NodeCpuLoadCritical
+          expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            identifier: "{{ $labels.kubernetes_node }}"
+            description: "High CPU usage on node ({{ $value }}%)"
+
+      - name: Pods
+        rules:
+
+        - alert: PersistentVolumeDiskWarning
+          expr: predict_linear(kubelet_volume_stats_available_bytes[1h], 4 * 3600) < 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            identifier: "{{ $labels.namespace }}/{{ $labels.persistenvolumeclaim }}"
+            description: "Persistent volume predicted to run out of space in under 4 hours"
+
+        - alert: StatefulsetDown
+          expr: (kube_statefulset_status_replicas_current - kube_statefulset_status_replicas_ready) != 0
+          for: 5m
+          labels:
+            severity: error
+          annotations:
+            identifier: "{{ $labels.namespace }}/{{ $labels.statefulset }}"
+            description: "StatefulSet failure - {{ $value }} member(s) down"
+
+        - alert: PodRestartsWarning
+          expr: round(rate(kube_pod_container_status_restarts_total[5m]) * 300) > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            identifier: "{{ $labels.namespace }}/{{ $labels.pod }} "
+            description: "Pod container restarted {{ $value }} times in last 5 minutes"
+
+        - alert: PodContainerStatusWaiting
+          expr: kube_pod_container_status_waiting_reason == 1
+          for: 10m
+          labels:
+            severity: error
+          annotations:
+            identifier: "{{ $labels.namespace }}/{{ $labels.pod }} "
+            description: "Pod waiting in state {{ $labels.reason }}"
+
+        - alert: PodContainerMemoryUsageAboveLimit
+          expr: |-
+            label_replace(
+              label_replace(
+                kube_pod_container_resource_limits_memory_bytes{},
+                "pod_name", "$1", "pod", "(.+)"
+              ),
+              "container_name", "$1", "container", "(.+)"
+            )
+            <
+            on(pod_name,namespace,container_name)
+            avg(
+              container_memory_usage_bytes{pod_name=~".+"}
+            )
+            by (pod_name,namespace,container_name)
+          for: 5m
+          labels:
+            severity: error
+          annotations:
+            identifier: "{{ $labels.namespace }}/{{ $labels.pod }} "
+            description: "Pod exceeded memory limit: {{ $value }} bytes"
+
+        - alert: PodContainerCPUCoresAboveLimit
+          expr: |-
+            label_replace(
+              label_replace(
+                kube_pod_container_resource_limits_cpu_cores{},
+                "pod_name", "$1", "pod", "(.+)"
+              ),
+              "container_name", "$1", "container", "(.+)"
+            )
+            <
+            on(pod_name,namespace,container_name)
+            avg(
+              rate(container_cpu_user_seconds_total{pod_name=~".+"}[5m])
+            )
+            by (pod_name,namespace,container_name)
+          for: 5m
+          labels:
+            severity: error
+          annotations:
+            identifier: "{{ $labels.namespace }}/{{ $labels.pod }} "
+            description: "Pod exceeded memory limit: {{ $value }} bytes"
+
+  alertmanagerFiles:
+    notifications.tmpl: |
+      {{ define "__single_message_title" }}{{ range .Alerts.Firing }}{{ .Labels.alertname }} @ {{ .Annotations.identifier }}{{ end }}{{ range .Alerts.Resolved }}{{ .Labels.alertname }} @ {{ .Annotations.identifier }}{{ end }}{{ end }}
+      {{ define "custom_title" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ if or (and (eq (len .Alerts.Firing) 1) (eq (len .Alerts.Resolved) 0)) (and (eq (len .Alerts.Firing) 0) (eq (len .Alerts.Resolved) 1)) }}{{ template "__single_message_title" . }}{{ end }}{{ end }}
+      {{ define "custom_slack_message" }}
+      {{ if or (and (eq (len .Alerts.Firing) 1) (eq (len .Alerts.Resolved) 0)) (and (eq (len .Alerts.Firing) 0) (eq (len .Alerts.Resolved) 1)) }}
+      {{ range .Alerts.Firing }}{{ .Annotations.description }}{{ end }}{{ range .Alerts.Resolved }}{{ .Annotations.description }}{{ end }}
+      {{ else }}
+      {{ if gt (len .Alerts.Firing) 0 }}
+      *Alerts Firing:*
+      {{ range .Alerts.Firing }}- {{ .Annotations.identifier }}: {{ .Annotations.description }}
+      {{ end }}{{ end }}
+      {{ if gt (len .Alerts.Resolved) 0 }}
+      *Alerts Resolved:*
+      {{ range .Alerts.Resolved }}- {{ .Annotations.identifier }}: {{ .Annotations.description }}
+      {{ end }}{{ end }}
+      {{ end }}
+      {{ end }}
+
+
+    alertmanager.yml:
+
+      global:
+        slack_api_url: "https://hooks.slack.com/services/REDACTED/REDACTED/REDACTED"
+
+      templates:
+      - /etc/config/notifications.tmpl
+
+      receivers:
+      - name: default-receiver
+        slack_configs:
+        - channel: '#k8s-alerts'
+          send_resolved: false
+
+grafana:
+
+  env:
+    GF_AUTH_ANONYMOUS_ENABLED: "true"
+    GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    GF_AUTH_DISABLE_LOGIN_FORM: "true"
+
+  datasources:
+   datasources.yaml:
+     apiVersion: 1
+     datasources:
+     - name: Prometheus
+       type: prometheus
+       # FIXME: hard-coded {{.Release.Name }} as the prefix here
+       url: http://monitoring-prometheus-server
+       access: proxy
+       isDefault: true
+
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: true
+        editable: false
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+  dashboards:
+    default:
+      node-exporter:
+        gnetId: 11074
+        revision: 2
+        datasource: Prometheus
+      kubernetes-metrics:
+        gnetId: 8588
+        revision: 1
+        datasource: Prometheus

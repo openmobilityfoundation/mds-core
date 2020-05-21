@@ -14,11 +14,11 @@
     limitations under the License.
  */
 import * as fs from 'fs'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import * as yargs from 'yargs'
 import { Policy, Geography, ComplianceResponse, VehicleEvent, Device } from '@mds-core/mds-types'
+import { validateEvents, validateGeographies, validatePolicies } from '@mds-core/mds-schema-validators'
 import { filterPolicies, processPolicy, filterEvents } from './mds-compliance-engine'
-import { validateEvents, validateGeographies, validatePolicies } from './validators'
 
 const args = yargs
   .options('geographies', {
@@ -53,20 +53,20 @@ async function readJson(path: string): Promise<object> {
 async function main(): Promise<(ComplianceResponse | undefined)[]> {
   const geographies = (await readJson(args.geographies)) as Geography[]
   if (!geographies || !validateGeographies(geographies)) {
-    await log.error('unable to read geographies')
+    logger.error('unable to read geographies')
     process.exit(1)
   }
 
   const policies = (await readJson(args.policies)) as Policy[]
   if (!policies || !validatePolicies(policies)) {
-    await log.error('unable to read policies')
+    logger.error('unable to read policies')
     process.exit(1)
   }
 
   // read events
   const events = (await readJson(args.events)) as VehicleEvent[]
   if (!events || !validateEvents(events)) {
-    await log.error('unable to read events')
+    logger.error('unable to read events')
     process.exit(1)
   }
   const filteredEvents = filterEvents(events)
@@ -77,7 +77,7 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
   }, {})
   // TODO Validate Devices
   if (!devices) {
-    await log.error('unable to read devices')
+    logger.error('unable to read devices')
     process.exit(1)
   }
 
@@ -92,21 +92,21 @@ main()
   .then(
     /* eslint-disable-next-line promise/always-return */
     result => {
-      log.info(JSON.stringify(result, undefined, 2))
+      logger.info(JSON.stringify(result, undefined, 2))
     },
     failure => {
       // TODO use payload response type instead of peering into body
       const reason = failure.slice && failure.slice(0, 2) === '{"' ? JSON.parse(failure) : failure
       if (reason.error_description) {
-        log.info(`${reason.error_description} (${reason.error})`)
+        logger.info(`${reason.error_description} (${reason.error})`)
       } else if (reason.result) {
-        log.info(reason.result)
+        logger.info(reason.result)
       } else {
-        log.info('failure:', reason)
+        logger.info('failure:', reason)
       }
     }
   )
   /* eslint-disable-next-line promise/prefer-await-to-callbacks */
   .catch(async err => {
-    await log.error('exception:', err.stack)
+    logger.error('exception:', err.stack)
   })

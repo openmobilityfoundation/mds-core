@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-utils",
-  "version": "0.1.18",
+  "version": "0.1.26",
   "description": "Mobility Data Specification utility functions",
   "keywords": [
     "mds",
@@ -9,10 +9,17 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@hapi/joi": "15.1.1",
-    "@mds-core/mds-types": "0.1.15",
-    "circle-to-polygon": "1.0.2",
-    "point-in-polygon": "1.0.1"
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-types": "0.1.23",
+    "@turf/boolean-point-in-polygon": "^6.0.1",
+    "@turf/helpers": "^6.1.4",
+    "@types/moment-timezone": "0.5.13",
+    "@types/point-in-polygon": "1.0.0",
+    "@types/uuid": "7.0.3",
+    "circle-to-polygon": "2.0.2",
+    "moment-timezone": "0.5.28",
+    "point-in-polygon": "1.0.1",
+    "uuid": "8.0.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +29,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 35 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts"
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 40  ts-mocha --project ../../tsconfig.json"
   }
 }

@@ -15,20 +15,20 @@
  */
 import { FeatureCollection } from 'geojson'
 
-export { AccessTokenScope, AccessTokenScopes, ScopeDescriptions } from './scopes'
-
 export const Enum = <T extends string>(...keys: T[]) =>
-  Object.freeze(keys.reduce((e, key) => {
-    return { ...e, [key]: key }
-  }, {}) as { [K in T]: K })
+  Object.freeze(
+    keys.reduce((e, key) => {
+      return { ...e, [key]: key }
+    }, {}) as { [K in T]: K }
+  )
 
 export const isEnum = (enums: { [key: string]: string }, value: unknown) =>
   typeof value === 'string' && typeof enums === 'object' && enums[value] === value
 
-export const VEHICLE_TYPES = Enum('carshare', 'bicycle', 'scooter', 'recumbent')
+export const VEHICLE_TYPES = Enum('car', 'bicycle', 'scooter', 'moped', 'recumbent')
 export type VEHICLE_TYPE = keyof typeof VEHICLE_TYPES
 
-export const RULE_TYPES = Enum('count', 'speed', 'time')
+export const RULE_TYPES = Enum('count', 'speed', 'time', 'user')
 export type RULE_TYPE = keyof typeof RULE_TYPES
 
 export const RULE_UNIT_MAP = {
@@ -41,6 +41,8 @@ export type PROPULSION_TYPE = keyof typeof PROPULSION_TYPES
 
 export const VEHICLE_STATUSES = Enum('available', 'reserved', 'unavailable', 'removed', 'inactive', 'trip', 'elsewhere')
 export type VEHICLE_STATUS = keyof typeof VEHICLE_STATUSES
+
+export const RIGHT_OF_WAY_STATUSES = ['available', 'reserved', 'unavailable', 'trip']
 
 export const VEHICLE_EVENTS = Enum(
   'register',
@@ -58,6 +60,7 @@ export const VEHICLE_EVENTS = Enum(
   'trip_end',
   'deregister'
 )
+
 export type VEHICLE_EVENT = keyof typeof VEHICLE_EVENTS
 
 export const VEHICLE_REASONS = Enum(
@@ -72,25 +75,6 @@ export const VEHICLE_REASONS = Enum(
   'rebalance'
 )
 export type VEHICLE_REASON = keyof typeof VEHICLE_REASONS
-
-export const PROVIDER_EVENTS = Enum('available', 'reserved', 'unavailable', 'removed')
-export type PROVIDER_EVENT = keyof typeof PROVIDER_EVENTS
-
-export const PROVIDER_REASONS = Enum(
-  'service_start',
-  'user_drop_off',
-  'rebalance_drop_off',
-  'maintenance_drop_off',
-  'agency_drop_off',
-  'user_pick_up',
-  'maintenance',
-  'low_battery',
-  'service_end',
-  'rebalance_pick_up',
-  'maintenance_pick_up',
-  'agency_pick_up'
-)
-export type PROVIDER_REASON = keyof typeof PROVIDER_REASONS
 
 export const AUDIT_EVENT_TYPES = Enum('start', 'note', 'summary', 'issue', 'telemetry', 'end')
 export type AUDIT_EVENT_TYPE = keyof typeof AUDIT_EVENT_TYPES
@@ -143,6 +127,12 @@ export type UUID = string
 
 export type Timestamp = number
 export type Stringify<T> = { [P in keyof T]: string }
+export type Nullable<T> = T | null
+export type NullableProperties<T extends object> = {
+  [P in keyof T]-?: T[P] extends null ? T[P] : Nullable<T[P]>
+}
+export type SingleOrArray<T> = T | T[]
+export type Optional<T, P extends keyof T> = Omit<T, P> & Partial<Pick<T, P>>
 
 // Represents a row in the "devices" table
 export interface Device {
@@ -177,12 +167,6 @@ export interface VehicleEvent {
   recorded: Timestamp
 }
 
-export interface VehicleEventSummary {
-  provider_event_id: number | null
-  provider_event_type: VEHICLE_EVENT | null
-  provider_event_type_reason?: VEHICLE_REASON | null
-}
-
 // Standard telemetry columns (used in more than one table)
 export interface TelemetryData {
   lat: number
@@ -195,6 +179,8 @@ export interface TelemetryData {
   satellites?: number | null
   charge?: number | null
 }
+
+export type GpsData = Omit<TelemetryData, 'charge'>
 
 // While telemetry data is stored in a flattened format, when passed as a parameter it has
 // a different shape: { gps: { lat, lng, speed, heading, accurace, altitude } charge }. This
@@ -211,6 +197,23 @@ export interface Telemetry extends WithGpsProperty<TelemetryData> {
   recorded?: Timestamp
 }
 
+// Represents a row in the "attachments" table
+export interface Attachment {
+  attachment_filename: string
+  attachment_id: UUID
+  base_url: string
+  mimetype: string
+  thumbnail_filename?: string | null
+  thumbnail_mimetype?: string | null
+  recorded?: Timestamp | null
+}
+
+export interface AttachmentSummary {
+  attachment_id: UUID
+  attachment_url: string
+  thumbnail_url?: string | null
+}
+
 // Represents a row in the "audits" table
 export interface Audit {
   audit_trip_id: UUID
@@ -224,6 +227,13 @@ export interface Audit {
   recorded: Timestamp
 }
 
+// Represents a row in the "audit_attachments" table
+export interface AuditAttachment {
+  attachment_id: UUID
+  audit_trip_id: UUID
+  recorded: Timestamp
+}
+
 // Represents a row in the "audit_events" table
 export interface AuditEvent extends TelemetryData {
   audit_trip_id: UUID
@@ -232,20 +242,27 @@ export interface AuditEvent extends TelemetryData {
   audit_issue_code?: string | null
   audit_subject_id: string
   note?: string | null
-  provider_event_id?: number | null
-  provider_event_type?: string | null
-  provider_event_type_reason?: string | null
   timestamp: Timestamp
   recorded: Timestamp
 }
 
 export interface AuditDetails extends Audit {
   events: WithGpsProperty<AuditEvent>[]
+  provider_event_type?: string | null
+  provider_event_type_reason?: string | null
+  provider_status?: string | null
+  provider_telemetry?: Telemetry | null
+  provider_event_time?: Timestamp | null
+  attachments: AttachmentSummary[]
   provider: null | {
     device: Device
     events: VehicleEvent[]
     telemetry: Telemetry[]
   }
+}
+
+export interface PolicyMessage {
+  [key: string]: string
 }
 
 interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
@@ -262,7 +279,7 @@ interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
   days?: DAY_OF_WEEK[] | null
   /* eslint-reason TODO: message types haven't been defined well yet */
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  messages?: any
+  messages?: PolicyMessage
   value_url?: URL | null
 }
 
@@ -276,7 +293,9 @@ export interface SpeedRule extends BaseRule<'speed'> {
   rule_units: 'kph' | 'mph'
 }
 
-export type Rule = CountRule | TimeRule | SpeedRule
+export type UserRule = BaseRule<'user'>
+
+export type Rule = CountRule | TimeRule | SpeedRule | UserRule
 
 export interface Policy {
   name: string
@@ -401,3 +420,43 @@ export interface Provider {
   mds_api_url?: string
   gbfs_api_url?: string
 }
+
+export interface Stop {
+  stop_id: UUID
+  stop_name: string
+  short_name?: string
+  platform_code?: string
+  geography_id?: UUID
+  lat: number
+  lng: number
+  zone_id?: UUID
+  address?: string
+  post_code?: string
+  rental_methods?: string // TOOD: enum?
+  capacity: Partial<{ [S in VEHICLE_TYPE]: number }>
+  location_type?: string // TODO: enum?
+  timezone?: string
+  cross_street?: string
+  num_vehicles_available: Partial<{ [S in VEHICLE_TYPE]: number }>
+  num_vehicles_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
+  num_spots_available: Partial<{ [S in VEHICLE_TYPE]: number }>
+  num_spots_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
+  wheelchair_boarding?: boolean
+  reservation_cost?: Partial<{ [S in VEHICLE_TYPE]: number }> // Cost to reserve a spot per vehicle_type
+}
+
+// eslint-reason recursive declarations require interfaces
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface JsonArray extends Array<Json> {}
+
+export interface JsonObject {
+  [property: string]: Json
+}
+
+export type JsonValue = string | number | boolean | JsonArray | JsonObject
+
+export type Json = Nullable<JsonValue>
+// eslint-reason Function and constructor inference must use a single rest parameter of type 'any[]'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type AnyFunction<A = any> = (...args: any[]) => A
+export type AnyConstructor<A = object> = new (...args: any[]) => A

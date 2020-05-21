@@ -1,6 +1,6 @@
 import { csv, now } from '@mds-core/mds-utils'
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import schema, { COLUMN_NAME, TABLE_NAME } from './schema'
 import { SqlExecuter, MDSPostgresClient, cols_sql, SqlExecuterFunction } from './sql-utils'
 
@@ -10,7 +10,9 @@ const MIGRATIONS = [
   'alterAuditEventsColumns',
   'alterPreviousGeographiesColumn',
   'dropDeprecatedProviderTables',
-  'dropReadOnlyGeographyColumn'
+  'dropReadOnlyGeographyColumn',
+  'dropAuditEventsColumns',
+  'alterReportsTripsMigration'
 ] as const
 type MIGRATION = typeof MIGRATIONS[number]
 
@@ -19,7 +21,7 @@ async function dropTables(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
   const drop = csv(schema.DEPRECATED_PROVIDER_TABLES.concat(schema.TABLES))
   await exec(`DROP TABLE IF EXISTS ${drop};`)
-  await log.info(`postgres drop table succeeded: ${drop}`)
+  logger.info(`postgres drop table succeeded: ${drop}`)
 }
 
 // Add a foreign key if it doesn't already exist
@@ -82,7 +84,7 @@ async function createTables(client: MDSPostgresClient) {
     (table: string) => !existing.rows.find((row: any) => row.table_name === table)
   )
   if (missing.length > 0) {
-    await log.warn('existing', JSON.stringify(existing.rows), 'missing', JSON.stringify(missing))
+    logger.warn('existing', JSON.stringify(existing.rows), 'missing', JSON.stringify(missing))
     const create = missing
       .map(
         table =>
@@ -91,9 +93,9 @@ async function createTables(client: MDSPostgresClient) {
             .join(', ')}, PRIMARY KEY (${csv(schema.TABLE_KEY[table])}));`
       )
       .join('\n')
-    await log.warn(create)
+    logger.warn(create)
     await exec(create)
-    await log.info('postgres create table suceeded')
+    logger.info('postgres create table suceeded')
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.recorded)))
     await Promise.all(missing.map(table => addIndex(client, table, schema.COLUMN.id, { unique: true })))
     await addForeignKey(client, schema.TABLE.policy_metadata, schema.TABLE.policies, schema.COLUMN.policy_id)
@@ -129,11 +131,11 @@ async function doMigration(
         )
         process.env.PG_DEBUG = 'true'
         try {
-          await log.warn('Running migration', migration)
+          logger.warn('Running migration', migration)
           await migrate(exec)
-          await log.warn('Migration', migration, 'succeeded')
+          logger.warn('Migration', migration, 'succeeded')
         } catch (err) {
-          await log.error('Migration', migration, 'failed', err)
+          logger.error('Migration', migration, 'failed', err)
         }
         process.env.PG_DEBUG = PG_DEBUG
       } catch {
@@ -157,15 +159,9 @@ async function alterGeographiesColumnsMigration(exec: SqlExecuterFunction) {
 }
 
 async function alterAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
-  await exec(
-    `ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN ${schema.COLUMN.provider_event_id} ${schema.COLUMN_TYPE.provider_event_id}`
-  )
-  await exec(
-    `ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN ${schema.COLUMN.provider_event_type} ${schema.COLUMN_TYPE.provider_event_type}`
-  )
-  await exec(
-    `ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN ${schema.COLUMN.provider_event_type_reason} ${schema.COLUMN_TYPE.provider_event_type_reason}`
-  )
+  await exec(`ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN provider_event_id bigint`)
+  await exec(`ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN provider_event_type varchar(31)`)
+  await exec(`ALTER TABLE ${schema.TABLE.audit_events} ADD COLUMN provider_event_type_reason varchar(31)`)
 }
 
 async function alterPreviousGeographiesColumnMigration(exec: SqlExecuterFunction) {
@@ -182,16 +178,20 @@ async function dropReadOnlyGeographyColumnMigration(exec: SqlExecuterFunction) {
   await exec(`ALTER TABLE ${schema.TABLE.geographies} DROP COLUMN read_only`)
 }
 
+async function dropAuditEventsColumnsMigration(exec: SqlExecuterFunction) {
+  await exec(`ALTER TABLE ${schema.TABLE.audit_events} DROP COLUMN provider_event_id`)
+  await exec(`ALTER TABLE ${schema.TABLE.audit_events} DROP COLUMN provider_event_type`)
+  await exec(`ALTER TABLE ${schema.TABLE.audit_events} DROP COLUMN provider_event_type_reason`)
+}
+
 async function doMigrations(client: MDSPostgresClient) {
   const exec = SqlExecuter(client)
-  // All migrations go here. createMigrationsTable will never actually run here as it is inserted when the
-  // migrations table is created, but it is included as it provides a template for how to invoke them.
-  await doMigration(exec, 'createMigrationsTable', async () => {})
   await doMigration(exec, 'alterGeographiesColumns', alterGeographiesColumnsMigration)
   await doMigration(exec, 'alterAuditEventsColumns', alterAuditEventsColumnsMigration)
   await doMigration(exec, 'alterPreviousGeographiesColumn', alterPreviousGeographiesColumnMigration)
   await doMigration(exec, 'dropDeprecatedProviderTables', dropDeprecatedProviderTablesMigration)
   await doMigration(exec, 'dropReadOnlyGeographyColumn', dropReadOnlyGeographyColumnMigration)
+  await doMigration(exec, 'dropAuditEventsColumns', dropAuditEventsColumnsMigration)
 }
 
 async function updateSchema(client: MDSPostgresClient) {

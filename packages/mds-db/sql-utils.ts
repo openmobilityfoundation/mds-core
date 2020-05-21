@@ -1,7 +1,7 @@
 // /////////////////////////////// SQL-related utilities /////////////////////////////
 import { Client as PostgresClient, types as PostgresTypes } from 'pg'
 import { csv } from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import schema from './schema'
 
 export interface PGInfo {
@@ -61,15 +61,15 @@ export function configureClient(pg_info: PGInfo) {
 
   client.on('end', () => {
     client.setConnected(false)
-    log.info('disconnected', client.client_type, 'client from postgres')
+    logger.info('disconnected', client.client_type, 'client from postgres')
   })
 
   client.on('error', async err => {
-    await log.error('pg client error event', err.stack)
+    logger.error('pg client error event', err.stack)
   })
 
   client.on('notice', async msg => {
-    await log.warn('notice:', msg)
+    logger.warn('notice:', msg)
   })
 
   if (!client) {
@@ -156,7 +156,7 @@ export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
     out = values
   }
 
-  log.info('sql>', sql, out)
+  logger.info('sql>', sql, out)
 }
 
 export class SqlVals {
@@ -187,3 +187,7 @@ export const SqlExecuter = (client: MDSPostgresClient) => async (command: string
 }
 
 export type SqlExecuterFunction = ReturnType<typeof SqlExecuter>
+
+export function arrayToInQueryFormat(arr: unknown[]) {
+  return `(${arr.map(currElem => `"${currElem}"`)})`
+}

@@ -1,18 +1,13 @@
 # MDS Agency API
+Implementation of the [MDS-Agency](https://github.com/openmobilityfoundation/mobility-data-specification/blob/dev/agency/README.md) API
+## Package Content
+### Stable Content
+This package contains an MDS-Agency 0.4.0 implementation.
+### Experimental Content
+This package implements the `/stops` endpoint which is currently up for PR and not approved in the specification.
 
-## Quick Start
-
-1. Make sure node/git are installed
-2. Clone this repo
-3. `cd` into the repo dir
-4. Host the API locally at `http://localhost:4001` by running `yarn start`
-5. Interact with the API using your favorite REST client
-
-## Run Tests
-
-1. Make sure you can run the API as per [Quick Start](#quick-start) above.
-2. `yarn test`
+## Quick Start and Tests
+See [Quick Start](../../README.md#Installation)
 
 ## Build Deployment Package
-1. Make sure the API passes all tests as per [Run Tests](#run-tests) above.
-2. `yarn build`
+See [Build](../../README.md#Build)

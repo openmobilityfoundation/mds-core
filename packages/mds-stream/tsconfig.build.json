@@ -3,5 +3,9 @@
   "compilerOptions": {
     "outDir": "dist"
   },
-  "references": [{ "path": "../../packages/mds-types/tsconfig.build.json" }]
+  "references": [
+    { "path": "../../packages/mds-logger/tsconfig.build.json" },
+    { "path": "../../packages/mds-types/tsconfig.build.json" },
+    { "path": "../../packages/mds-utils/tsconfig.build.json" }
+  ]
 }

@@ -1,3 +1,46 @@
+{{- if $.Values.nats.enabled }}
+{{- $natsNamespace := default "nats" .Values.natsNamespace }}
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: nats
+  namespace: {{ .Release.Namespace }}
+spec:
+  hosts:
+  - {{ printf "%s-nats-server.%s.svc.cluster.local" $natsNamespace $natsNamespace }}
+  - "*.kafka.svc.cluster.local"
+  ports:
+  - number: 4222
+    name: client
+    protocol: TCP
+  - number: 9092
+    name: kafka-client
+    protocol: TCP
+  location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: kafka
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: "*.kafka.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nats
+  namespace: {{ .Release.Namespace }}
+spec:
+  host: {{ printf "*.%s.svc.cluster.local" $natsNamespace | quote }}
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+{{- end }}
 {{- if (eq .Values.postgresql.internal false) }}
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
@@ -41,6 +84,24 @@ spec:
   - {{ .Values.redis.host }}
   ports:
   - number: {{ .Values.redis.port }}
+    name: tcp
+    protocol: TCP
+  location: MESH_EXTERNAL
+---
+{{- end }}
+{{- if hasKey .Values "egress" }}
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: egress-other
+  namespace: {{ .Release.Namespace }}
+spec:
+  hosts:
+  {{- range .Values.egress.hosts }}
+  - {{ . }}
+  {{- end }}
+  ports:
+  - number: 443
     name: tcp
     protocol: TCP
   location: MESH_EXTERNAL

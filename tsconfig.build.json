@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.settings.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -8,5 +8,6 @@
     "listEmittedFiles": true,
     "declaration": true,
     "composite": true
-  }
+  },
+  "exclude": ["**/tests", "**/dist"]
 }

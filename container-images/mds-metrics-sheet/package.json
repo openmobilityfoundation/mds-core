@@ -1,25 +1,25 @@
 {
   "name": "@container-images/mds-metrics-sheet",
-  "version": "0.1.19",
+  "version": "0.1.27",
   "description": "Docker Image for MDS Metrics Sheet",
+  "private": true,
   "main": "dist/index.js",
   "files": [
     "dist/"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.build.json",
-    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && ../../bin/mdsctl -c:image-name=mds-metrics-sheet:${npm_package_version} buildImage",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0"
+    "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-metrics-sheet:${npm_package_version} buildImage",
+    "test": "yarn test:eslint",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
   },
   "keywords": [
     "mds"
   ],
   "author": "City of Los Angeles",
+  "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-metrics-sheet": "0.0.19"
-  },
-  "license": "Apache-2.0"
+    "@mds-core/mds-metrics-sheet": "0.0.27",
+    "@mds-core/mds-webpack-config": "0.1.0"
+  }
 }

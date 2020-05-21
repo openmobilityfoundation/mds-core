@@ -16,7 +16,7 @@
 
 import GoogleSpreadsheet from 'google-spreadsheet'
 import { promisify } from 'util'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import {
   JUMP_PROVIDER_ID,
   LIME_PROVIDER_ID,
@@ -28,7 +28,7 @@ import {
   BOLT_PROVIDER_ID
 } from '@mds-core/mds-providers'
 import { VEHICLE_EVENT, EVENT_STATUS_MAP, VEHICLE_STATUS } from '@mds-core/mds-types'
-import { requestPromiseExceptionHelper } from './utils'
+import { requestPromiseExceptionHelper, MAX_TIMEOUT_MS } from './utils'
 import { VehicleCountResponse, LastDayStatsResponse, MetricsSheetRow, VehicleCountRow } from './types'
 
 // The list of providers ids on which to report
@@ -144,15 +144,15 @@ async function appendSheet(sheetName: string, rows: MetricsSheetRow[]) {
   const doc = new GoogleSpreadsheet(process.env.SPREADSHEET_ID)
   await promisify(doc.useServiceAccountAuth)(creds)
   const info = await promisify(doc.getInfo)()
-  log.info(`Loaded doc: ${info.title} by ${info.author.email}`)
+  logger.info(`Loaded doc: ${info.title} by ${info.author.email}`)
   const sheet = info.worksheets.filter((s: { title: string; rowCount: number } & unknown) => s.title === sheetName)[0]
-  log.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
+  logger.info(`${sheetName} sheet: ${sheet.title} ${sheet.rowCount}x${sheet.colCount}`)
   if (sheet.title === sheetName) {
     const inserted = rows.map(insert_row => promisify(sheet.addRow)(insert_row))
-    log.info(`Wrote ${inserted.length} rows.`)
+    logger.info(`Wrote ${inserted.length} rows.`)
     return Promise.all(inserted)
   }
-  log.info('Wrong sheet!')
+  logger.info('Wrong sheet!')
 }
 
 export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[]> {
@@ -170,19 +170,22 @@ export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[
       client_secret: process.env.CLIENT_SECRET,
       audience: process.env.AUDIENCE
     },
-    json: true
+    json: true,
+    timeout: MAX_TIMEOUT_MS
   }
   try {
     const token = await requestPromiseExceptionHelper(token_options)
     const counts_options = {
       url: 'https://api.ladot.io/daily/admin/vehicle_counts',
       headers: { authorization: `Bearer ${token.access_token}` },
-      json: true
+      json: true,
+      timeout: MAX_TIMEOUT_MS
     }
     const last_options = {
       url: 'https://api.ladot.io/daily/admin/last_day_stats_by_provider',
       headers: { authorization: `Bearer ${token.access_token}` },
-      json: true
+      json: true,
+      timeout: MAX_TIMEOUT_MS
     }
 
     const counts: VehicleCountResponse = await requestPromiseExceptionHelper(counts_options)
@@ -193,7 +196,7 @@ export async function getProviderMetrics(iter: number): Promise<MetricsSheetRow[
       .map(provider => mapProviderToPayload(provider, last))
     return rows
   } catch (err) {
-    await log.error(`getProviderMetrics() API call error on ${err.url}`, err)
+    logger.error(`getProviderMetrics() API call error on ${err.url}`, err)
     return getProviderMetrics(iter + 1)
   }
 }
@@ -203,6 +206,6 @@ export const MetricsLogHandler = async () => {
     const rows = await getProviderMetrics(0)
     await appendSheet('Metrics Log', rows)
   } catch (err) {
-    await log.error('MetricsLogHandler', err)
+    logger.error('MetricsLogHandler', err)
   }
 }

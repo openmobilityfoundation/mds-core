@@ -2,33 +2,33 @@ suite: test service policy-author
 templates:
   - service.yaml
 tests:
-  - it: doc 6
+  - it: doc 11
     release:
       namespace: mds
     asserts:
       - isAPIVersion:
           of: v1
-        documentIndex: 6
+        documentIndex: 11
       - isKind:
           of: Service
-        documentIndex: 6
+        documentIndex: 11
       - equal:
           path: metadata.name
           value: mds-policy-author
-        documentIndex: 6
+        documentIndex: 11
       - equal:
           path: metadata.namespace
           value: mds
-        documentIndex: 6
+        documentIndex: 11
       - equal:
           path: spec.selector.app
           value: mds-policy-author
-        documentIndex: 6
+        documentIndex: 11
       - equal:
           path: spec.ports[0].name
           value: http-mds-policy-author
-        documentIndex: 6
+        documentIndex: 11
       - equal:
           path: spec.ports[0].port
-          value: 4007
-        documentIndex: 6
+          value: 4000
+        documentIndex: 11

@@ -8,15 +8,21 @@
       "type": "node",
       "request": "launch",
       "name": "Server: mds-agency",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-agency",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-agency",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/agency"
       }
     },
@@ -24,79 +30,109 @@
       "type": "node",
       "request": "launch",
       "name": "Server: mds-audit",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-audit",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-audit",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/audit"
       }
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Server: mds-daily",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
-      "args": ["server.ts"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-daily",
-      "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-daily",
-        "PATH_PREFIX": "/daily"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Server: mds-compliance",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-compliance",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-compliance",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/compliance"
       }
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Server: mds-native",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "name": "Server: mds-daily",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-native",
+      "cwd": "${workspaceFolder}/packages/mds-daily",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-native",
-        "PATH_PREFIX": "/native"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "PATH_PREFIX": "/daily"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-jursidiction",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-jurisdiction",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "PATH_PREFIX": "/jurisdiction"
       }
     },
     {
       "type": "node",
       "request": "launch",
       "name": "Server: mds-policy",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-policy",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-policy",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/policy"
       }
     },
@@ -104,15 +140,43 @@
       "type": "node",
       "request": "launch",
       "name": "Server: mds-policy-author",
-      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register", "-r", "dotenv/config"],
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
       "args": ["server.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-policy-author",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "npm_package_name": "@mds-core/mds-policy-author",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "PATH_PREFIX": "/policy-author"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Server: mds-geography-author",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": ["server.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-geography-author",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/policy-author"
       }
     },
@@ -122,26 +186,19 @@
       "name": "Tests: mds-agency",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-agency",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/agency"
       }
     },
@@ -151,26 +208,19 @@
       "name": "Tests: mds-api-authorizer",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-api-authorizer",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {
@@ -179,28 +229,20 @@
       "name": "Tests: mds-api-server",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-api-server",
       "env": {
-        "npm_package_name": "mds-api-server",
         "npm_package_version": "0.0.0",
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {
@@ -209,26 +251,19 @@
       "name": "Tests: mds-audit",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-audit",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/audit"
       }
     },
@@ -238,26 +273,19 @@
       "name": "Tests: mds-compliance",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-compliance",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/compliance"
       }
     },
@@ -267,26 +295,19 @@
       "name": "Tests: mds-daily",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-daily",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/daily"
       }
     },
@@ -296,26 +317,61 @@
       "name": "Tests: mds-db",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-db",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-jurisdiction",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
+        "-r",
+        "ts-node/register",
+        "--timeout",
+        "0"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-jurisdiction",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-jurisdiction-service",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
+        "-r",
+        "ts-node/register",
+        "--timeout",
+        "0"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-jurisdiction-service",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {
@@ -324,55 +380,19 @@
       "name": "Tests: mds-logger",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-logger",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Tests: mds-native",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": [
-        "-r",
-        "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
-        "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-native",
-      "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
-        "PATH_PREFIX": "/native"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {
@@ -381,26 +401,19 @@
       "name": "Tests: mds-policy",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-policy",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/policy"
       }
     },
@@ -410,27 +423,63 @@
       "name": "Tests: mds-policy-author",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-policy-author",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env",
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "PATH_PREFIX": "/policy-author"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-geography-author",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
+        "-r",
+        "ts-node/register",
+        "--timeout",
+        "0"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-geography-author",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "PATH_PREFIX": "/policy-author"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Tests: mds-repository",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
+        "-r",
+        "ts-node/register",
+        "--timeout",
+        "0"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-repository",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {
@@ -439,26 +488,19 @@
       "name": "Tests: mds-types",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-types",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     },
     {
@@ -467,26 +509,19 @@
       "name": "Tests: mds-utils",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "args": [
+        "--project",
+        "${workspaceFolder}/tsconfig.json",
         "-r",
         "ts-node/register",
-        "-r",
-        "tsconfig-paths/register",
-        "-r",
-        "dotenv/config",
         "--timeout",
-        "999999",
-        "--colors",
-        "--recursive",
-        "--timeout",
-        "5000",
-        "'tests/**/*.ts'"
+        "0"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
       "cwd": "${workspaceFolder}/packages/mds-utils",
       "env": {
-        "DOTENV_CONFIG_PATH": "../../.env"
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env"
       }
     }
   ]

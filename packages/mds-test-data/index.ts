@@ -25,15 +25,9 @@ import {
   Timestamp,
   Telemetry,
   VehicleEvent,
-  Policy,
-  PROVIDER_EVENT,
-  PROVIDER_REASON,
-  PROVIDER_EVENTS,
-  PROVIDER_REASONS,
-  AccessTokenScope
+  Policy
 } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
-import { StatusChange, Trip } from '@mds-core/mds-db/types'
 
 import {
   addDistanceBearing,
@@ -41,25 +35,16 @@ import {
   makePointInShape,
   now,
   pointInShape,
-  randomElement,
   range,
   rangeRandom,
-  rangeRandomInt
+  rangeRandomInt,
+  uuid
 } from '@mds-core/mds-utils'
 
-import { serviceAreaMap } from 'ladot-service-areas'
+import logger from '@mds-core/mds-logger'
 
-import uuid from 'uuid'
-
-import log from '@mds-core/mds-logger'
-
-import {
-  JUMP_PROVIDER_ID,
-  LIME_PROVIDER_ID,
-  BIRD_PROVIDER_ID,
-  TEST1_PROVIDER_ID,
-  providerName
-} from '@mds-core/mds-providers'
+import { JUMP_PROVIDER_ID, LIME_PROVIDER_ID, BIRD_PROVIDER_ID, TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import { serviceAreaMap, restrictedAreas, veniceSpecOps } from './test-areas/test-areas'
 
 import { LA_CITY_BOUNDARY } from './la-city-boundary'
 import { DISTRICT_SEVEN } from './district-seven'
@@ -237,7 +222,29 @@ const POLICY4_JSON: Policy = {
   rules: [
     {
       name: 'Greater LA',
-      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
+      rule_id: uuid(),
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
+const POLICY5_JSON: Policy = {
+  policy_id: uuid(),
+  name: 'Policy 5',
+  description: 'just here to enable testing for policies by start date',
+  start_date: START_ONE_MONTH_AGO,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: uuid(),
       rule_type: 'speed',
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
@@ -258,10 +265,55 @@ const POLICY_JSON_MISSING_POLICY_ID = {
   rules: [
     {
       name: 'Greater LA',
+      rule_id: uuid(),
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [NONEXISTENT_GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
+const POLICY_WITH_DUPE_RULE: Policy = {
+  policy_id: uuid(),
+  name: 'I am a no good copycat',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: now(),
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
       rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
       rule_type: 'speed',
       rule_units: 'mph',
       geographies: [NONEXISTENT_GEOGRAPHY_UUID],
+      statuses: { trip: [] },
+      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      maximum: 25
+    }
+  ]
+}
+
+const PUBLISHED_POLICY: Policy = {
+  policy_id: uuid(),
+  name: 'I am published but do not do much',
+  description: 'LADOT Pilot Speed Limit Limitations',
+  start_date: START_ONE_MONTH_AGO,
+  publish_date: START_ONE_MONTH_AGO,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: uuid(),
+      rule_type: 'speed',
+      rule_units: 'mph',
+      geographies: [GEOGRAPHY_UUID],
       statuses: { trip: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
       maximum: 25
@@ -278,7 +330,7 @@ function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
     [key: string]: { num_clusters: number; cluster_radii: number[]; cluster_centers: { lat: number; lng: number }[] }
   } = {}
 
-  log.info('clustering')
+  logger.info('clustering')
   serviceAreaKeys.slice(0, 1).map(key => {
     const serviceArea = serviceAreaMap[key]
     const serviceAreaMultipoly = serviceArea.area
@@ -496,64 +548,7 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
   return devices
 }
 
-function makeStatusChange(device: Device, timestamp: Timestamp): StatusChange {
-  const event_type = randomElement(Object.keys(PROVIDER_EVENTS) as PROVIDER_EVENT[])
-  const event_type_reason = randomElement(Object.keys(PROVIDER_REASONS) as PROVIDER_REASON[])
-
-  return {
-    provider_id: device.provider_id,
-    provider_name: providerName(device.provider_id),
-    device_id: device.device_id,
-    vehicle_id: device.vehicle_id,
-    event_type,
-    event_type_reason,
-    event_location: null,
-    battery_pct: rangeRandomInt(1, 100),
-    associated_trip: uuid(),
-    event_time: timestamp,
-    vehicle_type: device.type,
-    propulsion_type: device.propulsion,
-    recorded: now()
-  }
-}
-
-function makeTrip(device: Device): Trip {
-  return {
-    provider_id: device.provider_id,
-    provider_name: providerName(device.provider_id),
-    device_id: device.device_id,
-    vehicle_id: device.vehicle_id,
-    vehicle_type: device.type,
-    propulsion_type: device.propulsion,
-    provider_trip_id: uuid(),
-    trip_duration: rangeRandomInt(5),
-    trip_distance: rangeRandomInt(5),
-    route: {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: {
-            timestamp: now()
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [Math.random() * 10, Math.random() * 10]
-          }
-        }
-      ]
-    },
-    accuracy: Math.random() * 3,
-    trip_start: now() - 1000 * Math.random(),
-    trip_end: now(),
-    parking_verification_url: 'http://iamverified.com',
-    standard_cost: rangeRandomInt(5),
-    actual_cost: rangeRandomInt(5),
-    recorded: now()
-  }
-}
-
-const SCOPED_AUTH = (scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
+const SCOPED_AUTH = <AccessTokenScope extends string>(scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
   `basic ${Buffer.from(`${principalId}|${scopes.join(' ')}`).toString('base64')}`
 
 export {
@@ -567,8 +562,11 @@ export {
   POLICY2_JSON,
   POLICY3_JSON,
   POLICY4_JSON,
+  POLICY5_JSON,
   POLICY_JSON_MISSING_POLICY_ID,
+  POLICY_WITH_DUPE_RULE,
   POLICY_UUID,
+  PUBLISHED_POLICY,
   SUPERSEDING_POLICY_UUID,
   POLICY2_UUID,
   POLICY3_UUID,
@@ -586,7 +584,8 @@ export {
   makeTelemetryInArea,
   makeTelemetryInShape,
   makeTelemetryStream,
-  makeStatusChange,
-  makeTrip,
-  SCOPED_AUTH
+  SCOPED_AUTH,
+  serviceAreaMap,
+  restrictedAreas,
+  veniceSpecOps
 }

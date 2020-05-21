@@ -1,13 +1,6 @@
 import { UUID, Recorded, Telemetry, Timestamp } from '@mds-core/mds-types'
-import {
-  convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry,
-  now,
-  csv,
-  days,
-  yesterday
-} from '@mds-core/mds-utils'
-import log from '@mds-core/mds-logger'
+import { now, csv, days, yesterday } from '@mds-core/mds-utils'
+import logger from '@mds-core/mds-logger'
 import { TelemetryRecord } from './types'
 
 import schema from './schema'
@@ -15,6 +8,32 @@ import schema from './schema'
 import { cols_sql, vals_list, SqlVals, logSql, to_sql } from './sql-utils'
 
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
+
+export function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
+  const {
+    gps: { lat, lng, altitude, heading, speed, accuracy },
+    recorded = now(),
+    ...props
+  } = telemetry
+  return {
+    ...props,
+    lat,
+    lng,
+    altitude,
+    heading,
+    speed,
+    accuracy,
+    recorded
+  }
+}
+
+export function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Telemetry {
+  const { lat, lng, altitude, heading, speed, accuracy, ...props } = telemetryRecord
+  return {
+    ...props,
+    gps: { lat, lng, altitude, heading, speed, accuracy }
+  }
+}
 
 export async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded<Telemetry>[]> {
   if (telemetries.length === 0) {
@@ -40,7 +59,7 @@ export async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded
 
     const delta = now() - start
     if (delta >= 300) {
-      await log.info(
+      logger.info(
         `pg db writeTelemetry ${telemetries.length} rows, success in ${delta} ms with ${recorded_telemetries.length} unique`
       )
     }
@@ -56,7 +75,7 @@ export async function writeTelemetry(telemetries: Telemetry[]): Promise<Recorded
         }) as Recorded<Telemetry>
     )
   } catch (err) {
-    await log.error('pg write telemetry error', err)
+    logger.error('pg write telemetry error', err)
     throw err
   }
 }
@@ -88,7 +107,7 @@ export async function readTelemetry(
       return convertTelemetryRecordToTelemetry(row) as Recorded<Telemetry>
     })
   } catch (err) {
-    await log.error('read telemetry error', err)
+    logger.error('read telemetry error', err)
     throw err
   }
 }
@@ -98,11 +117,16 @@ export async function getTelemetryCountsPerProviderSince(
   stop = now()
 ): Promise<{ provider_id: UUID; count: number; slacount: number }[]> {
   const one_day = days(1)
-  const sql = `select provider_id, count(*), count(case when ((recorded-timestamp) > ${one_day}) then 1 else null end) as slacount from telemetry where recorded > ${start} and recorded < ${stop} group by provider_id`
-  return makeReadOnlyQuery(sql)
+  const vals = new SqlVals()
+  const sql = `select provider_id, count(*), count(case when ((recorded-timestamp) > ${vals.add(
+    one_day
+  )}) then 1 else null end) as slacount from telemetry where recorded > ${vals.add(start)} and recorded < ${vals.add(
+    stop
+  )} group by provider_id`
+  return makeReadOnlyQuery(sql, vals)
 }
 
-// TODO way too slow to be useful -- move into mds-cache
+// TODO way too slow to be useful -- move into mds-agency-cache
 export async function getMostRecentTelemetryByProvider(): Promise<{ provider_id: UUID; max: number }[]> {
   const sql = `select provider_id, max(recorded) from ${schema.TABLE.telemetry} group by provider_id`
   return makeReadOnlyQuery(sql)

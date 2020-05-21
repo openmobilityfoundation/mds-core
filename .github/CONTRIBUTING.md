@@ -18,4 +18,4 @@ By participating, you are expected to uphold this code.
 
 In order to maintain consistency, all development dependencies related to the testing and building of the packages in this repository are installed in the root `package.json` file. This includes the various tools (`ESLint`, `Prettier`, `TypeScript`, `Mocha`, etc.) as well as the default configuration settings for those tools.
 
-One notable exception to this is the installation of TypeScript definition (`@types`) packages which are installed as development dependencies in the individual packages that require them which is analogous to those dependencies that include their own type definitinos without a separate `@types` package.
+One notable exception to this is the installation of TypeScript definition (`@types`) packages which are installed as regular dependencies in the individual packages that require them which is analogous to those dependencies that include their own type definitinos without a separate `@types` package.

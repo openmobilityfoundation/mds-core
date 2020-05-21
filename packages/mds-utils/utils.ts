@@ -26,15 +26,18 @@ import {
   BoundingBox,
   Geography,
   Rule,
-  VEHICLE_EVENTS,
-  VEHICLE_STATUSES,
   EVENT_STATUS_MAP,
   VEHICLE_STATUS,
-  BBox
+  BBox,
+  VEHICLE_EVENT,
+  SingleOrArray
 } from '@mds-core/mds-types'
-import { TelemetryRecord } from '@mds-core/mds-db/types'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
+
+import { isArray } from 'util'
+import { getNextState } from './state-machine'
+import { parseRelative, getCurrentDate } from './date-time-utils'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles
@@ -63,11 +66,11 @@ function isPct(val: unknown): val is number {
 // this is a real-time API, so timestamps should be now +/- some factor, let's start with 24h
 function isTimestamp(val: unknown): val is Timestamp {
   if (typeof val !== 'number') {
-    log.info('timestamp not an number')
+    logger.info('timestamp not an number')
     return false
   }
   if (val < 1420099200000) {
-    log.info('timestamp is prior to 1/1/2015; this is almost certainly seconds, not milliseconds')
+    logger.info('timestamp is prior to 1/1/2015; this is almost certainly seconds, not milliseconds')
     return false
   }
   return true
@@ -90,6 +93,13 @@ function hours(n: number) {
 
 function days(n: number) {
   return hours(n) * 24
+}
+
+// Based on a bin size (in ms), calculate the start/end of
+// the frame containing the timestamp.
+function timeframe(size: Timestamp, timestamp: Timestamp) {
+  const start_time = timestamp - (timestamp % size)
+  return { start_time, end_time: start_time + size - 1 }
 }
 
 /**
@@ -451,31 +461,6 @@ function csv<T>(list: T[] | Readonly<T[]>): string {
 function inc(map: { [key: string]: number }, key: string) {
   return Object.assign(map, { [key]: map[key] ? map[key] + 1 : 1 })
 }
-function convertTelemetryToTelemetryRecord(telemetry: Telemetry): TelemetryRecord {
-  const {
-    gps: { lat, lng, altitude, heading, speed, accuracy },
-    recorded = now(),
-    ...props
-  } = telemetry
-  return {
-    ...props,
-    lat,
-    lng,
-    altitude,
-    heading,
-    speed,
-    accuracy,
-    recorded
-  }
-}
-
-function convertTelemetryRecordToTelemetry(telemetryRecord: TelemetryRecord): Telemetry {
-  const { lat, lng, altitude, heading, speed, accuracy, ...props } = telemetryRecord
-  return {
-    ...props,
-    gps: { lat, lng, altitude, heading, speed, accuracy }
-  }
-}
 
 function pathsFor(path: string): string[] {
   const { PATH_PREFIX } = process.env
@@ -498,86 +483,13 @@ function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: Boun
   return false
 }
 
-function isStateTransitionValid(eventA: VehicleEvent, eventB: VehicleEvent) {
-  switch (EVENT_STATUS_MAP[eventA.event_type]) {
-    case VEHICLE_STATUSES.available:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.agency_pick_up:
-          return true
-        case VEHICLE_EVENTS.service_end:
-          return true
-        case VEHICLE_EVENTS.trip_start:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.elsewhere:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_enter:
-          return true
-        case VEHICLE_EVENTS.provider_pick_up:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.provider_drop_off:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.inactive:
-      switch (eventB.event_type) {
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.removed:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.register:
-          return true
-        case VEHICLE_EVENTS.trip_enter:
-          return true
-        case VEHICLE_EVENTS.provider_drop_off:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.reserved:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_start:
-          return true
-        case VEHICLE_EVENTS.cancel_reservation:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.trip:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.trip_leave:
-          return true
-        case VEHICLE_EVENTS.trip_end:
-          return true
-        default:
-          return false
-      }
-    case VEHICLE_STATUSES.unavailable:
-      switch (eventB.event_type) {
-        case VEHICLE_EVENTS.service_start:
-          return true
-        case VEHICLE_EVENTS.deregister:
-          return true
-        case VEHICLE_EVENTS.agency_pick_up:
-          return true
-        case VEHICLE_EVENTS.provider_pick_up:
-          return true
-        default:
-          return false
-      }
-    default:
-      return false
-  }
+function isStateTransitionValid(
+  eventA: VehicleEvent & { event_type: VEHICLE_EVENT },
+  eventB: VehicleEvent & { event_type: VEHICLE_EVENT }
+) {
+  const currState = EVENT_STATUS_MAP[eventA.event_type]
+  const nextState = getNextState(currState, eventB.event_type)
+  return nextState !== undefined
 }
 
 function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {
@@ -622,19 +534,70 @@ function clone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj))
 }
 
-// T is the non-null and non-undefined type
-function filterEmptyHelper<T>(warnOnEmpty?: boolean) {
-  // https://stackoverflow.com/a/51577579 to remove null/undefined in typesafe way
-  return (elem: T | undefined | null, idx: number): elem is T => {
-    if (elem !== undefined && elem !== null) {
-      return true
+type isDefinedOptions = Partial<{ warnOnEmpty: boolean }>
+
+const isDefined = <T>(elem: T | undefined | null, options: isDefinedOptions = {}, index?: number): elem is T => {
+  const { warnOnEmpty } = options
+  if (elem !== undefined && elem !== null) {
+    return true
+  }
+  if (warnOnEmpty) {
+    logger.warn(`Encountered empty element at index: ${index}`)
+  }
+  return false
+}
+
+const filterDefined = (options: isDefinedOptions = {}) => <T>(
+  value: T | undefined | null,
+  index: number,
+  array: (T | undefined | null)[]
+): value is T => isDefined(value, options, index)
+
+function moved(latA: number, lngA: number, latB: number, lngB: number) {
+  const limit = 0.00001 // arbitrary amount
+  const latDiff = Math.abs(latA - latB)
+  const lngDiff = Math.abs(lngA - lngB)
+  return lngDiff > limit || latDiff > limit // very computational efficient basic check (better than sqrts & trig)
+}
+
+function normalizeToArray<T>(elementToNormalize: T | T[] | undefined): T[] {
+  if (elementToNormalize === undefined) {
+    return []
+  }
+  if (isArray(elementToNormalize)) {
+    return elementToNormalize
+  }
+  return [elementToNormalize]
+}
+
+const getEnvVar = <TProps extends { [name: string]: string }>(props: TProps): TProps =>
+  Object.keys(props).reduce((env, key) => {
+    return {
+      ...env,
+      [key]: process.env[key] || props[key]
     }
-    if (warnOnEmpty) {
-      log.warn(`Encountered empty element at index: ${idx}`) // eslint-disable-line @typescript-eslint/no-floating-promises
-    }
-    return false
+  }, {} as TProps)
+
+export type ParseObjectPropertiesOptions<T> = Partial<{
+  parser: (value: string) => T
+}>
+
+const parseObjectProperties = <T = string>(
+  obj: { [k: string]: unknown },
+  { parser }: ParseObjectPropertiesOptions<T> = {}
+) => {
+  return {
+    keys: <TKey extends string>(first: TKey, ...rest: TKey[]): Partial<{ [P in TKey]: T }> =>
+      [first, ...rest]
+        .map(key => ({ key, value: obj[key] }))
+        .filter((param): param is { key: TKey; value: string } => typeof param.value === 'string')
+        .reduce((params, { key, value }) => ({ ...params, [key]: parser ? parser(value) : value }), {})
   }
 }
+
+const asArray = <T>(value: SingleOrArray<T>): T[] => (Array.isArray(value) ? value : [value])
+
+const pluralize = (count: number, singular: string, plural: string) => (count === 1 ? singular : plural)
 
 export {
   UUID_REGEX,
@@ -661,6 +624,7 @@ export {
   hours,
   minutes,
   seconds,
+  timeframe,
   yesterday,
   csv,
   inc,
@@ -670,11 +634,18 @@ export {
   tail,
   isStateTransitionValid,
   pointInGeometry,
-  convertTelemetryToTelemetryRecord,
-  convertTelemetryRecordToTelemetry,
   getPolygon,
   isInStatesOrEvents,
   routeDistance,
   clone,
-  filterEmptyHelper
+  isDefined,
+  moved,
+  normalizeToArray,
+  parseRelative,
+  getCurrentDate,
+  getEnvVar,
+  parseObjectProperties,
+  asArray,
+  pluralize,
+  filterDefined
 }

@@ -1,0 +1,10 @@
+name: mds-agency
+namespace: mds
+image: node:14.2.0
+command: ["bash"]
+forward:
+  - 9229:9229
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi

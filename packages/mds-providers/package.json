@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-providers",
-  "version": "0.1.18",
+  "version": "0.1.26",
   "description": "Mobility Data Specification provider details",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,10 +16,10 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "exit 0"
   },
   "dependencies": {
-    "@mds-core/mds-types": "0.1.15"
+    "@mds-core/mds-types": "0.1.23"
   }
 }

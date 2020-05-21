@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: "1.10.1"
-description: Dashboard
-name: kubernetes-dashboard
-version: 1.10.1

@@ -2,7 +2,7 @@ import sinon from 'sinon'
 import test from 'unit.js'
 import assert from 'assert'
 
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 import { updateSchema, createTables, dropTables } from '../migration'
 import schema from '../schema'
 import { PGInfo, configureClient } from '../sql-utils'
@@ -67,7 +67,10 @@ if (pg_info.database) {
         .sort()
       test.array(table_names).is(schema.TABLES.sort())
       const indices_result = await client.query(`SELECT tablename FROM pg_indexes WHERE indexdef like '%idx_recorded%'`)
-      const indices = indices_result.rows.map((row: DBRow) => row.tablename).sort()
+      const indices = indices_result.rows
+        .map((row: DBRow) => row.tablename)
+        .filter(table => (schema.TABLES as string[]).includes(table))
+        .sort()
       test
         .array(indices)
         .is(schema.TABLES.sort().filter(table => schema.TABLE_COLUMNS[table].includes(schema.COLUMN.recorded)))
@@ -135,9 +138,9 @@ if (pg_info.database) {
         assert.ok(err instanceof Error)
         assert.deepStrictEqual(err.message, 'err')
       }
-      log.info('hangingon')
+      logger.info('hangingon')
       await client.end()
-      log.info('hangingon')
+      logger.info('hangingon')
     })
   })
 }

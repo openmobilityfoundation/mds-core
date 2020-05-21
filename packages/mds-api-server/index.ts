@@ -1,24 +1,52 @@
 import morgan from 'morgan'
 import bodyParser from 'body-parser'
 import express from 'express'
-import cors from 'cors'
+import CorsMiddleware from 'cors'
 import logger from '@mds-core/mds-logger'
 import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
-import { AuthorizationHeaderApiAuthorizer, ApiAuthorizer, ApiAuthorizerClaims } from '@mds-core/mds-api-authorizer'
-import { AccessTokenScope } from '@mds-core/mds-types'
+import {
+  AuthorizationHeaderApiAuthorizer,
+  ApiAuthorizer,
+  AuthorizerClaims,
+  ProviderIdClaim,
+  UserEmailClaim,
+  JurisdictionsClaim
+} from '@mds-core/mds-api-authorizer'
+import { Params, ParamsDictionary } from 'express-serve-static-core'
 
-export type ApiRequest = express.Request
+export type ApiRequest<P extends Params = ParamsDictionary> = express.Request<P>
 
-export interface ApiResponseLocals {
-  claims: ApiAuthorizerClaims | null
+export type ApiQuery<Q1 extends string, Q2 extends string[] = never> = {
+  query: Partial<
+    {
+      [P in Q1]: string
+    }
+  > &
+    Partial<
+      {
+        [P in Q2[number]]: string | string[]
+      }
+    > & { [x: string]: never }
+}
+
+export interface ApiResponse<L = unknown, B = unknown>
+  extends express.Response<
+    B | { error: unknown; error_description?: string; error_details?: string[] } | { errors: unknown[] }
+  > {
+  locals: L
+}
+
+export type ApiClaims<AccessTokenScope extends string> = {
+  claims: AuthorizerClaims | null
   scopes: AccessTokenScope[]
 }
 
-export interface ApiResponse<T = unknown> extends express.Response {
-  locals: ApiResponseLocals
-  status: (code: number) => ApiResponse<T | { error: Error }>
-  send: (body: T) => ApiResponse<T | { error: Error }>
-}
+export type ApiVersion<TVersion extends string> = { version: TVersion }
+
+export type ApiVersionedResponse<TVersion extends string, L = unknown, TBody = unknown> = ApiResponse<
+  L & ApiVersion<TVersion>,
+  TBody & ApiVersion<TVersion>
+>
 
 const about = () => {
   const {
@@ -41,99 +69,241 @@ const about = () => {
   }
 }
 
-interface ApiServerOptions {
-  authorizer: ApiAuthorizer
-  handleCors: boolean
+export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): express.RequestHandler =>
+  morgan(
+    (tokens, req: ApiRequest, res: ApiResponse<ApiClaims<AccessTokenScope>>) =>
+      [
+        ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'),
+        '-',
+        tokens['response-time'](req, res),
+        'ms'
+      ].join(' '),
+    {
+      skip: (req: ApiRequest, res: ApiResponse) => {
+        // By default only log 400/500 errors
+        const { API_REQUEST_LOG_LEVEL = 0 } = process.env
+        return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
+      },
+      // Use logger, but remove extra line feed added by morgan stream option
+      stream: { write: msg => logger.info(msg.slice(0, -1)) }
+    }
+  )
+
+export const JsonBodyParserMiddleware = (options: bodyParser.OptionsJson) => bodyParser.json(options)
+
+export const MaintenanceModeMiddleware = () => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+  if (process.env.MAINTENANCE) {
+    return res.status(503).send(about())
+  }
+  next()
 }
+
+type AuthorizerMiddlewareOptions = { authorizer: ApiAuthorizer }
+export const AuthorizerMiddleware = ({
+  authorizer = AuthorizationHeaderApiAuthorizer
+}: Partial<AuthorizerMiddlewareOptions> = {}) => <AccessTokenScope extends string>(
+  req: ApiRequest,
+  res: ApiResponse<ApiClaims<AccessTokenScope>>,
+  next: express.NextFunction
+) => {
+  const claims = authorizer(req)
+  res.locals.claims = claims
+  res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
+  next()
+}
+
+const MinorVersion = (version: string) => {
+  const [major, minor] = version.split('.')
+  return `${major}.${minor}`
+}
+
+export const ApiVersionMiddleware = <TVersion extends string>(mimeType: string, versions: readonly TVersion[]) => ({
+  withDefaultVersion: (preferred: TVersion) => async (
+    req: ApiRequest,
+    res: ApiVersionedResponse<TVersion>,
+    next: express.NextFunction
+  ) => {
+    // Parse the Accept header into a list of values separated by commas
+    const { accept: header } = req.headers
+    const values = header ? header.split(',').map(value => value.trim()) : []
+
+    // Parse the version and q properties from all values matching the specified mime type
+    const accepted = values.reduce<{ version: string; q: number }[] | null>((accept, value) => {
+      const [mime, ...properties] = value.split(';').map(property => property.trim())
+      return mime === mimeType
+        ? (accept ?? []).concat({
+            ...properties.reduce<{ version: string; q: number }>(
+              (info, property) => {
+                const [key, val] = property.split('=').map(keyvalue => keyvalue.trim())
+                return {
+                  ...info,
+                  version: key === 'version' ? val : info.version,
+                  q: key === 'q' ? Number(val) : info.q
+                }
+              },
+              { version: preferred, q: 1.0 }
+            )
+          })
+        : accept
+    }, null) ?? [
+      {
+        version: preferred,
+        q: 1.0
+      }
+    ]
+
+    // Determine if any of the requested versions are supported
+    const supported = accepted
+      .map(info => ({
+        ...info,
+        latest: versions.reduce<TVersion | undefined>((latest, version) => {
+          if (MinorVersion(info.version) === MinorVersion(version)) {
+            if (latest) {
+              return latest > version ? latest : version
+            }
+            return version
+          }
+          return latest
+        }, undefined)
+      }))
+      .filter(info => info.latest !== undefined)
+
+    if (req.method === 'OPTIONS') {
+      /* If the incoming request is an OPTIONS request,
+       * immediately respond with the negotiated version.
+       * If the client did not negotiate a valid version, fall-through to a 406 response.
+       */
+      if (supported.length > 0) {
+        const [{ latest }] = supported.sort((a, b) => b.q - a.q)
+        if (latest) {
+          res.locals.version = latest
+          res.setHeader('Content-Type', `${mimeType};version=${MinorVersion(latest)}`)
+          return res.status(200).send()
+        }
+      }
+    } else if (supported.length > 0) {
+      /* If the incoming request is a non-OPTIONS request,
+       * set the negotiated version header, and forward the request to the next handler.
+       * If the client did not negotiate a valid version, fall-through to provide the "preferred" version,
+       * or, if they requested an invalid version, respond with a 406.
+       */
+      const [{ latest }] = supported.sort((a, b) => b.q - a.q)
+      if (latest) {
+        res.locals.version = latest
+        res.setHeader('Content-Type', `${mimeType};version=${MinorVersion(latest)}`)
+        return next()
+      }
+    } else if (values.length === 0) {
+      /*
+       * If no versions specified by the client for a non-OPTIONS request,
+       * fall-back to latest internal version supported
+       */
+      res.locals.version = preferred
+      res.setHeader('Content-Type', `${mimeType};version=${MinorVersion(preferred)}`)
+      return next()
+    }
+
+    // 406 - Not Acceptable
+    return res.sendStatus(406)
+  }
+})
+
+export const AboutRequestHandler = async (req: ApiRequest, res: ApiResponse) => {
+  return res.status(200).send(about())
+}
+
+export const HealthRequestHandler = async (req: ApiRequest, res: ApiResponse) => {
+  return res.status(200).send({
+    ...about(),
+    process: process.pid,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  })
+}
+
+const serverVersion = () => {
+  const { npm_package_name, npm_package_version, npm_package_git_commit } = process.env
+  return npm_package_name && npm_package_version
+    ? `${npm_package_name} v${npm_package_version} (${npm_package_git_commit || 'local'})`
+    : 'Server'
+}
+
+type HttpServerOptions = Partial<{
+  port: string | number
+}>
+
+export const HttpServer = (api: express.Express, options: HttpServerOptions = {}) => {
+  const { HTTP_KEEP_ALIVE_TIMEOUT = 15000, HTTP_HEADERS_TIMEOUT = 20000 } = process.env
+
+  const port = Number(options.port || process.env.PORT || 4000)
+
+  const server = api.listen(port, () => {
+    logger.info(
+      `${serverVersion()} running on port ${port}; Timeouts(${HTTP_KEEP_ALIVE_TIMEOUT}/${HTTP_HEADERS_TIMEOUT})`
+    )
+  })
+
+  // Increase default timeout values to mitigate spurious 503 errors from Istio
+  server.keepAliveTimeout = Number(HTTP_KEEP_ALIVE_TIMEOUT)
+  server.headersTimeout = Number(HTTP_HEADERS_TIMEOUT)
+
+  return server
+}
+
+type CorsMiddlewareOptions = Omit<CorsMiddleware.CorsOptions, 'preflightContinue'>
 
 export const ApiServer = (
   api: (server: express.Express) => express.Express,
-  options: Partial<ApiServerOptions> = {},
+  { authorizer, ...corsOptions }: Partial<AuthorizerMiddlewareOptions & CorsMiddlewareOptions> = {},
   app: express.Express = express()
 ): express.Express => {
-  const { authorizer, handleCors } = {
-    authorizer: AuthorizationHeaderApiAuthorizer,
-    handleCors: false,
-    ...options
-  }
+  logger.info(`${serverVersion()} starting`)
 
+  // Log the custom authorization namespace/claims
+  const claims = [ProviderIdClaim, UserEmailClaim, JurisdictionsClaim]
+  claims.forEach(claim => {
+    logger.info(`${serverVersion()} using authorization claim ${claim()}`)
+  })
   // Disable x-powered-by header
   app.disable('x-powered-by')
 
   // Middleware
   app.use(
-    //
-    // Request logging
-    //
-    morgan('tiny', {
-      skip: (req, res) => {
-        // By default only log 400/500 errors
-        const { API_REQUEST_LOG_LEVEL = 400 } = process.env
-        return res.statusCode < Number(API_REQUEST_LOG_LEVEL)
-      },
-      // Use logger, but remove extra line feed added by morgan stream option
-      stream: { write: msg => logger.info(msg.slice(0, -1)) }
-    }),
-    //
-    // JSON body parser
-    //
-    bodyParser.json({ limit: '5mb' }),
-    //
-    // CORS
-    //
-    handleCors
-      ? cors() // Server handles CORS
-      : (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-          res.header('Access-Control-Allow-Origin', '*')
-          next()
-        },
-    //
-    // Maintenance
-    //
-    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-      if (process.env.MAINTENANCE) {
-        return res.status(503).send(about())
-      }
-      next()
-    },
-    //
-    // Authorizer
-    //
-    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-      const claims = authorizer(req)
-      res.locals.claims = claims
-      res.locals.scopes = claims && claims.scope ? (claims.scope.split(' ') as AccessTokenScope[]) : []
-      next()
-    }
+    RequestLoggingMiddleware(),
+    CorsMiddleware({ preflightContinue: true, ...corsOptions }),
+    JsonBodyParserMiddleware({ limit: '5mb' }),
+    MaintenanceModeMiddleware(),
+    AuthorizerMiddleware({ authorizer })
   )
 
-  app.get(pathsFor('/'), async (req: ApiRequest, res: ApiResponse) => {
-    // 200 OK
-    return res.status(200).send(about())
-  })
-
-  app.get(pathsFor('/health'), async (req: ApiRequest, res: ApiResponse) => {
-    // 200 OK
-    return res.status(200).send({
-      ...about(),
-      process: process.pid,
-      uptime: process.uptime(),
-      memory: process.memoryUsage()
-    })
-  })
+  // Routes
+  app.get(pathsFor('/'), AboutRequestHandler)
+  app.get(pathsFor('/health'), HealthRequestHandler)
 
   return api(app)
 }
 
+export type AccessTokenScopeValidator<AccessTokenScope extends string = never> = (
+  scopes: AccessTokenScope[],
+  claims: AuthorizerClaims | null
+) => boolean | Promise<boolean>
+
 /* istanbul ignore next */
-export const checkAccess = (validator: (scopes: AccessTokenScope[]) => boolean) => (
-  req: ApiRequest,
-  res: ApiResponse,
-  next: express.NextFunction
-) => {
-  if (process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false' || validator(res.locals.scopes)) {
-    next()
-  } else {
-    res.status(403).send({ error: new AuthorizationError('no access without scope', { claims: res.locals.claims }) })
-  }
-}
+export const checkAccess = <AccessTokenScope extends string = never>(
+  validator: AccessTokenScopeValidator<AccessTokenScope>
+) =>
+  process.env.VERIFY_ACCESS_TOKEN_SCOPE === 'false'
+    ? async (req: ApiRequest, res: ApiResponse<ApiClaims<AccessTokenScope>>, next: express.NextFunction) => {
+        next() // Bypass
+      }
+    : async (req: ApiRequest, res: ApiResponse<ApiClaims<AccessTokenScope>>, next: express.NextFunction) => {
+        const { scopes, claims } = res.locals
+        const valid = await validator(scopes, claims)
+        return valid
+          ? next()
+          : res.status(403).send({ error: new AuthorizationError('no access without scope', { claims }) })
+      }

@@ -24,26 +24,52 @@ apis:
     pathPrefix: /daily
     version: latest
     migration: false
-  mds-native:
+  mds-jurisdiction:
     enabled: true
-    pathPrefix: /native
+    pathPrefix: /jurisdiction
     version: latest
+    migration: false
+  mds-jurisdiction-service:
+    enabled: true
+    pathPrefix: /jurisdiction-service
+    version: latest
+    migration: false
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author
     version: latest
     migration: false
-useEvents: false
+  mds-web-sockets:
+    enabled: true
+    pathPrefix: /web-sockets
+    version: latest
+    migration: false
+  mds-geography:
+    enabled: true
+    pathPrefix: /geography
+    version: latest
+    migration: false
+  mds-geography-author:
+    enabled: true
+    pathPrefix: /geography-author
+    version: latest
+    migration: false
+nats:
+  enabled: true
+  credentials: false
+tenantId:
 timezone: America/Los_Angeles
 registry:
 useLatestImage: true
-domain: '*'
+domain: "*"
 tls:
   enabled: false
   domain:
 jwt:
   issuer:
   enabled: false
+  bypassInternal: false
+  firstInstall: false
   audiences: []
 postgresql:
   internal: true

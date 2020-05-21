@@ -1,0 +1,25 @@
+{
+  "name": "@container-images/mds-jurisdiction",
+  "version": "0.0.1",
+  "description": "Docker Image for MDS Jurisdiction API",
+  "private": true,
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-jurisdiction:${npm_package_version} buildImage",
+    "test": "yarn test:eslint",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
+  },
+  "keywords": [
+    "mds"
+  ],
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mds-core/mds-jurisdiction": "0.1.0",
+    "@mds-core/mds-webpack-config": "0.1.0"
+  }
+}

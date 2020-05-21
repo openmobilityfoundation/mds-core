@@ -18,12 +18,16 @@ spec:
       labels:
         app: {{ $name }}
     spec:
+      volumes:
+        {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
+        - name: creds-volume
+          secret:
+            secretName: nats-creds
+        {{- end }}
       containers:
       - name: {{ $name }}
+        image: {{ if $.Values.registry }}{{ printf "%s/" $.Values.registry }}{{- end}}{{ $name }}:{{ $api.version }}
         {{- if $.Values.registry }}
-        image: {{ $.Values.registry }}/{{ $name }}:{{ $api.version }}
-        {{- else }}
-        image: {{ $name }}:{{ $api.version }}
         imagePullPolicy: IfNotPresent
         {{- end }}
         resources:
@@ -37,6 +41,11 @@ spec:
         - containerPort: 4000
           name: user-port
           protocol: TCP
+        volumeMounts:
+        {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
+        - name: creds-volume
+          mountPath: /var/run/nats/secrets
+        {{- end }}
         env:
           - name: PORT
             value: "4000"
@@ -55,7 +64,7 @@ spec:
                 key: postgresql-password
           - name: PG_HOST
           {{- if $.Values.postgresql.internal }}
-            value: mds-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Name }}-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
           {{- else }}
             value: {{ $.Values.postgresql.host }}
           {{- end }}
@@ -66,24 +75,31 @@ spec:
           {{- if $.Values.postgresql.port }}
           - name: PG_PORT
             value: {{ $.Values.postgresql.port | quote }}
-          {{- end }}
+          {{- end}}
           {{- if $api.migration }}
           - name: PG_MIGRATIONS
             value: {{ $api.migration | quote }}
           {{- end }}
           - name: REDIS_HOST
           {{- if $.Values.redis.internal }}
-            value: mds-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Name }}-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
           {{- else }}
             value: {{ $.Values.redis.host }}
           {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          {{- if $.Values.useEvents }}
-          - name: CE_NAME
-            value: {{ $name }}
-          - name: SINK
-            value: http://default-broker.{{ $.Release.Namespace }}.svc.cluster.local
+          {{- if $.Values.nats.enabled }}
+          - name: NATS
+            value: {{ default "nats" $.Values.natsNamespace }}-nats-server.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
+#            value: nats-cluster-mgmt.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
+          {{- end }}
+          - name: KAFKA_HOST
+            value: host.docker.internal:9092
+          - name: TENANT_ID
+          {{- if hasKey $.Values "tenantId" }}
+            value: {{ $.Values.tenantId }}
+          {{- else }}
+            value: {{ $.Release.Namespace }}
           {{- end }}
           {{- if $.Values.slack.channel }}
           - name: SLACK_CHANNEL
@@ -96,6 +112,11 @@ spec:
           {{- end }}
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
+          {{- end }}
+          {{- if hasKey $.Values "global" }}
+          {{- if hasKey $.Values.global "env" }}
+{{ toYaml $.Values.global.env | indent 10 }}
+          {{- end }}
           {{- end }}
   {{- end }}
 {{- end }}
@@ -113,3 +134,14 @@ data:
   postgresql-password: {{ .Values.postgresql.password | b64enc }}
   {{- end }}
 type: Opaque
+{{- if and $.Values.nats.enabled $.Values.nats.credentials }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nats-creds
+  namespace: {{ $.Release.Namespace }}
+data:
+  sys.creds: {{ $.Values.nats | b64enc }}
+type: Opaque
+{{- end }}

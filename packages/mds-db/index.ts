@@ -1,74 +1,47 @@
+/*
+    Copyright 2019-2020 City of Los Angeles.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+ */
+
 import { VehicleEvent, Device, Telemetry } from '@mds-core/mds-types'
-import log from '@mds-core/mds-logger'
+import logger from '@mds-core/mds-logger'
 
 import { dropTables, updateSchema } from './migration'
 import { MDSPostgresClient } from './sql-utils'
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
-import {
-  readDeviceByVehicleId,
-  readDeviceIds,
-  readDevice,
-  readDeviceList,
-  writeDevice,
-  updateDevice,
-  wipeDevice,
-  getVehicleCountsPerProvider,
-  getNumVehiclesRegisteredLast24HoursByProvider
-} from './devices'
+import * as devices from './devices'
 
-import {
-  writeEvent,
-  readEvent,
-  readEvents,
-  readHistoricalEvents,
-  getEventCountsPerProviderSince,
-  getEventsLast24HoursPerProvider,
-  getNumEventsLast24HoursByProvider,
-  getMostRecentEventByProvider,
-  readEventsWithTelemetry
-} from './events'
+import * as events from './events'
 
-import {
-  readPolicies,
-  writePolicy,
-  readPolicy,
-  editPolicy,
-  deletePolicy,
-  writePolicyMetadata,
-  updatePolicyMetadata,
-  readBulkPolicyMetadata,
-  readSinglePolicyMetadata,
-  publishPolicy,
-  readRule,
-  isPolicyPublished
-} from './policies'
+import * as policies from './policies'
 
-import {
-  writeGeographyMetadata,
-  updateGeographyMetadata,
-  readSingleGeographyMetadata,
-  readSingleGeography,
-  readBulkGeographyMetadata,
-  readGeographies,
-  readGeographySummaries,
-  writeGeography,
-  publishGeography,
-  deleteGeography,
-  isGeographyPublished,
-  editGeography
-} from './geographies'
+import * as geographies from './geographies'
 
-import { readAudit, readAudits, writeAudit, deleteAudit, readAuditEvents, writeAuditEvent } from './audits'
+import * as audit from './audits'
 
-import { getTripEventsLast24HoursByProvider, getTripCountsPerProviderSince } from './trips'
+import * as trips from './trips'
 
-import {
-  readTelemetry,
-  writeTelemetry,
-  getTelemetryCountsPerProviderSince,
-  getMostRecentTelemetryByProvider
-} from './telemetry'
+import * as telemetry from './telemetry'
+
+import * as stops from './stops'
+
+import * as attachments from './attachments'
+
+const { writeDevice } = devices
+const { writeTelemetry } = telemetry
+const { writeEvent } = events
 
 async function initialize() {
   const client: MDSPostgresClient = await getWriteableClient()
@@ -93,7 +66,7 @@ async function health(): Promise<{
   using: string
   stats: { current_running_queries: number; cache_hit_result: { heap_read: string; heap_hit: string; ratio: string } }
 }> {
-  log.info('postgres health check')
+  logger.info('postgres health check')
   const currentQueriesSQL = `SELECT query
     FROM pg_stat_activity
     WHERE query <> '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%' AND query <> ''
@@ -127,7 +100,7 @@ async function shutdown(): Promise<void> {
     const readOnlyClient = await getReadOnlyClient()
     await readOnlyClient.end()
   } catch (err) {
-    await log.error('error during disconnection', err.stack)
+    logger.error('error during disconnection', err.stack)
   }
 }
 
@@ -140,80 +113,35 @@ async function seed(data: {
   telemetry?: Telemetry[]
 }) {
   if (data) {
-    log.info('postgres seed start')
+    logger.info('postgres seed start')
     if (data.devices) {
       await Promise.all(data.devices.map(async (device: Device) => writeDevice(device)))
     }
-    log.info('postgres devices seeded')
+    logger.info('postgres devices seeded')
     if (data.events) await Promise.all(data.events.map(async (event: VehicleEvent) => writeEvent(event)))
-    log.info('postgres events seeded')
+    logger.info('postgres events seeded')
     if (data.telemetry) {
       await writeTelemetry(data.telemetry)
     }
-    log.info('postgres seed done')
+    logger.info('postgres seed done')
     return Promise.resolve()
   }
   return Promise.resolve('no data')
 }
 
-export = {
+export default {
   initialize,
   health,
   seed,
   startup,
   shutdown,
-  readDeviceByVehicleId,
-  readDeviceIds,
-  readDevice,
-  readDeviceList,
-  writeDevice,
-  updateDevice,
-  readEvent,
-  readEvents,
-  readHistoricalEvents,
-  writeEvent,
-  readTelemetry,
-  writeTelemetry,
-  wipeDevice,
-  readAudit,
-  readAudits,
-  writeAudit,
-  deleteAudit,
-  readAuditEvents,
-  writeAuditEvent,
-  readGeographies,
-  readGeographySummaries,
-  writeGeography,
-  publishGeography,
-  deleteGeography,
-  isGeographyPublished,
-  editGeography,
-  readPolicies,
-  writePolicy,
-  readPolicy,
-  editPolicy,
-  deletePolicy,
-  writeGeographyMetadata,
-  updateGeographyMetadata,
-  readSingleGeographyMetadata,
-  readSingleGeography,
-  readBulkGeographyMetadata,
-  writePolicyMetadata,
-  updatePolicyMetadata,
-  readBulkPolicyMetadata,
-  readSinglePolicyMetadata,
-  publishPolicy,
-  isPolicyPublished,
-  readRule,
-  getEventCountsPerProviderSince,
-  getTelemetryCountsPerProviderSince,
-  getTripCountsPerProviderSince,
-  getNumVehiclesRegisteredLast24HoursByProvider,
-  getMostRecentEventByProvider,
-  getVehicleCountsPerProvider,
-  getNumEventsLast24HoursByProvider,
-  getMostRecentTelemetryByProvider,
-  getTripEventsLast24HoursByProvider,
-  getEventsLast24HoursPerProvider,
-  readEventsWithTelemetry
+  ...devices,
+  ...events,
+  ...policies,
+  ...geographies,
+  ...audit,
+  ...trips,
+  ...telemetry,
+  ...stops,
+  ...attachments
 }

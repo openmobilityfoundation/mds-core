@@ -1,4 +1,4 @@
-FROM node:10.16.3-alpine
+FROM node:14.2.0-alpine
 
 RUN apk add --no-cache tini
 
@@ -8,4 +8,4 @@ COPY dist/* /mds/
 
 WORKDIR /mds
 
-ENTRYPOINT ["/sbin/tini", "node", "--no-deprecation", "index.js"]
+ENTRYPOINT ["/sbin/tini", "node", "--no-deprecation", "server.js"]

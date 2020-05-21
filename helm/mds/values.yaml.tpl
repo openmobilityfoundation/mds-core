@@ -24,13 +24,33 @@ apis:
     pathPrefix: /daily
     version: ${DAILY_VERSION}
     migration: false
-  mds-native:
+  mds-jurisdiction:
     enabled: true
-    pathPrefix: /native
-    version: ${NATIVE_VERSION}
+    pathPrefix: /jurisdiction
+    version: ${JURISDICTION_VERSION}
+    migration: false
+  mds-jurisdiction-service:
+    enabled: true
+    pathPrefix: /jurisdiction-service
+    version: ${JURISDICTION_SERVICE_VERSION}
     migration: false
   mds-policy-author:
     enabled: true
     pathPrefix: /policy-author
     version: ${POLICY_AUTHOR_VERSION}
+    migration: false
+  mds-web-sockets:
+    enabled: true
+    pathPrefix: /web-sockets
+    version: ${WEB_SOCKETS_VERSION}
+    migration: false
+  mds-geography:
+    enabled: true
+    pathPrefix: /geography
+    version: ${GEOGRAPHY_VERSION}
+    migration: false
+  mds-geography-author:
+    enabled: true
+    pathPrefix: /geography-author
+    version: ${GEOGRAPHY_AUTHOR_VERSION}
     migration: false

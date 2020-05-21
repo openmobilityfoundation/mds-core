@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats-account-server
+  namespace: {{ $.Release.Namespace | default "default" }}
+  labels:
+    app: nats-account-server
+  annotations:
+    sidecar.istio.io/inject: 'false'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nats-account-server
+  template:
+    metadata:
+      labels:
+        app: nats-account-server
+    spec:
+      initContainers:
+      - name: nats-operator-data
+        image: busybox:1.28
+        command:
+          - 'unzip'
+          - '/tmp/nats-operator-data.zip'
+          - '-d'
+          - '/nsc-operator'
+        volumeMounts:
+        - mountPath: /nsc-operator
+          name: nsc-operator
+        - mountPath: /tmp
+          name: nsc-operator-data
+      containers:
+        - name: nats-account-server
+          image: synadia/nats-account-server:0.8.4
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: {{ $.Values.resourcesLimitsCpu | default "500m" }}
+              memory: {{ $.Values.resourcesLimitsMemory | default "512Mi" }}
+            requests:
+              cpu: {{ $.Values.resourcesRequestsCpu | default "50m" }}
+              memory: {{ $.Values.resourcesRequestsMemory | default "128Mi" }}
+          volumeMounts:
+          - name: nsc-operator
+            mountPath: /nsc-operator
+          command:
+            - 'nats-account-server'
+            - '-DV'
+            - '-hp'
+            - '0.0.0.0:9090'
+            - '-nsc'
+            - '/nsc-operator/KO'
+      volumes:
+      - name: nsc-operator
+        emptyDir: {}
+      - name: nsc-operator-data
+        configMap:
+          name: nats-operator-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-account-server
+  namespace: {{ $.Release.Namespace | default "default" }}
+spec:
+  selector:
+    app: nats-account-server
+  ports:
+  - name: http-nats-account-server
+    port: 80
+    targetPort: 9090

@@ -16,17 +16,24 @@
 
 import express from 'express'
 
-import log from '@mds-core/mds-logger'
-import cache from '@mds-core/mds-cache'
+import logger from '@mds-core/mds-logger'
+import cache from '@mds-core/mds-agency-cache'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathsFor, now } from '@mds-core/mds-utils'
-import { checkAccess } from '@mds-core/mds-api-server'
-import { DailyApiRequest, DailyApiResponse } from './types'
+import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
+import { DailyApiRequest, DailyApiResponse, DailyApiAccessTokenScopes } from './types'
 import {
   getRawTripData,
   getVehicleCounts,
   getLastDayTripsByProvider,
-  getLastDayStatsByProvider
+  getLastDayStatsByProvider,
+  getTimeSinceLastEventHandler,
+  getNumVehiclesRegisteredLast24HoursHandler,
+  getNumEventsLast24HoursHandler,
+  getTripCountsSinceHandler,
+  getEventCountsPerProviderSinceHandler,
+  getTelemetryCountsPerProviderSinceHandler,
+  getConformanceLast24HoursHandler
 } from './request-handlers'
 
 async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, next: Function) {
@@ -47,7 +54,7 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
 
         if (provider_id) {
           if (!isUUID(provider_id)) {
-            await log.warn(req.originalUrl, 'bogus provider_id', provider_id)
+            logger.warn(req.originalUrl, 'bogus provider_id', provider_id)
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -59,7 +66,7 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
             })
           }
 
-          log.info(providerName(provider_id), req.method, req.originalUrl)
+          logger.info(providerName(provider_id), req.method, req.originalUrl)
         }
       } else {
         return res.status(401).send('Unauthorized')
@@ -67,10 +74,12 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
     }
   } catch (err) {
     /* istanbul ignore next */
-    await log.error(req.originalUrl, 'request validation fail:', err.stack)
+    logger.error(req.originalUrl, 'request validation fail:', err.stack)
   }
   next()
 }
+
+const checkDailyApiAccess = (validator: AccessTokenScopeValidator<DailyApiAccessTokenScopes>) => checkAccess(validator)
 
 function api(app: express.Express): express.Express {
   /**
@@ -82,18 +91,22 @@ function api(app: express.Express): express.Express {
 
   // ///////////////////// begin daily endpoints ///////////////////////
 
-  app.get(pathsFor('/admin/vehicle_counts'), checkAccess(scopes => scopes.includes('admin:all')), getVehicleCounts)
+  app.get(
+    pathsFor('/admin/vehicle_counts'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getVehicleCounts
+  )
 
   // read all the latest events out of the cache
   app.get(
     pathsFor('/admin/events'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     async (req: DailyApiRequest, res: DailyApiResponse) => {
       const start = now()
       const events = await cache.readAllEvents()
       const finish = now()
       const timeElapsed = finish - start
-      await log.info(`MDS-DAILY /admin/events -> cache.readAllEvents() time elapsed: ${timeElapsed}`)
+      logger.info(`MDS-DAILY /admin/events -> cache.readAllEvents() time elapsed: ${timeElapsed}`)
       res.status(200).send({
         events
       })
@@ -102,14 +115,14 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/admin/last_day_trips_by_provider'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getLastDayTripsByProvider
   )
 
   // get raw trip data for analysis
   app.get(
     pathsFor('/admin/raw_trip_data/:trip_id'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getRawTripData
   )
 
@@ -121,8 +134,50 @@ function api(app: express.Express): express.Express {
   // This function is ludicrously long as it is.
   app.get(
     pathsFor('/admin/last_day_stats_by_provider'),
-    checkAccess(scopes => scopes.includes('admin:all')),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getLastDayStatsByProvider
+  )
+
+  app.get(
+    pathsFor('/admin/time_since_last_event'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getTimeSinceLastEventHandler
+  )
+
+  app.get(
+    pathsFor('/admin/num_vehicles_registered_last_24_hours'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getNumVehiclesRegisteredLast24HoursHandler
+  )
+
+  app.get(
+    pathsFor('/admin/num_event_last_24_hours'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getNumEventsLast24HoursHandler
+  )
+
+  app.get(
+    pathsFor('/admin/trip_counts_since'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getTripCountsSinceHandler
+  )
+
+  app.get(
+    pathsFor('/admin/event_counts_per_provider_since'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getEventCountsPerProviderSinceHandler
+  )
+
+  app.get(
+    pathsFor('/admin/telemetry_counts_per_provider_since'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getTelemetryCountsPerProviderSinceHandler
+  )
+
+  app.get(
+    pathsFor('/admin/conformance_last_24_hours'),
+    checkDailyApiAccess(scopes => scopes.includes('admin:all')),
+    getConformanceLast24HoursHandler
   )
 
   return app

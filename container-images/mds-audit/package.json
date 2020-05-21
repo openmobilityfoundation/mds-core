@@ -1,28 +1,25 @@
 {
   "name": "@container-images/mds-audit",
-  "version": "0.1.19",
+  "version": "0.1.27",
   "description": "Docker Image for MDS Audit API",
+  "private": true,
   "main": "dist/index.js",
   "files": [
     "dist/"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.build.json",
-    "bundle": "yarn build && webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && ../../bin/mdsctl -c:image-name=mds-audit:${npm_package_version} buildImage",
-    "start": "yarn watch server",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0"
+    "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-audit:${npm_package_version} buildImage",
+    "test": "yarn test:eslint",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
   },
   "keywords": [
     "mds"
   ],
   "author": "City of Los Angeles",
+  "license": "Apache-2.0",
   "dependencies": {
-    "@container-images/env-inject": "0.1.17",
-    "@mds-core/mds-api-server": "0.1.18",
-    "@mds-core/mds-audit": "0.1.30"
-  },
-  "license": "Apache-2.0"
+    "@mds-core/mds-audit": "0.1.38",
+    "@mds-core/mds-webpack-config": "0.1.0"
+  }
 }

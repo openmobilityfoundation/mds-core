@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-api-server",
-  "version": "0.1.18",
+  "version": "0.1.26",
   "description": "MDS API Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,20 +10,25 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --check-coverage --exclude tests --extension .ts --lines 90 --reporter=text --reporter=html ts-mocha --project ../../tsconfig.json --require tsconfig-paths/register --require source-map-support/register --require dotenv/config --recursive --timeout 5000 tests/**/*.ts"
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc ts-mocha --project ../../tsconfig.json"
   },
   "keywords": [
     "mds"
   ],
   "author": "City of Los Angeles",
+  "license": "Apache-2.0",
   "dependencies": {
-    "@mds-core/mds-api-authorizer": "0.1.18",
-    "@mds-core/mds-utils": "0.1.18",
+    "@mds-core/mds-api-authorizer": "0.1.26",
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-utils": "0.1.26",
+    "@types/body-parser": "1.19.0",
+    "@types/cors": "2.8.6",
+    "@types/express": "4.17.6",
+    "@types/morgan": "1.9.0",
     "body-parser": "1.19.0",
     "cors": "2.8.5",
     "express": "4.17.1",
-    "morgan": "1.9.1"
-  },
-  "license": "Apache-2.0"
+    "morgan": "1.10.0"
+  }
 }

@@ -30,5 +30,5 @@ tests:
         documentIndex: 1
       - equal:
           path: spec.ports[0].port
-          value: 4002
+          value: 4000
         documentIndex: 1
