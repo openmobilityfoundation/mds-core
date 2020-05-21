@@ -1,37 +1,4 @@
 {{- if .Values.jwt.enabled }}
-{{- range $name, $api := .Values.apis }}
-{{- if $api.enabled }}
-{{- if hasKey $api "pathPrefix" }}
-{{- if (ne $name "mds-web-sockets") }}
-apiVersion: authentication.istio.io/v1alpha1
-kind: Policy
-metadata:
-  name: {{ $name }}-auth
-  namespace: {{ $.Release.Namespace }}
-spec:
-  targets:
-  - name: {{ $name }}
-  peers:
-  - mtls: {}
-  originIsOptional: true
-  origins:
-  - jwt:
-      audiences:
-      {{- range $.Values.jwt.audiences }}
-      - {{ . | quote }}
-      {{- end }}
-      issuer: {{ $.Values.jwt.issuer | quote }}
-      jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwt.issuer }}
-      trigger_rules:
-      - excluded_paths:
-        - exact: {{ $api.pathPrefix }}/health
-        - exact: /health
-  principalBinding: USE_ORIGIN
----
-{{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
 {{- if .Values.jwt.bypassInternal }}
 # This sets up outbound mTLS for intra-namespace requests
 apiVersion: networking.istio.io/v1alpha3
@@ -116,6 +83,39 @@ spec:
   inclusion:
     namespaces:
       - {{ .Release.Namespace }}
+{{- end }}
+{{- else }} # use old jwt configuration
+{{- range $name, $api := .Values.apis }}
+{{- if $api.enabled }}
+{{- if hasKey $api "pathPrefix" }}
+{{- if (ne $name "mds-web-sockets") }}
+apiVersion: authentication.istio.io/v1alpha1
+kind: Policy
+metadata:
+  name: {{ $name }}-auth
+  namespace: {{ $.Release.Namespace }}
+spec:
+  targets:
+  - name: {{ $name }}
+  peers:
+  - mtls: {}
+  origins:
+  - jwt:
+      audiences:
+      {{- range $.Values.jwt.audiences }}
+      - {{ . | quote }}
+      {{- end }}
+      issuer: {{ $.Values.jwt.issuer | quote }}
+      jwksUri: {{ printf "%s.well-known/jwks.json" $.Values.jwt.issuer }}
+      trigger_rules:
+      - excluded_paths:
+        - exact: {{ $api.pathPrefix }}/health
+        - exact: /health
+  principalBinding: USE_ORIGIN
+---
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
