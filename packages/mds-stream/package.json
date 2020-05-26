@@ -14,22 +14,24 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/bluebird": "3.5.30",
-    "@types/moment-timezone": "0.5.13",
-    "@types/redis": "2.8.20",
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
+    "@types/bluebird": "3.5.30",
+    "@types/moment-timezone": "0.5.13",
+    "@types/redis": "2.8.20",
     "bluebird": "3.7.2",
     "flat": "5.0.0",
     "kafkajs": "1.12.0",
+    "redis": "3.0.2",
     "ts-nats": "1.2.14-2",
-    "redis": "3.0.2"
+    "@types/sinon": "9.0.0",
+    "sinon": "9.0.2"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0"
+    "test:eslint": "eslint --fix --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 30 ts-mocha --project ../../tsconfig.json"
   }
 }

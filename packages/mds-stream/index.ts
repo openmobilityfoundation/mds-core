@@ -34,6 +34,7 @@ import { NatsStreamConsumer } from './nats/stream-consumer'
 import { NatsStreamProducer } from './nats/stream-producer'
 
 import { AgencyStreamNats } from './nats/agency-stream-nats'
+import { mockStream } from './test-utils'
 
 export { KafkaStreamConsumerOptions, KafkaStreamProducerOptions } from './kafka'
 export { StreamConsumer, StreamProducer } from './stream-interface'
@@ -297,5 +298,6 @@ export default {
   KafkaStreamConsumer,
   KafkaStreamProducer,
   NatsStreamConsumer,
-  NatsStreamProducer
+  NatsStreamProducer,
+  mockStream
 }
