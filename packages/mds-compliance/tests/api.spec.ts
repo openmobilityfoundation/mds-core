@@ -112,6 +112,7 @@ const SCOPED_COUNT_POLICY_JSON = {
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: COUNT_POLICY_UUID,
   start_date: 1558389669540,
+  publish_date: 1558389669540,
   end_date: null,
   prev_policies: null,
   provider_ids: [TEST2_PROVIDER_ID],
@@ -156,6 +157,7 @@ const COUNT_POLICY_JSON_3: Policy = {
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: COUNT_POLICY_UUID_3,
   start_date: 1558389669540,
+  publish_date: 1558389669540,
   end_date: null,
   prev_policies: null,
   provider_ids: [],
@@ -214,6 +216,7 @@ const COUNT_POLICY_JSON_5: Policy = {
   end_date: null,
   policy_id: '25851571-b53f-4426-a033-f375be0e7957',
   start_date: Date.now(),
+  publish_date: Date.now() - 10,
   description:
     'Prohibited areas for dockless vehicles within the City of Los Angeles for the LADOT Dockless On-Demand Personal Mobility Program',
   prev_policies: null
@@ -226,6 +229,7 @@ const TIME_POLICY_JSON: Policy = {
   description: 'LADOT Pilot Idle Time Limitations',
   policy_id: TIME_POLICY_UUID,
   start_date: 1558389669540,
+  publish_date: 1558389669540,
   end_date: null,
   prev_policies: null,
   provider_ids: [],
@@ -476,7 +480,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(TIME_POLICY_JSON)
-          await db.publishPolicy(TIME_POLICY_UUID)
           done()
         })
       })
@@ -514,7 +517,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(TIME_POLICY_JSON)
-          await db.publishPolicy(TIME_POLICY_UUID)
           done()
         })
       })
@@ -618,7 +620,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(COUNT_POLICY_JSON_3)
-          await db.publishPolicy(COUNT_POLICY_UUID_3)
           done()
         })
       })
@@ -657,7 +658,6 @@ describe('Tests Compliance API:', () => {
           await db.writeGeography(geography)
           await db.publishGeography({ geography_id: geography.geography_id })
           await db.writePolicy(COUNT_POLICY_JSON_3)
-          await db.publishPolicy(COUNT_POLICY_UUID_3)
           done()
         })
       })
@@ -703,6 +703,7 @@ describe('Tests Compliance API:', () => {
         description: 'LADOT Venice Drop-off/no-fly zones',
         policy_id: VENICE_POLICY_UUID,
         start_date: 1558389669540,
+        publish_date: 1558389669540,
         end_date: null,
         prev_policies: null,
         provider_ids: [],
@@ -769,7 +770,6 @@ describe('Tests Compliance API:', () => {
           geographies.map((geography: Geography) => db.publishGeography({ geography_id: geography.geography_id }))
         )
         await db.writePolicy(VENICE_SPEC_OPS_POLICY)
-        await db.publishPolicy(VENICE_SPEC_OPS_POLICY.policy_id)
         done()
       })
     })
@@ -929,7 +929,6 @@ describe('Tests Compliance API:', () => {
       await db.writeGeography(geography)
       await db.publishGeography({ geography_id: geography.geography_id })
       await db.writePolicy(SCOPED_COUNT_POLICY_JSON)
-      await db.publishPolicy(SCOPED_COUNT_POLICY_JSON.policy_id)
     })
 
     it("Verifies scoped provider can access policy's compliance", done => {
@@ -978,7 +977,6 @@ describe('Tests Compliance API:', () => {
       await db.writeGeography(geography)
       await db.publishGeography({ geography_id: geography.geography_id })
       await db.writePolicy(COUNT_POLICY_JSON_5)
-      await db.publishPolicy(COUNT_POLICY_JSON_5.policy_id)
     })
 
     it('Verifies max 0 single rule policy operates as expected', done => {

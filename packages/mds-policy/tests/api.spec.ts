@@ -23,7 +23,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { now, days } from '@mds-core/mds-utils'
+import { now, days, clone, yesterday } from '@mds-core/mds-utils'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { Policy } from '@mds-core/mds-types'
@@ -42,7 +42,8 @@ import {
   PROVIDER_SCOPES,
   GEOGRAPHY2_UUID,
   veniceSpecOps,
-  SCOPED_AUTH
+  SCOPED_AUTH,
+  START_ONE_MONTH_FROM_NOW
 } from '@mds-core/mds-test-data'
 
 import { la_city_boundary } from './la-city-boundary'
@@ -55,6 +56,12 @@ const log = console.log.bind(console)
 
 const request = supertest(ApiServer(api))
 
+const ACTIVE_POLICY_JSON = clone(POLICY_JSON)
+ACTIVE_POLICY_JSON.publish_date = yesterday()
+ACTIVE_POLICY_JSON.start_date = yesterday()
+
+const ACTIVE_MONTH_OLD_POLICY_JSON = clone(POLICY2_JSON)
+ACTIVE_MONTH_OLD_POLICY_JSON.publish_date = START_ONE_MONTH_FROM_NOW
 const APP_JSON = 'application/vnd.mds.policy+json; charset=utf-8; version=0.4'
 
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
@@ -76,9 +83,8 @@ describe('Tests app', () => {
   })
 
   it('read back one policy', async () => {
-    await db.writePolicy(POLICY_JSON)
+    await db.writePolicy(ACTIVE_POLICY_JSON)
     await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
-    await db.publishPolicy(POLICY_UUID)
     const result = await request.get(`/policies/${POLICY_UUID}`).set('Authorization', AUTH).expect(200)
     const body = result.body
     log('read back one policy response:', body)
@@ -95,7 +101,7 @@ describe('Tests app', () => {
     test.value(body.data.policies[0].policy_id).is(POLICY_UUID)
     test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
-    test.value(result.body.data.policies, [POLICY_JSON])
+    test.value(result.body.data.policies, [ACTIVE_POLICY_JSON])
   })
 
   it('read back all published policies and no superseded ones', async () => {
@@ -104,14 +110,13 @@ describe('Tests app', () => {
       geography_id: GEOGRAPHY2_UUID,
       geography_json: veniceSpecOps
     })
-    await db.writePolicy(POLICY2_JSON)
+    await db.writePolicy(ACTIVE_MONTH_OLD_POLICY_JSON)
     await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
     await db.publishGeography({ geography_id: GEOGRAPHY2_UUID })
-    await db.publishPolicy(POLICY2_JSON.policy_id)
     await db.writePolicy(POLICY3_JSON)
-    await db.publishPolicy(POLICY3_JSON.policy_id)
+    await db.publishPolicy(POLICY3_JSON.policy_id, POLICY3_JSON.start_date)
     await db.writePolicy(SUPERSEDING_POLICY_JSON)
-    await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id)
+    await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id, SUPERSEDING_POLICY_JSON.start_date)
     const result = await request
       .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
       .set('Authorization', AUTH)
@@ -123,7 +128,7 @@ describe('Tests app', () => {
     test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
     test.value(result).hasHeader('content-type', APP_JSON)
     const isSupersededPolicyPresent = policies.some((policy: Policy) => {
-      return policy.policy_id === POLICY_JSON.policy_id
+      return policy.policy_id === ACTIVE_POLICY_JSON.policy_id
     })
     const isSupersedingPolicyPresent = policies.some((policy: Policy) => {
       return policy.policy_id === SUPERSEDING_POLICY_JSON.policy_id

@@ -57,6 +57,8 @@ const POLICIES_WRITE_SCOPE = SCOPED_AUTH(['policies:write'])
 const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
 const POLICIES_PUBLISH_SCOPE = SCOPED_AUTH(['policies:publish'])
 const POLICIES_DELETE_SCOPE = SCOPED_AUTH(['policies:delete'])
+const POLICY_JSON_WITHOUT_PUBLISH_DATE = clone(POLICY_JSON)
+POLICY_JSON_WITHOUT_PUBLISH_DATE.publish_date = undefined
 
 describe('Tests app', () => {
   describe('Policy tests', () => {
@@ -69,7 +71,7 @@ describe('Tests app', () => {
     })
 
     it('cannot create one current policy (no authorization)', done => {
-      const policy = POLICY_JSON
+      const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
       request
         .post(`/policies`)
         .set('Authorization', EMPTY_SCOPE)
@@ -81,7 +83,7 @@ describe('Tests app', () => {
     })
 
     it('cannot create one current policy (wrong authorization)', done => {
-      const policy = POLICY_JSON
+      const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
       request
         .post(`/policies`)
         .set('Authorization', EVENTS_READ_SCOPE)
@@ -93,7 +95,7 @@ describe('Tests app', () => {
     })
 
     it('tries to post invalid policy', done => {
-      const bad_policy_json: Policy = clone(POLICY_JSON)
+      const bad_policy_json: Policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       delete bad_policy_json.rules[0].rule_type
       const bad_policy = bad_policy_json
       request
@@ -110,7 +112,7 @@ describe('Tests app', () => {
     })
 
     it('verifies cannot PUT policy (no auth)', done => {
-      const policy = clone(POLICY_JSON)
+      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       request
         .put(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
         .set('Authorization', EMPTY_SCOPE)
@@ -123,7 +125,7 @@ describe('Tests app', () => {
     })
 
     it('verifies cannot PUT policy (wrong auth)', done => {
-      const policy = clone(POLICY_JSON)
+      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       request
         .put(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
         .set('Authorization', EVENTS_READ_SCOPE)
@@ -136,11 +138,10 @@ describe('Tests app', () => {
     })
 
     it('verifies cannot PUT non-existent policy', done => {
-      const policy = clone(POLICY_JSON)
       request
         .put(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`)
         .set('Authorization', POLICIES_WRITE_SCOPE)
-        .send(policy)
+        .send(POLICY_JSON_WITHOUT_PUBLISH_DATE)
         .expect(404)
         .end((err, result) => {
           test.value(result).hasHeader('content-type', APP_JSON)
@@ -149,7 +150,7 @@ describe('Tests app', () => {
     })
 
     it('creates one current policy', done => {
-      const policy = POLICY_JSON
+      const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
       request
         .post(`/policies`)
         .set('Authorization', POLICIES_WRITE_SCOPE)
@@ -163,7 +164,7 @@ describe('Tests app', () => {
     })
 
     it('verifies cannot POST duplicate policy', done => {
-      const policy = POLICY_JSON
+      const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
       request
         .post(`/policies`)
         .set('Authorization', POLICIES_WRITE_SCOPE)
@@ -176,7 +177,7 @@ describe('Tests app', () => {
     })
 
     it('verifies cannot PUT invalid policy', async () => {
-      const bad_policy_json: Policy = clone(POLICY_JSON)
+      const bad_policy_json: Policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       delete bad_policy_json.rules[0].rule_type
       const bad_policy = bad_policy_json
       await request
@@ -187,7 +188,7 @@ describe('Tests app', () => {
     })
 
     it('edits one current policy', async () => {
-      const policy = clone(POLICY_JSON)
+      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       policy.name = 'a shiny new name'
       const apiResult = await request
         .put(`/policies/${POLICY_UUID}`)
@@ -236,7 +237,7 @@ describe('Tests app', () => {
 
     it('verifies cannot publish a policy (no auth)', done => {
       request
-        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .post(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`)
         .set('Authorization', EMPTY_SCOPE)
         .expect(403)
         .end(err => {
@@ -246,7 +247,7 @@ describe('Tests app', () => {
 
     it('verifies cannot publish a policy (wrong auth)', done => {
       request
-        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .post(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`)
         .set('Authorization', EVENTS_READ_SCOPE)
         .expect(403)
         .end(err => {
@@ -256,7 +257,7 @@ describe('Tests app', () => {
 
     it('verifies cannot publish a policy with missing geographies', done => {
       request
-        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .post(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`)
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(404)
         .end((err, result) => {
@@ -279,7 +280,7 @@ describe('Tests app', () => {
     it('cannot publish a policy if the geo is not published', async () => {
       await db.writeGeography({ name: 'LA', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
       const result = await request
-        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .post(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`)
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(424)
       test.value(result).hasHeader('content-type', APP_JSON)
@@ -288,7 +289,7 @@ describe('Tests app', () => {
     it('can publish a policy if the geo is published', async () => {
       await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
       const result = await request
-        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .post(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`)
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(200)
       test.value(result).hasHeader('content-type', APP_JSON)
@@ -296,7 +297,7 @@ describe('Tests app', () => {
 
     it('cannot double-publish a policy', done => {
       request
-        .post(`/policies/${POLICY_JSON.policy_id}/publish`)
+        .post(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`)
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(409)
         .end((err, result) => {
@@ -306,10 +307,10 @@ describe('Tests app', () => {
     })
 
     it('cannot edit a published policy (no auth)', done => {
-      const policy = clone(POLICY_JSON)
+      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       policy.name = 'an even shinier new name'
       request
-        .put(`/policies/${POLICY_JSON.policy_id}`)
+        .put(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}`)
         .set('Authorization', EMPTY_SCOPE)
         .send(policy)
         .expect(403)
@@ -319,10 +320,10 @@ describe('Tests app', () => {
     })
 
     it('cannot edit a published policy (wrong auth)', done => {
-      const policy = clone(POLICY_JSON)
+      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       policy.name = 'an even shinier new name'
       request
-        .put(`/policies/${POLICY_JSON.policy_id}`)
+        .put(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}`)
         .set('Authorization', EVENTS_READ_SCOPE)
         .send(policy)
         .expect(403)
@@ -332,10 +333,10 @@ describe('Tests app', () => {
     })
 
     it('cannot edit a published policy', done => {
-      const policy = clone(POLICY_JSON)
+      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
       policy.name = 'an even shinier new name'
       request
-        .put(`/policies/${POLICY_JSON.policy_id}`)
+        .put(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}`)
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(409)
@@ -390,6 +391,15 @@ describe('Tests app', () => {
         .end(err => {
           done(err)
         })
+    })
+
+    it('cannot publish a policy if the start_date would precede the publish_date', async () => {
+      await db.writePolicy(POLICY2_JSON)
+      const result = await request
+        .post(`/policies/${POLICY2_JSON.policy_id}/publish`)
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
+        .expect(409)
+      test.value(result.body.error.reason, 'Policies cannot be published after their start_date')
     })
 
     it('cannot GET policy metadata (no entries exist)', done => {

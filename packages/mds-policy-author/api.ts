@@ -24,7 +24,6 @@ import {
   ValidationError,
   ServerError,
   isUUID,
-  DependencyMissingError,
   ConflictError
 } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
@@ -68,10 +67,8 @@ function api(app: express.Express): express.Express {
         await db.writePolicy(policy)
         return res.status(201).send({ version: res.locals.version, data: { policy } })
       } catch (error) {
-        if (error.code === '23505') {
-          return res
-            .status(409)
-            .send({ error: new ConflictError(`policy ${policy.policy_id} already exists! Did you mean to PUT?`) })
+        if (error instanceof ConflictError) {
+          return res.status(409).send({ error })
         }
         /* istanbul ignore next */
         return next(new ServerError(error))
@@ -89,17 +86,23 @@ function api(app: express.Express): express.Express {
         return res.status(200).send({ version: res.locals.version, data: { policy } })
       } catch (error) {
         logger.error('failed to publish policy', error.stack)
-        if (error instanceof AlreadyPublishedError) {
-          return res.status(409).send({ error })
+        switch (error.constructor.name) {
+          case 'AlreadyPublishedError': {
+            return res.status(409).send({ error })
+          }
+          case 'NotFoundError': {
+            return res.status(404).send({ error })
+          }
+          case 'DependencyMissingError': {
+            return res.status(424).send({ error })
+          }
+          case 'ConflictError': {
+            return res.status(409).send({ error })
+          }
+          default: {
+            return next(new ServerError(error))
+          }
         }
-        if (error instanceof NotFoundError) {
-          return res.status(404).send({ error })
-        }
-        if (error instanceof DependencyMissingError) {
-          return res.status(424).send({ error })
-        }
-        /* istanbul ignore next */
-        return next(new ServerError(error))
       }
     }
   )

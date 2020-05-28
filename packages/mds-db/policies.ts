@@ -160,10 +160,18 @@ export async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
     schema.TABLE_COLUMNS.policies
   )}) RETURNING *`
   const values = vals_list(schema.TABLE_COLUMNS.policies, { ...policy, policy_json: policy })
-  const {
-    rows: [recorded_policy]
-  }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
-  return { ...policy, ...recorded_policy }
+  try {
+    const {
+      rows: [recorded_policy]
+    }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
+    return { ...policy, ...recorded_policy }
+  } catch (error) {
+    if (error.code === '23505') {
+      throw new ConflictError(`Policy ${policy.policy_id} already exists! Did you mean to PUT?`)
+    } else {
+      throw error
+    }
+  }
 }
 
 export async function isPolicyPublished(policy_id: UUID) {
@@ -206,7 +214,7 @@ export async function deletePolicy(policy_id: UUID) {
   return policy_id
 }
 
-export async function publishPolicy(policy_id: UUID) {
+export async function publishPolicy(policy_id: UUID, publish_date = now()) {
   try {
     const client = await getWriteableClient()
     if (await isPolicyPublished(policy_id)) {
@@ -218,7 +226,9 @@ export async function publishPolicy(policy_id: UUID) {
       throw new NotFoundError('cannot publish nonexistent policy')
     }
 
-    const publish_date = now()
+    if (policy.start_date < publish_date) {
+      throw new ConflictError('Policies cannot be published after their start_date')
+    }
 
     const geographies: UUID[] = []
     policy.rules.forEach(rule => {
