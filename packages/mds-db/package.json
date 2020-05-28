@@ -23,6 +23,6 @@
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
     "@types/pg": "7.14.3",
-    "pg": "8.2.0"
+    "pg": "8.2.1"
   }
 }

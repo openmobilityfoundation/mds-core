@@ -26,7 +26,7 @@
     "@mds-core/mds-utils": "0.1.26",
     "@types/pg": "7.14.3",
     "await-lock": "2.0.1",
-    "pg": "8.2.0"
+    "pg": "8.2.1"
   },
   "peerDependencies": {
     "typeorm": ">=0.2.24"

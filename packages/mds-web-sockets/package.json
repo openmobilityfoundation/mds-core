@@ -28,7 +28,7 @@
     "jwks-rsa": "1.8.0",
     "node-rsa": "1.0.8",
     "request-promise": "4.2.5",
-    "ts-nats": "1.2.14-2",
+    "ts-nats": "1.2.15",
     "ws": "7.3.0",
     "ws-heartbeat": "1.1.0"
   },

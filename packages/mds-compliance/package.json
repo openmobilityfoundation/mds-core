@@ -38,7 +38,7 @@
     "@types/yargs": "15.0.5",
     "express": "4.17.1",
     "fs": "0.0.1-security",
-    "moment-timezone": "0.5.28",
+    "moment-timezone": "0.5.31",
     "yargs": "15.3.1"
   }
 }

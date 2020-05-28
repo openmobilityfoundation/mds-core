@@ -9,6 +9,7 @@
     },
     "target": "ES2019",
     "module": "commonjs",
+    "skipLibCheck": true,
     "strict": true,
     "esModuleInterop": true,
     "inlineSourceMap": true,

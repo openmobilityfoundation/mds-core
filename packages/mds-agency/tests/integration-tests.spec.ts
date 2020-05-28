@@ -25,7 +25,7 @@
 /* eslint-disable promise/always-return */
 /* eslint-disable promise/no-nesting */
 /* eslint-disable promise/no-callback-in-promise */
-/* eslint-disable @typescript-eslint/ban-ts-ignore */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import supertest from 'supertest'
 import test from 'unit.js'

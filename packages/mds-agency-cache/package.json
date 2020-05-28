@@ -18,9 +18,9 @@
     "@mds-core/mds-schema-validators": "0.1.2",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/bluebird": "3.5.30",
-    "@types/flat": "5.0.0",
-    "@types/redis": "2.8.20",
+    "@types/bluebird": "3.5.32",
+    "@types/flat": "5.0.1",
+    "@types/redis": "2.8.21",
     "bluebird": "3.7.2",
     "flat": "5.0.0",
     "redis": "3.0.2"

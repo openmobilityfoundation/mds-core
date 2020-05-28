@@ -17,16 +17,16 @@
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/bluebird": "3.5.30",
+    "@types/bluebird": "3.5.32",
     "@types/moment-timezone": "0.5.13",
-    "@types/redis": "2.8.20",
+    "@types/redis": "2.8.21",
+    "@types/sinon": "9.0.4",
     "bluebird": "3.7.2",
     "flat": "5.0.0",
     "kafkajs": "1.12.0",
     "redis": "3.0.2",
-    "ts-nats": "1.2.14-2",
-    "@types/sinon": "9.0.0",
-    "sinon": "9.0.2"
+    "sinon": "9.0.2",
+    "ts-nats": "1.2.15"
   },
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
