@@ -9,7 +9,8 @@ import {
   ValidationError,
   AlreadyPublishedError,
   InsufficientPermissionsError,
-  BadParamsError
+  BadParamsError,
+  ConflictError
 } from '@mds-core/mds-utils'
 import { geographyValidationDetails } from '@mds-core/mds-schema-validators'
 import logger from '@mds-core/mds-logger'
@@ -102,19 +103,17 @@ function api(app: express.Express): express.Express {
 
         const recorded_geography = await db.writeGeography(geography)
         return res.status(201).send({ version: res.locals.version, data: { geography: recorded_geography } })
-      } catch (err) {
-        logger.error('POST /geographies failed', err.stack)
-        if (err.code === '23505') {
-          return res
-            .status(409)
-            .send({ error: `geography ${geography.geography_id} already exists! Did you mean to PUT?` })
+      } catch (error) {
+        logger.error('POST /geographies failed', error.stack)
+        if (error instanceof ConflictError) {
+          return res.status(409).send({ error })
         }
-        if (err instanceof ValidationError) {
-          return res.status(400).send({ error: err })
+        if (error instanceof ValidationError) {
+          return res.status(400).send({ error })
         }
         /* istanbul ignore next */
         /* istanbul ignore next */
-        return next(new ServerError(err))
+        return next(new ServerError(error))
       }
     }
   )

@@ -1,5 +1,11 @@
 import { Geography, GeographySummary, UUID, Recorded, GeographyMetadata } from '@mds-core/mds-types'
-import { BadParamsError, NotFoundError, DependencyMissingError, AlreadyPublishedError } from '@mds-core/mds-utils'
+import {
+  BadParamsError,
+  NotFoundError,
+  DependencyMissingError,
+  AlreadyPublishedError,
+  ConflictError
+} from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
@@ -107,10 +113,17 @@ export async function writeGeography(geography: Geography): Promise<Recorded<Geo
     schema.TABLE_COLUMNS.geographies
   )}) VALUES (${vals_sql(schema.TABLE_COLUMNS.geographies)}) RETURNING *`
   const values = vals_list(schema.TABLE_COLUMNS.geographies, { ...geography })
-  const {
-    rows: [recorded_geography]
-  }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
-  return { ...geography, ...recorded_geography }
+  try {
+    const {
+      rows: [recorded_geography]
+    }: { rows: Recorded<Geography>[] } = await client.query(sql, values)
+    return { ...geography, ...recorded_geography }
+  } catch (error) {
+    if (error.code === '23505') {
+      throw new ConflictError(`Geography with ID ${geography.geography_id} already exists!`)
+    }
+    throw error
+  }
 }
 
 export async function isGeographyPublished(geography_id: UUID) {

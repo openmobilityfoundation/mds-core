@@ -464,6 +464,10 @@ if (pg_info.database) {
         assert.deepEqual(writeableGeographies.length, 1)
       })
 
+      it('does not write a geography if one with the same id already exists', async () => {
+        await MDSDBPostgres.writeGeography(LAGeography).should.be.rejectedWith(ConflictError)
+      })
+
       it('can tell a Geography is published', async () => {
         await MDSDBPostgres.writeGeography(DistrictSeven)
         const publishedResult = await MDSDBPostgres.isGeographyPublished(LAGeography.geography_id)
