@@ -1507,7 +1507,7 @@ check() {
         [[ "$(exists ${d})" != "0" ]] && usage "install: ${d}"
       done; unset d
       # todo: include cluster connection check where needed if not globally
-      kubectl cluster-info > /dev/null 2>&1 || usage "connect to kubernetes cluster";;
+      kubectl cluster-info > /dev/null 2>&1 || warn "Please connect to kubernetes cluster";;
     build | testIntegration)
       [[ "$(exists yarn)" != "0" ]] && bootstrap;;
     installCredentials) ;;
