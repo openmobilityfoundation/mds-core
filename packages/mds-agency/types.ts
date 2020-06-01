@@ -1,43 +1,51 @@
 import { UUID, Device, VehicleEvent, Telemetry, Timestamp, Recorded, VEHICLE_STATUS, Stop } from '@mds-core/mds-types'
 import { MultiPolygon } from 'geojson'
-import { ApiRequest, ApiClaims, ApiResponse } from '@mds-core/mds-api-server'
-import { Params, ParamsDictionary } from 'express-serve-static-core'
+import { ApiRequest, ApiClaims, ApiResponse, ApiResponseLocals, ApiRequestParams } from '@mds-core/mds-api-server'
 
 export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
 export type AGENCY_API_SUPPORTED_VERSION = typeof AGENCY_API_SUPPORTED_VERSIONS[number]
 export const [AGENCY_API_DEFAULT_VERSION] = AGENCY_API_SUPPORTED_VERSIONS
 
-export type AgencyApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
+export type AgencyApiRequest<B = {}> = ApiRequest<B>
+
+export type AgencyApiRegisterVehicleRequest = AgencyApiRequest<Device>
+export type AgencyApiGetVehicleByIdRequest = AgencyApiRequest & ApiRequestParams<'device_id'>
+export type AgencyApiGetVehiclesByProviderRequest = AgencyApiRequest
+export type AgencyApiUpdateVehicleRequest = AgencyApiRequest<Device> & ApiRequestParams<'device_id'>
+export type AgencyApiSubmitVehicleEventRequest = AgencyApiRequest<VehicleEvent> & ApiRequestParams<'device_id'>
+export type AgencyApiSubmitVehicleTelemetryRequest = AgencyApiRequest<{ data: Telemetry[] }>
+export type AgencyApiRegisterStopRequest = AgencyApiRequest<Stop>
+export type AgencyApiReadStopRequest = AgencyApiRequest & ApiRequestParams<'stop_id'>
 
 export type AgencyApiAccessTokenScopes = 'admin:all' | 'vehicles:read'
 
-export type AgencyApiResponse<TBody = {}> = ApiResponse<
-  ApiClaims<AgencyApiAccessTokenScopes> & {
-    provider_id: UUID
-  },
-  TBody
->
+export type AgencyApiResponse<B = {}> = ApiResponse<B> &
+  ApiResponseLocals<
+    ApiClaims<AgencyApiAccessTokenScopes> & {
+      provider_id: UUID
+    }
+  >
 
-export type AgencyRegisterVehicleResponse = AgencyApiResponse
+export type AgencyApiRegisterVehicleResponse = AgencyApiResponse
 
-export type AgencyGetVehicleByIdResponse = AgencyApiResponse<CompositeVehicle>
-export type AgencyGetVehiclesByProviderResponse = AgencyApiResponse<PaginatedVehiclesList>
-export type AgencyUpdateVehicleResponse = AgencyApiResponse
-export type AgencySubmitVehicleEventResponse = AgencyApiResponse<{
+export type AgencyAipGetVehicleByIdResponse = AgencyApiResponse<CompositeVehicle>
+export type AgencyApiGetVehiclesByProviderResponse = AgencyApiResponse<PaginatedVehiclesList>
+export type AgencyApiUpdateVehicleResponse = AgencyApiResponse
+export type AgencyApiSubmitVehicleEventResponse = AgencyApiResponse<{
   device_id: UUID
   status: VEHICLE_STATUS
 }>
 
-export type AgencySubmitVehicleTelemetryResponse = AgencyApiResponse<{
+export type AgencyApiSubmitVehicleTelemetryResponse = AgencyApiResponse<{
   result: string
   recorded: Timestamp
   unique: number
   failures: string[]
 }>
 
-export type AgencyRegisterStopResponse = AgencyApiResponse<Recorded<Stop>>
-export type AgencyReadStopResponse = AgencyApiResponse<Recorded<Stop>>
-export type AgencyReadStopsResponse = AgencyApiResponse<{
+export type AgencyApiRegisterStopResponse = AgencyApiResponse<Recorded<Stop>>
+export type AgencyApiReadStopResponse = AgencyApiResponse<Recorded<Stop>>
+export type AgencyApiReadStopsResponse = AgencyApiResponse<{
   stops: Readonly<
     Required<
       Stop & {

@@ -8,9 +8,10 @@ import { checkAccess, AccessTokenScopeValidator, ApiResponse, ApiRequest } from 
 import { GeographyApiVersionMiddleware } from './middleware'
 import {
   GeographyApiAccessTokenScopes,
-  GeographyApiRequest,
-  GetGeographyResponse,
-  GetGeographiesResponse
+  GeographyApiGetGeographyResponse,
+  GeographyApiGetGeographiesResponse,
+  GeographyApiGetGeographyRequest,
+  GeographyApiGetGeographiesRequest
 } from './types'
 
 const checkGeographyApiAccess = (validator: AccessTokenScopeValidator<GeographyApiAccessTokenScopes>) =>
@@ -24,7 +25,7 @@ function api(app: express.Express): express.Express {
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
-    async (req: GeographyApiRequest, res: GetGeographyResponse, next: express.NextFunction) => {
+    async (req: GeographyApiGetGeographyRequest, res: GeographyApiGetGeographyResponse, next: express.NextFunction) => {
       const { geography_id } = req.params
       try {
         const geography = await db.readSingleGeography(geography_id)
@@ -52,7 +53,11 @@ function api(app: express.Express): express.Express {
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
-    async (req: GeographyApiRequest, res: GetGeographiesResponse, next: express.NextFunction) => {
+    async (
+      req: GeographyApiGetGeographiesRequest,
+      res: GeographyApiGetGeographiesResponse,
+      next: express.NextFunction
+    ) => {
       const summary = req.query.summary === 'true'
       const { get_published, get_unpublished } = req.query
       const params = {

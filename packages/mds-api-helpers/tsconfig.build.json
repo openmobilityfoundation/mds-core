@@ -5,6 +5,7 @@
   },
   "references": [
     { "path": "../../packages/mds-agency-cache/tsconfig.build.json" },
+    { "path": "../../packages/mds-api-server/tsconfig.build.json" },
     { "path": "../../packages/mds-db/tsconfig.build.json" },
     { "path": "../../packages/mds-types/tsconfig.build.json" },
     { "path": "../../packages/mds-utils/tsconfig.build.json" }

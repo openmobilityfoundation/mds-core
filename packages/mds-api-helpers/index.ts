@@ -15,15 +15,15 @@
  */
 
 import urls from 'url'
-import express from 'express'
 import { parseObjectProperties, ParseObjectPropertiesOptions } from '@mds-core/mds-utils'
+import { ApiRequest } from '@mds-core/mds-api-server'
 
 interface PagingParams {
   skip: number
   take: number
 }
 
-const jsonApiLink = (req: express.Request, skip: number, take: number): string =>
+const jsonApiLink = (req: ApiRequest, skip: number, take: number): string =>
   urls.format({
     protocol: req.get('x-forwarded-proto') || req.protocol,
     host: req.get('host'),
@@ -33,7 +33,7 @@ const jsonApiLink = (req: express.Request, skip: number, take: number): string =
 
 export type JsonApiLinks = Partial<{ first: string; prev: string; next: string; last: string }> | undefined
 
-export const asJsonApiLinks = (req: express.Request, skip: number, take: number, count: number): JsonApiLinks => {
+export const asJsonApiLinks = (req: ApiRequest, skip: number, take: number, count: number): JsonApiLinks => {
   if (skip > 0 || take < count) {
     const first = skip > 0 ? jsonApiLink(req, 0, take) : undefined
     const prev = skip - take >= 0 && skip - take < count ? jsonApiLink(req, skip - take, take) : undefined
@@ -44,13 +44,13 @@ export const asJsonApiLinks = (req: express.Request, skip: number, take: number,
   return undefined
 }
 
-export const parseRequest = <T = string>(req: express.Request, options?: ParseObjectPropertiesOptions<T>) => {
+export const parseRequest = <T = string>(req: ApiRequest, options?: ParseObjectPropertiesOptions<T>) => {
   const { keys: query } = parseObjectProperties<T>(req.query, options)
   const { keys: params } = parseObjectProperties<T>(req.params, options)
   return { params, query }
 }
 
-export const parsePagingQueryParams = (req: express.Request) => {
+export const parsePagingQueryParams = (req: ApiRequest) => {
   const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
   const { skip = 0, take = DEFAULT_PAGE_SIZE } = parseRequest(req, { parser: Number }).query('skip', 'take')
   return {

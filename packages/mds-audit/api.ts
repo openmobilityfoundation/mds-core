@@ -669,7 +669,7 @@ function api(app: express.Express): express.Express {
   app.get(
     pathsFor('/vehicles'),
     checkAuditApiAccess(scopes => scopes.includes('audits:vehicles:read')),
-    async (req, res: GetAuditVehiclesResponse) => {
+    async (req: AuditApiGetVehicleRequest, res: GetAuditVehiclesResponse) => {
       const { skip, take } = { skip: 0, take: 10000 }
       const { strict = true, bbox, provider_id } = {
         ...parseRequest(req, { parser: JSON.parse }).query('strict', 'bbox'),

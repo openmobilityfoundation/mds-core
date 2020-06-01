@@ -22,7 +22,14 @@ import { now, pathsFor, NotFoundError, isUUID, BadParamsError, ServerError } fro
 import logger from '@mds-core/mds-logger'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
-import { PolicyApiRequest, PolicyApiResponse, GetPoliciesResponse, GetPolicyResponse } from './types'
+import {
+  PolicyApiRequest,
+  PolicyApiResponse,
+  PolicyApiGetPoliciesResponse,
+  PolicyApiGetPolicyResponse,
+  PolicyApiGetPoliciesRequest,
+  PolicyApiGetPolicyRequest
+} from './types'
 import { PolicyApiVersionMiddleware } from './middleware'
 
 function api(app: express.Express): express.Express {
@@ -67,7 +74,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies'),
-    async (req: PolicyApiRequest, res: GetPoliciesResponse, next: express.NextFunction) => {
+    async (req: PolicyApiGetPoliciesRequest, res: PolicyApiGetPoliciesResponse, next: express.NextFunction) => {
       const { start_date = now(), end_date = now() } = req.query
       const { scopes } = res.locals
 
@@ -117,7 +124,7 @@ function api(app: express.Express): express.Express {
 
   app.get(
     pathsFor('/policies/:policy_id'),
-    async (req: PolicyApiRequest, res: GetPolicyResponse, next: express.NextFunction) => {
+    async (req: PolicyApiGetPolicyRequest, res: PolicyApiGetPolicyResponse, next: express.NextFunction) => {
       const { policy_id } = req.params
       const { scopes } = res.locals
 

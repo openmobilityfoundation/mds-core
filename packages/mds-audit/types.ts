@@ -28,58 +28,56 @@ import {
   VEHICLE_REASON,
   VEHICLE_STATUS
 } from '@mds-core/mds-types'
-import { ApiRequest, ApiQuery, ApiClaims, ApiVersionedResponse } from '@mds-core/mds-api-server'
-import { Params, ParamsDictionary } from 'express-serve-static-core'
+import {
+  ApiRequest,
+  ApiRequestQuery,
+  ApiClaims,
+  ApiVersionedResponse,
+  ApiRequestParams,
+  ApiResponseLocals
+} from '@mds-core/mds-api-server'
 
 export const AUDIT_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
 export type AUDIT_API_SUPPORTED_VERSION = typeof AUDIT_API_SUPPORTED_VERSIONS[number]
 export const [AUDIT_API_DEFAULT_VERSION] = AUDIT_API_SUPPORTED_VERSIONS
 
 // Allow adding type definitions for Express Request objects
-export type AuditApiRequest<P extends Params = ParamsDictionary> = ApiRequest<P>
+export type AuditApiRequest<B = {}> = ApiRequest<B>
 
-export type AuditApiTripRequest = AuditApiRequest<{ audit_trip_id: UUID }>
+export type AuditApiTripRequest<B = {}> = AuditApiRequest<B> & ApiRequestParams<'audit_trip_id'>
 
-export interface AuditApiAuditStartRequest extends AuditApiTripRequest {
-  body: {
-    audit_device_id: string
-    audit_event_id: UUID
-    audit_event_type: string
-    provider_id: UUID
-    provider_vehicle_id: string
-    telemetry?: Telemetry
-    timestamp: Timestamp
-  }
-}
+export type AuditApiAuditStartRequest = AuditApiTripRequest<{
+  audit_device_id: string
+  audit_event_id: UUID
+  audit_event_type: string
+  provider_id: UUID
+  provider_vehicle_id: string
+  telemetry?: Telemetry
+  timestamp: Timestamp
+}>
 
-export interface AuditApiVehicleEventRequest extends AuditApiTripRequest {
-  body: {
-    audit_event_id: UUID
-    event_type: string
-    telemetry?: Telemetry
-    trip_id: UUID
-    timestamp: Timestamp
-  }
-}
+export type AuditApiVehicleEventRequest = AuditApiTripRequest<{
+  audit_event_id: UUID
+  event_type: string
+  telemetry?: Telemetry
+  trip_id: UUID
+  timestamp: Timestamp
+}>
 
-export interface AuditApiVehicleTelemetryRequest extends AuditApiTripRequest {
-  body: {
-    audit_event_id: UUID
-    telemetry: Telemetry
-    timestamp: Timestamp
-  }
-}
+export type AuditApiVehicleTelemetryRequest = AuditApiTripRequest<{
+  audit_event_id: UUID
+  telemetry: Telemetry
+  timestamp: Timestamp
+}>
 
-export interface AuditApiAuditNoteRequest extends AuditApiTripRequest {
-  body: {
-    audit_event_id: UUID
-    audit_event_type: string
-    audit_issue_code?: string
-    note?: string
-    telemetry?: Telemetry
-    timestamp: Timestamp
-  }
-}
+export type AuditApiAuditNoteRequest = AuditApiTripRequest<{
+  audit_event_id: UUID
+  audit_event_type: string
+  audit_issue_code?: string
+  note?: string
+  telemetry?: Telemetry
+  timestamp: Timestamp
+}>
 
 export interface AuditApiAuditEndRequest extends AuditApiTripRequest {
   body: {
@@ -91,16 +89,15 @@ export interface AuditApiAuditEndRequest extends AuditApiTripRequest {
 }
 
 export type AuditApiGetTripsRequest = AuditApiRequest &
-  ApiQuery<'skip' | 'take' | 'provider_id' | 'provider_vehicle_id' | 'audit_subject_id' | 'start_time' | 'end_time'>
+  ApiRequestQuery<
+    'skip' | 'take' | 'provider_id' | 'provider_vehicle_id' | 'audit_subject_id' | 'start_time' | 'end_time'
+  >
 
-export type AuditApiGetTripRequest = AuditApiTripRequest & ApiQuery<'event_viewport_adjustment'>
+export type AuditApiGetTripRequest = AuditApiTripRequest & ApiRequestQuery<'event_viewport_adjustment'>
 
-export interface AuditApiGetVehicleRequest extends AuditApiRequest {
-  params: {
-    provider_id: UUID
-    vin: string
-  }
-}
+export type AuditApiGetVehicleRequest = AuditApiRequest &
+  ApiRequestParams<'provider_id' | 'vin'> &
+  ApiRequestQuery<'strict' | 'bbox' | 'provider_id'>
 
 export type AuditApiAccessTokenScopes = 'audits:write' | 'audits:read' | 'audits:delete' | 'audits:vehicles:read'
 
@@ -117,16 +114,14 @@ type AuditedDevice =
       updated?: number | null | undefined
     })
 // Allow adding type definitions for Express Response objects
-export type AuditApiResponse<T = unknown> = ApiVersionedResponse<
-  AUDIT_API_SUPPORTED_VERSION,
-  ApiClaims<AuditApiAccessTokenScopes> & {
+export type AuditApiResponse<B = {}> = ApiVersionedResponse<AUDIT_API_SUPPORTED_VERSION, B> &
+  ApiResponseLocals<ApiClaims<AuditApiAccessTokenScopes>> &
+  ApiResponseLocals<{
     audit_subject_id: string
     audit_trip_id: UUID
     audit: Audit | null
     recorded: Timestamp
-  },
-  T
->
+  }>
 
 export type PostAuditTripStartResponse = AuditApiResponse<{
   provider_id: string

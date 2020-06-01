@@ -1,6 +1,6 @@
 import db from '@mds-core/mds-db'
 import Sinon from 'sinon'
-import { DailyApiRequest, DailyApiResponse } from '../types'
+import { DailyApiResponse, DailyApiGetRawTripDataRequest } from '../types'
 import { getRawTripData } from '../request-handlers'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -18,7 +18,7 @@ describe('Request handlers', () => {
       await getRawTripData(
         {
           params: { trip_id: 'fake-trip-id' }
-        } as DailyApiRequest<{ trip_id: string }>,
+        } as DailyApiGetRawTripDataRequest,
         res as DailyApiResponse
       )
       Sinon.restore()

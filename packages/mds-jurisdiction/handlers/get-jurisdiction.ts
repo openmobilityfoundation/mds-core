@@ -14,25 +14,24 @@
     limitations under the License.
  */
 
-import {
-  JurisdictionServiceClient,
-  JurisdictionDomainModel,
-  JurisdictionIdType
-} from '@mds-core/mds-jurisdiction-service'
+import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { AuthorizationError } from '@mds-core/mds-utils'
 import { isServiceError } from '@mds-core/mds-service-helpers'
 import { parseRequest } from '@mds-core/mds-api-helpers'
-import { ApiQuery } from '@mds-core/mds-api-server'
+import { ApiRequestQuery, ApiRequestParams } from '@mds-core/mds-api-server'
 import { JurisdictionApiResponse, JurisdictionApiRequest } from '../@types'
 import { HasJurisdictionClaim } from './utils'
 
-type GetJurisdictionRequest = JurisdictionApiRequest<{ jurisdiction_id: JurisdictionIdType }> & ApiQuery<'effective'>
+export type JurisdictionApiGetJurisdictionRequest = JurisdictionApiRequest &
+  ApiRequestParams<'jurisdiction_id'> &
+  ApiRequestQuery<'effective'>
 
-type GetJurisdictionResponse = JurisdictionApiResponse<{
-  jurisdiction: JurisdictionDomainModel
-}>
+export type JurisdictionApiGetJurisdictionResponse = JurisdictionApiResponse<{ jurisdiction: JurisdictionDomainModel }>
 
-export const GetJurisdictionHandler = async (req: GetJurisdictionRequest, res: GetJurisdictionResponse) => {
+export const GetJurisdictionHandler = async (
+  req: JurisdictionApiGetJurisdictionRequest,
+  res: JurisdictionApiGetJurisdictionResponse
+) => {
   try {
     const { jurisdiction_id } = req.params
     const { effective } = parseRequest(req, { parser: Number }).query('effective')
