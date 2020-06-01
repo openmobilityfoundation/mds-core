@@ -25,6 +25,10 @@ The included code represents what is currently up and running for Los Angeles as
 * Development versions of mds-audit, mds-policy, and mds-compliance
 * MDS logging (mds-logger), daily metrics (mds-daily) and Google sheet reporting app for technical compliance.
 
+## Contributing, Code of Coduct, Licensing
+
+Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guidelines on contribution, code of conduct, license, development dependencies, and release guidelines.
+
 ## Contents
 
 ### Stable Content
@@ -321,6 +325,3 @@ Display the complete set of operations:
 
 To commit code, you will need the pre-commit tool, which can be installed via `brew install pre-commit`.  For more information, see [SECURITY.md](.github/SECURITY.md)
 
-## Contributing
-
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
