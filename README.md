@@ -25,11 +25,11 @@ The included code represents what is currently up and running for Los Angeles as
 * Development versions of mds-audit, mds-policy, and mds-compliance
 * MDS logging (mds-logger), daily metrics (mds-daily) and Google sheet reporting app for technical compliance.
 
-## Contributing, Code of Coduct, Licensing
+# Contributing, Code of Coduct, Licensing
 
 Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guidelines on contribution, code of conduct, license, development dependencies, and release guidelines.
 
-## Contents
+# Contents
 
 ### Stable Content
 #### APIs
