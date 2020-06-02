@@ -2,6 +2,8 @@
 
 The `mds-core` repo contains a deployable reference implementation for working with MDS data. It is a beta release meant for testing by cities and other entities to gather feedback and improve the product.
 
+The [Mobility Data Specification](https://github.com/openmobilityfoundation/mobility-data-specification/) (MDS) is a project of the [Open Mobility Foundation](http://www.openmobilityfoundation.org) (OMF) focused on digitally managing dockless e-scooters, bicycles and carshare in public spaces. 
+
 `mds-core` is... 
 - a reference MDS implementation usable by cities 
 - on-ramp for developers joining MDS ecosystem 
@@ -13,11 +15,9 @@ The `mds-core` repo contains a deployable reference implementation for working w
 - a place to define local policies or performance metrics 
 - a cloud service that will be operated by the OMF 
 
-See the `mds-core` [Github Wiki](https://github.com/openmobilityfoundation/mds-core/wiki) for more details and help.
+**See the `mds-core` [Wiki](https://github.com/openmobilityfoundation/mds-core/wiki) for more details and help, including how to use it, release goals, how to help, the technical stack used, and slideshows and a video presentation.**
 
-The [Mobility Data Specification](https://github.com/openmobilityfoundation/mobility-data-specification/) (MDS), a project of the [Open Mobility Foundation](http://www.openmobilityfoundation.org) (OMF) focused on dockless e-scooters, bicycles and carshare. 
-
-# Overview of MDS-CORE
+# Overview of `mds-core`
 
 The included code represents what is currently up and running for Los Angeles as well as new features under development.  Includes the following:
 
@@ -258,7 +258,7 @@ Verify:
 ```
 
 #### In-Cluster Development
-Due to the nature of MDS-Core being a highly portable Typescript project that compiles down into minified javascript for its images, rapidly development in-cluster can be quite challenging. MDS-Core utilizes [Okteto](https://okteto.com) to enable developers to actively develop their code in-cluster.
+Due to the nature of `mds-core` being a highly portable Typescript project that compiles down into minified javascript for its images, rapidly development in-cluster can be quite challenging. `mds-core` utilizes [Okteto](https://okteto.com) to enable developers to actively develop their code in-cluster.
 
 After following the above steps to set up a local MDS cluster, you can override an existing service's deployment with these steps.
 1. Update `mds-core/okteto.yml`'s `name` field to be set to the service you wish to replace (e.g. `mds-agency`)
