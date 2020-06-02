@@ -15,7 +15,7 @@ The [Mobility Data Specification](https://github.com/openmobilityfoundation/mobi
 - a place to define local policies or performance metrics 
 - a cloud service that will be operated by the OMF 
 
-**See the `mds-core` [Wiki](https://github.com/openmobilityfoundation/mds-core/wiki) for more details and help, including how to use it, release goals, how to help, the technical stack used, and slideshows and a video presentation.**
+**See the `mds-core` [Wiki](https://github.com/openmobilityfoundation/mds-core/wiki) for more details and help, including how to use it, architecture diagrams, release goals, how to help, the technical stack used, and slideshows and a video presentation.**
 
 # Overview of `mds-core`
 
@@ -24,6 +24,8 @@ The included code represents what is currently up and running for Los Angeles as
 * A current LADOT implementation of all MDS endpoints
 * Development versions of mds-audit, mds-policy, and mds-compliance
 * MDS logging (mds-logger), daily metrics (mds-daily) and Google sheet reporting app for technical compliance.
+
+![Applications Overview](https://i.imgur.com/AGRubjE.png)
 
 # Contributing, Code of Coduct, Licensing
 
