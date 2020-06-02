@@ -1,8 +1,35 @@
-# Overview
+# Introduction
 
-Repo for LADOT MDS implementation for contribution to the Open Mobility Foundation.  It represents what is currently up and running for Los Angeles production MDS as well as new features under development.
+The `mds-core` repo contains a deployable reference implementation for working with MDS data. It is a beta release meant for testing by cities and other entities to gather feedback and improve the product.
 
-## Contents
+`mds-core` is... 
+- a reference MDS implementation usable by cities 
+- on-ramp for developers joining MDS ecosystem 
+- a tool for validating software implementations and data 
+
+`mds-core` is not... 
+- the only implementation of MDS 
+- where the specification is officially defined
+- a place to define local policies or performance metrics 
+- a cloud service that will be operated by the OMF 
+
+See the `mds-core` [Github Wiki](https://github.com/openmobilityfoundation/mds-core/wiki) for more details and help.
+
+The [Mobility Data Specification](https://github.com/openmobilityfoundation/mobility-data-specification/) (MDS), a project of the [Open Mobility Foundation](http://www.openmobilityfoundation.org) (OMF) focused on dockless e-scooters, bicycles and carshare. 
+
+# Overview of MDS-CORE
+
+The included code represents what is currently up and running for Los Angeles as well as new features under development.  Includes the following:
+
+* A current LADOT implementation of all MDS endpoints
+* Development versions of mds-audit, mds-policy, and mds-compliance
+* MDS logging (mds-logger), daily metrics (mds-daily) and Google sheet reporting app for technical compliance.
+
+# Contributing, Code of Coduct, Licensing
+
+Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guidelines on contribution, code of conduct, license, development dependencies, and release guidelines.
+
+# Contents
 
 ### Stable Content
 #### APIs
@@ -298,6 +325,3 @@ Display the complete set of operations:
 
 To commit code, you will need the pre-commit tool, which can be installed via `brew install pre-commit`.  For more information, see [SECURITY.md](.github/SECURITY.md)
 
-## Contributing
-
-See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
