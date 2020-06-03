@@ -43,21 +43,6 @@ describe('Testing API Server', () => {
     done()
   })
 
-  it('verifies get root', done => {
-    request
-      .get('/')
-      .expect(200)
-      .end((err, result) => {
-        test.value(result).hasHeader('content-type', APP_JSON)
-        test.object(result.body).hasProperty('name')
-        test.object(result.body).hasProperty('version')
-        test.object(result.body).hasProperty('node')
-        test.object(result.body).hasProperty('build')
-        test.object(result.body).hasProperty('status', 'Running')
-        done(err)
-      })
-  })
-
   it('verifies get root (MAINTENANCE)', done => {
     process.env.MAINTENANCE = 'Testing'
     request
@@ -103,9 +88,9 @@ describe('Testing API Server', () => {
         test.object(result.body).hasProperty('version')
         test.object(result.body).hasProperty('node')
         test.object(result.body).hasProperty('build')
-        test.object(result.body).hasNotProperty('process')
-        test.object(result.body).hasNotProperty('memory')
-        test.object(result.body).hasNotProperty('uptime')
+        test.object(result.body).hasProperty('process')
+        test.object(result.body).hasProperty('memory')
+        test.object(result.body).hasProperty('uptime')
         test.object(result.body).hasProperty('status', 'Testing (MAINTENANCE)')
         done(err)
       })

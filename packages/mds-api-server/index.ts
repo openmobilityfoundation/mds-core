@@ -60,7 +60,7 @@ export type ApiVersion<V extends string> = { version: V }
 export type ApiVersionedResponse<V extends string, B = {}> = ApiResponse<B & ApiVersion<V>> &
   ApiResponseLocals<ApiVersion<V>>
 
-const about = () => {
+const health = () => {
   const {
     versions: { node },
     env: {
@@ -77,7 +77,10 @@ const about = () => {
     version,
     build: { date, branch, commit },
     node,
-    status: maintenance ? `${maintenance} (MAINTENANCE)` : 'Running'
+    status: maintenance ? `${maintenance} (MAINTENANCE)` : 'Running',
+    process: process.pid,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
   }
 }
 
@@ -107,12 +110,8 @@ export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): exp
 
 export const JsonBodyParserMiddleware = (options: bodyParser.OptionsJson) => bodyParser.json(options)
 
-export const MaintenanceModeMiddleware = () => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
-  if (process.env.MAINTENANCE) {
-    return res.status(503).send(about())
-  }
-  next()
-}
+export const MaintenanceModeMiddleware = () => (req: ApiRequest, res: ApiResponse, next: express.NextFunction) =>
+  process.env.MAINTENANCE ? res.status(503).send(health()) : next()
 
 type AuthorizerMiddlewareOptions = { authorizer: ApiAuthorizer }
 export const AuthorizerMiddleware = ({
@@ -224,18 +223,7 @@ export const ApiVersionMiddleware = <V extends string>(mimeType: string, version
   }
 })
 
-export const AboutRequestHandler = async (req: ApiRequest, res: ApiResponse) => {
-  return res.status(200).send(about())
-}
-
-export const HealthRequestHandler = async (req: ApiRequest, res: ApiResponse) => {
-  return res.status(200).send({
-    ...about(),
-    process: process.pid,
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
-  })
-}
+export const HealthRequestHandler = async (req: ApiRequest, res: ApiResponse) => res.status(200).send(health())
 
 const serverVersion = () => {
   const { npm_package_name, npm_package_version, npm_package_git_commit } = process.env
@@ -292,8 +280,7 @@ export const ApiServer = (
     AuthorizerMiddleware({ authorizer })
   )
 
-  // Routes
-  app.get(pathsFor('/'), AboutRequestHandler)
+  // Health Route
   app.get(pathsFor('/health'), HealthRequestHandler)
 
   return api(app)
