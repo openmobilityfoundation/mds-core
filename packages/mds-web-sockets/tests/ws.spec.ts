@@ -103,5 +103,31 @@ describe('Tests MDS-Web-Sockets', () => {
         return done
       })
     })
+
+    it('Subscribe and send telemetry', done => {
+      const client = new WebSocket(`ws://localhost:${process.env.PORT || 4000}`)
+      client.onopen = () => {
+        client.send(`AUTH%${ADMIN_AUTH}`)
+      }
+
+      client.on('message', data => {
+        if (data === 'AUTH%{"status":"Success"}') {
+          client.send('SUB%telemetry')
+          return
+        }
+
+        if (data === 'SUB%{"status":"Success"}') {
+          client.send(`PUSH%telemetry%${JSON.stringify({ foo: 'bar' })}`)
+          return
+        }
+
+        if (data === 'telemetry%{"foo":"bar"}') {
+          client.close()
+          return done()
+        }
+
+        return done
+      })
+    })
   })
 })

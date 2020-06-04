@@ -104,7 +104,9 @@ export const WebSocketServer = async <T extends readonly string[]>(entityTypes?:
     await pushToClients(entity, JSON.stringify(msg.data))
   }
 
-  supportedEntities.forEach(async e => {
-    await stream.NatsStreamConsumer(`${TENANT_ID}.event`, processor).initialize()
-  })
+  await Promise.all(
+    (supportedEntities as readonly string[]).map(e =>
+      stream.NatsStreamConsumer(`${TENANT_ID}.${e}`, processor).initialize()
+    )
+  )
 }
