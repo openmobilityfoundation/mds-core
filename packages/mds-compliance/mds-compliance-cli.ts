@@ -18,7 +18,7 @@ import logger from '@mds-core/mds-logger'
 import * as yargs from 'yargs'
 import { Policy, Geography, ComplianceResponse, VehicleEvent, Device } from '@mds-core/mds-types'
 import { validateEvents, validateGeographies, validatePolicies } from '@mds-core/mds-schema-validators'
-import { filterPolicies, processPolicy, filterEvents } from './mds-compliance-engine'
+import { getSupersedingPolicies, processPolicy, getRecentEvents } from './mds-compliance-engine'
 
 const args = yargs
   .options('geographies', {
@@ -69,7 +69,7 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
     logger.error('unable to read events')
     process.exit(1)
   }
-  const filteredEvents = filterEvents(events)
+  const recentEvents = getRecentEvents(events)
 
   // read devices
   const devices = ((await readJson(args.devices)) as Device[]).reduce((map: { [d: string]: Device }, device) => {
@@ -81,10 +81,10 @@ async function main(): Promise<(ComplianceResponse | undefined)[]> {
     process.exit(1)
   }
 
-  const filteredPolicies = filterPolicies(policies)
+  const supersedingPolicies = getSupersedingPolicies(policies)
   // emit results
   return Promise.resolve(
-    filteredPolicies.map((policy: Policy) => processPolicy(policy, filteredEvents, geographies, devices))
+    supersedingPolicies.map((policy: Policy) => processPolicy(policy, recentEvents, geographies, devices))
   )
 }
 

@@ -31,7 +31,7 @@ import {
   AuthorizationError
 } from '@mds-core/mds-utils'
 import { Geography, Device, UUID, VehicleEvent } from '@mds-core/mds-types'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_SYSTEMS_PROVIDER_ID, providerName } from '@mds-core/mds-providers'
+import { providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import * as compliance_engine from './mds-compliance-engine'
@@ -44,8 +44,8 @@ import {
   ComplianceApiCountRequest
 } from './types'
 import { ComplianceApiVersionMiddleware } from './middleware'
-
-const AllowedProviderIDs = [TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, BLUE_SYSTEMS_PROVIDER_ID]
+import { AllowedProviderIDs } from './constants'
+import { clientCanViewPolicyCompliance } from './helpers'
 
 function api(app: express.Express): express.Express {
   app.use(ComplianceApiVersionMiddleware)
@@ -104,30 +104,26 @@ function api(app: express.Express): express.Express {
       }
 
       try {
+        /* Get all published policies that fulfill the conditions start_date <= query_date,
+         * and end_date >= query_date.
+         */
         const all_policies = await db.readActivePolicies(query_date)
-        const policy = compliance_engine.filterPolicies(all_policies).find(p => {
+        const policy = compliance_engine.getSupersedingPolicies(all_policies).find(p => {
           return p.policy_id === policy_uuid
         })
         if (!policy) {
           return res.status(404).send({ error: new NotFoundError('Policy not found') })
         }
 
-        if (
-          policy &&
-          ((policy.provider_ids && policy.provider_ids.includes(provider_id)) ||
-            !policy.provider_ids ||
-            (AllowedProviderIDs.includes(provider_id) &&
-              ((policy.provider_ids &&
-                policy.provider_ids.length !== 0 &&
-                queried_provider_id &&
-                policy.provider_ids.includes(queried_provider_id)) ||
-                !policy.provider_ids ||
-                policy.provider_ids.length === 0)))
-        ) {
+        if (clientCanViewPolicyCompliance(provider_id, queried_provider_id, policy)) {
+          /* If the client is one of the allowed providers, they can query for an arbitrary provider's vehicles. Otherwise, they may
+           only see compliance results for their own devices.
+           */
           const target_provider_id = AllowedProviderIDs.includes(provider_id) ? queried_provider_id : provider_id
           if (
+            // Check to see if the policy for which a snapshot is desired has been superseded or not.
             compliance_engine
-              .filterPolicies(all_policies)
+              .getSupersedingPolicies(all_policies)
               .map(p => p.policy_id)
               .includes(policy.policy_id)
           ) {
@@ -139,7 +135,7 @@ function api(app: express.Express): express.Express {
               (record: { device_id: UUID; provider_id: UUID }) => record.device_id
             )
             const devices = await cache.readDevices(deviceIdSubset)
-            // if a timestamp was supplied, the data we want is probably old enough it's going to be in the db
+            // If a timestamp was supplied, the data we want is probably old enough it's going to be in the db
             const events = timestamp
               ? await db.readHistoricalEvents({ provider_id: target_provider_id, end_date: timestamp })
               : await cache.readEvents(deviceIdSubset)
@@ -148,7 +144,7 @@ function api(app: express.Express): express.Express {
               return device ? Object.assign(map, { [device.device_id]: device }) : map
             }, {})
 
-            const filteredEvents = compliance_engine.filterEvents(events)
+            const filteredEvents = compliance_engine.getRecentEvents(events)
             const result = compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
             if (result === undefined) {
               return res.status(400).send({ error: new BadParamsError('Unable to process compliance results') })
@@ -209,7 +205,7 @@ function api(app: express.Express): express.Express {
       const filteredVehicleEvents = events.filter(
         (event): event is VehicleEvent => event !== null && isInStatesOrEvents(rule, event)
       )
-      const filteredEvents = compliance_engine.filterEvents(filteredVehicleEvents)
+      const filteredEvents = compliance_engine.getRecentEvents(filteredVehicleEvents)
 
       const count = filteredEvents.reduce((count_acc, event) => {
         return (

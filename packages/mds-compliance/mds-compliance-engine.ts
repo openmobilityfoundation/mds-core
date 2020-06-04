@@ -384,7 +384,9 @@ function processPolicy(
   }
 }
 
-function filterPolicies(policies: Policy[]): Policy[] {
+// Take a list of policies, and eliminate all those that have been superseded. Returns
+// policies that have not been superseded.
+function getSupersedingPolicies(policies: Policy[]): Policy[] {
   const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: Policy) => {
     if (policy.prev_policies) {
       prev_policies_acc.push(...policy.prev_policies)
@@ -396,11 +398,11 @@ function filterPolicies(policies: Policy[]): Policy[] {
   })
 }
 
-function filterEvents(events: VehicleEvent[], end_time = now()): VehicleEvent[] {
+function getRecentEvents(events: VehicleEvent[], end_time = now()): VehicleEvent[] {
   return events.filter((event: VehicleEvent) => {
     /* Keep events that are less than two days old */
     return event.timestamp > end_time - TWO_DAYS_IN_MS
   })
 }
 
-export { processPolicy, filterPolicies, filterEvents }
+export { processPolicy, getSupersedingPolicies, getRecentEvents }
