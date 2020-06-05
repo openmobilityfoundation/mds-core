@@ -134,7 +134,7 @@ function api(app: express.Express): express.Express {
   app.use(AuditApiVersionMiddleware)
 
   app.use(async (req: AuditApiRequest, res: AuditApiResponse, next) => {
-    if (!(req.path.includes('/health') || req.path === '/')) {
+    if (!req.path.includes('/health')) {
       if (res.locals.claims) {
         // verify presence of subject_id
         const { principalId, user_email } = res.locals.claims

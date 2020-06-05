@@ -52,7 +52,7 @@ function api(app: express.Express): express.Express {
   app.use(async (req: ComplianceApiRequest, res: ComplianceApiResponse, next: express.NextFunction) => {
     try {
       // verify presence of provider_id
-      if (!(req.path.includes('/health') || req.path === '/')) {
+      if (!req.path.includes('/health')) {
         if (res.locals.claims) {
           const { provider_id } = res.locals.claims
 

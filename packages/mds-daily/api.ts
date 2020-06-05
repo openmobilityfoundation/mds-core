@@ -39,7 +39,7 @@ import {
 async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, next: Function) {
   try {
     // verify presence of provider_id
-    if (!(req.path.includes('/health') || req.path === '/')) {
+    if (!req.path.includes('/health')) {
       if (res.locals.claims) {
         const { provider_id, scope } = res.locals.claims
 

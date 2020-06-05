@@ -41,7 +41,7 @@ function api(app: express.Express): express.Express {
     res.header('Access-Control-Allow-Origin', '*')
     try {
       // verify presence of provider_id
-      if (!(req.path.includes('/health') || req.path === '/' || req.path === '/schema/policy')) {
+      if (!(req.path.includes('/health') || req.path.includes('/schema/policy'))) {
         if (res.locals.claims) {
           /* TEMPORARILY REMOVING SO NON-PROVIDERS CAN ACCESS POLICY API */
           // const { provider_id } = res.locals.claims
