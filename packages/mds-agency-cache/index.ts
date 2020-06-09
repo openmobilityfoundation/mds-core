@@ -200,7 +200,7 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
     throw new Error(`hwrite: invalid device_id ${item.device_id}`)
   }
   const { device_id } = item
-  const key = `device:${device_id}:${suffix}`
+  const key = decorateKey(`device:${device_id}:${suffix}`)
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
   const hmap = stripNulls(flat) as { [key: string]: unknown; device_id: UUID }
@@ -209,13 +209,13 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   if (nulls.length > 0) {
     // redis doesn't store null keys, so we have to delete them
     // TODO unit-test
-    await (await getClient()).hdelAsync(decorateKey(key), ...nulls)
+    await (await getClient()).hdelAsync(key, ...nulls)
   }
 
   const client = await getClient()
 
   await Promise.all(
-    (suffix === 'event' ? [`provider:${item.provider_id}:latest_event`, key] : [key]).map(k =>
+    (suffix === 'event' ? [decorateKey(`provider:${item.provider_id}:latest_event`), key] : [key]).map(k =>
       client.hmsetAsync(k, hmap)
     )
   )
