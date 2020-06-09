@@ -54,9 +54,6 @@ apis:
     pathPrefix: /geography-author
     version: latest
     migration: false
-nats:
-  enabled: true
-  credentials: false
 tenantId:
 timezone: America/Los_Angeles
 registry:
@@ -71,6 +68,14 @@ jwt:
   bypassInternal: false
   firstInstall: false
   audiences: []
+nats:
+  enabled: false
+  host:
+  credentials: false
+kafka:
+  enabled: false
+  host:
+  port: 9092
 postgresql:
   internal: true
   host:

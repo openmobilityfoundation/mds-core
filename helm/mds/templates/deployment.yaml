@@ -90,11 +90,12 @@ spec:
             value: {{ $.Values.redis.port | quote }}
           {{- if $.Values.nats.enabled }}
           - name: NATS
-            value: {{ default "nats" $.Values.natsNamespace }}-nats-server.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
-#            value: nats-cluster-mgmt.{{ default "nats" $.Values.natsNamespace }}.svc.cluster.local
+            value: {{ $.Values.nats.host }}
           {{- end }}
+          {{- if $.Values.kafka.enabled }}
           - name: KAFKA_HOST
-            value: host.docker.internal:9092
+            value: {{ $.Values.kafka.host }}:{{ $.Values.kafka.port }}
+          {{- end }}
           - name: TENANT_ID
           {{- if hasKey $.Values "tenantId" }}
             value: {{ $.Values.tenantId }}
