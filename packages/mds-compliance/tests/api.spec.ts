@@ -35,7 +35,7 @@ import {
 import MockDate from 'mockdate'
 import { Feature, Polygon } from 'geojson'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID, MOCHA_PROVIDER_ID, JUMP_PROVIDER_ID } from '@mds-core/mds-providers'
 import { api } from '../api'
 
 const request = supertest(ApiServer(api))
@@ -43,6 +43,7 @@ const agency_request = supertest(ApiServer(agency))
 
 const PROVIDER_SCOPES = 'admin:all'
 const TEST2_PROVIDER_AUTH = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
+const JUMP_PROVIDER_AUTH = `basic ${Buffer.from(`${JUMP_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const MOCHA_PROVIDER_AUTH = `basic ${Buffer.from(`${MOCHA_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const TRIP_UUID = '1f981864-cc17-40cf-aea3-70fd985e2ea7'
 const DEVICE_UUID = 'ec551174-f324-4251-bfed-28d9f3f473fc'
@@ -427,7 +428,9 @@ describe('Tests Compliance API:', () => {
   // })
   describe('Count Violation Over Test: ', () => {
     before(done => {
-      const devices: Device[] = makeDevices(15, now())
+      const devicesOfProvider1: Device[] = makeDevices(15, now())
+      const devicesOfProvider2: Device[] = makeDevices(15, now(), JUMP_PROVIDER_ID)
+      const devices = [...devicesOfProvider1, ...devicesOfProvider2]
       const events = makeEventsWithTelemetry(devices, now() - 100000, CITY_OF_LA, 'trip_end')
       const telemetry: Telemetry[] = []
       devices.forEach(device => {
@@ -445,19 +448,37 @@ describe('Tests Compliance API:', () => {
       })
     })
 
-    it('Verifies violation of count compliance (over)', done => {
-      request
+    it('Verifies violation of count compliance (over) and filters results by provider_id', async () => {
+      // Admins should be able to see violations across all providers
+      const adminResult = await request
         .get(`/snapshot/${COUNT_POLICY_UUID}`)
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
-        .end((err, result) => {
-          test.assert.deepEqual(result.body.compliance[0].matches[0].measured, 10)
-          test.assert.deepEqual(result.body.total_violations, 5)
-          test.object(result.body).hasProperty('timestamp')
-          test.object(result.body).hasProperty('version')
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      test.assert.deepEqual(adminResult.body.compliance[0].matches[0].measured, 10)
+      test.assert.deepEqual(adminResult.body.total_violations, 20)
+      test.object(adminResult.body).hasProperty('timestamp')
+      test.object(adminResult.body).hasProperty('version')
+      test.value(adminResult).hasHeader('content-type', APP_JSON)
+
+      // Admins should be able to query for a specific provider's compliance results
+      // and only see the number of violations for that provider
+      const provider1Result = await request
+        .get(`/snapshot/${COUNT_POLICY_UUID}?provider_id=${TEST1_PROVIDER_ID}`)
+        .set('Authorization', ADMIN_AUTH)
+        .expect(200)
+      test.assert.deepEqual(provider1Result.body.compliance[0].matches[0].measured, 10)
+      test.assert.deepEqual(provider1Result.body.total_violations, 5)
+      test.object(provider1Result.body).hasProperty('timestamp')
+      test.object(provider1Result.body).hasProperty('version')
+      test.value(provider1Result).hasHeader('content-type', APP_JSON)
+
+      // If a policy applies to every provider, a provider will see only its own compliance results.
+      const jumpResult = await request
+        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .set('Authorization', JUMP_PROVIDER_AUTH)
+        .expect(200)
+      test.assert.deepEqual(jumpResult.body.compliance[0].matches[0].measured, 10)
+      test.assert.deepEqual(jumpResult.body.total_violations, 5)
     })
 
     afterEach(async () => {

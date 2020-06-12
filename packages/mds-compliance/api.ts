@@ -30,7 +30,7 @@ import {
   BadParamsError,
   AuthorizationError
 } from '@mds-core/mds-utils'
-import { Geography, Device, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { Geography, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import { parseRequest } from '@mds-core/mds-api-helpers'
@@ -45,7 +45,7 @@ import {
 } from './types'
 import { ComplianceApiVersionMiddleware } from './middleware'
 import { AllowedProviderIDs } from './constants'
-import { clientCanViewPolicyCompliance } from './helpers'
+import { clientCanViewPolicyCompliance, getComplianceInputs } from './helpers'
 
 function api(app: express.Express): express.Express {
   app.use(ComplianceApiVersionMiddleware)
@@ -127,24 +127,7 @@ function api(app: express.Express): express.Express {
               .map(p => p.policy_id)
               .includes(policy.policy_id)
           ) {
-            const [geographies, deviceRecords] = await Promise.all([
-              db.readGeographies() as Promise<Geography[]>,
-              db.readDeviceIds(target_provider_id)
-            ])
-            const deviceIdSubset = deviceRecords.map(
-              (record: { device_id: UUID; provider_id: UUID }) => record.device_id
-            )
-            const devices = await cache.readDevices(deviceIdSubset)
-            // If a timestamp was supplied, the data we want is probably old enough it's going to be in the db
-            const events = timestamp
-              ? await db.readHistoricalEvents({ provider_id: target_provider_id, end_date: timestamp })
-              : await cache.readEvents(deviceIdSubset)
-
-            const deviceMap = devices.reduce((map: { [d: string]: Device }, device) => {
-              return device ? Object.assign(map, { [device.device_id]: device }) : map
-            }, {})
-
-            const filteredEvents = compliance_engine.getRecentEvents(events)
+            const { filteredEvents, geographies, deviceMap } = await getComplianceInputs(target_provider_id, timestamp)
             const result = compliance_engine.processPolicy(policy, filteredEvents, geographies, deviceMap)
             if (result === undefined) {
               return res.status(400).send({ error: new BadParamsError('Unable to process compliance results') })
