@@ -735,6 +735,34 @@ describe('Testing API', () => {
         })
     })
 
+    it('verify provider can get own trips', done => {
+      request
+        .get('/audit/trips')
+        .set('Authorization', SCOPED_AUTH(['audits:read:provider'], provider_id))
+        .expect(200)
+        .end((err, result) => {
+          /* Expect a 200 response with the audit records for that provider returned (only 1 in this case) */
+          test.value(result.body.audits[0].attachments[0].attachment_id).is(attachment_id)
+          test.value(result.body.audits[0].attachments[0].attachment_url).is(`http://example.com/${attachment_id}.jpg`)
+          test
+            .value(result.body.audits[0].attachments[0].thumbnail_url)
+            .is(`http://example.com/${attachment_id}.thumbnail.jpg`)
+          done(err)
+        })
+    })
+
+    it("verify provider cannot get others' trips", done => {
+      request
+        .get('/audit/trips')
+        .set('Authorization', SCOPED_AUTH(['audits:read:provider'], uuid())) // Generate arbitrary provider_id
+        .expect(200)
+        .end((err, result) => {
+          /* Expect a 200 response with no audits returned */
+          test.value(result.body.audits).is([])
+          done(err)
+        })
+    })
+
     it('verify post attachment (audit not found)', done => {
       request
         .post(`/trips/${uuid()}/attach/image%2Fpng`)

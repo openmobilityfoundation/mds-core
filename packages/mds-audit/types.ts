@@ -99,7 +99,12 @@ export type AuditApiGetVehicleRequest = AuditApiRequest &
   ApiRequestParams<'provider_id' | 'vin'> &
   ApiRequestQuery<'strict' | 'bbox' | 'provider_id'>
 
-export type AuditApiAccessTokenScopes = 'audits:write' | 'audits:read' | 'audits:delete' | 'audits:vehicles:read'
+export type AuditApiAccessTokenScopes =
+  | 'audits:write'
+  | 'audits:read'
+  | 'audits:delete'
+  | 'audits:vehicles:read'
+  | 'audits:read:provider'
 
 type AuditWithAttachmentSummary = Audit & { attachments: AttachmentSummary[]; id: number }
 type AuditedDevice =
