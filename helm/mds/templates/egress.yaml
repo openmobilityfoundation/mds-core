@@ -89,21 +89,3 @@ spec:
   location: MESH_EXTERNAL
 ---
 {{- end }}
-{{- if hasKey .Values "egress" }}
-apiVersion: networking.istio.io/v1alpha3
-kind: ServiceEntry
-metadata:
-  name: egress-other
-  namespace: {{ .Release.Namespace }}
-spec:
-  hosts:
-  {{- range .Values.egress.hosts }}
-  - {{ . }}
-  {{- end }}
-  ports:
-  - number: 443
-    name: tcp
-    protocol: TCP
-  location: MESH_EXTERNAL
----
-{{- end }}
