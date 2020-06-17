@@ -43,13 +43,15 @@ export interface ServiceResultType<R> {
 
 export type ServiceResponse<R> = ServiceErrorType | ServiceResultType<R>
 
-export type ServiceClient<I> = {
-  [P in keyof I]: I[P] extends AnyFunction<infer R> ? (...args: Parameters<I[P]>) => Promise<R> : never
+export type ServiceClient<S> = {
+  [M in keyof S]: S[M] extends AnyFunction<infer R> ? (...args: Parameters<S[M]>) => Promise<R> : never
 }
 
-export type ServiceProvider<I> = {
-  [P in keyof I]: I[P] extends AnyFunction<infer R> ? (...args: Parameters<I[P]>) => Promise<ServiceResponse<R>> : never
+export type ServiceProvider<S> = {
+  [M in keyof S]: S[M] extends AnyFunction<infer R> ? (...args: Parameters<S[M]>) => Promise<ServiceResponse<R>> : never
 }
+
+export type ServiceProviderResponse<S, M extends keyof S> = ReturnType<ServiceProvider<S>[M]>
 
 export interface ProcessController {
   start: () => Promise<void>
