@@ -95,6 +95,11 @@ function days(n: number) {
   return hours(n) * 24
 }
 
+export const RULE_UNIT_MAP = {
+  minutes: minutes(1),
+  hours: hours(1)
+}
+
 // Based on a bin size (in ms), calculate the start/end of
 // the frame containing the timestamp.
 function timeframe(size: Timestamp, timestamp: Timestamp) {

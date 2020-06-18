@@ -30,14 +30,13 @@ import {
   VehicleEvent,
   MatchedVehicle,
   EVENT_STATUS_MAP,
-  RULE_UNIT_MAP,
   DAY_OF_WEEK,
   VEHICLE_STATUS,
   TIME_FORMAT,
   DAYS_OF_WEEK,
   UUID
 } from '@mds-core/mds-types'
-import { pointInShape, getPolygon, isInStatesOrEvents, now, RuntimeError } from '@mds-core/mds-utils'
+import { pointInShape, getPolygon, isInStatesOrEvents, now, RuntimeError, RULE_UNIT_MAP } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
 import { MatchedVehiclePlusRule, VehicleEventWithTelemetry } from './types'
 

@@ -31,11 +31,6 @@ export type VEHICLE_TYPE = keyof typeof VEHICLE_TYPES
 export const RULE_TYPES = Enum('count', 'speed', 'time', 'user')
 export type RULE_TYPE = keyof typeof RULE_TYPES
 
-export const RULE_UNIT_MAP = {
-  minutes: 60,
-  hours: 60 * 60
-}
-
 export const PROPULSION_TYPES = Enum('human', 'electric', 'electric_assist', 'hybrid', 'combustion')
 export type PROPULSION_TYPE = keyof typeof PROPULSION_TYPES
 

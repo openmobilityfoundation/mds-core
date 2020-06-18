@@ -20,7 +20,7 @@ import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
 import stream from '@mds-core/mds-stream'
 import supertest from 'supertest'
-import { now, uuid } from '@mds-core/mds-utils'
+import { now, uuid, minutes } from '@mds-core/mds-utils'
 import {
   Telemetry,
   Device,
@@ -243,7 +243,7 @@ const TIME_POLICY_JSON: Policy = {
       geographies: [GEOGRAPHY_UUID],
       statuses: { available: [] },
       vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 7200
+      maximum: 20
     }
   ]
 }
@@ -526,7 +526,7 @@ describe('Tests Compliance API:', () => {
   describe('Time Violation Test: ', () => {
     before(done => {
       const devices: Device[] = makeDevices(15, now())
-      const events = makeEventsWithTelemetry(devices, now() - 1000000, CITY_OF_LA, 'trip_end')
+      const events = makeEventsWithTelemetry(devices, now() - minutes(21), CITY_OF_LA, 'trip_end')
       const telemetry: Telemetry[] = []
       devices.forEach(device => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))

@@ -7,7 +7,7 @@ import { RULE_TYPES, Geography, Policy, Device, VehicleEvent } from '@mds-core/m
 import { la_city_boundary } from '@mds-core/mds-policy/tests/la-city-boundary'
 import { FeatureCollection } from 'geojson'
 import { processPolicy, getSupersedingPolicies, getRecentEvents } from '@mds-core/mds-compliance/mds-compliance-engine'
-import { RuntimeError } from '@mds-core/mds-utils'
+import { RuntimeError, minutes } from '@mds-core/mds-utils'
 import { ValidationError, validateEvents, validateGeographies, validatePolicies } from '@mds-core/mds-schema-validators'
 
 let policies: Policy[] = []
@@ -249,7 +249,7 @@ describe('Tests Compliance Engine', () => {
 
   it('Verifies time compliance violation', done => {
     const devices = makeDevices(400, now())
-    const events = makeEventsWithTelemetry(devices, now() - 10000000, CITY_OF_LA, 'trip_end')
+    const events = makeEventsWithTelemetry(devices, now() - minutes(21), CITY_OF_LA, 'trip_end')
     test.assert.doesNotThrow(() => validatePolicies(policies))
     test.assert.doesNotThrow(() => validateGeographies(geographies))
     test.assert.doesNotThrow(() => validateEvents(events))
