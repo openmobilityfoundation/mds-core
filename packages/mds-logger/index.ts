@@ -27,7 +27,10 @@ const redact = (args: unknown[]): string[] =>
 const log = (level: LogLevel, ...args: unknown[]): string[] => {
   const redacted = process.env.QUIET === 'true' ? [] : redact(args)
   if (redacted.length) {
-    logger[level](level.toUpperCase(), ...redacted)
+    const timestamp = Date.now()
+    const ISOTimestamp = new Date(timestamp).toISOString()
+
+    logger[level](level.toUpperCase(), ISOTimestamp, timestamp, ...redacted)
   }
   return redacted
 }
