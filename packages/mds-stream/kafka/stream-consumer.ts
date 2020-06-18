@@ -32,7 +32,13 @@ const createStreamConsumer = async (
   { clientId = 'client', groupId = 'group' }: Partial<KafkaStreamConsumerOptions> = {}
 ) => {
   try {
-    const kafka = new Kafka({ clientId, brokers: getKafkaBrokers() })
+    const brokers = getKafkaBrokers()
+
+    if (!brokers) {
+      return null
+    }
+
+    const kafka = new Kafka({ clientId, brokers })
     const consumer = kafka.consumer({ groupId })
     await consumer.connect()
     await consumer.subscribe({ topic })

@@ -28,7 +28,13 @@ export interface KafkaStreamProducerOptions {
 
 const createStreamProducer = async ({ clientId = 'writer' }: Partial<KafkaStreamProducerOptions> = {}) => {
   try {
-    const kafka = new Kafka({ clientId, brokers: getKafkaBrokers() })
+    const brokers = getKafkaBrokers()
+
+    if (!brokers) {
+      return null
+    }
+
+    const kafka = new Kafka({ clientId, brokers })
     const producer = kafka.producer()
     await producer.connect()
     return producer
