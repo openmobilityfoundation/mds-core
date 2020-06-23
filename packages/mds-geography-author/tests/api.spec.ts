@@ -517,5 +517,15 @@ describe('Tests app', () => {
           done(err)
         })
     })
+
+    it('fails to hit non-existent endpoint with a 404', done => {
+      request
+        .get(`/foobar`)
+        .set('Authorization', GEOGRAPHIES_WRITE_SCOPE)
+        .expect(404)
+        .end(err => {
+          done(err)
+        })
+    })
   })
 })

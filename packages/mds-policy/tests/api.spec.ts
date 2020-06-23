@@ -193,4 +193,14 @@ describe('Tests app', () => {
       .set('Authorization', POLICIES_READ_SCOPE)
       .expect(200)
   })
+
+  it('fails to hit non-existent endpoint with a 404', done => {
+    request
+      .get(`/foobar`)
+      .set('Authorization', POLICIES_READ_SCOPE)
+      .expect(404)
+      .end(err => {
+        done(err)
+      })
+  })
 })

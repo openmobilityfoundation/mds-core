@@ -149,6 +149,16 @@ describe('Tests app', () => {
         })
     })
 
+    it('fails to hit non-existent endpoint with a 404', done => {
+      request
+        .get(`/foobar`)
+        .set('Authorization', POLICIES_WRITE_SCOPE)
+        .expect(404)
+        .end(err => {
+          done(err)
+        })
+    })
+
     it('creates one current policy', done => {
       const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
       request

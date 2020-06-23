@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import express from 'express'
+import express, { NextFunction } from 'express'
 import {
   uuid,
   pathsFor,
@@ -277,7 +277,7 @@ function api(app: express.Express): express.Express {
   /* eslint-reason global error handling middleware */
   /* istanbul ignore next */
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  app.use(async (error: Error, req: ApiRequest, res: ApiResponse) => {
+  app.use(async (error: Error, req: ApiRequest, res: ApiResponse, next: NextFunction) => {
     await logger.error(req.method, req.originalUrl, error)
     return res.status(500).send({ error })
   })
