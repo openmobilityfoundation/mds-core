@@ -16,7 +16,6 @@
 
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
-import { RepositoryError } from '@mds-core/mds-repository'
 import { UpdateJurisdictionDomainModel, JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 import { JurisdictionRepository } from '../repository'
 
@@ -28,7 +27,7 @@ export const updateJurisdiction = async (
     const updated = await JurisdictionRepository.updateJurisdiction(jurisdiction_id, jurisdiction)
     return ServiceResult(updated)
   } catch (error) /* istanbul ignore next */ {
-    const exception = ServiceException('Error Updating Jurisdiction', RepositoryError(error))
+    const exception = ServiceException('Error Updating Jurisdiction', error)
     logger.error(exception, error)
     return exception
   }

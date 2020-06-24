@@ -16,7 +16,6 @@
 
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
-import { RepositoryError } from '@mds-core/mds-repository'
 import { JurisdictionRepository } from '../repository'
 import { JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 
@@ -27,7 +26,7 @@ export const deleteJurisdiction = async (
     const deleted = await JurisdictionRepository.deleteJurisdiction(jurisdiction_id)
     return ServiceResult(deleted)
   } catch (error) /* istanbul ignore next */ {
-    const exception = ServiceException('Error Deleting Jurisdiction', RepositoryError(error))
+    const exception = ServiceException('Error Deleting Jurisdiction', error)
     logger.error(exception, error)
     return exception
   }

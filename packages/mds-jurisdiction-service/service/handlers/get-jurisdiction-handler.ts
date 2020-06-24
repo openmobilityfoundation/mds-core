@@ -16,7 +16,6 @@
 
 import { ServiceResponse, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
-import { RepositoryError } from '@mds-core/mds-repository'
 import { GetJurisdictionsOptions, JurisdictionDomainModel, JurisdictionIdType } from '../../@types'
 import { JurisdictionRepository } from '../repository'
 
@@ -28,7 +27,7 @@ export const getJurisdiction = async (
     const jurisdiction = await JurisdictionRepository.readJurisdiction(jurisdiction_id, options)
     return ServiceResult(jurisdiction)
   } catch (error) /* istanbul ignore next */ {
-    const exception = ServiceException('Error Reading Jurisdiction', RepositoryError(error))
+    const exception = ServiceException('Error Reading Jurisdiction', error)
     logger.error(exception, error)
     return exception
   }
