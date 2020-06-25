@@ -34,4 +34,9 @@ describe('Test Naming Strategy', () => {
     test.value(strategy.uniqueConstraintName('table', ['column'])).is('uc_column_table')
     done()
   })
+
+  it('Foreign Key Naming Strategy', done => {
+    test.value(strategy.foreignKeyName('table', ['column'])).is('fk_column_table')
+    done()
+  })
 })

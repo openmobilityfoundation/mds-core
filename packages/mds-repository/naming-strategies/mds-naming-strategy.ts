@@ -31,4 +31,8 @@ export class MdsNamingStrategy extends DefaultNamingStrategy implements NamingSt
   uniqueConstraintName(tableOrName: Table | string, columnNames: string[]): string {
     return ['uc', ...columnNames, tableName(tableOrName)].join('_')
   }
+
+  foreignKeyName(tableOrName: Table | string, columnNames: string[]): string {
+    return ['fk', ...columnNames, tableName(tableOrName)].join('_')
+  }
 }
