@@ -1,4 +1,4 @@
-import { MatchedVehicle, VehicleEvent, UUID, Timestamp, ComplianceResponse, Policy } from '@mds-core/mds-types'
+import { VehicleEvent, UUID, Timestamp, Policy, Device, Rule } from '@mds-core/mds-types'
 import {
   ApiRequest,
   ApiClaims,
@@ -32,3 +32,41 @@ export type ComplianceApiCountResponse = ComplianceApiResponse<{
 export type MatchedVehiclePlusRule = MatchedVehicle & { rule_id: UUID }
 
 export type VehicleEventWithTelemetry = VehicleEvent & { telemetry: { gps: { lat: number; lng: number } } }
+export interface MatchedVehicle {
+  device: Device
+  event: VehicleEvent
+}
+
+export interface CountMatch {
+  measured: number
+  geography_id: UUID
+  matched_vehicles: MatchedVehicle[]
+}
+
+export interface TimeMatch {
+  measured: number
+  geography_id: UUID
+  matched_vehicle: MatchedVehicle
+}
+
+export interface SpeedMatch {
+  measured: number
+  geography_id: UUID
+  matched_vehicle: MatchedVehicle
+}
+
+export interface ReducedMatch {
+  measured: number
+  geography_id: UUID
+}
+
+export interface Compliance {
+  rule: Rule
+  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] | SpeedMatch[]
+}
+export interface ComplianceResponse {
+  policy: Policy
+  compliance: Compliance[]
+  total_violations: number
+  vehicles_in_violation: MatchedVehiclePlusRule[]
+}

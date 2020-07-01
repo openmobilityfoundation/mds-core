@@ -379,7 +379,7 @@ describe('Verifies compliance engine processes by vehicle most recent event', as
             compliance.rule.rule_type === RULE_TYPES.count
           ) {
             test.assert.deepEqual(compliance.matches.length, 1)
-            test.assert.deepEqual(result.vehicles_in_violation[0].device_id, latest_device.device_id)
+            test.assert.deepEqual(result.vehicles_in_violation[0].device.device_id, latest_device.device_id)
           }
         })
       }

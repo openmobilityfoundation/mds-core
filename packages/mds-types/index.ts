@@ -312,53 +312,6 @@ export interface PolicyMetadata {
   policy_metadata: Record<string, any>
 }
 
-export interface MatchedVehicle {
-  device_id: UUID
-  provider_id: UUID
-  vehicle_id: string
-  vehicle_type: VEHICLE_TYPE
-  vehicle_status: VEHICLE_STATUS
-  gps: {
-    lat: number
-    lng: number
-  }
-}
-
-export interface CountMatch {
-  measured: number
-  geography_id: UUID
-  matched_vehicles: MatchedVehicle[]
-}
-
-export interface TimeMatch {
-  measured: number
-  geography_id: UUID
-  matched_vehicle: MatchedVehicle
-}
-
-export interface SpeedMatch {
-  measured: number
-  geography_id: UUID
-  matched_vehicle: MatchedVehicle
-}
-
-export interface ReducedMatch {
-  measured: number
-  geography_id: UUID
-}
-
-export interface Compliance {
-  rule: Rule
-  matches: ReducedMatch[] | CountMatch[] | TimeMatch[] | SpeedMatch[]
-}
-
-export interface ComplianceResponse {
-  policy: Policy
-  compliance: Compliance[]
-  total_violations: number
-  vehicles_in_violation: { device_id: UUID; rule_id: UUID }[]
-}
-
 // We don't put the publish_date into the geography_json column
 // as we do with the Policy type, because we don't want to mess with
 // the geojson FeatureCollection type.

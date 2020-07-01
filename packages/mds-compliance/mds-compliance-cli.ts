@@ -16,8 +16,9 @@
 import * as fs from 'fs'
 import logger from '@mds-core/mds-logger'
 import * as yargs from 'yargs'
-import { Policy, Geography, ComplianceResponse, VehicleEvent, Device } from '@mds-core/mds-types'
+import { Policy, Geography, VehicleEvent, Device } from '@mds-core/mds-types'
 import { validateEvents, validateGeographies, validatePolicies } from '@mds-core/mds-schema-validators'
+import { ComplianceResponse } from './types'
 import { getSupersedingPolicies, processPolicy, getRecentEvents } from './mds-compliance-engine'
 
 const args = yargs
