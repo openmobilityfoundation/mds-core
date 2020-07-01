@@ -35,8 +35,8 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "client": "yarn watch client",
-    "server": "yarn watch launch_server",
-    "start": "yarn watch launch_server",
+    "server": "yarn watch server",
+    "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 50 ts-mocha --project ../../tsconfig.json --exit",

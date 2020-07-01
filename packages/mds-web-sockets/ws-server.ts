@@ -101,7 +101,7 @@ export const WebSocketServer = async <T extends readonly string[]>(entityTypes?:
 
   const processor = async (err: Nullable<NatsError>, msg: Msg) => {
     const entity = msg.subject.split('.')?.[1]
-    await pushToClients(entity, JSON.stringify(msg.data))
+    await pushToClients(entity, msg.data)
   }
 
   await Promise.all(
