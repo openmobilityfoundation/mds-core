@@ -11,27 +11,29 @@ let writeableCachedClient: MDSPostgresClient | null = null
 let readOnlyCachedClient: MDSPostgresClient | null = null
 
 async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
-  const { PG_NAME, PG_USER, PG_PASS, PG_PORT, PG_MIGRATIONS = 'false' } = env
-  let PG_HOST: string | undefined
-  if (useWriteable) {
-    ;({ PG_HOST } = env)
-  } else {
-    PG_HOST = env.PG_HOST_READER || env.PG_HOST
-  }
-
-  const client_type: ClientType = useWriteable ? 'writeable' : 'readonly'
+  const {
+    PG_HOST,
+    PG_HOST_READER,
+    PG_MIGRATIONS = 'false',
+    PG_NAME,
+    PG_PASS,
+    PG_PASS_READER,
+    PG_PORT,
+    PG_USER,
+    PG_USER_READER
+  } = env
 
   const info = {
-    client_type,
+    client_type: useWriteable ? 'writeable' : 'readonly',
     database: PG_NAME,
-    user: PG_USER,
-    host: PG_HOST || 'localhost',
+    user: (useWriteable ? PG_USER : PG_USER_READER) || PG_USER,
+    host: (useWriteable ? PG_HOST : PG_HOST_READER) || PG_HOST || 'localhost',
     port: Number(PG_PORT) || 5432
   }
 
   logger.info('connecting to postgres:', ...Object.keys(info).map(key => (info as { [x: string]: unknown })[key]))
 
-  const client = configureClient({ ...info, password: PG_PASS })
+  const client = configureClient({ ...info, password: (useWriteable ? PG_PASS : PG_PASS_READER) || PG_PASS })
 
   try {
     await client.connect()

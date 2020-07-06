@@ -54,15 +54,25 @@ export class ConnectionManager<TConnectionMode extends ConnectionMode> {
 
   private connectionOptions = (mode: TConnectionMode): ConnectionOptions => {
     const { connectionName, options } = this
-    const { PG_HOST, PG_HOST_READER, PG_PORT, PG_USER, PG_PASS, PG_NAME, PG_DEBUG = 'false' } = process.env
+    const {
+      PG_DEBUG = 'false',
+      PG_HOST,
+      PG_HOST_READER,
+      PG_NAME,
+      PG_PASS,
+      PG_PASS_READER,
+      PG_PORT,
+      PG_USER,
+      PG_USER_READER
+    } = process.env
 
     return {
       name: connectionName(mode),
       type: 'postgres',
       host: (mode === 'rw' ? PG_HOST : PG_HOST_READER) || PG_HOST || 'localhost',
       port: Number(PG_PORT) || 5432,
-      username: PG_USER,
-      password: PG_PASS,
+      username: (mode === 'rw' ? PG_USER : PG_USER_READER) || PG_USER,
+      password: (mode === 'rw' ? PG_PASS : PG_PASS_READER) || PG_PASS,
       database: PG_NAME,
       logging: loggingOption(PG_DEBUG.toLowerCase()),
       maxQueryExecutionTime: 3000,
