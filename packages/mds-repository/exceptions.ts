@@ -32,5 +32,5 @@ export const RepositoryError = (error: unknown) => {
     }
     return error
   }
-  return new ServerError('Unexpected Server Error', error)
+  return new ServerError('Unexpected Repository Error', error)
 }

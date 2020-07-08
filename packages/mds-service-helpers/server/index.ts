@@ -83,7 +83,6 @@ const ProcessMonitor = async (
     clearInterval(timeout)
     logger.info(`Terminating process ${version} on ${signal}`)
     await controller.stop()
-    process.exit(0)
   }
 
   // Monitor process for signals
