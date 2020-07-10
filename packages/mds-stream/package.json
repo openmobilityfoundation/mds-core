@@ -19,7 +19,7 @@
     "@mds-core/mds-utils": "0.1.26",
     "@types/bluebird": "3.5.32",
     "@types/moment-timezone": "0.5.13",
-    "@types/redis": "2.8.21",
+    "@types/redis": "2.8.24",
     "@types/sinon": "9.0.4",
     "bluebird": "3.7.2",
     "flat": "5.0.0",

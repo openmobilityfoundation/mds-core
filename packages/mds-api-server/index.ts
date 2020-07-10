@@ -41,7 +41,7 @@ export type ApiResponse<B = {}> = Omit<
     B | { error: unknown; error_description?: string; error_details?: string[] } | { errors: unknown[] }
   >,
   'locals'
-> & { locals: {} }
+> & { locals: unknown }
 
 /**
  * L: Type of response locals (res.locals)
@@ -85,9 +85,9 @@ const health = () => {
 }
 
 export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): express.RequestHandler =>
-  morgan(
-    (tokens, req: ApiRequest, res: ApiResponse & ApiResponseLocals<ApiClaims<AccessTokenScope>>) =>
-      [
+  morgan<ApiRequest, ApiResponse & ApiResponseLocals<ApiClaims<AccessTokenScope>>>(
+    (tokens, req, res) => {
+      return [
         ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
         tokens.method(req, res),
         tokens.url(req, res),
@@ -96,9 +96,10 @@ export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): exp
         '-',
         tokens['response-time'](req, res),
         'ms'
-      ].join(' '),
+      ].join(' ')
+    },
     {
-      skip: (req: ApiRequest, res: ApiResponse) => {
+      skip: (req, res) => {
         // By default only log 400/500 errors
         const { API_REQUEST_LOG_LEVEL = 0 } = process.env
         return res.statusCode < Number(API_REQUEST_LOG_LEVEL)

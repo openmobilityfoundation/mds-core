@@ -35,7 +35,7 @@ import {
   Device
 } from '@mds-core/mds-types'
 import * as Joi from '@hapi/joi'
-import joiToJsonSchema from 'joi-to-json-schema'
+import joiToJson from 'joi-to-json'
 
 import { ValidationError } from '@mds-core/mds-utils'
 
@@ -58,7 +58,7 @@ export const uuidSchema = stringSchema.guid()
 
 export const timestampSchema = numberSchema.min(1420099200000)
 
-export const providerIdSchema = uuidSchema.valid(Object.keys(providers))
+export const providerIdSchema = uuidSchema.valid(...Object.keys(providers))
 
 const vehicleIdSchema = stringSchema.max(255)
 
@@ -85,8 +85,10 @@ const telemetrySchema = Joi.object().keys({
 const ruleSchema = Joi.object().keys({
   name: Joi.string().required(),
   rule_id: Joi.string().guid().required(),
-  rule_type: Joi.string().valid(Object.values(RULE_TYPES)).required(),
-  rule_units: Joi.string().valid(['seconds', 'minutes', 'hours', 'mph', 'kph']),
+  rule_type: Joi.string()
+    .valid(...Object.values(RULE_TYPES))
+    .required(),
+  rule_units: Joi.string().valid('seconds', 'minutes', 'hours', 'mph', 'kph'),
   geographies: Joi.array().items(Joi.string().guid()),
   statuses: Joi.object()
     .keys({
@@ -99,12 +101,12 @@ const ruleSchema = Joi.object().keys({
       elsewhere: Joi.array()
     })
     .allow(null),
-  vehicle_types: Joi.array().items(Joi.string().valid(Object.values(VEHICLE_TYPES))),
+  vehicle_types: Joi.array().items(Joi.string().valid(...Object.values(VEHICLE_TYPES))),
   maximum: Joi.number(),
   minimum: Joi.number(),
   start_time: Joi.string(),
   end_time: Joi.string(),
-  days: Joi.array().items(Joi.string().valid(Object.values(DAYS_OF_WEEK))),
+  days: Joi.array().items(Joi.string().valid(...Object.values(DAYS_OF_WEEK))),
   messages: Joi.object(),
   value_url: Joi.string().uri()
 })
@@ -124,7 +126,7 @@ const policiesSchema = Joi.array().items(policySchema)
 
 const featureSchema = Joi.object()
   .keys({
-    type: Joi.string().valid(['Feature']).required(),
+    type: Joi.string().valid('Feature').required(),
     properties: Joi.object().required(),
     geometry: Joi.object().required()
   })
@@ -132,7 +134,7 @@ const featureSchema = Joi.object()
 
 const featureCollectionSchema = Joi.object()
   .keys({
-    type: Joi.string().valid(['FeatureCollection']).required(),
+    type: Joi.string().valid('FeatureCollection').required(),
     features: Joi.array().min(1).items(featureSchema).required()
   })
   .unknown(true) // TODO
@@ -148,13 +150,13 @@ const geographiesSchema = Joi.array().items(geographySchema)
 
 const eventsSchema = Joi.array().items()
 
-const vehicleEventTypeSchema = stringSchema.valid(Object.keys(VEHICLE_EVENTS))
+const vehicleEventTypeSchema = stringSchema.valid(...Object.keys(VEHICLE_EVENTS))
 
-const vehicleTypeSchema = stringSchema.valid(Object.keys(VEHICLE_TYPES))
+const vehicleTypeSchema = stringSchema.valid(...Object.keys(VEHICLE_TYPES))
 
-const propulsionTypeSchema = stringSchema.valid(Object.keys(PROPULSION_TYPES))
+const propulsionTypeSchema = stringSchema.valid(...Object.keys(PROPULSION_TYPES))
 
-const vehicleStatusSchema = stringSchema.valid(Object.keys(VEHICLE_STATUSES))
+const vehicleStatusSchema = stringSchema.valid(...Object.keys(VEHICLE_STATUSES))
 
 const eventSchema = Joi.object().keys({
   device_id: uuidSchema.required(),
@@ -172,19 +174,19 @@ const tripEventSchema = eventSchema.keys({
 })
 
 const serviceEndEventSchema = eventSchema.keys({
-  event_type_reason: stringSchema.valid(['low_battery', 'maintenance', 'compliance', 'off_hours']).required()
+  event_type_reason: stringSchema.valid('low_battery', 'maintenance', 'compliance', 'off_hours').required()
 })
 
 const providerPickUpEventSchema = eventSchema.keys({
-  event_type_reason: stringSchema.valid(['rebalance', 'maintenance', 'charge', 'compliance']).required()
+  event_type_reason: stringSchema.valid('rebalance', 'maintenance', 'charge', 'compliance').required()
 })
 
 const deregisterEventSchema = eventSchema.keys({
-  event_type_reason: stringSchema.valid(['missing', 'decomissioned']).required()
+  event_type_reason: stringSchema.valid('missing', 'decomissioned').required()
 })
 
 const auditEventTypeSchema = (accept?: AUDIT_EVENT_TYPE[]): Joi.StringSchema =>
-  stringSchema.valid(accept || Object.keys(AUDIT_EVENT_TYPES))
+  stringSchema.valid(...(accept || Object.keys(AUDIT_EVENT_TYPES)))
 
 const auditIssueCodeSchema = stringSchema.max(31)
 
@@ -246,7 +248,7 @@ export const ValidateSchema = <T = unknown>(
   options: Partial<ValidatorOptions> = {}
 ): value is T => {
   const { assert = true, required = true, property = 'value', allowUnknown = false } = options
-  const { error } = Joi.validate(value, schema, { presence: required ? 'required' : 'optional', allowUnknown })
+  const { error } = schema.validate(value, { presence: required ? 'required' : 'optional', allowUnknown })
   if (error && assert) {
     throw new ValidationError(`invalid_${property}`.toLowerCase(), {
       [property]: value,
@@ -280,7 +282,7 @@ interface AuditEventValidatorOptions extends ValidatorOptions {
 }
 
 export const isValidStop = (value: unknown): value is Stop => {
-  const { error } = Joi.validate(value, stopSchema)
+  const { error } = stopSchema.validate(value)
   if (error) {
     throw new ValidationError('invalid_stop', {
       value,
@@ -339,7 +341,7 @@ export const HasPropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): ob
   typeof obj === 'object' && obj !== null && props.every(prop => prop in obj)
 
 export function validatePolicies(policies: unknown): policies is Policy[] {
-  const { error } = Joi.validate(policies, policiesSchema)
+  const { error } = policiesSchema.validate(policies)
   if (error) {
     throw new ValidationError('invalid_policies', {
       policies,
@@ -350,7 +352,7 @@ export function validatePolicies(policies: unknown): policies is Policy[] {
 }
 
 export function validateGeographies(geographies: unknown): geographies is Geography[] {
-  const { error } = Joi.validate(geographies, geographiesSchema)
+  const { error } = geographiesSchema.validate(geographies)
   if (error) {
     throw new ValidationError('invalid_geographies', {
       geographies,
@@ -361,7 +363,7 @@ export function validateGeographies(geographies: unknown): geographies is Geogra
 }
 
 export function validateEvents(events: unknown): events is VehicleEvent[] {
-  const { error } = Joi.validate(events, eventsSchema)
+  const { error } = eventsSchema.validate(events)
   if (error) {
     throw new ValidationError('invalid events', {
       events,
@@ -372,7 +374,7 @@ export function validateEvents(events: unknown): events is VehicleEvent[] {
 }
 
 export function policyValidationDetails(policy: Policy): Joi.ValidationErrorItem[] | null {
-  const { error } = Joi.validate(policy, policySchema, { allowUnknown: false })
+  const { error } = policySchema.validate(policy, { allowUnknown: false })
   if (error) {
     return error.details
   }
@@ -380,15 +382,15 @@ export function policyValidationDetails(policy: Policy): Joi.ValidationErrorItem
 }
 
 export function geographyValidationDetails(geography: Geography): Joi.ValidationErrorItem[] | null {
-  const { error } = Joi.validate(geography, geographySchema, { allowUnknown: false })
+  const { error } = geographySchema.validate(geography, { allowUnknown: false })
   if (error) {
     return error.details
   }
   return null
 }
 
-export function rawValidatePolicy(policy: Policy): Joi.ValidationResult<Policy> {
-  return Joi.validate(policy, policySchema)
+export function rawValidatePolicy(policy: Policy): Joi.ValidationResult {
+  return policySchema.validate(policy)
 }
 
 const validateTripEvent = (event: VehicleEvent) => ValidateSchema(event, tripEventSchema, {})
@@ -427,6 +429,6 @@ export const validateEvent = (event: unknown) => {
   }
 }
 
-export const policySchemaJson = joiToJsonSchema(policySchema)
+export const policySchemaJson = joiToJson(policySchema)
 
 export const SchemaBuilder = Joi

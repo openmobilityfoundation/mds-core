@@ -15,11 +15,11 @@
   },
   "dependencies": {
     "@types/git-revision-webpack-plugin": "3.0.0",
-    "@types/webpack": "4.41.13",
+    "@types/webpack": "4.41.21",
     "@types/webpack-merge": "4.1.5",
     "git-revision-webpack-plugin": "3.0.6",
     "webpack": "4.43.0",
-    "webpack-merge": "4.2.2",
+    "webpack-merge": "5.0.9",
     "wrapper-webpack-plugin": "2.1.0"
   },
   "keywords": [

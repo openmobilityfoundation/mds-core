@@ -22,6 +22,7 @@ import { now, pathsFor, NotFoundError, isUUID, BadParamsError, ServerError } fro
 import logger from '@mds-core/mds-logger'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
+import { policySchemaJson } from '@mds-core/mds-schema-validators'
 import {
   PolicyApiRequest,
   PolicyApiResponse,
@@ -162,6 +163,10 @@ function api(app: express.Express): express.Express {
       }
     }
   )
+
+  app.get(pathsFor('/schema/policy'), (req, res) => {
+    res.status(200).send(policySchemaJson)
+  })
 
   /* eslint-reason global error handling middleware */
   /* istanbul ignore next */

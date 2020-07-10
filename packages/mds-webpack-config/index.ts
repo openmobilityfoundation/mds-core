@@ -17,7 +17,7 @@
 import { Configuration, ConfigurationFactory, ContextReplacementPlugin, IgnorePlugin } from 'webpack'
 import GitRevisionPlugin from 'git-revision-webpack-plugin'
 import WrapperWebpackPlugin from 'wrapper-webpack-plugin'
-import WebpackMerge from 'webpack-merge'
+import { merge as WebpackMerge } from 'webpack-merge'
 import { parse, resolve } from 'path'
 
 const gitRevisionPlugin = new GitRevisionPlugin({ commithashCommand: 'rev-parse --short HEAD' })
@@ -34,7 +34,15 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
     [name]: path || `${dirname}/${name}.ts`
   }
 
-  const { npm_package_name = '', npm_package_version = '' } = typeof env === 'string' ? {} : env
+  const parseEnv = <P extends string>(...properties: P[]): Partial<{ [K in P]: string }> =>
+    env && typeof env === 'object'
+      ? properties.reduce((values, property) => {
+          const value = env[property]
+          return typeof value === 'string' ? { ...values, [property]: value } : values
+        }, {})
+      : {}
+
+  const { npm_package_name = '', npm_package_version = '' } = parseEnv('npm_package_name', 'npm_package_version')
 
   console.log('BUNDLE:', resolve(entry[name])) /* eslint-disable-line no-console */
 

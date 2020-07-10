@@ -19,7 +19,7 @@
     "circle-to-polygon": "2.0.2",
     "moment-timezone": "0.5.31",
     "point-in-polygon": "1.0.1",
-    "uuid": "8.1.0"
+    "uuid": "8.2.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

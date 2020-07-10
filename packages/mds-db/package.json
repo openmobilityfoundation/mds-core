@@ -22,7 +22,7 @@
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/pg": "7.14.3",
-    "pg": "8.2.1"
+    "@types/pg": "7.14.4",
+    "pg": "8.3.0"
   }
 }
