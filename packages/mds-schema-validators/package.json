@@ -14,7 +14,7 @@
     "@mds-core/mds-providers": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/hapi__joi": "17.1.3",
+    "@types/hapi__joi": "17.1.4",
     "joi-to-json": "1.2.0"
   },
   "main": "dist/index.js",

@@ -14,5 +14,10 @@
     limitations under the License.
  */
 
-export { BigintTransformer } from './bigint-transformer'
-export { UppercaseTransformer } from './uppercase-transformer'
+const Uppercase = (value: string | null): string | null => (value === null ? value : value.toUpperCase())
+
+// Transform strings to uppercase
+export const UppercaseTransformer = {
+  to: (to: string | null | (string | null)[]) => (Array.isArray(to) ? to.map(Uppercase) : Uppercase(to)),
+  from: (from: string | null | (string | null)[]) => (Array.isArray(from) ? from.map(Uppercase) : Uppercase(from))
+}

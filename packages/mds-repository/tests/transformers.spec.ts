@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import { BigintTransformer } from '../transformers'
+import { BigintTransformer, UppercaseTransformer } from '../transformers'
 
 describe('Test Transformers', () => {
   it('BigIntTransformer', done => {
@@ -25,6 +25,18 @@ describe('Test Transformers', () => {
     test.value(BigintTransformer.from('1')).is(1)
     test.value(BigintTransformer.from(null)).is(null)
     test.value(BigintTransformer.from(['1', null])).is([1, null])
+    done()
+  })
+
+  it('UppercaseTransformer', done => {
+    test.value(UppercaseTransformer.to('a')).is('A')
+    test.value(UppercaseTransformer.to('A')).is('A')
+    test.value(UppercaseTransformer.to(null)).is(null)
+    test.value(UppercaseTransformer.to(['a', 'A', null])).is(['A', 'A', null])
+    test.value(UppercaseTransformer.from('a')).is('A')
+    test.value(UppercaseTransformer.from('A')).is('A')
+    test.value(UppercaseTransformer.from(null)).is(null)
+    test.value(UppercaseTransformer.from(['a', 'A', null])).is(['A', 'A', null])
     done()
   })
 })

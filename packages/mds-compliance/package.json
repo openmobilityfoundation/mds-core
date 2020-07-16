@@ -39,6 +39,6 @@
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.31",
-    "yargs": "15.4.0"
+    "yargs": "15.4.1"
   }
 }
