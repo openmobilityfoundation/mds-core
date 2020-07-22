@@ -35,7 +35,7 @@ import {
 import logger from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
-import { isArray } from 'util'
+import { isArray, deprecate } from 'util'
 import { getNextState } from './state-machine'
 import { parseRelative, getCurrentDate } from './date-time-utils'
 
@@ -467,10 +467,14 @@ function inc(map: { [key: string]: number }, key: string) {
   return Object.assign(map, { [key]: map[key] ? map[key] + 1 : 1 })
 }
 
-function pathsFor(path: string): string[] {
+function pathPrefix(path: string): string {
   const { PATH_PREFIX } = process.env
-  return [path, PATH_PREFIX + path, `${PATH_PREFIX}/dev${path}`]
+  return PATH_PREFIX ? `${PATH_PREFIX}${path}` : path
 }
+
+const pathsFor = deprecate(function pathsFor(path: string): string[] {
+  return [...new Set([path, pathPrefix(path), pathPrefix(`/dev${path}`)])]
+}, 'The function "pathsFor" has been deprecated, please use "pathPrefix" instead')
 
 function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: BoundingBox): boolean {
   if (telemetry && telemetry.gps) {
@@ -633,6 +637,7 @@ export {
   yesterday,
   csv,
   inc,
+  pathPrefix,
   pathsFor,
   isInsideBoundingBox,
   head,

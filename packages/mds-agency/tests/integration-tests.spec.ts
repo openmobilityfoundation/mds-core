@@ -47,7 +47,7 @@ import { shutdown as socketShutdown } from '@mds-core/mds-web-sockets'
 import { makeDevices, makeEvents, GEOGRAPHY_UUID, LA_CITY_BOUNDARY, JUMP_TEST_DEVICE_1 } from '@mds-core/mds-test-data'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
-
+import { pathPrefix } from '@mds-core/mds-utils'
 import { api } from '../api'
 
 /* eslint-disable-next-line no-console */
@@ -140,7 +140,7 @@ after(async () => {
 describe('Tests API', () => {
   it('verifies unable to access admin if not scoped', done => {
     request
-      .get('/admin/cache/info')
+      .get(pathPrefix('/admin/cache/info'))
       .set('Authorization', AUTH_NO_SCOPE)
       .expect(403)
       .end((err, result) => {
@@ -152,7 +152,7 @@ describe('Tests API', () => {
 
   it('verifies post device failure nothing in body', done => {
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .expect(400)
       .end((err, result) => {
@@ -164,7 +164,7 @@ describe('Tests API', () => {
   })
   it('verifies get non-existent device', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}`))
       .set('Authorization', AUTH)
       .expect(404)
       .end((err, result) => {
@@ -175,7 +175,7 @@ describe('Tests API', () => {
   })
   it('verifies get non-existent device from cache', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}?cached=true`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}?cached=true`))
       .set('Authorization', AUTH)
       .expect(404)
       .end((err, result) => {
@@ -188,7 +188,7 @@ describe('Tests API', () => {
     const badVehicle = deepCopy(TEST_VEHICLE)
     badVehicle.device_id = 'bad'
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -202,7 +202,7 @@ describe('Tests API', () => {
   // it('verifies post device missing mfgr', (done) => {
   //     let badVehicle = deepCopy(TEST_VEHICLE)
   //     delete badVehicle.mfgr
-  //     request.post('/vehicles')
+  //     request.post(pathsFor('/vehicles'))
   //         .set('Authorization', AUTH)
   //         .send(badVehicle)
   //         .expect(400).end((err, result) => {
@@ -216,7 +216,7 @@ describe('Tests API', () => {
     const badVehicle = deepCopy(TEST_VEHICLE)
     delete badVehicle.propulsion
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -233,7 +233,7 @@ describe('Tests API', () => {
     // @ts-ignore: Spoofing garbage data
     badVehicle.propulsion = ['hamster']
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -248,7 +248,7 @@ describe('Tests API', () => {
   // it('verifies post device missing year', (done) => {
   //     let badVehicle = deepCopy(TEST_VEHICLE)
   //     delete badVehicle.year
-  //     request.post('/vehicles')
+  //     request.post(pathsFor('/vehicles'))
   //         .set('Authorization', AUTH)
   //         .send(badVehicle)
   //         .expect(400).end((err, result) => {
@@ -263,7 +263,7 @@ describe('Tests API', () => {
     // @ts-ignore: Spoofing garbage data
     badVehicle.year = 'hamster'
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -279,7 +279,7 @@ describe('Tests API', () => {
     const badVehicle = deepCopy(TEST_VEHICLE)
     badVehicle.year = 3000
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -295,7 +295,7 @@ describe('Tests API', () => {
     const badVehicle = deepCopy(TEST_VEHICLE)
     delete badVehicle.type
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -311,7 +311,7 @@ describe('Tests API', () => {
     // @ts-ignore: Spoofing garbage data
     badVehicle.type = 'hamster'
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(badVehicle)
       .expect(400)
@@ -326,7 +326,7 @@ describe('Tests API', () => {
 
   it('verifies post device success', done => {
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(TEST_VEHICLE)
       .expect(201)
@@ -338,7 +338,7 @@ describe('Tests API', () => {
   })
   it('verifies read back all devices from db', done => {
     request
-      .get('/vehicles')
+      .get(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -353,7 +353,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback success (database)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -367,7 +367,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback success (cache)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}?cached=true`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}?cached=true`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -381,7 +381,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback failure (provider mismatch database)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}`))
       .set('Authorization', AUTH2)
       .expect(404)
       .end((err, result) => {
@@ -392,7 +392,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback failure (provider mismatch cache)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}?cached=true`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}?cached=true`))
       .set('Authorization', AUTH2)
       .expect(404)
       .end((err, result) => {
@@ -403,7 +403,7 @@ describe('Tests API', () => {
   })
   it('verifies post same device fails as expected', done => {
     request
-      .post('/vehicles')
+      .post(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .send(TEST_VEHICLE)
       .expect(409)
@@ -417,7 +417,7 @@ describe('Tests API', () => {
   const NEW_VEHICLE_ID = 'new-vehicle-id'
   it('verifies put update success', done => {
     request
-      .put(`/vehicles/${TEST_VEHICLE.device_id}`)
+      .put(pathPrefix(`/vehicles/${TEST_VEHICLE.device_id}`))
       .set('Authorization', AUTH)
       .send({
         vehicle_id: NEW_VEHICLE_ID
@@ -432,7 +432,7 @@ describe('Tests API', () => {
   })
   it('verifies put update failure (provider mismatch)', done => {
     request
-      .put(`/vehicles/${TEST_VEHICLE.device_id}`)
+      .put(pathPrefix(`/vehicles/${TEST_VEHICLE.device_id}`))
       .set('Authorization', AUTH2)
       .send({
         vehicle_id: NEW_VEHICLE_ID
@@ -446,7 +446,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback success after update (database)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -457,7 +457,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback success after update (cache)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}?cached=true`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}?cached=true`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -468,7 +468,7 @@ describe('Tests API', () => {
   })
   it('verifies put bogus device_id fail', done => {
     request
-      .put('/vehicles/' + 'hamster')
+      .put(pathPrefix('/vehicles/' + 'hamster'))
       .set('Authorization', AUTH)
       .send({
         vehicle_id: 'new-vehicle-id'
@@ -483,7 +483,7 @@ describe('Tests API', () => {
   })
   it('verifies put non-existent device_id fail', done => {
     request
-      .put(`/vehicles/${TRIP_UUID}`)
+      .put(pathPrefix(`/vehicles/${TRIP_UUID}`))
       .set('Authorization', AUTH)
       .send({
         vehicle_id: 'new-vehicle-id'
@@ -497,7 +497,7 @@ describe('Tests API', () => {
   })
   it('verifies read back all device_ids from db', done => {
     request
-      .get('/admin/vehicle_ids')
+      .get(pathPrefix('/admin/vehicle_ids'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -507,7 +507,7 @@ describe('Tests API', () => {
   })
   it('verifies read back for non-existent provider fails', done => {
     request
-      .get('/admin/vehicle_ids?provider_id=123potato')
+      .get(pathPrefix('/admin/vehicle_ids?provider_id=123potato'))
       .set('Authorization', AUTH)
       .expect(400)
       .end((err, result) => {
@@ -523,7 +523,7 @@ describe('Tests API', () => {
 
   it('refreshes the cache', done => {
     request
-      .get('/admin/cache/refresh')
+      .get(pathPrefix('/admin/cache/refresh'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -538,7 +538,7 @@ describe('Tests API', () => {
 
   it('verifies service_start success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'service_start',
@@ -555,7 +555,7 @@ describe('Tests API', () => {
 
   it('verifies read back all devices from db', done => {
     request
-      .get('/vehicles')
+      .get(pathPrefix('/vehicles'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -570,7 +570,7 @@ describe('Tests API', () => {
 
   it('verifies service_end success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.service_end,
@@ -587,7 +587,7 @@ describe('Tests API', () => {
   // status
   it('verifies post device status deregister success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send(test_event)
       .expect(201)
@@ -604,7 +604,7 @@ describe('Tests API', () => {
 
   it('verifies post device status bogus event', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'BOGUS',
@@ -619,7 +619,7 @@ describe('Tests API', () => {
   })
   it('verifies post device status bogus DEVICE_UUID', done => {
     request
-      .post('/vehicles/' + 'bogus' + '/event')
+      .post(pathPrefix('/vehicles/' + 'bogus' + '/event'))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -635,7 +635,7 @@ describe('Tests API', () => {
   })
   it('verifies post device status provider mismatch', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH2)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -651,7 +651,7 @@ describe('Tests API', () => {
   })
   it('verifies post device status missing timestamp', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -667,7 +667,7 @@ describe('Tests API', () => {
   })
   it('verifies post device status bad timestamp', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'provider_drop_off',
@@ -684,7 +684,7 @@ describe('Tests API', () => {
   })
   it('verifies post device maintenance event', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -698,7 +698,7 @@ describe('Tests API', () => {
   })
   it('verifies post duplicate event fails as expected', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -716,7 +716,7 @@ describe('Tests API', () => {
   })
   it('verifies post event to non-existent vehicle fails as expected', done => {
     request
-      .post(`/vehicles/${TRIP_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${TRIP_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -732,7 +732,7 @@ describe('Tests API', () => {
   })
   it('verifies post event with bad event_type_reason fails', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.provider_pick_up,
@@ -751,7 +751,7 @@ describe('Tests API', () => {
   // start_trip
   it('verifies post start trip success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_start',
@@ -766,7 +766,7 @@ describe('Tests API', () => {
   })
   it('verifies post start trip without trip-id fails', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_start',
@@ -782,7 +782,7 @@ describe('Tests API', () => {
   })
   it('verifies post trip leave success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_leave',
@@ -797,7 +797,7 @@ describe('Tests API', () => {
   })
   it('verifies post trip enter success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_enter',
@@ -812,7 +812,7 @@ describe('Tests API', () => {
   })
   it('verifies post end trip success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -834,7 +834,7 @@ describe('Tests API', () => {
 
   it('verifies post reserve success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.reserve,
@@ -849,7 +849,7 @@ describe('Tests API', () => {
   })
   it('verifies post reserve cancellation success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.cancel_reservation,
@@ -868,7 +868,7 @@ describe('Tests API', () => {
 
   it('verifies post start trip missing event', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         // event_type: 'trip_start',
@@ -890,7 +890,7 @@ describe('Tests API', () => {
 
   it('verifies post trip start missing location', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_start',
@@ -908,7 +908,7 @@ describe('Tests API', () => {
 
   it('verifies post trip end fail bad trip_id', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -930,7 +930,7 @@ describe('Tests API', () => {
 
   it('verifies post trip end fail bad latitude', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -952,7 +952,7 @@ describe('Tests API', () => {
 
   it('verifies post trip end fail bad altitude', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -974,7 +974,7 @@ describe('Tests API', () => {
 
   it('verifies post trip end fail bad accuracy', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -995,7 +995,7 @@ describe('Tests API', () => {
 
   it('verifies post trip end fail bad speed', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -1016,7 +1016,7 @@ describe('Tests API', () => {
 
   it('verifies post trip end fail bad satellites', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -1033,7 +1033,7 @@ describe('Tests API', () => {
   })
   it('verifies post end trip missing location', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: 'trip_end',
@@ -1056,7 +1056,7 @@ describe('Tests API', () => {
   log('lateTimestamp', lateTimestamp)
   it('verifies late-event service-end (rebalance) success', done => {
     request
-      .post(`/vehicles/${DEVICE_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.service_end,
@@ -1088,7 +1088,7 @@ describe('Tests API', () => {
   // tests this particular uuid
   it('verifies wierd uuid', done => {
     request
-      .post(`/vehicles/${WEIRD_UUID}/event`)
+      .post(pathPrefix(`/vehicles/${WEIRD_UUID}/event`))
       .set('Authorization', AUTH)
       .send({
         event_type: VEHICLE_EVENTS.service_end,
@@ -1105,7 +1105,7 @@ describe('Tests API', () => {
 
   it('verifies post telemetry', done => {
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [TEST_TELEMETRY, TEST_TELEMETRY2]
@@ -1122,7 +1122,7 @@ describe('Tests API', () => {
   })
   it('verifies posting the same telemetry does not break things', done => {
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [TEST_TELEMETRY, TEST_TELEMETRY2]
@@ -1154,7 +1154,7 @@ describe('Tests API', () => {
     // @ts-ignore: Spoofing garbage data
     badTelemetry.device_id = 'bogus'
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [badTelemetry]
@@ -1175,7 +1175,7 @@ describe('Tests API', () => {
     badTelemetry.gps.lat = 'bogus'
 
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [badTelemetry]
@@ -1197,7 +1197,7 @@ describe('Tests API', () => {
     badTelemetry.gps.lng = 'bogus'
 
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [badTelemetry]
@@ -1219,7 +1219,7 @@ describe('Tests API', () => {
     badTelemetry.charge = 'bogus'
 
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [badTelemetry]
@@ -1241,7 +1241,7 @@ describe('Tests API', () => {
     badTelemetry.timestamp = 'bogus'
 
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
       .send({
         data: [badTelemetry]
@@ -1259,7 +1259,7 @@ describe('Tests API', () => {
   })
   it('verifies post telemetry with mismatched provider', done => {
     request
-      .post('/vehicles/telemetry')
+      .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH2)
       .send({
         data: [TEST_TELEMETRY]
@@ -1277,7 +1277,7 @@ describe('Tests API', () => {
   })
   it('verifies get device readback w/telemetry success (database)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1295,7 +1295,7 @@ describe('Tests API', () => {
 
   it('verifies get device readback w/telemetry success (cache)', done => {
     request
-      .get(`/vehicles/${DEVICE_UUID}?cached=true`)
+      .get(pathPrefix(`/vehicles/${DEVICE_UUID}?cached=true`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1312,21 +1312,24 @@ describe('Tests API', () => {
   })
 
   it('verifies get device defaults to `deregister` if cache misses reads for associated events', async () => {
-    await request.post('/vehicles').set('Authorization', AUTH).send(JUMP_TEST_DEVICE_1).expect(201)
+    await request.post(pathPrefix('/vehicles')).set('Authorization', AUTH).send(JUMP_TEST_DEVICE_1).expect(201)
 
     await request
-      .post(`/vehicles/${JUMP_TEST_DEVICE_1_ID}/event`)
+      .post(pathPrefix(`/vehicles/${JUMP_TEST_DEVICE_1_ID}/event`))
       .set('Authorization', AUTH)
       .send({ device_id: JUMP_TEST_DEVICE_1, timestamp: now(), event_type: VEHICLE_EVENTS.deregister })
       .expect(201)
 
-    const result = await request.get(`/vehicles/${JUMP_TEST_DEVICE_1_ID}`).set('Authorization', AUTH).expect(200)
+    const result = await request
+      .get(pathPrefix(`/vehicles/${JUMP_TEST_DEVICE_1_ID}`))
+      .set('Authorization', AUTH)
+      .expect(200)
     test.assert(result.body.status === VEHICLE_STATUSES.inactive)
     test.assert(result.body.prev_event === VEHICLE_EVENTS.deregister)
   })
 
   it('get multiple devices endpoint has vehicle status default to `inactive` if event is missing for a device', async () => {
-    const result = await request.get(`/vehicles/`).set('Authorization', AUTH).expect(200)
+    const result = await request.get(pathPrefix(`/vehicles/`)).set('Authorization', AUTH).expect(200)
     const ids = result.body.vehicles.map((device: any) => device.device_id)
     test.assert(ids.includes(JUMP_TEST_DEVICE_1_ID))
     result.body.vehicles.map((device: any) => {
@@ -1338,7 +1341,7 @@ describe('Tests API', () => {
 
   it('gets cache info', done => {
     request
-      .get('/admin/cache/info')
+      .get(pathPrefix('/admin/cache/info'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1349,7 +1352,7 @@ describe('Tests API', () => {
 
   it('refreshes the cache', done => {
     request
-      .get('/admin/cache/refresh')
+      .get(pathPrefix('/admin/cache/refresh'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1359,7 +1362,7 @@ describe('Tests API', () => {
   })
   it('wipes a vehicle via admin', done => {
     request
-      .get(`/admin/wipe/${TEST_VEHICLE.device_id}`)
+      .get(pathPrefix(`/admin/wipe/${TEST_VEHICLE.device_id}`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1369,7 +1372,7 @@ describe('Tests API', () => {
   })
   it('wipes a vehicle via admin that has already been wiped', done => {
     request
-      .get(`/admin/wipe/${TEST_VEHICLE.device_id}`)
+      .get(pathPrefix(`/admin/wipe/${TEST_VEHICLE.device_id}`))
       .set('Authorization', AUTH)
       .expect(404)
       .end((err, result) => {
@@ -1379,7 +1382,7 @@ describe('Tests API', () => {
   })
   it('fails to wipe a vehicle via admin', done => {
     request
-      .get('/admin/wipe/' + 'bogus')
+      .get(pathPrefix('/admin/wipe/' + 'bogus'))
       .set('Authorization', AUTH)
       .expect(400)
       .end((err, result) => {
@@ -1400,7 +1403,7 @@ describe('Tests pagination', async () => {
 
   it('verifies paging links when read back all devices from db', done => {
     request
-      .get('/vehicles?skip=2&take=5&foo=bar')
+      .get(pathPrefix('/vehicles?skip=2&take=5&foo=bar'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1416,7 +1419,7 @@ describe('Tests pagination', async () => {
 
   it('verifies reading past the end of the vehicles', done => {
     request
-      .get('/vehicles?skip=20000&take=5')
+      .get(pathPrefix('/vehicles?skip=20000&take=5'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1430,7 +1433,7 @@ describe('Tests pagination', async () => {
   it('verifies vehicles access for all providers with vehicles:read scope', done => {
     const VEHICLES_READ_AUTH = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|vehicles:read`).toString('base64')}`
     request
-      .get(`/vehicles?provider_id=${TEST1_PROVIDER_ID}`)
+      .get(pathPrefix(`/vehicles?provider_id=${TEST1_PROVIDER_ID}`))
       .set('Authorization', VEHICLES_READ_AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1444,7 +1447,7 @@ describe('Tests pagination', async () => {
   it('verifies no vehicles access for all providers without vehicles:read scope', done => {
     const VEHICLES_READ_AUTH = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
     request
-      .get(`/vehicles?provider_id=${TEST1_PROVIDER_ID}`)
+      .get(pathPrefix(`/vehicles?provider_id=${TEST1_PROVIDER_ID}`))
       .set('Authorization', VEHICLES_READ_AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1488,18 +1491,18 @@ describe('Tests Stops', async () => {
   })
 
   it('verifies failing to POST a stop (garbage data)', async () => {
-    await request.post(`/stops`).set('Authorization', AUTH).send({ foo: 'bar' }).expect(400)
+    await request.post(pathPrefix(`/stops`)).set('Authorization', AUTH).send({ foo: 'bar' }).expect(400)
   })
 
   it('verifies successfully POSTing a stop', async () => {
     await db.writeGeography(LAGeography)
     await db.publishGeography({ geography_id: GEOGRAPHY_UUID, publish_date: now() })
-    await request.post(`/stops`).set('Authorization', AUTH).send(TEST_STOP).expect(201)
+    await request.post(pathPrefix(`/stops`)).set('Authorization', AUTH).send(TEST_STOP).expect(201)
   })
 
   it('verifies successfully GETing a stop', done => {
     request
-      .get(`/stops/${TEST_STOP.stop_id}`)
+      .get(pathPrefix(`/stops/${TEST_STOP.stop_id}`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -1510,7 +1513,7 @@ describe('Tests Stops', async () => {
 
   it('verifies successfully GETing all stops', done => {
     request
-      .get(`/stops`)
+      .get(pathPrefix(`/stops`))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {

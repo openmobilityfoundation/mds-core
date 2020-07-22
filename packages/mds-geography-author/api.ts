@@ -2,7 +2,7 @@ import express, { NextFunction } from 'express'
 import db from '@mds-core/mds-db'
 
 import {
-  pathsFor,
+  pathPrefix,
   ServerError,
   NotFoundError,
   DependencyMissingError,
@@ -42,7 +42,7 @@ function api(app: express.Express): express.Express {
   app.use(GeographyAuthorApiVersionMiddleware)
 
   app.get(
-    pathsFor('/geographies/meta/'),
+    pathPrefix('/geographies/meta/'),
     checkGeographyAuthorApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
@@ -101,7 +101,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.post(
-    pathsFor('/geographies/'),
+    pathPrefix('/geographies/'),
     checkGeographyAuthorApiAccess(scopes => scopes.includes('geographies:write')),
     async (
       req: GeographyAuthorApiPostGeographyRequest,
@@ -134,7 +134,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.put(
-    pathsFor('/geographies/:geography_id'),
+    pathPrefix('/geographies/:geography_id'),
     checkGeographyAuthorApiAccess(scopes => scopes.includes('geographies:write')),
     async (
       req: GeographyAuthorApiPutGeographyRequest,
@@ -163,7 +163,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.delete(
-    pathsFor('/geographies/:geography_id'),
+    pathPrefix('/geographies/:geography_id'),
     checkGeographyAuthorApiAccess(scopes => scopes.includes('geographies:write')),
     async (
       req: GeographyAuthorApiDeleteGeographyRequest,
@@ -204,7 +204,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(
-    pathsFor('/geographies/:geography_id/meta'),
+    pathPrefix('/geographies/:geography_id/meta'),
     checkGeographyAuthorApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
@@ -235,7 +235,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.put(
-    pathsFor('/geographies/:geography_id/meta'),
+    pathPrefix('/geographies/:geography_id/meta'),
     checkGeographyAuthorApiAccess(scopes => scopes.includes('geographies:write')),
     async (
       req: GeographyAuthorApiPutGeographyMetadataRequest,
@@ -266,7 +266,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.put(
-    pathsFor('/geographies/:geography_id/publish'),
+    pathPrefix('/geographies/:geography_id/publish'),
     checkGeographyAuthorApiAccess(scopes => scopes.includes('geographies:publish')),
     async (
       req: GeographyAuthorApiPublishGeographyRequest,

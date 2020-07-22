@@ -18,7 +18,7 @@ import express, { NextFunction } from 'express'
 // import { isProviderId, providerName } from '@mds-core/mds-providers'
 import { Policy, UUID } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
-import { now, pathsFor, NotFoundError, isUUID, BadParamsError, ServerError } from '@mds-core/mds-utils'
+import { now, pathPrefix, NotFoundError, isUUID, BadParamsError, ServerError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
@@ -74,7 +74,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(
-    pathsFor('/policies'),
+    pathPrefix('/policies'),
     async (req: PolicyApiGetPoliciesRequest, res: PolicyApiGetPoliciesResponse, next: express.NextFunction) => {
       const { start_date = now(), end_date = now() } = req.query
       const { scopes } = res.locals
@@ -124,7 +124,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(
-    pathsFor('/policies/:policy_id'),
+    pathPrefix('/policies/:policy_id'),
     async (req: PolicyApiGetPolicyRequest, res: PolicyApiGetPolicyResponse, next: express.NextFunction) => {
       const { policy_id } = req.params
       const { scopes } = res.locals
@@ -164,7 +164,7 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/schema/policy'), (req, res) => {
+  app.get(pathPrefix('/schema/policy'), (req, res) => {
     res.status(200).send(policySchemaJson)
   })
 

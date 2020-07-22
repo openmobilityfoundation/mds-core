@@ -20,7 +20,7 @@ import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
 import stream from '@mds-core/mds-stream'
 import supertest from 'supertest'
-import { now, uuid, minutes } from '@mds-core/mds-utils'
+import { now, uuid, minutes, pathPrefix } from '@mds-core/mds-utils'
 import {
   Telemetry,
   Device,
@@ -258,7 +258,7 @@ describe('Tests Compliance API:', () => {
     beforeEach(done => {
       Promise.all([db.initialize(), cache.initialize()]).then(() => {
         agency_request
-          .post('/vehicles')
+          .post(pathPrefix('/vehicles'))
           .set('Authorization', ADMIN_AUTH)
           .send(TEST_VEHICLE)
           .expect(201)
@@ -290,7 +290,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies initial policy hit OK', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -301,7 +301,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies cannot query invalid policy_id', done => {
       request
-        .get(`/snapshot/potato`)
+        .get(pathPrefix(`/snapshot/potato`))
         .set('Authorization', ADMIN_AUTH)
         .expect(400)
         .end((err, result) => {
@@ -312,7 +312,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies cannot query valid UUID, but invalid policy_id', done => {
       request
-        .get(`/snapshot/f4a07b35-98dd-4234-93c7-199ea54083c3`)
+        .get(pathPrefix(`/snapshot/f4a07b35-98dd-4234-93c7-199ea54083c3`))
         .set('Authorization', ADMIN_AUTH)
         .expect(404)
         .end((err, result) => {
@@ -344,7 +344,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies count in compliance', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -371,12 +371,12 @@ describe('Tests Compliance API:', () => {
   //       telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
   //     })
   //     request
-  //       .get('/test/initialize')
+  //       .get(pathsFor('/test/initialize'))
   //       .set('Authorization', ADMIN_AUTH)
   //       .expect(200)
   //       .end(() => {
   //         provider_request
-  //           .post('/test/seed')
+  //           .post(pathsFor('/test/seed'))
   //           .set('Authorization', PROVIDER_AUTH)
   //           .send({ devices, events, telemetry })
   //           .expect(201)
@@ -404,7 +404,7 @@ describe('Tests Compliance API:', () => {
 
   //   it('Verifies violation of count compliance (under)', done => {
   //     request
-  //       .get(`/snapshot/${COUNT_POLICY_UUID}`)
+  //       .get(pathsFor(`/snapshot/${COUNT_POLICY_UUID}`))
   //       .set('Authorization', ADMIN_AUTH)
   //       .expect(200)
   //       .end((err, result) => {
@@ -418,7 +418,7 @@ describe('Tests Compliance API:', () => {
 
   //   afterEach(done => {
   //     agency_request
-  //       .get('/test/shutdown')
+  //       .get(pathsFor('/test/shutdown'))
   //       .set('Authorization', ADMIN_AUTH)
   //       .expect(200)
   //       .end(err => {
@@ -451,7 +451,7 @@ describe('Tests Compliance API:', () => {
     it('Verifies violation of count compliance (over) and filters results by provider_id', async () => {
       // Admins should be able to see violations across all providers
       const adminResult = await request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
       test.assert.deepEqual(adminResult.body.compliance[0].matches[0].measured, 10)
@@ -463,7 +463,7 @@ describe('Tests Compliance API:', () => {
       // Admins should be able to query for a specific provider's compliance results
       // and only see the number of violations for that provider
       const provider1Result = await request
-        .get(`/snapshot/${COUNT_POLICY_UUID}?provider_id=${TEST1_PROVIDER_ID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}?provider_id=${TEST1_PROVIDER_ID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
       test.assert.deepEqual(provider1Result.body.compliance[0].matches[0].measured, 10)
@@ -474,7 +474,7 @@ describe('Tests Compliance API:', () => {
 
       // If a policy applies to every provider, a provider will see only its own compliance results.
       const jumpResult = await request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
         .set('Authorization', JUMP_PROVIDER_AUTH)
         .expect(200)
       test.assert.deepEqual(jumpResult.body.compliance[0].matches[0].measured, 10)
@@ -508,7 +508,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies OK time compliance', done => {
       request
-        .get(`/snapshot/${TIME_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${TIME_POLICY_UUID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -545,7 +545,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies violation of time compliance', done => {
       request
-        .get(`/snapshot/${TIME_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${TIME_POLICY_UUID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -564,7 +564,7 @@ describe('Tests Compliance API:', () => {
     it('Checks for a valid UUID, but not present in db', done => {
       Promise.all([db.initialize(), cache.initialize()]).then(async () => {
         request
-          .get(`/snapshot/${TIME_POLICY_UUID}`)
+          .get(pathPrefix(`/snapshot/${TIME_POLICY_UUID}`))
           .set('Authorization', ADMIN_AUTH)
           .expect(404)
           .end(err => {
@@ -597,7 +597,7 @@ describe('Tests Compliance API:', () => {
     it('Verifies on a tuesday that vehicles are allowed', done => {
       MockDate.set('2019-05-21T20:00:00.000Z')
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_2}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID_2}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -610,7 +610,7 @@ describe('Tests Compliance API:', () => {
     it('Verifies on a saturday that vehicles are not allowed', done => {
       MockDate.set('2019-05-25T20:00:00.000Z')
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_2}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID_2}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -648,7 +648,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies violation for particular event', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_3}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID_3}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -686,7 +686,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies compliance for particular event', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_3}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID_3}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -797,7 +797,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verify 22 vehicles are matched within the first rule (inside of allowed zones), and 10 in the second (because they have not been previously matched).', done => {
       request
-        .get(`/snapshot/${VENICE_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${VENICE_POLICY_UUID}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -845,7 +845,7 @@ describe('Tests Compliance API:', () => {
 
     it('Historical check reports 5 violations', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_4}?timestamp=${yesterday + 200}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID_4}?timestamp=${yesterday + 200}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -857,7 +857,7 @@ describe('Tests Compliance API:', () => {
 
     it('Current check reports 0 violations', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID_4}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID_4}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -899,7 +899,7 @@ describe('Tests Compliance API:', () => {
 
     it('Test count endpoint, expecting events', done => {
       request
-        .get(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6`)
+        .get(pathPrefix(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -912,7 +912,7 @@ describe('Tests Compliance API:', () => {
 
     it('Test count endpoint, expecting no events', done => {
       request
-        .get(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6?timestamp=${START_ONE_MONTH_AGO}`)
+        .get(pathPrefix(`/count/47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6?timestamp=${START_ONE_MONTH_AGO}`))
         .set('Authorization', ADMIN_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -924,7 +924,7 @@ describe('Tests Compliance API:', () => {
 
     it('Test count endpoint failure with bad rule_id', done => {
       request
-        .get(`/count/33ca0ee8-e74b-419d-88d3-aaaf05ac0509`)
+        .get(pathPrefix(`/count/33ca0ee8-e74b-419d-88d3-aaaf05ac0509`))
         .set('Authorization', ADMIN_AUTH)
         .expect(404)
         .end(err => {
@@ -954,7 +954,7 @@ describe('Tests Compliance API:', () => {
 
     it("Verifies scoped provider can access policy's compliance", done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
         .set('Authorization', TEST2_PROVIDER_AUTH)
         .expect(200)
         .end((err, result) => {
@@ -966,7 +966,7 @@ describe('Tests Compliance API:', () => {
 
     it("Verifies non-scoped provider cannot access policy's compliance", done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_UUID}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
         .set('Authorization', MOCHA_PROVIDER_AUTH)
         .expect(401)
         .end((err, result) => {
@@ -1002,7 +1002,7 @@ describe('Tests Compliance API:', () => {
 
     it('Verifies max 0 single rule policy operates as expected', done => {
       request
-        .get(`/snapshot/${COUNT_POLICY_JSON_5.policy_id}`)
+        .get(pathPrefix(`/snapshot/${COUNT_POLICY_JSON_5.policy_id}`))
         .set('Authorization', TEST2_PROVIDER_AUTH)
         .expect(200)
         .end((err, result) => {

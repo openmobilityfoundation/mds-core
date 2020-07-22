@@ -1,7 +1,7 @@
 import express, { NextFunction } from 'express'
 import db from '@mds-core/mds-db'
 
-import { pathsFor, ServerError, NotFoundError, InsufficientPermissionsError } from '@mds-core/mds-utils'
+import { pathPrefix, ServerError, NotFoundError, InsufficientPermissionsError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
 import { checkAccess, AccessTokenScopeValidator, ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
@@ -21,7 +21,7 @@ function api(app: express.Express): express.Express {
   app.use(GeographyApiVersionMiddleware)
 
   app.get(
-    pathsFor('/geographies/:geography_id'),
+    pathPrefix('/geographies/:geography_id'),
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
@@ -49,7 +49,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(
-    pathsFor('/geographies'),
+    pathPrefix('/geographies'),
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),

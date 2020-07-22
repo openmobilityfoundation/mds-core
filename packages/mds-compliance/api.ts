@@ -21,7 +21,7 @@ import logger from '@mds-core/mds-logger'
 import {
   isUUID,
   now,
-  pathsFor,
+  pathPrefix,
   getPolygon,
   pointInShape,
   isInStatesOrEvents,
@@ -86,7 +86,7 @@ function api(app: express.Express): express.Express {
   })
 
   app.get(
-    pathsFor('/snapshot/:policy_uuid'),
+    pathPrefix('/snapshot/:policy_uuid'),
     async (req: ComplianceApiSnapshotRequest, res: ComplianceApiSnapshotResponse) => {
       const { provider_id, version } = res.locals
       const { provider_id: queried_provider_id, timestamp } = {
@@ -144,7 +144,7 @@ function api(app: express.Express): express.Express {
     }
   )
 
-  app.get(pathsFor('/count/:rule_id'), async (req: ComplianceApiCountRequest, res: ComplianceApiCountResponse) => {
+  app.get(pathPrefix('/count/:rule_id'), async (req: ComplianceApiCountRequest, res: ComplianceApiCountResponse) => {
     const { timestamp } = {
       ...parseRequest(req, { parser: Number }).query('timestamp')
     }

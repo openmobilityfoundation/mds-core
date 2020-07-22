@@ -15,7 +15,7 @@
  */
 
 import express from 'express'
-import { pathsFor } from '@mds-core/mds-utils'
+import { pathPrefix } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { JurisdictionApiVersionMiddleware } from './middleware'
 import {
@@ -34,31 +34,31 @@ export const api = (app: express.Express): express.Express =>
   app
     .use(JurisdictionApiVersionMiddleware)
     .get(
-      pathsFor('/jurisdictions'),
+      pathPrefix('/jurisdictions'),
       checkJurisdictionApiAccess(
         scopes => scopes.includes('jurisdictions:read') || scopes.includes('jurisdictions:read:claim')
       ),
       GetJurisdictionsHandler
     )
     .get(
-      pathsFor('/jurisdictions/:jurisdiction_id'),
+      pathPrefix('/jurisdictions/:jurisdiction_id'),
       checkJurisdictionApiAccess(
         scopes => scopes.includes('jurisdictions:read') || scopes.includes('jurisdictions:read:claim')
       ),
       GetJurisdictionHandler
     )
     .post(
-      pathsFor('/jurisdictions'),
+      pathPrefix('/jurisdictions'),
       checkJurisdictionApiAccess(scopes => scopes.includes('jurisdictions:write')),
       CreateJurisdictionHandler
     )
     .put(
-      pathsFor('/jurisdictions/:jurisdiction_id'),
+      pathPrefix('/jurisdictions/:jurisdiction_id'),
       checkJurisdictionApiAccess(scopes => scopes.includes('jurisdictions:write')),
       UpdateJurisdictionHandler
     )
     .delete(
-      pathsFor('/jurisdictions/:jurisdiction_id'),
+      pathPrefix('/jurisdictions/:jurisdiction_id'),
       checkJurisdictionApiAccess(scopes => scopes.includes('jurisdictions:write')),
       DeleteJurisdictionHandler
     )

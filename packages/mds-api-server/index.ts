@@ -3,7 +3,7 @@ import bodyParser from 'body-parser'
 import express from 'express'
 import CorsMiddleware from 'cors'
 import logger from '@mds-core/mds-logger'
-import { pathsFor, AuthorizationError } from '@mds-core/mds-utils'
+import { pathPrefix, AuthorizationError } from '@mds-core/mds-utils'
 import {
   AuthorizationHeaderApiAuthorizer,
   ApiAuthorizer,
@@ -282,7 +282,7 @@ export const ApiServer = (
   )
 
   // Health Route
-  app.get(pathsFor('/health'), HealthRequestHandler)
+  app.get(pathPrefix('/health'), HealthRequestHandler)
 
   return api(app)
 }

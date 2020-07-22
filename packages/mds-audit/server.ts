@@ -17,4 +17,4 @@
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from './api'
 
-HttpServer(ApiServer(api), { port: process.env.AUDIT_API_PORT })
+HttpServer(ApiServer(api), { port: process.env.AUDIT_API_HTTP_PORT })

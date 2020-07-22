@@ -37,6 +37,7 @@ import {
   DISTRICT_SEVEN,
   SCOPED_AUTH
 } from '@mds-core/mds-test-data'
+import { pathPrefix } from '@mds-core/mds-utils'
 import { api } from '../api'
 import { GEOGRAPHY_API_DEFAULT_VERSION } from '../types'
 
@@ -63,7 +64,7 @@ describe('Tests app', () => {
       const geography = { name: 'LA', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
       await db.writeGeography(geography)
       const result = await request
-        .get(`/geographies/${GEOGRAPHY_UUID}`)
+        .get(pathPrefix(`/geographies/${GEOGRAPHY_UUID}`))
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
       test.assert(result.body.data.geography.geography_id === GEOGRAPHY_UUID)
@@ -73,7 +74,7 @@ describe('Tests app', () => {
 
     it('cannot GET an unpublished geography with the published scope', done => {
       request
-        .get(`/geographies/${GEOGRAPHY_UUID}`)
+        .get(pathPrefix(`/geographies/${GEOGRAPHY_UUID}`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(403)
         .end(err => {
@@ -83,7 +84,7 @@ describe('Tests app', () => {
 
     it('cannot GET a nonexistent geography', done => {
       request
-        .get(`/geographies/${POLICY_UUID}`)
+        .get(pathPrefix(`/geographies/${POLICY_UUID}`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(404)
         .end(err => {
@@ -93,7 +94,7 @@ describe('Tests app', () => {
 
     it('cannot GET geographies (no auth)', done => {
       request
-        .get(`/geographies/`)
+        .get(pathPrefix(`/geographies/`))
         .set('Authorization', EMPTY_SCOPE)
         .expect(403)
         .end(err => {
@@ -103,7 +104,7 @@ describe('Tests app', () => {
 
     it('cannot GET geographies (wrong auth)', done => {
       request
-        .get(`/geographies/`)
+        .get(pathPrefix(`/geographies/`))
         .set('Authorization', EVENTS_READ_SCOPE)
         .expect(403)
         .end(err => {
@@ -113,7 +114,7 @@ describe('Tests app', () => {
 
     it('can GET geographies, full version', done => {
       request
-        .get(`/geographies/`)
+        .get(pathPrefix(`/geographies/`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -128,7 +129,7 @@ describe('Tests app', () => {
 
     it('can GET geographies, summarized version', done => {
       request
-        .get(`/geographies?summary=true`)
+        .get(pathPrefix(`/geographies?summary=true`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -144,14 +145,14 @@ describe('Tests app', () => {
       await db.writeGeography({ name: 'Geography 2', geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
       await db.publishGeography({ geography_id: GEOGRAPHY2_UUID })
       await request
-        .get(`/geographies/${GEOGRAPHY2_UUID}`)
+        .get(pathPrefix(`/geographies/${GEOGRAPHY2_UUID}`))
         .set('Authorization', GEOGRAPHIES_BOTH_READ_SCOPES)
         .expect(200)
     })
 
     it('can GET one unpublished geography with unpublished scope', done => {
       request
-        .get(`/geographies/${GEOGRAPHY_UUID}`)
+        .get(pathPrefix(`/geographies/${GEOGRAPHY_UUID}`))
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -163,7 +164,7 @@ describe('Tests app', () => {
 
     it('can get all geographies, with the unpublished scope', done => {
       request
-        .get(`/geographies`)
+        .get(pathPrefix(`/geographies`))
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -175,7 +176,7 @@ describe('Tests app', () => {
 
     it('can filter for published geographies, with the unpublished scope and get_published parameter', done => {
       request
-        .get(`/geographies?get_published=true`)
+        .get(pathPrefix(`/geographies?get_published=true`))
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -187,7 +188,7 @@ describe('Tests app', () => {
 
     it('can filter for unpublished geographies, with the unpublished scope and get_unpublished parameter', done => {
       request
-        .get(`/geographies?get_unpublished=true`)
+        .get(pathPrefix(`/geographies?get_unpublished=true`))
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -199,7 +200,7 @@ describe('Tests app', () => {
 
     it('can only GET published geographies, with only the published scope', done => {
       request
-        .get(`/geographies`)
+        .get(pathPrefix(`/geographies`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
@@ -211,14 +212,14 @@ describe('Tests app', () => {
 
     it('throws an error if only the get_published scope is set and get_unpublished param is set', async () => {
       await request
-        .get(`/geographies?get_unpublished=true`)
+        .get(pathPrefix(`/geographies?get_unpublished=true`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(403)
     })
 
     it('fails to hit non-existent endpoint with a 404', done => {
       request
-        .get(`/foobar`)
+        .get(pathPrefix(`/foobar`))
         .set('Authorization', GEOGRAPHIES_READ_PUBLISHED_SCOPE)
         .expect(404)
         .end(err => {

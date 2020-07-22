@@ -19,7 +19,7 @@ import express from 'express'
 import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
 import { providerName, isProviderId } from '@mds-core/mds-providers'
-import { isUUID, pathsFor, now } from '@mds-core/mds-utils'
+import { isUUID, pathPrefix, now } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { DailyApiRequest, DailyApiResponse, DailyApiAccessTokenScopes } from './types'
 import {
@@ -92,14 +92,14 @@ function api(app: express.Express): express.Express {
   // ///////////////////// begin daily endpoints ///////////////////////
 
   app.get(
-    pathsFor('/admin/vehicle_counts'),
+    pathPrefix('/admin/vehicle_counts'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getVehicleCounts
   )
 
   // read all the latest events out of the cache
   app.get(
-    pathsFor('/admin/events'),
+    pathPrefix('/admin/events'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     async (req: DailyApiRequest, res: DailyApiResponse) => {
       const start = now()
@@ -114,14 +114,14 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(
-    pathsFor('/admin/last_day_trips_by_provider'),
+    pathPrefix('/admin/last_day_trips_by_provider'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getLastDayTripsByProvider
   )
 
   // get raw trip data for analysis
   app.get(
-    pathsFor('/admin/raw_trip_data/:trip_id'),
+    pathPrefix('/admin/raw_trip_data/:trip_id'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getRawTripData
   )
@@ -133,49 +133,49 @@ function api(app: express.Express): express.Express {
   // by asking the DB for that information.
   // This function is ludicrously long as it is.
   app.get(
-    pathsFor('/admin/last_day_stats_by_provider'),
+    pathPrefix('/admin/last_day_stats_by_provider'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getLastDayStatsByProvider
   )
 
   app.get(
-    pathsFor('/admin/time_since_last_event'),
+    pathPrefix('/admin/time_since_last_event'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getTimeSinceLastEventHandler
   )
 
   app.get(
-    pathsFor('/admin/num_vehicles_registered_last_24_hours'),
+    pathPrefix('/admin/num_vehicles_registered_last_24_hours'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getNumVehiclesRegisteredLast24HoursHandler
   )
 
   app.get(
-    pathsFor('/admin/num_event_last_24_hours'),
+    pathPrefix('/admin/num_event_last_24_hours'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getNumEventsLast24HoursHandler
   )
 
   app.get(
-    pathsFor('/admin/trip_counts_since'),
+    pathPrefix('/admin/trip_counts_since'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getTripCountsSinceHandler
   )
 
   app.get(
-    pathsFor('/admin/event_counts_per_provider_since'),
+    pathPrefix('/admin/event_counts_per_provider_since'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getEventCountsPerProviderSinceHandler
   )
 
   app.get(
-    pathsFor('/admin/telemetry_counts_per_provider_since'),
+    pathPrefix('/admin/telemetry_counts_per_provider_since'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getTelemetryCountsPerProviderSinceHandler
   )
 
   app.get(
-    pathsFor('/admin/conformance_last_24_hours'),
+    pathPrefix('/admin/conformance_last_24_hours'),
     checkDailyApiAccess(scopes => scopes.includes('admin:all')),
     getConformanceLast24HoursHandler
   )

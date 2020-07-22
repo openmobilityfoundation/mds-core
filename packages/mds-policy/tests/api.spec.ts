@@ -23,7 +23,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
-import { now, days, clone, yesterday } from '@mds-core/mds-utils'
+import { now, days, clone, yesterday, pathPrefix } from '@mds-core/mds-utils'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { Policy } from '@mds-core/mds-types'
@@ -78,14 +78,20 @@ describe('Tests app', () => {
   })
 
   it('tries to get policy for invalid dates', async () => {
-    const result = await request.get('/policies?start_date=100000&end_date=100').set('Authorization', AUTH).expect(400)
+    const result = await request
+      .get(pathPrefix('/policies?start_date=100000&end_date=100'))
+      .set('Authorization', AUTH)
+      .expect(400)
     test.value(result.body.result === 'start_date after end_date')
   })
 
   it('read back one policy', async () => {
     await db.writePolicy(ACTIVE_POLICY_JSON)
     await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
-    const result = await request.get(`/policies/${POLICY_UUID}`).set('Authorization', AUTH).expect(200)
+    const result = await request
+      .get(pathPrefix(`/policies/${POLICY_UUID}`))
+      .set('Authorization', AUTH)
+      .expect(200)
     const body = result.body
     log('read back one policy response:', body)
     test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
@@ -94,7 +100,7 @@ describe('Tests app', () => {
   })
 
   it('reads back all active policies', async () => {
-    const result = await request.get(`/policies`).set('Authorization', AUTH).expect(200)
+    const result = await request.get(pathPrefix(`/policies`)).set('Authorization', AUTH).expect(200)
     const body = result.body
     log('read back all policies response:', body)
     test.value(body.data.policies.length).is(1) // only one should be currently valid
@@ -118,7 +124,7 @@ describe('Tests app', () => {
     await db.writePolicy(SUPERSEDING_POLICY_JSON)
     await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id, SUPERSEDING_POLICY_JSON.start_date)
     const result = await request
-      .get(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`)
+      .get(pathPrefix(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`))
       .set('Authorization', AUTH)
       .expect(200)
     const body = result.body
@@ -139,7 +145,7 @@ describe('Tests app', () => {
 
   it('read back an old policy', async () => {
     const result = await request
-      .get(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`)
+      .get(pathPrefix(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`))
       .set('Authorization', AUTH)
       .expect(200)
     const body = result.body
@@ -153,7 +159,7 @@ describe('Tests app', () => {
 
   it('read back current and future policies', async () => {
     const result = await request
-      .get(`/policies?end_date=${now() + days(365)}`)
+      .get(pathPrefix(`/policies?end_date=${now() + days(365)}`))
       .set('Authorization', AUTH)
       .expect(200)
     const body = result.body
@@ -165,7 +171,7 @@ describe('Tests app', () => {
 
   it('cannot GET a nonexistant policy', async () => {
     const result = await request
-      .get(`/policies/${GEOGRAPHY_UUID}`) // obvs not a policy
+      .get(pathPrefix(`/policies/${GEOGRAPHY_UUID}`)) // obvs not a policy
       .set('Authorization', AUTH)
       .expect(404)
     const body = result.body
@@ -174,14 +180,14 @@ describe('Tests app', () => {
   })
 
   it('tries to read non-UUID policy', async () => {
-    const result = await request.get('/policies/notarealpolicy').set('Authorization', AUTH).expect(400)
+    const result = await request.get(pathPrefix('/policies/notarealpolicy')).set('Authorization', AUTH).expect(400)
     test.value(result.body.result === 'not found')
   })
 
   it('can GET all unpublished policies', async () => {
     await db.writePolicy(POLICY4_JSON)
     const result = await request
-      .get(`/policies?get_unpublished=true`)
+      .get(pathPrefix(`/policies?get_unpublished=true`))
       .set('Authorization', POLICIES_READ_SCOPE)
       .expect(200)
     test.assert(result.body.data.policies.length === 1)
@@ -189,14 +195,14 @@ describe('Tests app', () => {
 
   it('can GET one unpublished policy', async () => {
     await request
-      .get(`/policies/${POLICY4_JSON.policy_id}?get_unpublished=true`)
+      .get(pathPrefix(`/policies/${POLICY4_JSON.policy_id}?get_unpublished=true`))
       .set('Authorization', POLICIES_READ_SCOPE)
       .expect(200)
   })
 
   it('fails to hit non-existent endpoint with a 404', done => {
     request
-      .get(`/foobar`)
+      .get(pathPrefix(`/foobar`))
       .set('Authorization', POLICIES_READ_SCOPE)
       .expect(404)
       .end(err => {

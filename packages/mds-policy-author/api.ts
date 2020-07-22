@@ -17,7 +17,7 @@
 import express, { NextFunction } from 'express'
 import {
   uuid,
-  pathsFor,
+  pathPrefix,
   AlreadyPublishedError,
   BadParamsError,
   NotFoundError,
@@ -58,7 +58,7 @@ function api(app: express.Express): express.Express {
   app.use(PolicyAuthorApiVersionMiddleware)
 
   app.post(
-    pathsFor('/policies'),
+    pathPrefix('/policies'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
     async (
       req: PolicyAuthorApiPostPolicyRequest,
@@ -87,7 +87,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.post(
-    pathsFor('/policies/:policy_id/publish'),
+    pathPrefix('/policies/:policy_id/publish'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:publish')),
     async (
       req: PolicyAuthorApiPublishPolicyRequest,
@@ -122,7 +122,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.put(
-    pathsFor('/policies/:policy_id'),
+    pathPrefix('/policies/:policy_id'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
     async (
       req: PolicyAuthorApiEditPolicyRequest,
@@ -155,7 +155,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.delete(
-    pathsFor('/policies/:policy_id'),
+    pathPrefix('/policies/:policy_id'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:delete')),
     async (
       req: PolicyAuthorApiDeletePolicyRequest,
@@ -177,7 +177,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(
-    pathsFor('/policies/meta/'),
+    pathPrefix('/policies/meta/'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
     async (
       req: PolicyAuthorApiGetPolicyMetadataRequest,
@@ -217,7 +217,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(
-    pathsFor('/policies/:policy_id/meta'),
+    pathPrefix('/policies/:policy_id/meta'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
     async (
       req: PolicyAuthorApiGetPolicyMetadatumRequest,
@@ -247,7 +247,7 @@ function api(app: express.Express): express.Express {
   )
 
   app.put(
-    pathsFor('/policies/:policy_id/meta'),
+    pathPrefix('/policies/:policy_id/meta'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),
     async (
       req: PolicyAuthorApiEditPolicyMetadataRequest,

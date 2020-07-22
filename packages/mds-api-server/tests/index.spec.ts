@@ -18,6 +18,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
+import { pathPrefix } from '@mds-core/mds-utils'
 import { ApiServer, HttpServer, ApiVersionMiddleware, ApiVersionedResponse } from '../index'
 
 const TEST_API_MIME_TYPE = 'application/vnd.mds.test+json'
@@ -61,7 +62,7 @@ describe('Testing API Server', () => {
 
   it('verifies health', done => {
     request
-      .get('/health')
+      .get(pathPrefix('/health'))
       .expect(200)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)

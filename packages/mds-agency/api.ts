@@ -7,7 +7,7 @@ import express from 'express'
 
 import logger from '@mds-core/mds-logger'
 import { isProviderId } from '@mds-core/mds-providers'
-import { isUUID, pathsFor } from '@mds-core/mds-utils'
+import { isUUID, pathPrefix } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { AgencyApiRequest, AgencyApiResponse, AgencyApiAccessTokenScopes } from './types'
 import {
@@ -79,32 +79,32 @@ function api(app: express.Express): express.Express {
    * Endpoint to register vehicles
    * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicle---register Register}
    */
-  app.post(pathsFor('/vehicles'), registerVehicle)
+  app.post(pathPrefix('/vehicles'), registerVehicle)
 
   /**
    * Read back a vehicle.
    */
-  app.get(pathsFor('/vehicles/:device_id'), validateDeviceId, getVehicleById)
+  app.get(pathPrefix('/vehicles/:device_id'), validateDeviceId, getVehicleById)
 
   /**
    * Read back all the vehicles for this provider_id, with pagination
    */
-  app.get(pathsFor('/vehicles'), getVehiclesByProvider)
+  app.get(pathPrefix('/vehicles'), getVehiclesByProvider)
 
   // update the vehicle_id
-  app.put(pathsFor('/vehicles/:device_id'), validateDeviceId, updateVehicle)
+  app.put(pathPrefix('/vehicles/:device_id'), validateDeviceId, updateVehicle)
 
   /**
    * Endpoint to submit vehicle events
    * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicle---event Events}
    */
-  app.post(pathsFor('/vehicles/:device_id/event'), validateDeviceId, submitVehicleEvent)
+  app.post(pathPrefix('/vehicles/:device_id/event'), validateDeviceId, submitVehicleEvent)
 
   /**
    * Endpoint to submit telemetry
    * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicles---update-telemetry Telemetry}
    */
-  app.post(pathsFor('/vehicles/telemetry'), submitVehicleTelemetry)
+  app.post(pathPrefix('/vehicles/telemetry'), submitVehicleTelemetry)
 
   // ///////////////////// begin Agency candidate endpoints ///////////////////////
 
@@ -112,7 +112,7 @@ function api(app: express.Express): express.Express {
    * Not currently in Agency spec.  Ability to read back all vehicle IDs.
    */
   app.get(
-    pathsFor('/admin/vehicle_ids'),
+    pathPrefix('/admin/vehicle_ids'),
     checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     readAllVehicleIds
   )
@@ -120,34 +120,34 @@ function api(app: express.Express): express.Express {
   // /////////////////// end Agency candidate endpoints ////////////////////
 
   app.get(
-    pathsFor('/admin/cache/info'),
+    pathPrefix('/admin/cache/info'),
     checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     getCacheInfo
   )
 
   // wipe a device -- sandbox or admin use only
   app.get(
-    pathsFor('/admin/wipe/:device_id'),
+    pathPrefix('/admin/wipe/:device_id'),
     checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     validateDeviceId,
     wipeDevice
   )
 
   app.get(
-    pathsFor('/admin/cache/refresh'),
+    pathPrefix('/admin/cache/refresh'),
     checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     refreshCache
   )
 
   app.post(
-    pathsFor('/stops'),
+    pathPrefix('/stops'),
     checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     registerStop
   )
 
-  app.get(pathsFor('/stops/:stop_id'), readStop)
+  app.get(pathPrefix('/stops/:stop_id'), readStop)
 
-  app.get(pathsFor('/stops'), readStops)
+  app.get(pathPrefix('/stops'), readStops)
 
   return app
 }

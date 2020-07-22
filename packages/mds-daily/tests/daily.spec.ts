@@ -35,6 +35,7 @@ import { makeDevices } from '@mds-core/mds-test-data'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import Sinon from 'sinon'
+import { pathPrefix } from '@mds-core/mds-utils'
 import { agencyMiddleware, api } from '../api'
 import { dbHelperFail } from '../request-handlers'
 
@@ -159,7 +160,7 @@ after(async () => {
 describe('Tests API', () => {
   it('gets vehicle counts per provider', done => {
     request
-      .get('/admin/vehicle_counts')
+      .get(pathPrefix('/admin/vehicle_counts'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -214,7 +215,7 @@ describe('Tests API', () => {
 
   it('verifies 8 total events, and 4 are non-conformant', done => {
     request
-      .get('/admin/last_day_stats_by_provider')
+      .get(pathPrefix('/admin/last_day_stats_by_provider'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {
@@ -233,7 +234,7 @@ describe('Tests API', () => {
     // These outer two promises are here to help check that old telemetry/event data
     // added by the call to .seed later don't show up in the final results
     request
-      .get('/admin/last_day_stats_by_provider')
+      .get(pathPrefix('/admin/last_day_stats_by_provider'))
       .set('Authorization', AUTH)
       .expect(200)
       .end((err, result) => {

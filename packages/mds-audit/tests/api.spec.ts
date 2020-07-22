@@ -36,7 +36,7 @@ import {
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
 import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { NotFoundError, now, rangeRandomInt, uuid } from '@mds-core/mds-utils'
+import { NotFoundError, now, rangeRandomInt, uuid, pathPrefix } from '@mds-core/mds-utils'
 import cache from '@mds-core/mds-agency-cache'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
@@ -131,7 +131,7 @@ describe('Testing API', () => {
 
   it('verify audit start (matching vehicle)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/start`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/start`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
@@ -155,7 +155,7 @@ describe('Testing API', () => {
 
   it('verify audit start (conflict)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/start`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/start`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .expect(409)
       .end((err, result) => {
@@ -166,7 +166,7 @@ describe('Testing API', () => {
 
   it('verify audit start (no scope)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/start`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/start`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .expect(403)
       .end((err, result) => {
@@ -177,7 +177,7 @@ describe('Testing API', () => {
 
   it('verify audit issue event', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/event`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/event`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
@@ -197,7 +197,7 @@ describe('Testing API', () => {
 
   it('verify audit issue event (no scope)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/event`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/event`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .send({
         audit_event_id: uuid(),
@@ -217,7 +217,7 @@ describe('Testing API', () => {
 
   it('verify trip start event', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/vehicle/event`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/vehicle/event`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         event_type: VEHICLE_EVENTS.trip_start,
@@ -236,7 +236,7 @@ describe('Testing API', () => {
 
   it('verify audit telemetry', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/vehicle/telemetry`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/vehicle/telemetry`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         telemetry: telemetry(),
@@ -253,7 +253,7 @@ describe('Testing API', () => {
 
   it('verify audit telemetry (no scope)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/vehicle/telemetry`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/vehicle/telemetry`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .send({
         telemetry: telemetry(),
@@ -269,7 +269,7 @@ describe('Testing API', () => {
 
   it('verify trip end event', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/vehicle/event`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/vehicle/event`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         event_type: VEHICLE_EVENTS.trip_end,
@@ -287,7 +287,7 @@ describe('Testing API', () => {
 
   it('verify audit summary event', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/event`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/event`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
@@ -307,7 +307,7 @@ describe('Testing API', () => {
 
   it('verify audit end', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/end`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/end`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
@@ -325,7 +325,7 @@ describe('Testing API', () => {
 
   it('verify audit end (no scope)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id}/end`)
+      .post(pathPrefix(`/trips/${audit_trip_id}/end`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .send({
         audit_event_id: uuid(),
@@ -340,12 +340,12 @@ describe('Testing API', () => {
       })
   })
 
-  const routes = ['note', 'vehicle/event', 'vehicle/telemetry', 'end'].map(path => `/audit/trips/${uuid()}/${path}`)
+  const routes = ['note', 'vehicle/event', 'vehicle/telemetry', 'end'].map(path => `/trips/${uuid()}/${path}`)
 
   routes.forEach(route =>
     it(`verify post audit (not found) ${route}`, done => {
       request
-        .post(route)
+        .post(pathPrefix(route))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .expect(404)
         .end((err, result) => {
@@ -358,7 +358,7 @@ describe('Testing API', () => {
 
   it('verify get audit (matched vehicle)', done => {
     request
-      .get(`/audit/trips/${audit_trip_id}`)
+      .get(pathPrefix(`/trips/${audit_trip_id}`))
       .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
       .expect(200)
       .end((err, result) => {
@@ -376,7 +376,7 @@ describe('Testing API', () => {
 
   it(`verify get audit (no scope)`, done => {
     request
-      .get(`/audit/trips/${uuid()}`)
+      .get(pathPrefix(`/trips/${uuid()}`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .expect(403)
       .end((err, result) => {
@@ -388,7 +388,7 @@ describe('Testing API', () => {
 
   it(`verify get audit (not found)`, done => {
     request
-      .get(`/audit/trips/${uuid()}`)
+      .get(pathPrefix(`/trips/${uuid()}`))
       .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
       .expect(404)
       .end((err, result) => {
@@ -400,7 +400,7 @@ describe('Testing API', () => {
 
   it(`verify list audits (no scope)`, done => {
     request
-      .get(`/audit/trips`)
+      .get(pathPrefix(`/trips`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .expect(403)
       .end((err, result) => {
@@ -427,7 +427,7 @@ describe('Testing API', () => {
   queries.forEach(({ filter, query, count }) =>
     it(`verify list audits (Filter: ${filter}, Count: ${count})`, done => {
       request
-        .get(`/audit/trips${query}`)
+        .get(pathPrefix(`/trips${query}`))
         .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -442,7 +442,7 @@ describe('Testing API', () => {
 
   it('verify delete audit (no scope)', done => {
     request
-      .delete(`/audit/trips/${uuid()}`)
+      .delete(pathPrefix(`/trips/${uuid()}`))
       .set('Authorization', SCOPED_AUTH([], ''))
       .expect(403)
       .end((err, result) => {
@@ -454,7 +454,7 @@ describe('Testing API', () => {
 
   it('verify delete audit (not found)', done => {
     request
-      .delete(`/audit/trips/${uuid()}`)
+      .delete(pathPrefix(`/trips/${uuid()}`))
       .set('Authorization', SCOPED_AUTH(['audits:delete'], audit_subject_id))
       .expect(404)
       .end((err, result) => {
@@ -466,7 +466,7 @@ describe('Testing API', () => {
 
   it('verify delete audit', done => {
     request
-      .delete(`/audit/trips/${audit_trip_id}`)
+      .delete(pathPrefix(`/trips/${audit_trip_id}`))
       .set('Authorization', SCOPED_AUTH(['audits:delete'], audit_subject_id))
       .expect(200)
       .end((err, result) => {
@@ -479,7 +479,7 @@ describe('Testing API', () => {
 
   it('verify audit start (missing vehicle)', done => {
     request
-      .post(`/audit/trips/${audit_trip_id_2}/start`)
+      .post(pathPrefix(`/trips/${audit_trip_id_2}/start`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
         audit_event_id: uuid(),
@@ -502,7 +502,7 @@ describe('Testing API', () => {
 
   it('verify get audit (missing vehicle)', done => {
     request
-      .get(`/audit/trips/${audit_trip_id_2}`)
+      .get(pathPrefix(`/trips/${audit_trip_id_2}`))
       .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
       .expect(200)
       .end((err, result) => {
@@ -525,7 +525,7 @@ describe('Testing API', () => {
   vehicles.forEach(vehicle_id =>
     it(`verify vehicle matching ${vehicle_id}`, done => {
       request
-        .post(`/audit/trips/${uuid()}/start`)
+        .post(pathPrefix(`/trips/${uuid()}/start`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .send({
           audit_event_id: uuid(),
@@ -581,7 +581,7 @@ describe('Testing API', () => {
         [-118.452283, 33.96299]
       ] // BBOX encompasses the entirity of CANALS
       request
-        .get(`/vehicles?bbox=${JSON.stringify(bbox)}`)
+        .get(pathPrefix(`/vehicles?bbox=${JSON.stringify(bbox)}`))
         .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -599,7 +599,7 @@ describe('Testing API', () => {
 
     it('Verify get vehicle by vehicle_id and provider_id', done => {
       request
-        .get(`/audit/vehicles/${devices_a[0].provider_id}/vin/${devices_a[0].vehicle_id}`)
+        .get(pathPrefix(`/vehicles/${devices_a[0].provider_id}/vin/${devices_a[0].vehicle_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -618,7 +618,7 @@ describe('Testing API', () => {
 
     it('Verify get vehicle by vehicle_id and provider_id (not found)', done => {
       request
-        .get(`/audit/vehicles/${uuid()}/vin/${devices_a[0].vehicle_id}`)
+        .get(pathPrefix(`/vehicles/${uuid()}/vin/${devices_a[0].vehicle_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
         .expect(404)
         .end((err, result) => {
@@ -630,7 +630,7 @@ describe('Testing API', () => {
 
     it('Verify get vehicle by vehicle_id and provider_id (no event or telemetry)', done => {
       request
-        .get(`/audit/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`)
+        .get(pathPrefix(`/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -643,7 +643,7 @@ describe('Testing API', () => {
 
     it('Verify get vehicle by vehicle_id and provider_id (duplicate device)', done => {
       request
-        .get(`/audit/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`)
+        .get(pathPrefix(`/vehicles/${devices_c[0].provider_id}/vin/${devices_c[0].vehicle_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:vehicles:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -709,7 +709,7 @@ describe('Testing API', () => {
 
     it('verify get audit by id with attachments', done => {
       request
-        .get(`/audit/trips/${audit_trip_id}`)
+        .get(pathPrefix(`/trips/${audit_trip_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -722,7 +722,7 @@ describe('Testing API', () => {
 
     it('verify get trips with attachments', done => {
       request
-        .get('/audit/trips')
+        .get(pathPrefix('/trips'))
         .set('Authorization', SCOPED_AUTH(['audits:read'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -737,7 +737,7 @@ describe('Testing API', () => {
 
     it('verify provider can get own trips', done => {
       request
-        .get('/audit/trips')
+        .get(pathPrefix('/trips'))
         .set('Authorization', SCOPED_AUTH(['audits:read:provider'], provider_id))
         .expect(200)
         .end((err, result) => {
@@ -753,7 +753,7 @@ describe('Testing API', () => {
 
     it("verify provider cannot get others' trips", done => {
       request
-        .get('/audit/trips')
+        .get(pathPrefix('/trips'))
         .set('Authorization', SCOPED_AUTH(['audits:read:provider'], uuid())) // Generate arbitrary provider_id
         .expect(200)
         .end((err, result) => {
@@ -765,7 +765,7 @@ describe('Testing API', () => {
 
     it('verify post attachment (audit not found)', done => {
       request
-        .post(`/trips/${uuid()}/attach/image%2Fpng`)
+        .post(pathPrefix(`/trips/${uuid()}/attach/image%2Fpng`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .send({}) // TODO: include file
         .expect(404)
@@ -803,7 +803,7 @@ describe('Testing API', () => {
     attachmentTests.forEach(testCase =>
       it(`verify post bad attachment (${testCase.name})`, done => {
         request
-          .post(`/trips/${audit_trip_id}/attach/image%2Fpng`)
+          .post(pathPrefix(`/trips/${audit_trip_id}/attach/image%2Fpng`))
           .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
           .attach('file', `./tests/${testCase.file}`)
           .expect(testCase.status)
@@ -826,7 +826,7 @@ describe('Testing API', () => {
       } as Attachment)
       Sinon.replace(attachments, 'writeAttachment', fake)
       request
-        .post(`/trips/${audit_trip_id}/attach/image%2Fpng`)
+        .post(pathPrefix(`/trips/${audit_trip_id}/attach/image%2Fpng`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .attach('file', `./tests/sample.png`)
         .expect(200)
@@ -842,7 +842,7 @@ describe('Testing API', () => {
       const fake = Sinon.fake.returns(null)
       Sinon.replace(attachments, 'writeAttachment', fake)
       request
-        .post(`/trips/${audit_trip_id}/attach/image%2Fpng`)
+        .post(pathPrefix(`/trips/${audit_trip_id}/attach/image%2Fpng`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .attach('file', `./tests/sample.png`)
         .expect(500)
@@ -856,7 +856,7 @@ describe('Testing API', () => {
       const fake = Sinon.fake.returns(null)
       Sinon.replace(attachments, 'deleteAuditAttachment', fake)
       request
-        .delete(`/trips/${audit_trip_id}/attachment/${attachment_id}`)
+        .delete(pathPrefix(`/trips/${audit_trip_id}/attachment/${attachment_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .expect(200)
         .end((err, result) => {
@@ -869,7 +869,7 @@ describe('Testing API', () => {
       const fake = Sinon.fake.throws(new NotFoundError())
       Sinon.replace(attachments, 'deleteAuditAttachment', fake)
       request
-        .delete(`/trips/${audit_trip_id}/attachment/${attachment_id}`)
+        .delete(pathPrefix(`/trips/${audit_trip_id}/attachment/${attachment_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .expect(404)
         .end((err, result) => {
@@ -882,7 +882,7 @@ describe('Testing API', () => {
       const fake = Sinon.fake.throws(new Error())
       Sinon.replace(attachments, 'deleteAuditAttachment', fake)
       request
-        .delete(`/trips/${audit_trip_id}/attachment/${attachment_id}`)
+        .delete(pathPrefix(`/trips/${audit_trip_id}/attachment/${attachment_id}`))
         .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
         .expect(500)
         .end((err, result) => {
