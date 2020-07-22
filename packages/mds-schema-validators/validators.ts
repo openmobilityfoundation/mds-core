@@ -141,9 +141,11 @@ const featureCollectionSchema = Joi.object()
 
 export const geographySchema = Joi.object().keys({
   geography_id: Joi.string().guid().required(),
+  name: Joi.string().required(),
   geography_json: featureCollectionSchema,
-  previous_geography_ids: Joi.array().items(Joi.string().guid()).allow(null),
-  name: Joi.string().required()
+  prev_geographies: Joi.array().items(Joi.string().guid()).allow(null),
+  effective_date: timestampSchema,
+  description: Joi.string()
 })
 
 const geographiesSchema = Joi.array().items(geographySchema)
