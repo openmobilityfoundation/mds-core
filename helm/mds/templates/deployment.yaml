@@ -15,6 +15,10 @@ spec:
       app: {{ $name }}
   template:
     metadata:
+      annotations:
+        prometheus.io/path: /prometheus
+        prometheus.io/port: "4000"
+        prometheus.io/scrape: "true"
       labels:
         app: {{ $name }}
     spec:

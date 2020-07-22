@@ -23,6 +23,6 @@
     "@types/request-promise": "4.1.46",
     "google-spreadsheet": "3.0.11",
     "request": "2.88.2",
-    "request-promise": "4.2.5"
+    "request-promise": "4.2.6"
   }
 }

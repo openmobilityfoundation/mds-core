@@ -26,8 +26,8 @@
     "@types/ws": "7.2.6",
     "jsonwebtoken": "8.5.1",
     "jwks-rsa": "1.8.1",
-    "node-rsa": "1.0.8",
-    "request-promise": "4.2.5",
+    "node-rsa": "1.1.1",
+    "request-promise": "4.2.6",
     "ts-nats": "1.2.15",
     "ws": "7.3.1",
     "ws-heartbeat": "1.1.0"
