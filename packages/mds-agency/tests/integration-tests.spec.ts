@@ -202,7 +202,7 @@ describe('Tests API', () => {
   // it('verifies post device missing mfgr', (done) => {
   //     let badVehicle = deepCopy(TEST_VEHICLE)
   //     delete badVehicle.mfgr
-  //     request.post(pathsFor('/vehicles'))
+  //     request.post(pathPrefix('/vehicles'))
   //         .set('Authorization', AUTH)
   //         .send(badVehicle)
   //         .expect(400).end((err, result) => {
@@ -248,7 +248,7 @@ describe('Tests API', () => {
   // it('verifies post device missing year', (done) => {
   //     let badVehicle = deepCopy(TEST_VEHICLE)
   //     delete badVehicle.year
-  //     request.post(pathsFor('/vehicles'))
+  //     request.post(pathPrefix('/vehicles'))
   //         .set('Authorization', AUTH)
   //         .send(badVehicle)
   //         .expect(400).end((err, result) => {

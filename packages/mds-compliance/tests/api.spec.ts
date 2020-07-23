@@ -371,12 +371,12 @@ describe('Tests Compliance API:', () => {
   //       telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
   //     })
   //     request
-  //       .get(pathsFor('/test/initialize'))
+  //       .get(pathPrefix('/test/initialize'))
   //       .set('Authorization', ADMIN_AUTH)
   //       .expect(200)
   //       .end(() => {
   //         provider_request
-  //           .post(pathsFor('/test/seed'))
+  //           .post(pathPrefix('/test/seed'))
   //           .set('Authorization', PROVIDER_AUTH)
   //           .send({ devices, events, telemetry })
   //           .expect(201)
@@ -404,7 +404,7 @@ describe('Tests Compliance API:', () => {
 
   //   it('Verifies violation of count compliance (under)', done => {
   //     request
-  //       .get(pathsFor(`/snapshot/${COUNT_POLICY_UUID}`))
+  //       .get(pathPrefix(`/snapshot/${COUNT_POLICY_UUID}`))
   //       .set('Authorization', ADMIN_AUTH)
   //       .expect(200)
   //       .end((err, result) => {
@@ -418,7 +418,7 @@ describe('Tests Compliance API:', () => {
 
   //   afterEach(done => {
   //     agency_request
-  //       .get(pathsFor('/test/shutdown'))
+  //       .get(pathPrefix('/test/shutdown'))
   //       .set('Authorization', ADMIN_AUTH)
   //       .expect(200)
   //       .end(err => {

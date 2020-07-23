@@ -19,7 +19,10 @@
 import supertest from 'supertest'
 import test from 'unit.js'
 import { pathPrefix } from '@mds-core/mds-utils'
-import { ApiServer, HttpServer, ApiVersionMiddleware, ApiVersionedResponse } from '../index'
+import { ApiServer } from '../api-server'
+import { HttpServer } from '../http-server'
+import { ApiVersionMiddleware } from '../middleware/api-version'
+import { ApiVersionedResponse } from '../@types'
 
 const TEST_API_MIME_TYPE = 'application/vnd.mds.test+json'
 const TEST_API_VERSIONS = ['0.1.0', '0.2.0'] as const
