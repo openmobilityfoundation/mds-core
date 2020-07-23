@@ -87,7 +87,7 @@ const health = () => {
   }
 }
 
-const PrometheusMiddleware = (options?: prometheus.Opts) =>
+export const PrometheusMiddleware = (options?: prometheus.Opts) =>
   prometheus({
     metricsPath: '/prometheus',
     includeMethod: true,
@@ -97,7 +97,7 @@ const PrometheusMiddleware = (options?: prometheus.Opts) =>
     ...options
   })
 
-const CompressionMiddleware = (options?: compression.CompressionOptions) => compression(options)
+export const CompressionMiddleware = (options?: compression.CompressionOptions) => compression(options)
 
 export const RequestLoggingMiddleware = <AccessTokenScope extends string>(): express.RequestHandler =>
   morgan<ApiRequest, ApiResponse & ApiResponseLocals<ApiClaims<AccessTokenScope>>>(
