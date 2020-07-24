@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
-    "image": "yarn bundle && ../../bin/mdsctl -c image-name=mds-web-sockets:${npm_package_version} buildImage",
+    "image": "yarn bundle && ../../bin/build-helper buildImage mds-web-sockets:${npm_package_version}",
     "test": "yarn test:eslint",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
   },

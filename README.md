@@ -2,18 +2,18 @@
 
 The `mds-core` repo contains a deployable reference implementation for working with MDS data. It is a beta release meant for testing by cities and other entities to gather feedback and improve the product.
 
-The [Mobility Data Specification](https://github.com/openmobilityfoundation/mobility-data-specification/) (MDS) is a project of the [Open Mobility Foundation](http://www.openmobilityfoundation.org) (OMF) focused on digitally managing dockless e-scooters, bicycles and carshare in public spaces. 
+The [Mobility Data Specification](https://github.com/openmobilityfoundation/mobility-data-specification/) (MDS) is a project of the [Open Mobility Foundation](http://www.openmobilityfoundation.org) (OMF) focused on digitally managing dockless e-scooters, bicycles and carshare in public spaces.
 
-`mds-core` is... 
-- a reference MDS implementation usable by cities 
-- on-ramp for developers joining MDS ecosystem 
-- a tool for validating software implementations and data 
+`mds-core` is...
+- a reference MDS implementation usable by cities
+- on-ramp for developers joining MDS ecosystem
+- a tool for validating software implementations and data
 
-`mds-core` is not... 
-- the only implementation of MDS 
+`mds-core` is not...
+- the only implementation of MDS
 - where the specification is officially defined
-- a place to define local policies or performance metrics 
-- a cloud service that will be operated by the OMF 
+- a place to define local policies or performance metrics
+- a cloud service that will be operated by the OMF
 
 **See the `mds-core` [Wiki](https://github.com/openmobilityfoundation/mds-core/wiki) for more details and help, including how to use it, architecture diagrams, release goals, how to help, the technical stack used, and slideshows and a video presentation.**
 
@@ -173,8 +173,8 @@ MDS can readily be provisioned to a [Kubernetes](https://kubernetes.io) capable 
 Obtain a local working copy of MDS:
 
 ```sh
-% git clone https://github.com/lacuna-tech/mds-core
-% cd mds-core
+git clone https://github.com/lacuna-tech/mds-core
+cd mds-core
 ```
 
 OSX (Linux and Windows tbd)
@@ -182,13 +182,13 @@ OSX (Linux and Windows tbd)
 Install [Docker Desktop](https://download.docker.com/mac/stable/Docker.dmg):
 
 ```sh
-% open https://download.docker.com/mac/stable/Docker.dmg
+open https://download.docker.com/mac/stable/Docker.dmg
 ```
 
 Start Docker-Desktop:
 
 ```sh
-% open /Applications/Docker.app
+open /Applications/Docker.app
 ```
 
 Lastly, configure Kubernetes:
@@ -197,7 +197,7 @@ Lastly, configure Kubernetes:
 select the 'Preferences' option
 select the 'Resources' option
   apply the following minimal resource changes:
-    CPUs: 6
+    CPUs: 4
     Memory: 8G
     Swap: 1G
 select the 'Kubernetes' option
@@ -208,55 +208,37 @@ select 'Apply & Restart'
 Verify:
 
 ```sh
-% which kubectl
-% kubectl config set-context docker-desktop
-% kubectl cluster-info
-```
-
-#### Bootstrap : install operational dependencies
-
-In order to build and operate MDS, a number of suporting technologies are leveraged by ensuring they are installed and operational via a one-time `bootstap` process:
-
-```sh
-% ./bin/mdsctl -p local bootstrap
-```
-
-The principle tools are: [homebrew](https://brew.sh), [bash-4.x+](https://www.gnu.org/software/bash/), [oq](https://github.com/Blacksmoke16/oq), [jq](https://stedolan.github.io/jq/), [yarn](https://yarnpkg.com/), [nvm](https://github.com/nvm-sh/nvm), [helm-2.14.1](https://helm.sh), [k9s](https://github.com/derailed/k9s), [kubectx](https://github.com/ahmetb/kubectx), [nsc](https://docs.nats.io/nats-tools/nsc), [git](https://git-scm.com/), [gcloud](https://cloud.google.com/sdk/) and [awscli](https://aws.amazon.com/cli/). Additionally the following services are provisioned: [istio](https://istio.io) and [nats](https://nats.io).
-
-Verify:
-
-```sh
-% kubectl -n istio-system get pods
-% kubectl -n nats get pods
-% k9s &
+which kubectl
+kubectl config set-context docker-desktop
+kubectl cluster-info
 ```
 
 #### Build : compile source into deployable images
 
-Compiling and packaging MDS into a deployable form is achived as follows:
+This will run the build, create the docker container images, and generate a manifest of the build output for use with Helm.
 
 ```sh
-% ./bin/mdsctl build
+yarn clean
+yarn image
+yarn values
 ```
 
 Verify:
 
 ```sh
-% docker images | grep mds*
+docker images --filter reference='mds-*'
 ```
 
 #### Run : install MDS
 
-(tbd: ?best profile?)
-
 ```sh
-% ./bin/mdsctl -p processors install:mds
+helm install --name mds --values ./dist/values.yaml ./helm/mds
 ```
 
 Verify:
 
 ```sh
-% curl localhost/agency
+curl localhost/agency
 ```
 
 #### In-Cluster Development
@@ -266,15 +248,15 @@ After following the above steps to set up a local MDS cluster, you can override 
 1. Update `mds-core/okteto.yml`'s `name` field to be set to the service you wish to replace (e.g. `mds-agency`)
 2.
 ```sh
-% curl https://get.okteto.com -sSfL | sh
+curl https://get.okteto.com -sSfL | sh
 ```
 3. Install the `Remote - Kubernetes` VSCode extension.
 4. Run `> Okteto Up` from the VSCode command palette.
 * After the remote session opens, execute this in the new shell window:
 ```sh
-% yarn
-% cd packages/${SERVICE_NAME}
-% yarn start
+yarn
+cd packages/${SERVICE_NAME}
+yarn start
 ```
 5. This session is now safe to close, and you can reattach with the `okteto.${SERVICE_NAME}` ssh profile automatically added for you using the VSCode `Remote - SSH` package.
 6. When you're completely done with your session, run `> Okteto Down` from the VSCode command palette, or `okteto down` from terminal to revert the changes made by Okteto, and return your service to its previous deployment.
@@ -290,40 +272,23 @@ MDS operates atop the following services: [Kubernetes](https://kubernetes.io), [
 Access the database:
 
 ```sh
-% ./bin/mdsctl cli:postgresql
+kubectl port-forward svc/mds-postgresql 5432 &
+psql -h localhost -U mdsadmin mds
 ```
 
 Access the cache:
 
 ```sh
-% ./bin/mdsctl cli:redis
-```
-
-(tbd) Access the event stream:
-
-```sh
-% ./bin/mdsctl install:natsbox
-```
-
-Access the MDS cluster:
-
-```sh
-% k9s
-```
-
-Display the complete set of operations:
-
-```sh
-% ./bin/mdsctl
+kubectl port-forward svc/mds-redis-master 6379 &
+redis-cli
 ```
 
 #### Cleanup
 
 ```sh
-% ./bin/mdsctl uninstall:mds uninstall
+helm del --purge mds
 ```
 
 ## Other
 
 To commit code, you will need the pre-commit tool, which can be installed via `brew install pre-commit`.  For more information, see [SECURITY.md](.github/SECURITY.md)
-

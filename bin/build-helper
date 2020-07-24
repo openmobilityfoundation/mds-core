@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+set -u
+set -o pipefail
+
+BASE_DIR=$(dirname $0)/..
+
+
+buildImage() {
+  docker build -t ${1}$(getBranchSuffix)$(getCommitHash) .
+}
+
+getBranchSuffix() {
+  CI_BRANCH=${CI_BRANCH:-$(git rev-parse --abbrev-ref HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g')}
+  echo -$CI_BRANCH
+}
+
+getCommitHash() {
+  git rev-parse --short HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
+}
+
+images() {
+  for d in $BASE_DIR/container-images/*; do
+    basename $d
+  done
+}
+
+templateValues() {
+  suffix="$(getBranchSuffix)$(getCommitHash)"
+  for image in $(images); do
+    version=$(jq -r '.version' < $BASE_DIR/container-images/$image/package.json)
+    varname="$(echo $image | sed -e 's/^lacuna-//' -e 's/^mds-//' -e 's/-/_/g' | tr a-z A-Z)_VERSION"
+    export $varname=${version}${suffix}
+  done
+  mkdir -p dist
+  envsubst < $BASE_DIR/helm/mds/values.yaml.tpl > $BASE_DIR/dist/values.yaml
+  echo "Wrote dist/values.yaml"
+}
+
+CALL=$1; shift
+$CALL $@

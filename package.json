@@ -63,6 +63,6 @@
     "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",
     "test:eslint": "yarn run:concurrent test:eslint",
     "test:unit": "yarn run:sequential test:unit",
-    "values": "bin/mdsctl templateValues"
+    "values": "bin/build-helper templateValues"
   }
 }
