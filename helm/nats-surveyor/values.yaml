@@ -1,9 +1,0 @@
-
-natsNamespace: nats
-clusterSize: 3
-observations: |
-  {
-    "name": "mds.telemetry",
-    "topic": "mds.events",
-    "credential": "/var/run/nats/secrets/sys.creds"
-  }

@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: '0.4.0'
-description: NATS Surveyor Grafana
-name: nats-surveyor-grafana
-version: 0.0.1

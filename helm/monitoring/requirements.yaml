@@ -1,7 +1,0 @@
-dependencies:
-- name: prometheus
-  version: 10.5.3
-  repository: alias:stable
-- name: grafana
-  version: 5.0.5
-  repository: alias:stable
