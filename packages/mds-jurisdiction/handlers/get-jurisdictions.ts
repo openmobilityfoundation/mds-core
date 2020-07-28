@@ -31,7 +31,9 @@ export const GetJurisdictionsHandler = async (
   res: JurisdictionApiGetJurisdictionsResponse
 ) => {
   try {
-    const { effective } = parseRequest(req, { parser: Number }).query('effective')
+    const {
+      effective: [effective]
+    } = parseRequest(req, { parser: Number }).query('effective')
     const jurisdictions = await JurisdictionServiceClient.getJurisdictions({ effective })
     const { version } = res.locals
     return res.status(200).send({ version, jurisdictions: jurisdictions.filter(HasJurisdictionClaim(res)) })

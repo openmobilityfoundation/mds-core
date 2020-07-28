@@ -85,9 +85,12 @@ function api(app: express.Express): express.Express {
           they are permitted to query for both published and unpublished policies.
           Otherwise, they can only read published.
         */
-        const { get_published = null, get_unpublished = null } = scopes.includes('policies:read')
+        const {
+          get_published: [get_published = null],
+          get_unpublished: [get_unpublished = null]
+        } = scopes.includes('policies:read')
           ? parseRequest(req, { parser: x => (x ? JSON.parse(x) : null) }).query('get_published', 'get_unpublished')
-          : { get_published: true }
+          : { get_published: [true], get_unpublished: [] }
 
         if (start_date > end_date) {
           throw new BadParamsError(`start_date ${start_date} > end_date ${end_date}`)
@@ -139,9 +142,12 @@ function api(app: express.Express): express.Express {
           they are permitted to query for both published and unpublished policies.
           Otherwise, they can only read published.
         */
-        const { get_published = null, get_unpublished = null } = scopes.includes('policies:read')
+        const {
+          get_published: [get_published = null],
+          get_unpublished: [get_unpublished = null]
+        } = scopes.includes('policies:read')
           ? parseRequest(req, { parser: x => (x ? JSON.parse(x) : null) }).query('get_published', 'get_unpublished')
-          : { get_published: true }
+          : { get_published: [true], get_unpublished: [] }
 
         const policies = await db.readPolicies({ policy_id, get_published, get_unpublished })
 
