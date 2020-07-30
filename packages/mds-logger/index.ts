@@ -14,6 +14,8 @@
     limitations under the License.
  */
 
+import httpContext from 'express-http-context'
+
 const logger: Pick<Console, 'info' | 'warn' | 'error'> = console
 type LogLevel = keyof typeof logger
 
@@ -29,8 +31,9 @@ const log = (level: LogLevel, ...args: unknown[]): string[] => {
   if (redacted.length) {
     const timestamp = Date.now()
     const ISOTimestamp = new Date(timestamp).toISOString()
+    const requestId = httpContext.get('x-request-id')
 
-    logger[level](level.toUpperCase(), ISOTimestamp, timestamp, ...redacted)
+    logger[level](level.toUpperCase(), ISOTimestamp, timestamp, ...(requestId ? [requestId] : []), ...redacted)
   }
   return redacted
 }
