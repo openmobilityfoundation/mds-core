@@ -1,0 +1,3 @@
+# Comma separated list of advisories to exclude
+# dot-prop https://npmjs.com/advisories/1213
+1213
