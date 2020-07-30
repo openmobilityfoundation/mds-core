@@ -15,8 +15,13 @@
  */
 
 import urls from 'url'
-import { parseObjectProperties, ParseObjectPropertiesOptions } from '@mds-core/mds-utils'
 import { ApiRequest } from '@mds-core/mds-api-server'
+import {
+  parseObjectPropertiesList,
+  parseObjectPropertiesSingle,
+  ParseObjectPropertiesOptionsSingle,
+  ParseObjectPropertiesOptionsList
+} from './object-properties-parser'
 
 interface PagingParams {
   skip: number
@@ -44,18 +49,30 @@ export const asJsonApiLinks = (req: ApiRequest, skip: number, take: number, coun
   return undefined
 }
 
-export const parseRequest = <T = string>(req: ApiRequest, options?: ParseObjectPropertiesOptions<T>) => {
-  const { keys: query } = parseObjectProperties<T>(req.query, options)
-  const { keys: params } = parseObjectProperties<T>(req.params, options)
-  return { params, query }
-}
+/** parseRequest
+ * Takes an API request, and returns two clients:
+ * - single: takes an optional parser that applies to a single value,
+ * and will return single values, e.g. string, number.
+ *
+ * - list: takes an optional parser that applies to a list of values,
+ * and will return a list of values, e.g. string[], number[], Foo[].
+ * @example parseRequest(req).single({ parser: Number }).query('skip', 'take')
+ * @example parseRequest(req).list({ parser: xs => { xs.filter(isUUID) }}).query('provider_id')
+ */
+export const parseRequest = (req: ApiRequest) => ({
+  single: <T = string>(options?: ParseObjectPropertiesOptionsSingle<T>) => ({
+    query: parseObjectPropertiesSingle<T>(req.query, options).keys,
+    params: parseObjectPropertiesSingle<T>(req.params, options).keys
+  }),
+  list: <T = string>(options?: ParseObjectPropertiesOptionsList<T>) => ({
+    query: parseObjectPropertiesList<T>(req.query, options).keys,
+    params: parseObjectPropertiesList<T>(req.params, options).keys
+  })
+})
 
 export const parsePagingQueryParams = (req: ApiRequest) => {
   const [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE] = [100, 1000]
-  const {
-    skip: [skip = 0],
-    take: [take = DEFAULT_PAGE_SIZE]
-  } = parseRequest(req, { parser: Number }).query('skip', 'take')
+  const { skip = 0, take = DEFAULT_PAGE_SIZE } = parseRequest(req).single({ parser: Number }).query('skip', 'take')
   return {
     skip: Number.isNaN(skip) ? 0 : Math.max(0, skip),
     take: Number.isNaN(take) ? DEFAULT_PAGE_SIZE : Math.min(take, MAX_PAGE_SIZE)

@@ -583,10 +583,6 @@ const getEnvVar = <TProps extends { [name: string]: string }>(props: TProps): TP
     }
   }, {} as TProps)
 
-export type ParseObjectPropertiesOptions<T> = Partial<{
-  parser: (value: string) => T
-}>
-
 export const isTArray = <T>(arr: unknown, isT: (t: unknown) => t is T): arr is T[] => {
   if (arr instanceof Array) {
     return arr.filter(t => isT(t)).length === arr.length
@@ -595,26 +591,6 @@ export const isTArray = <T>(arr: unknown, isT: (t: unknown) => t is T): arr is T
 }
 
 export const isStringArray = (arr: unknown): arr is string[] => isTArray<string>(arr, isString)
-
-const parseObjectProperties = <T = string>(
-  obj: { [k: string]: unknown },
-  { parser }: ParseObjectPropertiesOptions<T> = {}
-) => {
-  return {
-    keys: <TKey extends string>(first: TKey, ...rest: TKey[]) =>
-      [first, ...rest]
-        .map(key => ({ key, value: obj[key] }))
-        .reduce((params, { key, value }) => {
-          if (typeof value === 'string') {
-            return { ...params, [key]: parser ? [parser(value)] : [value] }
-          }
-          if (isStringArray(value)) {
-            return { ...params, [key]: parser ? value.map(parser) : value }
-          }
-          return { ...params, [key]: [] }
-        }, {}) as { [P in TKey]: (T | undefined)[] }
-  }
-}
 
 const asArray = <T>(value: SingleOrArray<T>): T[] => (Array.isArray(value) ? value : [value])
 
@@ -665,7 +641,6 @@ export {
   parseRelative,
   getCurrentDate,
   getEnvVar,
-  parseObjectProperties,
   asArray,
   pluralize,
   filterDefined

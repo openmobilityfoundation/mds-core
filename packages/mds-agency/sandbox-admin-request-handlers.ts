@@ -46,10 +46,7 @@ export type AgencyApiRefreshCacheRequest = AgencyApiRequest & ApiRequestQuery<'s
 
 export const refreshCache = async (req: AgencyApiRefreshCacheRequest, res: AgencyApiResponse) => {
   // wipe the cache and rebuild from db
-  const {
-    skip: [skip = 0],
-    take: [take = 10000000000]
-  } = parseRequest(req, { parser: Number }).query('skip', 'take')
+  const { skip = 0, take = 10000000000 } = parseRequest(req).single({ parser: Number }).query('skip', 'take')
 
   try {
     const rows = await db.readDeviceIds()

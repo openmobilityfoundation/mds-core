@@ -34,9 +34,7 @@ export const GetJurisdictionHandler = async (
 ) => {
   try {
     const { jurisdiction_id } = req.params
-    const {
-      effective: [effective]
-    } = parseRequest(req, { parser: Number }).query('effective')
+    const { effective } = parseRequest(req).single({ parser: Number }).query('effective')
     const jurisdiction = await JurisdictionServiceClient.getJurisdiction(jurisdiction_id, { effective })
     const { version } = res.locals
     return HasJurisdictionClaim(res)(jurisdiction)

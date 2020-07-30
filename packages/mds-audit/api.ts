@@ -528,11 +528,9 @@ function api(app: express.Express): express.Express {
                 }
               }, {})
 
-            const {
-              event_viewport_adjustment: [event_viewport_adjustment = seconds(30)]
-            } = parseRequest(req, {
-              parser: x => seconds(Number(x))
-            }).query('event_viewport_adjustment')
+            const { event_viewport_adjustment = seconds(30) } = parseRequest(req)
+              .single({ parser: x => seconds(Number(x)) })
+              .query('event_viewport_adjustment')
 
             const start_time = audit_start && audit_start - event_viewport_adjustment
             const end_time = (end => end && end + event_viewport_adjustment)(audit_end || last_event)
@@ -632,11 +630,9 @@ function api(app: express.Express): express.Express {
         const { scopes } = res.locals
         const { skip, take } = parsePagingQueryParams(req)
 
-        const {
-          provider_id: [queried_provider_id],
-          provider_vehicle_id: [provider_vehicle_id],
-          audit_subject_id: [audit_subject_id]
-        } = parseRequest(req).query('provider_id', 'provider_vehicle_id', 'audit_subject_id')
+        const { provider_id: queried_provider_id, provider_vehicle_id, audit_subject_id } = parseRequest(req)
+          .single()
+          .query('provider_id', 'provider_vehicle_id', 'audit_subject_id')
 
         const provider_id = scopes.includes('audits:read') ? queried_provider_id : res.locals.claims?.provider_id
 
@@ -647,10 +643,7 @@ function api(app: express.Express): express.Express {
           return res.status(500).send({ error: 'internal_server_error' })
         }
 
-        const {
-          start_time: [start_time],
-          end_time: [end_time]
-        } = parseRequest(req, { parser: Number }).query('start_time', 'end_time')
+        const { start_time, end_time } = parseRequest(req).single({ parser: Number }).query('start_time', 'end_time')
         const query = {
           start_time,
           end_time,
@@ -696,13 +689,9 @@ function api(app: express.Express): express.Express {
     checkAuditApiAccess(scopes => scopes.includes('audits:vehicles:read')),
     async (req: AuditApiGetVehicleRequest, res: GetAuditVehiclesResponse) => {
       const { skip, take } = { skip: 0, take: 10000 }
-      const {
-        strict: [strict = true],
-        bbox: [bbox],
-        provider_id: [provider_id]
-      } = {
-        ...parseRequest(req, { parser: JSON.parse }).query('strict', 'bbox'),
-        ...parseRequest(req).query('provider_id')
+      const { strict = true, bbox, provider_id } = {
+        ...parseRequest(req).single({ parser: JSON.parse }).query('strict', 'bbox'),
+        ...parseRequest(req).single().query('provider_id')
       }
 
       const url = urls.format({

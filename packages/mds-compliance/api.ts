@@ -89,12 +89,9 @@ function api(app: express.Express): express.Express {
     pathPrefix('/snapshot/:policy_uuid'),
     async (req: ComplianceApiSnapshotRequest, res: ComplianceApiSnapshotResponse) => {
       const { provider_id, version } = res.locals
-      const {
-        provider_id: [queried_provider_id],
-        timestamp: [timestamp]
-      } = {
-        ...parseRequest(req).query('provider_id'),
-        ...parseRequest(req, { parser: Number }).query('timestamp')
+      const { provider_id: queried_provider_id, timestamp } = {
+        ...parseRequest(req).single().query('provider_id'),
+        ...parseRequest(req).single({ parser: Number }).query('timestamp')
       }
 
       // default to now() if no timestamp supplied
@@ -148,10 +145,8 @@ function api(app: express.Express): express.Express {
   )
 
   app.get(pathPrefix('/count/:rule_id'), async (req: ComplianceApiCountRequest, res: ComplianceApiCountResponse) => {
-    const {
-      timestamp: [timestamp]
-    } = {
-      ...parseRequest(req, { parser: Number }).query('timestamp')
+    const { timestamp } = {
+      ...parseRequest(req).single({ parser: Number }).query('timestamp')
     }
     const query_date = timestamp || now()
     if (!AllowedProviderIDs.includes(res.locals.provider_id)) {

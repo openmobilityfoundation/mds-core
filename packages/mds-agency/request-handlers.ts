@@ -123,11 +123,9 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
 export const getVehicleById = async (req: AgencyApiGetVehicleByIdRequest, res: AgencyAipGetVehicleByIdResponse) => {
   const { device_id } = req.params
 
-  const {
-    provider_id: [provider_id]
-  } = res.locals.scopes.includes('vehicles:read')
-    ? parseRequest(req).query('provider_id')
-    : { provider_id: [res.locals.provider_id] }
+  const { provider_id } = res.locals.scopes.includes('vehicles:read')
+    ? parseRequest(req).single().query('provider_id')
+    : res.locals
 
   const payload = await readPayload(device_id)
 
@@ -145,10 +143,7 @@ export const getVehiclesByProvider = async (
 ) => {
   const PAGE_SIZE = 1000
 
-  const {
-    skip: [skip = 0],
-    take: [take = PAGE_SIZE]
-  } = parseRequest(req, { parser: Number }).query('skip', 'take')
+  const { skip = 0, take = PAGE_SIZE } = parseRequest(req).single({ parser: Number }).query('skip', 'take')
 
   const url = urls.format({
     protocol: req.get('x-forwarded-proto') || req.protocol,
@@ -157,11 +152,9 @@ export const getVehiclesByProvider = async (
   })
 
   // TODO: Replace with express middleware
-  const {
-    provider_id: [provider_id]
-  } = res.locals.scopes.includes('vehicles:read')
-    ? parseRequest(req).query('provider_id')
-    : { provider_id: [res.locals.provider_id] }
+  const { provider_id } = res.locals.scopes.includes('vehicles:read')
+    ? parseRequest(req).single().query('provider_id')
+    : res.locals
 
   try {
     const response = await getVehicles(skip, take, url, req.query, provider_id)
