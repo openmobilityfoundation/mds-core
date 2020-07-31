@@ -53,7 +53,7 @@ export const parseObjectPropertiesSingle = <T = string>(
             if (parser) {
               return { ...params, [key]: parser(firstVal) }
             }
-            return { ...params, key: value }
+            return { ...params, [key]: firstVal }
           }
           return { ...params, [key]: undefined }
         }, {}) as { [P in TKey]: T | undefined }
@@ -87,7 +87,7 @@ export const parseObjectPropertiesList = <T = string>(
             if (parser) {
               return { ...params, [key]: parser(value) }
             }
-            return { ...params, key: value }
+            return { ...params, [key]: value }
           }
           return { ...params, [key]: undefined }
         }, {}) as { [P in TKey]: T[] | undefined }
