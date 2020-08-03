@@ -24,6 +24,6 @@
     "build": "tsc --build tsconfig.build.json",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0"
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 40  ts-mocha --project ../../tsconfig.json"
   }
 }
