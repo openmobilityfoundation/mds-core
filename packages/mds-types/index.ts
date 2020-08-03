@@ -127,6 +127,9 @@ export type NullableProperties<T extends object> = {
   [P in keyof T]-?: T[P] extends null ? T[P] : Nullable<T[P]>
 }
 export type SingleOrArray<T> = T | T[]
+export type NullableKeys<T> = {
+  [P in keyof T]: null extends T[P] ? P : never
+}[keyof T]
 export type Optional<T, P extends keyof T> = Omit<T, P> & Partial<Pick<T, P>>
 export type NonEmptyArray<T> = [T, ...T[]]
 
