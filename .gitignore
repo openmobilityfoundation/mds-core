@@ -226,3 +226,6 @@ cypress/videos
 
 # tools
 tools
+
+# generated documentation
+docs
