@@ -15,7 +15,7 @@
  */
 
 import { ServiceClient } from '@mds-core/mds-service-helpers'
-import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common/client'
+import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common'
 import { JurisdictionServiceDefinition, JurisdictionService } from '../@types'
 
 const JurisdictionServiceRpcClient = RpcClient(JurisdictionServiceDefinition, {

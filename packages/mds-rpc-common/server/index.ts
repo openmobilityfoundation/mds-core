@@ -31,12 +31,12 @@ import { Server } from 'http'
 import { ProcessManager } from '@mds-core/mds-service-helpers'
 import { RpcServiceDefinition, RPC_PORT, RPC_CONTENT_TYPE } from '../@types'
 
-interface RpcServiceHandlers {
+export interface RpcServiceHandlers {
   onStart: () => Promise<void>
   onStop: () => Promise<void>
 }
 
-interface RpcServerOptions {
+export interface RpcServerOptions {
   port: string | number
 }
 

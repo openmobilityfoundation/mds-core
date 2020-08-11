@@ -22,7 +22,7 @@ import { ServiceError, ServiceResponse } from '@mds-core/mds-service-helpers'
 import { AnyFunction } from '@mds-core/mds-types'
 import { RpcServiceDefinition, RPC_HOST, RPC_PORT } from '../@types'
 
-interface RpcClientOptions {
+export interface RpcClientOptions {
   host: string
   port: string | number
 }
@@ -39,7 +39,7 @@ export const RpcClient = <S>(definition: RpcServiceDefinition<S>, options: Parti
   })
 }
 
-export const RpcClientError = (error: {}) =>
+const RpcClientError = (error: {}) =>
   ServiceError({
     type: 'ServiceUnavailable',
     message: error instanceof Error ? error.message : error.toString(),

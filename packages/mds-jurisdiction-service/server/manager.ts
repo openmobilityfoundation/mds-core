@@ -1,4 +1,4 @@
-import { RpcServer } from '@mds-core/mds-rpc-common/server'
+import { RpcServer } from '@mds-core/mds-rpc-common'
 import { JurisdictionServiceProvider } from '../service/provider'
 import { JurisdictionServiceDefinition } from '../@types'
 

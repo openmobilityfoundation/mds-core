@@ -14,11 +14,6 @@
     limitations under the License.
  */
 
-import { AnyFunction } from '@mds-core/mds-types'
-import { RpcRouteDefinition } from './@types'
-
-export * from './@types'
-
-export const RpcRoute = <M extends AnyFunction>(): RpcRouteDefinition<M> => {
-  return { request: {}, response: {} } as RpcRouteDefinition<M>
-}
+export { RpcServiceDefinition, RpcRouteDefinition, RpcRoute } from './@types'
+export { RpcClientOptions, RpcClient, RpcRequest } from './client'
+export { RpcServerOptions, RpcServiceHandlers, RpcServer } from './server'

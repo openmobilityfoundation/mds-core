@@ -22,6 +22,10 @@ export type RpcRouteDefinition<M extends AnyFunction> = {
   response: ServiceResponse<ReturnType<M>>
 }
 
+export const RpcRoute = <M extends AnyFunction>(): RpcRouteDefinition<M> => {
+  return { request: {}, response: {} } as RpcRouteDefinition<M>
+}
+
 export type RpcServiceDefinition<S> = {
   [M in keyof S]: S[M] extends AnyFunction ? RpcRouteDefinition<S[M]> : never
 }
