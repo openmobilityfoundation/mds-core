@@ -18,10 +18,9 @@ import supertest from 'supertest'
 import test from 'unit.js'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { uuid, pathPrefix } from '@mds-core/mds-utils'
-import { JurisdictionServiceProvider } from '@mds-core/mds-jurisdiction-service/service/provider'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
-import { ProcessManager } from '@mds-core/mds-service-helpers'
+import { JurisdictionServiceManager } from '@mds-core/mds-jurisdiction-service/server/manager'
 import { api } from '../api'
 import { JURISDICTION_API_DEFAULT_VERSION } from '../@types'
 
@@ -34,11 +33,11 @@ const [JURISDICTION0, JURISDICTION1, JURISDICTION2] = [uuid(), uuid(), uuid()].m
   geography_id: uuid()
 }))
 
-const controller = ProcessManager(JurisdictionServiceProvider).controller()
+const JurisdictionServer = JurisdictionServiceManager.controller()
 
 describe('Test Jurisdiction API', () => {
   before(async () => {
-    await controller.start()
+    await JurisdictionServer.start()
   })
 
   it('Create Single Jurisdiction', async () => {
@@ -214,6 +213,6 @@ describe('Test Jurisdiction API', () => {
   })
 
   after(async () => {
-    await controller.stop()
+    await JurisdictionServer.stop()
   })
 })

@@ -14,6 +14,11 @@
     limitations under the License.
  */
 
-import { JurisdictionServiceManager } from './manager'
+import { AnyFunction } from '@mds-core/mds-types'
+import { RpcRouteDefinition } from './@types'
 
-JurisdictionServiceManager.monitor()
+export * from './@types'
+
+export const RpcRoute = <M extends AnyFunction>(): RpcRouteDefinition<M> => {
+  return { request: {}, response: {} } as RpcRouteDefinition<M>
+}

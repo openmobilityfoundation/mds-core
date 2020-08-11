@@ -14,17 +14,22 @@
     limitations under the License.
  */
 
-import { UnwrapServiceResult, ServiceClient } from '@mds-core/mds-service-helpers'
-import { JurisdictionServiceProvider } from '../service/provider'
-import { JurisdictionService } from '../@types'
+import { ServiceClient } from '@mds-core/mds-service-helpers'
+import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common/client'
+import { JurisdictionServiceDefinition, JurisdictionService } from '../@types'
 
-const { start, stop, ...service } = JurisdictionServiceProvider
+const JurisdictionServiceRpcClient = RpcClient(JurisdictionServiceDefinition, {
+  host: process.env.JURISDICTION_SERVICE_RPC_HOST,
+  port: process.env.JURISDICTION_SERVICE_RPC_PORT
+})
 
 export const JurisdictionServiceClient: ServiceClient<JurisdictionService> = {
-  createJurisdiction: UnwrapServiceResult(service.createJurisdiction),
-  createJurisdictions: UnwrapServiceResult(service.createJurisdictions),
-  deleteJurisdiction: UnwrapServiceResult(service.deleteJurisdiction),
-  getJurisdiction: UnwrapServiceResult(service.getJurisdiction),
-  getJurisdictions: UnwrapServiceResult(service.getJurisdictions),
-  updateJurisdiction: UnwrapServiceResult(service.updateJurisdiction)
+  createJurisdiction: jurisdiction => RpcRequest(JurisdictionServiceRpcClient.createJurisdiction, [jurisdiction]),
+  createJurisdictions: jurisdictions => RpcRequest(JurisdictionServiceRpcClient.createJurisdictions, [jurisdictions]),
+  deleteJurisdiction: jurisdiction_id => RpcRequest(JurisdictionServiceRpcClient.deleteJurisdiction, [jurisdiction_id]),
+  getJurisdiction: (jurisdiction_id, options = {}) =>
+    RpcRequest(JurisdictionServiceRpcClient.getJurisdiction, [jurisdiction_id, options]),
+  getJurisdictions: (options = {}) => RpcRequest(JurisdictionServiceRpcClient.getJurisdictions, [options]),
+  updateJurisdiction: (jurisdiction_id, update) =>
+    RpcRequest(JurisdictionServiceRpcClient.updateJurisdiction, [jurisdiction_id, update])
 }

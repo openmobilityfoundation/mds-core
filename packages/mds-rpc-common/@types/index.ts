@@ -14,6 +14,18 @@
     limitations under the License.
  */
 
-import { JurisdictionServiceManager } from './manager'
+import { AnyFunction } from '@mds-core/mds-types'
+import { ServiceResponse } from '@mds-core/mds-service-helpers'
 
-JurisdictionServiceManager.monitor()
+export type RpcRouteDefinition<M extends AnyFunction> = {
+  request: Parameters<M>
+  response: ServiceResponse<ReturnType<M>>
+}
+
+export type RpcServiceDefinition<S> = {
+  [M in keyof S]: S[M] extends AnyFunction ? RpcRouteDefinition<S[M]> : never
+}
+
+export const RPC_HOST = 'http://localhost'
+export const RPC_PORT = 4000
+export const RPC_CONTENT_TYPE = 'application/grpc-web+json'

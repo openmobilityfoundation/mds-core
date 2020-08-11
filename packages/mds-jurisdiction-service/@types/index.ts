@@ -15,6 +15,7 @@
  */
 
 import { UUID, Timestamp, Optional } from '@mds-core/mds-types'
+import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
 
 export interface JurisdictionDomainModel {
   jurisdiction_id: UUID
@@ -44,4 +45,13 @@ export interface JurisdictionService {
   deleteJurisdiction: (jurisdiction_id: JurisdictionIdType) => Pick<JurisdictionDomainModel, 'jurisdiction_id'>
   getJurisdictions: (options?: GetJurisdictionsOptions) => JurisdictionDomainModel[]
   getJurisdiction: (jurisdiction_id: JurisdictionIdType, options?: GetJurisdictionsOptions) => JurisdictionDomainModel
+}
+
+export const JurisdictionServiceDefinition: RpcServiceDefinition<JurisdictionService> = {
+  createJurisdiction: RpcRoute<JurisdictionService['createJurisdiction']>(),
+  createJurisdictions: RpcRoute<JurisdictionService['createJurisdictions']>(),
+  updateJurisdiction: RpcRoute<JurisdictionService['updateJurisdiction']>(),
+  deleteJurisdiction: RpcRoute<JurisdictionService['deleteJurisdiction']>(),
+  getJurisdiction: RpcRoute<JurisdictionService['getJurisdiction']>(),
+  getJurisdictions: RpcRoute<JurisdictionService['getJurisdictions']>()
 }

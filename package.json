@@ -32,7 +32,7 @@
     "husky": "4.2.5",
     "improved-yarn-audit": "2.2.1",
     "lerna": "3.22.1",
-    "mocha": "8.0.1",
+    "mocha": "8.1.1",
     "mochawesome": "6.1.1",
     "mockdate": "3.0.2",
     "node-rsa": "1.1.1",

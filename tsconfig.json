@@ -2,14 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@container-images/*": ["container-images/*/index.ts"],
       "@mds-core/*": ["packages/*/index.ts"],
       "packages/*": ["/dev/null"],
       "*": ["@types/*", "*"]
     },
     "target": "ES2019",
-    "module": "commonjs",
     "skipLibCheck": true,
+    "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
     "inlineSourceMap": true,

@@ -1,0 +1,30 @@
+{
+  "name": "@mds-core/mds-rpc-common",
+  "version": "0.1.0",
+  "description": "MDS RPC Common Utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "keywords": [],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "test": "yarn test:eslint && yarn test:unit",
+    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
+    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc ts-mocha --project ../../tsconfig.json"
+  },
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@improbable-eng/grpc-web-node-http-transport": "0.13.0",
+    "@mds-core/mds-api-server": "0.1.26",
+    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-service-helpers": "0.1.0",
+    "@mds-core/mds-types": "0.1.23",
+    "@types/express": "4.17.7",
+    "envalid": "6.0.2",
+    "express": "4.17.1",
+    "rpc_ts": "2.1.0"
+  }
+}

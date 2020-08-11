@@ -1,0 +1,36 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+autonumber
+hide footbox
+title MDS RPC Service Architecture
+box Kubernetes Pod
+participant "**API**" as API #LightBlue
+endbox
+box Kubernetes Pod
+participant "**Service**"  as Service #LightGreen
+participant "**Repository**" as Repository #LightGreen
+endbox
+box Kubernetes Pod\nor External Server
+collections "**Postgres**" as DB #LightGoldenRodYellow
+hnote over Service,Repository #LightGreen: Initialize/Run Migrations
+hnote over API #LightBlue: Listen for HTTP Requests
+hnote over Service #LightGreen: Listen for RPC Requests
+[->API ++ #LightBlue: HTTP API Request
+hnote over API #LightBlue: Verify API Authorization
+hnote over API #LightBlue: Parse Request params, query, body
+API->Service ++ #LightGreen: RPC Service Request
+hnote over Service #LightGreen: Validate Request Parameters
+Service->Repository ++ #LightGreen: Repository method call
+hnote over Repository #LightGreen: Map to Entity Model
+Repository->DB ++: TypeORM Command/Query
+rnote over DB #LightGoldenRodYellow: Execute SQL
+return TypeORM Result
+hnote over Repository #LightGreen: Map to Domain Model
+return Repository method result
+hnote over Service #LightGreen: Manage exceptions/errors
+return RPC Service Response
+hnote over API #LightBlue: Convert result/error to HTTP status/response
+return HTTP API response
+@enduml
