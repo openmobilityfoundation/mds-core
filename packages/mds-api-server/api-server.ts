@@ -42,24 +42,25 @@ export const ApiServer = (
   // Middleware
   app.use(
     CompressionMiddleware(options.compression),
-    RequestLoggingMiddleware(options.requestLogging),
     CorsMiddleware(options.cors),
     JsonBodyParserMiddleware(options.jsonBodyParser),
+    AuthorizationMiddleware(options.authorization),
+    /** Prometheus Middleware
+     * Placed after the other middleware so it can label metrics with additional
+     * properties added by the other middleware.
+     */
+    PrometheusMiddleware(options.prometheus),
+    /** Request Logging Middleware
+     * Placed after Prometheus middleware to avoid excessive logging
+     */
+    RequestLoggingMiddleware(options.requestLogging),
     MaintenanceModeMiddleware(options.maintenanceMode),
-    AuthorizationMiddleware(options.authorization)
+    /** HTTP Context Middleware
+     * Placed after the other middleware to avoid causing collisions
+     * see express-http-context's README for more information
+     */
+    ...HttpContextMiddleware()
   )
-
-  /** Prometheus Middleware
-   * Placed after the other middleware so it can label metrics with additional
-   * properties added by the other middleware.
-   */
-  app.use(PrometheusMiddleware(options.prometheus))
-
-  /** HTTP Context Middleware
-   * Placed after the other middleware to avoid causing collisions
-   * see express-http-context's README for more information
-   */
-  app.use(...HttpContextMiddleware())
 
   // Health Route
   app.get(pathPrefix('/health'), HealthRequestHandler)

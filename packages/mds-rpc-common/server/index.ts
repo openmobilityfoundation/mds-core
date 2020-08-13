@@ -57,8 +57,8 @@ export const RpcServer = <S>(
         await onStart()
         server = HttpServer(
           express()
-            .use(RequestLoggingMiddleware())
             .use(PrometheusMiddleware())
+            .use(RequestLoggingMiddleware())
             .use(RawBodyParserMiddleware({ type: RPC_CONTENT_TYPE }))
             .get('/health', HealthRequestHandler)
             .use(ModuleRpcProtocolServer.registerRpcRoutes(definition, routes)),
