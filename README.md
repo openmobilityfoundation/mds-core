@@ -164,11 +164,11 @@ lerna run prettier
 * Select any one of the files in a package's test folder
 * Press `F5`
 
-### Kubernetes
+## Kubernetes
 
 MDS can readily be provisioned to a [Kubernetes](https://kubernetes.io) capable cluster, be it a local or remote. The following steps describe how to build, deploy and operate against a local MDS cluster.
 
-#### Prerequisites
+### Prerequisites
 
 Obtain a local working copy of MDS:
 
@@ -213,7 +213,7 @@ kubectl config set-context docker-desktop
 kubectl cluster-info
 ```
 
-#### Build : compile source into deployable images
+### Build : compile source into deployable images
 
 This will run the build, create the docker container images, and generate a manifest of the build output for use with Helm.
 
@@ -229,7 +229,7 @@ Verify:
 docker images --filter reference='mds-*'
 ```
 
-#### Run : install MDS
+### Run : install MDS
 
 ```sh
 helm install --name mds --values ./dist/values.yaml ./helm/mds
@@ -241,7 +241,7 @@ Verify:
 curl localhost/agency
 ```
 
-#### In-Cluster Development
+### In-Cluster Development
 Due to the nature of `mds-core` being a highly portable Typescript project that compiles down into minified javascript for its images, rapidly development in-cluster can be quite challenging. `mds-core` utilizes [Okteto](https://okteto.com) to enable developers to actively develop their code in-cluster.
 
 After following the above steps to set up a local MDS cluster, you can override an existing service's deployment with these steps.
@@ -261,13 +261,13 @@ yarn start
 5. This session is now safe to close, and you can reattach with the `okteto.${SERVICE_NAME}` ssh profile automatically added for you using the VSCode `Remote - SSH` package.
 6. When you're completely done with your session, run `> Okteto Down` from the VSCode command palette, or `okteto down` from terminal to revert the changes made by Okteto, and return your service to its previous deployment.
 
-#### MDS Operations
+### MDS Operations
 
 MDS operates atop the following services: [Kubernetes](https://kubernetes.io), [Istio](https://istio.io), [NATS](https://nats.io), [PostgreSQL](https://www.postgresql.org) and [Redis](https://redis.io).
 
 (tbd)
 
-#### Additional Considerations
+### Additional Considerations
 
 Access the database:
 
@@ -283,12 +283,22 @@ kubectl port-forward svc/mds-redis-master 6379 &
 redis-cli
 ```
 
-#### Cleanup
+### Cleanup
 
 ```sh
 helm del --purge mds
 ```
 
 ## Other
+
+### CI/CD
+
+This project includes a Jenkinsfile to run as a pipeline with the Jenkins CI/CD application.  You can test the syntax of this file with the following command:
+
+```sh
+curl --user user:password -X POST -F "jenkinsfile=<Jenkinsfile" http://localhost:8080/pipeline-model-converter/validate
+```
+
+This assumes you have a jenkins server running on port 8080 of your local machine.  Note that this will only validate syntax, not whether the pipeline can actually be run.
 
 To commit code, you will need the pre-commit tool, which can be installed via `brew install pre-commit`.  For more information, see [SECURITY.md](.github/SECURITY.md)
