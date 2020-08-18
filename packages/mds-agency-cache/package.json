@@ -22,7 +22,7 @@
     "@types/flat": "5.0.1",
     "@types/redis": "2.8.25",
     "bluebird": "3.7.2",
-    "flat": "5.0.0",
+    "flat": "5.0.2",
     "redis": "3.0.2"
   },
   "scripts": {

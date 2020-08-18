@@ -21,7 +21,7 @@
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
     "@types/request-promise": "4.1.46",
-    "google-spreadsheet": "3.0.11",
+    "google-spreadsheet": "3.0.13",
     "request": "2.88.2",
     "request-promise": "4.2.6"
   }

@@ -13,13 +13,12 @@
     "@mds-core/mds-types": "0.1.23",
     "@turf/boolean-point-in-polygon": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@types/moment-timezone": "0.5.13",
     "@types/point-in-polygon": "1.0.0",
-    "@types/uuid": "8.0.0",
+    "@types/uuid": "8.3.0",
     "circle-to-polygon": "2.0.2",
     "moment-timezone": "0.5.31",
     "point-in-polygon": "1.0.1",
-    "uuid": "8.2.0"
+    "uuid": "8.3.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
