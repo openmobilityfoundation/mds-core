@@ -128,7 +128,7 @@ export class ConnectionManager<TConnectionMode extends ConnectionMode> {
     }
   }
 
-  public cli = (mode: TConnectionMode, options: ConnectionManagerCliOptions = {}) => {
+  public cli = (mode: TConnectionMode, options: ConnectionManagerCliOptions = {}): ConnectionOptions => {
     const { connectionOptions } = this
     // Make the "rw" connection the default for the TypeORM CLI by removing the connection name
     const { name, ...ormconfig } = connectionOptions(mode)

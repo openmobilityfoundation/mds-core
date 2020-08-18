@@ -16,8 +16,10 @@
 
 import test from 'unit.js'
 import { uuid, days } from '@mds-core/mds-utils'
+import { createConnection, ConnectionOptions } from 'typeorm'
 import { JurisdictionServiceClient } from '../index'
 import { JurisdictionServiceManager } from '../server/manager'
+import ormconfig = require('../ormconfig')
 
 const records = 5_000
 
@@ -28,7 +30,21 @@ const LAST_WEEK = TODAY - days(7)
 
 const JurisdictionServer = JurisdictionServiceManager.controller()
 
-describe('Write/Read Jurisdictions', () => {
+describe('Test Migrations', () => {
+  it('Run Migrations', async () => {
+    const connection = await createConnection(ormconfig as ConnectionOptions)
+    await connection.runMigrations()
+    await connection.close()
+  })
+
+  it('Revert Migrations', async () => {
+    const connection = await createConnection(ormconfig as ConnectionOptions)
+    await connection.migrations.reduce(p => p.then(() => connection.undoLastMigration()), Promise.resolve())
+    await connection.close()
+  })
+})
+
+describe('Jurisdiction Service Tests', () => {
   before(async () => {
     await JurisdictionServer.start()
   })
