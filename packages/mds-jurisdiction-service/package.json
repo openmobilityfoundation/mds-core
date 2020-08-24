@@ -17,7 +17,7 @@
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
     "test:unit": "yarn typeorm schema:drop && DOTENV_CONFIG_PATH=../../.env nyc ts-mocha --project ../../tsconfig.json && yarn typeorm schema:drop",
-    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env node --experimental-repl-await -r ts-node/register -r dotenv/config",
     "typeorm": "yarn ts-node ./node_modules/.bin/typeorm",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
   },

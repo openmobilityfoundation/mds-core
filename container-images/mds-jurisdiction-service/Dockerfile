@@ -8,4 +8,4 @@ COPY dist/* /mds/
 
 WORKDIR /mds
 
-ENTRYPOINT ["/sbin/tini", "node", "--no-deprecation", "server.js"]
+ENTRYPOINT ["/sbin/tini", "node", "--no-deprecation", "--experimental-repl-await", "server.js"]

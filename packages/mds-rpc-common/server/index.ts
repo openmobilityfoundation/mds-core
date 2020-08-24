@@ -15,6 +15,9 @@
  */
 
 import express from 'express'
+import http from 'http'
+import net from 'net'
+import REPL from 'repl'
 import { ServiceHandlerFor } from 'rpc_ts/lib/server/server'
 import { cleanEnv, port as validatePort } from 'envalid'
 import { ModuleRpcProtocolServer } from 'rpc_ts/lib/protocol/server'
@@ -27,9 +30,8 @@ import {
   RawBodyParserMiddleware
 } from '@mds-core/mds-api-server'
 import { Nullable } from '@mds-core/mds-types'
-import { Server } from 'http'
 import { ProcessManager } from '@mds-core/mds-service-helpers'
-import { RpcServiceDefinition, RPC_PORT, RPC_CONTENT_TYPE } from '../@types'
+import { RpcServiceDefinition, RPC_PORT, RPC_CONTENT_TYPE, REPL_PORT } from '../@types'
 
 export interface RpcServiceHandlers {
   onStart: () => Promise<void>
@@ -38,6 +40,36 @@ export interface RpcServiceHandlers {
 
 export interface RpcServerOptions {
   port: string | number
+  repl: Partial<{
+    port: string
+    context: unknown
+  }>
+}
+
+const startRepl = (options: RpcServerOptions['repl']) => {
+  const { port } = cleanEnv(options, {
+    port: validatePort({ default: REPL_PORT })
+  })
+  const { context = {} } = options
+  logger.info(`Starting REPL server on port ${port}`)
+  return net
+    .createServer(socket => {
+      const repl = REPL.start({
+        prompt: `${process.env.npm_package_name} REPL> `,
+        input: socket,
+        output: socket,
+        ignoreUndefined: true,
+        terminal: true
+      })
+      Object.assign(repl.context, context)
+      repl.on('reset', () => {
+        Object.assign(repl.context, context)
+      })
+    })
+    .on('close', () => {
+      logger.info(`Stopping REPL server`)
+    })
+    .listen(port)
 }
 
 export const RpcServer = <S>(
@@ -46,7 +78,8 @@ export const RpcServer = <S>(
   routes: ServiceHandlerFor<RpcServiceDefinition<S>>,
   options: Partial<RpcServerOptions> = {}
 ) => {
-  let server: Nullable<Server> = null
+  let server: Nullable<http.Server> = null
+  let repl: Nullable<net.Server> = null
 
   return ProcessManager({
     start: async () => {
@@ -64,6 +97,9 @@ export const RpcServer = <S>(
             .use(ModuleRpcProtocolServer.registerRpcRoutes(definition, routes)),
           { port }
         )
+        if (options.repl) {
+          repl = startRepl(options.repl)
+        }
         logger.info(`Starting RPC server listening for ${RPC_CONTENT_TYPE} requests`)
       }
     },
@@ -72,6 +108,10 @@ export const RpcServer = <S>(
         logger.info(`Stopping RPC server listening for ${RPC_CONTENT_TYPE} requests`)
         server.close()
         server = null
+        if (repl) {
+          repl.close()
+          repl = null
+        }
         await onStop()
       }
     }

@@ -40,7 +40,8 @@ const TestServer = RpcServer(
   {
     length: async ([word]) =>
       word && word.length > 0 ? ServiceResult(word.length) : ServiceError({ type: 'NotFoundError', message: 'No Word' })
-  }
+  },
+  { repl: { context: {} } }
 ).controller()
 
 describe('Test RPC Client', () => {

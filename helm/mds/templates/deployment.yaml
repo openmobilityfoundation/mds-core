@@ -45,6 +45,9 @@ spec:
         - containerPort: 4000
           name: user-port
           protocol: TCP
+        - containerPort: 7375
+          name: repl-port
+          protocol: TCP
         volumeMounts:
         {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
         - name: creds-volume

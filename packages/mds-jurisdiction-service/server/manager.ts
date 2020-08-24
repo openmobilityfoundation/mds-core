@@ -1,5 +1,6 @@
 import { RpcServer } from '@mds-core/mds-rpc-common'
 import { JurisdictionServiceProvider } from '../service/provider'
+import { JurisdictionServiceClient } from '../client'
 import { JurisdictionServiceDefinition } from '../@types'
 
 export const JurisdictionServiceManager = RpcServer(
@@ -18,5 +19,11 @@ export const JurisdictionServiceManager = RpcServer(
     updateJurisdiction: async ([jurisdiction_id, update]) =>
       JurisdictionServiceProvider.updateJurisdiction(jurisdiction_id, update)
   },
-  { port: process.env.JURISDICTION_SERVICE_RPC_PORT }
+  {
+    port: process.env.JURISDICTION_SERVICE_RPC_PORT,
+    repl: {
+      port: process.env.JURISDICTION_SERVICE_REPL_PORT,
+      context: { client: JurisdictionServiceClient }
+    }
+  }
 )

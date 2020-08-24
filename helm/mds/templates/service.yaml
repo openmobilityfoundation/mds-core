@@ -12,5 +12,7 @@ spec:
   ports:
   - name: http-{{ $name }}
     port: 4000
+  - name: repl-{{ $name }}
+    port: 7375
 {{- end }}
 {{- end }}
