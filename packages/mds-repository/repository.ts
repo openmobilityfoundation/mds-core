@@ -16,7 +16,7 @@
 
 import { Connection } from 'typeorm'
 import logger from '@mds-core/mds-logger'
-import { pluralize } from '@mds-core/mds-utils'
+import { pluralize, tail } from '@mds-core/mds-utils'
 import { ConnectionManager, ConnectionManagerOptions, ConnectionMode, ConnectionManagerCliOptions } from './connection'
 import { CreateRepositoryMigration } from './migration'
 
@@ -99,6 +99,7 @@ export abstract class ReadWriteRepository extends BaseRepository<'ro' | 'rw'> {
             migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''
           }`
         )
+        logger.info(`Schema version (${migrationsTableName}): ${tail(connection.migrations).name}`)
       }
     }
   }

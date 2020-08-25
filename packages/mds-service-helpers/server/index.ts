@@ -75,9 +75,7 @@ const ProcessMonitor = async (
 
   // Keep NodeJS process alive
   logger.info(`Monitoring process ${version} for ${signals.join(', ')}`)
-  const timeout = setInterval(() => {
-    logger.info(`Monitoring process ${version} for ${signals.join(', ')}`)
-  }, interval)
+  const timeout = setInterval(() => undefined, interval)
 
   const terminate = async (signal: NodeJS.Signals) => {
     clearInterval(timeout)
