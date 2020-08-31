@@ -22,14 +22,20 @@ export type ApiRequestQuery<S extends string, M extends string[] = never> = {
 }
 
 /**
+ * Standard format for API errors
+ */
+export type ApiError = { error: unknown; error_description?: string; error_details?: string[] } | { errors: unknown[] }
+
+/**
  * B: Type of response body (res.send)
  */
-export type ApiResponse<B = {}> = Omit<
-  express.Response<
-    B | { error: unknown; error_description?: string; error_details?: string[] } | { errors: unknown[] }
-  >,
-  'locals'
-> & { locals: unknown }
+export type ApiResponse<B = {}> = Omit<express.Response<B | ApiError>, 'locals'> & { locals: unknown }
+
+/**
+ * Extracts the body generic (B) for an APIResponse, in addition to possible error values.
+ * Useful for frontend applications attempting to use the response payloads defined for Express.
+ */
+export type ExtractApiResponseBody<P> = P extends ApiResponse<infer T> ? T | ApiError : never
 
 /**
  * L: Type of response locals (res.locals)
