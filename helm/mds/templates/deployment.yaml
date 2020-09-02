@@ -1,5 +1,5 @@
 {{- range $name, $api := .Values.apis }}
-  {{- if $api.enabled }}
+{{- if $api.enabled }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,25 +22,23 @@ spec:
       labels:
         app: {{ $name }}
     spec:
-      volumes:
-        {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
-        - name: creds-volume
-          secret:
-            secretName: nats-creds
-        {{- end }}
       containers:
       - name: {{ $name }}
         image: {{ if $.Values.registry }}{{ printf "%s/" $.Values.registry }}{{- end}}{{ $name }}:{{ $api.version }}
-        {{- if $.Values.registry }}
+        {{- if $.Values.imagePullPolicy }}
+        imagePullPolicy: {{ $.Values.imagePullPolicy }}
+        {{- else if $.Values.registry }}
         imagePullPolicy: IfNotPresent
+        {{- else }}
+        imagePullPolicy: Never
         {{- end }}
         resources:
           limits:
-            cpu: {{ $api.resourcesLimitsCpu | default ($.Values.resourcesLimitsCpu | default "500m") }}
-            memory: {{ $api.resourcesLimitsMemory | default ($.Values.resourcesLimitsMemory | default "512Mi") }}
+            cpu: {{ $api.resourcesLimitsCpu | default "1000m" }}
+            memory: {{ $api.resourcesLimitsMemory | default "1024Mi" }}
           requests:
-            cpu: {{ $api.resourcesRequestsCpu | default ($.Values.resourcesRequestsCpu | default "50m") }}
-            memory: {{ $api.resourcesRequestsMemory | default ($.Values.resourcesRequestsMemory | default "128Mi") }}
+            cpu: {{ $api.resourcesRequestsCpu | default "5m" }}
+            memory: {{ $api.resourcesRequestsMemory | default "64Mi" }}
         ports:
         - containerPort: 4000
           name: user-port
@@ -48,11 +46,6 @@ spec:
         - containerPort: 7375
           name: repl-port
           protocol: TCP
-        volumeMounts:
-        {{- if and $.Values.nats.enabled $.Values.nats.credentials }}
-        - name: creds-volume
-          mountPath: /var/run/nats/secrets
-        {{- end }}
         env:
           - name: PORT
             value: "4000"
@@ -71,7 +64,7 @@ spec:
                 key: postgresql-password
           - name: PG_HOST
           {{- if $.Values.postgresql.internal }}
-            value: {{ $.Release.Name }}-postgresql.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Name }}-postgresql
           {{- else }}
             value: {{ $.Values.postgresql.host }}
           {{- end }}
@@ -89,18 +82,22 @@ spec:
           {{- end }}
           - name: REDIS_HOST
           {{- if $.Values.redis.internal }}
-            value: {{ $.Release.Name }}-redis-master.{{ $.Release.Namespace }}.svc.cluster.local
+            value: {{ $.Release.Name }}-redis-master
           {{- else }}
             value: {{ $.Values.redis.host }}
           {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
-          {{- if $.Values.nats.enabled }}
           - name: NATS
+          {{- if $.Values.nats.internal }}
+            value: {{ $.Release.Name }}-nats-client
+          {{- else }}
             value: {{ $.Values.nats.host }}
           {{- end }}
-          {{- if $.Values.kafka.enabled }}
           - name: KAFKA_HOST
+          {{- if $.Values.kafka.internal }}
+            value: {{ $.Release.Name }}-kafka:{{ $.Values.kafka.port }}
+          {{- else }}
             value: {{ $.Values.kafka.host }}:{{ $.Values.kafka.port }}
           {{- end }}
           - name: JURISDICTION_SERVICE_RPC_HOST
@@ -110,15 +107,6 @@ spec:
             value: {{ $.Values.tenantId }}
           {{- else }}
             value: {{ $.Release.Namespace }}
-          {{- end }}
-          {{- if $.Values.slack.channel }}
-          - name: SLACK_CHANNEL
-            value: {{ $.Values.slack.channel }}
-          - name: SLACK_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: mds-secrets
-                key: slack-token
           {{- end }}
           {{- if $api.env }}
 {{ toYaml $api.env | indent 10 }}
@@ -137,21 +125,7 @@ metadata:
   name: mds-secrets
   namespace: {{ $.Release.Namespace }}
 data:
-  {{- if .Values.slack.channel }}
-  slack-token: {{ .Values.slack.token | b64enc }}
-  {{- end }}
   {{- if .Values.postgresql.password }}
   postgresql-password: {{ .Values.postgresql.password | b64enc }}
   {{- end }}
 type: Opaque
-{{- if and $.Values.nats.enabled $.Values.nats.credentials }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: nats-creds
-  namespace: {{ $.Release.Namespace }}
-data:
-  sys.creds: {{ $.Values.nats | b64enc }}
-type: Opaque
-{{- end }}

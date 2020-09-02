@@ -60,6 +60,7 @@
     "bundle": "yarn run:concurrent bundle",
     "clean": "git clean -fdX -e '!.env' -e '!helm/mds/charts' -e '!helm/mds/charts/*' -e '!helm/mds/files' -e '!helm/mds/files/*' && yarn install && yarn improved-yarn-audit --fail-on-missing-exclusions",
     "image": "yarn run:concurrent image",
+    "images": "yarn run:concurrent image",
     "run:concurrent": "lerna run --stream",
     "run:sequential": "lerna run --stream --concurrency 1",
     "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",

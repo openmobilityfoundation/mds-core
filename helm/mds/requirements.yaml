@@ -8,3 +8,11 @@ dependencies:
     repository: alias:stable
     version: 8.6.4
     condition: postgresql.internal
+  - name: nats
+    repository: alias:bitnami
+    version: 4.5.1
+    condition: nats.internal
+  - name: kafka
+    repository: alias:bitnami
+    version: 11.5.1
+    condition: kafka.internal

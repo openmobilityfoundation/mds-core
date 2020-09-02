@@ -1,0 +1,74 @@
+#!/bin/bash
+
+set -e
+set -u
+set -o pipefail
+
+function err {
+  echo "ERROR: $1" 1>&2
+  exit 1
+}
+
+function prompt {
+  echo "$1 (press enter to continue, ctrl-C to exit)"
+  read _
+}
+
+function yn {
+  echo -n "$1 (y/N) "
+  read yn
+  if [[ "$yn" =~ [yY] ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function check_kube_context {
+  local context=$(kubectl config current-context)
+  if [[ "$(kubectl config current-context)" != "docker-desktop" ]] \
+    && [[ "$(kubectl config current-context)" != "docker-for-desktop" ]]; then
+    err "Please only use this script on your local docker-desktop kubernetes"
+  fi
+}
+
+function install_helm_tiller {
+  check_kube_context
+  prompt "This will install helm to your local system, and tiller on $(kubectl config current-context)."
+  tmpdir=$(mktemp -d)
+  os=$(uname | tr A-Z a-z)
+  curl -s https://get.helm.sh/helm-v2.16.9-${os}-amd64.tar.gz | tar -C $tmpdir -zxf -
+  echo "You may need to enter your password to install helm executable to /usr/local/bin"
+  sudo cp ${tmpdir}/${os}-amd64/helm /usr/local/bin/
+  kubectl -n kube-system create serviceaccount tiller
+  kubectl create clusterrolebinding tiller \
+    --service-account kube-system:tiller \
+    --clusterrole cluster-admin
+  helm init --service-account tiller --history-max 20
+}
+
+# istio install
+function install_istio {
+  check_kube_context
+  pushd .
+  cd /tmp
+  curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.5.10 sh -
+  cd istio-1.5.10
+  helm install --name istio-init --namespace istio-system ./install/kubernetes/helm/istio-init
+  kubectl wait --for condition=complete pods --all
+  helm install --name istio --namespace istio-system ./install/kubernetes/helm/istio \
+    --values ./install/kubernetes/helm/istio/values-istio-demo.yaml
+  popd
+}
+
+function install_mds {
+  kubectl create namespace mds
+  kubectl label namespace mds istio-injection=enabled
+  cd helm/mds
+  helm dep up
+  helm install --name mds --namespace mds .
+}
+
+if yn "Install Helm/Tiller?"; then install_helm_tiller; fi
+if yn "Install Istio?"; then install_istio; fi
+if yn "Install MDS?"; then install_mds; fi

@@ -68,20 +68,23 @@ jwt:
   firstInstall: false
   audiences: []
 nats:
-  enabled: false
+  internal: true
   host:
-  credentials: false
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
 kafka:
-  enabled: false
+  internal: true
   host:
   port: 9092
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
 postgresql:
   internal: true
   host:
   hostReader:
   port: 5432
   existingSecret: mds-secrets
-  password: # for setting secret internally - not used by https://github.com/helm/charts/tree/master/stable/postgresql
+  password: CHANGEME
   postgresqlUsername: mdsadmin
   postgresqlDatabase: mds
   image:
@@ -98,6 +101,3 @@ redis:
     disableCommands: []
   slave:
     disableCommands: []
-slack:
-  channel:
-  token:
