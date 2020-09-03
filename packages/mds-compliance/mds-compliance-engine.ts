@@ -359,7 +359,7 @@ function processPolicy(
       policy,
       compliance,
       total_violations: countViolations + timeVehicles.length + speedingVehicles.length,
-      vehicles_in_violation: { ...countVehicles, ...timeVehiclesMap, ...speedingVehiclesMap }
+      vehicles_in_violation: [...countVehicles, ...timeVehicles, ...speedingVehicles]
     }
   }
 }
