@@ -33,11 +33,11 @@
     "@mds-core/mds-stream": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/express": "4.17.7",
+    "@types/express": "4.17.8",
     "@types/yargs": "15.0.5",
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.31",
-    "yargs": "15.4.1"
+    "yargs": "16.0.2"
   }
 }

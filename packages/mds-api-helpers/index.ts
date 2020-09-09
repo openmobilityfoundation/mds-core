@@ -23,11 +23,6 @@ import {
   ParseObjectPropertiesOptionsList
 } from './object-properties-parser'
 
-interface PagingParams {
-  skip: number
-  take: number
-}
-
 const jsonApiLink = (req: ApiRequest, skip: number, take: number): string =>
   urls.format({
     protocol: req.get('x-forwarded-proto') || req.protocol,

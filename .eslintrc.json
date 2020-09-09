@@ -45,6 +45,7 @@
     "no-empty": ["error", { "allowEmptyCatch": true }],
     "no-plusplus": "off",
     "no-restricted-syntax": "off",
+    "no-use-before-define": "off",
     "no-useless-constructor": "off",
     "no-var": "error",
     "prettier/prettier": "warn",

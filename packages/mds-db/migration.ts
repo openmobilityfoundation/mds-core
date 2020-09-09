@@ -114,7 +114,7 @@ async function createTables(client: MDSPostgresClient) {
 async function doMigration(
   exec: SqlExecuterFunction,
   migration: MIGRATION,
-  migrate: (exec: SqlExecuterFunction) => Promise<void>
+  migrate: (executor: SqlExecuterFunction) => Promise<void>
 ) {
   const { PG_MIGRATIONS, PG_DEBUG } = process.env
   const migrations = PG_MIGRATIONS ? PG_MIGRATIONS.split(',') : []

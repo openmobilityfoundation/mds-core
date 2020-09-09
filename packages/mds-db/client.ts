@@ -5,8 +5,6 @@ import { logSql, configureClient, MDSPostgresClient, SqlVals } from './sql-utils
 
 const { env } = process
 
-type ClientType = 'writeable' | 'readonly'
-
 let writeableCachedClient: MDSPostgresClient | null = null
 let readOnlyCachedClient: MDSPostgresClient | null = null
 
