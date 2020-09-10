@@ -1,1 +1,3 @@
 # Comma separated list of advisories to exclude
+# https://npmjs.com/advisories/1556
+1556
