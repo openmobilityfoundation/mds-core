@@ -88,17 +88,21 @@ spec:
           {{- end }}
           - name: REDIS_PORT
             value: {{ $.Values.redis.port | quote }}
+          {{- if $.Values.nats.enabled }}
           - name: NATS
           {{- if $.Values.nats.internal }}
             value: {{ $.Release.Name }}-nats-client
           {{- else }}
             value: {{ $.Values.nats.host }}
           {{- end }}
+          {{- end }}
+          {{- if $.Values.kafka.enabled }}
           - name: KAFKA_HOST
           {{- if $.Values.kafka.internal }}
             value: {{ $.Release.Name }}-kafka:{{ $.Values.kafka.port }}
           {{- else }}
             value: {{ $.Values.kafka.host }}:{{ $.Values.kafka.port }}
+          {{- end }}
           {{- end }}
           - name: JURISDICTION_SERVICE_RPC_HOST
             value: http://mds-jurisdiction-service
