@@ -310,9 +310,9 @@ export interface Policy {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface PolicyMetadata {
+export interface PolicyMetadata<M extends {} = Record<string, any>> {
   policy_id: UUID
-  policy_metadata: Record<string, any>
+  policy_metadata: M
 }
 
 // We don't put the publish_date into the geography_json column
@@ -330,9 +330,9 @@ export interface Geography {
 
 export type GeographySummary = Omit<Geography, 'geography_json'>
 
-export interface GeographyMetadata {
+export interface GeographyMetadata<M extends {} = Record<string, any>> {
   geography_id: UUID
-  geography_metadata: Record<string, any>
+  geography_metadata: M
 }
 
 export interface ErrorObject {
