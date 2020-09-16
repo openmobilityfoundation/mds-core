@@ -203,7 +203,7 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   const key = decorateKey(`device:${device_id}:${suffix}`)
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
-  const hmap = stripNulls(flat) as { [key: string]: unknown; device_id: UUID }
+  const hmap = stripNulls(flat) as { [key: string]: unknown; device_id?: UUID }
   delete hmap.device_id
 
   if (nulls.length > 0) {

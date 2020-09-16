@@ -96,7 +96,14 @@ describe('Tests app', () => {
 
     it('tries to post invalid policy', done => {
       const bad_policy_json: Policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+
+      /* eslint-reason test intentionally does things that the compiler dissuades,
+         as it's testing an invalid data case.
+      */
+      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
+      // @ts-ignore
       delete bad_policy_json.rules[0].rule_type
+
       const bad_policy = bad_policy_json
       request
         .post(pathPrefix(`/policies`))
@@ -188,7 +195,14 @@ describe('Tests app', () => {
 
     it('verifies cannot PUT invalid policy', async () => {
       const bad_policy_json: Policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+
+      /* eslint-reason test intentionally does things that the compiler dissuades,
+         as it's testing an invalid data case.
+      */
+      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
+      // @ts-ignore
       delete bad_policy_json.rules[0].rule_type
+
       const bad_policy = bad_policy_json
       await request
         .put(pathPrefix(`/policies/${POLICY_UUID}`))
