@@ -1,24 +1,20 @@
-import Sinon from 'sinon'
 import { StreamProducer } from './stream-interface'
 
-type SinonMockedStream<T> = {
+type MockedStream<T> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key in keyof StreamProducer<T>]: Sinon.SinonSpy<any[], any>
+  [key in keyof StreamProducer<T>]: jest.MockedFunction<any>
 }
 
-export const mockStream = <T>(
-  stream: StreamProducer<T>,
-  overrides?: Partial<SinonMockedStream<T>>
-): SinonMockedStream<T> => {
-  const mockedMethods: SinonMockedStream<T> = {
-    initialize: Sinon.fake.resolves(undefined),
-    shutdown: Sinon.fake.resolves(undefined),
-    write: Sinon.fake.resolves(undefined),
+export const mockStream = <T>(stream: StreamProducer<T>, overrides?: Partial<MockedStream<T>>): MockedStream<T> => {
+  const mockedMethods: MockedStream<T> = {
+    initialize: jest.fn(async () => undefined),
+    shutdown: jest.fn(async () => undefined),
+    write: jest.fn(async () => undefined),
     ...overrides
   }
 
-  Object.entries(mockedMethods).forEach(([key, val]) => {
-    Sinon.replace(stream, key as keyof StreamProducer<T>, val)
+  Object.entries(mockedMethods).forEach(([key, fn]) => {
+    jest.spyOn(stream, key as keyof StreamProducer<T>).mockImplementationOnce(fn)
   })
 
   return mockedMethods

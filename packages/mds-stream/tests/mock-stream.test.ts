@@ -1,5 +1,4 @@
-import Sinon from 'sinon'
-import assert from 'assert'
+import logger from '@mds-core/mds-logger'
 import { mockStream } from '../test-utils'
 import { StreamProducer } from '../stream-interface'
 import { KafkaStreamProducer } from '../kafka'
@@ -12,37 +11,42 @@ describe('Mock stream API', () => {
     const { initialize, write, shutdown } = mockStream(fakeStream)
 
     await fakeStream.initialize()
-    assert.strictEqual(initialize.calledOnce, true)
+    expect(initialize).toHaveBeenCalledTimes(1)
 
     await fakeStream.write('foo')
-    assert.strictEqual(write.calledOnceWithExactly('foo'), true)
+    expect(write).toHaveBeenCalledWith('foo')
+    expect(write).toHaveBeenCalledTimes(1)
 
     await fakeStream.shutdown()
-    assert.strictEqual(shutdown.calledOnce, true)
+    expect(shutdown).toHaveBeenCalledTimes(1)
   })
 
   it('Mocks with overrides successfully', async () => {
     const fakeStream: StreamProducer<FakeStreamPayload> = KafkaStreamProducer<FakeStreamPayload>('fake-stream')
     const overrideMocks = {
-      initialize: Sinon.fake.resolves(undefined),
-      shutdown: Sinon.fake.resolves(undefined),
-      write: Sinon.fake.resolves(undefined)
+      initialize: jest.fn(async () => undefined),
+      shutdown: jest.fn(async () => undefined),
+      write: jest.fn(async x => {
+        logger.info(x)
+        return undefined
+      })
     }
     mockStream(fakeStream, overrideMocks)
 
     const { initialize, write, shutdown } = overrideMocks
 
     await fakeStream.initialize()
-    assert.strictEqual(initialize.calledOnce, true)
+    expect(initialize).toHaveBeenCalledTimes(1)
 
     await fakeStream.write('foo')
-    assert.strictEqual(write.calledOnceWithExactly('foo'), true)
+    expect(write).toHaveBeenCalledWith('foo')
+    expect(write).toHaveBeenCalledTimes(1)
 
     await fakeStream.shutdown()
-    assert.strictEqual(shutdown.calledOnce, true)
+    expect(shutdown).toHaveBeenCalledTimes(1)
   })
 
-  after(() => {
-    Sinon.restore()
+  afterAll(() => {
+    jest.restoreAllMocks()
   })
 })
