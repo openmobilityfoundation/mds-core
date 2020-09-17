@@ -14,7 +14,7 @@ export const mockStream = <T>(stream: StreamProducer<T>, overrides?: Partial<Moc
   }
 
   Object.entries(mockedMethods).forEach(([key, fn]) => {
-    jest.spyOn(stream, key as keyof StreamProducer<T>).mockImplementationOnce(fn)
+    jest.spyOn(stream, key as keyof StreamProducer<T>).mockImplementation(fn)
   })
 
   return mockedMethods
