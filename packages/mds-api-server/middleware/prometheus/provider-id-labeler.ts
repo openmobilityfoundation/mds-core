@@ -1,11 +1,11 @@
 import type { Labels as PrometheusLabels } from 'express-prom-bundle'
 import { PrometheusLabeler } from './@types'
-import { ApiRequest, ApiResponse, ApiResponseLocals, ApiClaims } from '../../@types'
+import { ApiRequest, ApiResponse, ApiResponseLocalsClaims } from '../../@types'
 
-const providerIdLabelTransformer = <AccessTokenScope extends string>(
+const providerIdLabelTransformer = (
   labels: PrometheusLabels,
   req: ApiRequest,
-  res: ApiResponse & ApiResponseLocals<ApiClaims<AccessTokenScope>>
+  res: ApiResponse & ApiResponseLocalsClaims
 ) => {
   if (res.locals.claims?.provider_id) {
     return Object.assign(labels, { provider_id: res.locals.claims.provider_id })

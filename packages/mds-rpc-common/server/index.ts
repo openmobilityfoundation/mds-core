@@ -46,31 +46,46 @@ export interface RpcServerOptions {
   }>
 }
 
-const startRepl = (options: RpcServerOptions['repl']) => {
-  const { port } = cleanEnv(options, {
-    port: validatePort({ default: REPL_PORT })
+const stopServer = async (server: http.Server | net.Server): Promise<void> =>
+  new Promise((resolve, reject) => {
+    server.close(error => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve()
+      }
+    })
   })
-  const { context = {} } = options
-  logger.info(`Starting REPL server on port ${port}`)
-  return net
-    .createServer(socket => {
-      const repl = REPL.start({
-        prompt: `${process.env.npm_package_name} REPL> `,
-        input: socket,
-        output: socket,
-        ignoreUndefined: true,
-        terminal: true
-      })
-      Object.assign(repl.context, context)
-      repl.on('reset', () => {
+
+const startRepl = (options: RpcServerOptions['repl']): Promise<net.Server> =>
+  new Promise(resolve => {
+    const { port } = cleanEnv(
+      { port: process.env.REPL_PORT, ...options },
+      { port: validatePort({ default: REPL_PORT }) }
+    )
+    const { context = {} } = options
+    logger.info(`Starting REPL server on port ${port}`)
+    const server = net
+      .createServer(socket => {
+        const repl = REPL.start({
+          prompt: `${process.env.npm_package_name} REPL> `,
+          input: socket,
+          output: socket,
+          ignoreUndefined: true,
+          terminal: true
+        })
         Object.assign(repl.context, context)
+        repl.on('reset', () => {
+          Object.assign(repl.context, context)
+        })
       })
+      .on('close', () => {
+        logger.info(`Stopping REPL server`)
+      })
+    server.listen(port, () => {
+      resolve(server)
     })
-    .on('close', () => {
-      logger.info(`Stopping REPL server`)
-    })
-    .listen(port)
-}
+  })
 
 export const RpcServer = <S>(
   definition: RpcServiceDefinition<S>,
@@ -84,9 +99,11 @@ export const RpcServer = <S>(
   return ProcessManager({
     start: async () => {
       if (!server) {
-        const { port } = cleanEnv(options, {
-          port: validatePort({ default: RPC_PORT })
-        })
+        const { port } = cleanEnv(
+          { port: process.env.RPC_PORT, ...options },
+          { port: validatePort({ default: RPC_PORT }) }
+        )
+        logger.info(`Starting RPC server listening for ${RPC_CONTENT_TYPE} requests`)
         await onStart()
         server = HttpServer(
           express()
@@ -98,20 +115,19 @@ export const RpcServer = <S>(
           { port }
         )
         if (options.repl) {
-          repl = startRepl(options.repl)
+          repl = await startRepl(options.repl)
         }
-        logger.info(`Starting RPC server listening for ${RPC_CONTENT_TYPE} requests`)
       }
     },
     stop: async () => {
       if (server) {
-        logger.info(`Stopping RPC server listening for ${RPC_CONTENT_TYPE} requests`)
-        server.close()
+        await stopServer(server)
         server = null
         if (repl) {
-          repl.close()
+          await stopServer(repl)
           repl = null
         }
+        logger.info(`Stopping RPC server listening for ${RPC_CONTENT_TYPE} requests`)
         await onStop()
       }
     }

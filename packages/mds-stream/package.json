@@ -22,7 +22,7 @@
     "@types/sinon": "9.0.5",
     "bluebird": "3.7.2",
     "flat": "5.0.2",
-    "kafkajs": "1.12.0",
+    "kafkajs": "1.13.0",
     "redis": "3.0.2",
     "sinon": "9.0.3",
     "ts-nats": "1.2.15"

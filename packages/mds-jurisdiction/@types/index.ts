@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { ApiRequest, ApiVersionedResponse, ApiClaims, ApiResponseLocals } from '@mds-core/mds-api-server'
+import { ApiRequest, ApiVersionedResponse, ApiResponseLocalsClaims } from '@mds-core/mds-api-server'
 
 export const JURISDICTION_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
 export type JURISDICTION_API_SUPPORTED_VERSION = typeof JURISDICTION_API_SUPPORTED_VERSIONS[number]
@@ -26,4 +26,4 @@ export type JurisdictionApiRequest<B = {}> = ApiRequest<B>
 export type JurisdictionApiAccessTokenScopes = 'jurisdictions:read' | 'jurisdictions:read:claim' | 'jurisdictions:write'
 
 export type JurisdictionApiResponse<B = {}> = ApiVersionedResponse<JURISDICTION_API_SUPPORTED_VERSION, B> &
-  ApiResponseLocals<ApiClaims<JurisdictionApiAccessTokenScopes>>
+  ApiResponseLocalsClaims<JurisdictionApiAccessTokenScopes>

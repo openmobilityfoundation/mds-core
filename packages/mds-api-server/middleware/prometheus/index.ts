@@ -2,15 +2,11 @@ import type { Labels as PrometheusLabels, Opts as PrometheusOptions, TransformLa
 import prometheus from 'express-prom-bundle'
 import promClient from 'prom-client'
 import { ProviderIdLabeler } from './provider-id-labeler'
-import { ApiRequest, ApiResponse, ApiResponseLocals, ApiClaims } from '../../@types'
+import { ApiRequest, ApiResponse } from '../../@types'
 import { PrometheusLabeler } from './@types'
 
-const PrometheusLabelTransformers = <AccessTokenScope extends string>(...labelers: TransformLabelsFn[]) => {
-  return (
-    labels: PrometheusLabels,
-    req: ApiRequest,
-    res: ApiResponse & ApiResponseLocals<ApiClaims<AccessTokenScope>>
-  ) => {
+const PrometheusLabelTransformers = (...labelers: TransformLabelsFn[]) => {
+  return (labels: PrometheusLabels, req: ApiRequest, res: ApiResponse) => {
     return labelers.reduce((acc: PrometheusLabels, labeler: TransformLabelsFn) => {
       return { ...acc, ...labeler(labels, req, res) }
     }, labels)

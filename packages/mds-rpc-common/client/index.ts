@@ -28,10 +28,10 @@ export interface RpcClientOptions {
 }
 
 export const RpcClient = <S>(definition: RpcServiceDefinition<S>, options: Partial<RpcClientOptions> = {}) => {
-  const { host, port } = cleanEnv(options, {
-    host: validateHost({ default: RPC_HOST }),
-    port: validatePort({ default: RPC_PORT })
-  })
+  const { host, port } = cleanEnv(
+    { host: process.env.RPC_HOST, port: process.env.RPC_PORT, ...options },
+    { host: validateHost({ default: RPC_HOST }), port: validatePort({ default: RPC_PORT }) }
+  )
 
   return ModuleRpcProtocolClient.getRpcClient(definition, {
     getGrpcWebTransport: NodeHttpTransport(),

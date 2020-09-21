@@ -29,7 +29,7 @@ export type ApiError = { error: unknown; error_description?: string; error_detai
 /**
  * B: Type of response body (res.send)
  */
-export type ApiResponse<B = {}> = Omit<express.Response<B | ApiError>, 'locals'> & { locals: unknown }
+export type ApiResponse<B = {}> = express.Response<B | ApiError>
 
 /**
  * Extracts the body generic (B) for an APIResponse, in addition to possible error values.
@@ -38,18 +38,19 @@ export type ApiResponse<B = {}> = Omit<express.Response<B | ApiError>, 'locals'>
 export type ExtractApiResponseBody<P> = P extends ApiResponse<infer T> ? T | ApiError : never
 
 /**
- * L: Type of response locals (res.locals)
+ * P, T: Property name/type { [P]: T } added to response locals (res.locals)
  */
-export type ApiResponseLocals<L> = {
-  locals: L
+export type ApiResponseLocals<P extends string, T> = {
+  locals: Record<P, T>
 }
 
-export type ApiClaims<AccessTokenScope extends string> = {
-  claims: AuthorizerClaims | null
-  scopes: AccessTokenScope[]
-}
+export type ApiResponseLocalsClaims<AccessTokenScope extends string | undefined = undefined> = ApiResponseLocals<
+  'claims',
+  AuthorizerClaims | null
+> &
+  AccessTokenScope extends undefined
+  ? ApiResponseLocals<'scopes', undefined>
+  : ApiResponseLocals<'scopes', Array<AccessTokenScope>>
 
-export type ApiVersion<V extends string> = { version: V }
-
-export type ApiVersionedResponse<V extends string, B = {}> = ApiResponse<B & ApiVersion<V>> &
-  ApiResponseLocals<ApiVersion<V>>
+export type ApiVersionedResponse<V extends string, B = {}> = ApiResponse<B & { version: V }> &
+  ApiResponseLocals<'version', V>

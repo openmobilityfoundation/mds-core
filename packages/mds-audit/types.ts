@@ -26,15 +26,16 @@ import {
   WithGpsProperty,
   VEHICLE_EVENT,
   VEHICLE_REASON,
-  VEHICLE_STATUS
+  VEHICLE_STATUS,
+  Nullable
 } from '@mds-core/mds-types'
 import {
   ApiRequest,
   ApiRequestQuery,
-  ApiClaims,
   ApiVersionedResponse,
   ApiRequestParams,
-  ApiResponseLocals
+  ApiResponseLocals,
+  ApiResponseLocalsClaims
 } from '@mds-core/mds-api-server'
 
 export const AUDIT_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
@@ -120,13 +121,11 @@ type AuditedDevice =
     })
 // Allow adding type definitions for Express Response objects
 export type AuditApiResponse<B = {}> = ApiVersionedResponse<AUDIT_API_SUPPORTED_VERSION, B> &
-  ApiResponseLocals<ApiClaims<AuditApiAccessTokenScopes>> &
-  ApiResponseLocals<{
-    audit_subject_id: string
-    audit_trip_id: UUID
-    audit: Audit | null
-    recorded: Timestamp
-  }>
+  ApiResponseLocalsClaims<AuditApiAccessTokenScopes> &
+  ApiResponseLocals<'audit_subject_id', string> &
+  ApiResponseLocals<'audit_trip_id', UUID> &
+  ApiResponseLocals<'audit', Nullable<Audit>> &
+  ApiResponseLocals<'recorded', Timestamp>
 
 export type PostAuditTripStartResponse = AuditApiResponse<{
   provider_id: string

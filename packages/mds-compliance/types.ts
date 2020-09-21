@@ -1,10 +1,10 @@
 import { VehicleEvent, UUID, Timestamp, Policy, Device, Rule } from '@mds-core/mds-types'
 import {
   ApiRequest,
-  ApiClaims,
   ApiVersionedResponse,
   ApiResponseLocals,
-  ApiRequestParams
+  ApiRequestParams,
+  ApiResponseLocalsClaims
 } from '@mds-core/mds-api-server'
 
 export const COMPLIANCE_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
@@ -19,8 +19,8 @@ export type ComplianceApiCountRequest = ComplianceApiRequest & ApiRequestParams<
 export type ComplianceApiAccessTokenScopes = never
 
 export type ComplianceApiResponse<B = {}> = ApiVersionedResponse<COMPLIANCE_API_SUPPORTED_VERSION, B> &
-  ApiResponseLocals<ApiClaims<ComplianceApiAccessTokenScopes>> &
-  ApiResponseLocals<{ provider_id: UUID }>
+  ApiResponseLocalsClaims<ComplianceApiAccessTokenScopes> &
+  ApiResponseLocals<'provider_id', UUID>
 
 export type ComplianceApiSnapshotResponse = ComplianceApiResponse<ComplianceResponse & { timestamp: Timestamp }>
 export type ComplianceApiCountResponse = ComplianceApiResponse<{
