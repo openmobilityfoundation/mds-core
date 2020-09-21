@@ -361,7 +361,7 @@
     unique-filename "^1.1.1"
     which "^1.3.1"
 
-"@hapi/address@^4.0.1":
+"@hapi/address@^4.1.0":
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/@hapi/address/-/address-4.1.0.tgz#d60c5c0d930e77456fdcde2598e77302e2955e1d"
   integrity sha512-SkszZf13HVgGmChdHo/PxchnSaCJ6cetVqLzyciudzZRT0jcOouIF/Q93mgjw8cce+D+4F4C1Z/WrfFN+O3VHQ==
@@ -377,17 +377,6 @@
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.1.0.tgz#6c9eafc78c1529248f8f4d92b0799a712b6052c6"
   integrity sha512-i9YbZPN3QgfighY/1X1Pu118VUz2Fmmhd6b2n0/O8YVgGGfw0FbUYoA97k7FkpGJ+pLCFEDLUmAPPV4D1kpeFw==
-
-"@hapi/joi@17.1.1":
-  version "17.1.1"
-  resolved "https://registry.yarnpkg.com/@hapi/joi/-/joi-17.1.1.tgz#9cc8d7e2c2213d1e46708c6260184b447c661350"
-  integrity sha512-p4DKeZAoeZW4g3u7ZeRo+vCDuSDgSvtsB/NpfjXEHTUjSeINAi/RrVOWiVQ1isaoLzMvFEhe8n5065mQq1AdQg==
-  dependencies:
-    "@hapi/address" "^4.0.1"
-    "@hapi/formula" "^2.0.0"
-    "@hapi/hoek" "^9.0.0"
-    "@hapi/pinpoint" "^2.0.0"
-    "@hapi/topo" "^5.0.0"
 
 "@hapi/pinpoint@^2.0.0":
   version "2.0.0"
@@ -1696,11 +1685,6 @@
   integrity sha512-AiHRaEB50LQg0pZmm659vNBb9f4SJ0qrAnteuzhSeAUcJKxoYgEnprg/83kppCnc2zvtCKbdZry1a5pVY3lOTQ==
   dependencies:
     "@types/node" "*"
-
-"@types/hapi__joi@17.1.4":
-  version "17.1.4"
-  resolved "https://registry.yarnpkg.com/@types/hapi__joi/-/hapi__joi-17.1.4.tgz#e46cd1bd81d25cd45247d652dadb3666514d807c"
-  integrity sha512-gqY3TeTyZvnyNhM02HgyCIoGIWsTFMnuzMfnD8evTsr1KIfueGJaz+QC77j+dFvhZ5cJArUNjDRHUjPxNohzGA==
 
 "@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0", "@types/istanbul-lib-coverage@^2.0.1":
   version "2.0.3"
@@ -7244,6 +7228,17 @@ joi-to-json@1.2.0:
   dependencies:
     lodash "^4.17.15"
     semver-compare "^1.0.0"
+
+joi@17.2.1:
+  version "17.2.1"
+  resolved "https://registry.yarnpkg.com/joi/-/joi-17.2.1.tgz#e5140fdf07e8fecf9bc977c2832d1bdb1e3f2a0a"
+  integrity sha512-YT3/4Ln+5YRpacdmfEfrrKh50/kkgX3LgBltjqnlMPIYiZ4hxXZuVJcxmsvxsdeHg9soZfE3qXxHC2tMpCCBOA==
+  dependencies:
+    "@hapi/address" "^4.1.0"
+    "@hapi/formula" "^2.0.0"
+    "@hapi/hoek" "^9.0.0"
+    "@hapi/pinpoint" "^2.0.0"
+    "@hapi/topo" "^5.0.0"
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
