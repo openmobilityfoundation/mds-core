@@ -52,5 +52,7 @@ export type ApiResponseLocalsClaims<AccessTokenScope extends string | undefined 
   ? ApiResponseLocals<'scopes', undefined>
   : ApiResponseLocals<'scopes', Array<AccessTokenScope>>
 
+export type ApiResponseLocalsVersion<V extends string> = ApiResponseLocals<'version', V>
+
 export type ApiVersionedResponse<V extends string, B = {}> = ApiResponse<B & { version: V }> &
-  ApiResponseLocals<'version', V>
+  ApiResponseLocalsVersion<V>
