@@ -1,4 +1,4 @@
-import { Geography, GeographySummary, UUID, Recorded, GeographyMetadata } from '@mds-core/mds-types'
+import { Geography, GeographySummary, UUID, Recorded, GeographyMetadata, Timestamp } from '@mds-core/mds-types'
 import {
   BadParamsError,
   NotFoundError,
@@ -78,6 +78,36 @@ export async function readGeographies(params: Partial<ReadGeographiesParams> = {
     })
   } catch (err) {
     logger.error('readGeographies', err)
+    throw err
+  }
+}
+
+export async function readPublishedGeographies(only_published_after?: Timestamp): Promise<Geography[]> {
+  try {
+    const client = await getReadOnlyClient()
+
+    let sql = `SELECT * FROM ${schema.TABLE.geographies}`
+
+    let conditions = ''
+    const vals = new SqlVals()
+
+    if (only_published_after) {
+      conditions = `publish_date > ${vals.add(only_published_after)}`
+    } else {
+      conditions = `publish_date IS NOT NULL`
+    }
+
+    sql += ` WHERE ${conditions}`
+
+    const values = vals.values()
+    const { rows } = await client.query(sql, values)
+
+    return rows.map(row => {
+      const { id, ...geography } = row
+      return geography
+    })
+  } catch (err) {
+    logger.error('readPublishedGeographies', err)
     throw err
   }
 }

@@ -24,7 +24,7 @@ import {
   START_ONE_MONTH_FROM_NOW,
   DELETEABLE_POLICY
 } from '@mds-core/mds-test-data'
-import { now, clone, NotFoundError, rangeRandomInt, uuid, ConflictError, yesterday } from '@mds-core/mds-utils'
+import { now, clone, NotFoundError, rangeRandomInt, uuid, ConflictError, yesterday, days } from '@mds-core/mds-utils'
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
 import { dropTables, createTables, updateSchema } from '../migration'
@@ -479,6 +479,19 @@ if (pg_info.database) {
         })
         const writeableGeographies = await MDSDBPostgres.readGeographies({ get_published: false })
         assert.deepEqual(writeableGeographies.length, 1)
+      })
+
+      it('can read published geographies, filter by date published', async () => {
+        const allPublishedGeographies = await MDSDBPostgres.readPublishedGeographies()
+        assert.deepEqual(allPublishedGeographies.length, 1)
+
+        const publishTimePastGeographies = await MDSDBPostgres.readPublishedGeographies(START_ONE_MONTH_AGO)
+        assert.deepEqual(publishTimePastGeographies.length, 1)
+
+        const ONE_MONTH_FROM_NOW = now() + days(30)
+        const publishTimeFutureGeographies = await MDSDBPostgres.readPublishedGeographies(ONE_MONTH_FROM_NOW)
+
+        assert.deepEqual(publishTimeFutureGeographies.length, 0)
       })
 
       it('does not write a geography if one with the same id already exists', async () => {
