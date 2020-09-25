@@ -27,6 +27,7 @@ import {
   HealthRequestHandler,
   PrometheusMiddleware,
   RequestLoggingMiddleware,
+  RawBodyParserMiddlewareOptions,
   RawBodyParserMiddleware
 } from '@mds-core/mds-api-server'
 import { Nullable } from '@mds-core/mds-types'
@@ -44,6 +45,7 @@ export interface RpcServerOptions {
     port: string
     context: unknown
   }>
+  maxRequestSize: RawBodyParserMiddlewareOptions['limit']
 }
 
 const stopServer = async (server: http.Server | net.Server): Promise<void> =>
@@ -59,12 +61,12 @@ const stopServer = async (server: http.Server | net.Server): Promise<void> =>
 
 const startRepl = (options: RpcServerOptions['repl']): Promise<net.Server> =>
   new Promise(resolve => {
-    const { port } = cleanEnv(
-      { port: process.env.REPL_PORT, ...options },
-      { port: validatePort({ default: REPL_PORT }) }
-    )
-    const { context = {} } = options
-    logger.info(`Starting REPL server on port ${port}`)
+    const env = {
+      port: cleanEnv(process.env, { REPL_PORT: validatePort({ default: REPL_PORT }) }).REPL_PORT,
+      context: {},
+      ...options
+    }
+    logger.info(`Starting REPL server on port ${env.port}`)
     const server = net
       .createServer(socket => {
         const repl = REPL.start({
@@ -74,15 +76,15 @@ const startRepl = (options: RpcServerOptions['repl']): Promise<net.Server> =>
           ignoreUndefined: true,
           terminal: true
         })
-        Object.assign(repl.context, context)
+        Object.assign(repl.context, env.context)
         repl.on('reset', () => {
-          Object.assign(repl.context, context)
+          Object.assign(repl.context, env.context)
         })
       })
       .on('close', () => {
         logger.info(`Stopping REPL server`)
       })
-    server.listen(port, () => {
+    server.listen(env.port, () => {
       resolve(server)
     })
   })
@@ -99,23 +101,23 @@ export const RpcServer = <S>(
   return ProcessManager({
     start: async () => {
       if (!server) {
-        const { port } = cleanEnv(
-          { port: process.env.RPC_PORT, ...options },
-          { port: validatePort({ default: RPC_PORT }) }
-        )
-        logger.info(`Starting RPC server listening for ${RPC_CONTENT_TYPE} requests`)
+        const env = {
+          port: cleanEnv(process.env, { RPC_PORT: validatePort({ default: RPC_PORT }) }).RPC_PORT,
+          ...options
+        }
+        logger.info(`Starting RPC server listening for ${RPC_CONTENT_TYPE} requests on port ${env.port}`)
         await onStart()
         server = HttpServer(
           express()
             .use(PrometheusMiddleware())
             .use(RequestLoggingMiddleware())
-            .use(RawBodyParserMiddleware({ type: RPC_CONTENT_TYPE }))
+            .use(RawBodyParserMiddleware({ type: RPC_CONTENT_TYPE, limit: env.maxRequestSize }))
             .get('/health', HealthRequestHandler)
             .use(ModuleRpcProtocolServer.registerRpcRoutes(definition, routes)),
-          { port }
+          { port: env.port }
         )
-        if (options.repl) {
-          repl = await startRepl(options.repl)
+        if (env.repl) {
+          repl = await startRepl(env.repl)
         }
       }
     },

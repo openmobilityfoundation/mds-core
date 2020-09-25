@@ -3,5 +3,5 @@ import bodyParser from 'body-parser'
 
 export type RawBodyParserMiddlewareOptions = Partial<OptionsRaw>
 
-export const RawBodyParserMiddleware = (options: RawBodyParserMiddlewareOptions = {}) =>
-  bodyParser.raw({ limit: '5mb', ...options })
+export const RawBodyParserMiddleware = ({ limit = '5mb', ...options }: RawBodyParserMiddlewareOptions = {}) =>
+  bodyParser.raw({ limit, ...options })
