@@ -42,10 +42,14 @@ export type GeographyApiAccessTokenScopes =
 export type GeographyApiResponse<B = {}> = ApiVersionedResponse<GEOGRAPHY_API_SUPPORTED_VERSION, B> &
   ApiResponseLocalsClaims<GeographyApiAccessTokenScopes>
 
-export type GeographyApiGetGeographyResponse = GeographyApiResponse<{
-  data: { geographies: Geography[] | GeographySummary[] } | { geography: Geography | GeographySummary }
-}>
+export type GeographyApiGetGeographyResponseBody = {
+  data: { geography: Geography }
+}
 
-export type GeographyApiGetGeographiesResponse = GeographyApiResponse<{
+export type GeographyApiGetGeographyResponse = GeographyApiResponse<GeographyApiGetGeographyResponseBody>
+
+export type GeographyApiGetGeographiesResponseBody = {
   data: { geographies: Geography[] | GeographySummary[] }
-}>
+}
+
+export type GeographyApiGetGeographiesResponse = GeographyApiResponse<GeographyApiGetGeographiesResponseBody>
