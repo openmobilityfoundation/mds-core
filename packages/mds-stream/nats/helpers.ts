@@ -1,6 +1,7 @@
 import { connect, MsgCallback, SubscriptionOptions, Client } from 'ts-nats'
 import logger from '@mds-core/mds-logger'
-import { getEnvVar } from '@mds-core/mds-utils'
+import { getEnvVar, asArray } from '@mds-core/mds-utils'
+import { SingleOrArray } from '@mds-core/mds-types'
 
 const initializeNatsClient = () => {
   const { NATS } = getEnvVar({ NATS: 'localhost' })
@@ -13,18 +14,16 @@ const initializeNatsClient = () => {
 }
 
 export const createStreamConsumer = async (
-  topic: string,
+  topics: SingleOrArray<string>,
   processor: MsgCallback,
   options: SubscriptionOptions = {}
 ) => {
   const natsClient = await initializeNatsClient()
-
   try {
-    await natsClient.subscribe(topic, processor, options)
+    await Promise.all(asArray(topics).map(topic => natsClient.subscribe(topic, processor, options)))
   } catch (err) {
     logger.error(err)
   }
-
   return natsClient
 }
 

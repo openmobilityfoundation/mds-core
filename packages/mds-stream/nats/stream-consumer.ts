@@ -1,10 +1,10 @@
 import { SubscriptionOptions, Client, MsgCallback } from 'ts-nats'
-import { Nullable } from '@mds-core/mds-types'
+import { Nullable, SingleOrArray } from '@mds-core/mds-types'
 import { createStreamConsumer, disconnectClient } from './helpers'
 import { StreamConsumer } from '../stream-interface'
 
 export const NatsStreamConsumer = (
-  topic: string,
+  topics: SingleOrArray<string>,
   eachMessage: MsgCallback,
   options?: Partial<SubscriptionOptions>
 ): StreamConsumer => {
@@ -12,7 +12,7 @@ export const NatsStreamConsumer = (
   return {
     initialize: async () => {
       if (!consumer) {
-        consumer = await createStreamConsumer(topic, eachMessage, options)
+        consumer = await createStreamConsumer(topics, eachMessage, options)
       }
     },
     shutdown: async () => {

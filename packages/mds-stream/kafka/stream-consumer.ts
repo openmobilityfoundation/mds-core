@@ -15,9 +15,9 @@
  */
 
 import { Kafka, EachMessagePayload, Consumer } from 'kafkajs'
-import { Nullable } from '@mds-core/mds-types'
+import { Nullable, SingleOrArray } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
-import { isDefined } from '@mds-core/mds-utils'
+import { isDefined, asArray } from '@mds-core/mds-utils'
 import { StreamConsumer } from '../stream-interface'
 import { getKafkaBrokers } from './helpers'
 
@@ -27,7 +27,7 @@ export interface KafkaStreamConsumerOptions {
 }
 
 const createStreamConsumer = async (
-  topic: string,
+  topics: SingleOrArray<string>,
   eachMessage: (payload: EachMessagePayload) => Promise<void>,
   { clientId = 'client', groupId = 'group' }: Partial<KafkaStreamConsumerOptions> = {}
 ) => {
@@ -41,7 +41,7 @@ const createStreamConsumer = async (
     const kafka = new Kafka({ clientId, brokers })
     const consumer = kafka.consumer({ groupId })
     await consumer.connect()
-    await consumer.subscribe({ topic })
+    await Promise.all(asArray(topics).map(topic => consumer.subscribe({ topic })))
     await consumer.run({ eachMessage })
     return consumer
   } catch (err) {
@@ -57,7 +57,7 @@ const disconnectConsumer = async (consumer: Nullable<Consumer>) => {
 }
 
 export const KafkaStreamConsumer = (
-  topic: string,
+  topics: SingleOrArray<string>,
   eachMessage: (payload: EachMessagePayload) => Promise<void>,
   options?: Partial<KafkaStreamConsumerOptions>
 ): StreamConsumer => {
@@ -65,7 +65,7 @@ export const KafkaStreamConsumer = (
   return {
     initialize: async () => {
       if (!consumer) {
-        consumer = await createStreamConsumer(topic, eachMessage, options)
+        consumer = await createStreamConsumer(topics, eachMessage, options)
       }
     },
     shutdown: async () => {
