@@ -8,7 +8,7 @@ import { PrometheusLabeler } from './@types'
 const PrometheusLabelTransformers = (...labelers: TransformLabelsFn[]) => {
   return (labels: PrometheusLabels, req: ApiRequest, res: ApiResponse) => {
     return labelers.reduce((acc: PrometheusLabels, labeler: TransformLabelsFn) => {
-      return { ...acc, ...labeler(labels, req, res) }
+      return Object.assign(acc, labeler(labels, req, res))
     }, labels)
   }
 }
