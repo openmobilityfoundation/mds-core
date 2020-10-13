@@ -16,7 +16,6 @@
 
 import { ModuleRpcProtocolClient } from 'rpc_ts/lib/protocol/client'
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport'
-import { cleanEnv, port as validatePort, url as validateHost } from 'envalid'
 import { ClientRpcError } from 'rpc_ts/lib/client/errors'
 import { ServiceError, ServiceResponse } from '@mds-core/mds-service-helpers'
 import { AnyFunction } from '@mds-core/mds-types'
@@ -28,10 +27,8 @@ export interface RpcClientOptions {
 }
 
 export const RpcClient = <S>(definition: RpcServiceDefinition<S>, options: Partial<RpcClientOptions> = {}) => {
-  const { host, port } = cleanEnv(
-    { host: process.env.RPC_HOST, port: process.env.RPC_PORT, ...options },
-    { host: validateHost({ default: RPC_HOST }), port: validatePort({ default: RPC_PORT }) }
-  )
+  const host = options.host || process.env.RPC_HOST || RPC_HOST
+  const port = Number(options.port || process.env.RPC_PORT || RPC_PORT)
 
   return ModuleRpcProtocolClient.getRpcClient(definition, {
     getGrpcWebTransport: NodeHttpTransport(),
