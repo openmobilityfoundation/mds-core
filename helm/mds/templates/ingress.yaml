@@ -20,6 +20,12 @@ spec:
         host: {{ $name }}.{{ $.Release.Namespace}}.svc.cluster.local
         port:
           number: 4000
+    {{- if $.Values.tls.elbTermination }}
+    headers:
+      request:
+        set:
+          x-forwarded-proto: https
+    {{- end }}
     corsPolicy:
       allowOrigin:
       - "*"
@@ -47,7 +53,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
-    istio: ingressgateway # use Istio default gateway implementation
+    istio: {{ .Values.ingressgateway }}
   servers:
   {{- if .Values.tls.enabled }}
   - port:
@@ -58,6 +64,11 @@ spec:
       mode: SIMPLE
       serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
       privateKey: /etc/istio/ingressgateway-certs/tls.key
+  {{- else if .Values.tls.elbTermination }}
+  - port:
+      number: 443
+      name: http443
+      protocol: HTTP
   {{- else }}
   - port:
       number: 80
