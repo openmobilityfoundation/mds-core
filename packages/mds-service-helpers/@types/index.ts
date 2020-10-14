@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { AnyFunction } from '@mds-core/mds-types'
+import { AnyFunction, Nullable } from '@mds-core/mds-types'
 
 export const ServiceErrorDescriptorTypes = [
   'ServiceException',
@@ -48,7 +48,13 @@ export type ServiceClient<S> = {
 }
 
 export type ServiceProvider<S> = {
-  [M in keyof S]: S[M] extends AnyFunction<infer R> ? (...args: Parameters<S[M]>) => Promise<ServiceResponse<R>> : never
+  [M in keyof S]: S[M] extends (...args: infer P) => infer R
+    ? (
+        ...args: {
+          [K in keyof P]: undefined extends P[K] ? Nullable<P[K]> : P[K]
+        }
+      ) => Promise<ServiceResponse<R>>
+    : never
 }
 
 export type ServiceProviderResponse<S, M extends keyof S> = ReturnType<ServiceProvider<S>[M]>

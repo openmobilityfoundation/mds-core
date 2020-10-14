@@ -18,16 +18,16 @@ import { InsertReturning, UpdateReturning, ReadWriteRepository, RepositoryError 
 
 import { ValidationError, ConflictError, NotFoundError, filterDefined } from '@mds-core/mds-utils'
 
-import { JurisdictionEntity } from './entities'
-import * as migrations from './migrations'
+import { JurisdictionEntity } from './entities/jurisdiction-entity'
+import migrations from './migrations'
 import {
   JurisdictionDomainModel,
   GetJurisdictionsOptions,
   UpdateJurisdictionDomainModel,
   CreateJurisdictionDomainModel,
   JurisdictionIdType
-} from '../../@types'
-import { JurisdictionEntityToDomain, JurisdictionDomainToEntityCreate } from './mappers'
+} from '../@types'
+import { JurisdictionEntityToDomain, JurisdictionDomainToEntityCreate } from './utils/mappers'
 
 class JurisdictionReadWriteRepository extends ReadWriteRepository {
   public createJurisdictions = async (
@@ -96,7 +96,7 @@ class JurisdictionReadWriteRepository extends ReadWriteRepository {
 
   public readJurisdiction = async (
     jurisdiction_id: JurisdictionIdType,
-    options?: GetJurisdictionsOptions
+    options: GetJurisdictionsOptions
   ): Promise<JurisdictionDomainModel> => {
     const { connect } = this
     try {
@@ -115,7 +115,7 @@ class JurisdictionReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public readJurisdictions = async (options?: GetJurisdictionsOptions): Promise<JurisdictionDomainModel[]> => {
+  public readJurisdictions = async (options: GetJurisdictionsOptions): Promise<JurisdictionDomainModel[]> => {
     const { connect } = this
     try {
       const connection = await connect('ro')
@@ -187,10 +187,7 @@ class JurisdictionReadWriteRepository extends ReadWriteRepository {
   }
 
   constructor() {
-    super('jurisdictions', {
-      entities: [JurisdictionEntity],
-      migrations: Object.values(migrations)
-    })
+    super('jurisdictions', { entities: [JurisdictionEntity], migrations })
   }
 }
 

@@ -14,13 +14,81 @@
     limitations under the License.
  */
 
-import { ServiceProvider, ProcessController } from '@mds-core/mds-service-helpers'
-import { JurisdictionRepository } from './repository'
+import logger from '@mds-core/mds-logger'
+import { ServiceProvider, ProcessController, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
+import { JurisdictionRepository } from '../repository'
 import { JurisdictionService } from '../@types'
-import * as handlers from './handlers'
+import { ValidateJurisdictionForCreate } from './validators'
 
 export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> & ProcessController = {
   start: JurisdictionRepository.initialize,
   stop: JurisdictionRepository.shutdown,
-  ...handlers
+
+  createJurisdiction: async model => {
+    try {
+      const [jurisdiction] = await JurisdictionRepository.createJurisdictions(
+        [model].map(ValidateJurisdictionForCreate)
+      )
+      return ServiceResult(jurisdiction)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Creating Jurisdiction', error)
+      logger.error(exception, error)
+      return exception
+    }
+  },
+
+  createJurisdictions: async models => {
+    try {
+      const jurisdictions = await JurisdictionRepository.createJurisdictions(models.map(ValidateJurisdictionForCreate))
+      return ServiceResult(jurisdictions)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Creating Jurisdictions', error)
+      logger.error(exception, error)
+      return exception
+    }
+  },
+
+  deleteJurisdiction: async jurisdiction_id => {
+    try {
+      const deleted = await JurisdictionRepository.deleteJurisdiction(jurisdiction_id)
+      return ServiceResult(deleted)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Deleting Jurisdiction', error)
+      logger.error(exception, error)
+      return exception
+    }
+  },
+
+  getJurisdiction: async (jurisdiction_id, options) => {
+    try {
+      const jurisdiction = await JurisdictionRepository.readJurisdiction(jurisdiction_id, options ?? {})
+      return ServiceResult(jurisdiction)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Reading Jurisdiction', error)
+      logger.error(exception, error)
+      return exception
+    }
+  },
+
+  getJurisdictions: async options => {
+    try {
+      const jurisdicitons = await JurisdictionRepository.readJurisdictions(options ?? {})
+      return ServiceResult(jurisdicitons)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Reading Jurisdictions', error)
+      logger.error(exception, error)
+      return exception
+    }
+  },
+
+  updateJurisdiction: async (jurisdiction_id, jurisdiction) => {
+    try {
+      const updated = await JurisdictionRepository.updateJurisdiction(jurisdiction_id, jurisdiction)
+      return ServiceResult(updated)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Updating Jurisdiction', error)
+      logger.error(exception, error)
+      return exception
+    }
+  }
 }

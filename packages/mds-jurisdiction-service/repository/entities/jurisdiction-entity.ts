@@ -17,7 +17,7 @@
 import { Entity, Column, Index } from 'typeorm'
 import { Nullable } from '@mds-core/mds-types'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { JurisdictionDomainModel } from '../../../@types'
+import { JurisdictionDomainModel } from '../../@types'
 
 export interface JurisdictionVersionedProperties {
   timestamp: JurisdictionDomainModel['timestamp']

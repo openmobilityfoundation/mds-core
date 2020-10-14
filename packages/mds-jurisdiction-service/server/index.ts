@@ -14,6 +14,6 @@
     limitations under the License.
  */
 
-import { JurisdictionServiceManager } from './manager'
+import { JurisdictionServiceManager } from '../service/manager'
 
 JurisdictionServiceManager.monitor()

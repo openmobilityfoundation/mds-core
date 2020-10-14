@@ -24,12 +24,10 @@ const JurisdictionServiceRpcClient = RpcClient(JurisdictionServiceDefinition, {
 })
 
 export const JurisdictionServiceClient: ServiceClient<JurisdictionService> = {
-  createJurisdiction: jurisdiction => RpcRequest(JurisdictionServiceRpcClient.createJurisdiction, [jurisdiction]),
-  createJurisdictions: jurisdictions => RpcRequest(JurisdictionServiceRpcClient.createJurisdictions, [jurisdictions]),
-  deleteJurisdiction: jurisdiction_id => RpcRequest(JurisdictionServiceRpcClient.deleteJurisdiction, [jurisdiction_id]),
-  getJurisdiction: (jurisdiction_id, options = {}) =>
-    RpcRequest(JurisdictionServiceRpcClient.getJurisdiction, [jurisdiction_id, options]),
-  getJurisdictions: (options = {}) => RpcRequest(JurisdictionServiceRpcClient.getJurisdictions, [options]),
-  updateJurisdiction: (jurisdiction_id, update) =>
-    RpcRequest(JurisdictionServiceRpcClient.updateJurisdiction, [jurisdiction_id, update])
+  createJurisdiction: (...args) => RpcRequest(JurisdictionServiceRpcClient.createJurisdiction, args),
+  createJurisdictions: (...args) => RpcRequest(JurisdictionServiceRpcClient.createJurisdictions, args),
+  deleteJurisdiction: (...args) => RpcRequest(JurisdictionServiceRpcClient.deleteJurisdiction, args),
+  getJurisdiction: (...args) => RpcRequest(JurisdictionServiceRpcClient.getJurisdiction, args),
+  getJurisdictions: (...args) => RpcRequest(JurisdictionServiceRpcClient.getJurisdictions, args),
+  updateJurisdiction: (...args) => RpcRequest(JurisdictionServiceRpcClient.updateJurisdiction, args)
 }

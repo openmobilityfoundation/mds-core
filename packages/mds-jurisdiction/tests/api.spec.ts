@@ -20,7 +20,7 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { uuid, pathPrefix } from '@mds-core/mds-utils'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
-import { JurisdictionServiceManager } from '@mds-core/mds-jurisdiction-service/server/manager'
+import { JurisdictionServiceManager } from '@mds-core/mds-jurisdiction-service/service/manager'
 import { api } from '../api'
 import { JURISDICTION_API_DEFAULT_VERSION } from '../@types'
 

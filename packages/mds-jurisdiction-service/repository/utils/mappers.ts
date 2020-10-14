@@ -18,7 +18,7 @@ import { Timestamp, Nullable, Optional } from '@mds-core/mds-types'
 import { ModelMapper, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { uuid } from '@mds-core/mds-utils'
 import { JurisdictionDomainModel, CreateJurisdictionDomainModel } from '../../@types'
-import { JurisdictionEntityModel } from './entities/jurisdiction-entity'
+import { JurisdictionEntityModel } from '../entities/jurisdiction-entity'
 
 type MapJurisdictionEntityToDomainModelOptions = Partial<{
   effective: Timestamp

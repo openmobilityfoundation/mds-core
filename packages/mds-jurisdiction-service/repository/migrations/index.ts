@@ -14,9 +14,6 @@
     limitations under the License.
  */
 
-export * from './create-jurisdiction-handler'
-export * from './create-jurisdictions-handler'
-export * from './delete-jurisdiction-handler'
-export * from './get-jurisdiction-handler'
-export * from './get-jurisdictions-handler'
-export * from './update-jurisdiction-handler'
+import { CreateJurisdictionsTable1582294819607 } from './1582294819607-CreateJurisdictionsTable'
+
+export default [CreateJurisdictionsTable1582294819607]

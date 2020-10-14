@@ -18,7 +18,7 @@ import test from 'unit.js'
 import { uuid, days } from '@mds-core/mds-utils'
 import { createConnection, ConnectionOptions } from 'typeorm'
 import { JurisdictionServiceClient } from '../index'
-import { JurisdictionServiceManager } from '../server/manager'
+import { JurisdictionServiceManager } from '../service/manager'
 import ormconfig = require('../ormconfig')
 
 const records = 5_000
