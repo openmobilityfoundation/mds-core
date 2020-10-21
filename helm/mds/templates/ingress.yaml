@@ -12,6 +12,41 @@ spec:
   gateways:
   - mds-gateway
   http:
+  {{- if (eq $name "mds-policy") }}
+  # comply with MDS 0.4 spec
+  - match:
+    - uri:
+        prefix: /policy/geographies
+    rewrite:
+      uri: /geography/geographies
+    route:
+    - destination:
+        host: mds-geography.{{ $.Release.Namespace}}.svc.cluster.local
+        port:
+          number: 4000
+    {{- if $.Values.tls.elbTermination }}
+    headers:
+      request:
+        set:
+          x-forwarded-proto: https
+    {{- end }}
+    corsPolicy:
+      allowOrigin:
+      - "*"
+      allowMethods:
+      - POST
+      - GET
+      - HEAD
+      - OPTIONS
+      - PATCH
+      - PUT
+      - DELETE
+      allowCredentials: false
+      allowHeaders:
+      - Content-Type
+      - Authorization
+      maxAge: "10m"
+  {{- end }}
   - match:
     - uri:
         regex: {{ printf "^%s($|/.*$)" $api.pathPrefix | quote }}
