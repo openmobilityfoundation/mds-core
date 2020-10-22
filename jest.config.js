@@ -14,5 +14,7 @@ module.exports = {
     }
   },
   coverageReporters: ['text', 'html'],
-  coverageDirectory: './coverage/.istanbul_output'
+  coverageDirectory: './coverage/',
+  collectCoverage: true,
+  testTimeout: 10000
 }

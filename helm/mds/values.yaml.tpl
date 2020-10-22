@@ -1,10 +1,16 @@
 apis:
   mds-agency:
     version: ${AGENCY_VERSION}
+  mds-attachment-service:
+    version: ${ATTACHMENT_SERVICE_VERSION}
+  mds-attachment-service:
+    version: ${AUDIT_SERVICE_VERSION}
   mds-audit:
     version: ${AUDIT_VERSION}
   mds-policy:
     version: ${POLICY_VERSION}
+  mds-policy-service:
+    version: ${POLICY_SERVICE_VERSION}
   mds-compliance:
     version: ${COMPLIANCE_VERSION}
   mds-daily:
@@ -21,3 +27,7 @@ apis:
     version: ${GEOGRAPHY_VERSION}
   mds-geography-author:
     version: ${GEOGRAPHY_AUTHOR_VERSION}
+  mds-geography-service:
+    version: ${GEOGRAPHY_SERVICE_VERSION}
+  mds-ingest-service:
+    version: ${MDS_INGEST_SERVICE_VERSION}

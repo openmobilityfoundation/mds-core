@@ -36,15 +36,13 @@ import {
   PROPULSION_TYPES,
   Timestamp,
   Device,
-  VehicleEvent,
-  Geography,
-  Stop
+  VehicleEvent
 } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
 import stream from '@mds-core/mds-stream'
 import { shutdown as socketShutdown } from '@mds-core/mds-web-sockets'
-import { makeDevices, makeEvents, GEOGRAPHY_UUID, LA_CITY_BOUNDARY, JUMP_TEST_DEVICE_1 } from '@mds-core/mds-test-data'
+import { makeDevices, makeEvents, JUMP_TEST_DEVICE_1 } from '@mds-core/mds-test-data'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
 import { pathPrefix } from '@mds-core/mds-utils'
@@ -111,12 +109,6 @@ const test_event = {
 }
 
 testTimestamp += 1
-
-const LAGeography: Geography = {
-  name: 'Los Angeles',
-  geography_id: GEOGRAPHY_UUID,
-  geography_json: LA_CITY_BOUNDARY
-}
 
 const JUMP_TEST_DEVICE_1_ID = JUMP_TEST_DEVICE_1.device_id
 
@@ -1449,71 +1441,6 @@ describe('Tests pagination', async () => {
         test.assert(result.body.total === 0)
         test.string(result.body.links.first).contains('http')
         test.string(result.body.links.last).contains('http')
-        done(err)
-      })
-  })
-})
-
-describe('Tests Stops', async () => {
-  const TEST_STOP: Stop = {
-    stop_id: '821f8dee-dd43-4f03-99d4-3cf761f4fe7e',
-    stop_name: 'LA Stop',
-    geography_id: GEOGRAPHY_UUID,
-    lat: 34.0522,
-    lng: -118.2437,
-    capacity: {
-      bicycle: 10,
-      scooter: 10,
-      car: 5,
-      moped: 3
-    },
-    num_vehicles_available: {
-      bicycle: 3,
-      scooter: 7,
-      car: 0,
-      moped: 1
-    },
-    num_spots_available: {
-      bicycle: 7,
-      scooter: 3,
-      car: 5,
-      moped: 2
-    }
-  }
-
-  before(async () => {
-    await Promise.all([db.initialize(), cache.initialize()])
-  })
-
-  it('verifies failing to POST a stop (garbage data)', async () => {
-    await request.post(pathPrefix(`/stops`)).set('Authorization', AUTH).send({ foo: 'bar' }).expect(400)
-  })
-
-  it('verifies successfully POSTing a stop', async () => {
-    await db.writeGeography(LAGeography)
-    await db.publishGeography({ geography_id: GEOGRAPHY_UUID, publish_date: now() })
-    await request.post(pathPrefix(`/stops`)).set('Authorization', AUTH).send(TEST_STOP).expect(201)
-  })
-
-  it('verifies successfully GETing a stop', done => {
-    request
-      .get(pathPrefix(`/stops/${TEST_STOP.stop_id}`))
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.assert(result.body.stop_id === TEST_STOP.stop_id)
-        done(err)
-      })
-  })
-
-  it('verifies successfully GETing all stops', done => {
-    request
-      .get(pathPrefix(`/stops`))
-      .set('Authorization', AUTH)
-      .expect(200)
-      .end((err, result) => {
-        test.assert(result.body.stops.length === 1)
-        test.assert(result.body.stops[0].stop_id === TEST_STOP.stop_id)
         done(err)
       })
   })

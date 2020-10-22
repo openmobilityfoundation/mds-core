@@ -36,7 +36,9 @@ describe('Test Naming Strategy', () => {
   })
 
   it('Foreign Key Naming Strategy', done => {
-    test.value(strategy.foreignKeyName('table', ['column'])).is('fk_column_table')
+    test
+      .value(strategy.foreignKeyName('table', ['column'], 'referencedtable', ['referencedcolumn']))
+      .is('fk_referencedtable_referencedcolumn')
     done()
   })
 })

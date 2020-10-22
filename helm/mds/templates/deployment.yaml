@@ -104,8 +104,18 @@ spec:
             value: {{ $.Values.kafka.host }}:{{ $.Values.kafka.port }}
           {{- end }}
           {{- end }}
+          - name: ATTACHMENT_SERVICE_RPC_HOST
+            value: http://mds-attachment-service
+          - name: AUDIT_SERVICE_RPC_HOST
+            value: http://mds-audit-service
+          - name: GEOGRAPHY_SERVICE_RPC_HOST
+            value: http://mds-geography-service
+          - name: INGEST_SERVICE_RPC_HOST
+            value: http://mds-ingest-service
           - name: JURISDICTION_SERVICE_RPC_HOST
             value: http://mds-jurisdiction-service
+          - name: POLICY_SERVICE_RPC_HOST
+            value: http://mds-policy-service
           - name: TENANT_ID
           {{- if hasKey $.Values "tenantId" }}
             value: {{ $.Values.tenantId }}

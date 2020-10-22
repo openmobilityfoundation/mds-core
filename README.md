@@ -40,14 +40,13 @@ Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guide
 
 ### Experimental Content
 #### APIs
-1. MDS-Agency `/stops` [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/430)
-2. MDS-Audit [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/326)
-3. MDS-Compliance [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/333)
-4. MDS-Config
-5. MDS-Daily
-6. MDS-Metrics-Sheet
-7. MDS-Policy-Author
-8. MDS-Web-Sockets
+1. MDS-Audit [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/326)
+2. MDS-Compliance [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/333)
+3. MDS-Config
+4. MDS-Daily
+5. MDS-Metrics-Sheet
+6. MDS-Policy-Author
+7. MDS-Web-Sockets
 
 ## Installation
 

@@ -47,8 +47,12 @@ abstract class BaseRepository<TConnectionMode extends ConnectionMode> {
 
 export abstract class ReadOnlyRepository extends BaseRepository<'ro'> {
   public initialize = async (): Promise<void> => {
-    const { name } = this
+    const {
+      name,
+      manager: { connect }
+    } = this
     logger.info(`Initializing R/O repository: ${name}`)
+    await connect('ro')
   }
 
   public shutdown = async (): Promise<void> => {
@@ -71,6 +75,52 @@ export abstract class ReadOnlyRepository extends BaseRepository<'ro'> {
 }
 
 export abstract class ReadWriteRepository extends BaseRepository<'ro' | 'rw'> {
+  public runAllMigrations = async (): Promise<void> => {
+    const {
+      manager: { connect }
+    } = this
+    const connection = await connect('rw')
+    const {
+      options: { migrationsTableName }
+    } = connection
+    if (migrationsTableName) {
+      const migrations = await connection.runMigrations({ transaction: 'all' })
+      logger.info(
+        `Ran ${migrations.length || 'no'} ${pluralize(
+          migrations.length,
+          'migration',
+          'migrations'
+        )} (${migrationsTableName})${
+          migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''
+        }`
+      )
+      logger.info(`Schema version (${migrationsTableName}): ${tail(connection.migrations).name}`)
+    }
+  }
+
+  public revertAllMigrations = async (): Promise<void> => {
+    const {
+      manager: { connect }
+    } = this
+    const connection = await connect('rw')
+    const {
+      options: { migrationsTableName }
+    } = connection
+    if (migrationsTableName) {
+      const { migrations } = connection
+      await migrations.reduce(p => p.then(() => connection.undoLastMigration()), Promise.resolve())
+      logger.info(
+        `Reverted ${migrations.length || 'no'} ${pluralize(
+          migrations.length,
+          'migration',
+          'migrations'
+        )} (${migrationsTableName})${
+          migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''
+        }`
+      )
+    }
+  }
+
   public initialize = async (): Promise<void> => {
     const {
       name,
@@ -78,29 +128,14 @@ export abstract class ReadWriteRepository extends BaseRepository<'ro' | 'rw'> {
     } = this
     logger.info(`Initializing R/W repository: ${name}`)
 
-    const {
-      PG_MIGRATIONS = 'true' // Enable migrations by default
-    } = process.env
+    await Promise.all([connect('rw'), connect('ro')])
+
+    // Enable migrations by default
+    const { PG_MIGRATIONS = 'true' } = process.env
 
     /* istanbul ignore if */
     if (PG_MIGRATIONS === 'true') {
-      const connection = await connect('rw')
-      const {
-        options: { migrationsTableName }
-      } = connection
-      if (migrationsTableName) {
-        const migrations = await connection.runMigrations({ transaction: 'all' })
-        logger.info(
-          `Ran ${migrations.length || 'no'} ${pluralize(
-            migrations.length,
-            'migration',
-            'migrations'
-          )} (${migrationsTableName})${
-            migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''
-          }`
-        )
-        logger.info(`Schema version (${migrationsTableName}): ${tail(connection.migrations).name}`)
-      }
+      await this.runAllMigrations()
     }
   }
 

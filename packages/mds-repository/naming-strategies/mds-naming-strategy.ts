@@ -32,7 +32,12 @@ export class MdsNamingStrategy extends DefaultNamingStrategy implements NamingSt
     return ['uc', ...columnNames, tableName(tableOrName)].join('_')
   }
 
-  foreignKeyName(tableOrName: Table | string, columnNames: string[]): string {
-    return ['fk', ...columnNames, tableName(tableOrName)].join('_')
+  foreignKeyName(
+    tableOrName: Table | string,
+    columnNames: string[],
+    referencedTablePath?: string,
+    referencedColumnNames?: string[]
+  ): string {
+    return ['fk', referencedTablePath ?? tableName(tableOrName), ...(referencedColumnNames ?? columnNames)].join('_')
   }
 }

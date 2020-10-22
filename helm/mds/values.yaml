@@ -53,6 +53,26 @@ apis:
     pathPrefix: /geography-author
     version: latest
     migration: false
+  mds-geography-service:
+    enabled: true
+    version: latest
+    migration: false
+  mds-policy-service:
+    enabled: true
+    version: latest
+    migration: false
+  mds-ingest-service:
+    enabled: true
+    version: latest
+    migration: false
+  mds-attachment-service:
+    enabled: true
+    version: latest
+    migration: false
+  mds-audit-service:
+    enabled: true
+    version: latest
+    migration: false
 tenantId:
 timezone: America/Los_Angeles
 registry:

@@ -1,6 +1,7 @@
 import logger from '@mds-core/mds-logger'
+import { csv } from '@mds-core/mds-utils'
+import schema from './schema'
 
-import { updateSchema } from './migration'
 import { logSql, configureClient, MDSPostgresClient, SqlVals } from './sql-utils'
 
 const { env } = process
@@ -37,7 +38,8 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
     await client.connect()
     if (useWriteable) {
       if (PG_MIGRATIONS === 'true') {
-        await updateSchema(client)
+        // Drop deprecated tables
+        await client.query(`DROP TABLE IF EXISTS ${csv(schema.DEPRECATED_TABLES)};`)
       }
     }
     client.setConnected(true)

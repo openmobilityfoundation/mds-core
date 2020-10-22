@@ -132,6 +132,11 @@ export type NullableKeys<T> = {
 }[keyof T]
 export type Optional<T, P extends keyof T> = Omit<T, P> & Partial<Pick<T, P>>
 export type NonEmptyArray<T> = [T, ...T[]]
+export type RequiredKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? never : K }[keyof T]
+export type OptionalKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? K : never }[keyof T]
+export type PickRequired<T> = Pick<T, RequiredKeys<T>>
+export type PickOptional<T> = Pick<T, OptionalKeys<T>>
+export type NullableOptional<T> = PickRequired<T> & NullableProperties<PickOptional<T>>
 
 // Represents a row in the "devices" table
 export interface Device {
@@ -371,30 +376,6 @@ export interface Provider {
   url?: string
   mds_api_url?: string
   gbfs_api_url?: string
-}
-
-export interface Stop {
-  stop_id: UUID
-  stop_name: string
-  short_name?: string
-  platform_code?: string
-  geography_id?: UUID
-  lat: number
-  lng: number
-  zone_id?: UUID
-  address?: string
-  post_code?: string
-  rental_methods?: string // TOOD: enum?
-  capacity: Partial<{ [S in VEHICLE_TYPE]: number }>
-  location_type?: string // TODO: enum?
-  timezone?: string
-  cross_street?: string
-  num_vehicles_available: Partial<{ [S in VEHICLE_TYPE]: number }>
-  num_vehicles_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
-  num_spots_available: Partial<{ [S in VEHICLE_TYPE]: number }>
-  num_spots_disabled?: Partial<{ [S in VEHICLE_TYPE]: number }>
-  wheelchair_boarding?: boolean
-  reservation_cost?: Partial<{ [S in VEHICLE_TYPE]: number }> // Cost to reserve a spot per vehicle_type
 }
 
 // eslint-reason recursive declarations require interfaces

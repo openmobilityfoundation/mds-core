@@ -112,13 +112,14 @@ export class ConnectionManager<TConnectionMode extends ConnectionMode> {
   }
 
   public disconnect = async (mode: TConnectionMode) => {
-    const { lock, connections, connectionMode } = this
+    const { lock, connections, connectionOptions, connectionMode } = this
+    const options = connectionOptions(mode)
+    logger.info(`Terminating ${connectionMode(mode)} connection: ${options.name}`)
     try {
       await lock.acquireAsync()
       const connection = connections.get(mode)
       if (connection) {
         if (connection.isConnected) {
-          logger.info(`Terminating ${connectionMode(mode)} connection: ${connection.options.name}`)
           await connection.close()
         }
         connections.delete(mode)

@@ -1,6 +1,6 @@
 import logger from '@mds-core/mds-logger'
-import { isUUID, now, ValidationError, normalizeToArray, NotFoundError, ServerError } from '@mds-core/mds-utils'
-import { isValidStop, isValidDevice, validateEvent, isValidTelemetry } from '@mds-core/mds-schema-validators'
+import { isUUID, now, normalizeToArray } from '@mds-core/mds-utils'
+import { isValidDevice, validateEvent, isValidTelemetry } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
 import stream from '@mds-core/mds-stream'
@@ -28,15 +28,10 @@ import {
   AgencyApiUpdateVehicleResponse,
   AgencyApiSubmitVehicleEventResponse,
   AgencyApiSubmitVehicleTelemetryResponse,
-  AgencyApiRegisterStopResponse,
-  AgencyApiReadStopsResponse,
-  AgencyApiReadStopResponse,
   AgencyApiGetVehicleByIdRequest,
   AgencyApiUpdateVehicleRequest,
   AgencyApiSubmitVehicleEventRequest,
   AgencyApiSubmitVehicleTelemetryRequest,
-  AgencyApiRegisterStopRequest,
-  AgencyApiReadStopRequest,
   AgencyApiRegisterVehicleRequest
 } from './types'
 import {
@@ -450,48 +445,5 @@ export const submitVehicleTelemetry = async (
       error_description: 'None of the provided data was valid',
       error_details: [` device_id ${data[0].device_id}: not found`]
     })
-  }
-}
-
-export const registerStop = async (req: AgencyApiRegisterStopRequest, res: AgencyApiRegisterStopResponse) => {
-  const stop = req.body
-
-  try {
-    isValidStop(stop)
-    const recorded_stop = await db.writeStop(stop)
-    return res.status(201).send({ ...recorded_stop })
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      return res.status(400).send({ error })
-    }
-
-    return res.status(500).send({ error: new ServerError() })
-  }
-}
-
-export const readStop = async (req: AgencyApiReadStopRequest, res: AgencyApiReadStopResponse) => {
-  const { stop_id } = req.params
-  try {
-    const recorded_stop = await db.readStop(stop_id)
-
-    if (!recorded_stop) {
-      return res.status(404).send({ error: new NotFoundError('Stop not found') })
-    }
-    res.status(200).send({ ...recorded_stop })
-  } catch (err) {
-    res.status(500).send({ error: new ServerError() })
-  }
-}
-
-export const readStops = async (req: AgencyApiRequest, res: AgencyApiReadStopsResponse) => {
-  try {
-    const stops = await db.readStops()
-
-    if (!stops) {
-      return res.status(404).send({ error: new NotFoundError('No stops were found') })
-    }
-    res.status(200).send({ stops })
-  } catch (err) {
-    return res.status(500).send({ error: new ServerError() })
   }
 }

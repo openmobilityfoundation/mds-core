@@ -2,6 +2,8 @@ import assert from 'assert'
 /* eslint-reason extends object.prototype */
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import should from 'should'
+import test from 'unit.js'
+
 import { FeatureCollection } from 'geojson'
 import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS, Geography } from '@mds-core/mds-types'
 import {
@@ -26,10 +28,15 @@ import {
 } from '@mds-core/mds-test-data'
 import { now, clone, NotFoundError, rangeRandomInt, uuid, ConflictError, yesterday, days } from '@mds-core/mds-utils'
 import { isNullOrUndefined } from 'util'
+import { AttachmentRepository } from '@mds-core/mds-attachment-service'
+import { AuditRepository } from '@mds-core/mds-audit-service'
+import { GeographyRepository } from '@mds-core/mds-geography-service'
+import { IngestRepository } from '@mds-core/mds-ingest-service'
+import { PolicyRepository } from '@mds-core/mds-policy-service'
 import MDSDBPostgres from '../index'
-import { dropTables, createTables, updateSchema } from '../migration'
+import { dropTables, createTables } from '../migration'
 import { Trip } from '../types'
-import { configureClient, MDSPostgresClient, PGInfo } from '../sql-utils'
+import { PGInfo } from '../sql-utils'
 
 const { env } = process
 const ACTIVE_POLICY_JSON = { ...POLICY_JSON, publish_date: yesterday(), start_date: yesterday() }
@@ -123,29 +130,40 @@ async function seedDB() {
   await MDSDBPostgres.seed({ devices, events, telemetry })
 }
 
-async function setFreshDB() {
-  const client: MDSPostgresClient = configureClient(pg_info)
-  await client.connect()
-  await dropTables(client)
-  await createTables(client)
-  await updateSchema(client)
-  await client.end()
+async function initializeDB() {
+  await Promise.all(
+    [AttachmentRepository, AuditRepository, GeographyRepository, IngestRepository, PolicyRepository].map(repository =>
+      repository.initialize()
+    )
+  )
+  await dropTables()
+  await createTables()
+}
+
+async function shutdownDB() {
+  await MDSDBPostgres.shutdown()
+  await Promise.all(
+    [AttachmentRepository, AuditRepository, GeographyRepository, IngestRepository, PolicyRepository].map(repository =>
+      repository.shutdown()
+    )
+  )
 }
 
 if (pg_info.database) {
   describe('Test mds-db-postgres', () => {
     describe('test reads and writes', () => {
       beforeEach(async () => {
-        const client: MDSPostgresClient = configureClient(pg_info)
-        await client.connect()
-        await dropTables(client)
-        await createTables(client)
-        await updateSchema(client)
-        await client.end()
+        await initializeDB()
       })
 
       afterEach(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
+      })
+
+      // This is incredibly stupid and makes 0 sense, but if we don't import (and use) unit.js, should.js breaks...
+      it('Nonsensical test', () => {
+        // eslint-disable-next-line no-self-compare
+        test.assert(true === true)
       })
 
       it('can make successful writes', async () => {
@@ -156,11 +174,9 @@ if (pg_info.database) {
       })
 
       it('can make a successful read query after shutting down a DB client', async () => {
-        await MDSDBPostgres.initialize()
-        await MDSDBPostgres.shutdown()
-
+        await shutdownDB()
         await MDSDBPostgres.writeDevice(JUMP_TEST_DEVICE_1)
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
         const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id, JUMP_PROVIDER_ID)
         assert.deepEqual(device.device_id, JUMP_TEST_DEVICE_1.device_id)
       })
@@ -193,17 +209,12 @@ if (pg_info.database) {
 
     describe('unit test read only functions', () => {
       beforeEach(async () => {
-        const client: MDSPostgresClient = configureClient(pg_info)
-        await client.connect()
-        await dropTables(client)
-        await createTables(client)
-        await updateSchema(client)
-        await client.end()
+        await initializeDB()
         await seedDB()
       })
 
       afterEach(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
       })
 
       it('can get vehicle counts by provider', async () => {
@@ -284,11 +295,11 @@ if (pg_info.database) {
 
     describe('unit test policy functions', () => {
       before(async () => {
-        await setFreshDB()
+        await initializeDB()
       })
 
       after(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
       })
 
       it('can delete an unpublished Policy', async () => {
@@ -406,11 +417,11 @@ if (pg_info.database) {
 
     describe('unit test PolicyMetadata functions', () => {
       before(async () => {
-        await setFreshDB()
+        await initializeDB()
       })
 
       after(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
       })
 
       it('.readBulkPolicyMetadata', async () => {
@@ -445,11 +456,11 @@ if (pg_info.database) {
 
     describe('unit test geography functions', () => {
       before(async () => {
-        await setFreshDB()
+        await initializeDB()
       })
 
       after(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
       })
 
       it('can delete an unpublished Geography', async () => {
@@ -464,7 +475,6 @@ if (pg_info.database) {
       })
 
       it('can write, read, and publish a Geography', async () => {
-        await MDSDBPostgres.initialize()
         await MDSDBPostgres.writeGeography(LAGeography)
         const result = await MDSDBPostgres.readSingleGeography(LAGeography.geography_id)
         assert.deepEqual(result.geography_json, LAGeography.geography_json)
@@ -555,11 +565,11 @@ if (pg_info.database) {
 
     describe('test Geography Policy interaction', () => {
       before(async () => {
-        await setFreshDB()
+        await initializeDB()
       })
 
       after(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
       })
 
       it('will throw an error if an attempt is made to publish a Policy but the Geography is unpublished', async () => {
@@ -594,11 +604,11 @@ if (pg_info.database) {
 
     describe('Geography metadata', () => {
       before(async () => {
-        await setFreshDB()
+        await initializeDB()
       })
 
       after(async () => {
-        await MDSDBPostgres.shutdown()
+        await shutdownDB()
       })
 
       it('should write a GeographyMetadata only if there is a Geography in the DB', async () => {
@@ -653,41 +663,4 @@ if (pg_info.database) {
       })
     })
   })
-
-  /*
-  TODO: finalize query semantics, then re-enable
-  it('Queries metrics correctly', async () => {
-    const fakeReadOnly = Sinon.fake.returns('boop')
-    Sinon.replace(dbClient, 'makeReadOnlyQuery', fakeReadOnly)
-    const start_time = 42
-    const end_time = 50
-    const provider_id: UUID[] = []
-    const geography_id = null
-    const vehicle_type: VEHICLE_TYPE[] = []
-    await getAllMetrics({ start_time, end_time, provider_id, geography_id, vehicle_type })
-    assert.strictEqual(
-      fakeReadOnly.args[0][0],
-      `SELECT * FROM reports_providers WHERE start_time BETWEEN ${start_time} AND ${end_time}`
-    )
-    Sinon.restore()
-  })
-
-  it('Queries optional fields correctly', async () => {
-    const fakeReadOnly = Sinon.fake.returns('boop')
-    Sinon.replace(dbClient, 'makeReadOnlyQuery', fakeReadOnly)
-    const start_time = 42
-    const end_time = 50
-    const provider_id = [uuid(), uuid()]
-    const geography_id = uuid()
-    const vehicle_type = [VEHICLE_TYPES.scooter]
-    await getAllMetrics({ start_time, end_time, provider_id, geography_id, vehicle_type })
-    assert.strictEqual(
-      fakeReadOnly.args[0][0],
-      `SELECT * FROM reports_providers WHERE start_time BETWEEN ${start_time} AND ${end_time} AND provider_id IN ${arrayToInQueryFormat(
-        provider_id
-      )}  AND geography_id = "${geography_id}"  AND vehicle_type IN ${arrayToInQueryFormat(vehicle_type)} `
-    )
-    Sinon.restore()
-  })
-  */
 }
