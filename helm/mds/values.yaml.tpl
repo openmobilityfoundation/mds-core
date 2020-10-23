@@ -3,7 +3,7 @@ apis:
     version: ${AGENCY_VERSION}
   mds-attachment-service:
     version: ${ATTACHMENT_SERVICE_VERSION}
-  mds-attachment-service:
+  mds-audit-service:
     version: ${AUDIT_SERVICE_VERSION}
   mds-audit:
     version: ${AUDIT_VERSION}
