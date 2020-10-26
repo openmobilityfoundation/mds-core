@@ -2,13 +2,21 @@ import { PolicyServiceManager } from '../service/manager'
 import { PolicyServiceClient } from '../client'
 import { PolicyRepository } from '../repository'
 
-describe('Test Migrations', () => {
+describe('Policy Repository Tests', () => {
+  beforeAll(async () => {
+    await PolicyRepository.initialize()
+  })
+
   it('Run Migrations', async () => {
     await PolicyRepository.runAllMigrations()
   })
 
   it('Revert Migrations', async () => {
     await PolicyRepository.revertAllMigrations()
+  })
+
+  afterAll(async () => {
+    await PolicyRepository.shutdown()
   })
 })
 

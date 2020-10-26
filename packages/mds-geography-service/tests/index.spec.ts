@@ -2,13 +2,21 @@ import { GeographyServiceManager } from '../service/manager'
 import { GeographyServiceClient } from '../client'
 import { GeographyRepository } from '../repository'
 
-describe('Test Migrations', () => {
+describe('Geography Repository Tests', () => {
+  beforeAll(async () => {
+    await GeographyRepository.initialize()
+  })
+
   it('Run Migrations', async () => {
     await GeographyRepository.runAllMigrations()
   })
 
   it('Revert Migrations', async () => {
     await GeographyRepository.revertAllMigrations()
+  })
+
+  afterAll(async () => {
+    await GeographyRepository.shutdown()
   })
 })
 

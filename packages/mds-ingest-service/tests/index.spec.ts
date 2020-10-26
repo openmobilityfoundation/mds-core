@@ -2,13 +2,21 @@ import { IngestServiceManager } from '../service/manager'
 import { IngestServiceClient } from '../client'
 import { IngestRepository } from '../repository'
 
-describe('Test Migrations', () => {
+describe('Ingest Repository Tests', () => {
+  beforeAll(async () => {
+    await IngestRepository.initialize()
+  })
+
   it('Run Migrations', async () => {
     await IngestRepository.runAllMigrations()
   })
 
   it('Revert Migrations', async () => {
     await IngestRepository.revertAllMigrations()
+  })
+
+  afterAll(async () => {
+    await IngestRepository.shutdown()
   })
 })
 

@@ -2,13 +2,21 @@ import { AttachmentServiceManager } from '../service/manager'
 import { AttachmentServiceClient } from '../client'
 import { AttachmentRepository } from '../repository'
 
-describe('Test Migrations', () => {
+describe('Attachment Repository Tests', () => {
+  beforeAll(async () => {
+    await AttachmentRepository.initialize()
+  })
+
   it('Run Migrations', async () => {
     await AttachmentRepository.runAllMigrations()
   })
 
   it('Revert Migrations', async () => {
     await AttachmentRepository.revertAllMigrations()
+  })
+
+  afterAll(async () => {
+    await AttachmentRepository.shutdown()
   })
 })
 
