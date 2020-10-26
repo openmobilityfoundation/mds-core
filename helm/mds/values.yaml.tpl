@@ -30,4 +30,4 @@ apis:
   mds-geography-service:
     version: ${GEOGRAPHY_SERVICE_VERSION}
   mds-ingest-service:
-    version: ${MDS_INGEST_SERVICE_VERSION}
+    version: ${INGEST_SERVICE_VERSION}

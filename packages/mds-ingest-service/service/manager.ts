@@ -13,9 +13,9 @@ export const IngestServiceManager = RpcServer(
     name: args => IngestServiceProvider.name(...args)
   },
   {
-    port: process.env.MDS_INGEST_SERVICE_RPC_PORT,
+    port: process.env.INGEST_SERVICE_RPC_PORT,
     repl: {
-      port: process.env.MDS_INGEST_SERVICE_REPL_PORT,
+      port: process.env.INGEST_SERVICE_REPL_PORT,
       context: { client: IngestServiceClient }
     }
   }
