@@ -1,18 +1,7 @@
 import Joi from 'joi'
 import gjv from 'geojson-validation'
-import { ValidationError } from '@mds-core/mds-utils'
+import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { GeographyDomainModel, GeographyMetadataDomainModel } from '../@types'
-
-const schemaValidator = <T>(schema: Joi.AnySchema) => ({
-  validate: (value: unknown): T => {
-    const { error } = schema.validate(value)
-    if (error) {
-      throw new ValidationError(error.message, value)
-    }
-    return value as T
-  },
-  isValid: (value: unknown): value is T => !schema.validate(value).error
-})
 
 export const { validate: validateGeographyDomainModel, isValid: isValidGeographyDomainModel } = schemaValidator<
   GeographyDomainModel

@@ -25,6 +25,7 @@
   "dependencies": {
     "@mds-core/mds-repository": "0.1.0",
     "@mds-core/mds-rpc-common": "0.1.0",
+    "@mds-core/mds-schema-validators": "0.1.2",
     "@mds-core/mds-service-helpers": "0.1.0",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
