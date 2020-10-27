@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
+    "pretest:unit": "yarn typeorm schema:drop",
     "start": "yarn watch server",
     "test": "yarn test:eslint && yarn test:unit",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
