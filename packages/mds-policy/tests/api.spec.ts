@@ -69,7 +69,7 @@ const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
 
 describe('Tests app', () => {
   before('Initialize the DB', async () => {
-    await db.initialize()
+    await db.reinitialize()
     await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
   })
 

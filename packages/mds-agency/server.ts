@@ -14,7 +14,17 @@
     limitations under the License.
  */
 
-import { HttpServer, ApiServer } from '@mds-core/mds-api-server'
+import logger from '@mds-core/mds-logger'
+import cache from '@mds-core/mds-agency-cache'
+import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from './api'
 
-HttpServer(ApiServer(api), { port: process.env.AGENCY_API_HTTP_PORT })
+cache
+  .startup()
+  .then(() => {
+    return HttpServer(ApiServer(api), { port: process.env.AGENCY_API_HTTP_PORT })
+  })
+  // eslint-disable-next-line promise/prefer-await-to-callbacks
+  .catch(err => {
+    logger.error('mds-agency startup failure', err)
+  })

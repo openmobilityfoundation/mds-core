@@ -250,13 +250,16 @@ const TIME_POLICY_JSON: Policy = {
 
 const APP_JSON = 'application/vnd.mds.compliance+json; charset=utf-8; version=0.1'
 describe('Tests Compliance API:', () => {
+  beforeEach(async () => {
+    await Promise.all([db.startup(), cache.startup()])
+  })
   afterEach(async () => {
     await Promise.all([db.shutdown(), cache.shutdown(), stream.shutdown()])
   })
 
   describe('Singular Policy API Sanity Checks: ', () => {
     beforeEach(done => {
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         agency_request
           .post(pathPrefix('/vehicles'))
           .set('Authorization', ADMIN_AUTH)
@@ -331,7 +334,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
           await db.writeGeography(geography)
@@ -437,7 +440,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
           await db.writeGeography(geography)
@@ -495,7 +498,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
           await db.writeGeography(geography)
@@ -532,7 +535,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
           await db.writeGeography(geography)
@@ -562,7 +565,7 @@ describe('Tests Compliance API:', () => {
 
   describe('Attempts to check compliance for non-existent policy', () => {
     it('Checks for a valid UUID, but not present in db', done => {
-      Promise.all([db.initialize(), cache.initialize()]).then(async () => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(async () => {
         request
           .get(pathPrefix(`/snapshot/${TIME_POLICY_UUID}`))
           .set('Authorization', ADMIN_AUTH)
@@ -583,7 +586,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), LA_BEACH, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'la beach', geography_id: LA_BEACH, geography_json: restrictedAreas }
           await db.writeGeography(geography)
@@ -635,7 +638,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
           await db.writeGeography(geography)
@@ -673,7 +676,7 @@ describe('Tests Compliance API:', () => {
         telemetry.push(makeTelemetryInArea(device, now(), CITY_OF_LA, 10))
       })
       const seedData = { devices, events, telemetry }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([db.seed(seedData), cache.seed(seedData)]).then(async () => {
           const geography = { name: 'LA', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
           await db.writeGeography(geography)
@@ -778,13 +781,13 @@ describe('Tests Compliance API:', () => {
         TEST_ZONE_NO_VALID_DROP_OFF_POINTS,
         'provider_drop_off'
       )
-      Promise.all([db.initialize(), cache.initialize()]).then(async () => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(async () => {
         const seedData: { devices: Device[]; events: VehicleEvent[]; telemetry: Telemetry[] } = {
           devices: [...devices_a, ...devices_b],
           events: [...events_a, ...events_b],
           telemetry: []
         }
-        await Promise.all([db.initialize(), cache.initialize()])
+        await Promise.all([db.reinitialize(), cache.reinitialize()])
         await Promise.all([cache.seed(seedData), db.seed(seedData)])
         await Promise.all(geographies.map((geography: Geography) => db.writeGeography(geography)))
         await Promise.all(
@@ -833,7 +836,7 @@ describe('Tests Compliance API:', () => {
         events: [...events_a, ...events_b],
         telemetry: [...telemetry_a, ...telemetry_b]
       }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([cache.seed(seedData), db.seed(seedData)]).then(async () => {
           await db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
           await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
@@ -888,8 +891,8 @@ describe('Tests Compliance API:', () => {
         events: [...events_a, ...events_b],
         telemetry: [...telemetry_a, ...telemetry_b]
       }
-      await db.initialize()
-      await cache.initialize()
+      await db.reinitialize()
+      await cache.reinitialize()
       await cache.seed(seedData)
       await db.seed(seedData)
       await db.writeGeography({ name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
@@ -943,7 +946,7 @@ describe('Tests Compliance API:', () => {
       })
 
       const seedData = { events, telemetry, devices }
-      await Promise.all([db.initialize(), cache.initialize()])
+      await Promise.all([db.reinitialize(), cache.reinitialize()])
       await Promise.all([cache.seed(seedData), db.seed(seedData)])
 
       const geography = { name: 'la', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY }
@@ -993,7 +996,7 @@ describe('Tests Compliance API:', () => {
 
       const seedData = { devices, events, telemetry: [] }
 
-      await Promise.all([db.initialize(), cache.initialize()])
+      await Promise.all([db.reinitialize(), cache.reinitialize()])
       await Promise.all([cache.seed(seedData), db.seed(seedData)])
       await db.writeGeography(geography)
       await db.publishGeography({ geography_id: geography.geography_id })

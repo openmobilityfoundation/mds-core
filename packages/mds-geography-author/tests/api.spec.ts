@@ -60,7 +60,7 @@ describe('Tests app', () => {
     })
 
     before(async () => {
-      await db.initialize()
+      await db.reinitialize()
     })
 
     after(async () => {
@@ -292,7 +292,7 @@ describe('Tests app', () => {
     })
 
     before(async () => {
-      await db.initialize()
+      await db.reinitialize()
       await db.writeGeography({ name: 'Geography 1', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
       await db.writeGeography({ name: 'Geography 2', geography_id: GEOGRAPHY2_UUID, geography_json: DISTRICT_SEVEN })
       await db.publishGeography({ geography_id: GEOGRAPHY2_UUID })

@@ -104,7 +104,7 @@ function makeTrip(device: Device): Trip {
 /* istanbul ignore next */
 
 async function seedDB() {
-  await MDSDBPostgres.initialize()
+  await MDSDBPostgres.reinitialize()
   const devices: Device[] = makeDevices(9, startTime, JUMP_PROVIDER_ID) as Device[]
   devices.push(JUMP_TEST_DEVICE_1 as Device)
   const deregisterEvents: VehicleEvent[] = makeEventsWithTelemetry(
@@ -167,7 +167,7 @@ if (pg_info.database) {
       })
 
       it('can make successful writes', async () => {
-        await MDSDBPostgres.initialize()
+        await MDSDBPostgres.reinitialize()
         await MDSDBPostgres.writeDevice(JUMP_TEST_DEVICE_1)
         const device: Device = await MDSDBPostgres.readDevice(JUMP_TEST_DEVICE_1.device_id, JUMP_PROVIDER_ID)
         assert.deepEqual(device.device_id, JUMP_TEST_DEVICE_1.device_id)

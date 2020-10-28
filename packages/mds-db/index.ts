@@ -45,7 +45,7 @@ const { writeDevice } = devices
 const { writeTelemetry } = telemetry
 const { writeEvent } = events
 
-async function initialize() {
+async function reinitialize() {
   await Promise.all([getWriteableClient(), getReadOnlyClient()])
   await Promise.all(
     [AttachmentRepository, AuditRepository, GeographyRepository, IngestRepository, PolicyRepository].map(repository =>
@@ -144,7 +144,7 @@ async function seed(data: {
 }
 
 export default {
-  initialize,
+  reinitialize,
   health,
   seed,
   startup,

@@ -53,7 +53,7 @@ const GEOGRAPHIES_BOTH_READ_SCOPES = SCOPED_AUTH(['geographies:read:published', 
 describe('Tests app', () => {
   describe('Geography endpoint tests', () => {
     before(async () => {
-      await db.initialize()
+      await db.reinitialize()
     })
 
     after(async () => {

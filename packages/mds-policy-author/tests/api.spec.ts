@@ -63,7 +63,7 @@ POLICY_JSON_WITHOUT_PUBLISH_DATE.publish_date = undefined
 describe('Tests app', () => {
   describe('Policy tests', () => {
     before(async () => {
-      await db.initialize()
+      await db.reinitialize()
     })
 
     after(async () => {

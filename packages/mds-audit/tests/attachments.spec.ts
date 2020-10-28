@@ -69,7 +69,7 @@ describe('Testing Attachments Service', () => {
   } as Express.Multer.File
 
   before('Initializing database', async () => {
-    await db.initialize()
+    await db.reinitialize()
   })
 
   beforeEach(async () => {
@@ -148,7 +148,7 @@ describe('Testing Attachments Service', () => {
   })
 
   after('Clearing and shutting down database', async () => {
-    await db.initialize()
+    await db.reinitialize()
     await db.shutdown()
   })
 })

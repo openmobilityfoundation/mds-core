@@ -122,7 +122,7 @@ const AUTH2 = `basic ${Buffer.from(`${TEST2_PROVIDER_ID}|${PROVIDER_SCOPES}`).to
 const AUTH_NO_SCOPE = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}`).toString('base64')}`
 
 before(async () => {
-  await Promise.all([db.initialize(), cache.initialize()])
+  await Promise.all([db.reinitialize(), cache.reinitialize()])
 })
 
 after(async () => {
@@ -1384,7 +1384,7 @@ describe('Tests pagination', async () => {
     const devices = makeDevices(100, now())
     const events = makeEvents(devices, now())
     const seedData = { devices, events, telemetry: [] }
-    await Promise.all([db.initialize(), cache.initialize()])
+    await Promise.all([db.reinitialize(), cache.reinitialize()])
     await Promise.all([cache.seed(seedData), db.seed(seedData)])
   })
 

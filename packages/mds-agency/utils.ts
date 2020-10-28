@@ -122,7 +122,7 @@ export async function getVehicles(
   const total = rows.length
   logger.info(`read ${total} deviceIds in /vehicles`)
 
-  const events = await cache.readEvents(rows.map(record => record.device_id))
+  const events = rows.length > 0 ? await cache.readEvents(rows.map(record => record.device_id)) : []
   const eventMap: { [s: string]: VehicleEvent } = {}
   events.map(event => {
     if (event) {

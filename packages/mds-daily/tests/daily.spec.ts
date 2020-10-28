@@ -146,7 +146,7 @@ before(done => {
   ]
   const telemetry: Telemetry[] = []
   const seedData = { devices, events, telemetry }
-  Promise.all([db.initialize(), cache.initialize()]).then(() => {
+  Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
     Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
       done()
     })

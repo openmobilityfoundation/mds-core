@@ -16,7 +16,7 @@
 
 import logger from '@mds-core/mds-logger'
 
-import flatten from 'flat'
+import flatten, { unflatten } from 'flat'
 import { NotFoundError, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
 import {
   UUID,
@@ -28,8 +28,8 @@ import {
   EVENT_STATUS_MAP,
   VEHICLE_STATUSES
 } from '@mds-core/mds-types'
-import redis from 'redis'
-import bluebird from 'bluebird'
+
+import { RedisCache } from '@mds-core/mds-cache'
 
 import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
 import {
@@ -43,66 +43,15 @@ import {
 
 const { env } = process
 
-const { unflatten } = flatten
-
-declare module 'redis' {
-  interface RedisClient {
-    dbsizeAsync: () => Promise<number>
-    delAsync: (...arg1: string[]) => Promise<number>
-    flushdbAsync: () => Promise<'OK'>
-    hdelAsync: (...args: (string | number)[]) => Promise<number>
-    hgetallAsync: (arg1: string) => Promise<{ [key: string]: string }>
-    hgetAsync: (key: string, field: string) => Promise<string>
-    hscanAsync: (key: string, cursor: number, condition: string, pattern: string) => Promise<[string, string[]]>
-    hsetAsync: (key: string, field: string, value: string) => Promise<number>
-    hmsetAsync: (...args: unknown[]) => Promise<'OK'>
-    infoAsync: () => Promise<string>
-    keysAsync: (arg1: string) => Promise<string[]>
-    zaddAsync: (arg1: string | number, arg2: number, arg3: string) => Promise<number>
-    zrangebyscoreAsync: (key: string, min: number | string, max: number | string) => Promise<string[]>
-    georadiusAsync: (key: string, longitude: number, latitude: number, radius: number, unit: string) => Promise<UUID[]>
-  }
-  interface Multi {
-    hgetallAsync: (arg1: string) => Promise<{ [key: string]: string }>
-    execAsync: () => Promise<object[]>
-  }
-}
-
-bluebird.promisifyAll(redis.RedisClient.prototype)
-bluebird.promisifyAll(redis.Multi.prototype)
-
-let cachedClient: redis.RedisClient | null
+const client = RedisCache()
 
 // optionally prefix a 'tenantId' key given the redis is a shared service across deployments
 function decorateKey(key: string): string {
   return env.TENANT_ID ? `${env.TENANT_ID}:${key}` : key
 }
 
-async function getClient() {
-  if (!cachedClient) {
-    const port = Number(env.REDIS_PORT) || 6379
-    const host = env.REDIS_HOST || 'localhost'
-    logger.info(`connecting to redis on ${host}:${port}`)
-    cachedClient = redis.createClient({ port, host, password: env.REDIS_PASS })
-    logger.info('redis client created')
-    cachedClient.on('connect', () => {
-      logger.info('redis cache connected')
-    })
-    cachedClient.on('error', async err => {
-      logger.error(`redis cache error ${err}`)
-    })
-    try {
-      const size = await cachedClient.dbsizeAsync()
-      logger.info(`redis cache has ${size} keys`)
-    } catch (err) {
-      logger.error('redis failed to get dbsize', err)
-    }
-  }
-  return cachedClient
-}
-
 async function info() {
-  const results = await (await getClient()).infoAsync()
+  const results = await client.info()
   const lines = results.split('\r\n')
   const data: { [propName: string]: string | number } = {}
   lines.map(line => {
@@ -123,15 +72,15 @@ async function info() {
 async function updateVehicleList(device_id: UUID, timestamp?: Timestamp) {
   const when = timestamp || now()
   // logger.info('redis zadd', device_id, when)
-  return (await getClient()).zaddAsync(decorateKey('device-ids'), when, device_id)
+  return client.zadd(decorateKey('device-ids'), [when, device_id])
 }
 async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
   if (!device_id) {
     throw new Error(`hread: tried to read ${suffix} for device_id ${device_id}`)
   }
   const key = decorateKey(`device:${device_id}:${suffix}`)
-  const flat = await (await getClient()).hgetallAsync(key)
-  if (flat) {
+  const flat = await client.hgetall(key)
+  if (Object.keys(flat).length !== 0) {
     return unflatten({ ...flat, device_id })
   }
   throw new NotFoundError(`${suffix} for ${device_id} not found`)
@@ -139,7 +88,6 @@ async function hread(suffix: string, device_id: UUID): Promise<CachedItem> {
 
 /* Store latest known lat/lng for a given device in a redis geo-spatial analysis compatible manner. */
 async function addGeospatialHash(device_id: UUID, coordinates: [number, number]) {
-  const client = await getClient()
   const [lat, lng] = coordinates
   const res = await client.geoadd(decorateKey('locations'), lng, lat, device_id)
   return res
@@ -147,15 +95,14 @@ async function addGeospatialHash(device_id: UUID, coordinates: [number, number])
 
 async function getEventsInBBox(bbox: BoundingBox) {
   const start = now()
-  const client = await getClient()
   const [pt1, pt2] = bbox
   const points = bbox.map(pt => {
     return { lat: pt[0], lng: pt[1] }
   })
   const [lng, lat] = [(pt1[0] + pt2[0]) / 2, (pt1[1] + pt2[1]) / 2]
-  const radius = routeDistance(points)
-  const events = client.georadiusAsync(decorateKey('locations'), lng, lat, radius, 'm')
-  const finish = now()
+  const radius: number = routeDistance(points)
+  const events: string[] = await client.georadius(decorateKey('locations'), lng, lat, radius, 'm')
+  const finish: Timestamp = now()
   const timeElapsed = finish - start
   logger.info(`mds-agency-cache getEventsInBBox ${JSON.stringify(bbox)} time elapsed: ${timeElapsed}ms`)
   return events
@@ -172,25 +119,19 @@ async function hreads(
   if (ids === undefined) {
     throw new Error('hreads: no ids')
   }
-  // bleah
-  const multi = (await getClient()).multi()
 
-  await Promise.all(
-    suffixes.map(suffix =>
-      ids.map(id => {
-        return multi.hgetallAsync(decorateKey(`${prefix}:${id}:${suffix}`))
-      })
-    )
+  const multi = suffixes
+    .map(suffix => ids.map(id => decorateKey(`${prefix}:${id}:${suffix}`)))
+    .flat()
+    .reduce((pipeline, key) => {
+      return pipeline.hgetall(key)
+    }, await client.multi())
+
+  const replies = (await multi.exec()).map(([_, result]) => result)
+
+  return replies.map((flat, index) =>
+    Object.keys(flat).length > 0 ? unflatten({ ...flat, [`${prefix}_id`]: ids[index % ids.length] }) : unflatten(null)
   )
-
-  const replies = await multi.execAsync()
-  return replies.map((flat, index) => {
-    if (flat) {
-      const flattened = { ...flat, [`${prefix}_id`]: ids[index % ids.length] }
-      return unflatten(flattened)
-    }
-    return unflatten(null)
-  })
 }
 
 // anything with a device_id, e.g. device, telemetry, etc.
@@ -203,22 +144,18 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   const key = decorateKey(`device:${device_id}:${suffix}`)
   const flat: { [key: string]: unknown } = flatten(item)
   const nulls = nullKeys(flat)
-  const hmap = stripNulls(flat) as { [key: string]: unknown; device_id?: UUID }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hmap = stripNulls(flat) as { [key: string]: any; device_id?: UUID }
   delete hmap.device_id
 
   if (nulls.length > 0) {
     // redis doesn't store null keys, so we have to delete them
     // TODO unit-test
-    await (await getClient()).hdelAsync(key, ...nulls)
+    await client.hdel(key, ...nulls)
   }
 
-  const client = await getClient()
-
-  await Promise.all(
-    (suffix === 'event' ? [decorateKey(`provider:${item.provider_id}:latest_event`), key] : [key]).map(k =>
-      client.hmsetAsync(k, hmap)
-    )
-  )
+  const keys = suffix === 'event' ? [decorateKey(`provider:${item.provider_id}:latest_event`), key] : [key]
+  await Promise.all(keys.map(k => client.hset(k, hmap)))
 
   return updateVehicleList(device_id)
 }
@@ -232,7 +169,7 @@ async function writeDevice(device: Device) {
 }
 
 async function readKeys(pattern: string) {
-  return (await getClient()).keysAsync(decorateKey(pattern))
+  return client.keys(decorateKey(pattern))
 }
 
 async function getMostRecentEventByProvider(): Promise<{ provider_id: string; max: number }[]> {
@@ -255,7 +192,7 @@ async function wipeDevice(device_id: UUID) {
   ]
   if (keys.length > 0) {
     logger.info('del', ...keys)
-    return (await getClient()).delAsync(...keys)
+    return client.del(...keys)
   }
   logger.info('no keys found for', device_id)
   return 0
@@ -309,7 +246,7 @@ async function readEvents(device_ids: UUID[]): Promise<VehicleEvent[]> {
     .map(e => {
       return parseEvent(e as StringifiedEventWithTelemetry)
     })
-    .filter(e => !!e)
+    .filter(e => Boolean(e))
 }
 
 async function readAllEvents(): Promise<Array<VehicleEvent | null>> {
@@ -372,6 +309,7 @@ async function readDeviceStatus(device_id: UUID) {
         Object.assign(deviceStatusMap[item.device_id], item)
       })
     const statuses = Object.values(deviceStatusMap)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return statuses.find((status: any) => status.telemetry) || statuses[0] || null
   } catch (err) {
     logger.error('Error reading device status', err)
@@ -395,15 +333,11 @@ async function readDevicesStatus(query: {
   const strictChecking = query.strict
 
   logger.info('redis zrangebyscore device-ids', start, stop)
-  const client = await getClient()
-
   const geoStart = now()
   const { bbox } = query
   const deviceIdsInBbox = await getEventsInBBox(bbox)
   const deviceIdsRes =
-    deviceIdsInBbox.length === 0
-      ? await client.zrangebyscoreAsync(decorateKey('device-ids'), start, stop)
-      : deviceIdsInBbox
+    deviceIdsInBbox.length === 0 ? await client.zrangebyscore(decorateKey('device-ids'), start, stop) : deviceIdsInBbox
   const skip = query.skip || 0
   const take = query.take || 100000000000
   const deviceIds = deviceIdsRes.slice(skip, skip + take)
@@ -453,6 +387,7 @@ async function readDevicesStatus(query: {
     Object.assign(deviceStatusMap[item.device_id], item)
   })
   const values = Object.values(deviceStatusMap)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const valuesWithTelemetry = values.filter((item: any) => item.telemetry)
   const devicesFinish = now()
   const devicesTimeElapsed = devicesFinish - devicesStart
@@ -537,24 +472,21 @@ async function seed(dataParam: { devices: Device[]; events: VehicleEvent[]; tele
 
 async function reset() {
   logger.info('cache reset')
-  await (await getClient()).flushdbAsync()
+  await client.flushdb()
   return logger.info('redis flushed')
 }
 
-async function initialize() {
-  await getClient()
+async function reinitialize() {
+  await client.initialize()
   await reset()
 }
 
 async function startup() {
-  await getClient()
+  await client.initialize()
 }
 
-function shutdown() {
-  if (cachedClient) {
-    cachedClient.quit()
-    cachedClient = null
-  }
+async function shutdown() {
+  await client.shutdown()
 }
 
 async function health() {
@@ -585,7 +517,7 @@ async function cleanup() {
       })
       // let's just purge a few as an experiment
       badKeys = badKeys.slice(0, 10000)
-      const result = await (await getClient()).delAsync(...badKeys)
+      const result = await client.del(...badKeys)
       // return a wee report
       report.deleted = result
       return report
@@ -600,7 +532,7 @@ async function cleanup() {
 }
 
 export default {
-  initialize,
+  reinitialize,
   health,
   info,
   seed,

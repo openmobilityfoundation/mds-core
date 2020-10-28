@@ -74,7 +74,7 @@ const OLD_EVENT = Date.now() - 60000
 const audit_subject_id = 'user@mds-testing.info'
 
 before('Initializing Database', async () => {
-  await Promise.all([db.initialize(), cache.initialize()])
+  await Promise.all([db.reinitialize(), cache.reinitialize()])
 })
 
 describe('Testing API', () => {
@@ -568,7 +568,7 @@ describe('Testing API', () => {
         events: [...events_a, ...events_b],
         telemetry: [...telemetry_a, ...telemetry_b]
       }
-      Promise.all([db.initialize(), cache.initialize()]).then(() => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(() => {
         Promise.all([cache.seed(seedData), db.seed(seedData)]).then(() => {
           done()
         })
@@ -687,7 +687,7 @@ describe('Testing API', () => {
         audit_trip_id,
         recorded: AUDIT_START
       } as AuditAttachment
-      Promise.all([db.initialize(), cache.initialize()]).then(async () => {
+      Promise.all([db.reinitialize(), cache.reinitialize()]).then(async () => {
         await db.writeDevice({
           device_id: provider_device_id,
           provider_id,
