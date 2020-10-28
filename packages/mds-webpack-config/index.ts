@@ -82,7 +82,10 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
           'hiredis', // Redis
           ...['bufferutil', 'utf-8-validate'], // https://github.com/adieuadieu/serverless-chrome/issues/103#issuecomment-358261003
           ...[
+            '@sap/hana-client',
             '@sap/hdbext',
+            'better-sqlite3',
+            'hdb-pool',
             'mongodb',
             'mssql',
             'mysql',

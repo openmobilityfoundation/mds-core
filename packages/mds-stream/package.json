@@ -17,14 +17,14 @@
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/bluebird": "3.5.32",
+    "@types/bluebird": "3.5.33",
     "@types/redis": "2.8.28",
     "@types/sinon": "9.0.8",
     "bluebird": "3.7.2",
     "flat": "5.0.2",
     "kafkajs": "1.14.0",
     "redis": "3.0.2",
-    "sinon": "9.2.0",
+    "sinon": "9.2.1",
     "ts-nats": "1.2.15"
   },
   "scripts": {
