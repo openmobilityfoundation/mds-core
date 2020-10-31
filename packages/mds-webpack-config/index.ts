@@ -14,9 +14,8 @@
     limitations under the License.
  */
 
-import { Configuration, ConfigurationFactory, ContextReplacementPlugin, IgnorePlugin } from 'webpack'
+import { Configuration, ContextReplacementPlugin, IgnorePlugin, BannerPlugin } from 'webpack'
 import GitRevisionPlugin from 'git-revision-webpack-plugin'
-import WrapperWebpackPlugin from 'wrapper-webpack-plugin'
 import { merge as WebpackMerge } from 'webpack-merge'
 import { parse, resolve } from 'path'
 
@@ -24,9 +23,8 @@ const gitRevisionPlugin = new GitRevisionPlugin({ commithashCommand: 'rev-parse 
 
 type CustomConfiguration = Omit<Configuration, 'entry'>
 
-const MergeConfigurations = (name: string, path: string, config: CustomConfiguration = {}): ConfigurationFactory => (
-  env,
-  argv
+const MergeConfigurations = (name: string, path: string, config: CustomConfiguration = {}) => (
+  env: Partial<Record<string, string>>
 ) => {
   const dirname = process.cwd()
 
@@ -44,9 +42,10 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
 
   const { npm_package_name = '', npm_package_version = '' } = parseEnv('npm_package_name', 'npm_package_version')
 
-  console.log('BUNDLE:', resolve(entry[name])) /* eslint-disable-line no-console */
+  // eslint-disable-next-line no-console
+  console.log(`BUNDLE: ${npm_package_name}@${npm_package_version} from ${resolve(entry[name])}`)
 
-  return WebpackMerge(
+  return WebpackMerge<Configuration>(
     {
       entry,
       output: { path: `${dirname}/dist`, filename: `${name}.js`, libraryTarget: 'commonjs' },
@@ -97,17 +96,18 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
             'sqlite3',
             'typeorm-aurora-data-api-driver'
           ] // TypeORM
-        ].map(dependency => new IgnorePlugin(new RegExp(`^${dependency}$`))),
+        ].map(dependency => new IgnorePlugin({ resourceRegExp: new RegExp(`^${dependency}$`) })),
         // Make npm package name/version available to bundle
-        new WrapperWebpackPlugin({
-          header: () =>
-            `Object.assign(process.env, {
+        new BannerPlugin({
+          banner: `Object.assign(process.env, {
               npm_package_name: '${npm_package_name}',
               npm_package_version: '${npm_package_version}',
               npm_package_git_branch: '${gitRevisionPlugin.branch()}',
               npm_package_git_commit: '${gitRevisionPlugin.commithash()}',
               npm_package_build_date: '${new Date().toISOString()}'
-            });`
+            });`,
+          raw: true,
+          entryOnly: true
         })
       ],
       resolve: {

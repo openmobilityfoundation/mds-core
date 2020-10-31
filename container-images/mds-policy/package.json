@@ -8,7 +8,7 @@
     "dist/"
   ],
   "scripts": {
-    "bundle": "webpack --mode=production --env.npm_package_name=${npm_package_name} --env.npm_package_version=${npm_package_version}",
+    "bundle": "webpack --mode=production --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
     "image": "yarn bundle && ../../bin/build-helper buildImage mds-policy:${npm_package_version}",
     "test": "yarn test:eslint",
     "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
