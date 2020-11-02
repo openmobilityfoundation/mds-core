@@ -2,7 +2,6 @@
   "name": "@mds-core/mds-geography-author",
   "description": "MDS Geography Author API",
   "version": "0.0.1",
-  "private": true,
   "author": "City of Los Angeles",
   "licence": "Apache-2.0",
   "dependencies": {

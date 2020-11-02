@@ -2,7 +2,6 @@
   "name": "@mds-core/mds-policy-author",
   "description": "MDS Policy Author API",
   "version": "0.0.23",
-  "private": true,
   "author": "City of Los Angeles",
   "licence": "Apache-2.0",
   "dependencies": {
