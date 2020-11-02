@@ -3,7 +3,7 @@
   "description": "MDS Geography API",
   "version": "0.0.1",
   "private": true,
-  "author": "City of Los Anngeles",
+  "author": "City of Los Angeles",
   "licence": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-api-helpers": "0.1.26",
