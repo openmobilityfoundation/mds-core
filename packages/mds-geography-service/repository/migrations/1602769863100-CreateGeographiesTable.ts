@@ -4,10 +4,7 @@ export class CreateGeographiesTable1602769863100 implements MigrationInterface {
   name = 'CreateGeographiesTable1602769863100'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const [geographies] = await queryRunner.query(
-      `SELECT "table_name" FROM information_schema.tables WHERE "table_catalog" = CURRENT_CATALOG AND "table_schema" = CURRENT_SCHEMA AND "table_name" = 'geographies'`
-    )
-    if (geographies === undefined) {
+    if (!(await queryRunner.hasTable('geographies'))) {
       await queryRunner.query(
         `CREATE TABLE "geographies" ("id" bigint GENERATED ALWAYS AS IDENTITY, "geography_id" uuid NOT NULL, "name" character varying(255), "description" character varying(255), "effective_date" bigint, "publish_date" bigint, "prev_geographies" uuid array, "geography_json" json NOT NULL, CONSTRAINT "geographies_pkey" PRIMARY KEY ("geography_id"))`
       )

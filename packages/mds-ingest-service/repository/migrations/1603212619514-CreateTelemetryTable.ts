@@ -4,10 +4,7 @@ export class CreateTelemetryTable1603212619514 implements MigrationInterface {
   name = 'CreateTelemetryTable1603212619514'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const [telemetry] = await queryRunner.query(
-      `SELECT "table_name" FROM information_schema.tables WHERE "table_catalog" = CURRENT_CATALOG AND "table_schema" = CURRENT_SCHEMA AND "table_name" = 'telemetry'`
-    )
-    if (telemetry === undefined) {
+    if (!(await queryRunner.hasTable('telemetry'))) {
       await queryRunner.query(
         `CREATE TABLE "telemetry" ("recorded" bigint NOT NULL DEFAULT (extract(epoch from now()) * 1000)::bigint, "id" bigint GENERATED ALWAYS AS IDENTITY, "device_id" uuid NOT NULL, "provider_id" uuid NOT NULL, "timestamp" bigint NOT NULL, "lat" double precision NOT NULL, "lng" double precision NOT NULL, "speed" real, "heading" real, "accuracy" real, "altitude" real, "charge" real, CONSTRAINT "telemetry_pkey" PRIMARY KEY ("device_id", "timestamp"))`
       )

@@ -4,10 +4,7 @@ export class CreatePolicyMetadataTable1603045629619 implements MigrationInterfac
   name = 'CreatePolicyMetadataTable1603045629619'
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const [policy_metadata] = await queryRunner.query(
-      `SELECT "table_name" FROM information_schema.tables WHERE "table_catalog" = CURRENT_CATALOG AND "table_schema" = CURRENT_SCHEMA AND "table_name" = 'policy_metadata'`
-    )
-    if (policy_metadata === undefined) {
+    if (!(await queryRunner.hasTable('policy_metadata'))) {
       await queryRunner.query(
         `CREATE TABLE "policy_metadata" ("id" bigint GENERATED ALWAYS AS IDENTITY, "policy_id" uuid NOT NULL, "policy_metadata" json, CONSTRAINT "policy_metadata_pkey" PRIMARY KEY ("policy_id"))`
       )
