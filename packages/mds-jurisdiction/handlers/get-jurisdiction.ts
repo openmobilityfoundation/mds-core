@@ -26,7 +26,11 @@ export type JurisdictionApiGetJurisdictionRequest = JurisdictionApiRequest &
   ApiRequestParams<'jurisdiction_id'> &
   ApiRequestQuery<'effective'>
 
-export type JurisdictionApiGetJurisdictionResponse = JurisdictionApiResponse<{ jurisdiction: JurisdictionDomainModel }>
+export type JurisdictionApiGetJurisdictionResponseBody = {
+  jurisdiction: JurisdictionDomainModel
+}
+
+export type JurisdictionApiGetJurisdictionResponse = JurisdictionApiResponse<JurisdictionApiGetJurisdictionResponseBody>
 
 export const GetJurisdictionHandler = async (
   req: JurisdictionApiGetJurisdictionRequest,

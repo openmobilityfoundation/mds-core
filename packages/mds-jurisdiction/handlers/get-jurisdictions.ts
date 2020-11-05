@@ -22,9 +22,13 @@ import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 export type JurisdictionApiGetJurisdictionsRequest = JurisdictionApiRequest & ApiRequestQuery<'effective'>
 
-export type JurisdictionApiGetJurisdictionsResponse = JurisdictionApiResponse<{
+export type JurisdictionApiGetJurisdictionsResponseBody = {
   jurisdictions: JurisdictionDomainModel[]
-}>
+}
+
+export type JurisdictionApiGetJurisdictionsResponse = JurisdictionApiResponse<
+  JurisdictionApiGetJurisdictionsResponseBody
+>
 
 export const GetJurisdictionsHandler = async (
   req: JurisdictionApiGetJurisdictionsRequest,

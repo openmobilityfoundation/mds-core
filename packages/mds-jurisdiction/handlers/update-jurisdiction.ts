@@ -26,9 +26,13 @@ import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 export type JurisdictionApiUpdateJurisdictionRequest = JurisdictionApiRequest<UpdateJurisdictionDomainModel> &
   ApiRequestParams<'jurisdiction_id'>
 
-export type JurisdictionApiUpdateJurisdictionResponse = JurisdictionApiResponse<{
+export type JurisdictionApiUpdateJurisdictionResponseBody = {
   jurisdiction: JurisdictionDomainModel
-}>
+}
+
+export type JurisdictionApiUpdateJurisdictionResponse = JurisdictionApiResponse<
+  JurisdictionApiUpdateJurisdictionResponseBody
+>
 
 export const UpdateJurisdictionHandler = async (
   req: JurisdictionApiUpdateJurisdictionRequest,

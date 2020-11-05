@@ -21,8 +21,10 @@ import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'
 
 export type JurisdictionApiDeleteJurisdictionRequest = JurisdictionApiRequest & ApiRequestParams<'jurisdiction_id'>
 
+export type JurisdictionApiDeleteJurisdictionResponseBody = Pick<JurisdictionDomainModel, 'jurisdiction_id'>
+
 export type JurisdictionApiDeleteJurisdictionResponse = JurisdictionApiResponse<
-  Pick<JurisdictionDomainModel, 'jurisdiction_id'>
+  JurisdictionApiDeleteJurisdictionResponseBody
 >
 
 export const DeleteJurisdictionHandler = async (
