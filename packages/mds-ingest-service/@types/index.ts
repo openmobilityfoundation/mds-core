@@ -27,12 +27,14 @@ export interface DeviceDomainModel extends RecordedColumn {
 export type DeviceDomainCreateModel = DomainModelCreate<Omit<DeviceDomainModel, keyof RecordedColumn>>
 
 /* More flexible version of WithGpsProperty */
-type WithGpsData<T extends TelemetryData, P extends string = 'gps'> = Omit<T, keyof Omit<TelemetryData, 'charge'>> & {
-  [p in P]: Omit<T, 'charge'>
-}
+type WithGpsData<T extends TelemetryData, P extends string = 'gps'> = Omit<T, keyof Omit<TelemetryData, 'charge'>> &
+  {
+    [p in P]: Omit<T, 'charge'>
+  }
 
 export interface TelemetryDomainModel
-  extends WithGpsData<NullableOptional<Omit<TelemetryData, 'hdop' | 'satellites'>>>, RecordedColumn {
+  extends WithGpsData<NullableOptional<Omit<TelemetryData, 'hdop' | 'satellites'>>>,
+    RecordedColumn {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
