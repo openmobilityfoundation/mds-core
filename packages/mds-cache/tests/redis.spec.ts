@@ -114,6 +114,11 @@ describe('Redis Tests', () => {
       await expect(redis.zrangebyscore('foo', 0, 2)).resolves.toEqual(['bar', 'baz'])
     })
 
+    it('zremrangebyscore()', async () => {
+      await redis.zadd('foo', { bar: 1, baz: 2 })
+      await expect(redis.zremrangebyscore('foo', 0, 2)).resolves.toEqual(2)
+    })
+
     it('multihgetall()', async () => {
       await redis.hset('foo', 'bar', 'baz')
       await redis.hset('foo', 'qux', 'quux')

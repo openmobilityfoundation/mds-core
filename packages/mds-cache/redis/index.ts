@@ -110,6 +110,9 @@ export const RedisCache = () => {
     zrangebyscore: async (key: KeyType, min: string | number, max: string | number) =>
       safelyExec(theClient => theClient.zrangebyscore(key, min, max)),
 
+    zremrangebyscore: async (key: KeyType, min: string | number, max: string | number) =>
+      safelyExec(theClient => theClient.zremrangebyscore(key, min, max)),
+
     geoadd: async (key: KeyType, longitude: number, latitude: number, member: KeyType) =>
       safelyExec(theClient => theClient.geoadd(key, longitude, latitude, member)),
 
