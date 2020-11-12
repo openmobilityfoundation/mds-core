@@ -1,4 +1,4 @@
-import { VehicleEvent, UUID, Timestamp, Recorded } from '@mds-core/mds-types'
+import { VehicleEvent, Device, UUID, Timestamp, Recorded } from '@mds-core/mds-types'
 import { now, isUUID, isTimestamp, seconds, yesterday } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 import { ReadEventsResult, ReadEventsQueryParams, ReadHistoricalEventsQueryParams } from './types'
@@ -280,15 +280,15 @@ export async function readEventsWithTelemetry({
     }
   }
 
+  // we can only select based on event criteria
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp FROM (SELECT * FROM ${
-      schema.TABLE.events
-    }${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}
-    ) AS E LEFT JOIN ${
-      schema.TABLE.telemetry
-    } T ON E.device_id = T.device_id AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp ORDER BY ${order_by}`,
+    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp 
+      FROM (SELECT * FROM ${schema.TABLE.events}${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}) AS E 
+    LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id 
+      AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp 
+    ORDER BY ${order_by}`,
     vals.values()
   )
 
@@ -302,6 +302,92 @@ export async function readEventsWithTelemetry({
         }
       : null
   }))
+}
+
+// TODO: remove
+// heinous copypasta specifically to provide the VIN with every event, used ONLY by Native.
+// this is to be excised when we dump Native in the garbage in the 1.0 timeframe.
+export async function readEventsWithTelemetryAndVehicleId({
+  device_id,
+  provider_id,
+  start_time,
+  end_time,
+  order_by = 'id',
+  last_id = 0,
+  limit = 1000
+}: Partial<{
+  device_id: UUID
+  provider_id: UUID
+  start_time: Timestamp
+  end_time: Timestamp
+  order_by: string
+  last_id: number
+  limit: number
+}>): Promise<Recorded<VehicleEvent & Pick<Device, 'vehicle_id'>>[]> {
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const exec = SqlExecuter(client)
+
+  const conditions: string[] = last_id ? [`id > ${vals.add(last_id)}`] : []
+
+  if (provider_id) {
+    if (!isUUID(provider_id)) {
+      throw new Error(`invalid provider_id ${provider_id}`)
+    } else {
+      conditions.push(`provider_id = ${vals.add(provider_id)}`)
+    }
+  }
+
+  if (device_id) {
+    if (!isUUID(device_id)) {
+      throw new Error(`invalid device_id ${device_id}`)
+    } else {
+      conditions.push(`device_id = ${vals.add(device_id)}`)
+    }
+  }
+
+  if (start_time !== undefined) {
+    if (!isTimestamp(start_time)) {
+      throw new Error(`invalid start_time ${start_time}`)
+    } else {
+      conditions.push(`timestamp >= ${vals.add(start_time)}`)
+    }
+  }
+
+  if (end_time !== undefined) {
+    if (!isTimestamp(end_time)) {
+      throw new Error(`invalid end_time ${end_time}`)
+    } else {
+      conditions.push(`timestamp <= ${vals.add(end_time)}`)
+    }
+  }
+
+  // we can only select based on event criteria
+  const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
+
+  const { rows } = await exec(
+    `SELECT E.*, D.vehicle_id, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp 
+      FROM (SELECT * FROM ${schema.TABLE.events}${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}) AS E 
+    LEFT JOIN ${schema.TABLE.devices} D ON E.device_id = D.device_id
+    LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id 
+      AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp
+    ORDER BY ${order_by}`,
+    vals.values()
+  )
+
+  return rows.map(
+    ({ vehicle_id, lat, lng, speed, heading, accuracy, altitude, charge, telemetry_timestamp, ...event }) => ({
+      ...event,
+      vehicle_id,
+      telemetry: telemetry_timestamp
+        ? {
+            timestamp: telemetry_timestamp,
+            gps: { lat, lng, speed, heading, accuracy, altitude },
+            charge
+          }
+        : null
+    })
+  )
 }
 
 // TODO way too slow to be useful -- move into mds-agency-cache
