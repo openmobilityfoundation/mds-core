@@ -317,6 +317,9 @@ export interface Policy extends BasePolicy {
   rules: Rule[]
 }
 
+export const RATE_RECURRENCE_VALUES = ['once', 'each_time_unit', 'per_complete_time_unit'] as const
+export type RATE_RECURRENCE = typeof RATE_RECURRENCE_VALUES[number]
+
 /**
  * A RateRule is a rule of any type that has a `rate_amount` property.
  * @alpha Out-of-spec for MDS 0.4.1
@@ -328,7 +331,7 @@ export type RateRule = Rule & { rate_amount: number }
  * @alpha Out-of-spec for MDS 0.4.1
  */
 export interface RatePolicy extends BasePolicy {
-  rate_recurrence: 'once' | 'each_time_unit' | 'per_complete_time_unit'
+  rate_recurrence: RATE_RECURRENCE
   currency: string
   rules: RateRule[]
 }
