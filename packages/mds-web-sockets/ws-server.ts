@@ -4,9 +4,9 @@ import WebSocket from 'ws'
 import { setWsHeartbeat } from 'ws-heartbeat/server'
 import { Nullable } from '@mds-core/mds-types'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
-import stream from '@mds-core/mds-stream'
+import stream, { StreamProducer } from '@mds-core/mds-stream'
 import { NatsError, Msg } from 'ts-nats'
-import { ENTITY_TYPES } from './types'
+import { ENTITY_TYPE, ENTITY_TYPES } from './types'
 import { Clients } from './clients'
 
 /**
@@ -21,6 +21,10 @@ export const WebSocketServer = async <T extends readonly string[]>(entityTypes?:
   const wss = new WebSocket.Server({ server })
   logger.info('WS Server created!')
 
+  const { TENANT_ID } = getEnvVar({
+    TENANT_ID: 'mds'
+  })
+
   setWsHeartbeat(
     wss,
     (ws, data) => {
@@ -33,7 +37,19 @@ export const WebSocketServer = async <T extends readonly string[]>(entityTypes?:
 
   const clients = new Clients(supportedEntities)
 
-  function isSupported(entity: string) {
+  const producers = (supportedEntities as readonly string[]).reduce((acc, e) => {
+    return Object.assign(acc, { [e]: stream.NatsStreamProducer(`${TENANT_ID}.${e}`) })
+  }, {} as { [s: string]: StreamProducer<unknown> })
+
+  await Promise.all(Object.values(producers).map(producer => producer.initialize()))
+
+  const pushToProducers = async (entity: ENTITY_TYPE, payload: string) => {
+    const producer = producers[entity]
+
+    return producer.write(JSON.parse(payload))
+  }
+
+  function isSupported(entity: string): entity is ENTITY_TYPE {
     return supportedEntities.some(e => e === entity)
   }
 
@@ -68,8 +84,7 @@ export const WebSocketServer = async <T extends readonly string[]>(entityTypes?:
             const [entity, payload] = args
             // Limit messages to only supported entities
             if (isSupported(entity)) {
-              await pushToClients(entity, payload)
-              return
+              return pushToProducers(entity, payload)
             }
             return ws.send(`Invalid entity: ${entity}`)
           }
@@ -95,12 +110,9 @@ export const WebSocketServer = async <T extends readonly string[]>(entityTypes?:
     })
   })
 
-  const { TENANT_ID } = getEnvVar({
-    TENANT_ID: 'mds'
-  })
-
   const processor = async (err: Nullable<NatsError>, msg: Msg) => {
     const entity = msg.subject.split('.')?.[1]
+
     await pushToClients(entity, msg.data)
   }
 

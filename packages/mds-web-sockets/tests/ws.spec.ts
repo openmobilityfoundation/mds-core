@@ -2,10 +2,11 @@
 /* eslint-disable no-multi-str */
 import WebSocket from 'ws'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
-import { PROVIDER_SCOPES } from '@mds-core/mds-test-data'
-import Sinon from 'sinon'
 import jwt from 'jsonwebtoken'
 import NodeRSA from 'node-rsa'
+import stream, { StreamProducer } from '@mds-core/mds-stream'
+import { Msg, NatsError } from 'ts-nats'
+import { SingleOrArray } from '@mds-core/mds-types'
 import { WebSocketServer } from '../ws-server'
 import { Clients } from '../clients'
 
@@ -22,7 +23,7 @@ const RSA_PUBLIC_KEY = key.exportKey('public')
 
 const returnRsaPublicKey = async () => RSA_PUBLIC_KEY
 
-const goodToken = jwt.sign({ provider_id: MOCHA_PROVIDER_ID, scope: PROVIDER_SCOPES }, RSA_PRIVATE_KEY, {
+const goodToken = jwt.sign({ provider_id: MOCHA_PROVIDER_ID, scope: 'admin:all' }, RSA_PRIVATE_KEY, {
   algorithm: 'RS256',
   audience: 'https://example.com',
   issuer: 'https://example.com'
@@ -30,8 +31,49 @@ const goodToken = jwt.sign({ provider_id: MOCHA_PROVIDER_ID, scope: PROVIDER_SCO
 
 const ADMIN_AUTH = `Bearer ${goodToken}`
 
-before(() => {
-  Sinon.stub(Clients, 'getKey').returns(returnRsaPublicKey())
+/* Callbacks to use for stream operations. Set by consumers, used by producers. */
+const streamCallbacks: Partial<{ [e: string]: ((err: NatsError | null, msg: Msg) => void)[] }> = {}
+
+/* Can't use the existing mock stream producer, because we use unnamed producers in a hash map for the WS Server */
+const mockProducer: (topic: string) => StreamProducer<object> = topic => {
+  return {
+    write: async (message: SingleOrArray<object>) => {
+      const callbacks = streamCallbacks[topic]
+      if (callbacks) {
+        const messages = (Array.isArray(message) ? message : [message]).map(msg => {
+          return JSON.stringify(msg)
+        })
+
+        /* eslint-disable promise/prefer-await-to-callbacks */
+        await Promise.all(
+          messages.map(msg => callbacks.map(cb => cb(null, { subject: topic, data: msg, sid: 0, size: 1 })))
+        )
+        /* eslint-enable promise/prefer-await-to-callbacks */
+      }
+    },
+    initialize: async () => undefined,
+    shutdown: async () => undefined
+  }
+}
+
+const mockConsumer = (topics: string | string[], processor: (err: NatsError | null, msg: Msg) => void) => {
+  if (Array.isArray(topics)) {
+    topics.forEach(topic => {
+      streamCallbacks[topic] = (streamCallbacks[topic] ?? []).concat(processor)
+    })
+  } else {
+    streamCallbacks[topics] = (streamCallbacks[topics] ?? []).concat(processor)
+  }
+  return {
+    initialize: async () => undefined,
+    shutdown: async () => undefined
+  }
+}
+
+beforeAll(() => {
+  jest.spyOn(Clients, 'getKey').mockImplementation(returnRsaPublicKey)
+  jest.spyOn(stream, 'NatsStreamProducer').mockImplementation(mockProducer as any) // need to cast cause jest infers StreamProducer<unknown> ¯\_(ツ)_/¯
+  jest.spyOn(stream, 'NatsStreamConsumer').mockImplementation(mockConsumer)
   /* eslint-disable-next-line @typescript-eslint/no-floating-promises */
   WebSocketServer()
 })
@@ -55,7 +97,7 @@ describe('Tests MDS-Web-Sockets', () => {
     })
 
     it('Tests invalid audience tokens cannot authenticate successfully', done => {
-      const badToken = jwt.sign({ provider_id: MOCHA_PROVIDER_ID, scope: PROVIDER_SCOPES }, RSA_PRIVATE_KEY, {
+      const badToken = jwt.sign({ provider_id: MOCHA_PROVIDER_ID, scope: 'admin:all' }, RSA_PRIVATE_KEY, {
         algorithm: 'RS256',
         audience: 'https://foo.com',
         issuer: 'https://foo.com'
