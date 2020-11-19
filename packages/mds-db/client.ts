@@ -1,6 +1,4 @@
 import logger from '@mds-core/mds-logger'
-import { csv } from '@mds-core/mds-utils'
-import schema from './schema'
 
 import { logSql, configureClient, MDSPostgresClient, SqlVals } from './sql-utils'
 
@@ -10,17 +8,7 @@ let writeableCachedClient: MDSPostgresClient | null = null
 let readOnlyCachedClient: MDSPostgresClient | null = null
 
 async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
-  const {
-    PG_HOST,
-    PG_HOST_READER,
-    PG_MIGRATIONS = 'false',
-    PG_NAME,
-    PG_PASS,
-    PG_PASS_READER,
-    PG_PORT,
-    PG_USER,
-    PG_USER_READER
-  } = env
+  const { PG_HOST, PG_HOST_READER, PG_NAME, PG_PASS, PG_PASS_READER, PG_PORT, PG_USER, PG_USER_READER } = env
 
   const info = {
     client_type: useWriteable ? 'writeable' : 'readonly',
@@ -36,12 +24,6 @@ async function setupClient(useWriteable: boolean): Promise<MDSPostgresClient> {
 
   try {
     await client.connect()
-    if (useWriteable) {
-      if (PG_MIGRATIONS === 'true') {
-        // Drop deprecated tables
-        await client.query(`DROP TABLE IF EXISTS ${csv(schema.DEPRECATED_TABLES)};`)
-      }
-    }
     client.setConnected(true)
     return client
   } catch (err) {

@@ -16,7 +16,6 @@ const TABLE = Enum(
 export type TABLE_NAME = keyof typeof TABLE
 
 const TABLES = Object.keys(TABLE) as TABLE_NAME[]
-const DEPRECATED_TABLES = ['migrations', 'status_changes', 'stops', 'trips']
 
 const COLUMN = Enum(
   'accuracy',
@@ -173,7 +172,6 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
 export default {
   COLUMN,
   COLUMNS,
-  DEPRECATED_TABLES,
   TABLE,
   TABLES,
   TABLE_COLUMNS
