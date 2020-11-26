@@ -3,9 +3,10 @@ import gjv from 'geojson-validation'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { GeographyDomainModel, GeographyMetadataDomainModel } from '../@types'
 
-export const { validate: validateGeographyDomainModel, isValid: isValidGeographyDomainModel } = schemaValidator<
-  GeographyDomainModel
->(
+export const {
+  validate: validateGeographyDomainModel,
+  isValid: isValidGeographyDomainModel
+} = schemaValidator<GeographyDomainModel>(
   Joi.object<GeographyDomainModel>()
     .keys({
       geography_id: Joi.string().uuid().required(),

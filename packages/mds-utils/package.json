@@ -11,8 +11,8 @@
   "dependencies": {
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-types": "0.1.23",
-    "@turf/boolean-point-in-polygon": "^6.0.1",
-    "@turf/helpers": "^6.1.4",
+    "@turf/boolean-point-in-polygon": "6.0.1",
+    "@turf/helpers": "6.1.4",
     "@types/point-in-polygon": "1.0.0",
     "@types/uuid": "8.3.0",
     "circle-to-polygon": "2.0.2",

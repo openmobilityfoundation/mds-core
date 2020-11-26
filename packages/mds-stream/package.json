@@ -19,10 +19,10 @@
     "@mds-core/mds-utils": "0.1.26",
     "@types/bluebird": "3.5.33",
     "@types/redis": "2.8.28",
-    "@types/sinon": "9.0.8",
+    "@types/sinon": "9.0.9",
     "bluebird": "3.7.2",
     "flat": "5.0.2",
-    "kafkajs": "1.14.0",
+    "kafkajs": "1.15.0",
     "redis": "3.0.2",
     "sinon": "9.2.1",
     "ts-nats": "1.2.15"

@@ -2,9 +2,10 @@ import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { AttachmentDomainModel } from '../@types'
 
-export const { validate: validateAttachmentDomainModel, isValid: isValidAttachmentDomainModel } = schemaValidator<
-  AttachmentDomainModel
->(
+export const {
+  validate: validateAttachmentDomainModel,
+  isValid: isValidAttachmentDomainModel
+} = schemaValidator<AttachmentDomainModel>(
   Joi.object<AttachmentDomainModel>()
     .keys({
       attachment_id: Joi.string().uuid().required(),

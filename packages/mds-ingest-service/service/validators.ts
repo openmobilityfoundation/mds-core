@@ -3,9 +3,10 @@ import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_REASONS } from '@mds-core/mds-types'
 import { DeviceDomainModel, EventDomainModel, TelemetryDomainModel } from '../@types'
 
-export const { validate: validateDeviceDomainModel, isValid: isValidDeviceDomainModel } = schemaValidator<
-  DeviceDomainModel
->(
+export const {
+  validate: validateDeviceDomainModel,
+  isValid: isValidDeviceDomainModel
+} = schemaValidator<DeviceDomainModel>(
   Joi.object<DeviceDomainModel>()
     .keys({
       device_id: Joi.string().uuid().required(),
@@ -40,13 +41,15 @@ const telemetrySchema = Joi.object<TelemetryDomainModel>()
   })
   .unknown(false)
 
-export const { validate: validateTelemetryDomainModel, isValid: isValidTelemetryDomainModel } = schemaValidator<
-  DeviceDomainModel
->(telemetrySchema)
+export const {
+  validate: validateTelemetryDomainModel,
+  isValid: isValidTelemetryDomainModel
+} = schemaValidator<DeviceDomainModel>(telemetrySchema)
 
-export const { validate: validateEventDomainModel, isValid: isValidEventDomainModel } = schemaValidator<
-  DeviceDomainModel
->(
+export const {
+  validate: validateEventDomainModel,
+  isValid: isValidEventDomainModel
+} = schemaValidator<DeviceDomainModel>(
   Joi.object<EventDomainModel>()
     .keys({
       device_id: Joi.string().uuid().required(),

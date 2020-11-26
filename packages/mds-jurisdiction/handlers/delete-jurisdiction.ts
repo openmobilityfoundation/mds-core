@@ -23,9 +23,7 @@ export type JurisdictionApiDeleteJurisdictionRequest = JurisdictionApiRequest & 
 
 export type JurisdictionApiDeleteJurisdictionResponseBody = Pick<JurisdictionDomainModel, 'jurisdiction_id'>
 
-export type JurisdictionApiDeleteJurisdictionResponse = JurisdictionApiResponse<
-  JurisdictionApiDeleteJurisdictionResponseBody
->
+export type JurisdictionApiDeleteJurisdictionResponse = JurisdictionApiResponse<JurisdictionApiDeleteJurisdictionResponseBody>
 
 export const DeleteJurisdictionHandler = async (
   req: JurisdictionApiDeleteJurisdictionRequest,

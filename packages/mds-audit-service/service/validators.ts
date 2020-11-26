@@ -3,9 +3,10 @@ import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
 import { AuditAttachmentDomainModel, AuditDomainModel, AuditEventDomainModel } from '../@types'
 
-export const { validate: validateAuditDomainModel, isValid: isValidAuditDomainModel } = schemaValidator<
-  AuditDomainModel
->(
+export const {
+  validate: validateAuditDomainModel,
+  isValid: isValidAuditDomainModel
+} = schemaValidator<AuditDomainModel>(
   Joi.object<AuditDomainModel>()
     .keys({
       audit_trip_id: Joi.string().uuid().required(),
@@ -19,9 +20,10 @@ export const { validate: validateAuditDomainModel, isValid: isValidAuditDomainMo
     .unknown(false)
 )
 
-export const { validate: validateAuditEventDomainModel, isValid: isValidAuditEventDomainModel } = schemaValidator<
-  AuditEventDomainModel
->(
+export const {
+  validate: validateAuditEventDomainModel,
+  isValid: isValidAuditEventDomainModel
+} = schemaValidator<AuditEventDomainModel>(
   Joi.object<AuditEventDomainModel>()
     .keys({
       audit_trip_id: Joi.string().uuid().required(),

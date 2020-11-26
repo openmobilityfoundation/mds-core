@@ -30,9 +30,7 @@ export type JurisdictionApiUpdateJurisdictionResponseBody = {
   jurisdiction: JurisdictionDomainModel
 }
 
-export type JurisdictionApiUpdateJurisdictionResponse = JurisdictionApiResponse<
-  JurisdictionApiUpdateJurisdictionResponseBody
->
+export type JurisdictionApiUpdateJurisdictionResponse = JurisdictionApiResponse<JurisdictionApiUpdateJurisdictionResponseBody>
 
 export const UpdateJurisdictionHandler = async (
   req: JurisdictionApiUpdateJurisdictionRequest,

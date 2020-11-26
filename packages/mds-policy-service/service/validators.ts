@@ -2,9 +2,10 @@ import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { PolicyDomainModel, PolicyMetadataDomainModel } from '../@types'
 
-export const { validate: validatePolicyDomainModel, isValid: isValidPolicyDomainModel } = schemaValidator<
-  PolicyDomainModel
->(
+export const {
+  validate: validatePolicyDomainModel,
+  isValid: isValidPolicyDomainModel
+} = schemaValidator<PolicyDomainModel>(
   Joi.object<PolicyDomainModel>()
     .keys({
       policy_id: Joi.string().uuid().required(),

@@ -24,7 +24,7 @@
     "@mds-core/mds-providers": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/pg": "7.14.6",
+    "@types/pg": "7.14.7",
     "await-lock": "2.1.0",
     "pg": "8.5.1"
   },
