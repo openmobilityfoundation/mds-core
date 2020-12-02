@@ -131,7 +131,7 @@ export const WebSocketServer = <T extends SupportedEntities>(entityTypes?: T) =>
     stop: async () => {
       // eslint-disable-next-line no-new
       const stopServer = (s: http.Server | WebSocket.Server) => {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
           s.close(error => {
             if (error) {
               reject(error)

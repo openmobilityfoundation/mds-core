@@ -13,6 +13,15 @@ pipeline {
   agent any
 
   stages {
+    stage('Build') {
+      steps {
+        nvm('version': 'v14.2.0') {
+          sh '''
+          yarn clean && yarn build
+          '''
+        }
+      }
+    }
     stage('Test') {
       steps {
         nvm('version': 'v14.2.0') {
