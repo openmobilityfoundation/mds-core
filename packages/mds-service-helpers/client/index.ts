@@ -26,6 +26,10 @@ export const isServiceError = <E extends string = ServiceErrorDescriptorType>(
   (error as ServiceErrorDescriptor<E>).isServiceError === true &&
   (types.length === 0 || types.includes((error as ServiceErrorDescriptor<E>).type))
 
+/** Will match an error if it's thrown locally, or from a service */
+export const isError = <E extends Error>(error: unknown, type: new () => E) =>
+  error instanceof type || isServiceError(error, type.name)
+
 // eslint-reason type inference requires any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ServiceResponseMethod<R = any> = AnyFunction<Promise<ServiceResponse<R>>>

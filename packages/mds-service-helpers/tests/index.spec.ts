@@ -15,8 +15,9 @@
  */
 
 import test from 'unit.js'
+import { ValidationError } from '@mds-core/mds-utils'
 import { ServiceResult, ServiceError, ServiceException, isServiceError, ProcessManager } from '../index'
-import { UnwrapServiceResult } from '../client'
+import { isError, UnwrapServiceResult } from '../client'
 
 describe('Tests Service Helpers', () => {
   it('ServiceResult', async () => {
@@ -73,6 +74,13 @@ describe('Tests Service Helpers', () => {
   it('Custom ServiceError type', async () => {
     const { error } = ServiceError({ type: 'CustomError', message: 'Custom Error Message' })
     test.value(isServiceError(error, 'CustomError')).is(true)
+  })
+
+  it('Tests isError', () => {
+    const { error } = ServiceError({ type: 'ValidationError', message: 'Validation Error' })
+    test.value(isError(error, ValidationError))
+
+    test.value(isError(new ValidationError(), ValidationError))
   })
 
   it('ServiceError type guard', async () => {
