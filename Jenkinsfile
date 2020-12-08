@@ -37,6 +37,8 @@ pipeline {
             export PG_PORT=$(randport)
             export REDIS_PORT=$(randport)
             export PORT=$(randport)
+            export RPC_PORT=$(randport)
+            source env.jenkins
 
             PG_ID=$(docker run -d -e POSTGRES_HOST_AUTH_METHOD=trust -p $PG_PORT:5432 postgres:10-alpine)
             REDIS_ID=$(docker run -d -p $REDIS_PORT:6379 redis:5-alpine)
