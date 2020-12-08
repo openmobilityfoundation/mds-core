@@ -30,7 +30,7 @@
     "node-rsa": "1.1.1",
     "request-promise": "4.2.6",
     "ts-nats": "1.2.15",
-    "ws": "7.4.0",
+    "ws": "7.4.1",
     "ws-heartbeat": "1.2.0"
   },
   "scripts": {
