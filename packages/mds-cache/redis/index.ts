@@ -37,6 +37,8 @@ export const RedisCache = () => {
 
     get: async (key: KeyType) => safelyExec(theClient => theClient.get(key)),
 
+    mget: async (keys: KeyType[]) => safelyExec(theClient => theClient.mget(keys)),
+
     set: async (key: KeyType, val: ValueType) => safelyExec(theClient => theClient.set(key, val)),
 
     expireat: async (key: KeyType, time: Timestamp) => safelyExec(theClient => theClient.expireat(key, time)),

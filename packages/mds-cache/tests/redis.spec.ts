@@ -28,6 +28,13 @@ describe('Redis Tests', () => {
       expect(res).toEqual('bar')
     })
 
+    it('mget()', async () => {
+      await redis.set('foo', 'bar')
+      await redis.set('foo1', 'bar1')
+      const res = await redis.mget(['foo', 'foo1'])
+      expect(res).toEqual(['bar', 'bar1'])
+    })
+
     it('dbsize()', async () => {
       const res = await redis.dbsize()
       expect(res).toEqual(0)
@@ -156,6 +163,12 @@ describe('Redis Tests', () => {
 
     it('get()', async () => {
       await expect(redis.get('foo')).rejects.toEqual(
+        new ClientDisconnectedError(ExceptionMessages.INITIALIZE_CLIENT_MESSAGE)
+      )
+    })
+
+    it('mget()', async () => {
+      await expect(redis.mget(['foo'])).rejects.toEqual(
         new ClientDisconnectedError(ExceptionMessages.INITIALIZE_CLIENT_MESSAGE)
       )
     })
