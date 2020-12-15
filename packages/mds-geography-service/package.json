@@ -25,6 +25,7 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
+    "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-repository": "0.1.0",
     "@mds-core/mds-rpc-common": "0.1.0",
     "@mds-core/mds-schema-validators": "0.1.2",

@@ -4,6 +4,7 @@
     "outDir": "dist"
   },
   "references": [
+    { "path": "../../packages/mds-logger/tsconfig.build.json" },
     { "path": "../../packages/mds-repository/tsconfig.build.json" },
     { "path": "../../packages/mds-rpc-common/tsconfig.build.json" },
     { "path": "../../packages/mds-schema-validators/tsconfig.build.json" },

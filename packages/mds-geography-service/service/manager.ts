@@ -10,7 +10,12 @@ export const GeographyServiceManager = RpcServer(
     onStop: GeographyServiceProvider.stop
   },
   {
-    name: args => GeographyServiceProvider.name(...args)
+    getGeography: args => GeographyServiceProvider.getGeography(...args),
+    getGeographies: args => GeographyServiceProvider.getGeographies(...args),
+    getUnpublishedGeographies: args => GeographyServiceProvider.getUnpublishedGeographies(...args),
+    getPublishedGeographies: args => GeographyServiceProvider.getPublishedGeographies(...args),
+    writeGeographies: args => GeographyServiceProvider.writeGeographies(...args),
+    writeGeographiesMetadata: args => GeographyServiceProvider.writeGeographiesMetadata(...args)
   },
   {
     port: process.env.GEOGRAPHY_SERVICE_RPC_PORT,
