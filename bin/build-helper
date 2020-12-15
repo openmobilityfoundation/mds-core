@@ -41,7 +41,7 @@ templateValues() {
     export $varname=${version}${suffix}
   done
   mkdir -p dist
-  envsubst < $BASE_DIR/helm/mds/values.yaml.tpl > $BASE_DIR/dist/values.yaml
+  envsubst < $BASE_DIR/values.yaml.tpl > $BASE_DIR/dist/values-mds.yaml
   echo "Wrote dist/values.yaml"
 }
 

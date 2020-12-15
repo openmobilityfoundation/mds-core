@@ -1,4 +1,4 @@
-apis:
+deployments:
   mds-agency:
     version: ${AGENCY_VERSION}
   mds-attachment-service:
