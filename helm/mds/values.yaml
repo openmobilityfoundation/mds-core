@@ -38,11 +38,6 @@ apis:
     pathPrefix: /policy-author
     version: latest
     migration: false
-  mds-web-sockets:
-    enabled: true
-    pathPrefix: /web-sockets
-    version: latest
-    migration: false
   mds-geography:
     enabled: true
     pathPrefix: /geography

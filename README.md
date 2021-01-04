@@ -46,7 +46,6 @@ Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guide
 4. MDS-Daily
 5. MDS-Metrics-Sheet
 6. MDS-Policy-Author
-7. MDS-Web-Sockets
 
 ## Installation
 
