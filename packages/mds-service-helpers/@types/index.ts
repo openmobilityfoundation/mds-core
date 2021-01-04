@@ -41,17 +41,43 @@ export interface ServiceResultType<R> {
   result: R
 }
 
+/**
+ * Over-the-wire, Javascript Buffers are serialized into JSON, but then not converted back into Javascript Buffers when deserializing.
+ * This helper type aims to mitigate type differences that could arise between a ServiceClient and ServiceProvider.
+ *
+ * Note: Prettier doesn't like parens around nested ternaries in typedefs. This is a two-level-deep ternary, where the outer ternary
+ * is checking if we've bottomed out (important for recursive typing), and the second ternary is where the main logic for the type lives.
+ *
+ * @example ```typescript
+            type Foo = { x: string; y: { z: Buffer } }
+
+            type SerializedFoo = SerializedBuffers<Foo>
+
+            const example: Foo = { x: 'hi', y: { z: Buffer.from([1, 2, 3]) } }
+            const exampleSerialized: SerializedFoo = { x: 'hi', y: { z: { type: 'Buffer', data: [1, 2, 3] } } }
+            ```
+ */
+export type SerializedBuffers<T> = {
+  [K in keyof T]: T[K] extends never
+    ? never
+    : T[K] extends Buffer
+    ? ReturnType<Buffer['toJSON']>
+    : SerializedBuffers<T[K]>
+}
+
 export type ServiceResponse<R> = ServiceErrorType | ServiceResultType<R>
 
 export type ServiceClient<S> = {
-  [M in keyof S]: S[M] extends AnyFunction<infer R> ? (...args: Parameters<S[M]>) => Promise<R> : never
+  [M in keyof S]: S[M] extends AnyFunction<infer R>
+    ? (...args: Parameters<S[M]>) => Promise<SerializedBuffers<R>>
+    : never
 }
 
 export type ServiceProvider<S> = {
   [M in keyof S]: S[M] extends (...args: infer P) => infer R
     ? (
         ...args: {
-          [K in keyof P]: undefined extends P[K] ? Nullable<P[K]> : P[K]
+          [K in keyof P]: undefined extends P[K] ? Nullable<SerializedBuffers<P[K]>> : SerializedBuffers<P[K]>
         }
       ) => Promise<ServiceResponse<R>>
     : never
