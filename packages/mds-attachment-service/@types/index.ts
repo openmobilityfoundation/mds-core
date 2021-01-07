@@ -1,6 +1,7 @@
 import { DomainModelCreate } from '@mds-core/mds-repository'
 import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
 import { Nullable, UUID } from '@mds-core/mds-types'
+import { SerializedBuffers } from '@mds-core/mds-service-helpers'
 
 export interface AttachmentDomainModel {
   attachment_id: UUID
@@ -14,9 +15,11 @@ export interface AttachmentDomainModel {
 export type AttachmentDomainCreateModel = DomainModelCreate<AttachmentDomainModel>
 
 export interface AttachmentService {
-  name: () => string
+  deleteAttachment: (attachment_id: UUID) => AttachmentDomainModel
+  writeAttachment: (file: SerializedBuffers<Express.Multer.File>) => AttachmentDomainModel
 }
 
 export const AttachmentServiceDefinition: RpcServiceDefinition<AttachmentService> = {
-  name: RpcRoute<AttachmentService['name']>()
+  deleteAttachment: RpcRoute<AttachmentService['deleteAttachment']>(),
+  writeAttachment: RpcRoute<AttachmentService['writeAttachment']>()
 }

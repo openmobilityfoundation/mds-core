@@ -15,7 +15,15 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { hours, minutes, seconds, NotFoundError, ValidationError, ConflictError } from '@mds-core/mds-utils'
+import {
+  hours,
+  minutes,
+  seconds,
+  NotFoundError,
+  ValidationError,
+  ConflictError,
+  UnsupportedTypeError
+} from '@mds-core/mds-utils'
 import { Nullable } from '@mds-core/mds-types'
 import retry, { Options as RetryOptions } from 'async-retry'
 import { ServiceResultType, ServiceErrorDescriptor, ServiceErrorType, ProcessController } from '../@types'
@@ -144,6 +152,10 @@ export const ServiceException = (message: string, error?: unknown) => {
   /* istanbul ignore if */
   if (error instanceof ConflictError) {
     return ServiceError({ type: 'ConflictError', message, details })
+  }
+
+  if (error instanceof UnsupportedTypeError) {
+    return ServiceError({ type: 'UnsupportedTypeError', message, details })
   }
 
   return ServiceError({ type: 'ServiceException', message, details })

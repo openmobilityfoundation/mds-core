@@ -27,6 +27,7 @@ import { isUUID, NotFoundError, uuid } from '@mds-core/mds-utils'
 import assert from 'assert'
 import fs from 'fs'
 import Sinon from 'sinon'
+import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
 import { attachmentSummary, deleteAuditAttachment, readAttachments, writeAttachment } from '../attachments'
 import { getWriteableClient } from '../../mds-db/client'
 import schema from '../../mds-db/schema'
@@ -92,21 +93,14 @@ describe('Testing Attachments Service', () => {
   })
 
   it('verify writeAttachment', async () => {
-    const uploadStub = Sinon.stub(aws.S3.prototype, 'upload')
-    const writeAttachmentStub = Sinon.stub(db, 'writeAttachment')
+    const writeAttachmentStub = Sinon.stub(AttachmentServiceClient, 'writeAttachment')
     const writeAuditAttachmentStub = Sinon.stub(db, 'writeAuditAttachment')
-    uploadStub.returns({
-      promise: () => {
-        // Intentionally empty
-      }
-    })
+    writeAttachmentStub.resolves(attachment as any) // casting for the sake of test happiness
     const res: Attachment | null = await writeAttachment(attachmentFile, auditTripId)
     assert.equal(res && res.attachment_filename.includes('.png'), true)
     assert.equal(res && res.thumbnail_filename && res.thumbnail_filename.includes('.png'), true)
     assert.equal(res && isUUID(res.attachment_id), true)
     assert.equal(res && res.mimetype, mimetype)
-    assert.equal(res && res.thumbnail_mimetype, mimetype)
-    Sinon.assert.calledTwice(uploadStub) // For attachment and thumbnail
     Sinon.assert.calledOnce(writeAttachmentStub)
     Sinon.assert.calledOnce(writeAuditAttachmentStub)
   })

@@ -56,6 +56,7 @@ import {
 } from '@mds-core/mds-types'
 import { parsePagingQueryParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
+import { isError } from '@mds-core/mds-service-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,
@@ -101,7 +102,6 @@ import {
   deleteAuditAttachment,
   multipartFormUpload,
   readAttachments,
-  validateFile,
   writeAttachment
 } from './attachments'
 import { AuditApiVersionMiddleware } from './middleware'
@@ -743,19 +743,9 @@ function api(app: express.Express): express.Express {
     multipartFormUpload,
     async (req, res: PostAuditAttachmentResponse) => {
       const { audit, audit_trip_id } = res.locals
-      if (!audit) {
-        return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
-      }
-      try {
-        validateFile(req.file)
-      } catch (err) {
-        if (err instanceof ValidationError) {
-          return res.status(400).send({ error: err })
-        }
-        if (err instanceof UnsupportedTypeError) {
-          return res.status(415).send({ error: err })
-        }
-      }
+
+      if (!audit) return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
+
       try {
         const attachment = await writeAttachment(req.file, audit_trip_id)
         res.status(200).send({
@@ -764,6 +754,10 @@ function api(app: express.Express): express.Express {
           audit_trip_id
         })
       } catch (err) {
+        if (isError(err, ValidationError)) return res.status(400).send({ error: err })
+
+        if (isError(err, UnsupportedTypeError)) return res.status(415).send({ error: err })
+
         logger.error('post attachment fail', err)
         return res.status(500).send({ error: new ServerError(err) })
       }

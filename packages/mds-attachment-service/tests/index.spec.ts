@@ -27,11 +27,6 @@ describe('Attachment Service Tests', () => {
     await AttachmentServer.start()
   })
 
-  it('Test Name Method', async () => {
-    const name = await AttachmentServiceClient.name()
-    expect(name).toEqual('mds-attachment-service')
-  })
-
   afterAll(async () => {
     await AttachmentServer.stop()
   })

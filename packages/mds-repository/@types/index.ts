@@ -14,7 +14,7 @@
     limitations under the License.
  */
 
-import { InsertResult, UpdateResult } from 'typeorm'
+import { DeleteResult, InsertResult, UpdateResult } from 'typeorm'
 import { AnyFunction, Optional, NullableKeys } from '@mds-core/mds-types'
 
 export interface InsertReturning<T> extends InsertResult {
@@ -22,6 +22,10 @@ export interface InsertReturning<T> extends InsertResult {
 }
 
 export interface UpdateReturning<T> extends UpdateResult {
+  raw: T[]
+}
+
+export interface DeleteReturning<T> extends DeleteResult {
   raw: T[]
 }
 

@@ -24,13 +24,19 @@
   "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "dependencies": {
+    "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-repository": "0.1.0",
     "@mds-core/mds-rpc-common": "0.1.0",
     "@mds-core/mds-schema-validators": "0.1.2",
     "@mds-core/mds-service-helpers": "0.1.0",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
+    "@types/sharp": "0.26.1",
+    "aws-sdk": "2.805.0",
+    "express": "4.17.1",
     "joi": "17.3.0",
+    "multer": "1.4.2",
+    "sharp": "0.26.3",
     "typeorm": "0.2.29"
   }
 }
