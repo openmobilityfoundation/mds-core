@@ -1,5 +1,4 @@
 import { AttachmentServiceManager } from '../service/manager'
-import { AttachmentServiceClient } from '../client'
 import { AttachmentRepository } from '../repository'
 
 describe('Attachment Repository Tests', () => {

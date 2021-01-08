@@ -16,13 +16,11 @@
 
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
-import aws from 'aws-sdk'
 import { Attachment, AttachmentSummary, AuditAttachment, Recorded, UUID } from '@mds-core/mds-types'
 import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
 
 /* eslint-disable-next-line */
 const multer = require('multer')
-const { env } = process
 const memoryStorage = multer.memoryStorage()
 
 export const multipartFormUpload = multer({ storage: memoryStorage }).single('file')
