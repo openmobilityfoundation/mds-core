@@ -1,6 +1,8 @@
 import { DeleteReturning, InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
+import { UUID } from '@mds-core/mds-types'
+import { In } from 'typeorm'
 import { AttachmentDomainToEntityCreate, AttachmentEntityToDomain } from './mappers'
-import { AttachmentDomainModel } from '../@types'
+import { AttachmentDomainModel, ReadAttachmentsOptions } from '../@types'
 import { AttachmentEntity } from './entities/attachment-entity'
 
 import entities from './entities'
@@ -12,9 +14,8 @@ class AttachmentReadWriteRepository extends ReadWriteRepository {
   }
 
   public writeAttachment = async (attachment: AttachmentDomainModel): Promise<AttachmentDomainModel> => {
-    const { connect } = this
     try {
-      const connection = await connect('rw')
+      const connection = await this.connect('rw')
 
       const {
         raw: [entity]
@@ -32,9 +33,8 @@ class AttachmentReadWriteRepository extends ReadWriteRepository {
   }
 
   public deleteAttachment = async (attachment_id: string): Promise<AttachmentDomainModel> => {
-    const { connect } = this
     try {
-      const connection = await connect('rw')
+      const connection = await this.connect('rw')
 
       const {
         raw: [entity]
@@ -47,6 +47,46 @@ class AttachmentReadWriteRepository extends ReadWriteRepository {
         .execute()
 
       return AttachmentEntityToDomain.map(entity)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public readAttachment = async (attachment_id: string): Promise<AttachmentDomainModel | undefined> => {
+    try {
+      const connection = await this.connect('rw')
+
+      const entity = await connection.getRepository(AttachmentEntity).findOne({ attachment_id })
+
+      return entity ? AttachmentEntityToDomain.map(entity) : undefined
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public readAttachments = async (options: ReadAttachmentsOptions): Promise<AttachmentDomainModel[]> => {
+    const isAttachmentListIdOption = (opts: ReadAttachmentsOptions): opts is { attachment_list_id: UUID } => 'attachment_list_id' in opts
+
+    const isAttachmentIdsOption = (opts: ReadAttachmentsOptions): opts is { attachment_ids: UUID[] } => 'attachment_ids' in opts
+
+    try {
+      const connection = await this.connect('rw')
+
+      const attachments = await (async () => {
+        if (isAttachmentIdsOption(options)) {
+          const { attachment_ids } = options
+          return connection.getRepository(AttachmentEntity).find({ attachment_id: In(attachment_ids) })
+        }
+
+        if (isAttachmentListIdOption(options)) {
+          const { attachment_list_id } = options
+          return connection.getRepository(AttachmentEntity).find({ attachment_list_id })
+        }
+
+        return []
+      })()
+
+      return attachments.map(AttachmentEntityToDomain.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }

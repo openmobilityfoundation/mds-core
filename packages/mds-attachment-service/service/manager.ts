@@ -11,7 +11,9 @@ export const AttachmentServiceManager = RpcServer(
   },
   {
     writeAttachment: args => AttachmentServiceProvider.writeAttachment(...args),
-    deleteAttachment: args => AttachmentServiceProvider.deleteAttachment(...args)
+    deleteAttachment: args => AttachmentServiceProvider.deleteAttachment(...args),
+    readAttachment: args => AttachmentServiceProvider.readAttachment(...args),
+    readAttachments: args => AttachmentServiceProvider.readAttachments(...args)
   },
   {
     port: process.env.ATTACHMENT_SERVICE_RPC_PORT,

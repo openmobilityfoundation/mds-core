@@ -5,7 +5,7 @@ module.exports = {
   ...baseConfig,
   coverageThreshold: {
     global: {
-      lines: 50
+      lines: 45
     }
   }
 }

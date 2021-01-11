@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { AttachmentDomainModel } from '../../@types'
 
@@ -9,6 +9,7 @@ export interface AttachmentEntityModel extends IdentityColumn, RecordedColumn {
   mimetype: AttachmentDomainModel['mimetype']
   thumbnail_filename: AttachmentDomainModel['thumbnail_filename']
   thumbnail_mimetype: AttachmentDomainModel['thumbnail_mimetype']
+  attachment_list_id: AttachmentDomainModel['attachment_list_id']
 }
 
 @Entity('attachments')
@@ -30,4 +31,8 @@ export class AttachmentEntity extends IdentityColumn(RecordedColumn(class {})) i
 
   @Column('varchar', { length: 64, nullable: true })
   thumbnail_mimetype: AttachmentEntityModel['thumbnail_mimetype']
+
+  @Index()
+  @Column('uuid', { nullable: true })
+  attachment_list_id: AttachmentEntityModel['attachment_list_id']
 }

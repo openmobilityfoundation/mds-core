@@ -27,7 +27,7 @@ export const AttachmentDomainToEntityCreate = ModelMapper<
   AttachmentDomainCreateModel,
   AttachmentEntityCreateModel,
   AttachmentEntityCreateOptions
->(({ thumbnail_filename = null, thumbnail_mimetype = null, ...domain }, options) => {
+>(({ thumbnail_filename = null, thumbnail_mimetype = null, attachment_list_id = null, ...domain }, options) => {
   const { recorded } = options ?? {}
-  return { thumbnail_filename, thumbnail_mimetype, ...domain, recorded }
+  return { thumbnail_filename, thumbnail_mimetype, attachment_list_id, ...domain, recorded }
 })

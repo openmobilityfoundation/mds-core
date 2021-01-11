@@ -59,10 +59,10 @@ export interface ServiceResultType<R> {
             ```
  */
 export type SerializedBuffers<T> = {
-  [K in keyof T]: T[K] extends never
-    ? never
-    : T[K] extends Buffer
+  [K in keyof T]: T[K] extends Buffer
     ? ReturnType<Buffer['toJSON']>
+    : T[K] extends never
+    ? never
     : SerializedBuffers<T[K]>
 }
 

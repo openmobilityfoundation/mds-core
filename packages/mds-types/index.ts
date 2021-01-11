@@ -209,6 +209,7 @@ export interface Attachment {
   mimetype: string
   thumbnail_filename?: string | null
   thumbnail_mimetype?: string | null
+  attachment_list_id?: UUID | null
   recorded?: Timestamp | null
 }
 

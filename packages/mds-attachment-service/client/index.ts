@@ -10,5 +10,7 @@ const AttachmentServiceRpcClient = RpcClient(AttachmentServiceDefinition, {
 // What the API layer, and any other clients, will invoke.
 export const AttachmentServiceClient: ServiceClient<AttachmentService> = {
   deleteAttachment: (...args) => RpcRequest(AttachmentServiceRpcClient.deleteAttachment, args),
-  writeAttachment: (...args) => RpcRequest(AttachmentServiceRpcClient.writeAttachment, args)
+  writeAttachment: (...args) => RpcRequest(AttachmentServiceRpcClient.writeAttachment, args),
+  readAttachment: (...args) => RpcRequest(AttachmentServiceRpcClient.readAttachment, args),
+  readAttachments: (...args) => RpcRequest(AttachmentServiceRpcClient.readAttachments, args)
 }
