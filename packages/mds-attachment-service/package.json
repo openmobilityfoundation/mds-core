@@ -31,12 +31,12 @@
     "@mds-core/mds-service-helpers": "0.1.0",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "@types/sharp": "0.26.1",
-    "aws-sdk": "2.805.0",
+    "@types/sharp": "0.27.1",
+    "aws-sdk": "2.826.0",
     "express": "4.17.1",
     "joi": "17.3.0",
     "multer": "1.4.2",
-    "sharp": "0.26.3",
-    "typeorm": "0.2.29"
+    "sharp": "0.27.0",
+    "typeorm": "0.2.30"
   }
 }
