@@ -13,9 +13,21 @@ buildImage() {
   if [[ "$NODE_ENV" == "development" ]]; then
     image_name=$(echo $image | cut -f1 -d":")
     docker build -t ${REGISTRY}${image_name}:latest .
+    echo ${REGISTRY}${image_name}:latest >> $BASE_DIR/dist/images.txt
   else
     docker build -t ${REGISTRY}${image}$(getBranchSuffix)$(getCommitHash) .
+    echo ${REGISTRY}${image}$(getBranchSuffix)$(getCommitHash) >> $BASE_DIR/dist/images.txt
   fi
+}
+
+pushImages() {
+  cat /dev/null > $BASE_DIR/dist/images.txt
+  if [[ "$REGISTRY" =~ amazonaws.com$ ]]; then
+    eval $(aws ecr get-login --no-include-email)
+  fi
+  for image in $(cat $BASE_DIR/dist/images.txt); do
+    docker push $image
+  done
 }
 
 getBranchSuffix() {

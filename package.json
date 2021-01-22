@@ -68,6 +68,7 @@
     "image:development": "yarn run:concurrent image:development",
     "image:production": "yarn run:concurrent image:production",
     "images": "yarn run:concurrent image",
+    "push": "bin/build-helper pushImages",
     "run:concurrent": "lerna run --stream",
     "run:sequential": "lerna run --stream --concurrency 1",
     "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",
