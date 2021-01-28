@@ -1,3 +1,19 @@
+/**
+ * Copyright 2019 City of Los Angeles
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { VehicleEvent, Device, UUID, Timestamp, Recorded } from '@mds-core/mds-types'
 import { now, isUUID, isTimestamp, seconds, yesterday } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
@@ -284,10 +300,10 @@ export async function readEventsWithTelemetry({
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
   const { rows } = await exec(
-    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp 
-      FROM (SELECT * FROM ${schema.TABLE.events}${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}) AS E 
-    LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id 
-      AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp 
+    `SELECT E.*, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp
+      FROM (SELECT * FROM ${schema.TABLE.events}${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}) AS E
+    LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id
+      AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp
     ORDER BY ${order_by}`,
     vals.values()
   )
@@ -366,10 +382,10 @@ export async function readEventsWithTelemetryAndVehicleId({
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
   const { rows } = await exec(
-    `SELECT E.*, D.vehicle_id, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp 
-      FROM (SELECT * FROM ${schema.TABLE.events}${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}) AS E 
+    `SELECT E.*, D.vehicle_id, T.lat, T.lng, T.speed, T.heading, T.accuracy, T.altitude, T.charge, T.timestamp AS telemetry_timestamp
+      FROM (SELECT * FROM ${schema.TABLE.events}${where} ORDER BY ${order_by} LIMIT ${vals.add(limit)}) AS E
     LEFT JOIN ${schema.TABLE.devices} D ON E.device_id = D.device_id
-    LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id 
+    LEFT JOIN ${schema.TABLE.telemetry} T ON E.device_id = T.device_id
       AND CASE WHEN E.telemetry_timestamp IS NULL THEN E.timestamp ELSE E.telemetry_timestamp END = T.timestamp
     ORDER BY ${order_by}`,
     vals.values()

@@ -2,8 +2,8 @@
   "name": "@mds-core/mds-transactions-api",
   "description": "MDS Transaction API",
   "version": "0.1.0",
-  "author": "Lacuna Technologies",
-  "license": "UNLICENSED",
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

@@ -22,8 +22,8 @@
     "typeorm": "yarn ts-node ../../node_modules/typeorm/cli.js",
     "watch": "yarn build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
   },
-  "author": "Lacuna Technologies",
-  "license": "UNLICENSED",
+  "author": "City of Los Angeles",
+  "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-logger": "0.1.24",
     "@mds-core/mds-repository": "0.1.0",

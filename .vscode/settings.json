@@ -6,12 +6,14 @@
   "editor.formatOnSave": true,
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
-  "eslint.enable": true,
   "eslint.options": { "ignorePath": ".gitignore" },
   "eslint.validate": ["typescript"],
   "prettier.disableLanguages": ["markdown"],
   "[typescript]": {
     "editor.formatOnSave": false
   },
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "licenser.author": "City of Los Angeles",
+  "licenser.useSingleLineStyle": false,
+  "licenser.license": "AL2"
 }

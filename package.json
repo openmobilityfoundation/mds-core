@@ -2,6 +2,7 @@
   "name": "root",
   "private": true,
   "version": "0.0.20",
+  "author": "City of Los Angeles",
   "license": "Apache-2.0",
   "workspaces": [
     "container-images/*",
