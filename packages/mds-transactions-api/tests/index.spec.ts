@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TransactionServiceManager } from '@mds-core/mds-transactions-service/service/manager'
+import { TransactionServiceManager } from '@mds-core/mds-transactions-backend/service/manager'
 
 const TransactionServer = TransactionServiceManager.controller()
 

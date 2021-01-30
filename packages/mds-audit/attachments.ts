@@ -17,7 +17,7 @@
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import { Attachment, AttachmentSummary, AuditAttachment, Recorded, UUID } from '@mds-core/mds-types'
-import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
+import { AttachmentServiceClient } from '@mds-core/mds-attachment-backend'
 
 /* eslint-disable-next-line */
 const multer = require('multer')

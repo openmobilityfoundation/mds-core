@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import { ServiceResult, ServiceError, ServiceClient } from '@mds-core/mds-service-helpers'
+import { ServiceResult, ServiceError, ServiceClient } from '@mds-core/mds-backend-helpers'
 import { RpcServiceDefinition } from '../@types'
 import { RpcRoute } from '../index'
 import { RpcClient, RpcRequest } from '../client'

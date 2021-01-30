@@ -4,7 +4,7 @@
     "outDir": "dist"
   },
   "references": [
-    { "path": "../../packages/mds-transactions-service/tsconfig.build.json" },
+    { "path": "../../packages/mds-transactions-backend/tsconfig.build.json" },
     { "path": "../../packages/mds-api-helpers/tsconfig.build.json" },
     { "path": "../../packages/mds-api-server/tsconfig.build.json" },
     { "path": "../../packages/mds-logger/tsconfig.build.json" },

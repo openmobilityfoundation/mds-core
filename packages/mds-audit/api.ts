@@ -56,7 +56,7 @@ import {
 } from '@mds-core/mds-types'
 import { parsePagingQueryParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { isError } from '@mds-core/mds-service-helpers'
+import { isError } from '@mds-core/mds-backend-helpers'
 import {
   AuditApiAuditEndRequest,
   AuditApiAuditNoteRequest,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
+import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-backend'
 import { JurisdictionApiResponse } from '../@types'
 
 export const HasJurisdictionClaim = <TBody extends {}>(res: JurisdictionApiResponse<TBody>) => (

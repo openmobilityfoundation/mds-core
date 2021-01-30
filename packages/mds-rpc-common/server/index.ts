@@ -30,7 +30,7 @@ import {
   RawBodyParserMiddleware
 } from '@mds-core/mds-api-server'
 import { Nullable } from '@mds-core/mds-types'
-import { ProcessManager } from '@mds-core/mds-service-helpers'
+import { ProcessManager } from '@mds-core/mds-backend-helpers'
 import { RpcServiceDefinition, RPC_PORT, RPC_CONTENT_TYPE, REPL_PORT } from '../@types'
 
 export interface RpcServiceHandlers {

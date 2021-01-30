@@ -15,11 +15,11 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { AttachmentRepository } from '@mds-core/mds-attachment-service'
-import { GeographyRepository } from '@mds-core/mds-geography-service'
-import { IngestRepository } from '@mds-core/mds-ingest-service'
-import { PolicyRepository } from '@mds-core/mds-policy-service'
-import { AuditRepository } from '@mds-core/mds-audit-service'
+import { AttachmentRepository } from '@mds-core/mds-attachment-backend'
+import { GeographyRepository } from '@mds-core/mds-geography-backend'
+import { IngestRepository } from '@mds-core/mds-ingest-backend'
+import { PolicyRepository } from '@mds-core/mds-policy-backend'
+import { AuditRepository } from '@mds-core/mds-audit-backend'
 
 async function dropTables() {
   await Promise.all(

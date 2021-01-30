@@ -15,7 +15,7 @@
  */
 
 import { AnyFunction } from '@mds-core/mds-types'
-import { ServiceResponse } from '@mds-core/mds-service-helpers'
+import { ServiceResponse } from '@mds-core/mds-backend-helpers'
 
 export type RpcRouteDefinition<M extends AnyFunction> = {
   request: Parameters<M>

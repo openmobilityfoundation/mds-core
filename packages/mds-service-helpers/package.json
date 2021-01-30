@@ -1,5 +1,5 @@
 {
-  "name": "@mds-core/mds-service-helpers",
+  "name": "@mds-core/mds-backend-helpers",
   "version": "0.1.0",
   "description": "Mobility Data Specification Service Helpers",
   "main": "dist/index.js",

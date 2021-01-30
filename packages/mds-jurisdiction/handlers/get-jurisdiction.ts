@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
+import { JurisdictionServiceClient, JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-backend'
 import { AuthorizationError } from '@mds-core/mds-utils'
-import { isServiceError } from '@mds-core/mds-service-helpers'
+import { isServiceError } from '@mds-core/mds-backend-helpers'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequestQuery, ApiRequestParams } from '@mds-core/mds-api-server'
 import { JurisdictionApiResponse, JurisdictionApiRequest } from '../@types'

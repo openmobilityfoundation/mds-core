@@ -146,7 +146,7 @@ export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = O
     provider_id: TIER_PROVIDER_ID,
     provider_name: 'Tier',
     url: 'https://www.tier.app',
-    mds_api_url: 'https://partner.tier-services.io/mds'
+    mds_api_url: 'https://partner.tier-backends.io/mds'
   }),
   [CLOUD_PROVIDER_ID]: Object.freeze({
     provider_id: CLOUD_PROVIDER_ID,

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { TransactionServiceClient, TransactionDomainModel } from '@mds-core/mds-transactions-service'
-import { isError } from '@mds-core/mds-service-helpers'
+import { TransactionServiceClient, TransactionDomainModel } from '@mds-core/mds-transactions-backend'
+import { isError } from '@mds-core/mds-backend-helpers'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
 import { NotFoundError, ServerError } from '@mds-core/mds-utils'
 import { TransactionApiResponse, TransactionApiRequest } from '../@types'

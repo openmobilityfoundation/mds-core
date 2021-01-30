@@ -17,11 +17,11 @@
 import { VehicleEvent, Device, Telemetry } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
 
-import { AttachmentRepository } from '@mds-core/mds-attachment-service'
-import { AuditRepository } from '@mds-core/mds-audit-service'
-import { GeographyRepository } from '@mds-core/mds-geography-service'
-import { IngestRepository } from '@mds-core/mds-ingest-service'
-import { PolicyRepository } from '@mds-core/mds-policy-service'
+import { AttachmentRepository } from '@mds-core/mds-attachment-backend'
+import { AuditRepository } from '@mds-core/mds-audit-backend'
+import { GeographyRepository } from '@mds-core/mds-geography-backend'
+import { IngestRepository } from '@mds-core/mds-ingest-backend'
+import { PolicyRepository } from '@mds-core/mds-policy-backend'
 import { dropTables, createTables } from './migration'
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
 
