@@ -15,10 +15,16 @@
  */
 
 import Redis, { KeyType, ValueType } from 'ioredis'
-import { Nullable, Timestamp } from '@mds-core/mds-types'
+import { Nullable, Timestamp, TimestampInSeconds } from '@mds-core/mds-types'
 import { isDefined, ClientDisconnectedError, ExceptionMessages } from '@mds-core/mds-utils'
 import { initClient } from './helpers/client'
 import { OrderedFields } from '../@types'
+
+export type ExpireAtOptions = {
+  key: KeyType
+  timeInSeconds?: TimestampInSeconds
+  timeInMs?: Timestamp
+}
 
 export const RedisCache = () => {
   let client: Nullable<Redis.Redis> = null
@@ -57,7 +63,19 @@ export const RedisCache = () => {
 
     set: async (key: KeyType, val: ValueType) => safelyExec(theClient => theClient.set(key, val)),
 
-    expireat: async (key: KeyType, time: Timestamp) => safelyExec(theClient => theClient.expireat(key, time)),
+    /**
+     * Expires a key at Unix time in seconds, or time in milliseconds.
+     * Don't add both parameters, only one of them will be used.
+     */
+    expireat: async (options: ExpireAtOptions) => {
+      const { key, timeInSeconds, timeInMs } = options
+      if (timeInSeconds) {
+        return safelyExec(theClient => theClient.expireat(key, timeInSeconds))
+      }
+      if (timeInMs) {
+        return safelyExec(theClient => theClient.pexpireat(key, timeInMs))
+      }
+    },
 
     dbsize: async () => safelyExec(theClient => theClient.dbsize()),
 
@@ -116,9 +134,7 @@ export const RedisCache = () => {
     zadd: async (key: KeyType, fields: OrderedFields | (string | number)[]) =>
       safelyExec(theClient => {
         const entries: (string | number)[] = !Array.isArray(fields)
-          ? Object.entries(fields).reduce((acc: (number | string)[], [field, value]) => {
-              return [...acc, value, field]
-            }, [])
+          ? Object.entries(fields).reduce((acc: (number | string)[], [field, value]) => [...acc, value, field], [])
           : fields
         return theClient.zadd(key, ...entries)
       }),

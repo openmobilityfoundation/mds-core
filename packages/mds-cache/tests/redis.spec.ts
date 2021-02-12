@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ClientDisconnectedError, now, hours, ExceptionMessages } from '@mds-core/mds-utils'
+import { ClientDisconnectedError, now, hours, ExceptionMessages, minutes } from '@mds-core/mds-utils'
 import { RedisCache } from '../redis'
 
 const redis = RedisCache()
@@ -160,6 +160,28 @@ describe('Redis Tests', () => {
         await expect(redis.smembers('foo')).resolves.toEqual([])
       })
     })
+
+    describe('ExpireAt', () => {
+      it('expires at a time in seconds', async () => {
+        await redis.set('foo', 'bar')
+        // expire 1 minute from now
+        await redis.expireat({ key: 'foo', timeInSeconds: Math.round(now() + minutes(1) / 1000) })
+        await expect(redis.get('foo')).resolves.toEqual('bar')
+        // expire 1 second ago
+        await redis.expireat({ key: 'foo', timeInSeconds: Math.round(now() / 1000) - 1 })
+        await expect(redis.get('foo')).resolves.toEqual(null)
+      })
+
+      it('expires at a time in milliseconds', async () => {
+        await redis.set('foo', 'bar')
+        // expire 1 minute from now
+        await redis.expireat({ key: 'foo', timeInMs: now() + minutes(1) })
+        await expect(redis.get('foo')).resolves.toEqual('bar')
+        // expire 1 millisecond ago
+        await redis.expireat({ key: 'foo', timeInMs: now() - 1 })
+        await expect(redis.get('foo')).resolves.toEqual(null)
+      })
+    })
   })
 
   describe('Null Client tests', () => {
@@ -274,7 +296,7 @@ describe('Redis Tests', () => {
     })
 
     it('expireat()', async () => {
-      await expect(redis.expireat('foo', now() + hours(1))).rejects.toEqual(
+      await expect(redis.expireat({ key: 'foo', timeInMs: now() + hours(1) })).rejects.toEqual(
         new ClientDisconnectedError(ExceptionMessages.INITIALIZE_CLIENT_MESSAGE)
       )
     })

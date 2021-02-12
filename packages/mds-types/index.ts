@@ -121,6 +121,7 @@ export const TIME_FORMAT = 'HH:mm:ss'
 export type UUID = string
 
 export type Timestamp = number
+export type TimestampInSeconds = number
 export type Stringify<T> = { [P in keyof T]: string }
 export type Nullable<T> = T | null
 export type NullableProperties<T extends object> = {
