@@ -2,6 +2,12 @@
   "name": "@mds-core/mds-audit",
   "version": "0.1.38",
   "description": "Endpoint for auditing compliance with MDS",
+  "keywords": [
+    "mds",
+    "audit"
+  ],
+  "license": "Apache-2.0",
+  "author": "City of Los Angeles",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -9,19 +15,11 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "PATH_PREFIX=/audit yarn watch server",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/audit DOTENV_CONFIG_PATH=../../.env nyc ts-mocha --project ../../tsconfig.json",
-    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
-    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
+    "start": "PATH_PREFIX=/audit pnpm watch server",
+    "test": "PATH_PREFIX=/audit DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap ts-mocha --project ../../tsconfig.json",
+    "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
-  "keywords": [
-    "mds",
-    "audit"
-  ],
-  "author": "City of Los Angeles",
-  "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-agency-cache": "0.1.26",
     "@mds-core/mds-api-helpers": "0.1.26",
@@ -41,5 +39,8 @@
     "express": "4.17.1",
     "multer": "1.4.2",
     "sharp": "0.27.0"
+  },
+  "devDependencies": {
+    "@mds-core/mds-test-data": "0.1.26"
   }
 }

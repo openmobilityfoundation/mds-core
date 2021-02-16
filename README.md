@@ -84,17 +84,17 @@ Then add `export PG_NAME=mdstest` to your shell's environment file.  (The name i
 
 You should have NVM already installed from the link above.  The top level directory of the project has a `.nvmrc` file and you should be able to run `nvm install` to get the right version of Node.
 
-#### Package setup
-Install [Lerna](https://lerna.js.org/)
+#### Package manager setup
+Install [pnpm](https://pnpm.js.org/)
 
 ```sh
-yarn global add lerna
+npm install -g pnpm
 ```
 
-Install all packages.  Uses Yarn workspaces.
+Install all packages.  Uses pnpm workspaces.
 
 ```sh
-yarn install
+pnpm install
 ```
 
 #### Launching a local server for a package
@@ -102,50 +102,14 @@ Now you can work with each package
 
 ```sh
 cd packages/mds-audit
-yarn test
-yarn start
+pnpm test
+pnpm start
 ```
 
 #### Running the tests
 You can also run all tests from the project root with
 ```
-yarn test
-```
-
-### Package Management - Lerna
-
-This repository is a monorepo and uses Lerna for working with its packages.
-
-#### Example commands
-
-Run all test suites at once
-
-```sh
-lerna run test
-```
-
-Run all tests suites sequentially
-
-```sh
-lerna run test --concurrency 1
-```
-
-Run tests for a particular package
-
-```sh
-lerna run test --scope mds-audit
-```
-
-Clean all dependencies
-
-```sh
-lerna run clean
-```
-
-Format all files
-
-```sh
-lerna run prettier
+pnpm test
 ```
 
 ## Debugging with Visual Studio Code
@@ -247,7 +211,7 @@ This will run the build, and create the docker container images.
 
 ```sh
 yarn clean
-NODE_ENV=development yarn image
+NODE_ENV=development pnpm image
 ```
 
 note that setting `NODE_ENV=development` will enable images to be built with the `:latest` tag instead of a specific version-branch-commit tag.  If you choose not to use this, the images will be built with tags matching the format `:version-branch-commit`.  You can generate a manifest with these image tags by running `yarn values`.  This manifest can be included in a helm install with the switch `--values dist/values.yaml`.

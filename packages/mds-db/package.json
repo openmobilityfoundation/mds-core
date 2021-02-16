@@ -2,22 +2,20 @@
   "name": "@mds-core/mds-db",
   "version": "0.1.26",
   "description": "Mobility Data Specification database interface",
-  "main": "dist/index.js",
-  "files": [
-    "dist/"
-  ],
   "keywords": [
     "mds",
     "database"
   ],
+  "license": "Apache-2.0",
+  "author": "City of Los Angeles",
+  "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 65  ts-mocha --project ../../tsconfig.json"
+    "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap --lines 65  ts-mocha --project ../../tsconfig.json"
   },
-  "author": "City of Los Angeles",
-  "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-attachment-service": "0.1.0",
     "@mds-core/mds-audit-service": "0.1.0",
@@ -29,5 +27,8 @@
     "@mds-core/mds-utils": "0.1.26",
     "@types/pg": "7.14.7",
     "pg": "8.5.1"
+  },
+  "devDependencies": {
+    "@mds-core/mds-test-data": "0.1.26"
   }
 }

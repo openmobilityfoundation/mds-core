@@ -2,22 +2,20 @@
   "name": "@mds-core/mds-providers",
   "version": "0.1.26",
   "description": "Mobility Data Specification provider details",
+  "keywords": [
+    "mds",
+    "providers"
+  ],
+  "license": "Apache-2.0",
+  "author": "City of Los Angeles",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist/"
   ],
-  "keywords": [
-    "mds",
-    "providers"
-  ],
-  "author": "City of Los Angeles",
-  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "exit 0"
+    "test": "DOTENV_CONFIG_PATH=../../.env jest --passWithNoTests"
   },
   "dependencies": {
     "@mds-core/mds-types": "0.1.23"

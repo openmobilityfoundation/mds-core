@@ -1,9 +1,9 @@
 {
   "name": "@mds-core/mds-transactions-api",
-  "description": "MDS Transaction API",
   "version": "0.1.0",
-  "author": "City of Los Angeles",
+  "description": "MDS Transaction API",
   "license": "Apache-2.0",
+  "author": "City of Los Angeles",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -11,12 +11,10 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "PATH_PREFIX=/transaction yarn watch server",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/transaction DOTENV_CONFIG_PATH=../../.env jest",
-    "ts-node": "DOTENV_CONFIG_PATH=../../.env node --experimental-repl-await -r ts-node/register -r dotenv/config",
-    "watch": "yarn build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
+    "start": "PATH_PREFIX=/transaction pnpm watch server",
+    "test": "PATH_PREFIX=/transaction DOTENV_CONFIG_PATH=../../.env jest",
+    "ts-node": "DOTENV_CONFIG_PATH=../../.env node -r ts-node/register -r dotenv/config",
+    "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
     "@mds-core/mds-api-helpers": "0.1.26",

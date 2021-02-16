@@ -89,7 +89,7 @@ export const RpcServer = <S>(
   { onStart, onStop }: RpcServiceHandlers,
   routes: ServiceHandlerFor<RpcServiceDefinition<S>>,
   options: Partial<RpcServerOptions> = {}
-) => {
+): ProcessManager => {
   let server: Nullable<http.Server> = null
   let repl: Nullable<net.Server> = null
 

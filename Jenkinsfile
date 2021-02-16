@@ -17,7 +17,7 @@ pipeline {
       steps {
         nvm('version': 'v14.2.0') {
           sh '''
-          yarn clean && yarn build
+          pnpm clean && pnpm build
           '''
         }
       }
@@ -52,9 +52,9 @@ pipeline {
             }
             trap cleanup EXIT
 
-            yarn clean
-            PG_NAME=postgres PG_HOST=localhost PG_USER=postgres REDIS_HOST=localhost yarn test:eslint
-            PG_NAME=postgres PG_HOST=localhost PG_USER=postgres REDIS_HOST=localhost yarn test:unit
+            pnpm clean
+            pnpm lint
+            PG_NAME=postgres PG_HOST=localhost PG_USER=postgres REDIS_HOST=localhost pnpm test
           '''
         }
       }

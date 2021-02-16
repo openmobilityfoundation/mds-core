@@ -7,15 +7,8 @@
     "json",
     "schema"
   ],
-  "author": "City of Los Angeles",
   "license": "Apache-2.0",
-  "dependencies": {
-    "@mds-core/mds-providers": "0.1.26",
-    "@mds-core/mds-types": "0.1.23",
-    "@mds-core/mds-utils": "0.1.26",
-    "joi": "17.3.0",
-    "joi-to-json": "1.2.0"
-  },
+  "author": "City of Los Angeles",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -23,8 +16,13 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "DOTENV_CONFIG_PATH=../../.env nyc --lines 75  ts-mocha --project ../../tsconfig.json"
+    "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap --lines 75  ts-mocha --project ../../tsconfig.json"
+  },
+  "dependencies": {
+    "@mds-core/mds-providers": "0.1.26",
+    "@mds-core/mds-types": "0.1.23",
+    "@mds-core/mds-utils": "0.1.26",
+    "joi": "17.3.0",
+    "joi-to-json": "1.2.0"
   }
 }

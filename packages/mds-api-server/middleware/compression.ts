@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+import type { RequestHandler } from 'express'
 import type { CompressionOptions } from 'compression'
 import compression from 'compression'
 
 export type CompressionMiddlewareOptions = Partial<CompressionOptions>
 
-export const CompressionMiddleware = (options: CompressionMiddlewareOptions = {}) => compression(options)
+export const CompressionMiddleware = (options: CompressionMiddlewareOptions = {}): RequestHandler =>
+  compression(options)

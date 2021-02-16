@@ -64,7 +64,7 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
         ...['app-root-path', 'express', 'google-spreadsheet', 'optional', 'typeorm'].map(
           module =>
             new ContextReplacementPlugin(
-              new RegExp(`node_modules/${module}`),
+              new RegExp(`node_modules[\\/\\\\]${module}`),
               (data: { dependencies: { critical: unknown }[] }) => {
                 // eslint-disable-next-line no-param-reassign
                 data.dependencies = data.dependencies.map(dependency => {
@@ -111,7 +111,8 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
         })
       ],
       resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js'],
+        symlinks: true
       },
       externals: {
         sharp: 'commonjs sharp'
@@ -121,7 +122,8 @@ const MergeConfigurations = (name: string, path: string, config: CustomConfigura
         all: false,
         assets: true,
         errors: true,
-        warnings: true
+        warnings: true,
+        timings: true
       }
     },
     config

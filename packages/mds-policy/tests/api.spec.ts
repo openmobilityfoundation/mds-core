@@ -43,10 +43,10 @@ import {
   GEOGRAPHY2_UUID,
   veniceSpecOps,
   SCOPED_AUTH,
-  START_ONE_MONTH_FROM_NOW
+  START_ONE_MONTH_FROM_NOW,
+  LA_CITY_BOUNDARY
 } from '@mds-core/mds-test-data'
 
-import { la_city_boundary } from './la-city-boundary'
 import { api } from '../api'
 import { POLICY_API_DEFAULT_VERSION } from '../types'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
@@ -70,7 +70,7 @@ const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
 describe('Tests app', () => {
   before('Initialize the DB', async () => {
     await db.reinitialize()
-    await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: la_city_boundary })
+    await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
   })
 
   after('Shutdown the DB', async () => {

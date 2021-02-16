@@ -1108,3 +1108,4 @@ const DISTRICT_SEVEN: FeatureCollection = {
 }
 
 export { DISTRICT_SEVEN }
+export default DISTRICT_SEVEN

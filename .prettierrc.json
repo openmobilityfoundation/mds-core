@@ -11,5 +11,6 @@
         "singleQuote": true
       }
     }
-  ]
+  ],
+  "plugins": ["./node_modules/prettier-plugin-packagejson"]
 }

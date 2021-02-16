@@ -1,9 +1,18 @@
 {
   "name": "@mds-core/mds-policy-author",
-  "description": "MDS Policy Author API",
   "version": "0.0.23",
-  "author": "City of Los Angeles",
+  "description": "MDS Policy Author API",
   "license": "Apache-2.0",
+  "author": "City of Los Angeles",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "start": "PATH_PREFIX=/policy-author pnpm watch server",
+    "test": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap  ts-mocha --project ../../tsconfig.json",
+    "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
+  },
   "dependencies": {
     "@mds-core/mds-api-helpers": "0.1.26",
     "@mds-core/mds-api-server": "0.1.26",
@@ -16,15 +25,7 @@
     "@types/express": "4.17.10",
     "express": "4.17.1"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc --build tsconfig.build.json",
-    "start": "PATH_PREFIX=/policy-author yarn watch server",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env nyc  ts-mocha --project ../../tsconfig.json",
-    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
-    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
+  "devDependencies": {
+    "@mds-core/mds-test-data": "0.1.26"
   }
 }

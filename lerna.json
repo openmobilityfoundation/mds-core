@@ -1,10 +1,9 @@
 {
   "version": "independent",
-  "npmClient": "yarn",
-  "useWorkspaces": true,
   "command": {
     "version": {
       "allowBranch": "master"
     }
-  }
+  },
+  "packages": ["packages/*"]
 }

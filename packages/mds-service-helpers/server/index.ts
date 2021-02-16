@@ -128,6 +128,8 @@ export const ProcessManager = (controller: ProcessController, options: ProcessMo
   }
 })
 
+export type ProcessManager = ReturnType<typeof ProcessManager>
+
 export const ServiceResult = <R>(result: R): ServiceResultType<R> => ({ error: null, result })
 
 export const ServiceError = <E extends string>(

@@ -1,27 +1,25 @@
 {
   "name": "@container-images/mds-geography",
   "version": "0.0.1",
-  "description": "Docker Image for MDS Geography API",
   "private": true,
+  "description": "Docker Image for MDS Geography API",
+  "keywords": [
+    "mds"
+  ],
+  "license": "Apache-2.0",
+  "author": "City of Los Angeles",
   "main": "dist/index.js",
   "files": [
     "dist/"
   ],
   "scripts": {
+    "bundle": "pnpm bundle:production",
     "bundle:development": "webpack --mode=development --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
     "bundle:production": "webpack --mode=production --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
-    "bundle": "yarn bundle:production",
-    "image:development": "yarn bundle:development && ../../bin/build-helper buildImage mds-geography:${npm_package_version}",
-    "image:production": "yarn bundle:production && ../../bin/build-helper buildImage mds-geography:${npm_package_version}",
-    "image": "yarn image:production",
-    "test": "yarn test:eslint",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'"
+    "image": "pnpm image:production",
+    "image:development": "pnpm bundle:development && ../../bin/build-helper buildImage mds-geography:${npm_package_version}",
+    "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-geography:${npm_package_version}"
   },
-  "keywords": [
-    "mds"
-  ],
-  "author": "City of Los Angeles",
-  "license": "Apache-2.0",
   "dependencies": {
     "@mds-core/mds-geography": "0.0.1",
     "@mds-core/mds-webpack-config": "0.1.0"

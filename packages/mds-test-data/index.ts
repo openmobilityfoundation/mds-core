@@ -46,8 +46,8 @@ import logger from '@mds-core/mds-logger'
 import { JUMP_PROVIDER_ID, LIME_PROVIDER_ID, BIRD_PROVIDER_ID, TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { serviceAreaMap, restrictedAreas, veniceSpecOps } from './test-areas/test-areas'
 
-import { LA_CITY_BOUNDARY } from './la-city-boundary'
-import { DISTRICT_SEVEN } from './district-seven'
+import { LA_CITY_BOUNDARY } from './test-areas/la-city-boundary'
+import { DISTRICT_SEVEN } from './test-areas/district-seven'
 
 const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'

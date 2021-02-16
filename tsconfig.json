@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "preserveSymlinks": true,
+    "preserveSymlinks": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false

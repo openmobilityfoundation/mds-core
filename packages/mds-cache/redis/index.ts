@@ -157,3 +157,5 @@ export const RedisCache = () => {
     multihgetall: async (key: KeyType) => safelyExec(theClient => theClient.multi().hgetall(key).exec())
   }
 }
+
+export type RedisCache = ReturnType<typeof RedisCache>

@@ -17,23 +17,19 @@
 import test from 'unit.js'
 import fs from 'fs'
 
-import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { makeDevices, makeEventsWithTelemetry, LA_CITY_BOUNDARY } from '@mds-core/mds-test-data'
 import { RULE_TYPES, Geography, Policy, Device, VehicleEvent } from '@mds-core/mds-types'
 
-import { la_city_boundary } from '@mds-core/mds-policy/tests/la-city-boundary'
-import { FeatureCollection } from 'geojson'
-import { processPolicy, getSupersedingPolicies, getRecentEvents } from '@mds-core/mds-compliance/mds-compliance-engine'
 import { RuntimeError, minutes } from '@mds-core/mds-utils'
 import { ValidationError, validateEvents, validateGeographies, validatePolicies } from '@mds-core/mds-schema-validators'
+import { processPolicy, getSupersedingPolicies, getRecentEvents } from '../mds-compliance-engine'
 
 let policies: Policy[] = []
 let low_count_policies: Policy[] = []
 
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 
-const geographies: Geography[] = [
-  { name: 'la', geography_id: CITY_OF_LA, geography_json: la_city_boundary as FeatureCollection }
-]
+const geographies: Geography[] = [{ name: 'la', geography_id: CITY_OF_LA, geography_json: LA_CITY_BOUNDARY }]
 
 process.env.TIMEZONE = 'America/Los_Angeles'
 

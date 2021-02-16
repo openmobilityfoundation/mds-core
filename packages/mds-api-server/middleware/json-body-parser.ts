@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import type { RequestHandler } from 'express'
 import type { OptionsJson } from 'body-parser'
 import bodyParser from 'body-parser'
 
 export type JsonBodyParserMiddlewareOptions = Partial<OptionsJson>
 
-export const JsonBodyParserMiddleware = (options: JsonBodyParserMiddlewareOptions = {}) =>
+export const JsonBodyParserMiddleware = (options: JsonBodyParserMiddlewareOptions = {}): RequestHandler =>
   bodyParser.json({ limit: '5mb', ...options })

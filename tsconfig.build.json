@@ -1,6 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "paths": {
+      "*": ["@types/*", "*"]
+    },
     "listEmittedFiles": true,
     "declaration": true,
     "composite": true

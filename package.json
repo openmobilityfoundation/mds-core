@@ -1,15 +1,28 @@
 {
   "name": "root",
-  "private": true,
   "version": "0.0.20",
-  "author": "City of Los Angeles",
+  "private": true,
   "license": "Apache-2.0",
-  "workspaces": [
-    "container-images/*",
-    "packages/*"
-  ],
-  "engines": {
-    "node": "14.2.0"
+  "author": "City of Los Angeles",
+  "scripts": {
+    "build": "tsc --version && pnpm run:concurrent build",
+    "bundle": "webpack --version && pnpm run:concurrent bundle",
+    "clean": "git clean -fdX -e '!.env' -e '!helm/mds/charts' -e '!helm/mds/charts/**' -e '!helm/mds/files' -e '!helm/mds/files/**' && pnpm install",
+    "image": "pnpm run:concurrent image",
+    "image:development": "pnpm run:concurrent image:development",
+    "image:production": "pnpm run:concurrent image:production",
+    "images": "pnpm run:concurrent image",
+    "preinstall": "npx check-node-version --package && npx only-allow pnpm",
+    "postinstall": "husky install",
+    "lint": "pnpm lint:audit && pnpm lint:eslint '**/*.ts' && pnpm lint:prettier '**/package.json'",
+    "lint:audit": "pnpm-ci audit -i 1556,1561 --strict",
+    "lint:eslint": "eslint --ignore-path .gitignore --ignore-path .eslintignore",
+    "lint:prettier": "prettier --check",
+    "push": "bin/build-helper pushImages",
+    "run:concurrent": "pnpm recursive run --filter=!root",
+    "run:sequential": "pnpm recursive run --workspace-concurrency=1 --filter=!root",
+    "test": "pnpm run:sequential test",
+    "values": "bin/build-helper templateValues"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.1",
@@ -21,27 +34,30 @@
     "@types/supertest": "2.0.10",
     "@typescript-eslint/eslint-plugin": "4.13.0",
     "@typescript-eslint/parser": "4.13.0",
-    "check-node-version": "4.0.3",
     "dotenv": "8.2.0",
     "eslint": "7.17.0",
     "eslint-config-airbnb-base": "14.2.1",
     "eslint-config-prettier": "7.1.0",
     "eslint-config-recommended": "4.1.0",
     "eslint-plugin-import": "2.22.1",
+    "eslint-plugin-log": "1.2.7",
     "eslint-plugin-prettier": "3.3.1",
+    "eslint-plugin-progress": "0.0.1",
     "eslint-plugin-promise": "4.2.1",
     "git-revision-webpack-plugin": "3.0.6",
-    "husky": "4.3.7",
-    "improved-yarn-audit": "2.3.2",
+    "husky": "5.0.9",
     "jest": "26.6.3",
     "lerna": "3.22.1",
+    "lint-staged": "10.5.4",
     "mocha": "8.2.1",
     "mochawesome": "6.2.1",
     "mockdate": "3.0.2",
     "node-rsa": "1.1.1",
     "nodemon": "2.0.7",
     "nyc": "15.1.0",
+    "pnpm-ci-tools": "1.0.0",
     "prettier": "2.2.1",
+    "prettier-plugin-packagejson": "2.2.9",
     "should": "13.2.3",
     "sinon": "9.2.3",
     "sinon-express-mock": "2.2.1",
@@ -61,20 +77,7 @@
     "webpack-merge": "5.7.3",
     "wtfnode": "0.8.4"
   },
-  "scripts": {
-    "build": "yarn run:concurrent build",
-    "bundle": "yarn run:concurrent bundle",
-    "clean": "git clean -fdX -e '!.env' -e '!helm/mds/charts' -e '!helm/mds/charts/*' -e '!helm/mds/files' -e '!helm/mds/files/*' && yarn install && yarn improved-yarn-audit --fail-on-missing-exclusions",
-    "image": "yarn run:concurrent image",
-    "image:development": "yarn run:concurrent image:development",
-    "image:production": "yarn run:concurrent image:production",
-    "images": "yarn run:concurrent image",
-    "push": "bin/build-helper pushImages",
-    "run:concurrent": "lerna run --stream",
-    "run:sequential": "lerna run --stream --concurrency 1",
-    "test": "check-node-version --package --print && yarn test:eslint && yarn test:unit",
-    "test:eslint": "yarn run:concurrent test:eslint",
-    "test:unit": "yarn run:sequential test:unit",
-    "values": "bin/build-helper templateValues"
+  "engines": {
+    "node": "14.2.0"
   }
 }

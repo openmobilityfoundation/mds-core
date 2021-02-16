@@ -16,24 +16,12 @@
 
 import { FeatureCollection } from 'geojson'
 
-export default {
+const LA_CITY_BOUNDARY: FeatureCollection = {
   type: 'FeatureCollection',
-  crs: {
-    type: 'name',
-    properties: {
-      name: 'EPSG:4326'
-    }
-  },
   features: [
     {
       type: 'Feature',
       id: 1,
-      properties: {
-        name: 'City Boundaries',
-        OBJECTID_1: 1,
-        OBJECTID: 1,
-        CITY: 'IN'
-      },
       geometry: {
         type: 'Polygon',
         coordinates: [
@@ -8785,7 +8773,16 @@ export default {
             [-118.443819758262, 34.2733849274111]
           ]
         ]
+      },
+      properties: {
+        name: 'City Boundaries',
+        OBJECTID_1: 1,
+        OBJECTID: 1,
+        CITY: 'IN'
       }
     }
   ]
-} as FeatureCollection
+}
+
+export { LA_CITY_BOUNDARY }
+export default LA_CITY_BOUNDARY
