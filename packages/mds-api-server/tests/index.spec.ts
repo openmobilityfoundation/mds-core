@@ -19,6 +19,7 @@
 
 import supertest from 'supertest'
 import test from 'unit.js'
+import HttpStatus from 'http-status-codes'
 import { pathPrefix } from '@mds-core/mds-utils'
 import { ApiServer } from '../api-server'
 import { HttpServer } from '../http-server'
@@ -33,7 +34,7 @@ const [DEFAULT_TEST_API_VERSION, ALTERNATE_TEST_API_VERSION] = TEST_API_VERSIONS
 const api = ApiServer(app => {
   app.use(ApiVersionMiddleware(TEST_API_MIME_TYPE, TEST_API_VERSIONS).withDefaultVersion(DEFAULT_TEST_API_VERSION))
   app.get('/api-version-middleware-test', (req, res: ApiVersionedResponse<TEST_API_VERSION>) =>
-    res.status(200).send({ version: res.locals.version })
+    res.status(HttpStatus.OK).send({ version: res.locals.version })
   )
   return app
 })
@@ -52,7 +53,7 @@ describe('Testing API Server', () => {
     process.env.MAINTENANCE = 'Testing'
     request
       .get('/')
-      .expect(503)
+      .expect(HttpStatus.SERVICE_UNAVAILABLE)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('name')
@@ -67,7 +68,7 @@ describe('Testing API Server', () => {
   it('verifies health', done => {
     request
       .get(pathPrefix('/health'))
-      .expect(200)
+      .expect(HttpStatus.OK)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('name')
@@ -86,7 +87,7 @@ describe('Testing API Server', () => {
     process.env.MAINTENANCE = 'Testing'
     request
       .get('/health')
-      .expect(503)
+      .expect(HttpStatus.OK)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('name')
@@ -104,8 +105,8 @@ describe('Testing API Server', () => {
   it('verifies MAINTENANCE repsonse', done => {
     process.env.MAINTENANCE = 'Testing'
     request
-      .get('/this-is-an-bad-route-but-it-should-return-503-in-maintenance-mode')
-      .expect(503)
+      .get('/this-is-a-bad-route-but-it-should-return-503-in-maintenance-mode')
+      .expect(HttpStatus.SERVICE_UNAVAILABLE)
       .end((err, result) => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.object(result.body).hasProperty('status', 'Testing (MAINTENANCE)')
@@ -115,8 +116,8 @@ describe('Testing API Server', () => {
 
   it('verifies MAINTENANCE passthrough', done => {
     request
-      .get('/this-is-an-bad-route-so-it-should-normally-return-404')
-      .expect(404)
+      .get('/this-is-a-bad-route-so-it-should-normally-return-404')
+      .expect(HttpStatus.NOT_FOUND)
       .end(err => {
         done(err)
       })
@@ -139,7 +140,7 @@ describe('Testing API Server', () => {
     request
       .options('/api-version-middleware-test')
       .set('accept', `${TEST_API_MIME_TYPE};version=0.4;q=.9,${TEST_API_MIME_TYPE};version=0.5;`)
-      .expect(406)
+      .expect(HttpStatus.NOT_ACCEPTABLE)
       .end((err, result) => {
         test.value(result.text).is('Not Acceptable')
         done(err)
@@ -150,7 +151,7 @@ describe('Testing API Server', () => {
     request
       .options('/api-version-middleware-test')
       .set('accept', `${TEST_API_MIME_TYPE};version=0.2`)
-      .expect(200)
+      .expect(HttpStatus.OK)
       .end((err, result) => {
         test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE};version=0.2`)
         done(err)
@@ -160,7 +161,7 @@ describe('Testing API Server', () => {
   it('verifies version middleware (default version)', done => {
     request
       .get('/api-version-middleware-test')
-      .expect(200)
+      .expect(HttpStatus.OK)
       .end((err, result) => {
         test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE}; charset=utf-8; version=0.1`)
         test.value(result.body.version).is(DEFAULT_TEST_API_VERSION)
@@ -172,7 +173,7 @@ describe('Testing API Server', () => {
     request
       .get('/api-version-middleware-test')
       .set('accept', `${TEST_API_MIME_TYPE};version=0.2`)
-      .expect(200)
+      .expect(HttpStatus.OK)
       .end((err, result) => {
         test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE}; charset=utf-8; version=0.2`)
         test.value(result.body.version).is(ALTERNATE_TEST_API_VERSION)
@@ -184,7 +185,7 @@ describe('Testing API Server', () => {
     request
       .get('/api-version-middleware-test')
       .set('accept', `${TEST_API_MIME_TYPE};version=0.2;q=.9,${TEST_API_MIME_TYPE};version=0.1;`)
-      .expect(200)
+      .expect(HttpStatus.OK)
       .end((err, result) => {
         test.value(result.header['content-type']).is(`${TEST_API_MIME_TYPE}; charset=utf-8; version=0.1`)
         test.value(result.body.version).is(DEFAULT_TEST_API_VERSION)
@@ -196,7 +197,7 @@ describe('Testing API Server', () => {
     request
       .get('/api-version-middleware-test')
       .set('accept', `${TEST_API_MIME_TYPE};version=0.4;q=.9,${TEST_API_MIME_TYPE};version=0.5;`)
-      .expect(406)
+      .expect(HttpStatus.NOT_ACCEPTABLE)
       .end((err, result) => {
         test.value(result.text).is('Not Acceptable')
         done(err)

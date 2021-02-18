@@ -16,33 +16,55 @@
 
 import express from 'express'
 import morgan from 'morgan'
+import httpContext from 'express-http-context'
+import HttpStatus from 'http-status-codes'
 import logger from '@mds-core/mds-logger'
 import { ApiRequest, ApiResponse, ApiResponseLocalsClaims } from '../@types'
 
-export type RequestLoggingMiddlewareOptions = Partial<{}>
+const { REQUEST_LOGGING_LEVEL = HttpStatus.OK } = process.env
 
-export const RequestLoggingMiddleware = (options: RequestLoggingMiddlewareOptions = {}): express.RequestHandler =>
-  morgan<ApiRequest, ApiResponse & ApiResponseLocalsClaims>(
-    (tokens, req, res) => {
-      return [
-        ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
-        tokens.method(req, res),
-        tokens.url(req, res),
-        tokens.status(req, res),
-        tokens.res(req, res, 'content-length'),
-        '-',
-        tokens['response-time'](req, res),
-        'ms'
-      ]
-        .filter((token): token is string => token !== undefined)
-        .join(' ')
-    },
-    {
-      skip: (req, res) => {
-        const { REQUEST_LOGGING_LEVEL = 0 } = process.env
-        return res.statusCode < Number(REQUEST_LOGGING_LEVEL)
+export type RequestLoggingMiddlewareOptions = Partial<{
+  filters: Array<{ path: RegExp; level: number }>
+}>
+
+export const RequestLoggingMiddleware = ({
+  filters = []
+}: RequestLoggingMiddlewareOptions = {}): express.RequestHandler[] => {
+  const skip = (req: ApiRequest, res: ApiResponse): boolean => {
+    return res.statusCode < Number(filters.find(filter => req.path.match(filter.path))?.level ?? REQUEST_LOGGING_LEVEL)
+  }
+
+  return [
+    morgan<ApiRequest, ApiResponse & ApiResponseLocalsClaims>(
+      (tokens, req, res) => {
+        return [
+          ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
+          tokens.method(req, res),
+          tokens.url(req, res),
+          tokens.status(req, res),
+          tokens.res(req, res, 'content-length'),
+          '-',
+          tokens['response-time'](req, res),
+          'ms'
+        ]
+          .filter((token): token is string => token !== undefined)
+          .join(' ')
       },
-      // Use logger, but remove extra line feed added by morgan stream option
-      stream: { write: msg => logger.info(msg.slice(0, -1)) }
+      {
+        skip,
+        // Use logger, but remove extra line feed added by morgan stream option
+        stream: { write: msg => logger.info(msg.slice(0, -1)) }
+      }
+    ),
+    httpContext.middleware,
+    (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+      const xRequestId = req.get('x-request-id')
+      if (xRequestId) {
+        httpContext.set('x-request-id', xRequestId)
+      } else if (!skip(req, res)) {
+        logger.warn('X-Request-Id is not set! If you expect it, please check your ingress gateway configuration.')
+      }
+      return next()
     }
-  )
+  ]
+}

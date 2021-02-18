@@ -15,6 +15,7 @@
  */
 
 import express from 'express'
+import HttpStatus from 'http-status-codes'
 import logger from '@mds-core/mds-logger'
 import { ProviderIdClaim, UserEmailClaim, JurisdictionsClaim } from '@mds-core/mds-api-authorizer'
 import { pathPrefix } from '@mds-core/mds-utils'
@@ -27,7 +28,6 @@ import { RequestLoggingMiddlewareOptions, RequestLoggingMiddleware } from './mid
 import { PrometheusMiddlewareOptions, PrometheusMiddleware } from './middleware/prometheus'
 import { serverVersion } from './utils'
 import { HealthRequestHandler } from './handlers/health'
-import { HttpContextMiddleware } from './middleware/http-context'
 
 export interface ApiServerOptions {
   authorization: AuthorizationMiddlewareOptions
@@ -68,18 +68,19 @@ export const ApiServer = (
     PrometheusMiddleware(options.prometheus),
     /** Request Logging Middleware
      * Placed after Prometheus middleware to avoid excessive logging
-     */
-    RequestLoggingMiddleware(options.requestLogging),
-    MaintenanceModeMiddleware(options.maintenanceMode),
-    /** HTTP Context Middleware
      * Placed after the other middleware to avoid causing collisions
      * see express-http-context's README for more information
      */
-    ...HttpContextMiddleware()
+    ...RequestLoggingMiddleware(
+      options.requestLogging ?? { filters: [{ path: /\/health$/, level: HttpStatus.BAD_REQUEST }] }
+    )
   )
 
   // Health Route
   app.get(pathPrefix('/health'), HealthRequestHandler)
+
+  // Everything except /health will return a 503 when in maintenance mode
+  app.use(MaintenanceModeMiddleware(options.maintenanceMode))
 
   return api(app)
 }
