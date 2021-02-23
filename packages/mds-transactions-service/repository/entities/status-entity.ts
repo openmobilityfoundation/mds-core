@@ -16,32 +16,25 @@
 
 import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { TransactionStatusDomainModel } from '../../@types'
-
-export interface TransactionStatusEntityModel extends IdentityColumn, RecordedColumn {
-  status_id: TransactionStatusDomainModel['status_id']
-  transaction_id: TransactionStatusDomainModel['transaction_id']
-  timestamp: TransactionStatusDomainModel['timestamp']
-  status_type: TransactionStatusDomainModel['status_type']
-  author: TransactionStatusDomainModel['author']
-}
+import { Timestamp } from '@mds-core/mds-types'
+import { TransactionStatusDomainModel, TRANSACTION_STATUS_TYPE } from '../../@types'
 
 @Entity('transaction_statuses')
 export class TransactionStatusEntity
   extends IdentityColumn(RecordedColumn(class {}))
   implements TransactionStatusDomainModel {
   @Column('uuid', { primary: true })
-  transaction_id: TransactionStatusDomainModel['transaction_id']
+  transaction_id: string
 
   @Column('uuid', { primary: true })
-  status_id: TransactionStatusDomainModel['status_id']
+  status_id: string
 
   @Column('bigint', { transformer: BigintTransformer })
-  timestamp: TransactionStatusDomainModel['timestamp']
+  timestamp: Timestamp
 
   @Column('varchar', { length: 127 })
-  status_type: TransactionStatusDomainModel['status_type']
+  status_type: TRANSACTION_STATUS_TYPE
 
   @Column('varchar', { length: 127 })
-  author: TransactionStatusDomainModel['author'] // is this how you specify a JSON blob?
+  author: string
 }

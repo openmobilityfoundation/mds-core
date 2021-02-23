@@ -17,6 +17,12 @@
 import { DomainModelCreate } from '@mds-core/mds-repository'
 import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
 import { Nullable, Timestamp, UUID, VEHICLE_TYPE, VehicleEvent } from '@mds-core/mds-types'
+import { Cursor } from 'typeorm-cursor-pagination'
+
+export interface PaginationLinks {
+  prev: string | null
+  next: string | null
+}
 
 // one example -- many others are possible
 export interface TripReceiptDetailsDomainModel {
@@ -41,7 +47,7 @@ export interface CurbUseDetailsDomainModel {
   trip_events: VehicleEvent[]
 }
 
-export const FEE_TYPES = [
+export const FEE_TYPE = <const>[
   'base_fee',
   'upgrade_fee',
   'congestion_fee',
@@ -50,9 +56,9 @@ export const FEE_TYPES = [
   'reservation_fee',
   'distance_fee',
   'tolls_fee'
-] as const
+]
 
-export type FEE_TYPE = typeof FEE_TYPES[number]
+export type FEE_TYPE = typeof FEE_TYPE[number]
 
 export interface ReceiptDomainModel {
   receipt_id: UUID
@@ -72,16 +78,16 @@ export interface TransactionDomainModel {
 }
 export type TransactionDomainCreateModel = DomainModelCreate<TransactionDomainModel>
 
-export const TRANSACTION_OPERATION_TYPES = [
+export const TRANSACTION_OPERATION_TYPE = <const>[
   'transaction_posted',
   'invoice_generated',
   'dispute_requested',
   'dispute_approved',
   'dispute_declined',
   'dispute_canceled'
-] as const
+]
 
-export type TRANSACTION_OPERATION_TYPE = typeof TRANSACTION_OPERATION_TYPES[number]
+export type TRANSACTION_OPERATION_TYPE = typeof TRANSACTION_OPERATION_TYPE[number]
 
 export interface TransactionOperationDomainModel {
   operation_id: UUID
@@ -94,19 +100,31 @@ export interface TransactionOperationDomainModel {
 }
 export type TransactionOperationDomainCreateModel = DomainModelCreate<TransactionOperationDomainModel>
 
-export const TRANSACTION_STATUS_TYPES = [
+export const TRANSACTION_STATUS_TYPE = <const>[
   'order_submitted',
   'order_canceled',
   'order_complete',
   'order_incomplete'
-] as const
+]
+export type TRANSACTION_STATUS_TYPE = typeof TRANSACTION_STATUS_TYPE[number]
 
-export type TRANSACTION_STATUS_TYPE = typeof TRANSACTION_STATUS_TYPES[number]
+export const SORTABLE_COLUMN = <const>['timestamp']
+export type SORTABLE_COLUMN = typeof SORTABLE_COLUMN[number]
+
+export const SORT_DIRECTION = <const>['ASC', 'DESC']
+export type SORT_DIRECTION = typeof SORT_DIRECTION[number]
 
 export interface TransactionSearchParams {
   provider_id?: UUID
   start_timestamp?: Timestamp
   end_timestamp?: Timestamp
+  before?: string
+  after?: string
+  limit?: number
+  order?: {
+    column: SORTABLE_COLUMN
+    direction: SORT_DIRECTION
+  }
 }
 
 export interface TransactionStatusDomainModel {
@@ -114,7 +132,7 @@ export interface TransactionStatusDomainModel {
   transaction_id: UUID
   // when was this change made
   timestamp: Timestamp
-  status_type: TRANSACTION_OPERATION_TYPE
+  status_type: TRANSACTION_STATUS_TYPE
   // who made this change (TODO work out authorship representation; could be human, could be api, etc.)
   author: string
 }
@@ -128,7 +146,7 @@ export interface TransactionService {
 
   // if auth token has a provider_id, it must match
   // read-back bulk TODO search criteria
-  getTransactions: (params: TransactionSearchParams) => TransactionDomainModel[]
+  getTransactions: (params: TransactionSearchParams) => { transactions: TransactionDomainModel[]; cursor: Cursor }
   // if auth token has a provider_id, it must match
   // read back single
   getTransaction: (transaction_id: TransactionDomainModel['transaction_id']) => TransactionDomainModel

@@ -169,13 +169,13 @@ describe('Tests app', () => {
     test.value(result).hasHeader('content-type', APP_JSON)
   })
 
-  it('cannot GET a nonexistant policy', async () => {
+  it('cannot GET a nonexistent policy', async () => {
     const result = await request
       .get(pathPrefix(`/policies/${GEOGRAPHY_UUID}`)) // obvs not a policy
       .set('Authorization', AUTH)
       .expect(404)
     const body = result.body
-    log('read back nonexistant policy response:', body)
+    log('read back nonexistent policy response:', body)
     test.value(result).hasHeader('content-type', APP_JSON)
   })
 

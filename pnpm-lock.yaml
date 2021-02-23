@@ -924,6 +924,7 @@ importers:
       '@mds-core/mds-utils': link:../mds-utils
       joi: 17.3.0
       typeorm: 0.2.30
+      typeorm-cursor-pagination: 0.6.0_typeorm@0.2.30
     specifiers:
       '@mds-core/mds-logger': 0.1.24
       '@mds-core/mds-repository': 0.1.0
@@ -934,6 +935,7 @@ importers:
       '@mds-core/mds-utils': 0.1.26
       joi: 17.3.0
       typeorm: 0.2.30
+      typeorm-cursor-pagination: 0.6.0
   packages/mds-types:
     dependencies:
       '@types/geojson': 7946.0.7
@@ -12590,7 +12592,7 @@ packages:
       serialize-javascript: 5.0.1
       source-map: 0.6.1
       terser: 5.6.0
-      webpack: 5.13.0_webpack-cli@4.3.1
+      webpack: 5.13.0
     dev: true
     engines:
       node: '>= 10.13.0'
@@ -13042,6 +13044,14 @@ packages:
       typescript: 3.9.x || 4.0.x || 4.1.x
     resolution:
       integrity: sha512-9bsZp5/qkl+gDSv9DRvHbfbY8Sr0tD8fKx7hNIvcluxeAFzBCEo9o0qDCdLUZw+/axbfd9TaqHvSuCVRu+YH6Q==
+  /typeorm-cursor-pagination/0.6.0_typeorm@0.2.30:
+    dependencies:
+      typeorm: 0.2.30
+    dev: false
+    peerDependencies:
+      typeorm: ^0.2
+    resolution:
+      integrity: sha512-SNsQRqaoRHihtSwwtzAlYkBvzgzq9Qwg/rnQFKeEUKyyk79+uroezUB9gOMpZrIq8mmeY3Ldm0/XfBVxNoRxYA==
   /typeorm/0.2.30:
     dependencies:
       '@sqltools/formatter': 1.2.2

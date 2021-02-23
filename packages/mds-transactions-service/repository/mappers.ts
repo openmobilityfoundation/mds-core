@@ -16,9 +16,9 @@
 
 import { Optional, Timestamp } from '@mds-core/mds-types'
 import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repository'
-import { TransactionEntityModel } from './entities/transaction-entity'
-import { TransactionOperationEntityModel } from './entities/operation-entity'
-import { TransactionStatusEntityModel } from './entities/status-entity'
+import { TransactionEntity } from './entities/transaction-entity'
+import { TransactionOperationEntity } from './entities/operation-entity'
+import { TransactionStatusEntity } from './entities/status-entity'
 import {
   TransactionDomainCreateModel,
   TransactionDomainModel,
@@ -31,18 +31,18 @@ import {
 type TransactionEntityToDomainOptions = Partial<{}>
 
 export const TransactionEntityToDomain = ModelMapper<
-  TransactionEntityModel,
+  TransactionEntity,
   TransactionDomainModel,
   TransactionEntityToDomainOptions
 >((entity, options) => {
-  const { id, recorded, ...domain } = entity
-  return domain
+  const { id, recorded, receipt, ...domain } = entity
+  return { ...domain, receipt: receipt as TransactionDomainModel['receipt'] }
 })
 
 type TransactionOperationEntityToDomainOptions = Partial<{}>
 
 export const TransactionOperationEntityToDomain = ModelMapper<
-  TransactionOperationEntityModel,
+  TransactionOperationEntity,
   TransactionOperationDomainModel,
   TransactionOperationEntityToDomainOptions
 >((entity, options) => {
@@ -53,7 +53,7 @@ export const TransactionOperationEntityToDomain = ModelMapper<
 type TransactionStatusEntityToDomainOptions = Partial<{}>
 
 export const TransactionStatusEntityToDomain = ModelMapper<
-  TransactionStatusEntityModel,
+  TransactionStatusEntity,
   TransactionStatusDomainModel,
   TransactionStatusEntityToDomainOptions
 >((entity, options) => {
@@ -65,10 +65,7 @@ type TransactionEntityCreateOptions = Partial<{
   recorded: Timestamp
 }>
 
-export type TransactionEntityCreateModel = Omit<
-  Optional<TransactionEntityModel, keyof RecordedColumn>,
-  keyof IdentityColumn
->
+export type TransactionEntityCreateModel = Omit<Optional<TransactionEntity, keyof RecordedColumn>, keyof IdentityColumn>
 
 export const TransactionDomainToEntityCreate = ModelMapper<
   TransactionDomainCreateModel,
@@ -80,7 +77,7 @@ export const TransactionDomainToEntityCreate = ModelMapper<
 })
 
 export type TransactionOperationEntityCreateModel = Omit<
-  Optional<TransactionOperationEntityModel, keyof RecordedColumn>,
+  Optional<TransactionOperationEntity, keyof RecordedColumn>,
   keyof IdentityColumn
 >
 
@@ -98,7 +95,7 @@ export const TransactionOperationDomainToEntityCreate = ModelMapper<
 })
 
 export type TransactionStatusEntityCreateModel = Omit<
-  Optional<TransactionStatusEntityModel, keyof RecordedColumn>,
+  Optional<TransactionStatusEntity, keyof RecordedColumn>,
   keyof IdentityColumn
 >
 

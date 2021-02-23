@@ -17,9 +17,13 @@
 import { InsertReturning, RepositoryError, ReadWriteRepository } from '@mds-core/mds-repository'
 import { NotFoundError } from '@mds-core/mds-utils'
 import { UUID } from '@mds-core/mds-types'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import Joi from 'joi'
+import { buildPaginator, Cursor } from 'typeorm-cursor-pagination'
 import { LessThan, MoreThan, Between, FindOperator } from 'typeorm'
+import { schemaValidator } from '@mds-core/mds-schema-validators'
 import {
+  SORTABLE_COLUMN,
+  SORT_DIRECTION,
   TransactionDomainModel,
   TransactionOperationDomainModel,
   TransactionSearchParams,
@@ -37,6 +41,32 @@ import { TransactionEntity } from './entities/transaction-entity'
 import { TransactionOperationEntity } from './entities/operation-entity'
 import { TransactionStatusEntity } from './entities/status-entity'
 import migrations from './migrations'
+
+/**
+ * Aborts execution if not running under a test environment.
+ */
+const testEnvSafeguard = () => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error(`This method is only supported when executing tests`)
+  }
+}
+
+const { validate: validateTransactionSearchParams } = schemaValidator<TransactionSearchParams>(
+  Joi.object<TransactionSearchParams>()
+    .keys({
+      provider_id: Joi.string().uuid(),
+      start_timestamp: Joi.number().integer(),
+      end_timestamp: Joi.number().integer(),
+      before: Joi.string(),
+      after: Joi.string(),
+      limit: Joi.number().integer().min(1).max(1000).default(10),
+      order: Joi.object<TransactionSearchParams['order']>().keys({
+        column: Joi.string().allow(...SORTABLE_COLUMN),
+        direction: Joi.string().allow(...SORT_DIRECTION)
+      })
+    })
+    .unknown(false)
+)
 
 class TransactionReadWriteRepository extends ReadWriteRepository {
   public getTransaction = async (transaction_id: UUID): Promise<TransactionDomainModel> => {
@@ -57,11 +87,22 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  // TODO search criteria, paging
-  public getTransactions = async (search: TransactionSearchParams): Promise<TransactionDomainModel[]> => {
+  // TODO search criteria
+  public getTransactions = async (
+    search: TransactionSearchParams
+  ): Promise<{ transactions: TransactionDomainModel[]; cursor: Cursor }> => {
     const { connect } = this
-    const { provider_id, start_timestamp, end_timestamp } = search
-    function when(): { timestamp?: FindOperator<number> } {
+    const {
+      provider_id,
+      start_timestamp,
+      end_timestamp,
+      before,
+      after,
+      limit,
+      order
+    } = validateTransactionSearchParams(search)
+
+    const resolveTimeBounds = (): { timestamp?: FindOperator<number> } => {
       if (start_timestamp && end_timestamp) {
         return { timestamp: Between(start_timestamp, end_timestamp) }
       }
@@ -73,16 +114,27 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
       }
       return {}
     }
-    function who(): { provider_id?: UUID } {
-      if (provider_id) {
-        return { provider_id }
-      }
-      return {}
-    }
+
+    const resolveProviderId = (): { provider_id?: UUID } => (provider_id ? { provider_id } : {})
+
     try {
       const connection = await connect('ro')
-      const entities = await connection.getRepository(TransactionEntity).find({ where: { ...who(), ...when() } })
-      return entities.map(TransactionEntityToDomain.mapper())
+      const queryBuilder = connection
+        .getRepository(TransactionEntity)
+        .createQueryBuilder('transactionentity') // yuk!
+        .where({ ...resolveProviderId(), ...resolveTimeBounds() })
+
+      const { data, cursor } = await buildPaginator({
+        entity: TransactionEntity,
+        query: {
+          limit,
+          order: order?.direction ?? 'ASC',
+          afterCursor: after,
+          beforeCursor: after ? undefined : before
+        },
+        paginationKeys: [order?.column ?? 'id']
+      }).paginate(queryBuilder)
+      return { transactions: data.map(TransactionEntityToDomain.mapper()), cursor }
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -185,6 +237,60 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
       const connection = await connect('ro')
       const entities = await connection.getRepository(TransactionStatusEntity).find({ where: { transaction_id } })
       return entities.map(TransactionStatusEntityToDomain.mapper())
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  /**
+   * @deprecated
+   * **WARNING: This should ONLY be used during tests! Hence adding the deprecated flag.**
+   * Deletes all transactions from the DB.
+   */
+  public deleteAllTransactions = async () => {
+    testEnvSafeguard()
+    const { connect } = this
+    try {
+      const connection = await connect('rw')
+      const repository = await connection.getRepository(TransactionEntity)
+
+      await repository.query(`DELETE FROM ${repository.metadata.tableName};`)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  /**
+   * @deprecated
+   * **WARNING: This should ONLY be used during tests! Hence adding the deprecated flag.**
+   * Deletes all transaction operations from the DB.
+   */
+  public deleteAllTransactionOperations = async () => {
+    testEnvSafeguard()
+    const { connect } = this
+    try {
+      const connection = await connect('rw')
+      const repository = await connection.getRepository(TransactionOperationEntity)
+
+      await repository.query(`DELETE FROM ${repository.metadata.tableName};`)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  /**
+   * @deprecated
+   * **WARNING: This should ONLY be used during tests! Hence adding the deprecated flag.**
+   * Deletes all transaction statuses from the DB.
+   */
+  public deleteAllTransactionStatuses = async () => {
+    testEnvSafeguard()
+    const { connect } = this
+    try {
+      const connection = await connect('rw')
+      const repository = await connection.getRepository(TransactionStatusEntity)
+
+      await repository.query(`DELETE FROM ${repository.metadata.tableName};`)
     } catch (error) {
       throw RepositoryError(error)
     }

@@ -19,8 +19,8 @@ import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common'
 import { TransactionService, TransactionServiceDefinition } from '../@types'
 
 const TransactionServiceRpcClient = RpcClient(TransactionServiceDefinition, {
-  host: process.env.TRANSACTIONS_SERVICE_RPC_HOST,
-  port: process.env.MTRANSACTION_SERVICE_RPC_PORT
+  host: process.env.TRANSACTION_SERVICE_RPC_HOST,
+  port: process.env.TRANSACTION_SERVICE_RPC_PORT
 })
 
 // What the API layer, and any other clients, will invoke.

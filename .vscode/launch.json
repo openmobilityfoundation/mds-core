@@ -344,6 +344,29 @@
       }
     },
     {
+      "name": "Server: mds-transaction-api",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": ["server/index.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-transactions-api",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-transactions-api",
+        "PATH_PREFIX": "/transaction"
+      }
+    },
+    {
       "name": "Tests: mds-agency",
       "type": "node",
       "request": "launch",
@@ -798,6 +821,46 @@
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "npm_package_name": "@mds-core/mds-stream"
+      }
+    },
+    {
+      "name": "Tests: mds-transactions-api",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/jest/bin/jest",
+        "--runInBand",
+        "--coverage",
+        "false"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-transactions-api",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-transactions-api"
+      }
+    },
+    {
+      "name": "Tests: mds-transactions-service",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/jest/bin/jest",
+        "--runInBand",
+        "--coverage",
+        "false"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-transactions-service",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-transactions-service"
       }
     },
     {

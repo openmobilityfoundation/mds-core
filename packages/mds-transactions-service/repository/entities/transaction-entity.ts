@@ -16,38 +16,29 @@
 
 import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { TransactionDomainModel } from '../../@types'
-
-export interface TransactionEntityModel extends IdentityColumn, RecordedColumn {
-  transaction_id: TransactionDomainModel['transaction_id']
-  provider_id: TransactionDomainModel['provider_id']
-  device_id: TransactionDomainModel['device_id']
-  timestamp: TransactionDomainModel['timestamp']
-  fee_type: TransactionDomainModel['fee_type']
-  amount: TransactionDomainModel['amount']
-  receipt: TransactionDomainModel['receipt']
-}
+import { UUID, Timestamp, Nullable } from '@mds-core/mds-types'
+import { FEE_TYPE } from '../../@types'
 
 @Entity('transactions')
-export class TransactionEntity extends IdentityColumn(RecordedColumn(class {})) implements TransactionEntityModel {
+export class TransactionEntity extends IdentityColumn(RecordedColumn(class {})) {
   @Column('uuid', { primary: true })
-  transaction_id: TransactionEntityModel['transaction_id']
+  transaction_id: UUID
 
   @Column('uuid')
-  provider_id: TransactionEntityModel['provider_id']
+  provider_id: UUID
 
   @Column('uuid', { nullable: true })
-  device_id: TransactionEntityModel['device_id']
+  device_id: Nullable<UUID>
 
   @Column('bigint', { transformer: BigintTransformer })
-  timestamp: TransactionEntityModel['timestamp']
+  timestamp: Timestamp
 
   @Column('varchar', { length: 127 })
-  fee_type: TransactionEntityModel['fee_type']
+  fee_type: FEE_TYPE
 
   @Column('int')
-  amount: TransactionEntityModel['amount'] // pennies or equivalent
+  amount: number
 
   @Column('jsonb')
-  receipt: TransactionEntityModel['receipt']
+  receipt: object
 }

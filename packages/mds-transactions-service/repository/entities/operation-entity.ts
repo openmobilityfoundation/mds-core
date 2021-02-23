@@ -16,32 +16,24 @@
 
 import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { TransactionOperationDomainModel } from '../../@types'
-
-export interface TransactionOperationEntityModel extends IdentityColumn, RecordedColumn {
-  operation_id: TransactionOperationDomainModel['operation_id']
-  transaction_id: TransactionOperationDomainModel['transaction_id']
-  timestamp: TransactionOperationDomainModel['timestamp']
-  operation_type: TransactionOperationDomainModel['operation_type']
-  author: TransactionOperationDomainModel['author']
-}
-
+import { UUID, Timestamp } from '@mds-core/mds-types'
+import { TransactionOperationDomainModel, TRANSACTION_OPERATION_TYPE } from '../../@types'
 @Entity('transaction_operations')
 export class TransactionOperationEntity
   extends IdentityColumn(RecordedColumn(class {}))
   implements TransactionOperationDomainModel {
   @Column('uuid', { primary: true })
-  transaction_id: TransactionOperationDomainModel['transaction_id']
+  transaction_id: UUID
 
   @Column('uuid', { primary: true })
-  operation_id: TransactionOperationDomainModel['operation_id']
+  operation_id: UUID
 
   @Column('bigint', { transformer: BigintTransformer })
-  timestamp: TransactionOperationDomainModel['timestamp']
+  timestamp: Timestamp
 
   @Column('varchar', { length: 127 })
-  operation_type: TransactionOperationDomainModel['operation_type']
+  operation_type: TRANSACTION_OPERATION_TYPE
 
   @Column('varchar', { length: 127 })
-  author: TransactionOperationDomainModel['author']
+  author: string
 }
