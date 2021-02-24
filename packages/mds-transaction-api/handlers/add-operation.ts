@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-import { TransactionServiceClient, TransactionDomainModel } from '@mds-core/mds-transactions-service'
+import { TransactionServiceClient } from '@mds-core/mds-transaction-service'
+import { TransactionOperationDomainModel } from '@mds-core/mds-transaction-service/@types'
 import express from 'express'
 import { TransactionApiRequest, TransactionApiResponse } from '../@types'
 
-export type TransactionApiCreateTransactionsRequest = TransactionApiRequest<TransactionDomainModel[]>
+export type TransactionApiAddTransactionOperationRequest = TransactionApiRequest<TransactionOperationDomainModel>
 
-export type TransactionApiCreateTransactionsResponse = TransactionApiResponse<{
-  transactions: TransactionDomainModel[]
+export type TransactionApiAddTransactionOperationResponse = TransactionApiResponse<{
+  transaction: TransactionOperationDomainModel
 }>
 
-// TODO consolidate with create single
-export const CreateTransactionsHandler = async (
-  req: TransactionApiCreateTransactionsRequest,
-  res: TransactionApiCreateTransactionsResponse,
+export const AddTransactionOperationHandler = async (
+  req: TransactionApiAddTransactionOperationRequest,
+  res: TransactionApiAddTransactionOperationResponse,
   next: express.NextFunction
 ) => {
   try {
-    const transactions = await TransactionServiceClient.createTransactions(req.body)
+    const transaction = await TransactionServiceClient.addTransactionOperation(req.body)
     const { version } = res.locals
-    return res.status(201).send({ version, transactions })
+    return res.status(201).send({ version, transaction })
   } catch (error) {
     next(error)
   }

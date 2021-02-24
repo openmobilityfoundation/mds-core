@@ -20,7 +20,7 @@ import {
   transactionsGenerator,
   TransactionServiceClient,
   TransactionDomainModel
-} from '@mds-core/mds-transactions-service'
+} from '@mds-core/mds-transaction-service'
 // import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { pathPrefix, uuid, NotFoundError } from '@mds-core/mds-utils'
 import { api } from '../api'

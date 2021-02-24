@@ -21,7 +21,7 @@ import {
   SORTABLE_COLUMN,
   SORT_DIRECTION,
   TransactionSearchParams
-} from '@mds-core/mds-transactions-service'
+} from '@mds-core/mds-transaction-service'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ValidationError } from '@mds-core/mds-utils'

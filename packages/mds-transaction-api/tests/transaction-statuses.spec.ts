@@ -16,9 +16,9 @@
 
 import supertest from 'supertest'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { transactionOperationsGenerator, TransactionServiceClient } from '@mds-core/mds-transactions-service'
+import { transactionStatusesGenerator, TransactionServiceClient } from '@mds-core/mds-transaction-service'
 // import { SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { pathPrefix, uuid } from '@mds-core/mds-utils'
+import { pathPrefix } from '@mds-core/mds-utils'
 import { api } from '../api'
 
 const request = supertest(ApiServer(api))
@@ -27,40 +27,38 @@ const request = supertest(ApiServer(api))
 const SCOPED_AUTH = (scopes: string[], principalId = '5f7114d1-4091-46ee-b492-e55875f7de00') =>
   `basic ${Buffer.from(`${principalId}|${scopes.join(' ')}`).toString('base64')}`
 
-describe('Test Transactions API: Transaction Operations', () => {
+describe('Test Transactions API: Transactions', () => {
   beforeAll(async () => {
     jest.clearAllMocks()
   })
 
   describe('Success', () => {
-    it('Can POST a transaction operation', async () => {
-      const [operation] = transactionOperationsGenerator()
-      const { transaction_id } = operation
+    it('Can POST a transaction status', async () => {
+      const [status] = transactionStatusesGenerator()
+      const { transaction_id } = status
 
-      jest.spyOn(TransactionServiceClient, 'addTransactionOperation').mockImplementationOnce(async o => o as any)
+      jest.spyOn(TransactionServiceClient, 'setTransactionStatus').mockImplementationOnce(async t => t as any)
 
       const result = await request
-        .post(pathPrefix(`/transactions/${transaction_id}/operations`))
+        .post(pathPrefix(`/transaction/${transaction_id}/statuses`))
         .set('Authorization', SCOPED_AUTH(['transactions:write']))
-        .send(operation)
+        .send(status)
 
-      expect(result.status).toEqual(201)
+      expect(result.status).toStrictEqual(201)
     })
 
-    it('Can GET operations for a transaction', async () => {
-      const transaction_id = uuid()
-      const mockOperations = [...transactionOperationsGenerator(5, transaction_id)]
-      jest
-        .spyOn(TransactionServiceClient, 'getTransactionOperations')
-        .mockImplementationOnce(async _ => mockOperations as any)
+    it('Can GET transaction statuses', async () => {
+      const mockStatuses = [...transactionStatusesGenerator(5)]
+      const [{ transaction_id }] = mockStatuses
+
+      jest.spyOn(TransactionServiceClient, 'getTransactionStatuses').mockImplementationOnce(async _ => mockStatuses)
 
       const result = await request
-        .get(pathPrefix(`/transactions/${transaction_id}/operations`))
-        .set('Authorization', SCOPED_AUTH(['transactions:read']))
+        .get(pathPrefix(`/transactions/${transaction_id}/statuses`))
+        .set('Authorization', SCOPED_AUTH(['transactions:write']))
 
-      expect(result.status).toEqual(200)
-      expect(result.body.operations.length).toEqual(5)
-      expect(result.body.operations).toStrictEqual(mockOperations)
+      expect(result.status).toStrictEqual(200)
+      expect(result.body.statuses).toStrictEqual(mockStatuses)
     })
   })
 

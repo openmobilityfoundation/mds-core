@@ -117,7 +117,7 @@ spec:
           - name: POLICY_SERVICE_RPC_HOST
             value: http://mds-policy-service
           - name: TRANSACTION_SERVICE_RPC_HOST
-            value: http://mds-transactions-service
+            value: http://mds-transaction-service
           - name: TENANT_ID
           {{- if hasKey $.Values "tenantId" }}
             value: {{ $.Values.tenantId }}

@@ -359,10 +359,10 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-transactions-api",
+      "cwd": "${workspaceFolder}/packages/mds-transaction-api",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-transactions-api",
+        "npm_package_name": "@mds-core/mds-transaction-api",
         "PATH_PREFIX": "/transaction"
       }
     },
@@ -824,7 +824,7 @@
       }
     },
     {
-      "name": "Tests: mds-transactions-api",
+      "name": "Tests: mds-transaction-api",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -837,14 +837,14 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-transactions-api",
+      "cwd": "${workspaceFolder}/packages/mds-transaction-api",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-transactions-api"
+        "npm_package_name": "@mds-core/mds-transaction-api"
       }
     },
     {
-      "name": "Tests: mds-transactions-service",
+      "name": "Tests: mds-transaction-service",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -857,10 +857,10 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
-      "cwd": "${workspaceFolder}/packages/mds-transactions-service",
+      "cwd": "${workspaceFolder}/packages/mds-transaction-service",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-transactions-service"
+        "npm_package_name": "@mds-core/mds-transaction-service"
       }
     },
     {

@@ -1,8 +1,8 @@
 {
-  "name": "@container-images/mds-transactions-service",
+  "name": "@container-images/mds-transaction-service",
   "version": "0.0.1",
   "private": true,
-  "description": "Docker Image for MDS Transactions Service",
+  "description": "Docker Image for MDS Transaction Service",
   "keywords": [
     "mds"
   ],
@@ -17,11 +17,11 @@
     "bundle:development": "webpack --mode=development --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
     "bundle:production": "webpack --mode=production --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
     "image": "pnpm image:production",
-    "image:development": "pnpm bundle:development && ../../bin/build-helper buildImage mds-transactions-service:${npm_package_version}",
-    "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-transactions-service:${npm_package_version}"
+    "image:development": "pnpm bundle:development && ../../bin/build-helper buildImage mds-transaction-service:${npm_package_version}",
+    "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-transaction-service:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-transactions-service": "0.1.0",
+    "@mds-core/mds-transaction-service": "0.1.0",
     "@mds-core/mds-webpack-config": "0.1.0"
   }
 }

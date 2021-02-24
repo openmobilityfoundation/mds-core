@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-import { TransactionServiceClient } from '@mds-core/mds-transactions-service'
-import { TransactionStatusDomainModel } from '@mds-core/mds-transactions-service/@types'
+import { TransactionServiceClient } from '@mds-core/mds-transaction-service'
+import { TransactionOperationDomainModel } from '@mds-core/mds-transaction-service/@types'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
 import express from 'express'
 import { TransactionApiRequest, TransactionApiResponse } from '../@types'
 
-export type TransactionApiGetTransactionStatusesRequest = TransactionApiRequest & ApiRequestParams<'transaction_id'>
+export type TransactionApiGetTransactionOperationsRequest = TransactionApiRequest & ApiRequestParams<'transaction_id'>
 
-export type TransactionApiGetTransactionStatusesResponse = TransactionApiResponse<{
-  statuses: TransactionStatusDomainModel[]
+export type TransactionApiGetTransactionOperationsResponse = TransactionApiResponse<{
+  operations: TransactionOperationDomainModel[]
 }>
 
-export const GetTransactionStatusesHandler = async (
-  req: TransactionApiGetTransactionStatusesRequest,
-  res: TransactionApiGetTransactionStatusesResponse,
+export const GetTransactionOperationsHandler = async (
+  req: TransactionApiGetTransactionOperationsRequest,
+  res: TransactionApiGetTransactionOperationsResponse,
   next: express.NextFunction
 ) => {
   try {
     const { transaction_id } = req.params
-    const statuses = await TransactionServiceClient.getTransactionStatuses(transaction_id)
+    const operations = await TransactionServiceClient.getTransactionOperations(transaction_id)
     const { version } = res.locals
-    return res.status(200).send({ version, statuses })
+    return res.status(200).send({ version, operations })
   } catch (error) {
     next(error)
   }

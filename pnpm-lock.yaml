@@ -216,19 +216,19 @@ importers:
     specifiers:
       '@mds-core/mds-policy-service': 0.1.0
       '@mds-core/mds-webpack-config': 0.1.0
-  container-images/mds-transactions-api:
+  container-images/mds-transaction-api:
     dependencies:
-      '@mds-core/mds-transactions-service': link:../../packages/mds-transactions-service
+      '@mds-core/mds-transaction-api': link:../../packages/mds-transaction-api
       '@mds-core/mds-webpack-config': link:../../packages/mds-webpack-config
     specifiers:
-      '@mds-core/mds-transactions-service': 0.1.0
+      '@mds-core/mds-transaction-api': 0.1.0
       '@mds-core/mds-webpack-config': 0.1.0
-  container-images/mds-transactions-service:
+  container-images/mds-transaction-service:
     dependencies:
-      '@mds-core/mds-transactions-service': link:../../packages/mds-transactions-service
+      '@mds-core/mds-transaction-service': link:../../packages/mds-transaction-service
       '@mds-core/mds-webpack-config': link:../../packages/mds-webpack-config
     specifiers:
-      '@mds-core/mds-transactions-service': 0.1.0
+      '@mds-core/mds-transaction-service': 0.1.0
       '@mds-core/mds-webpack-config': 0.1.0
   packages/mds-agency:
     dependencies:
@@ -888,13 +888,13 @@ importers:
       '@mds-core/mds-providers': 0.1.26
       '@mds-core/mds-types': 0.1.23
       '@mds-core/mds-utils': 0.1.26
-  packages/mds-transactions-api:
+  packages/mds-transaction-api:
     dependencies:
       '@mds-core/mds-api-helpers': link:../mds-api-helpers
       '@mds-core/mds-api-server': link:../mds-api-server
       '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-service-helpers': link:../mds-service-helpers
-      '@mds-core/mds-transactions-service': link:../mds-transactions-service
+      '@mds-core/mds-transaction-service': link:../mds-transaction-service
       '@mds-core/mds-types': link:../mds-types
       '@mds-core/mds-utils': link:../mds-utils
       '@types/express': 4.17.10
@@ -909,14 +909,14 @@ importers:
       '@mds-core/mds-logger': 0.1.24
       '@mds-core/mds-service-helpers': 0.1.0
       '@mds-core/mds-test-data': 0.1.26
-      '@mds-core/mds-transactions-service': 0.1.0
+      '@mds-core/mds-transaction-service': 0.1.0
       '@mds-core/mds-types': 0.1.23
       '@mds-core/mds-utils': 0.1.26
       '@types/express': 4.17.10
       express: 4.17.1
       http-status-codes: 2.1.4
       joi: 17.3.0
-  packages/mds-transactions-service:
+  packages/mds-transaction-service:
     dependencies:
       '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-repository': link:../mds-repository
@@ -12584,7 +12584,7 @@ packages:
       serialize-javascript: 5.0.1
       source-map: 0.6.1
       terser: 5.6.0
-      webpack: 5.13.0_webpack-cli@4.3.1
+      webpack: 5.13.0
     dev: true
     engines:
       node: '>= 10.13.0'

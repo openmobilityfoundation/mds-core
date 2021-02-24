@@ -60,11 +60,11 @@ apis:
     enabled: true
     version: latest
     migration: false
-  mds-transactions-service:
+  mds-transaction-service:
     enabled: true
     version: latest
     migration: false
-  mds-transactions-api:
+  mds-transaction-api:
     enabled: true
     version: latest
     migration: false
