@@ -17,7 +17,7 @@
 import express from 'express'
 import { pathPrefix } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { TransactionApiVersionMiddleware } from '../middleware'
+import { TransactionApiVersionMiddleware, TransactionApiErrorMiddleware } from '../middleware'
 
 import { CreateTransactionHandler } from '../handlers/create-transaction'
 import { CreateTransactionsHandler } from '../handlers/create-transactions'
@@ -79,3 +79,4 @@ export const api = (app: express.Express): express.Express =>
       checkTransactionApiAccess(scopes => scopes.includes('transactions:write')),
       GetTransactionStatusesHandler
     )
+    .use(TransactionApiErrorMiddleware)

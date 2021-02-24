@@ -15,3 +15,4 @@
  */
 
 export * from './transaction-api-version'
+export * from './transaction-api-error'

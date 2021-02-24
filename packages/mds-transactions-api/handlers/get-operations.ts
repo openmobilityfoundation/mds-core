@@ -17,7 +17,7 @@
 import { TransactionServiceClient } from '@mds-core/mds-transactions-service'
 import { TransactionOperationDomainModel } from '@mds-core/mds-transactions-service/@types'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
-import { ServerError } from '@mds-core/mds-utils'
+import express from 'express'
 import { TransactionApiRequest, TransactionApiResponse } from '../@types'
 
 export type TransactionApiGetTransactionOperationsRequest = TransactionApiRequest & ApiRequestParams<'transaction_id'>
@@ -28,7 +28,8 @@ export type TransactionApiGetTransactionOperationsResponse = TransactionApiRespo
 
 export const GetTransactionOperationsHandler = async (
   req: TransactionApiGetTransactionOperationsRequest,
-  res: TransactionApiGetTransactionOperationsResponse
+  res: TransactionApiGetTransactionOperationsResponse,
+  next: express.NextFunction
 ) => {
   try {
     const { transaction_id } = req.params
@@ -36,6 +37,6 @@ export const GetTransactionOperationsHandler = async (
     const { version } = res.locals
     return res.status(200).send({ version, operations })
   } catch (error) {
-    return res.status(500).send({ error: new ServerError(error) })
+    next(error)
   }
 }

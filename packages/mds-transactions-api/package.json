@@ -28,5 +28,8 @@
     "express": "4.17.1",
     "http-status-codes": "2.1.4",
     "joi": "17.3.0"
+  },
+  "devDependencies": {
+    "@mds-core/mds-test-data": "0.1.26"
   }
 }

@@ -24,7 +24,8 @@ import {
 } from '@mds-core/mds-transactions-service'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
 import { parseRequest } from '@mds-core/mds-api-helpers'
-import { ServerError, ValidationError } from '@mds-core/mds-utils'
+import { ValidationError } from '@mds-core/mds-utils'
+import express from 'express'
 import { TransactionApiRequest, TransactionApiResponse } from '../@types'
 
 export type TransactionApiGetTransactionsRequest = TransactionApiRequest &
@@ -94,7 +95,9 @@ const constructUrls = (
 
   const basicOptionsUrls = Object.entries(basicOptions).reduce((urlParams, [key, val]) => {
     if (val) {
-      if (urlParams === '?') return `${urlParams}${key}=${val}`
+      const paramsTail = urlParams.slice(-1)
+
+      if (paramsTail === '?') return `${urlParams}${key}=${val}`
       return `${urlParams}&${key}=${val}`
     }
 
@@ -111,7 +114,8 @@ const constructUrls = (
 
 export const GetTransactionsHandler = async (
   req: TransactionApiGetTransactionsRequest,
-  res: TransactionApiGetTransactionsResponse
+  res: TransactionApiGetTransactionsResponse,
+  next: express.NextFunction
 ) => {
   try {
     const order = getOrderOption(req)
@@ -159,6 +163,6 @@ export const GetTransactionsHandler = async (
 
     return res.status(200).send({ version, transactions, links })
   } catch (error) {
-    return res.status(500).send({ error: new ServerError(error) })
+    next(error)
   }
 }

@@ -2,23 +2,7 @@ import { uuid } from '@mds-core/mds-utils'
 import { TransactionServiceManager } from '../service/manager'
 import { TransactionServiceClient } from '../client'
 import { TransactionRepository } from '../repository'
-import { TransactionStatusDomainCreateModel } from '../@types'
-
-function* transactionStatusesGenerator(length = 20): Generator<TransactionStatusDomainCreateModel> {
-  const start_timestamp = Date.now() - length * 1000
-
-  for (let i = 0; i < length; i++) {
-    const timestamp = start_timestamp + i * 1000
-
-    yield {
-      transaction_id: uuid(),
-      status_id: uuid(),
-      timestamp,
-      status_type: 'order_submitted',
-      author: 'no one'
-    }
-  }
-}
+import { transactionStatusesGenerator } from '../test-fixtures'
 
 const TransactionServer = TransactionServiceManager.controller()
 

@@ -17,3 +17,4 @@
 export * from './@types'
 export * from './client'
 export * from './repository'
+export * from './test-fixtures'

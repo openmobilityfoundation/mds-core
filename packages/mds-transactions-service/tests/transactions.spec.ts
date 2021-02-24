@@ -15,11 +15,11 @@
  */
 
 import { uuid } from '@mds-core/mds-utils'
-import { UUID } from '@mds-core/mds-types'
 import { TransactionServiceManager } from '../service/manager'
 import { TransactionServiceClient } from '../client'
 import { TransactionRepository } from '../repository'
-import { TransactionDomainCreateModel, TransactionDomainModel } from '../@types'
+import { TransactionDomainModel } from '../@types'
+import { transactionsGenerator } from '../test-fixtures'
 
 describe('Transaction Repository Tests', () => {
   beforeAll(async () => {
@@ -40,35 +40,6 @@ describe('Transaction Repository Tests', () => {
 })
 
 const TransactionServer = TransactionServiceManager.controller()
-
-const receipt = { receipt_id: uuid(), timestamp: Date.now(), receipt_details: {}, origin_url: '' }
-
-/**
- * Generator for Transactions.
- * @param length How many transactions to generate
- */
-function* transactionsGenerator(
-  length = 20,
-  options: { provider_id?: UUID } = {}
-): Generator<TransactionDomainCreateModel> {
-  const start_timestamp = Date.now() - length * 1000
-
-  const { provider_id } = options
-
-  for (let i = 0; i < length; i++) {
-    const timestamp = start_timestamp + i * 1000
-
-    yield {
-      transaction_id: uuid(),
-      provider_id: provider_id ?? uuid(),
-      device_id: uuid(),
-      timestamp,
-      amount: 100, // "I'd buy THAT for a dollar!"
-      fee_type: 'base_fee',
-      receipt
-    }
-  }
-}
 
 describe('Transaction Service Tests', () => {
   beforeAll(async () => {
