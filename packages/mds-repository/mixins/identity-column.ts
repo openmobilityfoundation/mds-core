@@ -19,18 +19,19 @@ import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptio
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
 import { AnyConstructor } from '@mds-core/mds-types'
 import { BigintTransformer } from '../transformers'
-import { Mixin } from '../@types'
+
+export interface IdentityColumn {
+  id: number
+}
 
 export const IdentityColumn = <T extends AnyConstructor>(
   EntityClass: T,
   options: ColumnWithWidthOptions & ColumnCommonOptions = {}
 ) => {
-  abstract class IdentityColumnMixin extends EntityClass {
+  abstract class IdentityColumnMixin extends EntityClass implements IdentityColumn {
     @Column('bigint', { generated: 'increment', transformer: BigintTransformer, ...options })
     @Index({ unique: true })
     id: number
   }
   return IdentityColumnMixin
 }
-
-export type IdentityColumn = Mixin<typeof IdentityColumn>

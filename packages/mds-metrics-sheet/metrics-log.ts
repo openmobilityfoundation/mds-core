@@ -78,8 +78,6 @@ export function eventCountsToStatusCounts(events: { [s in VEHICLE_EVENT]: number
 }
 
 export const mapProviderToPayload = (provider: VehicleCountRow, last: LastDayStatsResponse) => {
-  const dateOptions = { timeZone: 'America/Los_Angeles', day: '2-digit', month: '2-digit', year: 'numeric' }
-  const timeOptions = { timeZone: 'America/Los_Angeles', hour12: false, hour: '2-digit', minute: '2-digit' }
   const d = new Date()
   let [enters, leaves, starts, ends, start_sla, end_sla, telems, telem_sla] = [0, 0, 0, 0, 0, 0, 0, 0]
   let event_counts = { service_start: 0, provider_drop_off: 0, trip_start: 0, trip_end: 0 }
@@ -112,7 +110,17 @@ export const mapProviderToPayload = (provider: VehicleCountRow, last: LastDaySta
     }
   }
   return {
-    date: `${d.toLocaleDateString('en-US', dateOptions)} ${d.toLocaleTimeString('en-US', timeOptions)}`,
+    date: `${d.toLocaleDateString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })} ${d.toLocaleTimeString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`,
     name: provider.provider,
     registered: provider.count || 0,
     deployed:

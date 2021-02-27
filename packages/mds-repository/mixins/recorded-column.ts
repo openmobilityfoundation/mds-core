@@ -19,13 +19,16 @@ import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptio
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
 import { Timestamp, AnyConstructor } from '@mds-core/mds-types'
 import { BigintTransformer } from '../transformers'
-import { Mixin } from '../@types'
+
+export interface RecordedColumn {
+  recorded: Timestamp
+}
 
 export const RecordedColumn = <T extends AnyConstructor>(
   EntityClass: T,
   options: ColumnWithWidthOptions & ColumnCommonOptions = {}
 ) => {
-  abstract class RecordedColumnMixin extends EntityClass {
+  abstract class RecordedColumnMixin extends EntityClass implements RecordedColumn {
     @Column('bigint', {
       transformer: BigintTransformer,
       default: () => '(extract(epoch from now()) * 1000)::bigint',
@@ -36,5 +39,3 @@ export const RecordedColumn = <T extends AnyConstructor>(
   }
   return RecordedColumnMixin
 }
-
-export type RecordedColumn = Mixin<typeof RecordedColumn>

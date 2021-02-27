@@ -15,7 +15,7 @@
  */
 
 import { DeleteResult, InsertResult, UpdateResult } from 'typeorm'
-import { AnyFunction, Optional, NullableKeys } from '@mds-core/mds-types'
+import { Optional, NullableKeys } from '@mds-core/mds-types'
 
 export interface InsertReturning<T> extends InsertResult {
   raw: T[]
@@ -28,8 +28,6 @@ export interface UpdateReturning<T> extends UpdateResult {
 export interface DeleteReturning<T> extends DeleteResult {
   raw: T[]
 }
-
-export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
 
 // Mark all nullable properties as optional (useful for create methods)
 export type DomainModelCreate<T> = Optional<T, NullableKeys<T>>

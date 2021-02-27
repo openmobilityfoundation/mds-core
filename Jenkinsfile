@@ -17,7 +17,9 @@ pipeline {
       steps {
         nvm('version': 'v14.2.0') {
           sh '''
-          pnpm clean && pnpm build
+          pnpm clean
+          pnpm lint
+          pnpm build
           '''
         }
       }
@@ -53,7 +55,6 @@ pipeline {
             trap cleanup EXIT
 
             pnpm clean
-            pnpm lint
             PG_NAME=postgres PG_HOST=localhost PG_USER=postgres REDIS_HOST=localhost pnpm test
           '''
         }
