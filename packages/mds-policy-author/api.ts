@@ -69,7 +69,7 @@ function api(app: express.Express): express.Express {
 
       const details = policyValidationDetails(policy)
 
-      if (details != null) {
+      if (details !== null) {
         return res.status(400).send({ error: new ValidationError(JSON.stringify(details)) })
       }
 

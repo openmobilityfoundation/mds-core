@@ -244,8 +244,9 @@ function processPolicy(
                     i: number
                   ) => {
                     // If the rule has a defined maximum, use it, even if 0
-                    const maximum = rule.maximum == null ? Number.POSITIVE_INFINITY : rule.maximum
-                    if (maximum && i < maximum) {
+                    const maximum =
+                      rule.maximum === null || rule.maximum === undefined ? Number.POSITIVE_INFINITY : rule.maximum
+                    if (i < maximum) {
                       if (overflowVehiclesMap[match_instance.device.device_id]) {
                         delete overflowVehiclesMap[match_instance.device.device_id]
                       }
@@ -289,7 +290,7 @@ function processPolicy(
           // only vehicles in count maximum violation are in overflow
           // no vehicles are in violation if it's a mininimum violation,
           // but # of violations goes up
-          const minimum = rule.minimum == null ? Number.NEGATIVE_INFINITY : rule.minimum
+          const minimum = rule.minimum === null || rule.minimum === undefined ? Number.NEGATIVE_INFINITY : rule.minimum
 
           if (overflowVehicles.length > 0) {
             countVehiclesMap = { ...countVehiclesMap, ...overflowVehiclesMap }
