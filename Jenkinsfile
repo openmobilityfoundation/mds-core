@@ -15,7 +15,7 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        nvm('version': 'v14.2.0') {
+        nvm('version': 'v15.11.0') {
           sh '''
           pnpm clean
           pnpm lint
@@ -26,7 +26,7 @@ pipeline {
     }
     stage('Test') {
       steps {
-        nvm('version': 'v14.2.0') {
+        nvm('version': 'v15.11.0') {
           sh '''
             set -eu
             set -o pipefail

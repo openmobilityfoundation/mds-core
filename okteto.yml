@@ -1,6 +1,6 @@
 name: mds-agency
 namespace: mds
-image: node:14.2.0
+image: node:15.11.0
 command: ["bash"]
 forward:
   - 9229:9229
