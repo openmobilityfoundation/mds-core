@@ -84,17 +84,21 @@ export abstract class ReadWriteRepository extends BaseRepository<'ro' | 'rw'> {
       options: { migrationsTableName }
     } = connection
     if (migrationsTableName) {
-      const migrations = await connection.runMigrations({ transaction: 'all' })
-      logger.info(
-        `Ran ${migrations.length || 'no'} ${pluralize(
-          migrations.length,
-          'migration',
-          'migrations'
-        )} (${migrationsTableName})${
-          migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''
-        }`
-      )
-      logger.info(`Schema version (${migrationsTableName}): ${tail(connection.migrations).name}`)
+      if (connection.migrations.length > 0) {
+        const migrations = await connection.runMigrations({ transaction: 'all' })
+        logger.info(
+          `Ran ${migrations.length || 'no'} ${pluralize(
+            migrations.length,
+            'migration',
+            'migrations'
+          )} (${migrationsTableName})${
+            migrations.length ? `: ${migrations.map(migration => migration.name).join(', ')}` : ''
+          }`
+        )
+        logger.info(`Schema version (${migrationsTableName}): ${tail(connection.migrations).name}`)
+      } else {
+        logger.info(`No migrations defined (${migrationsTableName})`)
+      }
     }
   }
 
@@ -151,6 +155,25 @@ export abstract class ReadWriteRepository extends BaseRepository<'ro' | 'rw'> {
   public cli = (options?: ConnectionManagerCliOptions) => {
     const { cli } = this.manager
     return cli('rw', options)
+  }
+
+  protected asChunksForInsert = <TEntity>(entities: TEntity[], size = 4_000) => {
+    const chunks =
+      entities.length > size
+        ? entities.reduce<Array<Array<TEntity>>>((reduced, t, index) => {
+            const chunk = Math.floor(index / size)
+            if (!reduced[chunk]) {
+              reduced.push([])
+            }
+            reduced[chunk].push(t)
+            return reduced
+          }, [])
+        : [entities]
+
+    if (chunks.length > 1) {
+      logger.info(`Splitting ${entities.length} records into ${chunks.length} chunks for insert`)
+    }
+    return chunks
   }
 
   constructor(name: string, { entities = [], migrations = [] }: RepositoryOptions = {}) {

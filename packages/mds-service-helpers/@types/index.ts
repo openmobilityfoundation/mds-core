@@ -30,7 +30,7 @@ export type ServiceErrorDescriptor<E extends string> = Readonly<{
   isServiceError: true
   type: E
   message: string
-  details?: string
+  details?: unknown
 }>
 
 export interface ServiceErrorType<E extends string = ServiceErrorDescriptorType> {

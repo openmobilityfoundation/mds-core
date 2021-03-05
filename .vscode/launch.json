@@ -39,7 +39,7 @@
         "-r",
         "dotenv/config"
       ],
-      "args": ["server.ts"],
+      "args": ["server/index.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -84,7 +84,7 @@
         "-r",
         "dotenv/config"
       ],
-      "args": ["server.ts"],
+      "args": ["server/index.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -92,6 +92,51 @@
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "npm_package_name": "@mds-core/mds-audit-service"
+      }
+    },
+    {
+      "name": "Server: mds-collector-api",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": ["server/index.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-collector-api",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-collector-api",
+        "PATH_PREFIX": "/collector"
+      }
+    },
+    {
+      "name": "Server: mds-collector-backend",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": ["server/index.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-collector-backend",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-collector-backend"
       }
     },
     {
@@ -198,7 +243,7 @@
         "-r",
         "dotenv/config"
       ],
-      "args": ["server.ts"],
+      "args": ["server/index.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -220,7 +265,7 @@
         "-r",
         "dotenv/config"
       ],
-      "args": ["server.ts"],
+      "args": ["server/index.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -231,7 +276,7 @@
       }
     },
     {
-      "name": "Server: mds-jursidiction",
+      "name": "Server: mds-jurisdiction",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -254,7 +299,7 @@
       }
     },
     {
-      "name": "Server: mds-jursidiction-service",
+      "name": "Server: mds-jurisdiction-service",
       "type": "node",
       "request": "launch",
       "runtimeArgs": [
@@ -265,7 +310,7 @@
         "-r",
         "dotenv/config"
       ],
-      "args": ["server.ts"],
+      "args": ["server/index.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -333,7 +378,7 @@
         "-r",
         "dotenv/config"
       ],
-      "args": ["server.ts"],
+      "args": ["server/index.ts"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "protocol": "inspector",
@@ -364,6 +409,28 @@
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "npm_package_name": "@mds-core/mds-transaction-api",
         "PATH_PREFIX": "/transaction"
+      }
+    },
+    {
+      "name": "Server: mds-transaction-service",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register",
+        "-r",
+        "dotenv/config"
+      ],
+      "args": ["server/index.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-transaction-service",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-transaction-service"
       }
     },
     {
@@ -494,6 +561,47 @@
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "npm_package_name": "@mds-core/mds-audit-service"
+      }
+    },
+    {
+      "name": "Tests: mds-collector-api",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "--coverage",
+        "false"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-collector-api",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-collector-api",
+        "PATH_PREFIX": "/collector"
+      }
+    },
+    {
+      "name": "Tests: mds-collector-backend",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/.bin/jest",
+        "--runInBand",
+        "--coverage",
+        "false"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "protocol": "inspector",
+      "cwd": "${workspaceFolder}/packages/mds-collector-backend",
+      "env": {
+        "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "npm_package_name": "@mds-core/mds-collector-backend"
       }
     },
     {

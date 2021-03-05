@@ -76,6 +76,15 @@ apis:
     enabled: true
     version: latest
     migration: false
+  mds-collector-api:
+    enabled: true
+    version: latest
+    migration: false
+    pathPrefix: /collector
+  mds-collector-backend:
+    enabled: true
+    version: latest
+    migration: false
 tenantId:
 timezone: America/Los_Angeles
 registry:

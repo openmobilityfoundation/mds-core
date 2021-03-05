@@ -53,7 +53,6 @@ Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guide
 
 * PostgreSQL
 * Redis
-* [Yarn](https://yarnpkg.com/en/docs/install#mac-stable)
 * [NVM](https://github.com/nvm-sh/nvm#installation-and-update)
 
 #### Database config on macOS
@@ -210,11 +209,11 @@ helm install --name istio --namespace istio-system ./install/kubernetes/helm/ist
 This will run the build, and create the docker container images.
 
 ```sh
-yarn clean
+pnpm clean
 NODE_ENV=development pnpm image
 ```
 
-note that setting `NODE_ENV=development` will enable images to be built with the `:latest` tag instead of a specific version-branch-commit tag.  If you choose not to use this, the images will be built with tags matching the format `:version-branch-commit`.  You can generate a manifest with these image tags by running `yarn values`.  This manifest can be included in a helm install with the switch `--values dist/values.yaml`.
+note that setting `NODE_ENV=development` will enable images to be built with the `:latest` tag instead of a specific version-branch-commit tag.  If you choose not to use this, the images will be built with tags matching the format `:version-branch-commit`.  You can generate a manifest with these image tags by running `pnpm values`.  This manifest can be included in a helm install with the switch `--values dist/values.yaml`.
 
 Verify:
 
@@ -251,9 +250,9 @@ curl https://get.okteto.com -sSfL | sh
 4. Run `> Okteto Up` from the VSCode command palette.
 * After the remote session opens, execute this in the new shell window:
 ```sh
-yarn
+pnpm install
 cd packages/${SERVICE_NAME}
-yarn start
+pnpm start
 ```
 5. This session is now safe to close, and you can reattach with the `okteto.${SERVICE_NAME}` ssh profile automatically added for you using the VSCode `Remote - SSH` package.
 6. When you're completely done with your session, run `> Okteto Down` from the VSCode command palette, or `okteto down` from terminal to revert the changes made by Okteto, and return your service to its previous deployment.
