@@ -31,14 +31,17 @@ export function* transactionsGenerator(
   }
 }
 
-export function* transactionStatusesGenerator(length = 20): Generator<TransactionStatusDomainModel> {
+export function* transactionStatusesGenerator(
+  length = 20,
+  transaction_id = uuid()
+): Generator<TransactionStatusDomainModel> {
   const start_timestamp = Date.now() - length * 1000
 
   for (let i = 0; i < length; i++) {
     const timestamp = start_timestamp + i * 1000
 
     yield {
-      transaction_id: uuid(),
+      transaction_id,
       status_id: uuid(),
       timestamp,
       status_type: 'order_submitted',

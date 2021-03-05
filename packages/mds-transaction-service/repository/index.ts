@@ -19,7 +19,7 @@ import { NotFoundError } from '@mds-core/mds-utils'
 import { UUID } from '@mds-core/mds-types'
 import Joi from 'joi'
 import { buildPaginator, Cursor } from 'typeorm-cursor-pagination'
-import { LessThan, MoreThan, Between, FindOperator } from 'typeorm'
+import { LessThan, MoreThan, Between, FindOperator, In } from 'typeorm'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import {
   SORTABLE_COLUMN,
@@ -237,6 +237,30 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
       const connection = await connect('ro')
       const entities = await connection.getRepository(TransactionStatusEntity).find({ where: { transaction_id } })
       return entities.map(TransactionStatusEntityToDomain.mapper())
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public getTransactionsStatuses = async (
+    transaction_ids: UUID[]
+  ): Promise<Record<UUID, TransactionStatusDomainModel[]>> => {
+    const { connect } = this
+    try {
+      const connection = await connect('ro')
+      const entities: { transaction_id: UUID; statuses: TransactionStatusEntity[] }[] = await connection
+        .getRepository(TransactionStatusEntity)
+        .createQueryBuilder()
+        .select('transaction_id, ARRAY_AGG(row_to_json("TransactionStatusEntity".*)) as statuses')
+        .where({ transaction_id: In(transaction_ids) })
+        .groupBy(`transaction_id`)
+        .execute()
+
+      // Map the statuses within the object to their domain models
+      return entities.reduce<Record<UUID, TransactionStatusDomainModel[]>>((acc, { transaction_id, statuses }) => {
+        const mappedStatuses = statuses.map(TransactionStatusEntityToDomain.mapper())
+        return { ...acc, [transaction_id]: mappedStatuses }
+      }, {})
     } catch (error) {
       throw RepositoryError(error)
     }

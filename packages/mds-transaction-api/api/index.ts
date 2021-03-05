@@ -28,6 +28,7 @@ import { GetTransactionOperationsHandler } from '../handlers/get-operations'
 import { AddTransactionOperationHandler } from '../handlers/add-operation'
 import { SetTransactionStatusHandler } from '../handlers/set-status'
 import { GetTransactionStatusesHandler } from '../handlers/get-statuses'
+import { GetTransactionsStatusesHandler } from '../handlers/get-transactions-statuses'
 
 import { TransactionApiAccessTokenScopes } from '../@types'
 
@@ -43,6 +44,11 @@ export const api = (app: express.Express): express.Express =>
       pathPrefix('/transactions'),
       checkTransactionApiAccess(scopes => scopes.includes('transactions:read')),
       GetTransactionsHandler
+    )
+    .get(
+      pathPrefix('/transactions/statuses'),
+      checkTransactionApiAccess(scopes => scopes.includes('transactions:read')),
+      GetTransactionsStatusesHandler
     )
     .get(
       pathPrefix('/transactions/:transaction_id'),
@@ -76,7 +82,7 @@ export const api = (app: express.Express): express.Express =>
     )
     .get(
       pathPrefix('/transactions/:transaction_id/statuses'),
-      checkTransactionApiAccess(scopes => scopes.includes('transactions:write')),
+      checkTransactionApiAccess(scopes => scopes.includes('transactions:read')),
       GetTransactionStatusesHandler
     )
     .use(TransactionApiErrorMiddleware)

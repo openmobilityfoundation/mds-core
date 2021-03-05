@@ -16,7 +16,13 @@
 
 import supertest from 'supertest'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { transactionStatusesGenerator, TransactionServiceClient } from '@mds-core/mds-transaction-service'
+import {
+  transactionStatusesGenerator,
+  TransactionServiceClient,
+  TransactionStatusDomainModel
+} from '@mds-core/mds-transaction-service'
+import { UUID } from '@mds-core/mds-types'
+import { uuid } from '@mds-core/mds-utils'
 // import { SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { pathPrefix } from '@mds-core/mds-utils'
 import { api } from '../api'
@@ -55,10 +61,44 @@ describe('Test Transactions API: Transactions', () => {
 
       const result = await request
         .get(pathPrefix(`/transactions/${transaction_id}/statuses`))
-        .set('Authorization', SCOPED_AUTH(['transactions:write']))
+        .set('Authorization', SCOPED_AUTH(['transactions:read']))
 
       expect(result.status).toStrictEqual(200)
       expect(result.body.statuses).toStrictEqual(mockStatuses)
+    })
+
+    it('Can GET transactions statuses', async () => {
+      const transaction_ids = Array.from({ length: 10 }, uuid)
+
+      const mockStatuses = transaction_ids.reduce<Record<UUID, TransactionStatusDomainModel[]>>(
+        (acc, transaction_id) => ({ ...acc, [transaction_id]: [...transactionStatusesGenerator(3, transaction_id)] }),
+        {}
+      )
+
+      jest.spyOn(TransactionServiceClient, 'getTransactionsStatuses').mockImplementationOnce(async _ => mockStatuses)
+
+      const result = await request
+        .get(
+          pathPrefix(
+            `/transactions/statuses?transaction_id=${transaction_ids
+              .reduce((acc, transaction_id) => acc.concat(`transaction_id=${transaction_id}&`), '')
+              .slice(0, -1)}`
+          )
+        )
+        .set('Authorization', SCOPED_AUTH(['transactions:read']))
+
+      expect(result.status).toStrictEqual(200)
+      expect(result.body.statuses).toStrictEqual(mockStatuses)
+    })
+  })
+
+  describe('Failure', () => {
+    it('Cannot GET transactions statuses without valid transaction_ids', async () => {
+      const result = await request
+        .get(pathPrefix(`/transactions/statuses?transaction_id=potato&transaction_id=coolerPotato`))
+        .set('Authorization', SCOPED_AUTH(['transactions:read']))
+
+      expect(result.status).toStrictEqual(400)
     })
   })
 

@@ -17,6 +17,7 @@
 import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { TransactionDomainModel, TransactionOperationDomainModel, TransactionStatusDomainModel } from '../@types'
+import { UUID } from '@mds-core/mds-types'
 
 export const {
   validate: validateTransactionDomainModel,
@@ -57,4 +58,12 @@ export const {
     status_type: Joi.string().required(),
     author: Joi.string().required()
   })
+)
+
+export const { validate: validateTransactionId, isValid: isValidTransactionId } = schemaValidator<UUID>(
+  Joi.string().uuid().required()
+)
+
+export const { validate: validateTransactionIds, isValid: isValidTransactionIds } = schemaValidator<UUID[]>(
+  Joi.array().items(Joi.string().uuid()).max(100).required()
 )

@@ -162,6 +162,10 @@ export interface TransactionService {
   /** get all the status changes for this transaction (typically we won't have a ton I expect) */
   // if auth token has a provider_id, it must match the provider_id in the transaction
   getTransactionStatuses: (transaction_id: TransactionDomainModel['transaction_id']) => TransactionStatusDomainModel[]
+
+  getTransactionsStatuses: (
+    tranaction_ids: TransactionDomainModel['transaction_id'][]
+  ) => Record<TransactionDomainModel['transaction_id'], TransactionStatusDomainModel[]>
   /** add a new status change */
   setTransactionStatus: (status: TransactionStatusDomainCreateModel) => TransactionStatusDomainModel
 }
@@ -177,5 +181,6 @@ export const TransactionServiceDefinition: RpcServiceDefinition<TransactionServi
   getTransactionOperations: RpcRoute<TransactionService['getTransactionOperations']>(),
 
   getTransactionStatuses: RpcRoute<TransactionService['getTransactionStatuses']>(),
+  getTransactionsStatuses: RpcRoute<TransactionService['getTransactionsStatuses']>(),
   setTransactionStatus: RpcRoute<TransactionService['setTransactionStatus']>()
 }

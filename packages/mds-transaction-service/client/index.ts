@@ -32,5 +32,6 @@ export const TransactionServiceClient: ServiceClient<TransactionService> = {
   addTransactionOperation: (...args) => RpcRequest(TransactionServiceRpcClient.addTransactionOperation, args),
   getTransactionOperations: (...args) => RpcRequest(TransactionServiceRpcClient.getTransactionOperations, args),
   setTransactionStatus: (...args) => RpcRequest(TransactionServiceRpcClient.setTransactionStatus, args),
+  getTransactionsStatuses: (...args) => RpcRequest(TransactionServiceRpcClient.getTransactionsStatuses, args),
   getTransactionStatuses: (...args) => RpcRequest(TransactionServiceRpcClient.getTransactionStatuses, args)
 }

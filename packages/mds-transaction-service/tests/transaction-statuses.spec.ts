@@ -22,28 +22,75 @@ describe('Transaction Status Tests', () => {
     ])
   })
 
-  it('Post Good Transaction Status', async () => {
-    const [transactionStatusToPersist] = transactionStatusesGenerator(1)
-    const recordedTransactionStatus = await TransactionServiceClient.setTransactionStatus(transactionStatusToPersist)
+  describe('Success', () => {
+    it('Post Good Transaction Status', async () => {
+      const [transactionStatusToPersist] = transactionStatusesGenerator(1)
+      const recordedTransactionStatus = await TransactionServiceClient.setTransactionStatus(transactionStatusToPersist)
 
-    expect(recordedTransactionStatus.status_id).toEqual(transactionStatusToPersist.status_id)
-    expect(recordedTransactionStatus.transaction_id).toEqual(recordedTransactionStatus.transaction_id)
+      expect(recordedTransactionStatus.status_id).toEqual(transactionStatusToPersist.status_id)
+      expect(recordedTransactionStatus.transaction_id).toEqual(recordedTransactionStatus.transaction_id)
+    })
+
+    it('Get Statuses for one Transaction', async () => {
+      const [transactionStatusToPersist] = transactionStatusesGenerator(1)
+
+      await TransactionServiceClient.setTransactionStatus(transactionStatusToPersist)
+
+      const statuses = await TransactionServiceClient.getTransactionStatuses(transactionStatusToPersist.transaction_id)
+      expect(statuses.length).toEqual(1)
+      const [status] = statuses
+      expect(status.status_id).toEqual(transactionStatusToPersist.status_id)
+    })
+
+    it('Get Statuses for many Transactions', async () => {
+      const transaction_ids = Array.from({ length: 10 }, uuid)
+
+      const transactionStatusesToPersist = transaction_ids
+        .map(transaction_id => [...transactionStatusesGenerator(3, transaction_id)])
+        .flat()
+
+      await Promise.all(
+        transactionStatusesToPersist.map(status => TransactionServiceClient.setTransactionStatus(status))
+      )
+
+      const statusMap = await TransactionServiceClient.getTransactionsStatuses(transaction_ids)
+
+      expect(Object.keys(statusMap).length).toEqual(transaction_ids.length)
+
+      Object.entries(statusMap).forEach(([transaction_id, transactionStatuses]) => {
+        expect(transaction_ids).toContain(transaction_id)
+        transactionStatuses.forEach(transactionStatus => {
+          expect(transactionStatus.transaction_id).toStrictEqual(transaction_id)
+        })
+      })
+    })
   })
 
-  it('Get All Transaction Statuses', async () => {
-    const [transactionStatusToPersist] = transactionStatusesGenerator(1)
+  describe('Failure', () => {
+    it('Get Transaction Statuses for One Nonexistent Transaction returns nothing', async () => {
+      const statuses = await TransactionServiceClient.getTransactionStatuses(uuid())
+      expect(statuses.length).toEqual(0)
+    })
 
-    await TransactionServiceClient.setTransactionStatus(transactionStatusToPersist)
+    it('Get Transaction Statuses for non-uuid transaction_id throws', async () => {
+      await expect(TransactionServiceClient.getTransactionStatuses('potato')).rejects.toMatchObject({
+        type: 'ValidationError'
+      })
+    })
 
-    const statuses = await TransactionServiceClient.getTransactionStatuses(transactionStatusToPersist.transaction_id)
-    expect(statuses.length).toEqual(1)
-    const [status] = statuses
-    expect(status.status_id).toEqual(transactionStatusToPersist.status_id)
-  })
+    it('Get Transactions Statuses for non-uuid transaction_ids throw', async () => {
+      await expect(TransactionServiceClient.getTransactionsStatuses(['potato'])).rejects.toMatchObject({
+        type: 'ValidationError'
+      })
+    })
 
-  it('Get All Transaction Statuses for One Nonexistent Transaction', async () => {
-    const statuses = await TransactionServiceClient.getTransactionStatuses(uuid())
-    expect(statuses.length).toEqual(0)
+    it('Get Transactions Statuses for >100 transaction_ids', async () => {
+      await expect(
+        TransactionServiceClient.getTransactionsStatuses(Array.from({ length: 200 }, uuid))
+      ).rejects.toMatchObject({
+        type: 'ValidationError'
+      })
+    })
   })
 
   // TODO
@@ -52,7 +99,7 @@ describe('Transaction Status Tests', () => {
   // post stat with missing fields
   // post stat with non-UUID
   // post stat with bad stat
-  // post stat on non-existaet transaction id
+  // post stat on non-existent transaction id
 
   afterAll(async () => {
     await Promise.all([

@@ -22,7 +22,9 @@ import { TransactionRepository } from '../repository'
 import {
   validateTransactionDomainModel,
   validateTransactionOperationDomainModel,
-  validateTransactionStatusDomainModel
+  validateTransactionStatusDomainModel,
+  validateTransactionIds,
+  validateTransactionId
 } from './validators'
 
 export const TransactionServiceProvider: ServiceProvider<TransactionService> & ProcessController = {
@@ -107,7 +109,19 @@ export const TransactionServiceProvider: ServiceProvider<TransactionService> & P
   // TODO search params
   getTransactionStatuses: async (transaction_id: UUID) => {
     try {
+      validateTransactionId(transaction_id)
       const statuses = await TransactionRepository.getTransactionStatuses(transaction_id)
+      return ServiceResult(statuses)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Getting Transaction Operations', error)
+      logger.error(exception, error)
+      return exception
+    }
+  },
+  getTransactionsStatuses: async (transaction_ids: UUID[]) => {
+    try {
+      validateTransactionIds(transaction_ids)
+      const statuses = await TransactionRepository.getTransactionsStatuses(transaction_ids)
       return ServiceResult(statuses)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Getting Transaction Operations', error)
