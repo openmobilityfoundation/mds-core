@@ -103,6 +103,9 @@ export const CollectorServiceProvider: ServiceProvider<CollectorService> & Proce
   },
 
   writeSchemaMessages: async (schema_id, provider_id, messages) => {
+    if (messages.length === 0) {
+      return ServiceResult([])
+    }
     try {
       const [validator, producer] = await Promise.all([getSchemaValidator(schema_id), getStreamProducer(schema_id)])
 

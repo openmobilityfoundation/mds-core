@@ -19,17 +19,13 @@ import HttpStatus from 'http-status-codes'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
 import { CollectorService, CollectorServiceClient } from '@mds-core/mds-collector-backend'
 import { ValidationError } from '@mds-core/mds-utils'
-import { NonEmptyArray } from '@mds-core/mds-types'
 import { CollectorApiResponse, CollectorApiRequest } from '../@types'
 
-export type CollectorApiWriteSchemaMessagesRequest = CollectorApiRequest<NonEmptyArray<{}>> &
-  ApiRequestParams<'schema_id'>
+export type CollectorApiWriteSchemaMessagesRequest = CollectorApiRequest<Array<{}>> & ApiRequestParams<'schema_id'>
 
 export type CollectorApiWriteSchemaMessagesResponseBody = ReturnType<CollectorService['writeSchemaMessages']>
 
 export type CollectorApiWriteSchemaMessagesResponse = CollectorApiResponse<CollectorApiWriteSchemaMessagesResponseBody>
-
-const isNonEmptyArray = <T>(array: unknown): array is NonEmptyArray<T> => Array.isArray(array) && array.length > 0
 
 export const WriteSchemaMessagesHandler = async (
   req: CollectorApiWriteSchemaMessagesRequest,
@@ -38,7 +34,7 @@ export const WriteSchemaMessagesHandler = async (
 ) => {
   try {
     const { schema_id } = req.params
-    if (!isNonEmptyArray(req.body)) {
+    if (!Array.isArray(req.body) || req.body.length === 0) {
       throw new ValidationError('Request must contain a non-empty array of messages')
     }
     const messages = await CollectorServiceClient.writeSchemaMessages(
