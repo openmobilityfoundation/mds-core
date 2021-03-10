@@ -47,3 +47,5 @@ export const CollectorServiceClientFactory = (
     ) => CollectorServiceClient.writeSchemaMessages(schema_id, provider_id, messages)
   }
 }
+
+export type CollectorServiceClient = ReturnType<typeof CollectorServiceClientFactory>

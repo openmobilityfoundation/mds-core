@@ -51,8 +51,8 @@ getCommitHash() {
 }
 
 images() {
-  for d in $BASE_DIR/container-images/*; do
-    basename $d
+  for d in $BASE_DIR/container-images/*/package.json; do
+    basename $(dirname $d)
   done
 }
 
