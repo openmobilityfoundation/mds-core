@@ -31,7 +31,7 @@ export const getTripCountsSince = async ({ start_time, end_time, provider_info, 
     const finish = now()
     const timeElapsed = finish - start
     logger.info(`MDS-DAILY db.getTripCountsPerProviderSince() time elapsed: ${timeElapsed}`)
-    logger.info('trips last 24h', rows)
+    logger.info('trips last 24h', { rows })
     rows.map(row => {
       const pid = row.provider_id
       provider_info[pid] = provider_info[pid] || {}
@@ -51,7 +51,7 @@ export const getTimeSinceLastEvent = async ({ provider_info, fail }: DbHelperArg
     const finish = now()
     const timeElapsed = finish - start
     logger.info(`MDS-DAILY cache.getMostRecentEventByProvider() time elapsed: ${timeElapsed}`)
-    logger.info('time since last event', rows)
+    logger.info('time since last event', { rows })
     rows.map(row => {
       const pid = row.provider_id
       provider_info[pid] = provider_info[pid] || {}
@@ -69,7 +69,7 @@ export const getEventCountsPerProviderSince = async ({ start_time, end_time, pro
     const finish = now()
     const timeElapsed = finish - start
     logger.info(`MDS-DAILY db.getEventCountsPerProviderSince() time elapsed: ${timeElapsed}`)
-    logger.info('time since last event', rows)
+    logger.info('time since last event', { rows })
     rows.map(row => {
       const pid = row.provider_id
       provider_info[pid] = provider_info[pid] || {}
@@ -95,7 +95,7 @@ export const getTelemetryCountsPerProviderSince = async ({
     const finish = now()
     const timeElapsed = finish - start
     logger.info(`MDS-DAILY db.getTelemetryCountsPerProviderSince() time elapsed: ${timeElapsed}`)
-    logger.info('time since last event', rows)
+    logger.info('time since last event', { rows })
     rows.map(row => {
       const pid = row.provider_id
       provider_info[pid] = provider_info[pid] || {}
@@ -119,7 +119,7 @@ export const getNumVehiclesRegisteredLast24Hours = async ({
     const finish = now()
     const timeElapsed = finish - start
     logger.info(`MDS-DAILY db.getNumVehiclesRegisteredLast24HoursByProvider() time elapsed: ${timeElapsed}`)
-    logger.info('num vehicles since last 24', rows)
+    logger.info('num vehicles since last 24', { rows })
     rows.map(row => {
       const pid = row.provider_id
       provider_info[pid] = provider_info[pid] || {}
@@ -155,7 +155,7 @@ export const getConformanceLast24Hours = async ({ start_time, end_time, provider
     const timeElapsed = finish - start
     logger.info(`MDS-DAILY db.getEventsLast24HoursPerProvider() time elapsed: ${timeElapsed}`)
     const prev_event: { [key: string]: VehicleEvent } = {}
-    logger.info('event', rows)
+    logger.info('event', { rows })
     rows.map(event => {
       const pid = event.provider_id
       provider_info[pid] = provider_info[pid] || {}

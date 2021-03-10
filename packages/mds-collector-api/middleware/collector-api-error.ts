@@ -27,7 +27,7 @@ export const CollectorApiErrorMiddleware = (
   res: CollectorApiResponse,
   next: NextFunction
 ) => {
-  logger.error(req.method, req.originalUrl, error)
+  logger.error('Collector API Error', { method: req.method, originalUrl: req.originalUrl, error })
   if (isError(error, ValidationError)) {
     return res.status(HttpStatus.BAD_REQUEST).send({ error })
   }

@@ -18,7 +18,7 @@ import express from 'express'
 
 import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
-import { providerName, isProviderId } from '@mds-core/mds-providers'
+import { isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathPrefix, now } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { DailyApiRequest, DailyApiResponse, DailyApiAccessTokenScopes } from './types'
@@ -54,7 +54,7 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
 
         if (provider_id) {
           if (!isUUID(provider_id)) {
-            logger.warn(req.originalUrl, 'bogus provider_id', provider_id)
+            logger.warn('Invalid provider_id', { provider_id, originalUrl: req.originalUrl })
             return res.status(400).send({
               result: `invalid provider_id ${provider_id} is not a UUID`
             })
@@ -65,16 +65,14 @@ async function agencyMiddleware(req: DailyApiRequest, res: DailyApiResponse, nex
               result: `invalid provider_id ${provider_id} is not a known provider`
             })
           }
-
-          logger.info(providerName(provider_id), req.method, req.originalUrl)
         }
       } else {
         return res.status(401).send('Unauthorized')
       }
     }
-  } catch (err) {
+  } catch (error) {
     /* istanbul ignore next */
-    logger.error(req.originalUrl, 'request validation fail:', err.stack)
+    logger.error('request validation fail', { error, originalUrl: req.originalUrl })
   }
   next()
 }

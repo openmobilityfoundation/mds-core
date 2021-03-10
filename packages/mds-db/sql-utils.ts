@@ -77,11 +77,11 @@ export function configureClient(pg_info: PGInfo) {
 
   client.on('end', () => {
     client.setConnected(false)
-    logger.info('disconnected', client.client_type, 'client from postgres')
+    logger.info(`disconnected client from postgres`, { client_type: client.client_type })
   })
 
   client.on('error', async err => {
-    logger.error('pg client error event', err.stack)
+    logger.error('pg client error event', err)
   })
 
   client.on('notice', async msg => {
@@ -172,7 +172,7 @@ export async function logSql(sql: string, ...values: unknown[]): Promise<void> {
     out = values
   }
 
-  logger.info('sql>', sql, out)
+  logger.info('SQL', { sql, vals: out })
 }
 
 export class SqlVals {

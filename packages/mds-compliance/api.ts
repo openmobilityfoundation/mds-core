@@ -31,7 +31,6 @@ import {
   AuthorizationError
 } from '@mds-core/mds-utils'
 import { Geography, UUID, VehicleEvent } from '@mds-core/mds-types'
-import { providerName } from '@mds-core/mds-providers'
 import { Geometry, FeatureCollection } from 'geojson'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import * as compliance_engine from './mds-compliance-engine'
@@ -58,13 +57,13 @@ function api(app: express.Express): express.Express {
 
           /* istanbul ignore next */
           if (!provider_id) {
-            logger.warn('Missing provider_id in', req.originalUrl)
+            logger.warn('Missing provider_id', { originalUrl: req.originalUrl })
             return res.status(400).send({ error: new BadParamsError('missing provider_id') })
           }
 
           /* istanbul ignore next */
           if (!isUUID(provider_id)) {
-            logger.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
+            logger.warn('invalid provider_id is not a UUID', { originalUrl: req.originalUrl, provider_id })
             return res
               .status(400)
               .send({ error: new BadParamsError(`invalid provider_id ${provider_id} is not a UUID`) })
@@ -72,15 +71,13 @@ function api(app: express.Express): express.Express {
 
           // stash provider_id
           res.locals.provider_id = provider_id
-
-          logger.info(providerName(provider_id), req.method, req.originalUrl)
         } else {
           return res.status(401).send({ error: new AuthorizationError('Unauthorized') })
         }
       }
-    } catch (err) {
+    } catch (error) {
       /* istanbul ignore next */
-      logger.error(req.originalUrl, 'request validation fail:', err.stack)
+      logger.error('request validation fail:', { originalUrl: req.originalUrl, error })
     }
     next()
   })
@@ -205,7 +202,7 @@ function api(app: express.Express): express.Express {
       const { version } = res.locals
       return res.status(200).send({ policy, count, timestamp: query_date, version })
     } catch (error) {
-      await logger.error(error.stack)
+      logger.error(error.stack)
       if (error instanceof NotFoundError) {
         return res.status(404).send({ error })
       }

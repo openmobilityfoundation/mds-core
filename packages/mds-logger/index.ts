@@ -19,27 +19,43 @@ import httpContext from 'express-http-context'
 const logger: Pick<Console, 'info' | 'warn' | 'error'> = console
 type LogLevel = keyof typeof logger
 
-const redact = (args: unknown[]): string[] =>
-  args.map(arg =>
-    JSON.stringify(arg instanceof Error ? arg.toString() : arg, (k, v) =>
-      ['lat', 'lng'].includes(k) ? '[REDACTED]' : v
-    )
+const redact = (arg: string | Record<string, unknown> | Error | undefined) => {
+  if (arg === undefined) return {}
+  const res = JSON.stringify(arg instanceof Error ? { error: arg.toString() } : arg, (k, v) =>
+    ['lat', 'lng'].includes(k) ? '[REDACTED]' : v
   )
 
-const log = (level: LogLevel, ...args: unknown[]): string[] => {
-  const redacted = process.env.QUIET === 'true' ? [] : redact(args)
-  if (redacted.length) {
-    const timestamp = Date.now()
-    const ISOTimestamp = new Date(timestamp).toISOString()
-    const requestId = httpContext.get('x-request-id')
-
-    logger[level](level.toUpperCase(), ISOTimestamp, timestamp, ...(requestId ? [requestId] : []), ...redacted)
-  }
-  return redacted
+  return JSON.parse(res)
 }
 
-const info = (...args: unknown[]) => log('info', ...args)
-const warn = (...args: unknown[]) => log('warn', ...args)
-const error = (...args: unknown[]) => log('error', ...args)
+const log = (level: LogLevel) => (
+  message: string,
+  data?: Record<string, unknown> | Error
+): { log_message?: string; log_data?: any } => {
+  if (process.env.QUIET === 'true') {
+    return {}
+  }
 
-export default { log, info, warn, error }
+  const { log_message, log_data } = { log_message: redact(message), log_data: redact(data) }
+  const log_timestamp = Date.now()
+  const log_ISO_timestamp = new Date(log_timestamp).toISOString()
+  const log_requestId = httpContext.get('x-request-id')
+
+  logger[level]({
+    log_level: level.toUpperCase(),
+    log_ISO_timestamp,
+    log_timestamp,
+    ...(log_requestId ? { log_requestId } : {}),
+    log_message,
+    log_data
+  })
+
+  return { log_message, log_data }
+}
+
+export default {
+  log: (level: LogLevel, ...args: Parameters<ReturnType<typeof log>>) => log(level)(...args),
+  info: log('info'),
+  warn: log('warn'),
+  error: log('error')
+}

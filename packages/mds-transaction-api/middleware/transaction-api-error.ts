@@ -12,7 +12,12 @@ export const TransactionApiErrorMiddleware = (
   res: TransactionApiResponse,
   next: express.NextFunction
 ) => {
-  log.error(req.method, req.originalUrl, error)
+  const { method, originalUrl } = req
+  log.error('MDS Transaction API Error (global error handling middleware)', {
+    method,
+    originalUrl,
+    error
+  })
 
   if (isError(error, ValidationError) || isError(error, BadParamsError))
     return res.status(HttpStatus.BAD_REQUEST).send({ error })

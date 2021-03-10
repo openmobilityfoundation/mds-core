@@ -66,9 +66,9 @@ function api(app: express.Express): express.Express {
           return res.status(401).send({ error: 'Unauthorized' })
         }
       }
-    } catch (err) {
+    } catch (error) {
       /* istanbul ignore next */
-      logger.error(req.originalUrl, 'request validation fail:', err.stack)
+      logger.error('request validation fail', { error, originalUrl: req.originalUrl })
     }
     next()
   })
@@ -172,7 +172,12 @@ function api(app: express.Express): express.Express {
   /* istanbul ignore next */
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   app.use(async (error: Error, req: ApiRequest, res: ApiResponse, next: NextFunction) => {
-    await logger.error(req.method, req.originalUrl, error)
+    const { method, originalUrl } = req
+    logger.error('Fatal MDS Policy Error (global error handling middleware)', {
+      method,
+      originalUrl,
+      error
+    })
     return res.status(500).send({ error })
   })
 

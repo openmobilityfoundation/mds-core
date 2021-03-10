@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import { mockStream } from '../test-utils'
 import { StreamProducer } from '../stream-interface'
 import { KafkaStreamProducer } from '../kafka'
@@ -43,7 +42,6 @@ describe('Mock stream API', () => {
       initialize: jest.fn(async () => undefined),
       shutdown: jest.fn(async () => undefined),
       write: jest.fn(async x => {
-        logger.info(x)
         return undefined
       })
     }

@@ -39,12 +39,8 @@ import {
 } from './db-helpers'
 import { startAndEnd, categorizeTrips, getMaps } from './utils'
 
-export async function dbHelperFail(err: Error | string): Promise<void> {
-  logger.error(
-    'last_day_stats_by_provider err:',
-    err instanceof Error ? err.message : err,
-    err instanceof Error ? err.stack : ''
-  )
+export async function dbHelperFail(error: Error | string): Promise<void> {
+  logger.error('last_day_stats_by_provider err:', { error })
 }
 
 const SERVER_ERROR = {
@@ -80,10 +76,10 @@ export async function getRawTripData(req: DailyApiGetRawTripDataRequest, res: Da
 }
 
 export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiResponse) {
-  async function fail(err: Error | string): Promise<void> {
-    logger.error('/admin/vehicle_counts fail', err)
+  async function fail(error: Error | string): Promise<void> {
+    logger.error('/admin/vehicle_counts fail', { error })
     res.status(500).send({
-      error: err
+      error
     })
   }
 
@@ -109,7 +105,7 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
         event_type: {}
       }
     })
-    logger.info('/admin/vehicle_counts', JSON.stringify(stats))
+    logger.info('/admin/vehicle_counts init stats', { stats })
 
     const maps = await getMaps()
     // TODO reimplement to be more efficient
@@ -131,7 +127,7 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
         })
       })
     )
-    logger.info(JSON.stringify(stats))
+    logger.info('/admin/vehicle_counts finished stats', { stats })
     res.status(200).send(stats)
   } catch (err) {
     await fail(err)
@@ -139,8 +135,8 @@ export async function getVehicleCounts(req: DailyApiRequest, res: DailyApiRespon
 }
 
 export async function getLastDayTripsByProvider(req: DailyApiRequest, res: DailyApiResponse) {
-  async function fail(err: Error | string): Promise<void> {
-    logger.error('last_day_trips_by_provider err:', err)
+  async function fail(error: Error | string): Promise<void> {
+    logger.error('last_day_trips_by_provider err:', { error })
   }
 
   const { start_time, end_time } = startAndEnd(req.params)

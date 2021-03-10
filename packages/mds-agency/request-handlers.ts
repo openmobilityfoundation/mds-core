@@ -106,7 +106,7 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
     } catch (err) {
       logger.error('failed to write device stream/cache', err)
     }
-    logger.info('new', providerName(res.locals.provider_id), 'vehicle added', device)
+    logger.info('new vehicle added', { providerName: providerName(res.locals.provider_id), device })
     try {
       await writeRegisterEvent(device, recorded)
     } catch (err) {
@@ -120,10 +120,10 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
         error_description: 'A vehicle with this device_id is already registered'
       })
     } else if (String(err).includes('db')) {
-      logger.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+      logger.error('register vehicle failed:', { err, providerName: providerName(res.locals.provider_id) })
       res.status(500).send(agencyServerError)
     } else {
-      logger.error(providerName(res.locals.provider_id), 'register vehicle failed:', err)
+      logger.error('register vehicle failed:', { err, providerName: providerName(res.locals.provider_id) })
       res.status(500).send(agencyServerError)
     }
   }
@@ -179,11 +179,11 @@ export async function updateVehicleFail(
   res: AgencyApiUpdateVehicleResponse,
   provider_id: UUID,
   device_id: UUID,
-  err: Error | string
+  error: Error | string
 ) {
-  if (String(err).includes('not found')) {
+  if (String(error).includes('not found')) {
     res.status(404).send({})
-  } else if (String(err).includes('invalid')) {
+  } else if (String(error).includes('invalid')) {
     res.status(400).send({
       error: 'bad_param',
       error_description: 'Invalid parameters for vehicle were sent'
@@ -191,7 +191,7 @@ export async function updateVehicleFail(
   } else if (!provider_id) {
     res.status(404).send({})
   } else {
-    logger.error(providerName(provider_id), `fail PUT /vehicles/${device_id}`, req.body, err)
+    logger.error(`fail PUT /vehicles/${device_id}`, { providerName: providerName(provider_id), body: req.body, error })
     res.status(500).send(agencyServerError)
   }
 }
@@ -270,7 +270,7 @@ export const submitVehicleEvent = async (
     const delta = now() - recorded
 
     if (delta > 100) {
-      logger.info(name, 'post event took', delta, 'ms')
+      logger.info(`${name} post event took ${delta} ms`)
       fin()
     } else {
       fin()
@@ -281,19 +281,19 @@ export const submitVehicleEvent = async (
   async function fail(err: Error | Partial<{ message: string }>): Promise<void> {
     const message = err.message || String(err)
     if (message.includes('duplicate')) {
-      logger.info(name, 'duplicate event', event.event_type)
+      logger.info('duplicate event', { name, event })
       res.status(400).send({
         error: 'bad_param',
         error_description: 'An event with this device_id and timestamp has already been received'
       })
     } else if (message.includes('not found') || message.includes('unregistered')) {
-      logger.info(name, 'event for unregistered', event.device_id, event.event_type)
+      logger.info('event for unregistered', { name, event })
       res.status(400).send({
         error: 'unregistered',
         error_description: 'The specified device_id has not been registered'
       })
     } else {
-      logger.error('post event fail:', event, message)
+      logger.error('post event fail:', { event, message })
       res.status(500).send(agencyServerError)
     }
   }
@@ -317,7 +317,7 @@ export const submitVehicleEvent = async (
     const failure = (await badEvent(event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
     // TODO unify with fail() above
     if (failure) {
-      logger.info(name, 'event failure', failure, event)
+      logger.info('event failure', { name, failure, event })
       return res.status(400).send(failure)
     }
 
@@ -418,15 +418,12 @@ export const submitVehicleTelemetry = async (
 
       const delta = Date.now() - start
       if (delta > 300) {
-        logger.info(
+        logger.info('writeTelemetry', {
           name,
-          'writeTelemetry',
-          valid.length,
-          `(${recorded_telemetry.length} unique)`,
-          'took',
-          delta,
-          `ms (${Math.round((1000 * valid.length) / delta)}/s)`
-        )
+          validItems: valid.length,
+          unique: recorded_telemetry.length,
+          delta: `${delta} ms (${Math.round((1000 * valid.length) / delta)}/s)`
+        })
       }
       if (recorded_telemetry.length) {
         res.status(201).send({
@@ -436,7 +433,7 @@ export const submitVehicleTelemetry = async (
           failures
         })
       } else {
-        logger.info(name, 'no unique telemetry in', data.length, 'items')
+        logger.info(`no unique telemetry in ${data.length} items for ${name}`)
         res.status(400).send({
           error: 'invalid_data',
           error_description: 'None of the provided data was valid',
@@ -446,7 +443,7 @@ export const submitVehicleTelemetry = async (
     } else {
       const body = `${JSON.stringify(req.body).substring(0, 128)} ...`
       const fails = `${JSON.stringify(failures).substring(0, 128)} ...`
-      logger.info(name, 'no valid telemetry in', data.length, 'items:', body, 'failures:', fails)
+      logger.info(`no valid telemetry in ${data.length} items for ${name}`, { body, fails })
       res.status(400).send({
         error: 'invalid_data',
         error_description: 'None of the provided data was valid',

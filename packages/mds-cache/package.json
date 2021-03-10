@@ -15,7 +15,7 @@
     "test": "DOTENV_CONFIG_PATH=../../.env jest"
   },
   "dependencies": {
-    "@mds-core/mds-logger": "0.1.24",
+    "@mds-core/mds-logger": "0.2.0",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
     "@types/ioredis": "4.17.11",

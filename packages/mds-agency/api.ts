@@ -52,7 +52,7 @@ function api(app: express.Express): express.Express {
           const { provider_id } = res.locals.claims
 
           if (!isUUID(provider_id)) {
-            logger.warn(req.originalUrl, 'invalid provider_id is not a UUID', provider_id)
+            logger.warn('invalid provider_id is not a UUID', { provider_id, originalUrl: req.originalUrl })
             return res.status(400).send({
               error: 'authentication_error',
               error_description: `invalid provider_id ${provider_id} is not a UUID`
@@ -74,9 +74,9 @@ function api(app: express.Express): express.Express {
           return res.status(401).send({ error: 'authentication_error', error_description: 'Unauthorized' })
         }
       }
-    } catch (err) {
+    } catch (error) {
       /* istanbul ignore next */
-      logger.error(req.originalUrl, 'request validation fail:', err.stack)
+      logger.error('request validation fail:', { originalUrl: req.originalUrl, error })
     }
     next()
   })

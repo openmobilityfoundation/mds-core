@@ -304,7 +304,12 @@ function api(app: express.Express): express.Express {
   )
 
   app.use(async (error: Error, req: ApiRequest, res: ApiResponse, next: NextFunction) => {
-    await logger.error(req.method, req.originalUrl, error)
+    const { method, originalUrl } = req
+    logger.error('Fatal MDS Geography Author Error (global error handling middleware)', {
+      method,
+      originalUrl,
+      error
+    })
     return res.status(500).send({ error })
   })
 

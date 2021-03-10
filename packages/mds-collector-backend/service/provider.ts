@@ -86,7 +86,7 @@ export const CollectorServiceProvider: ServiceProvider<CollectorService> & Proce
       return ServiceResult(true)
     } catch (error) {
       const exception = ServiceException(`Error Registering Schema ${schema_id}`, error)
-      logger.error(exception, error)
+      logger.error('registerMessageSchema exception', { exception, error })
       return exception
     }
   },
@@ -97,7 +97,7 @@ export const CollectorServiceProvider: ServiceProvider<CollectorService> & Proce
       return ServiceResult(schema)
     } catch (error) {
       const exception = ServiceException(`Error Reading Schema ${schema_id}`, error)
-      logger.error(exception, error)
+      logger.error('getMessageSchema exception', { exception, error })
       return exception
     }
   },
@@ -149,7 +149,7 @@ export const CollectorServiceProvider: ServiceProvider<CollectorService> & Proce
       return ServiceResult(result)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException(`Error Writing Messages for Schema ${schema_id}`, error)
-      logger.error(exception, error)
+      logger.error('writeSchemaMessages exception', { exception, error })
       return exception
     }
   }

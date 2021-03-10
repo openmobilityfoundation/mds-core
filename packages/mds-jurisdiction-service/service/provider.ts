@@ -32,7 +32,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> &
       return ServiceResult(jurisdiction)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Creating Jurisdiction', error)
-      logger.error(exception, error)
+      logger.error('mds-jurisdiction-service::createJurisdiction error', { exception, error })
       return exception
     }
   },
@@ -43,7 +43,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> &
       return ServiceResult(jurisdictions)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Creating Jurisdictions', error)
-      logger.error(exception, error)
+      logger.error('mds-jurisdiction-service::createJurisdictions error', { exception, error })
       return exception
     }
   },
@@ -54,7 +54,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> &
       return ServiceResult(deleted)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Deleting Jurisdiction', error)
-      logger.error(exception, error)
+      logger.error('mds-jurisdiction-service::deleteJurisdiction error', { exception, error })
       return exception
     }
   },
@@ -65,7 +65,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> &
       return ServiceResult(jurisdiction)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Reading Jurisdiction', error)
-      logger.error(exception, error)
+      logger.error('mds-jurisdiction-service::getJurisdiction error', { exception, error })
       return exception
     }
   },
@@ -76,7 +76,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> &
       return ServiceResult(jurisdicitons)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Reading Jurisdictions', error)
-      logger.error(exception, error)
+      logger.error('mds-jurisdiction-service::getJurisdictions error', { exception, error })
       return exception
     }
   },
@@ -87,7 +87,7 @@ export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> &
       return ServiceResult(updated)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Updating Jurisdiction', error)
-      logger.error(exception, error)
+      logger.error('mds-jurisdiction-service::updateJurisdiction error', { exception, error })
       return exception
     }
   }

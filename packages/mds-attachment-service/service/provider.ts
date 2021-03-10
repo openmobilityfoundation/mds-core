@@ -32,7 +32,7 @@ export const AttachmentServiceProvider: ServiceProvider<AttachmentService> & Pro
       return ServiceResult(attachment)
     } catch (error) {
       const exception = ServiceException('Error Writing Attachment', error)
-      logger.error(exception, error)
+      logger.error('mds-attachment-service::writeAttachment error', { exception, error })
       return exception
     }
   },
@@ -45,7 +45,7 @@ export const AttachmentServiceProvider: ServiceProvider<AttachmentService> & Pro
       return ServiceResult(attachment)
     } catch (error) {
       const exception = ServiceException('Error Deleting Attachment', error)
-      logger.error(exception, error)
+      logger.error('mds-attachment-service::deleteAttachment error', { exception, error })
       return exception
     }
   },
@@ -55,7 +55,7 @@ export const AttachmentServiceProvider: ServiceProvider<AttachmentService> & Pro
       return ServiceResult(attachment)
     } catch (error) {
       const exception = ServiceException('Error Reading Attachment', error)
-      logger.error(exception, error)
+      logger.error('mds-attachment-service::readAttachment error', { exception, error })
       return exception
     }
   },
@@ -65,7 +65,7 @@ export const AttachmentServiceProvider: ServiceProvider<AttachmentService> & Pro
       return ServiceResult(attachments)
     } catch (error) {
       const exception = ServiceException('Error Reading Attachments', error)
-      logger.error(exception, error)
+      logger.error('mds-attachment-service::readAttachments error', { exception, error })
       return exception
     }
   }

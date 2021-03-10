@@ -183,7 +183,7 @@ async function writeTelemetry(telemetry: Telemetry[]) {
   await writeStreamBatch(DEVICE_RAW_STREAM, 'telemetry', telemetry)
   const delta = now() - start
   if (delta > 200) {
-    logger.info('stream writeTelemetry', telemetry.length, 'points in', delta, 'ms')
+    logger.info('mds-stream::writeTelemetry', { pointsInserted: telemetry.length, executionTime: delta })
   }
 }
 

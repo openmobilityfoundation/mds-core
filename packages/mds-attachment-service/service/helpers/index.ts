@@ -38,7 +38,7 @@ if (env.ATTACHMENTS_BUCKET) {
   /* eslint-disable-next-line */
   aws.config.getCredentials(async err => {
     if (err) {
-      logger.error('Error getting AWS credentials', err.stack || err)
+      logger.error('Error getting AWS credentials', err)
     } else if (aws.config.credentials) {
       aws.config.update({
         secretAccessKey: aws.config.credentials.secretAccessKey,

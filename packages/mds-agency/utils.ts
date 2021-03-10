@@ -392,13 +392,13 @@ export async function refresh(device_id: UUID, provider_id: UUID): Promise<strin
   try {
     const event = await db.readEvent(device_id)
     await cache.writeEvent(event)
-  } catch (err) {
-    logger.info('no events for', device_id, err)
+  } catch (error) {
+    logger.info('no events for', { device_id, error })
   }
   try {
     await db.readTelemetry(device_id)
-  } catch (err) {
-    logger.info('no telemetry for', device_id, err)
+  } catch (error) {
+    logger.info('no telemetry for', { device_id, error })
   }
   return 'done'
 }
@@ -411,7 +411,7 @@ export async function validateDeviceId(req: express.Request, res: express.Respon
 
   /* istanbul ignore if This is never called with no device_id parameter */
   if (!device_id) {
-    logger.warn('agency: missing device_id', req.originalUrl)
+    logger.warn('agency: missing device_id', { originalUrl: req.originalUrl })
     res.status(400).send({
       error: 'missing_param',
       error_description: 'missing device_id'
@@ -419,7 +419,7 @@ export async function validateDeviceId(req: express.Request, res: express.Respon
     return
   }
   if (device_id && !isUUID(device_id)) {
-    logger.warn('agency: bogus device_id', device_id, req.originalUrl)
+    logger.warn('agency: bogus device_id', { device_id, originalUrl: req.originalUrl })
     res.status(400).send({
       error: 'bad_param',
       error_description: `invalid device_id ${device_id} is not a UUID`

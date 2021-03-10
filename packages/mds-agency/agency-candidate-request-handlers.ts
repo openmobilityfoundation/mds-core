@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import { isUUID } from '@mds-core/mds-utils'
 import db from '@mds-core/mds-db'
 import { providerName } from '@mds-core/mds-providers'
@@ -31,8 +30,6 @@ export const readAllVehicleIds = async (req: AgencyApiRequest, res: AgencyApiRes
       error_description: `invalid provider_id ${query_provider_id} is not a UUID`
     })
   }
-
-  logger.info(query_provider_id ? providerName(query_provider_id) : null, 'get /vehicles')
 
   const items = await db.readDeviceIds(query_provider_id)
   const data: { [s: string]: string[] } = {}

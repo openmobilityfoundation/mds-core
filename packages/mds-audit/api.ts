@@ -148,7 +148,7 @@ function api(app: express.Express): express.Express {
           return next()
         }
       }
-      logger.warn('Missing subject_id', req.method, req.originalUrl)
+      logger.warn('Missing subject_id', { method: req.method, originalUrl: req.originalUrl })
       // 403 Forbidden
       return res.status(403).send({ error: new AuthorizationError('missing_subject_id') })
     }

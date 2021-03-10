@@ -191,10 +191,10 @@ async function wipeDevice(device_id: UUID) {
     decorateKey(`device:${device_id}:device`)
   ]
   if (keys.length > 0) {
-    logger.info('del', ...keys)
+    logger.info('mds-agency-cache::wipeDevice, deleting keys', { keys })
     return client.del(...keys)
   }
-  logger.info('no keys found for', device_id)
+  logger.warn('mds-agency-cache::wipeDevice, no keys found!', { device_id })
   return 0
 }
 
@@ -327,12 +327,10 @@ async function readDevicesStatus(query: {
   bbox: BoundingBox
   strict?: boolean
 }) {
-  logger.info('readDevicesStatus', JSON.stringify(query), 'start')
   const start = query.since || 0
   const stop = now()
   const strictChecking = query.strict
 
-  logger.info('redis zrangebyscore device-ids', start, stop)
   const geoStart = now()
   const { bbox } = query
   const deviceIdsInBbox = await getEventsInBBox(bbox)
@@ -499,7 +497,7 @@ async function health() {
 async function cleanup() {
   try {
     const keys = await readKeys('device:*')
-    logger.warn('cleanup: read', keys.length)
+    logger.warn(`cleanup: read ${keys.length} keys`)
     const report: { telemetry: number; device: number; event: number; [suffix: string]: number } = {
       telemetry: 0,
       device: 0,
