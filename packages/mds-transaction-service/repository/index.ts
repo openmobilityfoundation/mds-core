@@ -119,12 +119,20 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
 
     try {
       const connection = await connect('ro')
+
+      /**
+       * Need to generate a shared alias due to the different aliasing methods in TypeORM & TypeORM Cursor Paginator
+       * depending on debug vs production environments.
+       */
+      const alias = 'transactionentity'
+
       const queryBuilder = connection
         .getRepository(TransactionEntity)
-        .createQueryBuilder('transactionentity') // yuk!
+        .createQueryBuilder(alias)
         .where({ ...resolveProviderId(), ...resolveTimeBounds() })
 
       const { data, cursor } = await buildPaginator({
+        alias,
         entity: TransactionEntity,
         query: {
           limit,
