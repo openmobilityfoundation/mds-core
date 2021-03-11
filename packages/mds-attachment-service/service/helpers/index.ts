@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import aws from 'aws-sdk'
 import path from 'path'
 import sharp from 'sharp'
@@ -33,21 +32,6 @@ const s3Region = String(env.ATTACHMENTS_REGION)
 const s3ACL = String(env.ATTACHMENTS_ACL)
 const s3 = new aws.S3()
 const memoryStorage = multer.memoryStorage()
-
-if (env.ATTACHMENTS_BUCKET) {
-  /* eslint-disable-next-line */
-  aws.config.getCredentials(async err => {
-    if (err) {
-      logger.error('Error getting AWS credentials', err)
-    } else if (aws.config.credentials) {
-      aws.config.update({
-        secretAccessKey: aws.config.credentials.secretAccessKey,
-        accessKeyId: aws.config.credentials.accessKeyId,
-        region: s3Region
-      })
-    }
-  })
-}
 
 export const multipartFormUpload = multer({ storage: memoryStorage }).single('file')
 
