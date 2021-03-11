@@ -52,7 +52,7 @@ const getSchemaValidator = async (schema_id: string) => {
 }
 
 const createStreamProducer = async (schema_id: string): Promise<CollectorStreamProducer> => {
-  const topic = `${TENANT_ID}.collector:${schema_id}`
+  const topic = `${TENANT_ID}.collector.${schema_id}`
   // TODO: Do we need to create the topic?
   if (process.env.KAFKA_HOST !== undefined) {
     const producer = stream.KafkaStreamProducer(topic)
