@@ -97,9 +97,37 @@ describe('MDS Logger', () => {
     process.env.QUIET = 'true'
     const result = logger.log('error', 'some message', { key1: 'key1', key2: 'key2' })
     test.value(Object.keys(result).length).is(0)
+    process.env.QUIET = 'false'
   })
 
   it('can write a log with only a message, and no data', () => {
     logger.info('some message')
+  })
+
+  it('can write out a reasonably deep object and retain proper format', () => {
+    /**
+     * NOTE: This test doesn't really _test_ anything, because unfortunately we can't listen to the console output trivially.
+     *       That being said, for any future engineers looking at this test...
+     *       Make sure that the output in the console doesn't contain `[Object]` instead of fully qualifying :)
+     */
+
+    // With default logger depth, this will be printed out as `{ a: 'a', b: { c: 'c', d: [Object] } }`. Not ideal, we want the full object.
+    const object = {
+      a: 'a',
+      b: {
+        c: 'c',
+        d: {
+          e: 'e',
+          f: {
+            g: 'g',
+            h: {
+              i: 'i'
+            }
+          }
+        }
+      }
+    }
+
+    logger.log('error', 'some message', object)
   })
 })

@@ -15,6 +15,10 @@
  */
 
 import httpContext from 'express-http-context'
+import { inspect } from 'util'
+
+// Set the inspector depth to infinity. To the moooooooon 🚀 🌕
+inspect.defaultOptions.depth = null
 
 const logger: Pick<Console, 'info' | 'warn' | 'error'> = console
 type LogLevel = keyof typeof logger
