@@ -114,6 +114,78 @@ export async function readEvents(params: ReadEventsQueryParams): Promise<ReadEve
   }
 }
 
+export interface TripEvents {
+  [trip_id: string]: VehicleEvent[]
+}
+
+export interface TripEventsResult {
+  trips: TripEvents
+  tripCount: number
+}
+
+/**
+ * @param ReadEventsQueryParams skip/take paginates on trip_id
+ */
+export async function readTripEvents(params: ReadEventsQueryParams): Promise<TripEventsResult> {
+  const { skip, take, start_time, end_time } = params
+  const client = await getReadOnlyClient()
+  const vals = new SqlVals()
+  const conditions = []
+
+  if (start_time) {
+    conditions.push(`e."timestamp" >= ${vals.add(start_time)}`)
+  }
+  if (end_time) {
+    conditions.push(`e."timestamp" <= ${vals.add(end_time)}`)
+  }
+
+  conditions.push('e.trip_id is not null')
+
+  const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+  const countSql = `SELECT COUNT(DISTINCT(trip_id)) FROM ${schema.TABLE.events} e ${filter}`
+  const countVals = vals.values()
+
+  await logSql(countSql, countVals)
+
+  const res = await client.query(countSql, countVals)
+  const tripCount = parseInt(res.rows[0].count)
+
+  if (typeof skip === 'number' && skip >= 0) {
+    conditions.push(` e.trip_id > ${vals.add(skip)}`)
+  }
+  const queryFilter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  let selectSql = `select et.trip_id, array_agg(row_to_json(et.*) order by best_timestamp) as events
+    FROM
+      (SELECT e.*, to_json(t.*) as telemetry, COALESCE(e.telemetry_timestamp, e.timestamp) as best_timestamp
+      FROM ${schema.TABLE.events} e
+      LEFT JOIN ${schema.TABLE.telemetry} t ON e.device_id = t.device_id
+        AND COALESCE(e.telemetry_timestamp, e.timestamp) = t.timestamp
+      ${queryFilter}
+      order by trip_id
+      ) et
+    GROUP BY et.trip_id
+    ORDER BY et.trip_id`
+
+  if (typeof take === 'number' && take >= 0) {
+    selectSql += ` LIMIT ${vals.add(take)}`
+  }
+  const selectVals = vals.values()
+  await logSql(selectSql, selectVals)
+
+  const res2 = await client.query(selectSql, selectVals)
+
+  const trips = Object.values(res2.rows).reduce(
+    (acc: TripEvents, { trip_id, events }) => Object.assign(acc, { [trip_id]: events as VehicleEvent }),
+    {}
+  )
+
+  return {
+    trips,
+    tripCount
+  }
+}
+
 export async function readHistoricalEvents(params: ReadHistoricalEventsQueryParams): Promise<VehicleEvent[]> {
   const { provider_id: query_provider_id, end_date } = params
   const client = await getReadOnlyClient()

@@ -516,7 +516,8 @@ function makeEventsWithTelemetry(
   timestamp: Timestamp,
   area: UUID | Geometry,
   event_type: null | string = null,
-  speed = rangeRandomInt(10)
+  speed = rangeRandomInt(10),
+  trip_id?: UUID
 ): VehicleEvent[] {
   return devices.map(device => {
     const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
@@ -528,7 +529,8 @@ function makeEventsWithTelemetry(
         : (vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)] as VEHICLE_EVENT),
       telemetry: makeTelemetryInArea(device, timestamp, area, speed),
       timestamp,
-      recorded: timestamp
+      recorded: timestamp,
+      trip_id
     }
   })
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { EventDomainModel } from '../../@types'
 
@@ -49,6 +49,7 @@ export class EventEntity extends IdentityColumn(RecordedColumn(class {})) implem
   @Column('bigint', { transformer: BigintTransformer, nullable: true })
   telemetry_timestamp: EventEntityModel['telemetry_timestamp']
 
+  @Index()
   @Column('uuid', { nullable: true })
   trip_id: EventEntityModel['trip_id']
 
