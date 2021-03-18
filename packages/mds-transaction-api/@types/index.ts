@@ -23,7 +23,7 @@ export const [TRANSACTION_API_DEFAULT_VERSION] = TRANSACTION_API_SUPPORTED_VERSI
 // Allow adding type definitions for Express Request objects
 export type TransactionApiRequest<B = {}> = ApiRequest<B>
 
-export type TransactionApiAccessTokenScopes = 'transactions:read' | 'transactions:read:claim' | 'transactions:write'
+export type TransactionApiAccessTokenScopes = 'transactions:read' | 'transactions:read:provider' | 'transactions:write'
 
 export type TransactionApiResponse<B = {}> = ApiVersionedResponse<TRANSACTION_API_SUPPORTED_VERSION, B> &
   ApiResponseLocalsClaims<TransactionApiAccessTokenScopes>

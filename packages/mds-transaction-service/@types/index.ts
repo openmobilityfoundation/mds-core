@@ -139,34 +139,38 @@ export interface TransactionStatusDomainModel {
 export type TransactionStatusDomainCreateModel = DomainModelCreate<TransactionStatusDomainModel>
 
 export interface TransactionService {
-  /**  if auth token has a provider_id, it must match */
+  /**  TODO if auth token has a provider_id, it must match */
   createTransaction: (transaction: TransactionDomainCreateModel) => TransactionDomainModel
-  /**  if auth token has a provider_id, it must match */
+  /**  TODO if auth token has a provider_id, it must match */
   createTransactions: (transactions: TransactionDomainCreateModel[]) => TransactionDomainModel[]
 
-  // if auth token has a provider_id, it must match
-  // read-back bulk TODO search criteria
+  /**  if auth token has a provider_id, it must match */
+  /**  read-back bulk TODO search criteria */
   getTransactions: (params: TransactionSearchParams) => { transactions: TransactionDomainModel[]; cursor: Cursor }
-  // if auth token has a provider_id, it must match
-  // read back single
+  /** TODO if auth token has a provider_id, it must match */
+  /**  read back single */
   getTransaction: (transaction_id: TransactionDomainModel['transaction_id']) => TransactionDomainModel
 
   /** create an 'operation', e.g. for dispute-handling, etc. */
+  /**  TODO if auth token has a provider_id, it must match */
   addTransactionOperation: (operation: TransactionOperationDomainCreateModel) => TransactionOperationDomainModel
   /** read back operations for a transaction */
-  // if auth token has a provider_id, it must match the provider_id in the transaction
+  /**  TODO if auth token has a provider_id, it must match */
   getTransactionOperations: (
     transaction_id: TransactionDomainModel['transaction_id']
   ) => TransactionOperationDomainModel[]
 
   /** get all the status changes for this transaction (typically we won't have a ton I expect) */
-  // if auth token has a provider_id, it must match the provider_id in the transaction
+  /**  TODO if auth token has a provider_id, it must match */
   getTransactionStatuses: (transaction_id: TransactionDomainModel['transaction_id']) => TransactionStatusDomainModel[]
 
+  /**  TODO if auth token has a provider_id, it must match */
   getTransactionsStatuses: (
     tranaction_ids: TransactionDomainModel['transaction_id'][]
   ) => Record<TransactionDomainModel['transaction_id'], TransactionStatusDomainModel[]>
+
   /** add a new status change */
+  /**  TODO if auth token has a provider_id, it must match */
   setTransactionStatus: (status: TransactionStatusDomainCreateModel) => TransactionStatusDomainModel
 }
 

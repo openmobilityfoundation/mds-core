@@ -261,6 +261,68 @@ describe('Test Transactions API: Transactions', () => {
       expect(prev).toBeUrl()
       expect(next).toBeUrl()
     })
+
+    it('Will override provider_id if not included when client has transactions:read:provider scope', async () => {
+      const mockTransactions: TransactionDomainModel[] = []
+      const provider_id_scoped = uuid() // only provider_id allowed for client
+      const basicOptions = {
+        start_timestamp: Date.now(),
+        end_timestamp: undefined,
+        before: undefined,
+        after: undefined,
+        limit: 10
+      }
+
+      const getTransactionsMock = jest
+        .spyOn(TransactionServiceClient, 'getTransactions')
+        .mockImplementationOnce(async _ => ({
+          transactions: mockTransactions,
+          cursor: { beforeCursor: 'arbitraryBeforeCursor', afterCursor: 'arbitraryAfterCursor' }
+        }))
+
+      const result = await request
+        .get(pathPrefix(`/transactions${basicOptionsUrls(basicOptions)}`))
+        .set('Authorization', SCOPED_AUTH(['transactions:read:provider'], provider_id_scoped))
+
+      expect(getTransactionsMock).toBeCalledWith({
+        ...basicOptions,
+        provider_id: provider_id_scoped, // ensure provider query param is overridden when passed to service
+        order: undefined
+      })
+      expect(result.status).toBe(200)
+    })
+
+    it('Will override provider_id query param when client has transactions:read:provider scope', async () => {
+      const mockTransactions: TransactionDomainModel[] = []
+      const provider_id = uuid() // desired provider_id
+      const provider_id_scoped = uuid() // only provider_id allowed for client
+      const basicOptions = {
+        provider_id,
+        start_timestamp: Date.now(),
+        end_timestamp: undefined,
+        before: undefined,
+        after: undefined,
+        limit: 10
+      }
+
+      const getTransactionsMock = jest
+        .spyOn(TransactionServiceClient, 'getTransactions')
+        .mockImplementationOnce(async _ => ({
+          transactions: mockTransactions,
+          cursor: { beforeCursor: 'arbitraryBeforeCursor', afterCursor: 'arbitraryAfterCursor' }
+        }))
+
+      const result = await request
+        .get(pathPrefix(`/transactions${basicOptionsUrls(basicOptions)}`))
+        .set('Authorization', SCOPED_AUTH(['transactions:read:provider'], provider_id_scoped))
+
+      expect(getTransactionsMock).toBeCalledWith({
+        ...basicOptions,
+        provider_id: provider_id_scoped, // ensure provider query param is overridden when passed to service
+        order: undefined
+      })
+      expect(result.status).toBe(200)
+    })
   })
 
   describe('Failure', () => {

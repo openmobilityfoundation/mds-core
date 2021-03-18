@@ -118,10 +118,17 @@ export const GetTransactionsHandler = async (
   next: express.NextFunction
 ) => {
   try {
+    const { scopes } = res.locals
+
     const order = getOrderOption(req)
-    const { provider_id, before, after } = parseRequest(req)
+    const { provider_id: queried_provider_id, before, after } = parseRequest(req)
       .single({ parser: String })
       .query('provider_id', 'before', 'after')
+
+    // eslint-reason checkAccess middleware has previously verified that local.claims.provider_id is a UUID
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const provider_id = scopes.includes('transactions:read') ? queried_provider_id : res.locals.claims!.provider_id!
+
     const { start_timestamp, end_timestamp, limit = 10 } = parseRequest(req)
       .single({ parser: Number })
       .query('start_timestamp', 'end_timestamp', 'limit')
