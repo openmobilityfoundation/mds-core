@@ -115,8 +115,12 @@ async function getClient() {
 }
 
 async function initialize() {
-  await AgencyStreamKafka.initialize()
-  await AgencyStreamNats.initialize()
+  if (process.env.KAFKA_HOST) {
+    await AgencyStreamKafka.initialize()
+  }
+  if (process.env.NATS) {
+    await AgencyStreamNats.initialize()
+  }
   await getClient()
 }
 
