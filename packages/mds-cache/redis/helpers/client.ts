@@ -33,7 +33,7 @@ export const initClient = async () => {
   })
 
   client.on('connect', () => {
-    logger.warn('Redis connection established')
+    logger.info(`Redis connection established to ${REDIS_HOST}:${REDIS_PORT}`)
   })
 
   try {
@@ -43,7 +43,7 @@ export const initClient = async () => {
     */
     await client.connect()
   } catch (err) {
-    logger.error('Initial redis connection failure (connection will be retried):', err)
+    logger.error(`Initial redis connection to ${REDIS_HOST}:${REDIS_PORT} failed (connection will be retried)`, err)
   }
 
   return client
