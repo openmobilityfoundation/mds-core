@@ -17,11 +17,11 @@
 import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
 import { DomainModelCreate } from '@mds-core/mds-repository'
 import { Timestamp, UUID } from '@mds-core/mds-types'
-import { AnySchema } from 'ajv'
+import { SchemaObject } from 'ajv'
 
 export interface CollectorSchemaDomainModel {
   schema_id: string
-  schema: AnySchema
+  schema: SchemaObject
 }
 
 export type CollectorSchemaDomainCreateModel = CollectorSchemaDomainModel

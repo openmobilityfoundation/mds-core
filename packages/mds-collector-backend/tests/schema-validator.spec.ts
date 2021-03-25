@@ -88,6 +88,7 @@ describe('Schema Validation', () => {
   })
 
   it('Returns JSON schema', () => {
-    expect(validator.schema).toMatchObject(TestSchema)
+    expect(validator.$schema).toMatchObject(TestSchema)
+    expect(validator.$schema).toHaveProperty('$schema', 'http://json-schema.org/draft-07/schema#')
   })
 })

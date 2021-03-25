@@ -17,7 +17,7 @@
 import { Column, Entity, Index } from 'typeorm'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
-import { AnySchema } from 'ajv'
+import { SchemaObject } from 'ajv'
 
 @Entity('collector-schemas')
 export class CollectorSchemaEntity extends IdentityColumn(RecordedColumn(class {})) {
@@ -25,7 +25,7 @@ export class CollectorSchemaEntity extends IdentityColumn(RecordedColumn(class {
   schema_id: string
 
   @Column('json')
-  schema: AnySchema
+  schema: SchemaObject
 }
 
 export type CollectorSchemaEntityModel = CollectorSchemaEntity

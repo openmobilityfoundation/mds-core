@@ -25,12 +25,12 @@ import {
   ServiceError
 } from '@mds-core/mds-service-helpers'
 import { getEnvVar, pluralize, ServerError } from '@mds-core/mds-utils'
-import { ErrorObject, SchemaObject } from 'ajv'
+import { ErrorObject } from 'ajv'
 import { CollectorService } from '../@types'
 import { CollectorRepository } from '../repository'
 import { SchemaValidator } from '../schema-validator'
 
-const SchemaValidators = new Map<string, SchemaValidator>()
+const SchemaValidators = new Map<string, SchemaValidator<unknown>>()
 type CollectorStreamProducer = Nullable<StreamProducer<{}>>
 const StreamProducers = new Map<string, Nullable<CollectorStreamProducer>>()
 
@@ -38,7 +38,7 @@ const { TENANT_ID } = getEnvVar({
   TENANT_ID: 'mds'
 })
 
-const createSchemaValidator = async (schema_id: string): Promise<SchemaValidator> => {
+const createSchemaValidator = async (schema_id: string): Promise<SchemaValidator<unknown>> => {
   const { schema } = await CollectorRepository.getCollectorSchema(schema_id)
   return SchemaValidator(schema)
 }
@@ -77,10 +77,7 @@ export const CollectorServiceProvider: ServiceProvider<CollectorService> & Proce
 
   registerMessageSchema: async (schema_id, schema) => {
     try {
-      const validator = SchemaValidator({
-        $schema: 'http://json-schema.org/draft-07/schema#',
-        ...(schema as SchemaObject)
-      })
+      const validator = SchemaValidator(schema)
       await CollectorRepository.insertCollectorSchema({ schema_id, schema })
       SchemaValidators.set(schema_id, validator)
       return ServiceResult(true)
@@ -93,8 +90,8 @@ export const CollectorServiceProvider: ServiceProvider<CollectorService> & Proce
 
   getMessageSchema: async schema_id => {
     try {
-      const { schema } = await getSchemaValidator(schema_id)
-      return ServiceResult(schema)
+      const { $schema } = await getSchemaValidator(schema_id)
+      return ServiceResult($schema)
     } catch (error) {
       const exception = ServiceException(`Error Reading Schema ${schema_id}`, error)
       logger.error('getMessageSchema exception', { exception, error })

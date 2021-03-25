@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-import Ajv, { AnySchema, Options } from 'ajv'
+import Ajv, { SchemaObject, JSONSchemaType, Options, ValidateFunction } from 'ajv'
 import withFormats from 'ajv-formats'
 
-export const SchemaValidator = <Schema extends AnySchema>(schema: Schema, options: Options = { allErrors: true }) => {
-  const validator = withFormats(new Ajv(options)).compile<Schema>(schema)
+export type Schema<T> = SchemaObject | JSONSchemaType<T>
+
+export type SchemaValidator<T> = {
+  validate: (data: unknown) => data is T
+  $schema: Schema<T> & { $schema: string }
+}
+
+export const SchemaValidator = <T>(schema: Schema<T>, options: Options = { allErrors: true }): SchemaValidator<T> => {
+  const $schema = { $schema: 'http://json-schema.org/draft-07/schema#', ...schema }
+  const validator: ValidateFunction<T> = withFormats(new Ajv(options)).compile($schema)
   return {
-    validate: <T extends object = object>(data: unknown): data is T => {
+    validate: (data: unknown): data is T => {
       if (validator(data)) {
         return true
       }
-      throw validator.errors ?? []
+      throw [...(validator.errors ?? [])]
     },
-    schema: validator.schema
+    $schema
   }
 }
-
-export type SchemaValidator = ReturnType<typeof SchemaValidator>
