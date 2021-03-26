@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ValidationError } from '@mds-core/mds-utils'
 import { SchemaValidator } from '../schema-validator'
 import TestSchema from '../schemas/test.schema'
 
@@ -39,56 +40,30 @@ describe('Schema Validation', () => {
 
   it('Fails Validation (missing required field)', async () => {
     const { id, ...data } = TestData
-    await expect(async () => validator.validate(data)).rejects.toContainEqual(
-      expect.objectContaining({
-        keyword: 'required',
-        params: { missingProperty: 'id' }
-      })
-    )
+    await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid format)', async () => {
     const data = { ...TestData, email: 'invalid' }
-    await expect(async () => validator.validate(data)).rejects.toContainEqual(
-      expect.objectContaining({
-        keyword: 'format',
-        dataPath: '/email'
-      })
-    )
+    await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid enum)', async () => {
     const data = { ...TestData, country: 'NZ' }
-    await expect(async () => validator.validate(data)).rejects.toContainEqual(
-      expect.objectContaining({
-        keyword: 'enum',
-        dataPath: '/country'
-      })
-    )
+    await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid type)', async () => {
     const data = { ...TestData, zip: true }
-    await expect(async () => validator.validate(data)).rejects.toContainEqual(
-      expect.objectContaining({
-        keyword: 'type',
-        dataPath: '/zip'
-      })
-    )
+    await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid pattern)', async () => {
     const data = { ...TestData, country: 'CA' }
-    await expect(async () => validator.validate(data)).rejects.toContainEqual(
-      expect.objectContaining({
-        keyword: 'pattern',
-        dataPath: '/zip'
-      })
-    )
+    await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Returns JSON schema', () => {
-    expect(validator.$schema).toMatchObject(TestSchema)
-    expect(validator.$schema).toHaveProperty('$schema', 'http://json-schema.org/draft-07/schema#')
+    expect(validator.$schema).toMatchObject({ $schema: 'http://json-schema.org/draft-07/schema#', ...TestSchema })
   })
 })

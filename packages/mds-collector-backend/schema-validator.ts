@@ -16,6 +16,7 @@
 
 import Ajv, { SchemaObject, JSONSchemaType, Options, ValidateFunction } from 'ajv'
 import withFormats from 'ajv-formats'
+import { ValidationError } from '@mds-core/mds-utils'
 
 export type Schema<T> = SchemaObject | JSONSchemaType<T>
 
@@ -29,10 +30,11 @@ export const SchemaValidator = <T>(schema: Schema<T>, options: Options = { allEr
   const validator: ValidateFunction<T> = withFormats(new Ajv(options)).compile($schema)
   return {
     validate: (data: unknown): data is T => {
-      if (validator(data)) {
-        return true
+      if (!validator(data)) {
+        const [error] = validator.errors ?? [null]
+        throw new ValidationError(`${error?.dataPath || 'Data'} ${error?.message ?? 'is invalid'}`, validator.errors)
       }
-      throw [...(validator.errors ?? [])]
+      return true
     },
     $schema
   }
