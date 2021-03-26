@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { UUID, Timestamp, Nullable } from '@mds-core/mds-types'
 import { FEE_TYPE } from '../../@types'
@@ -33,9 +33,11 @@ export class TransactionEntity extends IdentityColumn(RecordedColumn(class {})) 
   @Column('bigint', { transformer: BigintTransformer })
   timestamp: Timestamp
 
+  @Index()
   @Column('varchar', { length: 127 })
   fee_type: FEE_TYPE
 
+  @Index()
   @Column('int')
   amount: number
 

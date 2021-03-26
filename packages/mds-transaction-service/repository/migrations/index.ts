@@ -15,5 +15,6 @@
  */
 
 import { CreateTransactionsTable1607356754555 } from './1607356754555-CreateTransactionsTable'
+import { TransactionsSearchIndicies1615586339528 } from './1615586339528-TransactionsSearchIndicies'
 
-export default [CreateTransactionsTable1607356754555]
+export default [CreateTransactionsTable1607356754555, TransactionsSearchIndicies1615586339528]

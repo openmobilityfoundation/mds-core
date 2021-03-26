@@ -19,9 +19,10 @@ import { NotFoundError } from '@mds-core/mds-utils'
 import { UUID } from '@mds-core/mds-types'
 import Joi from 'joi'
 import { buildPaginator, Cursor } from 'typeorm-cursor-pagination'
-import { LessThan, MoreThan, Between, FindOperator, In } from 'typeorm'
+import { LessThan, MoreThan, Between, FindOperator, In, Brackets } from 'typeorm'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import {
+  FEE_TYPE,
   SORTABLE_COLUMN,
   SORT_DIRECTION,
   TransactionDomainModel,
@@ -57,6 +58,10 @@ const { validate: validateTransactionSearchParams } = schemaValidator<Transactio
       provider_id: Joi.string().uuid(),
       start_timestamp: Joi.number().integer(),
       end_timestamp: Joi.number().integer(),
+      search_text: Joi.string(),
+      start_amount: Joi.number(),
+      end_amount: Joi.number(),
+      fee_type: Joi.string().allow(...FEE_TYPE),
       before: Joi.string(),
       after: Joi.string(),
       limit: Joi.number().integer().min(1).max(1000).default(10),
@@ -96,6 +101,10 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
       provider_id,
       start_timestamp,
       end_timestamp,
+      search_text,
+      start_amount,
+      end_amount,
+      fee_type,
       before,
       after,
       limit,
@@ -115,7 +124,37 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
       return {}
     }
 
+    const jsonSearch = (alias: string) => {
+      /**
+       * 'simple' means no word-stemming, all words are indexed and searchable.
+       * ['string','numeric','boolean'] means all values of the JSONB column are being searched as text
+       */
+      return search_text
+        ? new Brackets(qb =>
+            qb.where(
+              `jsonb_to_tsvector('simple',${alias}.receipt,'["string","numeric","boolean"]') @@ to_tsquery(:search_text)`,
+              {
+                search_text: search_text + ':*'
+              }
+            )
+          )
+        : []
+    }
+
     const resolveProviderId = (): { provider_id?: UUID } => (provider_id ? { provider_id } : {})
+
+    const resolveConditions = (alias: string) => {
+      const clauses = [
+        start_amount ? new Brackets(qb => qb.where(`amount > :start_amount`, { start_amount })) : [],
+        end_amount ? new Brackets(qb => qb.where(`amount < :end_amount`, { end_amount })) : [],
+        fee_type ? new Brackets(qb => qb.where({ fee_type })) : [],
+        jsonSearch(alias)
+      ]
+
+      return clauses.flat().reduce((acc, clause) => {
+        return new Brackets(qb => qb.andWhere(acc).andWhere(clause))
+      }, new Brackets(qb => qb.where('1=1')))
+    }
 
     try {
       const connection = await connect('ro')
@@ -130,6 +169,7 @@ class TransactionReadWriteRepository extends ReadWriteRepository {
         .getRepository(TransactionEntity)
         .createQueryBuilder(alias)
         .where({ ...resolveProviderId(), ...resolveTimeBounds() })
+        .andWhere(resolveConditions(alias))
 
       const { data, cursor } = await buildPaginator({
         alias,

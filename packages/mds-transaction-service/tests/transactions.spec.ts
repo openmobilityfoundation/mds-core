@@ -94,7 +94,9 @@ describe('Transaction Service Tests', () => {
           const [transaction] = transactionsGenerator(1)
           const { fee_type, ...malformedTransaction } = transaction
 
-          await expect(TransactionServiceClient.createTransaction(malformedTransaction as any)).rejects.toMatchObject({
+          await expect(
+            TransactionServiceClient.createTransaction(malformedTransaction as TransactionDomainModel)
+          ).rejects.toMatchObject({
             type: 'ValidationError'
           })
         })
@@ -257,6 +259,93 @@ describe('Transaction Service Tests', () => {
 
             return currTransaction
           }, undefined)
+        })
+
+        it('Get Bulk Transactions with search string on receipt json', async () => {
+          const limit = 5
+          const provider_id = uuid()
+
+          const transactionsToPersist = [
+            ...transactionsGenerator(5, { provider_id, receipt_details: { color: 'Blue' } })
+          ] // Arbitrarily generate 5 events
+          await TransactionServiceClient.createTransactions(transactionsToPersist)
+
+          // Partial matching on string-value 'blu'
+          const { transactions: bluePages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: 'blu'
+          })
+          expect(bluePages.length).toEqual(limit) // all results are color:blue
+
+          // Search for a non-existent value
+          const { transactions: redPages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: 'red'
+          })
+          expect(redPages.length).toEqual(0) // no results are color:red
+
+          await TransactionServiceClient.createTransactions([
+            ...transactionsGenerator(5, {
+              provider_id,
+              receipt_details: { whitePages: 5, releaseDate: '1993/09/24', color: 'White' }
+            })
+          ])
+
+          // Search for a numeric value
+          const { transactions: whitePages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: '5'
+          })
+          expect(whitePages.length).toEqual(limit) // found all the white pages missing from the book!
+        })
+
+        it('Get Bulk Transactions with search on fee_type, amount', async () => {
+          const limit = 5
+          const provider_id = uuid()
+
+          const transactionsToPersist = [
+            ...transactionsGenerator(5, { provider_id, receipt_details: { color: 'Blue' }, fee_type: 'parking_fee' })
+          ] // Arbitrarily generate 5 events
+          await TransactionServiceClient.createTransactions(transactionsToPersist)
+
+          // Partial matching on string-value 'blu', fee_type is parking_fee
+          const { transactions: bluePages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: 'blu',
+            fee_type: 'parking_fee'
+          })
+          expect(bluePages.length).toEqual(limit) // all results are color:blue
+
+          // Search for a non-existent value
+          const { transactions: baseFeePages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: 'blu',
+            fee_type: 'base_fee'
+          })
+          expect(baseFeePages.length).toEqual(0) // no results are base_fee
+
+          // Arbitrarily generate 5 events
+          await TransactionServiceClient.createTransactions([
+            ...transactionsGenerator(5, { provider_id, receipt_details: { color: 'Red' }, amount: 125 })
+          ])
+
+          // Partial matching on string-value 'red', amount > 100 and amount < 200
+          const { transactions: cheapRedPages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: 'red',
+            start_amount: 100,
+            end_amount: 200
+          })
+          expect(cheapRedPages.length).toEqual(limit) // all results are color:red
+
+          // Partial matching on string-value 'red', amount > 200 and amount < 300
+          const { transactions: expensiveRedPages } = await TransactionServiceClient.getTransactions({
+            limit,
+            search_text: 'red',
+            start_amount: 200,
+            end_amount: 300
+          })
+          expect(expensiveRedPages.length).toEqual(0) // no results between 200 and 300
         })
       })
 

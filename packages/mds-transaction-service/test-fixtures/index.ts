@@ -1,6 +1,11 @@
 import { UUID } from '@mds-core/mds-types'
 import { uuid } from '@mds-core/mds-utils'
-import { TransactionDomainModel, TransactionStatusDomainModel, TransactionOperationDomainCreateModel } from '../@types'
+import {
+  TransactionDomainModel,
+  TransactionStatusDomainModel,
+  TransactionOperationDomainCreateModel,
+  FEE_TYPE
+} from '../@types'
 
 const receipt = { receipt_id: uuid(), timestamp: Date.now(), receipt_details: {}, origin_url: '' }
 
@@ -10,11 +15,11 @@ const receipt = { receipt_id: uuid(), timestamp: Date.now(), receipt_details: {}
  */
 export function* transactionsGenerator(
   length = 20,
-  options: { provider_id?: UUID } = {}
+  options: { provider_id?: UUID; receipt_details?: {}; amount?: number; fee_type?: FEE_TYPE } = {}
 ): Generator<TransactionDomainModel> {
   const start_timestamp = Date.now() - length * 1000
 
-  const { provider_id } = options
+  const { provider_id, receipt_details = {}, amount = 100, fee_type = 'base_fee' } = options
 
   for (let i = 0; i < length; i++) {
     const timestamp = start_timestamp + i * 1000
@@ -24,9 +29,9 @@ export function* transactionsGenerator(
       provider_id: provider_id ?? uuid(),
       device_id: uuid(),
       timestamp,
-      amount: 100, // "I'd buy THAT for a dollar!"
-      fee_type: 'base_fee',
-      receipt
+      amount, // "I'd buy THAT for a dollar!"
+      fee_type,
+      receipt: { ...receipt, receipt_details }
     }
   }
 }

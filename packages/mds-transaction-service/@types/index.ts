@@ -118,6 +118,10 @@ export interface TransactionSearchParams {
   provider_id?: UUID
   start_timestamp?: Timestamp
   end_timestamp?: Timestamp
+  search_text?: string
+  start_amount?: number
+  end_amount?: number
+  fee_type?: FEE_TYPE
   before?: string
   after?: string
   limit?: number

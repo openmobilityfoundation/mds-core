@@ -45,12 +45,12 @@ pipeline {
             export RPC_PORT=$(randport)
             source env.jenkins
 
-            export PG_ID=$(docker run -d -e POSTGRES_HOST_AUTH_METHOD=trust -p $PG_PORT:5432 postgres:10-alpine)
+            export PG_ID=$(docker run -d -e POSTGRES_HOST_AUTH_METHOD=trust -p $PG_PORT:5432 postgres:11-alpine)
             export REDIS_ID=$(docker run -d -p $REDIS_PORT:6379 redis:5-alpine)
 
             function cleanup() {
-              docker stop $PG_ID
-              docker stop $REDIS_ID
+              docker stop $PG_ID && docker rm $PG_ID
+              docker stop $REDIS_ID && docker rm $REDIS_ID
             }
             trap cleanup EXIT
 
