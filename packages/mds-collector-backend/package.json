@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-collector-backend",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mobility Data Specification Collector Backend Service",
   "keywords": [
     "mds"
@@ -22,13 +22,13 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-logger": "0.2.0",
-    "@mds-core/mds-repository": "0.1.0",
-    "@mds-core/mds-rpc-common": "0.1.0",
-    "@mds-core/mds-service-helpers": "0.1.0",
-    "@mds-core/mds-stream": "0.1.26",
-    "@mds-core/mds-types": "0.1.23",
-    "@mds-core/mds-utils": "0.1.26",
+    "@mds-core/mds-logger": "0.2.1",
+    "@mds-core/mds-repository": "0.1.1",
+    "@mds-core/mds-rpc-common": "0.1.1",
+    "@mds-core/mds-service-helpers": "0.1.1",
+    "@mds-core/mds-stream": "0.1.27",
+    "@mds-core/mds-types": "0.1.24",
+    "@mds-core/mds-utils": "0.1.27",
     "ajv": "8.0.0",
     "ajv-formats": "2.0.0",
     "typeorm": "0.2.30"
