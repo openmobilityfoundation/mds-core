@@ -13,7 +13,7 @@
     "image:production": "pnpm run:concurrent image:production",
     "images": "pnpm run:concurrent image",
     "preinstall": "npx check-node-version --package && npx only-allow pnpm",
-    "lint": "pnpm lint:audit && pnpm lint:prettier '**/package.json' && pnpm lint:eslint '**/*.ts'",
+    "lint": "pnpm lint:audit && pnpm lint:prettier '**/package.json' && pnpm lint:eslint '**/!(*.spec).ts'",
     "lint:audit": "pnpm-ci audit -i 1556,1561 --strict",
     "lint:eslint": "eslint --ignore-path .gitignore --ignore-path .eslintignore",
     "lint:prettier": "prettier --check",

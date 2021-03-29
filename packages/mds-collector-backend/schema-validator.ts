@@ -26,13 +26,13 @@ export type SchemaValidator<T> = {
 }
 
 export const SchemaValidator = <T>(schema: Schema<T>, options: Options = { allErrors: true }): SchemaValidator<T> => {
-  const $schema = { $schema: 'http://json-schema.org/draft-07/schema#', ...schema }
+  const $schema = Object.assign({ $schema: 'http://json-schema.org/draft-07/schema#' }, schema)
   const validator: ValidateFunction<T> = withFormats(new Ajv(options)).compile($schema)
   return {
     validate: (data: unknown): data is T => {
       if (!validator(data)) {
-        const [error] = validator.errors ?? [null]
-        throw new ValidationError(`${error?.dataPath || 'Data'} ${error?.message ?? 'is invalid'}`, validator.errors)
+        const [{ instancePath, message } = { instancePath: 'Data', message: 'is invalid' }] = validator.errors ?? []
+        throw new ValidationError(`${instancePath} ${message}`, validator.errors)
       }
       return true
     },

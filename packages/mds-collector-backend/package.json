@@ -29,8 +29,8 @@
     "@mds-core/mds-stream": "0.1.26",
     "@mds-core/mds-types": "0.1.23",
     "@mds-core/mds-utils": "0.1.26",
-    "ajv": "7.0.4",
-    "ajv-formats": "1.5.1",
+    "ajv": "8.0.0",
+    "ajv-formats": "2.0.0",
     "typeorm": "0.2.30"
   }
 }

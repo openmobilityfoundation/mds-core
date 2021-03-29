@@ -30,50 +30,22 @@ type TestSchema = {
 const TestSchema: JSONSchemaType<TestSchema> = {
   type: 'object',
   properties: {
-    id: {
-      type: 'string',
-      format: 'uuid'
-    },
-    name: {
-      type: 'string'
-    },
-    email: {
-      type: 'string',
-      format: 'email',
-      nullable: true
-    },
-    country: {
-      type: 'string',
-      enum: [...Countries]
-    },
-    zip: {
-      type: 'string'
-    }
+    id: { type: 'string', format: 'uuid' },
+    name: { type: 'string' },
+    email: { type: 'string', format: 'email', nullable: true },
+    country: { type: 'string', enum: [...Countries] },
+    zip: { type: 'string' }
   },
-  if: {
-    properties: {
-      country: {
-        type: 'string',
-        const: 'US'
-      }
+  allOf: [
+    {
+      if: { properties: { country: { type: 'string', const: 'US' } } },
+      then: { properties: { zip: { type: 'string', pattern: '^[0-9]{5}(-[0-9]{4})?$' } } }
+    },
+    {
+      if: { properties: { country: { type: 'string', const: 'CA' } } },
+      then: { properties: { zip: { type: 'string', pattern: '^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$' } } }
     }
-  },
-  then: {
-    properties: {
-      zip: {
-        type: 'string',
-        pattern: '^[0-9]{5}(-[0-9]{4})?$'
-      }
-    }
-  },
-  else: {
-    properties: {
-      zip: {
-        type: 'string',
-        pattern: '^[A-Z][0-9][A-Z] [0-9][A-Z][0-9]$'
-      }
-    }
-  },
+  ],
   required: ['id', 'name', 'country', 'zip'],
   additionalProperties: false
 }
