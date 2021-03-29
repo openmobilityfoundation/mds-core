@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-schema-validators",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Mobility Data Specification JSON schema definition and validation",
   "keywords": [
     "mds",
@@ -19,9 +19,9 @@
     "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap --lines 75  ts-mocha --project ../../tsconfig.json"
   },
   "dependencies": {
-    "@mds-core/mds-providers": "0.1.27",
-    "@mds-core/mds-types": "0.1.24",
-    "@mds-core/mds-utils": "0.1.27",
+    "@mds-core/mds-providers": "0.1.28",
+    "@mds-core/mds-types": "0.1.25",
+    "@mds-core/mds-utils": "0.1.28",
     "joi": "17.3.0",
     "joi-to-json": "1.2.0"
   }
