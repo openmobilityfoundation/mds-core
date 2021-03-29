@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-geography-service:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-geography-service": "0.1.0",
-    "@mds-core/mds-webpack-config": "0.1.0"
+    "@mds-core/mds-geography-service": "0.1.1",
+    "@mds-core/mds-webpack-config": "0.1.1"
   }
 }

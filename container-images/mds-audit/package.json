@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-audit:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-audit": "0.1.38",
-    "@mds-core/mds-webpack-config": "0.1.0"
+    "@mds-core/mds-audit": "0.1.39",
+    "@mds-core/mds-webpack-config": "0.1.1"
   }
 }
