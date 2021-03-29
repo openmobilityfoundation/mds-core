@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-metrics-sheet",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "private": true,
   "description": "Docker Image for MDS Metrics Sheet",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-metrics-sheet:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-metrics-sheet": "0.0.28",
-    "@mds-core/mds-webpack-config": "0.1.1"
+    "@mds-core/mds-metrics-sheet": "0.0.29",
+    "@mds-core/mds-webpack-config": "0.1.2"
   }
 }

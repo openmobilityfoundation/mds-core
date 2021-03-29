@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-test-data",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "description": "Mobility Data Specification test data generator",
   "keywords": [
     "mds",
@@ -18,9 +18,9 @@
     "test": "DOTENV_CONFIG_PATH=../../.env jest --passWithNoTests"
   },
   "dependencies": {
-    "@mds-core/mds-logger": "0.2.1",
-    "@mds-core/mds-providers": "0.1.27",
-    "@mds-core/mds-types": "0.1.24",
-    "@mds-core/mds-utils": "0.1.27"
+    "@mds-core/mds-logger": "0.2.2",
+    "@mds-core/mds-providers": "0.1.28",
+    "@mds-core/mds-types": "0.1.25",
+    "@mds-core/mds-utils": "0.1.28"
   }
 }

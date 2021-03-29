@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-geography",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "description": "Docker Image for MDS Geography API",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-geography:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-geography": "0.0.2",
-    "@mds-core/mds-webpack-config": "0.1.1"
+    "@mds-core/mds-geography": "0.0.3",
+    "@mds-core/mds-webpack-config": "0.1.2"
   }
 }
