@@ -19,7 +19,7 @@ import { JSONSchemaType } from 'ajv'
 const Countries = <const>['US', 'CA']
 type Country = typeof Countries[number]
 
-type TestSchema = {
+export type TestSchema = {
   id: string
   name: string
   email?: string
@@ -27,7 +27,7 @@ type TestSchema = {
   zip: string
 }
 
-const TestSchema: JSONSchemaType<TestSchema> = {
+export const TestSchema: JSONSchemaType<TestSchema> = {
   type: 'object',
   properties: {
     id: { type: 'string', format: 'uuid' },
@@ -49,5 +49,3 @@ const TestSchema: JSONSchemaType<TestSchema> = {
   required: ['id', 'name', 'country', 'zip'],
   additionalProperties: false
 }
-
-export default TestSchema

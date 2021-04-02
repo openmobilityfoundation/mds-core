@@ -28,7 +28,7 @@ import { getEnvVar, pluralize, ServerError } from '@mds-core/mds-utils'
 import { ErrorObject } from 'ajv'
 import { CollectorService } from '../@types'
 import { CollectorRepository } from '../repository'
-import { SchemaValidator } from '../schema-validator'
+import { SchemaValidator } from '@mds-core/mds-schema-validators'
 
 const SchemaValidators = new Map<string, SchemaValidator<unknown>>()
 type CollectorStreamProducer = Nullable<StreamProducer<{}>>

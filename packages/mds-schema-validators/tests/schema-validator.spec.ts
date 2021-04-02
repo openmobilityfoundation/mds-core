@@ -15,8 +15,7 @@
  */
 
 import { ValidationError } from '@mds-core/mds-utils'
-import { SchemaValidator } from '../schema-validator'
-import TestSchema from '../schemas/test.schema'
+import { SchemaValidator, TestSchema } from '../index'
 
 const TestData: TestSchema = {
   country: 'US',
@@ -30,36 +29,43 @@ const validator = SchemaValidator(TestSchema)
 
 describe('Schema Validation', () => {
   it('Passes Validation', () => {
-    expect(validator.validate(TestData)).toBe(true)
+    expect(validator.isValid(TestData)).toBe(true)
+    expect(validator.validate(TestData)).toBe(TestData)
   })
 
   it('Passes Validation (optional field)', () => {
     const { email, ...data } = TestData
-    expect(validator.validate(data)).toBe(true)
+    expect(validator.isValid(data)).toBe(true)
+    expect(validator.validate(data)).toBe(data)
   })
 
   it('Fails Validation (missing required field)', async () => {
     const { id, ...data } = TestData
+    expect(validator.isValid(data)).toBe(false)
     await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid format)', async () => {
     const data = { ...TestData, email: 'invalid' }
+    expect(validator.isValid(data)).toBe(false)
     await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid enum)', async () => {
     const data = { ...TestData, country: 'NZ' }
+    expect(validator.isValid(data)).toBe(false)
     await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid type)', async () => {
     const data = { ...TestData, zip: true }
+    expect(validator.isValid(data)).toBe(false)
     await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 
   it('Fails Validation (invalid pattern)', async () => {
     const data = { ...TestData, country: 'CA' }
+    expect(validator.isValid(data)).toBe(false)
     await expect(async () => validator.validate(data)).rejects.toThrowError(ValidationError)
   })
 

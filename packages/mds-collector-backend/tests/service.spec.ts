@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { uuid } from '@mds-core/mds-utils'
+import { TestSchema } from '@mds-core/mds-schema-validators'
 import { CollectorServiceClient, CollectorServiceClientFactory } from '../client'
 import { CollectorBackendController } from '../service/backend'
 import { CollectorRepository } from '../repository'
-import TestSchema from '../schemas/test.schema'
 
 const CollectorBackend = CollectorBackendController()
 const TEST_SCHEMA_ID = 'test'

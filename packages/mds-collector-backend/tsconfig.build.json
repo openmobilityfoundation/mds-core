@@ -8,6 +8,7 @@
     { "path": "../../packages/mds-repository/tsconfig.build.json" },
     { "path": "../../packages/mds-rpc-common/tsconfig.build.json" },
     { "path": "../../packages/mds-service-helpers/tsconfig.build.json" },
+    { "path": "../../packages/mds-schema-validators/tsconfig.build.json" },
     { "path": "../../packages/mds-types/tsconfig.build.json" },
     { "path": "../../packages/mds-stream/tsconfig.build.json" },
     { "path": "../../packages/mds-utils/tsconfig.build.json" }
