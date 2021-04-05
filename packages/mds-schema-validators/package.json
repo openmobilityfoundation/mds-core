@@ -22,9 +22,9 @@
     "@mds-core/mds-providers": "0.1.28",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
-    "ajv": "8.0.3",
+    "ajv": "8.0.5",
     "ajv-formats": "2.0.2",
-    "joi": "17.3.0",
+    "joi": "17.4.0",
     "joi-to-json": "1.2.0"
   }
 }

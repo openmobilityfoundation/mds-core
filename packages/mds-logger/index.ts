@@ -38,6 +38,7 @@ const redact = (arg: string | Record<string, unknown> | Error | undefined) => {
 const log = (level: LogLevel) => (
   message: string,
   data?: Record<string, unknown> | Error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): { log_message?: string; log_data?: any } => {
   if (process.env.QUIET === 'true') {
     return {}

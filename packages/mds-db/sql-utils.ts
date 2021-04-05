@@ -85,7 +85,7 @@ export function configureClient(pg_info: PGInfo) {
   })
 
   client.on('notice', async msg => {
-    logger.warn('notice:', msg)
+    logger.warn('notice:', { msg })
   })
 
   if (!client) {
