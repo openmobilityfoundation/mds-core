@@ -16,7 +16,7 @@
 
 import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
-import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_STATES } from '@mds-core/mds-types'
+import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_REASONS } from '@mds-core/mds-types'
 import { DeviceDomainModel, EventDomainModel, TelemetryDomainModel } from '../@types'
 
 export const {
@@ -28,10 +28,10 @@ export const {
       device_id: Joi.string().uuid().required(),
       provider_id: Joi.string().uuid().required(),
       vehicle_id: Joi.string().required(),
-      vehicle_type: Joi.string()
+      type: Joi.string()
         .valid(...Object.keys(VEHICLE_TYPES))
         .required(),
-      propulsion_types: Joi.array().valid(Joi.string().valid(...Object.keys(PROPULSION_TYPES))),
+      propulsion: Joi.string().valid(...Object.keys(PROPULSION_TYPES)),
       year: Joi.number().allow(null),
       mfgr: Joi.string().allow(null),
       model: Joi.string().allow(null)
@@ -71,10 +71,12 @@ export const {
       device_id: Joi.string().uuid().required(),
       provider_id: Joi.string().uuid().required(),
       timestamp: Joi.number().required(),
-      event_types: Joi.array()
-        .valid(Joi.string().valid(...VEHICLE_EVENTS))
+      event_type: Joi.string()
+        .valid(...Object.keys(VEHICLE_EVENTS))
         .required(),
-      vehicle_state: Joi.string().valid(...VEHICLE_STATES),
+      event_type_reason: Joi.string()
+        .valid(...Object.keys(VEHICLE_REASONS))
+        .allow(null),
       telemetry_timestamp: Joi.number().allow(null),
       telemetry: telemetrySchema.allow(null),
       trip_id: Joi.string().uuid().allow(null),

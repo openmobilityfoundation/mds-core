@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import { UUID, Timestamp } from '@mds-core/mds-types'
+import { UUID, Timestamp, VEHICLE_EVENT } from '@mds-core/mds-types'
+import { now, yesterday } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
 
 import { logSql, SqlVals } from './sql-utils'
 
-import { getReadOnlyClient } from './client'
+import { getReadOnlyClient, makeReadOnlyQuery } from './client'
 
 export interface ReadTripIdsResult {
   count: number
@@ -82,4 +83,26 @@ export async function readTripIds(params: Partial<ReadTripIdsQueryParams> = {}):
     logger.error('readTripIds error', err)
     throw err
   }
+}
+
+export async function getTripCountsPerProviderSince(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: string; count: number }[]> {
+  const vals = new SqlVals()
+  const sql = `select provider_id, count(event_type) from events where event_type='trip_end' and recorded > ${vals.add(
+    start
+  )} and recorded < ${vals.add(stop)} group by provider_id, event_type`
+  return makeReadOnlyQuery(sql, vals)
+}
+
+export async function getTripEventsLast24HoursByProvider(
+  start = yesterday(),
+  stop = now()
+): Promise<{ provider_id: UUID; trip_id: UUID; event_type: VEHICLE_EVENT; recorded: number; timestamp: number }[]> {
+  const vals = new SqlVals()
+  const sql = `select provider_id, trip_id, event_type, recorded, timestamp from ${
+    schema.TABLE.events
+  } where trip_id is not null and recorded > ${vals.add(start)} and recorded < ${vals.add(stop)} order by "timestamp"`
+  return makeReadOnlyQuery(sql, vals)
 }

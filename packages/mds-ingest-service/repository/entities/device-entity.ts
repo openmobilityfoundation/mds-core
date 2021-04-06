@@ -22,8 +22,8 @@ export interface DeviceEntityModel extends IdentityColumn, RecordedColumn {
   device_id: DeviceDomainModel['device_id']
   provider_id: DeviceDomainModel['provider_id']
   vehicle_id: DeviceDomainModel['vehicle_id']
-  vehicle_type: DeviceDomainModel['vehicle_type']
-  propulsion_types: DeviceDomainModel['propulsion_types']
+  type: DeviceDomainModel['type']
+  propulsion: DeviceDomainModel['propulsion']
   year: DeviceDomainModel['year']
   mfgr: DeviceDomainModel['mfgr']
   model: DeviceDomainModel['model']
@@ -41,10 +41,10 @@ export class DeviceEntity extends IdentityColumn(RecordedColumn(class {})) imple
   vehicle_id: DeviceEntityModel['vehicle_id']
 
   @Column('varchar', { length: 31 })
-  vehicle_type: DeviceEntityModel['vehicle_type']
+  type: DeviceEntityModel['type']
 
   @Column('varchar', { array: true, length: 31 })
-  propulsion_types: DeviceEntityModel['propulsion_types']
+  propulsion: DeviceEntityModel['propulsion']
 
   @Column('smallint', { nullable: true })
   year: DeviceEntityModel['year']

@@ -23,7 +23,7 @@ import {
   Timestamp,
   UUID,
   VEHICLE_EVENT,
-  VEHICLE_STATE,
+  VEHICLE_REASON,
   VEHICLE_TYPE
 } from '@mds-core/mds-types'
 import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
@@ -32,8 +32,8 @@ export interface DeviceDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID
   vehicle_id: string
-  vehicle_type: VEHICLE_TYPE
-  propulsion_types: PROPULSION_TYPE[]
+  type: VEHICLE_TYPE
+  propulsion: PROPULSION_TYPE[]
 
   year: Nullable<number>
   mfgr: Nullable<string>
@@ -62,9 +62,9 @@ export interface EventDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
-  event_types: VEHICLE_EVENT[]
-  vehicle_state: VEHICLE_STATE
+  event_type: VEHICLE_EVENT
 
+  event_type_reason: Nullable<VEHICLE_REASON>
   telemetry_timestamp: Nullable<Timestamp>
   telemetry: Nullable<TelemetryDomainModel>
   trip_id: Nullable<UUID>

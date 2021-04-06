@@ -50,10 +50,8 @@ const COLUMN = Enum(
   'description',
   'device_id',
   'effective_date',
-  'end_time',
-  'event_type', // deprecated 1.0 for event_types
-  'event_types', // new in 1.0
-  'event_type_reason', // deprecated 1.0, removed entirely
+  'event_type',
+  'event_type_reason',
   'geography_id',
   'geography_json',
   'geography_metadata',
@@ -71,8 +69,6 @@ const COLUMN = Enum(
   'policy_metadata',
   'prev_geographies',
   'propulsion',
-  'propulsion_type', // deprecated 1.0 for propulsion_types
-  'propulsion_types', // new in 1.0
   'provider_device_id',
   'provider_id',
   'provider_name',
@@ -86,9 +82,7 @@ const COLUMN = Enum(
   'thumbnail_mimetype',
   'timestamp',
   'trip_id',
-  'type', // deprecated 1.0 for vehicle_type
-  'vehicle_state', // new in 1.0
-  'vehicle_type', // new in 1.0
+  'type',
   'vehicle_id',
   'year'
 )
@@ -143,10 +137,8 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.device_id,
     COLUMN.provider_id,
     COLUMN.vehicle_id,
-    // COLUMN.type, // deprecated 1.0
-    COLUMN.vehicle_type, // added 1.0
-    // COLUMN.propulsion, // deprecated 1.0
-    COLUMN.propulsion_types, // added 1.0
+    COLUMN.type,
+    COLUMN.propulsion,
     COLUMN.year,
     COLUMN.mfgr,
     COLUMN.model,
@@ -157,10 +149,8 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.device_id,
     COLUMN.provider_id,
     COLUMN.timestamp,
-    // COLUMN.event_type, // deprecated 1.0
-    COLUMN.event_types, // added 1.0
-    // COLUMN.event_type_reason, // deprecated 1.0
-    COLUMN.vehicle_state, // added 1.0
+    COLUMN.event_type,
+    COLUMN.event_type_reason,
     COLUMN.telemetry_timestamp,
     COLUMN.trip_id,
     COLUMN.service_area_id,

@@ -21,11 +21,12 @@ import should from 'should'
 import test from 'unit.js'
 
 import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, VehicleEvent, Device, Geography } from '@mds-core/mds-types'
+import { Telemetry, Recorded, VehicleEvent, Device, VEHICLE_EVENTS, Geography } from '@mds-core/mds-types'
 import {
   JUMP_TEST_DEVICE_1,
   makeDevices,
   makeEventsWithTelemetry,
+  makeEvents,
   JUMP_PROVIDER_ID,
   POLICY_JSON,
   POLICY2_JSON,
@@ -41,7 +42,7 @@ import {
   START_ONE_MONTH_FROM_NOW,
   DELETEABLE_POLICY
 } from '@mds-core/mds-test-data'
-import { now, clone, NotFoundError, rangeRandomInt, ConflictError, yesterday, days, uuid } from '@mds-core/mds-utils'
+import { now, clone, NotFoundError, rangeRandomInt, uuid, ConflictError, yesterday, days } from '@mds-core/mds-utils'
 import { isNullOrUndefined } from 'util'
 import { AttachmentRepository } from '@mds-core/mds-attachment-service'
 import { AuditRepository } from '@mds-core/mds-audit-service'
@@ -50,6 +51,7 @@ import { IngestRepository } from '@mds-core/mds-ingest-service'
 import { PolicyRepository } from '@mds-core/mds-policy-service'
 import MDSDBPostgres from '../index'
 import { dropTables, createTables } from '../migration'
+import { Trip } from '../types'
 import { PGInfo } from '../sql-utils'
 
 const { env } = process
@@ -76,6 +78,42 @@ const DistrictSeven: Geography = {
   geography_json: DISTRICT_SEVEN
 }
 
+function makeTrip(device: Device): Trip {
+  return {
+    provider_id: device.provider_id,
+    provider_name: device.provider_id,
+    device_id: device.device_id,
+    vehicle_id: device.vehicle_id,
+    vehicle_type: device.type,
+    propulsion_type: device.propulsion,
+    provider_trip_id: uuid(),
+    trip_duration: rangeRandomInt(5),
+    trip_distance: rangeRandomInt(5),
+    route: {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {
+            timestamp: now()
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [Math.random() * 10, Math.random() * 10]
+          }
+        }
+      ]
+    },
+    accuracy: Math.random() * 3,
+    trip_start: now() - 1000 * Math.random(),
+    trip_end: now(),
+    parking_verification_url: 'http://iamverified.com',
+    standard_cost: rangeRandomInt(5),
+    actual_cost: rangeRandomInt(5),
+    recorded: now()
+  }
+}
+
 /* You'll need postgres running and the env variable PG_NAME
  * to be set to run these tests.
  */
@@ -85,18 +123,21 @@ async function seedDB() {
   await MDSDBPostgres.reinitialize()
   const devices: Device[] = makeDevices(9, startTime, JUMP_PROVIDER_ID) as Device[]
   devices.push(JUMP_TEST_DEVICE_1 as Device)
-  const decommissionEvents: VehicleEvent[] = makeEventsWithTelemetry(devices.slice(0, 9), startTime + 10, shapeUUID, {
-    event_types: ['decommissioned'],
-    vehicle_state: 'removed',
-    speed: rangeRandomInt(0, 10)
-  })
-  const tripEndEvent: VehicleEvent[] = makeEventsWithTelemetry(devices.slice(9, 10), startTime + 10, shapeUUID, {
-    event_types: ['trip_end'],
-    vehicle_state: 'available',
-    speed: rangeRandomInt(0, 10)
-  })
+  const deregisterEvents: VehicleEvent[] = makeEventsWithTelemetry(
+    devices.slice(0, 9),
+    startTime + 10,
+    shapeUUID,
+    VEHICLE_EVENTS.deregister,
+    rangeRandomInt(10)
+  )
+  const tripEndEvent: VehicleEvent[] = makeEventsWithTelemetry(
+    devices.slice(9, 10),
+    startTime + 10,
+    shapeUUID,
+    'trip_end'
+  )
   const telemetry: Telemetry[] = []
-  const events: VehicleEvent[] = decommissionEvents.concat(tripEndEvent)
+  const events: VehicleEvent[] = deregisterEvents.concat(tripEndEvent)
   events.map(event => {
     if (event.telemetry) {
       telemetry.push(event.telemetry)
@@ -114,18 +155,22 @@ async function seedTripEvents(reinit = true) {
 
   const devices: Device[] = makeDevices(9, startTime, JUMP_PROVIDER_ID) as Device[]
   const trip_id = uuid()
-  const tripStartEvents: VehicleEvent[] = makeEventsWithTelemetry(devices.slice(0, 9), startTime + 10, shapeUUID, {
-    event_types: ['trip_start'],
-    vehicle_state: 'on_trip',
-    speed: rangeRandomInt(10),
+  const tripStartEvents: VehicleEvent[] = makeEventsWithTelemetry(
+    devices.slice(0, 9),
+    startTime + 10,
+    shapeUUID,
+    VEHICLE_EVENTS.trip_start,
+    rangeRandomInt(10),
     trip_id
-  })
-  const tripEndEvents: VehicleEvent[] = makeEventsWithTelemetry(devices.slice(9, 10), startTime + 10, shapeUUID, {
-    event_types: ['trip_end'],
-    vehicle_state: 'available',
-    speed: rangeRandomInt(10),
+  )
+  const tripEndEvents: VehicleEvent[] = makeEventsWithTelemetry(
+    devices.slice(9, 10),
+    startTime + 10,
+    shapeUUID,
+    VEHICLE_EVENTS.trip_end,
+    rangeRandomInt(10),
     trip_id
-  })
+  )
   const telemetry: Telemetry[] = []
   const events: VehicleEvent[] = tripStartEvents.concat(tripEndEvents)
   events.map(event => {
@@ -257,9 +302,68 @@ if (pg_info.database) {
         assert.deepEqual(result[0].count, 10)
       })
 
+      it('.getEventCountsPerProviderSince', async () => {
+        const result = await MDSDBPostgres.getEventCountsPerProviderSince()
+        assert.deepEqual(result[0].provider_id, JUMP_PROVIDER_ID)
+        assert.deepEqual(result[0].event_type, VEHICLE_EVENTS.deregister)
+        assert.deepEqual(result[0].count, 9)
+        assert.deepEqual(result[1].provider_id, JUMP_PROVIDER_ID)
+        assert.deepEqual(result[1].event_type, VEHICLE_EVENTS.trip_end)
+        assert.deepEqual(result[1].count, 1)
+      })
+
+      it('.getEventsLast24HoursPerProvider', async () => {
+        const result = await MDSDBPostgres.getEventsLast24HoursPerProvider()
+        assert.deepEqual(result.length, 10)
+        const firstResult = result[0]
+        assert(firstResult.provider_id)
+        assert(firstResult.device_id)
+        assert(firstResult.event_type)
+        assert(firstResult.recorded)
+        assert(firstResult.timestamp)
+      })
+
+      it('.getTelemetryCountsPerProviderSince', async () => {
+        const result = await MDSDBPostgres.getTelemetryCountsPerProviderSince()
+        assert.deepEqual(result.length, 1)
+      })
+
+      it('.getTripCountsPerProviderSince', async () => {
+        const result = await MDSDBPostgres.getTripCountsPerProviderSince()
+        assert.deepEqual(result[0].count, 1)
+      })
+
       it('.getVehicleCountsPerProvider', async () => {
         const result = await MDSDBPostgres.getVehicleCountsPerProvider()
         assert.deepEqual(result[0].count, 10)
+      })
+
+      it('.getNumVehiclesRegisteredLast24HoursByProvider', async () => {
+        const result = await MDSDBPostgres.getNumVehiclesRegisteredLast24HoursByProvider()
+        assert.deepEqual(result[0].count, 10)
+      })
+
+      it('.getNumEventsLast24HoursByProvider', async () => {
+        const result = await MDSDBPostgres.getNumEventsLast24HoursByProvider()
+        assert.deepEqual(result[0].count, 10)
+      })
+
+      it('.getTripEventsLast24HoursByProvider', async () => {
+        const trip1: Trip = makeTrip(JUMP_TEST_DEVICE_1)
+        const trip2: Trip = makeTrip(JUMP_TEST_DEVICE_1)
+        const event1: VehicleEvent = makeEvents([JUMP_TEST_DEVICE_1], now() - 5)[0]
+        const event2: VehicleEvent = makeEvents([JUMP_TEST_DEVICE_1], now())[0]
+        event1.trip_id = trip1.provider_trip_id
+        event2.trip_id = trip2.provider_trip_id
+        await MDSDBPostgres.writeEvent(event1)
+        await MDSDBPostgres.writeEvent(event2)
+        const result = await MDSDBPostgres.getTripEventsLast24HoursByProvider()
+        assert.deepEqual(result.length, 2)
+      })
+
+      it('.getMostRecentEventByProvider', async () => {
+        const result = await MDSDBPostgres.getMostRecentEventByProvider()
+        assert.deepEqual(result.length, 1)
       })
 
       it('.health', async () => {

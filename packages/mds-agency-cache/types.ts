@@ -23,15 +23,14 @@ import {
   PROPULSION_TYPE
 } from '@mds-core/mds-types'
 
-export type StringifiedEvent = Stringify<Omit<VehicleEvent, 'telemetry' | 'event_types'>> &
-  Pick<VehicleEvent, 'event_types'>
+export type StringifiedEvent = Stringify<Omit<VehicleEvent, 'telemetry'>>
 export type StringifiedTelemetry = Stringify<Omit<Telemetry, 'gps'>> & {
   gps: Stringify<Omit<TelemetryData, 'charge'>>
 }
 export type StringifiedEventWithTelemetry = StringifiedEvent & { telemetry?: StringifiedTelemetry }
 
 export type StringifiedCacheReadDeviceResult = Stringify<CacheReadDeviceResult & { timestamp?: Timestamp }> & {
-  propulsion_types: PROPULSION_TYPE[]
+  propulsion: PROPULSION_TYPE[]
 }
 export type CacheReadDeviceResult = Device & { updated?: Timestamp | null; telemetry?: Telemetry | null }
 export type CachedItem = StringifiedCacheReadDeviceResult | StringifiedTelemetry | StringifiedEvent

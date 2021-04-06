@@ -72,9 +72,6 @@ function api(app: express.Express): express.Express {
       if (details !== null) {
         return res.status(400).send({ error: new ValidationError(JSON.stringify(details)) })
       }
-      if (policy.publish_date) {
-        return res.status(400).send({ error: new ValidationError('publish_date must be set via publish endpoint') })
-      }
 
       try {
         await db.writePolicy(policy)
@@ -138,10 +135,6 @@ function api(app: express.Express): express.Express {
 
       if (details !== null) {
         return res.status(400).send({ error: new ValidationError(JSON.stringify(details)) })
-      }
-
-      if (policy.publish_date) {
-        return res.status(400).send({ error: new ValidationError('publish_date must be set via publish endpoint') })
       }
 
       try {

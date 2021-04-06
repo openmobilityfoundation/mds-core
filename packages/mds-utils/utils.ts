@@ -26,16 +26,17 @@ import {
   BoundingBox,
   Geography,
   Rule,
-  EVENT_STATES_MAP,
-  VEHICLE_STATE,
+  EVENT_STATUS_MAP,
+  VEHICLE_STATUS,
   BBox,
+  VEHICLE_EVENT,
   SingleOrArray
 } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
 import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
 
 import { isArray, isString } from 'util'
-import { getNextStates, isEventSequenceValid } from './state-machine'
+import { getNextState } from './state-machine'
 import { parseRelative, getCurrentDate } from './date-time-utils'
 
 const RADIUS = 30.48 // 100 feet, in meters
@@ -487,6 +488,15 @@ function isInsideBoundingBox(telemetry: Telemetry | undefined | null, bbox: Boun
   return false
 }
 
+function isStateTransitionValid(
+  eventA: VehicleEvent & { event_type: VEHICLE_EVENT },
+  eventB: VehicleEvent & { event_type: VEHICLE_EVENT }
+) {
+  const currState = EVENT_STATUS_MAP[eventA.event_type]
+  const nextState = getNextState(currState, eventB.event_type)
+  return nextState !== undefined
+}
+
 function getPolygon(geographies: Geography[], geography: string): Geometry | FeatureCollection {
   const res = geographies.find((location: Geography) => {
     return location.geography_id === geography
@@ -497,78 +507,14 @@ function getPolygon(geographies: Geography[], geography: string): Geometry | Fea
   return res.geography_json
 }
 
-function areThereCommonElements<T, U>(arr1: T[], arr2: U[]) {
-  const set = new Set([...arr1, ...arr2])
-  return set.size !== arr1.length + arr2.length
-}
-
-/**
- * The rule matches this event if a transient event_type and possible resultant states,
- * or the final event_type and explicitly encoded vehicle_state match with the rule's status definitions.
- * e.g. if the rule states are { reserved: [] } and there's an event with event_types
- *      [trip_end, reservation_start, trip_start], there's an implication
- *      that the vehicle entered the reserved state after reservation_start,
- *      even if the final state of the event is on_trip, and the rule will match.
- *
- * @example Matching transient `event_type`
- * ```typescript
- * isInStatesOrEvents({ states: { reserved: [] } }, { event_types: ['trip_end', 'reservation_start', 'trip_start'], vehicle_state: 'on_trip' }) => true
- * ```
- * @example State matching for transient `event_type` 'off_hours', but `event_type` not matched with explicit `event_type` in rule
- * ```typescript
- * isInStatesOrEvents({ states: { non_operational: ['maintenance'] } }, { event_types: ['trip_end', 'off_hours', 'on_hours'], vehicle_state: 'available' }) => false
- * ```
- * @example Match for last `event_type` and encoded `vehicle_state`, with explicit `event_type` in rule
- * ```typescript
- * isInStatesOrEvents({ states: { available: ['on_hours'] } }, { event_types: ['trip_end', 'off_hours', 'on_hours'], vehicle_state: 'available' }) => true
- * ```
- * @example Match for last `event_type` and encoded `vehicle_state`, with catch-all in rule
- * ```typescript
- * isInStatesOrEvents({ states: { available: [] } }, { event_types: ['on_hours'], vehicle_state: 'available' }) => true
- * ```
- */
-function isInStatesOrEvents(
-  rule: Pick<Rule, 'states'>,
-  event: Pick<VehicleEvent, 'event_types' | 'vehicle_state'>
-): boolean {
-  const { states } = rule
-  // If no states are specified, then the rule applies to all VehicleStates.
-  if (states === null || states === undefined) {
-    return true
-  }
-
-  const { event_types, vehicle_state } = event
-
-  // All event_types except the last (in most cases this will be an empty list)
-  const transientEventTypes = event_types.splice(0, -1)
-
-  /**
-   * State encoded in the event payload (default acc in the reducer) + states that it is
-   * possible to transition into with any transient event_types
-   */
-  const possibleStates: VEHICLE_STATE[] = transientEventTypes.reduce(
-    (acc: VEHICLE_STATE[], event_type) => {
-      return acc.concat(EVENT_STATES_MAP[event_type])
-    },
-    [vehicle_state]
-  )
-
-  return possibleStates.some(state => {
-    // Explicit events encoded in rule for that state (if any)
-    const matchableEvents: string[] | undefined = states[state as VEHICLE_STATE]
-
-    /**
-     * If event_types not encoded in rule, assume state match.
-     * If event_types encoded in rule, see if event.event_types contains a match.
-     */
-    if (
-      matchableEvents !== undefined &&
-      (matchableEvents.length === 0 || areThereCommonElements(matchableEvents, event.event_types))
-    ) {
-      return true
-    }
-    return false
-  })
+function isInStatesOrEvents(rule: Rule, event: VehicleEvent): boolean {
+  const status = rule.statuses ? rule.statuses[EVENT_STATUS_MAP[event.event_type] as VEHICLE_STATUS] : null
+  return status !== null
+    ? rule.statuses !== null &&
+        Object.keys(rule.statuses).includes(EVENT_STATUS_MAP[event.event_type]) &&
+        status !== undefined &&
+        (status.length === 0 || (status as string[]).includes(event.event_type))
+    : true
 }
 
 function routeDistance(coordinates: { lat: number; lng: number }[]): number {
@@ -683,8 +629,7 @@ export {
   isInsideBoundingBox,
   head,
   tail,
-  isEventSequenceValid,
-  getNextStates,
+  isStateTransitionValid,
   pointInGeometry,
   getPolygon,
   isInStatesOrEvents,
@@ -698,6 +643,5 @@ export {
   getEnvVar,
   asArray,
   pluralize,
-  filterDefined,
-  areThereCommonElements
+  filterDefined
 }

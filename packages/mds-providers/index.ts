@@ -80,7 +80,7 @@ const PROVIDER_IDS = [
   SUPPORT3_PROVIDER_ID
 ] as const
 
-export type PROVIDER_ID = typeof PROVIDER_IDS[number]
+type PROVIDER_ID = typeof PROVIDER_IDS[number]
 
 export const providers: Readonly<{ [P in PROVIDER_ID]: Readonly<Provider> }> = Object.freeze({
   [JUMP_PROVIDER_ID]: Object.freeze({

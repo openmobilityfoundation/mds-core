@@ -14,29 +14,19 @@
  * limitations under the License.
  */
 
-import {
-  UUID,
-  Device,
-  VehicleEvent,
-  Telemetry,
-  Timestamp,
-  Recorded,
-  VEHICLE_EVENT,
-  VEHICLE_STATE
-} from '@mds-core/mds-types'
+import { UUID, Device, VehicleEvent, Telemetry, Timestamp, Recorded, VEHICLE_STATUS } from '@mds-core/mds-types'
 import { MultiPolygon } from 'geojson'
 import {
   ApiRequest,
   ApiResponse,
   ApiResponseLocals,
   ApiRequestParams,
-  ApiResponseLocalsClaims,
-  ApiResponseLocalsVersion
+  ApiResponseLocalsClaims
 } from '@mds-core/mds-api-server'
 
-export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1', '1.0.0'] as const
+export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
 export type AGENCY_API_SUPPORTED_VERSION = typeof AGENCY_API_SUPPORTED_VERSIONS[number]
-export const [AGENCY_API_DEFAULT_VERSION] = AGENCY_API_SUPPORTED_VERSIONS // default has to be oldest, because we didn't used to require a version
+export const [AGENCY_API_DEFAULT_VERSION] = AGENCY_API_SUPPORTED_VERSIONS
 
 export type AgencyApiRequest<B = {}> = ApiRequest<B>
 
@@ -51,8 +41,7 @@ export type AgencyApiAccessTokenScopes = 'admin:all' | 'vehicles:read'
 
 export type AgencyApiResponse<B = {}> = ApiResponse<B> &
   ApiResponseLocalsClaims<AgencyApiAccessTokenScopes> &
-  ApiResponseLocals<'provider_id', UUID> &
-  ApiResponseLocalsVersion<AGENCY_API_SUPPORTED_VERSION>
+  ApiResponseLocals<'provider_id', UUID>
 
 export type AgencyApiRegisterVehicleResponse = AgencyApiResponse
 
@@ -61,7 +50,7 @@ export type AgencyApiGetVehiclesByProviderResponse = AgencyApiResponse<Paginated
 export type AgencyApiUpdateVehicleResponse = AgencyApiResponse
 export type AgencyApiSubmitVehicleEventResponse = AgencyApiResponse<{
   device_id: UUID
-  state: VEHICLE_STATE
+  status: VEHICLE_STATUS
 }>
 
 export type AgencyApiSubmitVehicleTelemetryResponse = AgencyApiResponse<{
@@ -99,7 +88,7 @@ export type TelemetryResult =
     >[]
 
 export type CompositeVehicle = Partial<
-  Device & { prev_events?: VEHICLE_EVENT[]; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }
+  Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }
 >
 
 export type PaginatedVehiclesList = {

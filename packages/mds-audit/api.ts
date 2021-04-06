@@ -45,7 +45,15 @@ import {
 } from '@mds-core/mds-schema-validators'
 
 import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
-import { AUDIT_EVENT_TYPES, AuditEvent, Timestamp, Telemetry, TelemetryData } from '@mds-core/mds-types'
+import {
+  AUDIT_EVENT_TYPES,
+  AuditEvent,
+  EVENT_STATUS_MAP,
+  Timestamp,
+  Telemetry,
+  TelemetryData,
+  VEHICLE_EVENT
+} from '@mds-core/mds-types'
 import { parsePagingQueryParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { isError } from '@mds-core/mds-service-helpers'
@@ -530,7 +538,7 @@ function api(app: express.Express): express.Express {
             if (start_time && end_time) {
               const deviceEvents = await readEvents(device.device_id, start_time, end_time)
               const deviceTelemetry = await readTelemetry(device.device_id, start_time, end_time)
-              const [providerEvent] = await db.readEventsWithTelemetry({
+              const providerEvent = await db.readEventsWithTelemetry({
                 device_id: device.device_id,
                 provider_id: device.provider_id,
                 end_time: audit_start, // Last provider event before the audit started
@@ -541,10 +549,11 @@ function api(app: express.Express): express.Express {
                 version: res.locals.version,
                 ...audit,
                 provider_vehicle_id: device.vehicle_id,
-                provider_event_types: providerEvent.event_types,
-                provider_vehicle_state: providerEvent.vehicle_state,
-                provider_telemetry: providerEvent.telemetry,
-                provider_event_time: providerEvent.timestamp,
+                provider_event_type: providerEvent[0]?.event_type,
+                provider_event_type_reason: providerEvent[0]?.event_type_reason,
+                provider_status: EVENT_STATUS_MAP[providerEvent[0]?.event_type as VEHICLE_EVENT],
+                provider_telemetry: providerEvent[0]?.telemetry,
+                provider_event_time: providerEvent[0]?.timestamp,
                 events: auditEvents.map(withGpsProperty),
                 attachments: attachments.map(attachmentSummary),
                 provider: {

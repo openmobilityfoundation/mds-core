@@ -38,7 +38,12 @@ export const EventDomainToEntityCreate = ModelMapper<
   EventDomainCreateModel,
   EventEntityCreateModel,
   EventEntityCreateOptions
->(({ telemetry_timestamp = null, trip_id = null, service_area_id = null, ...domain }, options) => {
-  const { recorded } = options ?? {}
-  return { telemetry_timestamp, trip_id, service_area_id, recorded, ...domain }
-})
+>(
+  (
+    { event_type_reason = null, telemetry_timestamp = null, trip_id = null, service_area_id = null, ...domain },
+    options
+  ) => {
+    const { recorded } = options ?? {}
+    return { event_type_reason, telemetry_timestamp, trip_id, service_area_id, recorded, ...domain }
+  }
+)

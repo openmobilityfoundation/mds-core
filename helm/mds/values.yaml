@@ -14,6 +14,16 @@ apis:
     pathPrefix: /policy
     version: latest
     migration: false
+  mds-compliance:
+    enabled: true
+    pathPrefix: /compliance
+    version: latest
+    migration: false
+  mds-daily:
+    enabled: true
+    pathPrefix: /daily
+    version: latest
+    migration: false
   mds-jurisdiction:
     enabled: true
     pathPrefix: /jurisdiction
@@ -38,14 +48,6 @@ apis:
     pathPrefix: /geography-author
     version: latest
     migration: false
-  mds-compliance-api:
-    enabled: true
-    pathPrefix: /compliance
-    version: latest
-    migration: false
-  mds-compliance-service:
-    enabled: true
-    version: latest
   mds-geography-service:
     enabled: true
     version: latest
@@ -77,8 +79,8 @@ apis:
   mds-collector-api:
     enabled: true
     version: latest
-    pathPrefix: /collector
     migration: false
+    pathPrefix: /collector
   mds-collector-backend:
     enabled: true
     version: latest

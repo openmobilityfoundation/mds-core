@@ -34,13 +34,13 @@ describe('Agency API request handlers', () => {
     const getFakeBody = () => {
       const device_id = uuid()
       const vehicle_id = uuid()
-      const vehicle_type: Device['vehicle_type'] = VEHICLE_TYPES.car
-      const propulsion_types: Device['propulsion_types'] = ['combustion']
+      const type: Device['type'] = VEHICLE_TYPES.car
+      const propulsion: Device['propulsion'] = ['combustion']
       const body = {
         device_id,
         vehicle_id,
-        vehicle_type,
-        propulsion_types,
+        type,
+        propulsion,
         year: 1990,
         mfgr: 'foo inc',
         model: 'i date one'
@@ -129,6 +129,7 @@ describe('Agency API request handlers', () => {
       Sinon.replace(db, 'writeDevice', Sinon.fake.resolves('it-worked'))
       Sinon.replace(cache, 'writeDevice', Sinon.fake.resolves('it-worked'))
       Sinon.replace(stream, 'writeDevice', Sinon.fake.resolves('it-worked'))
+      Sinon.replace(utils, 'writeRegisterEvent', Sinon.fake.resolves('it-worked'))
       await registerVehicle({ body } as AgencyApiRegisterVehicleRequest, res)
       assert.equal(statusHandler.calledWith(201), true)
       assert.equal(sendHandler.called, true)
@@ -148,6 +149,7 @@ describe('Agency API request handlers', () => {
       Sinon.replace(db, 'writeDevice', Sinon.fake.resolves('it-worked'))
       Sinon.replace(cache, 'writeDevice', Sinon.fake.rejects('it-broke'))
       Sinon.replace(stream, 'writeDevice', Sinon.fake.resolves('it-worked'))
+      Sinon.replace(utils, 'writeRegisterEvent', Sinon.fake.resolves('it-worked'))
       await registerVehicle({ body } as AgencyApiRegisterVehicleRequest, res)
       assert.equal(statusHandler.calledWith(201), true)
       assert.equal(sendHandler.called, true)

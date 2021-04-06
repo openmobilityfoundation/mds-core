@@ -28,10 +28,14 @@ import {
   VehicleEvent,
   TelemetryData,
   WithGpsProperty,
-  BoundingBox
+  BoundingBox,
+  EVENT_STATUS_MAP,
+  VEHICLE_EVENT,
+  VEHICLE_EVENTS,
+  VEHICLE_STATUSES
 } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
-import { now, tail } from '@mds-core/mds-utils'
+import { now } from '@mds-core/mds-utils'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)
@@ -170,7 +174,6 @@ export async function getVehicle(provider_id: UUID, vehicle_id: string) {
   if (devices.length === 0) {
     return null
   }
-
   const deviceStatusMap: {
     active: (Device & { updated?: Timestamp | null })[]
     inactive: (Device & { updated?: Timestamp | null })[]
@@ -178,19 +181,19 @@ export async function getVehicle(provider_id: UUID, vehicle_id: string) {
   await Promise.all(
     devices.map(async device => {
       const deviceStatus = (await cache.readDeviceStatus(device.device_id)) as (VehicleEvent & Device) | null
-      if (deviceStatus === null || (deviceStatus.event_types && tail(deviceStatus.event_types) === 'decommissioned')) {
+      if (deviceStatus === null || deviceStatus.event_type === VEHICLE_EVENTS.deregister) {
         const { device_id } = device
         logger.info('Bad vehicle status', { deviceStatus, provider_id, vehicle_id, device_id })
         deviceStatusMap.inactive.push(device)
       } else {
-        const state = deviceStatus.vehicle_state
+        const status = EVENT_STATUS_MAP[deviceStatus.event_type as VEHICLE_EVENT]
         const updated = deviceStatus.timestamp
         // FIXME: There are currently some scenarios in which in the latest device information
         // isn't properly reflected in the device cache. As a result, we overwrite these values
         // using the device information from the database. If these scenarios can be resolved then
         // using just the cached values would be the preferred approach as the cache should always
         // reflect the most up to date information.
-        deviceStatusMap.active.push({ ...deviceStatus, ...device, state, updated })
+        deviceStatusMap.active.push({ ...deviceStatus, ...device, status, updated })
       }
     })
   )
@@ -217,11 +220,13 @@ export async function getVehicles(
 
   const start = now()
   const statusesSuperset = ((await cache.readDevicesStatus({ bbox, strict })) as (VehicleEvent & Device)[]).filter(
-    status => status.vehicle_state !== 'removed' && (!provider_id || status.provider_id === provider_id)
+    status =>
+      EVENT_STATUS_MAP[status.event_type as VEHICLE_EVENT] !== VEHICLE_STATUSES.removed &&
+      (!provider_id || status.provider_id === provider_id)
   )
   const statusesSubset = statusesSuperset.slice(skip, skip + take)
   const devices = statusesSubset.reduce((acc: (VehicleEvent & Device)[], item) => {
-    const status = item.vehicle_state
+    const status = EVENT_STATUS_MAP[item.event_type as VEHICLE_EVENT]
     const updated = item.timestamp
     return [...acc, { ...item, status, updated }]
   }, [])
