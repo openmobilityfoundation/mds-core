@@ -36,6 +36,8 @@ import { NatsStreamProducer } from './nats/stream-producer'
 import { AgencyStreamNats } from './nats/agency-stream-nats'
 import { mockStream } from './test-utils'
 
+export { NatsProcessorFn } from './nats/codecs'
+
 export { KafkaStreamConsumerOptions, KafkaStreamProducerOptions } from './kafka'
 export { StreamConsumer, StreamProducer } from './stream-interface'
 
