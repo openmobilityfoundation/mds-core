@@ -11,10 +11,10 @@ deployments:
     version: ${POLICY_VERSION}
   mds-policy-service:
     version: ${POLICY_SERVICE_VERSION}
-  mds-compliance:
-    version: ${COMPLIANCE_VERSION}
-  mds-daily:
-    version: ${DAILY_VERSION}
+  mds-compliance-api:
+    version: ${COMPLIANCE_API_VERSION}
+  mds-compliance-service:
+    version: ${COMPLIANCE_SERVICE_VERSION}
   mds-jurisdiction:
     version: ${JURISDICTION_VERSION}
   mds-jurisdiction-service:

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@mds-core/mds-providers": "0.1.28",
+    "@mds-core/mds-test-data": "0.1.28",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
     "ajv": "8.0.5",

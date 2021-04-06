@@ -25,87 +25,128 @@ export const Enum = <T extends string>(...keys: T[]) =>
 export const isEnum = (enums: { [key: string]: string }, value: unknown) =>
   typeof value === 'string' && typeof enums === 'object' && enums[value] === value
 
-export const VEHICLE_TYPES = Enum('car', 'bicycle', 'scooter', 'moped', 'recumbent')
+export const VEHICLE_TYPES = Enum('car', 'bicycle', 'scooter', 'moped', 'other')
 export type VEHICLE_TYPE = keyof typeof VEHICLE_TYPES
 
+// TODO rate
 export const RULE_TYPES = Enum('count', 'speed', 'time', 'user')
 export type RULE_TYPE = keyof typeof RULE_TYPES
 
 export const PROPULSION_TYPES = Enum('human', 'electric', 'electric_assist', 'hybrid', 'combustion')
 export type PROPULSION_TYPE = keyof typeof PROPULSION_TYPES
 
-export const VEHICLE_STATUSES = Enum('available', 'reserved', 'unavailable', 'removed', 'inactive', 'trip', 'elsewhere')
-export type VEHICLE_STATUS = keyof typeof VEHICLE_STATUSES
+export const RIGHT_OF_WAY_STATES = ['available', 'reserved', 'non_operational', 'trip'] as const
 
-export const RIGHT_OF_WAY_STATUSES = ['available', 'reserved', 'unavailable', 'trip']
+export const VEHICLE_STATES_v1_0_0 = [
+  'available',
+  'elsewhere',
+  'non_operational',
+  'on_trip',
+  'removed',
+  'reserved',
+  'unknown'
+] as const
+export type VEHICLE_STATE_v1_0_0 = typeof VEHICLE_STATES_v1_0_0[number]
+export type VEHICLE_STATE = VEHICLE_STATE_v1_0_0
+export const VEHICLE_STATES = VEHICLE_STATES_v1_0_0
 
-export const VEHICLE_EVENTS = Enum(
-  'register',
-  'service_start',
-  'service_end',
-  'provider_drop_off',
-  'provider_pick_up',
-  'agency_pick_up',
+export const VEHICLE_EVENTS_v1_0_0 = [
   'agency_drop_off',
-  'reserve',
-  'cancel_reservation',
-  'trip_start',
-  'trip_enter',
-  'trip_leave',
-  'trip_end',
-  'deregister'
-)
-
-export type VEHICLE_EVENT = keyof typeof VEHICLE_EVENTS
-
-export const VEHICLE_REASONS = Enum(
+  'agency_pick_up',
   'battery_charged',
-  'charge',
-  'compliance',
+  'battery_low',
+  'comms_lost',
+  'comms_restored',
+  'compliance_pick_up',
   'decommissioned',
-  'low_battery',
+  'located',
   'maintenance',
+  'maintenance_pick_up',
   'missing',
   'off_hours',
-  'rebalance'
-)
-export type VEHICLE_REASON = keyof typeof VEHICLE_REASONS
+  'on_hours',
+  'provider_drop_off',
+  'rebalance_pick_up',
+  'reservation_cancel',
+  'reservation_start',
+  'system_resume',
+  'system_suspend',
+  'trip_cancel',
+  'trip_end',
+  'trip_enter_jurisdiction',
+  'trip_leave_jurisdiction',
+  'trip_start',
+  'unspecified'
+] as const
+
+export const VEHICLE_EVENTS = VEHICLE_EVENTS_v1_0_0
+export type VEHICLE_EVENT_v1_0_0 = typeof VEHICLE_EVENTS_v1_0_0[number]
+export type VEHICLE_EVENT = VEHICLE_EVENT_v1_0_0
 
 export const AUDIT_EVENT_TYPES = Enum('start', 'note', 'summary', 'issue', 'telemetry', 'end')
 export type AUDIT_EVENT_TYPE = keyof typeof AUDIT_EVENT_TYPES
 
-export const EVENT_STATUS_MAP: { [P in VEHICLE_EVENT]: VEHICLE_STATUS } = {
-  register: VEHICLE_STATUSES.removed,
-  service_start: VEHICLE_STATUSES.available,
-  service_end: VEHICLE_STATUSES.unavailable,
-  provider_drop_off: VEHICLE_STATUSES.available,
-  provider_pick_up: VEHICLE_STATUSES.removed,
-  agency_pick_up: VEHICLE_STATUSES.removed,
-  agency_drop_off: VEHICLE_STATUSES.available,
-  reserve: VEHICLE_STATUSES.reserved,
-  cancel_reservation: VEHICLE_STATUSES.available,
-  trip_start: VEHICLE_STATUSES.trip,
-  trip_enter: VEHICLE_STATUSES.trip,
-  trip_leave: VEHICLE_STATUSES.elsewhere,
-  trip_end: VEHICLE_STATUSES.available,
-  deregister: VEHICLE_STATUSES.inactive
+// States you transition into based on event_type
+export const EVENT_STATES_MAP: { [P in VEHICLE_EVENT]: VEHICLE_STATE[] } = {
+  agency_drop_off: ['available'],
+  agency_pick_up: ['removed'],
+  battery_charged: ['available'],
+  battery_low: ['non_operational'],
+  comms_lost: ['unknown'],
+  comms_restored: ['available', 'elsewhere', 'non_operational', 'removed', 'reserved', 'on_trip'],
+  compliance_pick_up: ['removed'],
+  decommissioned: ['removed'],
+  located: ['available', 'non_operational', 'reserved', 'on_trip', 'elsewhere'],
+  maintenance: ['available', 'non_operational'],
+  maintenance_pick_up: ['removed'],
+  missing: ['unknown'],
+  off_hours: ['non_operational'],
+  on_hours: ['available'],
+  provider_drop_off: ['available'],
+  rebalance_pick_up: ['removed'],
+  reservation_cancel: ['available'],
+  reservation_start: ['reserved'],
+  system_resume: ['available'],
+  system_suspend: ['non_operational'],
+  trip_cancel: ['available'],
+  trip_end: ['available'],
+  trip_enter_jurisdiction: ['on_trip'],
+  trip_leave_jurisdiction: ['elsewhere'],
+  trip_start: ['on_trip'],
+  unspecified: ['available', 'elsewhere', 'non_operational', 'on_trip', 'removed', 'reserved', 'unknown']
 }
 
-const StatusEventMap = <T extends { [S in VEHICLE_STATUS]: Partial<typeof VEHICLE_EVENTS> }>(map: T) => map
+const StatusEventMap = <T extends { [S in VEHICLE_STATE]: Partial<VEHICLE_EVENT[]> }>(map: T) => map
 
-export const STATUS_EVENT_MAP = StatusEventMap({
-  available: Enum(
-    VEHICLE_EVENTS.service_start,
-    VEHICLE_EVENTS.provider_drop_off,
-    VEHICLE_EVENTS.cancel_reservation,
-    VEHICLE_EVENTS.agency_drop_off
-  ),
-  reserved: Enum(VEHICLE_EVENTS.reserve),
-  unavailable: Enum(VEHICLE_EVENTS.service_end, VEHICLE_EVENTS.trip_end),
-  trip: Enum(VEHICLE_EVENTS.trip_start, VEHICLE_EVENTS.trip_enter),
-  elsewhere: Enum(VEHICLE_EVENTS.trip_leave),
-  removed: Enum(VEHICLE_EVENTS.register, VEHICLE_EVENTS.provider_pick_up, VEHICLE_EVENTS.agency_pick_up),
-  inactive: Enum(VEHICLE_EVENTS.deregister)
+// Given a state, list the valid entry events
+export const STATE_EVENT_MAP = StatusEventMap({
+  available: [
+    'battery_charged',
+    'on_hours',
+    'provider_drop_off',
+    'agency_drop_off',
+    'maintenance',
+    'trip_end',
+    'reservation_cancel',
+    'trip_cancel',
+    'system_resume',
+    'maintenance_pick_up',
+    'comms_restored',
+    'unspecified'
+  ],
+  reserved: ['reservation_start', 'comms_restored'],
+  non_operational: ['battery_low', 'maintenance', 'off_hours', 'system_suspend', 'unspecified', 'comms_restored'],
+  on_trip: ['trip_start', 'trip_enter_jurisdiction', 'comms_restored'],
+  elsewhere: ['trip_leave_jurisdiction', 'comms_restored'],
+  removed: [
+    'maintenance_pick_up',
+    'rebalance_pick_up',
+    'compliance_pick_up',
+    'agency_pick_up',
+    'decommissioned',
+    'unspecified'
+  ],
+  unknown: ['comms_lost', 'missing', 'located']
 })
 
 export const DAYS_OF_WEEK = Enum('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
@@ -140,37 +181,45 @@ export type PickOptional<T> = Pick<T, OptionalKeys<T>>
 export type NullableOptional<T> = PickRequired<T> & NullableProperties<PickOptional<T>>
 
 // Represents a row in the "devices" table
-export interface Device {
+export interface Device_v1_0_0 {
   device_id: UUID
   provider_id: UUID
   vehicle_id: string
-  type: VEHICLE_TYPE
-  propulsion: PROPULSION_TYPE[]
+  vehicle_type: VEHICLE_TYPE // changed name in 1.0
+  propulsion_types: PROPULSION_TYPE[] // changed name in 1.0
   year?: number | null
   mfgr?: string | null
   model?: string | null
   recorded: Timestamp
-  status?: VEHICLE_STATUS | null
+  state?: VEHICLE_STATE | null
 }
+/**
+ * This is an alias that must be updated in the event of future changes to the type.
+ */
+export type Device = Device_v1_0_0
 
 export type DeviceID = Pick<Device, 'provider_id' | 'device_id'>
 
-// Represents a row in the "events" table
-// Named "VehicleEvent" to avoid confusion with the DOM's Event interface
-export interface VehicleEvent {
+/**
+ *  Represents a row in the "events" table
+ * Named "VehicleEvent" to avoid confusion with the DOM's Event interface
+ * Keeping 1_0_0 types in here and not in transformers/@types to avoid circular imports.
+ * This alias must be updated if this type is updated.
+ */
+export interface VehicleEvent_v1_0_0 {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
   timestamp_long?: string | null
   delta?: Timestamp | null
-  event_type: VEHICLE_EVENT
-  event_type_reason?: VEHICLE_REASON | null
+  event_types: VEHICLE_EVENT[]
   telemetry_timestamp?: Timestamp | null
   telemetry?: Telemetry | null
   trip_id?: UUID | null
-  service_area_id?: UUID | null
+  vehicle_state: VEHICLE_STATE
   recorded: Timestamp
 }
+export type VehicleEvent = VehicleEvent_v1_0_0
 
 // Standard telemetry columns (used in more than one table)
 export interface TelemetryData {
@@ -200,6 +249,7 @@ export interface Telemetry extends WithGpsProperty<TelemetryData> {
   device_id: UUID
   timestamp: Timestamp
   recorded?: Timestamp
+  stop_id?: UUID | null
 }
 
 // Represents a row in the "attachments" table
@@ -254,9 +304,8 @@ export interface AuditEvent extends TelemetryData {
 
 export interface AuditDetails extends Audit {
   events: WithGpsProperty<AuditEvent>[]
-  provider_event_type?: string | null
-  provider_event_type_reason?: string | null
-  provider_status?: string | null
+  provider_event_types?: string[] | null
+  provider_vehicle_state?: string | null
   provider_telemetry?: Telemetry | null
   provider_event_time?: Timestamp | null
   attachments: AttachmentSummary[]
@@ -271,11 +320,33 @@ export interface PolicyMessage {
   [key: string]: string
 }
 
+// interface BaseRule<RuleType = 'count' | 'speed' | 'time'> {
+//   name: string
+//   rule_id: UUID
+//   geographies: UUID[]
+//   statuses: Partial<{ [S in VEHICLE_STATE]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }> | null
+//   rule_type: RuleType
+//   vehicle_types?: VEHICLE_TYPE[] | null
+//   maximum?: number | null
+//   minimum?: number | null
+//   start_time?: string | null
+//   end_time?: string | null
+//   days?: DAY_OF_WEEK[] | null
+//   /* eslint-reason TODO: message types haven't been defined well yet */
+//   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+//   messages?: PolicyMessage
+//   value_url?: URL | null
+// }
+
+// This gets you a type where the keys must be VEHICLE_STATES, such as 'available',
+// and the values are an array of events.
+export type StatesToEvents = { [S in VEHICLE_STATE]: VEHICLE_EVENT[] | [] }
+
 interface BaseRule<RuleType extends 'count' | 'speed' | 'time' | 'user'> {
   name: string
   rule_id: UUID
   geographies: UUID[]
-  statuses: Partial<{ [S in VEHICLE_STATUS]: (keyof typeof STATUS_EVENT_MAP[S])[] | [] }> | null
+  states: Partial<StatesToEvents> | null
   rule_type: RuleType
   vehicle_types?: VEHICLE_TYPE[] | null
   maximum?: number | null

@@ -17,17 +17,8 @@
 import logger from '@mds-core/mds-logger'
 
 import flatten, { unflatten } from 'flat'
-import { NotFoundError, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance } from '@mds-core/mds-utils'
-import {
-  UUID,
-  Timestamp,
-  Device,
-  VehicleEvent,
-  Telemetry,
-  BoundingBox,
-  EVENT_STATUS_MAP,
-  VEHICLE_STATUSES
-} from '@mds-core/mds-types'
+import { NotFoundError, nullKeys, stripNulls, now, isInsideBoundingBox, routeDistance, tail } from '@mds-core/mds-utils'
+import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from '@mds-core/mds-types'
 
 import { RedisCache } from '@mds-core/mds-cache'
 
@@ -172,18 +163,6 @@ async function readKeys(pattern: string) {
   return client.keys(decorateKey(pattern))
 }
 
-async function getMostRecentEventByProvider(): Promise<{ provider_id: string; max: number }[]> {
-  const provider_ids = (await readKeys('provider:*:latest_event')).map(key => {
-    const [, provider_id] = key.split(':')
-    return provider_id
-  })
-  const result = await hreads(['latest_event'], provider_ids, 'provider')
-  return result.map(elem => {
-    const max = parseInt(elem.timestamp || '0')
-    return { provider_id: elem.provider_id, max }
-  })
-}
-
 async function wipeDevice(device_id: UUID) {
   const keys = [
     decorateKey(`device:${device_id}:event`),
@@ -202,7 +181,7 @@ async function writeEvent(event: VehicleEvent) {
   // FIXME cope with out-of-order -- check timestamp
   // logger.info('redis write event', event.device_id)
   try {
-    if (event.event_type === 'deregister') {
+    if (tail(event.event_types) === 'decommissioned') {
       return await wipeDevice(event.device_id)
     }
     const prev_event = parseEvent((await hread('event', event.device_id)) as StringifiedEventWithTelemetry)
@@ -349,7 +328,7 @@ async function readDevicesStatus(query: {
       try {
         const parsedItem = parseEvent(item)
         if (
-          EVENT_STATUS_MAP[parsedItem.event_type] === VEHICLE_STATUSES.removed ||
+          parsedItem.vehicle_state === 'removed' ||
           !parsedItem.telemetry ||
           (strictChecking && !isInsideBoundingBox(parsedItem.telemetry, query.bbox))
         )
@@ -553,6 +532,5 @@ export default {
   readKeys,
   wipeDevice,
   updateVehicleList,
-  cleanup,
-  getMostRecentEventByProvider
+  cleanup
 }

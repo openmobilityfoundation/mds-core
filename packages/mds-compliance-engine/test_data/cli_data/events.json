@@ -1,0 +1,112 @@
+[
+  {
+    "device_id": "2e009e53-82ac-47e7-9d63-99ce99b12052",
+    "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+    "event_types": [ "provider_drop_off" ],
+    "vehicle_state": "available",
+    "telemetry": {
+      "device_id": "2e009e53-82ac-47e7-9d63-99ce99b12052",
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "gps": {
+        "lat": 33.98257972245834,
+        "lng": -118.46774887538558,
+        "speed": 0,
+        "hdop": 0,
+        "heading": 98
+      },
+      "charge": 0.8274443288450807,
+      "timestamp": 1605587184615,
+      "recorded": 1605587184615
+    },
+    "timestamp": 1605587184615,
+    "recorded": 1605587184615
+  },
+  {
+    "device_id": "cbd00bd6-da99-4196-9fb9-59da9c945eed",
+    "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+    "event_types": [ "provider_drop_off" ],
+    "vehicle_state": "available",
+    "telemetry": {
+      "device_id": "cbd00bd6-da99-4196-9fb9-59da9c945eed",
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "gps": {
+        "lat": 33.98207955116546,
+        "lng": -118.46826376972137,
+        "speed": 0,
+        "hdop": 0,
+        "heading": 146
+      },
+      "charge": 0.4776323366455616,
+      "timestamp": 1605587184615,
+      "recorded": 1605587184615
+    },
+    "timestamp": 1605587184615,
+    "recorded": 1605587184615
+  },
+  {
+    "device_id": "84c2298c-ffb9-4bdc-8770-5b7052df2dae",
+    "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+    "event_types": [ "provider_drop_off" ],
+    "vehicle_state": "available",
+    "telemetry": {
+      "device_id": "84c2298c-ffb9-4bdc-8770-5b7052df2dae",
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "gps": {
+        "lat": 33.982480471226495,
+        "lng": -118.46831300846762,
+        "speed": 0,
+        "hdop": 0,
+        "heading": 214
+      },
+      "charge": 0.13340735579952787,
+      "timestamp": 1605587184615,
+      "recorded": 1605587184615
+    },
+    "timestamp": 1605587184615,
+    "recorded": 1605587184615
+  },
+  {
+    "device_id": "c5aeff16-da9c-44aa-927a-afed7ba52f12",
+    "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+    "event_types": [ "provider_drop_off" ],
+    "vehicle_state": "available",
+    "telemetry": {
+      "device_id": "c5aeff16-da9c-44aa-927a-afed7ba52f12",
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "gps": {
+        "lat": 33.99027040522719,
+        "lng": -118.46880145615417,
+        "speed": 0,
+        "hdop": 0,
+        "heading": 32
+      },
+      "charge": 0.23565915210317315,
+      "timestamp": 1605587184616,
+      "recorded": 1605587184616
+    },
+    "timestamp": 1605587184616,
+    "recorded": 1605587184616
+  },
+  {
+    "device_id": "ca9b83e3-5310-4bc2-a1d2-d1d957010612",
+    "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+    "event_types": [ "provider_drop_off" ],
+    "vehicle_state": "available",
+    "telemetry": {
+      "device_id": "ca9b83e3-5310-4bc2-a1d2-d1d957010612",
+      "provider_id": "5f7114d1-4091-46ee-b492-e55875f7de00",
+      "gps": {
+        "lat": 33.989736286312606,
+        "lng": -118.46897802824233,
+        "speed": 0,
+        "hdop": 2,
+        "heading": 24
+      },
+      "charge": 0.10881685271574,
+      "timestamp": 1605587184616,
+      "recorded": 1605587184616
+    },
+    "timestamp": 1605587184616,
+    "recorded": 1605587184616
+  }
+]

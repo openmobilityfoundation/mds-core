@@ -16,7 +16,7 @@
 
 import { QueryResult } from 'pg'
 import { UUID, Device, Recorded, DeviceID } from '@mds-core/mds-types'
-import { now, yesterday, isUUID, csv, NotFoundError } from '@mds-core/mds-utils'
+import { now, isUUID, csv, NotFoundError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
@@ -156,15 +156,4 @@ export async function wipeDevice(device_id: UUID): Promise<QueryResult> {
 export async function getVehicleCountsPerProvider(): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(provider_id) from ${schema.TABLE.devices} group by provider_id`
   return makeReadOnlyQuery(sql)
-}
-
-export async function getNumVehiclesRegisteredLast24HoursByProvider(
-  start = yesterday(),
-  stop = now()
-): Promise<{ provider_id: UUID; count: number }[]> {
-  const vals = new SqlVals()
-  const sql = `select provider_id, count(device_id) from ${schema.TABLE.devices} where recorded > ${vals.add(
-    start
-  )} and recorded < ${vals.add(stop)} group by provider_id`
-  return makeReadOnlyQuery(sql, vals)
 }

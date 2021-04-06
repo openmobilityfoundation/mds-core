@@ -27,11 +27,9 @@ import {
   Telemetry,
   ErrorObject,
   DeviceID,
-  VEHICLE_STATUSES,
-  EVENT_STATUS_MAP,
   VEHICLE_EVENT,
-  VEHICLE_REASON,
-  UUID
+  UUID,
+  VEHICLE_STATE
 } from '@mds-core/mds-types'
 import urls from 'url'
 import { parseRequest } from '@mds-core/mds-api-helpers'
@@ -57,7 +55,6 @@ import {
   writeTelemetry,
   badEvent,
   badTelemetry,
-  writeRegisterEvent,
   readPayload,
   computeCompositeVehicleData
 } from './utils'
@@ -68,17 +65,22 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
   const { body } = req
   const recorded = now()
 
-  const { provider_id } = res.locals
-  const { device_id, vehicle_id, type, propulsion, year, mfgr, model } = body
+  const { provider_id, version } = res.locals
 
-  const status = VEHICLE_STATUSES.removed
+  if (!version || version === '0.4.1') {
+    // TODO: Transform 0.4.1 -> 1.0.0
+  }
+
+  const { device_id, vehicle_id, vehicle_type, propulsion_types, year, mfgr, model } = body
+
+  const status: VEHICLE_STATE = 'removed'
 
   const device = {
     provider_id,
     device_id,
     vehicle_id,
-    type,
-    propulsion,
+    vehicle_type,
+    propulsion_types,
     year,
     mfgr,
     model,
@@ -107,11 +109,6 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
       logger.error('failed to write device stream/cache', err)
     }
     logger.info('new vehicle added', { providerName: providerName(res.locals.provider_id), device })
-    try {
-      await writeRegisterEvent(device, recorded)
-    } catch (err) {
-      logger.error('writeRegisterEvent failure', err)
-    }
     res.status(201).send({})
   } catch (err) {
     if (String(err).includes('duplicate')) {
@@ -240,14 +237,16 @@ export const submitVehicleEvent = async (
   const event: VehicleEvent = {
     device_id: req.params.device_id,
     provider_id: res.locals.provider_id,
-    event_type: lower(req.body.event_type) as VEHICLE_EVENT,
-    event_type_reason: req.body.event_type_reason ? (lower(req.body.event_type_reason) as VEHICLE_REASON) : undefined,
+    event_types:
+      req.body.event_types && Array.isArray(req.body.event_types)
+        ? (req.body.event_types.map(lower) as VEHICLE_EVENT[])
+        : req.body.event_types, // FIXME: this is super not the best way of doing things. Need to use better validation.
+    vehicle_state: req.body.vehicle_state as VEHICLE_STATE,
     telemetry: req.body.telemetry ? { ...req.body.telemetry, provider_id: res.locals.provider_id } : null,
     timestamp: req.body.timestamp,
     trip_id: req.body.trip_id,
     recorded,
-    telemetry_timestamp: undefined, // added for diagnostic purposes
-    service_area_id: null // added for diagnostic purposes
+    telemetry_timestamp: undefined // added for diagnostic purposes
   }
 
   try {
@@ -264,7 +263,7 @@ export const submitVehicleEvent = async (
     function fin() {
       res.status(201).send({
         device_id,
-        status: EVENT_STATUS_MAP[event.event_type]
+        state: event.vehicle_state
       })
     }
     const delta = now() - recorded
@@ -454,7 +453,7 @@ export const submitVehicleTelemetry = async (
     res.status(500).send({
       error: 'server_error',
       error_description: 'None of the provided data was valid',
-      error_details: [` device_id ${data[0].device_id}: not found`]
+      error_details: [`device_id ${data[0].device_id}: not found`]
     })
   }
 }

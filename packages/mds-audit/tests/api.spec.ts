@@ -32,9 +32,8 @@ import {
   Timestamp,
   AUDIT_EVENT_TYPES,
   PROPULSION_TYPES,
-  VEHICLE_EVENTS,
-  VEHICLE_REASONS,
-  VEHICLE_TYPES
+  VEHICLE_TYPES,
+  VehicleEvent
 } from '@mds-core/mds-types'
 import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import { NotFoundError, now, rangeRandomInt, uuid, pathPrefix } from '@mds-core/mds-utils'
@@ -82,11 +81,11 @@ before('Initializing Database', async () => {
 
 describe('Testing API', () => {
   before(done => {
-    const baseEvent = {
+    const baseEvent: VehicleEvent = {
       provider_id,
       device_id: provider_device_id,
-      event_type: VEHICLE_EVENTS.agency_drop_off,
-      event_type_reason: VEHICLE_REASONS.rebalance,
+      event_types: ['agency_drop_off'],
+      vehicle_state: 'available',
       telemetry_timestamp: AUDIT_START,
       trip_id: uuid(),
       timestamp: AUDIT_START,
@@ -110,8 +109,8 @@ describe('Testing API', () => {
       device_id: provider_device_id,
       provider_id,
       vehicle_id: provider_vehicle_id,
-      propulsion: [PROPULSION_TYPES.electric],
-      type: VEHICLE_TYPES.scooter,
+      propulsion_types: [PROPULSION_TYPES.electric],
+      vehicle_type: VEHICLE_TYPES.scooter,
       recorded: AUDIT_START
     }).then(() => {
       db.writeEvent({
@@ -223,7 +222,7 @@ describe('Testing API', () => {
       .post(pathPrefix(`/trips/${audit_trip_id}/vehicle/event`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
-        event_type: VEHICLE_EVENTS.trip_start,
+        event_type: 'trip_start',
         timestamp: Date.now(),
         trip_id: audit_trip_id,
         telemetry: telemetry()
@@ -275,7 +274,7 @@ describe('Testing API', () => {
       .post(pathPrefix(`/trips/${audit_trip_id}/vehicle/event`))
       .set('Authorization', SCOPED_AUTH(['audits:write'], audit_subject_id))
       .send({
-        event_type: VEHICLE_EVENTS.trip_end,
+        event_type: 'trip_end',
         timestamp: Date.now(),
         trip_id: audit_trip_id,
         telemetry: telemetry()
@@ -368,9 +367,8 @@ describe('Testing API', () => {
         test.value(result).hasHeader('content-type', APP_JSON)
         test.value(result.body.version, AUDIT_API_DEFAULT_VERSION)
         test.value(result.body.events.length).is(7)
-        test.value(result.body.provider_event_type).is(VEHICLE_EVENTS.agency_drop_off)
-        test.value(result.body.provider_event_type_reason).is(VEHICLE_REASONS.rebalance)
-        test.value(result.body.provider_status).is('available')
+        test.value(result.body.provider_event_types).is(['agency_drop_off'])
+        test.value(result.body.provider_vehicle_state).is('available')
         test.value(result.body.provider_telemetry.charge).is(0.5)
         test.value(result.body.provider_event_time).is(AUDIT_START)
         done(err)
@@ -556,12 +554,20 @@ describe('Testing API', () => {
     let devices_c: Device[] // No events or telemetry
     before(done => {
       devices_a = makeDevices(10, now(), MOCHA_PROVIDER_ID)
-      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, VEHICLE_EVENTS.trip_start)
+      const events_a = makeEventsWithTelemetry(devices_a, now(), SAN_FERNANDO_VALLEY, {
+        event_types: ['trip_start'],
+        vehicle_state: 'on_trip',
+        speed: rangeRandomInt(10)
+      })
       const telemetry_a = devices_a.map(device =>
         makeTelemetryInArea(device, now(), SAN_FERNANDO_VALLEY, rangeRandomInt(10))
       )
       devices_b = makeDevices(10, now(), MOCHA_PROVIDER_ID)
-      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, VEHICLE_EVENTS.trip_start)
+      const events_b = makeEventsWithTelemetry(devices_b, now(), CANALS, {
+        event_types: ['trip_start'],
+        vehicle_state: 'on_trip',
+        speed: rangeRandomInt(10)
+      })
       const telemetry_b = devices_b.map(device => makeTelemetryInArea(device, now(), CANALS, rangeRandomInt(10)))
       devices_c = makeDevices(10, now(), MOCHA_PROVIDER_ID)
 
@@ -613,7 +619,7 @@ describe('Testing API', () => {
           test.value(result.body.vehicles[0].provider_id).is(devices_a[0].provider_id)
           test.value(result.body.vehicles[0].vehicle_id).is(devices_a[0].vehicle_id)
           test.value(result.body.vehicles[0].updated).is(result.body.vehicles[0].timestamp)
-          test.value(result.body.vehicles[0].status).is('trip')
+          test.value(result.body.vehicles[0].vehicle_state).is('on_trip')
           test.value(result.body.vehicles[0].telemetry.charge > 0).is(true)
           done(err)
         })
@@ -639,7 +645,7 @@ describe('Testing API', () => {
         .end((err, result) => {
           test.value(result.body.vehicles[0].provider_id).is(devices_c[0].provider_id)
           test.value(result.body.vehicles[0].vehicle_id).is(devices_c[0].vehicle_id)
-          test.object(result.body.vehicles[0]).hasNotProperty('status')
+          test.object(result.body.vehicles[0]).hasNotProperty('vehicle_state')
           done(err)
         })
     })
@@ -695,8 +701,8 @@ describe('Testing API', () => {
           device_id: provider_device_id,
           provider_id,
           vehicle_id: provider_vehicle_id,
-          propulsion: [PROPULSION_TYPES.electric],
-          type: VEHICLE_TYPES.scooter,
+          propulsion_types: [PROPULSION_TYPES.electric],
+          vehicle_type: VEHICLE_TYPES.scooter,
           recorded: AUDIT_START
         })
         await db.writeAudit(audit)

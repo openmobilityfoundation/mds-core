@@ -30,18 +30,18 @@ import {
   Timestamp,
   Telemetry,
   PROPULSION_TYPES,
-  VEHICLE_STATUSES,
+  VEHICLE_STATES,
   Device,
   RATE_RECURRENCE_VALUES
 } from '@mds-core/mds-types'
 import * as Joi from 'joi'
 import joiToJson from 'joi-to-json'
 
-import { ValidationError } from '@mds-core/mds-utils'
+import { ValidationError, areThereCommonElements } from '@mds-core/mds-utils'
 
 export { ValidationError }
 
-interface ValidatorOptions {
+export interface ValidatorOptions {
   property: string
   assert: boolean
   required: boolean
@@ -60,9 +60,9 @@ export const timestampSchema = numberSchema.min(1420099200000)
 
 export const providerIdSchema = uuidSchema.valid(...Object.keys(providers))
 
-const vehicleIdSchema = stringSchema.max(255)
+export const vehicleIdSchema = stringSchema.max(255)
 
-const telemetrySchema = Joi.object().keys({
+export const telemetrySchema = Joi.object().keys({
   gps: Joi.object()
     .keys({
       lat: numberSchema.min(-90).max(90).required(),
@@ -89,17 +89,14 @@ const ruleSchema = Joi.object().keys({
     .valid(...Object.values(RULE_TYPES))
     .required(),
   rule_units: Joi.string().valid('seconds', 'minutes', 'hours', 'mph', 'kph'),
-  geographies: Joi.array().items(Joi.string().guid()),
-  statuses: Joi.object()
-    .keys({
-      available: Joi.array(),
-      reserved: Joi.array(),
-      unavailable: Joi.array(),
-      removed: Joi.array(),
-      inactive: Joi.array(),
-      trip: Joi.array(),
-      elsewhere: Joi.array()
-    })
+  geographies: Joi.array().items(uuidSchema),
+  states: Joi.object()
+    .keys(
+      VEHICLE_STATES.reduce(
+        (acc, state) => Object.assign(acc, { [state]: Joi.array().items(stringSchema.valid(...VEHICLE_EVENTS)) }),
+        {}
+      )
+    )
     .allow(null),
   vehicle_types: Joi.array().items(Joi.string().valid(...Object.values(VEHICLE_TYPES))),
   maximum: Joi.number(),
@@ -117,6 +114,7 @@ export const policySchema = Joi.object().keys({
   description: Joi.string().required(),
   policy_id: Joi.string().guid().required(),
   start_date: Joi.date().timestamp('javascript').required(),
+  publish_date: Joi.date().timestamp('javascript').allow(null),
   end_date: Joi.date().timestamp('javascript').allow(null),
   prev_policies: Joi.array().items(Joi.string().guid()).allow(null),
   provider_ids: Joi.array().items(Joi.string().guid()).allow(null),
@@ -153,41 +151,32 @@ export const geographySchema = Joi.object().keys({
 
 const geographiesSchema = Joi.array().items(geographySchema)
 
-const eventsSchema = Joi.array().items()
-
-const vehicleEventTypeSchema = stringSchema.valid(...Object.keys(VEHICLE_EVENTS))
+export const vehicleEventTypeSchema = stringSchema.valid(...VEHICLE_EVENTS)
 
 const vehicleTypeSchema = stringSchema.valid(...Object.keys(VEHICLE_TYPES))
 
 const propulsionTypeSchema = stringSchema.valid(...Object.keys(PROPULSION_TYPES))
 
-const vehicleStatusSchema = stringSchema.valid(...Object.keys(VEHICLE_STATUSES))
+export const vehicleStatusSchema = stringSchema.valid(...VEHICLE_STATES)
 
 const eventSchema = Joi.object().keys({
   device_id: uuidSchema.required(),
   provider_id: uuidSchema.required(),
   timestamp: timestampSchema.required(),
-  event_type: vehicleEventTypeSchema.required(),
+  timestamp_long: stringSchema.optional(),
+  delta: timestampSchema.optional(),
+  event_types: Joi.array().items(vehicleEventTypeSchema.required()),
   telemetry_timestamp: timestampSchema.optional(),
-  telemetry: telemetrySchema.required(),
-  service_area_id: uuidSchema.allow(null).optional(),
+  telemetry: telemetrySchema.allow(null).optional(),
+  trip_id: uuidSchema.allow(null).optional(),
+  vehicle_state: vehicleStatusSchema.allow(null).optional(),
   recorded: timestampSchema.optional()
 })
 
+const eventsSchema = Joi.array().items(eventSchema)
+
 const tripEventSchema = eventSchema.keys({
   trip_id: uuidSchema.required()
-})
-
-const serviceEndEventSchema = eventSchema.keys({
-  event_type_reason: stringSchema.valid('low_battery', 'maintenance', 'compliance', 'off_hours').required()
-})
-
-const providerPickUpEventSchema = eventSchema.keys({
-  event_type_reason: stringSchema.valid('rebalance', 'maintenance', 'charge', 'compliance').required()
-})
-
-const deregisterEventSchema = eventSchema.keys({
-  event_type_reason: stringSchema.valid('missing', 'decomissioned').required()
 })
 
 const auditEventTypeSchema = (accept?: AUDIT_EVENT_TYPE[]): Joi.StringSchema =>
@@ -245,6 +234,8 @@ export const isValidNumber = (value: unknown, options: Partial<NumberValidatorOp
       .max(options.max === undefined ? Number.MAX_SAFE_INTEGER : options.max),
     options
   )
+
+export const isValidUUID = (value: unknown): value is string => ValidateSchema(value, uuidSchema)
 
 export const isValidAuditTripId = (
   audit_trip_id: unknown,
@@ -358,39 +349,26 @@ export function rawValidatePolicy(policy: Policy): Joi.ValidationResult {
 
 const validateTripEvent = (event: VehicleEvent) => ValidateSchema(event, tripEventSchema, {})
 
-const validateProviderPickUpEvent = (event: VehicleEvent) => ValidateSchema(event, providerPickUpEventSchema, {})
-
-const validateServiceEndEvent = (event: VehicleEvent) => ValidateSchema(event, serviceEndEventSchema, {})
-
-const validateDeregisterEvent = (event: VehicleEvent) => ValidateSchema(event, deregisterEventSchema, {})
-
-export const validateEvent = (event: unknown) => {
+const validate_v1_0_0_Event = (event: unknown) => {
   if (isValidEvent(event, { allowUnknown: true })) {
-    const { event_type } = event
+    const { event_types } = event
 
-    const TRIP_EVENTS: string[] = [
-      VEHICLE_EVENTS.trip_start,
-      VEHICLE_EVENTS.trip_end,
-      VEHICLE_EVENTS.trip_enter,
-      VEHICLE_EVENTS.trip_leave
+    const TRIP_EVENTS: VEHICLE_EVENT[] = [
+      'trip_start',
+      'trip_end',
+      'trip_enter_jurisdiction',
+      'trip_leave_jurisdiction'
     ]
 
-    if (TRIP_EVENTS.includes(event_type)) {
+    if (areThereCommonElements(TRIP_EVENTS, event_types)) {
       return validateTripEvent(event)
-    }
-    if (event_type === VEHICLE_EVENTS.provider_pick_up) {
-      return validateProviderPickUpEvent(event)
-    }
-    if (event_type === VEHICLE_EVENTS.service_end) {
-      return validateServiceEndEvent(event)
-    }
-    if (event_type === VEHICLE_EVENTS.deregister) {
-      return validateDeregisterEvent(event)
     }
 
     return ValidateSchema(event, eventSchema, {})
   }
 }
+
+export const validateEvent = validate_v1_0_0_Event
 
 export const policySchemaJson = joiToJson(policySchema)
 

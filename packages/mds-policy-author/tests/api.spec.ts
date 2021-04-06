@@ -572,32 +572,26 @@ describe('Tests app', () => {
         })
     })
 
-    it('Cannot PUT a policy with publish_date set', done => {
-      request
+    it('Cannot PUT a policy with publish_date set', async () => {
+      const result = await request
         .put(pathPrefix(`/policies/${PUBLISHED_POLICY.policy_id}`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(PUBLISHED_POLICY)
         .expect(400)
-        .end((err, result) => {
-          test.assert(result.body.error.name === `ValidationError`)
-          test.assert(result.body.error.reason.includes('publish_date'))
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      test.assert(result.body.error.name === `ValidationError`)
+      test.assert(result.body.error.reason.includes('publish_date'))
+      test.value(result).hasHeader('content-type', APP_JSON)
     })
 
-    it('Cannot POST a policy with publish_date set', done => {
-      request
+    it('Cannot POST a policy with publish_date set', async () => {
+      const result = await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(PUBLISHED_POLICY)
         .expect(400)
-        .end((err, result) => {
-          test.assert(result.body.error.name === `ValidationError`)
-          test.assert(result.body.error.reason.includes('publish_date'))
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      test.assert(result.body.error.name === `ValidationError`)
+      test.assert(result.body.error.reason.includes('publish_date'))
+      test.value(result).hasHeader('content-type', APP_JSON)
     })
   })
 })
