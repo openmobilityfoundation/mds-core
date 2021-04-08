@@ -17,9 +17,21 @@ createImagesFileIfNotExists() {
   fi
 }
 
+setRegistry() {
+  # if registry is passed as env var ensure last char is a /
+  local last=$(echo "${REGISTRY: -1}")
+  if [[ $REGISTRY != "" && "$last" != "/" ]]; then
+    REGISTRY="${REGISTRY}/"
+  fi
+
+  echo "Currently using registry: ${REGISTRY:="unset"}"
+}
+
 buildImage() {
   local image=$1
   createImagesFileIfNotExists
+  setRegistry
+
   if [[ "$NODE_ENV" == "development" ]]; then
     image_name=$(echo $image | cut -f1 -d":")
     docker build -t ${REGISTRY}${image_name}:latest .
@@ -32,10 +44,18 @@ buildImage() {
 
 pushImages() {
   createImagesFileIfNotExists
-  cat /dev/null > $BASE_DIR/dist/images.txt
+
+  if [[ $REGISTRY == "" ]]; then
+    echo "REGISTRY env var is not set. Please add REGISTRY to env or as a var before the command."
+    exit 1
+  else
+    setRegistry
+  fi
+
   if [[ "$REGISTRY" =~ amazonaws.com$ ]]; then
     eval $(aws ecr get-login --no-include-email)
   fi
+
   for image in $(cat $BASE_DIR/dist/images.txt); do
     docker push $image
   done
