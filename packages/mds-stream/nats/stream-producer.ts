@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-import { Client } from 'ts-nats'
-import { isArray } from 'util'
+import { NatsConnection, StringCodec } from 'nats'
 import { Nullable } from '@mds-core/mds-types'
 import { StreamProducer } from '../stream-interface'
 import { createStreamProducer, disconnectClient } from './helpers'
 
+/**
+ * We must encode all of our messages as UInt8 Arrays
+ */
+const { encode: encodeAsUInt8Array } = StringCodec()
+
 export const NatsStreamProducer = <TMessage>(topic: string): StreamProducer<TMessage> => {
-  let producer: Nullable<Client> = null
+  let producer: Nullable<NatsConnection> = null
   return {
     initialize: async () => {
       if (!producer) {
@@ -29,8 +33,8 @@ export const NatsStreamProducer = <TMessage>(topic: string): StreamProducer<TMes
       }
     },
     write: async (message: TMessage[] | TMessage) => {
-      const messages = (isArray(message) ? message : [message]).map(msg => {
-        return JSON.stringify(msg)
+      const messages = (Array.isArray(message) ? message : [message]).map(msg => {
+        return encodeAsUInt8Array(JSON.stringify(msg))
       })
 
       await Promise.all(messages.map(msg => producer?.publish(topic, msg)))

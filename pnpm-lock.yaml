@@ -930,9 +930,9 @@ importers:
       bluebird: 3.7.2
       flat: 5.0.2
       kafkajs: 1.15.0
+      nats: 2.0.2
       redis: 3.1.0
       sinon: 10.0.0
-      ts-nats: 1.2.15
     specifiers:
       '@mds-core/mds-logger': 0.2.2
       '@mds-core/mds-types': 0.1.25
@@ -943,9 +943,9 @@ importers:
       bluebird: 3.7.2
       flat: 5.0.2
       kafkajs: 1.15.0
+      nats: 2.0.2
       redis: 3.1.0
       sinon: 10.0.0
-      ts-nats: 1.2.15
   packages/mds-test-data:
     dependencies:
       '@mds-core/mds-logger': link:../mds-logger
@@ -9241,6 +9241,14 @@ packages:
     dev: false
     resolution:
       integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==
+  /nats/2.0.2:
+    dependencies:
+      nkeys.js: 1.0.0-9
+    dev: false
+    engines:
+      node: '>= 10.0.0'
+    resolution:
+      integrity: sha512-fKjwJBvnrEDJWrIU5gPIp2zutTqCZETLv+icUi6bV1Jb0FetOfsE2U2HL1k6Y7VooPVN8/kxXmW9Z0xQod/jNQ==
   /natural-compare/1.4.0:
     dev: true
     resolution:
@@ -9278,6 +9286,15 @@ packages:
       path-to-regexp: 1.8.0
     resolution:
       integrity: sha512-eQMEmGN/8arp0xsvGoQ+B1qvSkR73B1nWSCh7nOt5neMCtwcQVYQGdzQMhcNscktTsWB54xnlSQFzOAPJD8nXA==
+  /nkeys.js/1.0.0-9:
+    dependencies:
+      '@types/node': 14.14.37
+      tweetnacl: 1.0.3
+    dev: false
+    engines:
+      node: '>=10.0.0'
+    resolution:
+      integrity: sha512-m9O0NQT+3rUe1om6MWpxV77EuHql/LdorDH+FYQkoeARcM2V0sQ89kM36fArWaHWq/25EmNmQUW0MhLTcbqW1A==
   /node-abi/2.21.0:
     dependencies:
       semver: 5.7.1
@@ -9602,12 +9619,6 @@ packages:
       set-blocking: 2.0.0
     resolution:
       integrity: sha512-2uUqazuKlTaSI/dC8AzicUck7+IrEaOnN/e0jd3Xtt1KcGpwx30v50mL7oPyr/h9bL3E4aZccVwpwP+5W9Vjkg==
-  /nuid/1.1.4:
-    dev: false
-    engines:
-      node: '>= 8.16.0'
-    resolution:
-      integrity: sha512-PXiYyHhGfrq8H4g5HyC8enO1lz6SBe5z6x1yx/JG4tmADzDGJVQy3l1sRf3VtEvPsN8dGn9hRFRwDKWL62x0BA==
   /number-is-nan/1.0.1:
     engines:
       node: '>=0.10.0'
@@ -12538,22 +12549,6 @@ packages:
       mocha: ^3.X.X || ^4.X.X || ^5.X.X || ^6.X.X || ^7.X.X || ^8.X.X
     resolution:
       integrity: sha512-Kou1yxTlubLnD5C3unlCVO7nh0HERTezjoVhVw/M5S1SqoUec0WgllQvPk3vzPMc6by8m6xD1uR1yRf8lnVUbA==
-  /ts-nats/1.2.15:
-    dependencies:
-      nuid: 1.1.4
-      ts-nkeys: 1.0.16
-    deprecated: nats now offers the async functionality directly
-    dev: false
-    engines:
-      node: '>= 8.17.0'
-    resolution:
-      integrity: sha512-5dNokE+DpCcxfmfzDEid1P9awOUo7EfIzYnL175jCi/L8NpFFjgTdwqR/DsqYBPC4dk7MrOkwrZK8tM8z+i3rw==
-  /ts-nkeys/1.0.16:
-    dependencies:
-      tweetnacl: 1.0.3
-    dev: false
-    resolution:
-      integrity: sha512-1qrhAlavbm36wtW+7NtKOgxpzl+70NTF8xlz9mEhiA5zHMlMxjj3sEVKWm3pGZhHXE0Q3ykjrj+OSRVaYw+Dqg==
   /ts-node/7.0.1:
     dependencies:
       arrify: 1.0.1
