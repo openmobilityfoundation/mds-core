@@ -14,19 +14,30 @@
  * limitations under the License.
  */
 
-import { UUID, Device, VehicleEvent, Telemetry, Timestamp, Recorded, VEHICLE_STATUS } from '@mds-core/mds-types'
+import {
+  UUID,
+  Device,
+  VehicleEvent,
+  Telemetry,
+  Timestamp,
+  Recorded,
+  VEHICLE_STATE,
+  VEHICLE_EVENT,
+  TripMetadata
+} from '@mds-core/mds-types'
 import { MultiPolygon } from 'geojson'
 import {
   ApiRequest,
   ApiResponse,
   ApiResponseLocals,
   ApiRequestParams,
-  ApiResponseLocalsClaims
+  ApiResponseLocalsClaims,
+  ApiResponseLocalsVersion
 } from '@mds-core/mds-api-server'
 
-export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
+export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1', '1.0.0'] as const
 export type AGENCY_API_SUPPORTED_VERSION = typeof AGENCY_API_SUPPORTED_VERSIONS[number]
-export const [AGENCY_API_DEFAULT_VERSION] = AGENCY_API_SUPPORTED_VERSIONS
+export const [AGENCY_API_DEFAULT_VERSION] = AGENCY_API_SUPPORTED_VERSIONS // default has to be oldest, because we didn't used to require a version
 
 export type AgencyApiRequest<B = {}> = ApiRequest<B>
 
@@ -36,12 +47,13 @@ export type AgencyApiGetVehiclesByProviderRequest = AgencyApiRequest
 export type AgencyApiUpdateVehicleRequest = AgencyApiRequest<Device> & ApiRequestParams<'device_id'>
 export type AgencyApiSubmitVehicleEventRequest = AgencyApiRequest<VehicleEvent> & ApiRequestParams<'device_id'>
 export type AgencyApiSubmitVehicleTelemetryRequest = AgencyApiRequest<{ data: Telemetry[] }>
-
+export type AgencyApiPostTripMetadataRequest = AgencyApiRequest<TripMetadata>
 export type AgencyApiAccessTokenScopes = 'admin:all' | 'vehicles:read'
 
 export type AgencyApiResponse<B = {}> = ApiResponse<B> &
   ApiResponseLocalsClaims<AgencyApiAccessTokenScopes> &
-  ApiResponseLocals<'provider_id', UUID>
+  ApiResponseLocals<'provider_id', UUID> &
+  ApiResponseLocalsVersion<AGENCY_API_SUPPORTED_VERSION>
 
 export type AgencyApiRegisterVehicleResponse = AgencyApiResponse
 
@@ -50,7 +62,7 @@ export type AgencyApiGetVehiclesByProviderResponse = AgencyApiResponse<Paginated
 export type AgencyApiUpdateVehicleResponse = AgencyApiResponse
 export type AgencyApiSubmitVehicleEventResponse = AgencyApiResponse<{
   device_id: UUID
-  status: VEHICLE_STATUS
+  state: VEHICLE_STATE
 }>
 
 export type AgencyApiSubmitVehicleTelemetryResponse = AgencyApiResponse<{
@@ -59,6 +71,8 @@ export type AgencyApiSubmitVehicleTelemetryResponse = AgencyApiResponse<{
   unique: number
   failures: string[]
 }>
+
+export type AgencyApiPostTripMetadataResponse = AgencyApiResponse<TripMetadata>
 
 export interface ServiceArea {
   service_area_id: UUID
@@ -88,7 +102,7 @@ export type TelemetryResult =
     >[]
 
 export type CompositeVehicle = Partial<
-  Device & { prev_event?: string; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }
+  Device & { prev_events?: VEHICLE_EVENT[]; updated?: Timestamp; gps?: Recorded<Telemetry>['gps'] }
 >
 
 export type PaginatedVehiclesList = {

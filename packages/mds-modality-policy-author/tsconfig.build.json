@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "references": [
+    { "path": "../../packages/mds-api-server/tsconfig.build.json" },
+    { "path": "../../packages/mds-policy-author/tsconfig.build.json" },
+    { "path": "../../packages/mds-policy-author-middleware/tsconfig.build.json" },
+    { "path": "../../packages/mds-types/tsconfig.build.json" }
+  ]
+}

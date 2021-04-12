@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { uuid } from '@mds-core/mds-utils'
-import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
+import { now, uuid } from '@mds-core/mds-utils'
+import { AUDIT_EVENT_TYPES } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers' // map of uuids -> obj
+import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
 import {
   isValidAuditTripId,
   isValidVehicleEventType,
@@ -32,7 +33,11 @@ import {
   isValidAuditNote,
   isValidNumber,
   ValidationError,
-  validateEvent
+  validateEvent,
+  validateEvents,
+  validateModalityPolicies,
+  isValidEvent,
+  validateGeographies
 } from '../validators'
 
 describe('Tests validators', () => {
@@ -229,14 +234,10 @@ describe('Tests validators', () => {
 
     expect(isValidVehicleEventType(AUDIT_EVENT_TYPES.telemetry, { assert: false })).toBe(false)
 
-    expect(isValidVehicleEventType(VEHICLE_EVENTS.trip_end)).toBe(true)
+    expect(isValidVehicleEventType('trip_end')).toBe(true)
   })
 
   it('verifies Vehicle Event validator', async () => {
-    const DEREGISTER_EVENT_TYPE_REASONS = ['missing', 'decomissioned']
-    const PROVIDER_PICK_UP_EVENT_TYPE_REASONS = ['rebalance', 'maintenance', 'charge', 'compliance']
-    const SERVICE_END_EVENT_TYPE_REASONS = ['low_battery', 'maintenance', 'compliance', 'off_hours']
-
     await expect(async () => validateEvent(undefined)).rejects.toThrow(ValidationError)
 
     await expect(async () => validateEvent(null)).rejects.toThrow(ValidationError)
@@ -272,45 +273,6 @@ describe('Tests validators', () => {
         timestamp: Date.now()
       })
     ).rejects.toThrow(ValidationError)
-
-    DEREGISTER_EVENT_TYPE_REASONS.forEach(event_type_reason => {
-      expect(
-        validateEvent({
-          device_id: '395144fb-ebef-4842-ba91-b5ba98d34945',
-          provider_id: 'b54c08c7-884a-4c5f-b9ed-2c7dc24638cb',
-          event_type: 'deregister',
-          event_type_reason,
-          telemetry: { timestamp: Date.now(), gps: { lat: 0, lng: 0 } },
-          timestamp: Date.now()
-        })
-      ).toBe(true)
-    })
-
-    PROVIDER_PICK_UP_EVENT_TYPE_REASONS.forEach(event_type_reason => {
-      expect(
-        validateEvent({
-          device_id: '395144fb-ebef-4842-ba91-b5ba98d34945',
-          provider_id: 'b54c08c7-884a-4c5f-b9ed-2c7dc24638cb',
-          event_type: 'provider_pick_up',
-          event_type_reason,
-          telemetry: { timestamp: Date.now(), gps: { lat: 0, lng: 0 } },
-          timestamp: Date.now()
-        })
-      ).toBe(true)
-    })
-
-    SERVICE_END_EVENT_TYPE_REASONS.forEach(event_type_reason => {
-      expect(
-        validateEvent({
-          device_id: '395144fb-ebef-4842-ba91-b5ba98d34945',
-          provider_id: 'b54c08c7-884a-4c5f-b9ed-2c7dc24638cb',
-          event_type: 'service_end',
-          event_type_reason,
-          telemetry: { timestamp: Date.now(), gps: { lat: 0, lng: 0 } },
-          timestamp: Date.now()
-        })
-      ).toBe(true)
-    })
   })
 
   it('verifies Audit Issue Code validator', async () => {
@@ -343,5 +305,211 @@ describe('Tests validators', () => {
     expect(isValidAuditNote('provider-vehicle-id')).toBe(true)
 
     expect(isValidAuditNote(undefined, { assert: false, required: false })).toBe(true)
+  })
+
+  it('verifies policy validator', async () => {
+    expect(
+      validateModalityPolicies([
+        {
+          name: 'LADOT Mobility Caps',
+          description: 'Mobility caps as described in the One-Year Permit',
+          policy_id: uuid(),
+          start_date: 1558389669540,
+          end_date: null,
+          prev_policies: null,
+          provider_ids: [],
+          rules: [
+            {
+              name: 'Greater LA',
+              rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
+              rule_type: 'count',
+              geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
+              states: { available: [], non_operational: [], reserved: [], on_trip: [] },
+              vehicle_types: ['scooter'],
+              maximum: 10,
+              minimum: 5
+            }
+          ]
+        }
+      ])
+    ).toBe(true)
+
+    await expect(async () =>
+      validateModalityPolicies([
+        {
+          name: 'LADOT Mobility Caps',
+          description: 'Mobility caps as described in the One-Year Permit',
+          policy_id: uuid(),
+          start_date: 1558389669540,
+          end_date: null,
+          prev_policies: null,
+          provider_ids: [],
+          rules: [
+            {
+              name: 'Greater LA',
+              rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
+              rule_type: 'count',
+              geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
+              states: { available: [], non_operational: [], reserved: [], on_trip: [] },
+              vehicle_types: ['trololol'],
+              maximum: 10,
+              minimum: 5
+            }
+          ]
+        }
+      ])
+    ).rejects.toThrow(ValidationError)
+
+    await expect(async () =>
+      validateModalityPolicies([
+        {
+          name: 'LADOT Mobility Caps',
+          description: 'Mobility caps as described in the One-Year Permit',
+          policy_id: uuid(),
+          start_date: 1558389669540,
+          end_date: null,
+          prev_policies: null,
+          provider_ids: [],
+          rules: [
+            {
+              name: 'Greater LA',
+              rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
+              rule_type: 'count',
+              geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
+              states: { not_a_state: [] },
+              vehicle_types: ['scooter'],
+              maximum: 10,
+              minimum: 5
+            }
+          ]
+        }
+      ])
+    ).rejects.toThrow(ValidationError)
+  })
+
+  it('verifies vehicle event validation (single)', async () => {
+    expect(
+      isValidEvent({
+        device_id: 'bae569e2-c011-4732-9796-c14402c2758e',
+        provider_id: '5f7114d1-4091-46ee-b492-e55875f7de00',
+        event_types: ['trip_start', 'unspecified'],
+        vehicle_state: 'unknown',
+        telemetry: {
+          device_id: 'bae569e2-c011-4732-9796-c14402c2758e',
+          provider_id: '5f7114d1-4091-46ee-b492-e55875f7de00',
+          gps: {
+            lat: 33.91503182420198,
+            lng: -118.28634258945067,
+            speed: 6,
+            hdop: 3,
+            heading: 220
+          },
+          charge: 0.778778830284381,
+          timestamp: 1601964963032,
+          recorded: 1601964963032
+        },
+        timestamp: 1601964963032,
+        recorded: 1601964963032
+      })
+    ).toBe(true)
+
+    expect(
+      isValidEvent({
+        device_id: 'bae569e2-c011-4732-9796-c14402c2758e',
+        provider_id: '5f7114d1-4091-46ee-b492-e55875f7de00',
+        event_types: ['trip_start', 'unspecified'],
+        vehicle_state: 'unknown',
+        timestamp: 1601964963032
+      })
+    ).toBe(true)
+
+    await expect(async () =>
+      isValidEvent({
+        device_id: 'bae569e2-c011-4732-9796-c14402c2758e',
+        provider_id: '5f7114d1-4091-46ee-b492-e55875f7de00',
+        event_types: ['notreal', 'unspecified'],
+        vehicle_state: 'unknown',
+        timestamp: 1601964963032
+      })
+    ).rejects.toThrow(ValidationError)
+
+    await expect(async () =>
+      isValidEvent({
+        device_id: 'bae569e2-c011-4732-9796-c14402c2758e',
+        provider_id: '5f7114d1-4091-46ee-b492-e55875f7de00',
+        event_types: ['on_trip', 'unspecified'],
+        vehicle_state: 'fakestate',
+        timestamp: 1601964963032
+      })
+    ).rejects.toThrow(ValidationError)
+  })
+
+  it('verifies vehicle events validator (array)', async () => {
+    const devices = makeDevices(3, now())
+    const events: any[] = makeEventsWithTelemetry(devices, now(), '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49')
+    expect(validateEvents(events)).toBe(true)
+
+    events[0].event_types = ['notreal']
+    await expect(async () => validateEvents(events)).rejects.toThrow(ValidationError)
+  })
+
+  it('verifies geographies validatory (array)', async () => {
+    const geographies: any = [
+      {
+        name: 'inner venice geo',
+        geography_id: 'b4c75556-3842-47a9-b8f6-d721b98c8ca5',
+        geography_json: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [-118.46941709518433, 33.9807517760146],
+                    [-118.46564054489136, 33.9807517760146],
+                    [-118.46564054489136, 33.98356306245639],
+                    [-118.46941709518433, 33.98356306245639],
+                    [-118.46941709518433, 33.9807517760146]
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        name: 'a random utah geo',
+        geography_id: 'a345a55d-6b31-4c18-b082-3a37bba49982',
+        geography_json: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [-112.587890625, 37.71859032558816],
+                    [-109.3798828125, 37.71859032558816],
+                    [-109.3798828125, 38.58252615935333],
+                    [-112.587890625, 38.58252615935333],
+                    [-112.587890625, 37.71859032558816]
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+
+    expect(validateGeographies(geographies)).toBe(true)
+
+    geographies[0].geography_json = {}
+    await expect(async () => validateGeographies(geographies)).rejects.toThrow(ValidationError)
   })
 })

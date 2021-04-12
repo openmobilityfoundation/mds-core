@@ -16,14 +16,17 @@
 
 import { DomainModelCreate, RecordedColumn } from '@mds-core/mds-repository'
 import {
+  ACCESSIBILITY_OPTION,
+  MODALITY,
   Nullable,
   NullableOptional,
   PROPULSION_TYPE,
   TelemetryData,
   Timestamp,
+  TRIP_STATE,
   UUID,
   VEHICLE_EVENT,
-  VEHICLE_REASON,
+  VEHICLE_STATE,
   VEHICLE_TYPE
 } from '@mds-core/mds-types'
 import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
@@ -32,12 +35,14 @@ export interface DeviceDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID
   vehicle_id: string
-  type: VEHICLE_TYPE
-  propulsion: PROPULSION_TYPE[]
+  vehicle_type: VEHICLE_TYPE
+  propulsion_types: PROPULSION_TYPE[]
 
   year: Nullable<number>
   mfgr: Nullable<string>
   model: Nullable<string>
+  accessibility_options: Nullable<ACCESSIBILITY_OPTION[]>
+  modality: MODALITY
 }
 
 export type DeviceDomainCreateModel = DomainModelCreate<Omit<DeviceDomainModel, keyof RecordedColumn>>
@@ -62,9 +67,10 @@ export interface EventDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
-  event_type: VEHICLE_EVENT
+  event_types: VEHICLE_EVENT[]
+  vehicle_state: VEHICLE_STATE
+  trip_state: TRIP_STATE
 
-  event_type_reason: Nullable<VEHICLE_REASON>
   telemetry_timestamp: Nullable<Timestamp>
   telemetry: Nullable<TelemetryDomainModel>
   trip_id: Nullable<UUID>

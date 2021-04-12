@@ -22,11 +22,13 @@ export interface DeviceEntityModel extends IdentityColumn, RecordedColumn {
   device_id: DeviceDomainModel['device_id']
   provider_id: DeviceDomainModel['provider_id']
   vehicle_id: DeviceDomainModel['vehicle_id']
-  type: DeviceDomainModel['type']
-  propulsion: DeviceDomainModel['propulsion']
+  vehicle_type: DeviceDomainModel['vehicle_type']
+  propulsion_types: DeviceDomainModel['propulsion_types']
   year: DeviceDomainModel['year']
   mfgr: DeviceDomainModel['mfgr']
   model: DeviceDomainModel['model']
+  accessibility_options: DeviceDomainModel['accessibility_options']
+  modality: DeviceDomainModel['modality']
 }
 
 @Entity('devices')
@@ -41,10 +43,10 @@ export class DeviceEntity extends IdentityColumn(RecordedColumn(class {})) imple
   vehicle_id: DeviceEntityModel['vehicle_id']
 
   @Column('varchar', { length: 31 })
-  type: DeviceEntityModel['type']
+  vehicle_type: DeviceEntityModel['vehicle_type']
 
   @Column('varchar', { array: true, length: 31 })
-  propulsion: DeviceEntityModel['propulsion']
+  propulsion_types: DeviceEntityModel['propulsion_types']
 
   @Column('smallint', { nullable: true })
   year: DeviceEntityModel['year']
@@ -54,4 +56,20 @@ export class DeviceEntity extends IdentityColumn(RecordedColumn(class {})) imple
 
   @Column('varchar', { length: 127, nullable: true })
   model: DeviceEntityModel['model']
+
+  @Column('varchar', { array: true, length: 255 })
+  accessibility_options: DeviceEntityModel['accessibility_options']
+
+  @Column('varchar', { length: 255 })
+  modality: DeviceEntityModel['modality']
 }
+
+/*
+ await exec(`ALTER TABLE ${schema.TABLE.devices} ADD COLUMN ${schema.COLUMN.accessibility_options} varchar(255)[]`)
+  await exec(`UPDATE ${schema.TABLE.devices} SET ${schema.COLUMN.accessibility_options} = {}`)
+  await exec(`ALTER TABLE ${schema.TABLE.devices} ALTER COLUMN ${schema.COLUMN.accessibility_options} SET NOT NULL`)
+
+  await exec(`ALTER TABLE ${schema.TABLE.devices} ADD COLUMN ${schema.COLUMN.modality} varchar(255)`)
+  await exec(`UPDATE ${schema.TABLE.devices} SET ${schema.COLUMN.modality} = 'micro_mobility'`)
+  await exec(`ALTER TABLE ${schema.TABLE.devices} ALTER COLUMN ${schema.COLUMN.modality} SET NOT NULL`)
+  */

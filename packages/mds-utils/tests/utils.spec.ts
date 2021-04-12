@@ -16,9 +16,14 @@
 
 import test from 'unit.js'
 import assert from 'assert'
-import { VEHICLE_EVENTS, VehicleEvent } from '@mds-core/mds-types'
-import { routeDistance, isStateTransitionValid, normalizeToArray, filterDefined } from '../utils'
-import { expectedTransitions } from './state-transition-expected'
+import {
+  MICRO_MOBILITY_VEHICLE_EVENTS,
+  MICRO_MOBILITY_VEHICLE_STATES,
+  MICRO_MOBILITY_EVENT_STATES_MAP,
+  MicroMobilityVehicleEvent
+} from '@mds-core/mds-types'
+import { routeDistance, isEventSequenceValid, normalizeToArray, filterDefined } from '../utils'
+import { isEventValid, stateTransitionDict } from '../state-machine'
 
 const Boston = { lat: 42.360081, lng: -71.058884 }
 const LosAngeles = { lat: 34.052235, lng: -118.243683 }
@@ -87,16 +92,47 @@ describe('Tests Utilities', () => {
 
   describe('State machine', () => {
     it('Tests state transitions', () => {
-      const events = Object.keys(VEHICLE_EVENTS)
+      const events = MICRO_MOBILITY_VEHICLE_EVENTS
+      const states = MICRO_MOBILITY_VEHICLE_STATES
       for (const event_type_A of events) {
-        for (const event_type_B of events) {
-          const eventA = { event_type: event_type_A } as VehicleEvent
-          const eventB = { event_type: event_type_B } as VehicleEvent
-          const actual = isStateTransitionValid(eventA, eventB)
-          const transitionKey = `${eventA.event_type}, ${eventB.event_type}`
-          assert.strictEqual(actual, expectedTransitions[eventA.event_type][eventB.event_type], transitionKey)
+        for (const eventAState of states) {
+          const eventA = { vehicle_state: eventAState, event_types: [event_type_A] } as MicroMobilityVehicleEvent
+          assert.strictEqual(isEventValid(eventA), MICRO_MOBILITY_EVENT_STATES_MAP[event_type_A].includes(eventAState))
+          for (const event_type_B of events) {
+            for (const eventBState of states) {
+              const eventB = { vehicle_state: eventBState, event_types: [event_type_B] } as MicroMobilityVehicleEvent
+              assert.strictEqual(
+                isEventValid(eventB),
+                MICRO_MOBILITY_EVENT_STATES_MAP[event_type_B].includes(eventBState)
+              )
+              const actual = isEventSequenceValid(eventA, eventB)
+              const transitionKey =
+                `eventA :{ vehicle_state: ${eventAState}, event_types: [${event_type_A}] }, ` +
+                `eventB: { vehicle_state: ${eventBState}, event_types: [${event_type_B} }]`
+              const stateTransitionValidity = !!stateTransitionDict[eventAState][event_type_B]?.includes(eventBState)
+              assert.strictEqual(actual, stateTransitionValidity, transitionKey)
+            }
+          }
         }
       }
+    })
+
+    it('isEventSequenceValid returns true when there are multiple valid event_types in an event', () => {
+      const eventA = { vehicle_state: 'on_trip', event_types: ['trip_start'] } as MicroMobilityVehicleEvent
+      const eventB = {
+        vehicle_state: 'unknown',
+        event_types: ['trip_leave_jurisdiction', 'comms_lost']
+      } as MicroMobilityVehicleEvent
+      assert(isEventSequenceValid(eventA, eventB))
+    })
+
+    it('isEventSequenceValid returns false when the multiple event_types are invalid', () => {
+      const eventA = { vehicle_state: 'on_trip', event_types: ['trip_start'] } as MicroMobilityVehicleEvent
+      const eventB = {
+        vehicle_state: 'unknown',
+        event_types: ['comms_lost', 'comms_lost']
+      } as MicroMobilityVehicleEvent
+      assert(!isEventSequenceValid(eventA, eventB))
     })
   })
 })

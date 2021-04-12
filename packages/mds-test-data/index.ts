@@ -15,7 +15,6 @@
  */
 
 import {
-  VEHICLE_EVENTS,
   PROPULSION_TYPE,
   VEHICLE_EVENT,
   VEHICLE_TYPES,
@@ -25,13 +24,13 @@ import {
   Timestamp,
   Telemetry,
   VehicleEvent,
-  Policy
+  VEHICLE_STATE,
+  MODALITY
 } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
 
 import {
   addDistanceBearing,
-  days,
   makePointInShape,
   now,
   pointInShape,
@@ -46,18 +45,33 @@ import logger from '@mds-core/mds-logger'
 import { JUMP_PROVIDER_ID, LIME_PROVIDER_ID, BIRD_PROVIDER_ID, TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { serviceAreaMap, restrictedAreas, veniceSpecOps } from './test-areas/test-areas'
 
+import {
+  POLICY_JSON,
+  TAXI_POLICY,
+  SUPERSEDING_POLICY_JSON,
+  POLICY2_JSON,
+  POLICY3_JSON,
+  POLICY4_JSON,
+  POLICY5_JSON,
+  POLICY_JSON_MISSING_POLICY_ID,
+  POLICY_WITH_DUPE_RULE,
+  PUBLISH_DATE_VALIDATION_JSON,
+  POLICY_UUID,
+  PUBLISHED_POLICY,
+  DELETEABLE_POLICY,
+  SUPERSEDING_POLICY_UUID,
+  POLICY2_UUID,
+  POLICY3_UUID,
+  POLICY4_UUID,
+  GEOGRAPHY_UUID,
+  GEOGRAPHY2_UUID,
+  NONEXISTENT_GEOGRAPHY_UUID,
+  START_ONE_MONTH_AGO,
+  START_ONE_WEEK_AGO,
+  START_ONE_MONTH_FROM_NOW
+} from './policies'
 import { LA_CITY_BOUNDARY } from './test-areas/la-city-boundary'
 import { DISTRICT_SEVEN } from './test-areas/district-seven'
-
-const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
-const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
-const NONEXISTENT_GEOGRAPHY_UUID = '991d4062-6e5e-4ac1-bcd1-1a3bd6d7f63c'
-
-const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
-const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
-const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
-const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
-const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
 const PROVIDER_SCOPES = 'admin:all'
 
@@ -71,301 +85,17 @@ const COMPLIANCE_AUTH =
 const BAD_PROVIDER_UUID = '5f7114d1-4091-46ee-b492-e55875f7de99'
 
 const JUMP_TEST_DEVICE_1: Device = {
+  accessibility_options: [],
   provider_id: JUMP_PROVIDER_ID,
   device_id: 'e9edbe74-f7be-48e0-a63a-92f4bc1af5ed',
   vehicle_id: '1230987',
-  type: VEHICLE_TYPES.scooter,
-  propulsion: [PROPULSION_TYPES.electric],
+  vehicle_type: VEHICLE_TYPES.scooter,
+  propulsion_types: [PROPULSION_TYPES.electric],
   year: 2018,
   mfgr: 'Schwinn',
+  modality: 'micromobility',
   model: 'whoknows',
   recorded: now()
-}
-
-const START_YESTERDAY = now() - (now() % days(1))
-const START_TOMORROW = now() + (now() % days(1))
-const START_NOW = now()
-
-const POLICY_JSON: Policy = {
-  // TODO guts
-  name: 'Policy 1',
-  description: 'Mobility caps as described in the One-Year Permit',
-  policy_id: POLICY_UUID,
-  start_date: START_TOMORROW,
-  end_date: null,
-  publish_date: START_NOW,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      rule_type: 'count',
-      rule_id: '7ea0d16e-ad15-4337-9722-9924e3af9146',
-      name: 'Greater LA',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 3000,
-      minimum: 500
-    }
-  ]
-}
-
-const SUPERSEDING_POLICY_JSON: Policy = {
-  // TODO guts
-  name: 'Supersedes Policy 1',
-  description: 'Mobility caps as described in the One-Year Permit',
-  policy_id: SUPERSEDING_POLICY_UUID,
-  start_date: START_YESTERDAY,
-  end_date: null,
-  prev_policies: [POLICY_UUID],
-  provider_ids: [],
-  rules: [
-    {
-      rule_type: 'count',
-      rule_id: 'f518e886-ec06-4eb9-ad19-d91d34ee73d3',
-      name: 'Greater LA',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { available: [], unavailable: [], reserved: [], trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 1000,
-      minimum: 500
-    }
-  ]
-}
-
-const START_ONE_MONTH_AGO = now() - (now() % days(1)) - days(30)
-const START_ONE_WEEK_AGO = now() - (now() % days(1)) - days(7)
-
-// in the past
-const POLICY2_JSON: Policy = {
-  // TODO guts
-  name: 'Policy 2',
-  description: 'LADOT Idle Time Limitations',
-  policy_id: POLICY2_UUID,
-  start_date: START_ONE_MONTH_AGO,
-  end_date: START_ONE_WEEK_AGO,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA (rentable)',
-      rule_id: '2df37be2-b1cb-4152-9bb9-b23472a43b05',
-      rule_type: 'time',
-      rule_units: 'minutes',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { available: [], reserved: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 7200
-    },
-    {
-      name: 'Greater LA (non-rentable)',
-      rule_id: '06a97976-180d-4990-b497-ecafbe818d7d',
-      rule_type: 'time',
-      rule_units: 'minutes',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { unavailable: [], trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 720
-    }
-  ]
-}
-
-const START_ONE_MONTH_FROM_NOW = now() - (now() % days(1)) + days(30)
-
-// in the future
-const POLICY3_JSON: Policy = {
-  // TODO guts
-  policy_id: POLICY3_UUID,
-  name: 'Policy 3',
-  description: 'LADOT Pilot Speed Limit Limitations From the Future',
-  start_date: START_ONE_MONTH_FROM_NOW,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 15
-    },
-    {
-      name: 'Venice Beach on weekend afternoons',
-      geographies: [GEOGRAPHY2_UUID],
-      rule_id: 'dff14dd1-603e-43d1-b0cf-5d4fe21d8628',
-      rule_type: 'speed',
-      rule_units: 'mph',
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      days: ['sat', 'sun'],
-      start_time: '12:00',
-      end_time: '23:59',
-      maximum: 10,
-      messages: {
-        'en-US': 'Remember to stay under 10 MPH on Venice Beach on weekends!',
-        'es-US': '¡Recuerda permanecer menos de 10 millas por hora en Venice Beach los fines de semana!'
-      }
-    }
-  ]
-}
-
-const POLICY4_JSON: Policy = {
-  // TODO guts
-  policy_id: POLICY4_UUID,
-  name: 'Policy 4',
-  description: 'LADOT Pilot Speed Limit Limitations',
-  start_date: now(),
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: uuid(),
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
-}
-
-const POLICY5_JSON: Policy = {
-  policy_id: uuid(),
-  name: 'Policy 5',
-  description: 'just here to enable testing for policies by start date',
-  start_date: START_ONE_MONTH_AGO,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: uuid(),
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
-}
-
-const PUBLISH_DATE_VALIDATION_JSON: Policy = {
-  policy_id: '682ab342-0127-4eed-8c26-fb674c25af74',
-  name: 'Future Policy',
-  description: 'just here to help show that publish_date must be before start_date',
-  start_date: START_ONE_MONTH_AGO,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: uuid(),
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
-}
-
-const POLICY_JSON_MISSING_POLICY_ID = {
-  name: 'I have no identity woe is me',
-  description: 'LADOT Pilot Speed Limit Limitations',
-  start_date: now(),
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: uuid(),
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [NONEXISTENT_GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
-}
-
-const POLICY_WITH_DUPE_RULE: Policy = {
-  policy_id: 'ddb4fbc7-0f3d-49cf-869d-f9c1d0b5471f',
-  name: 'I am a no good copycat',
-  description: 'LADOT Pilot Speed Limit Limitations',
-  start_date: now(),
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: 'bfd790d3-87d6-41ec-afa0-98fa443ee0d3',
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [NONEXISTENT_GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
-}
-
-const PUBLISHED_POLICY: Policy = {
-  policy_id: 'a337afd5-f8a9-4291-b176-11f965bc9f3d',
-  name: 'I am published but do not do much',
-  description: 'LADOT Pilot Speed Limit Limitations',
-  start_date: START_ONE_MONTH_AGO,
-  publish_date: START_ONE_MONTH_AGO,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: uuid(),
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
-}
-
-const DELETEABLE_POLICY: Policy = {
-  policy_id: '55396abd-e32b-4370-ac02-7f3294eef49e',
-  name: 'I am published but do not do much',
-  description: 'LADOT Pilot Speed Limit Limitations',
-  start_date: START_ONE_MONTH_AGO,
-  end_date: null,
-  prev_policies: null,
-  provider_ids: [],
-  rules: [
-    {
-      name: 'Greater LA',
-      rule_id: uuid(),
-      rule_type: 'speed',
-      rule_units: 'mph',
-      geographies: [GEOGRAPHY_UUID],
-      statuses: { trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
-      maximum: 25
-    }
-  ]
 }
 
 function makeTelemetry(devices: Device[], timestamp: Timestamp): Telemetry[] {
@@ -495,16 +225,23 @@ function makeTelemetryStream(origin: Telemetry, steps: number) {
   return stream
 }
 
-function makeEvents(devices: Device[], timestamp: Timestamp, event_type = VEHICLE_EVENTS.deregister): VehicleEvent[] {
-  if (!event_type) {
-    throw new Error('empty event_type')
-  }
+function makeEvents(
+  devices: Device[],
+  timestamp: Timestamp,
+  makeEventsOptions: {
+    event_types: VEHICLE_EVENT[]
+    vehicle_state: VEHICLE_STATE
+  } = { event_types: ['trip_start'], vehicle_state: 'on_trip' }
+): VehicleEvent[] {
+  const { event_types, vehicle_state } = makeEventsOptions
 
   return devices.map(device => {
     return {
       device_id: device.device_id,
       provider_id: device.provider_id,
-      event_type: event_type as VEHICLE_EVENT,
+      event_types,
+      vehicle_state,
+      trip_state: null,
       timestamp,
       recorded: now()
     }
@@ -515,18 +252,26 @@ function makeEventsWithTelemetry(
   devices: Device[],
   timestamp: Timestamp,
   area: UUID | Geometry,
-  event_type: null | string = null,
-  speed = rangeRandomInt(10),
-  trip_id?: UUID
+  makeEventsWithTelemetryOptions: {
+    event_types: VEHICLE_EVENT[]
+    vehicle_state: VEHICLE_STATE
+    speed: number
+    trip_id?: UUID
+  } = {
+    event_types: ['trip_start'],
+    vehicle_state: 'on_trip',
+    speed: rangeRandomInt(10)
+  }
 ): VehicleEvent[] {
+  const { event_types, vehicle_state, speed, trip_id } = makeEventsWithTelemetryOptions
+
   return devices.map(device => {
-    const vehicleEventsKeys = Object.keys(VEHICLE_EVENTS)
     return {
       device_id: device.device_id,
       provider_id: device.provider_id,
-      event_type: event_type
-        ? (event_type as VEHICLE_EVENT)
-        : (vehicleEventsKeys[rangeRandomInt(vehicleEventsKeys.length)] as VEHICLE_EVENT),
+      event_types,
+      vehicle_state,
+      trip_state: null,
       telemetry: makeTelemetryInArea(device, timestamp, area, speed),
       timestamp,
       recorded: timestamp,
@@ -542,33 +287,33 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
     // make a rando vehicle
     const device_id = uuid()
     const coin = rangeRandomInt(2)
-    let type
-    let propulsion: PROPULSION_TYPE[]
+    let vehicle_type
+    let propulsion_types: PROPULSION_TYPE[]
     switch (provider_id) {
       case LIME_PROVIDER_ID:
       case JUMP_PROVIDER_ID:
-        type = [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter][coin]
-        if (type === VEHICLE_TYPES.bicycle) {
-          propulsion = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][
+        vehicle_type = [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter][coin]
+        if (vehicle_type === VEHICLE_TYPES.bicycle) {
+          propulsion_types = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][
             coin
           ] as PROPULSION_TYPE[]
         } else {
-          propulsion = [PROPULSION_TYPES.electric]
+          propulsion_types = [PROPULSION_TYPES.electric]
         }
         break
       case BIRD_PROVIDER_ID:
-        type = VEHICLE_TYPES.scooter
-        propulsion = [PROPULSION_TYPES.electric]
+        vehicle_type = VEHICLE_TYPES.scooter
+        propulsion_types = [PROPULSION_TYPES.electric]
         break
       default:
-        type = VEHICLE_TYPES.bicycle
-        propulsion = [PROPULSION_TYPES.human]
+        vehicle_type = VEHICLE_TYPES.bicycle
+        propulsion_types = [PROPULSION_TYPES.human]
         break
     }
     let mfgr
     let model
     const year = rangeRandomInt(2016, 2020)
-    switch (type) {
+    switch (vehicle_type) {
       case VEHICLE_TYPES.scooter:
         mfgr = 'Xiaomi'
         model = 'M365'
@@ -578,16 +323,18 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
         model = 'Mantaray'
         break
       default:
-        throw new Error(`unknown type: ${type}`)
+        throw new Error(`unknown type: ${vehicle_type}`)
     }
     const device = {
+      accessibility_options: [],
       device_id,
       provider_id,
       vehicle_id: `test-vin-${Math.round(Math.random() * 1000000)}`,
-      type,
-      propulsion,
+      vehicle_type,
+      propulsion_types,
       year,
       mfgr,
+      modality: 'micromobility' as MODALITY,
       model,
       timestamp,
       recorded: now()
@@ -621,8 +368,10 @@ export {
   SUPERSEDING_POLICY_UUID,
   POLICY2_UUID,
   POLICY3_UUID,
+  POLICY4_UUID,
   GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
+  NONEXISTENT_GEOGRAPHY_UUID,
   START_ONE_MONTH_AGO,
   START_ONE_WEEK_AGO,
   START_ONE_MONTH_FROM_NOW,
@@ -639,5 +388,6 @@ export {
   SCOPED_AUTH,
   serviceAreaMap,
   restrictedAreas,
-  veniceSpecOps
+  veniceSpecOps,
+  TAXI_POLICY
 }

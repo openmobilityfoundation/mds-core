@@ -14,59 +14,153 @@
  * limitations under the License.
  */
 
-import { VEHICLE_STATUSES, VEHICLE_EVENTS, VEHICLE_STATUS, VEHICLE_EVENT } from '@mds-core/mds-types'
+import {
+  MICRO_MOBILITY_VEHICLE_STATES,
+  MICRO_MOBILITY_VEHICLE_STATE,
+  VEHICLE_EVENT,
+  MICRO_MOBILITY_EVENT_STATES_MAP,
+  MICRO_MOBILITY_VEHICLE_EVENT,
+  MicroMobilityVehicleEvent
+} from '@mds-core/mds-types'
 
-const stateTransitionDict: {
-  [S in VEHICLE_STATUS]: Partial<
+/* Start with a state, then there's a list of valid event_types by which one
+ * may transition out, then possible states for each event_type
+ */
+const microMobilityStateTransitionDict: {
+  [S in MICRO_MOBILITY_VEHICLE_STATE]: Partial<
     {
-      [E in VEHICLE_EVENT]: VEHICLE_STATUS
+      [E in MICRO_MOBILITY_VEHICLE_EVENT]: MICRO_MOBILITY_VEHICLE_STATE[]
     }
   >
 } = {
-  [VEHICLE_STATUSES.available]: {
-    [VEHICLE_EVENTS.deregister]: VEHICLE_STATUSES.inactive,
-    [VEHICLE_EVENTS.agency_pick_up]: VEHICLE_STATUSES.removed,
-    [VEHICLE_EVENTS.service_end]: VEHICLE_STATUSES.unavailable,
-    [VEHICLE_EVENTS.trip_start]: VEHICLE_STATUSES.trip
+  available: {
+    agency_pick_up: ['removed'],
+    battery_low: ['non_operational'],
+    comms_lost: ['unknown'],
+    compliance_pick_up: ['removed'],
+    decommissioned: ['removed'],
+    maintenance: ['non_operational'],
+    maintenance_pick_up: ['removed'],
+    missing: ['unknown'],
+    off_hours: ['non_operational'],
+    rebalance_pick_up: ['removed'],
+    reservation_start: ['reserved'],
+    system_suspend: ['non_operational'],
+    trip_start: ['on_trip'],
+    unspecified: ['non_operational', 'unknown', 'removed']
   },
-  [VEHICLE_STATUSES.elsewhere]: {
-    [VEHICLE_EVENTS.trip_enter]: VEHICLE_STATUSES.trip,
-    [VEHICLE_EVENTS.provider_pick_up]: VEHICLE_STATUSES.removed,
-    [VEHICLE_EVENTS.deregister]: VEHICLE_STATUSES.inactive,
-    [VEHICLE_EVENTS.provider_drop_off]: VEHICLE_STATUSES.available
+  elsewhere: {
+    agency_drop_off: ['available'],
+    agency_pick_up: ['removed'],
+    comms_lost: ['unknown'],
+    compliance_pick_up: ['removed'],
+    decommissioned: ['removed'],
+    maintenance_pick_up: ['removed'],
+    missing: ['unknown'],
+    provider_drop_off: ['available'],
+    rebalance_pick_up: ['removed'],
+    trip_enter_jurisdiction: ['on_trip'],
+    unspecified: ['available', 'removed', 'unknown']
   },
-  [VEHICLE_STATUSES.inactive]: {
-    [VEHICLE_EVENTS.register]: VEHICLE_STATUSES.removed
+  non_operational: {
+    agency_pick_up: ['removed'],
+    battery_charged: ['available'],
+    comms_lost: ['unknown'],
+    compliance_pick_up: ['removed'],
+    decommissioned: ['removed'],
+    maintenance: ['available'],
+    maintenance_pick_up: ['removed'],
+    missing: ['unknown'],
+    on_hours: ['available'],
+    rebalance_pick_up: ['removed'],
+    system_resume: ['available'],
+    unspecified: ['available', 'removed', 'unknown']
   },
-  [VEHICLE_STATUSES.removed]: {
-    [VEHICLE_EVENTS.trip_enter]: VEHICLE_STATUSES.trip,
-    [VEHICLE_EVENTS.provider_drop_off]: VEHICLE_STATUSES.available,
-    [VEHICLE_EVENTS.deregister]: VEHICLE_STATUSES.inactive
+  on_trip: {
+    comms_lost: ['unknown'],
+    trip_cancel: ['available'],
+    trip_end: ['available'],
+    trip_leave_jurisdiction: ['elsewhere'],
+    missing: ['unknown'],
+    unspecified: ['unknown']
   },
-  [VEHICLE_STATUSES.reserved]: {
-    [VEHICLE_EVENTS.trip_start]: VEHICLE_STATUSES.trip,
-    [VEHICLE_EVENTS.cancel_reservation]: VEHICLE_STATUSES.available
+  removed: {
+    comms_lost: ['unknown'],
+    missing: ['unknown'],
+    agency_drop_off: ['available'],
+    decommissioned: ['removed'],
+    provider_drop_off: ['available'],
+    unspecified: ['unknown']
   },
-  [VEHICLE_STATUSES.trip]: {
-    [VEHICLE_EVENTS.trip_leave]: VEHICLE_STATUSES.elsewhere,
-    [VEHICLE_EVENTS.trip_end]: VEHICLE_STATUSES.available
+  reserved: {
+    comms_lost: ['unknown'],
+    missing: ['unknown'],
+    reservation_cancel: ['available'],
+    trip_start: ['on_trip'],
+    unspecified: ['unknown']
   },
-  [VEHICLE_STATUSES.unavailable]: {
-    [VEHICLE_EVENTS.service_start]: VEHICLE_STATUSES.available,
-    [VEHICLE_EVENTS.deregister]: VEHICLE_STATUSES.inactive,
-    [VEHICLE_EVENTS.agency_pick_up]: VEHICLE_STATUSES.removed,
-    [VEHICLE_EVENTS.provider_pick_up]: VEHICLE_STATUSES.removed
+  unknown: {
+    agency_drop_off: ['available'],
+    agency_pick_up: ['removed'],
+    comms_restored: ['available', 'elsewhere', 'removed', 'reserved', 'on_trip', 'non_operational'],
+    decommissioned: ['removed'],
+    provider_drop_off: ['available'],
+    unspecified: ['available', 'removed'],
+    located: ['available', 'elsewhere', 'reserved', 'on_trip', 'non_operational']
   }
 }
 
-const getNextState = (currStatus: VEHICLE_STATUS, nextEvent: VEHICLE_EVENT): VEHICLE_STATUS | undefined => {
-  return stateTransitionDict[currStatus]?.[nextEvent]
+const getNextStates = (
+  currStatus: MICRO_MOBILITY_VEHICLE_STATE,
+  nextEvent: MICRO_MOBILITY_VEHICLE_EVENT
+): MICRO_MOBILITY_VEHICLE_STATE[] | undefined => {
+  return microMobilityStateTransitionDict[currStatus]?.[nextEvent]
+}
+
+// Filter for all states that have this event as a valid exiting event
+function getValidPreviousStates(
+  event: MICRO_MOBILITY_VEHICLE_EVENT,
+  states: Readonly<MICRO_MOBILITY_VEHICLE_STATE[]> = MICRO_MOBILITY_VEHICLE_STATES
+) {
+  return states.filter(state => {
+    return Object.keys(microMobilityStateTransitionDict[state]).includes(event)
+  })
+}
+
+function isEventValid(event: MicroMobilityVehicleEvent) {
+  const { event_types } = event
+  const finalEventType: VEHICLE_EVENT = event_types[event_types.length - 1]
+  return MICRO_MOBILITY_EVENT_STATES_MAP[finalEventType].includes(event.vehicle_state as MICRO_MOBILITY_VEHICLE_STATE)
+}
+
+function isEventSequenceValid(eventA: MicroMobilityVehicleEvent, eventB: MicroMobilityVehicleEvent) {
+  let prevStates: MICRO_MOBILITY_VEHICLE_STATE[] = [eventA.vehicle_state]
+  for (const eventTypeB of eventB.event_types) {
+    const validPreviousStates = getValidPreviousStates(eventTypeB, prevStates)
+    if (validPreviousStates.length > 0) {
+      const nextStates = validPreviousStates.reduce((acc: MICRO_MOBILITY_VEHICLE_STATE[], state) => {
+        const possibleNextStates = getNextStates(state, eventTypeB)
+        if (possibleNextStates) {
+          return [...acc, ...possibleNextStates]
+        }
+        return acc
+      }, [])
+      if (nextStates.length > 0) {
+        prevStates = nextStates
+      } else {
+        return false
+      }
+    } else {
+      return false
+    }
+  }
+  return prevStates.includes(eventB.vehicle_state)
 }
 
 const generateTransitionLabel = (
-  status: VEHICLE_STATUS,
-  nextStatus: VEHICLE_STATUS,
-  transitionEvent: VEHICLE_EVENT
+  status: MICRO_MOBILITY_VEHICLE_STATE,
+  nextStatus: MICRO_MOBILITY_VEHICLE_STATE,
+  transitionEvent: MICRO_MOBILITY_VEHICLE_EVENT
 ) => {
   return `${status} -> ${nextStatus} [ label = ${transitionEvent} ]`
 }
@@ -74,14 +168,19 @@ const generateTransitionLabel = (
 // Punch this output into http://www.webgraphviz.com/
 const generateGraph = () => {
   const graphEntries = []
-  const statuses: VEHICLE_STATUS[] = Object.values(VEHICLE_STATUSES)
+  const statuses: Readonly<MICRO_MOBILITY_VEHICLE_STATE[]> = MICRO_MOBILITY_VEHICLE_STATES
   for (const status of statuses) {
-    const eventTransitions: VEHICLE_EVENT[] = Object.keys(stateTransitionDict[status]) as VEHICLE_EVENT[]
+    const eventTransitions: MICRO_MOBILITY_VEHICLE_EVENT[] = Object.keys(
+      microMobilityStateTransitionDict[status]
+    ) as MICRO_MOBILITY_VEHICLE_EVENT[]
     for (const event of eventTransitions) {
       if (event) {
-        const nextStatus: VEHICLE_STATUS | undefined = stateTransitionDict[status][event]
-        if (nextStatus) {
-          graphEntries.push(`\t${generateTransitionLabel(status, nextStatus, event)}`)
+        const nextStatuses: Array<MICRO_MOBILITY_VEHICLE_STATE> | undefined =
+          microMobilityStateTransitionDict[status][event]
+        if (nextStatuses) {
+          for (const nextStatus of nextStatuses) {
+            graphEntries.push(`\t${generateTransitionLabel(status, nextStatus, event)}`)
+          }
         }
       }
     }
@@ -89,4 +188,11 @@ const generateGraph = () => {
   return `digraph G {\n${graphEntries.join('\n')}\n}`
 }
 
-export { stateTransitionDict, getNextState, generateGraph }
+export {
+  getValidPreviousStates,
+  isEventValid,
+  isEventSequenceValid,
+  microMobilityStateTransitionDict as stateTransitionDict,
+  getNextStates,
+  generateGraph
+}

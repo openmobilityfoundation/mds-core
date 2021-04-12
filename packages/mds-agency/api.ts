@@ -27,7 +27,8 @@ import {
   getVehiclesByProvider,
   updateVehicle,
   submitVehicleEvent,
-  submitVehicleTelemetry
+  submitVehicleTelemetry,
+  writeTripMetadata
 } from './request-handlers'
 import { readAllVehicleIds } from './agency-candidate-request-handlers'
 import { getCacheInfo, wipeDevice, refreshCache } from './sandbox-admin-request-handlers'
@@ -146,6 +147,9 @@ function api(app: express.Express): express.Express {
     checkAgencyApiAccess(scopes => scopes.includes('admin:all')),
     refreshCache
   )
+
+  /* Experimental Endpoint */
+  app.post(pathPrefix('/trips'), writeTripMetadata)
 
   return app
 }

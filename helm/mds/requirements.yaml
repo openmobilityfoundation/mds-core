@@ -2,10 +2,10 @@
 dependencies:
   - name: redis
     version: 10.5.7
-    repository: alias:stable
+    repository: alias:bitnami
     condition: redis.internal
   - name: postgresql
-    repository: alias:stable
+    repository: alias:bitnami
     version: 8.6.4
     condition: postgresql.internal
   - name: nats

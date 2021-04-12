@@ -1,0 +1,23 @@
+{
+  "policy_id": "95645117-fd85-463e-a2c9-fc95ea47463e",
+  "name": "Speed Limits",
+  "description": "LADOT Pilot Speed Limit Limitations",
+  "start_date": 1552678594428,
+  "end_date": null,
+  "prev_policies": null,
+  "provider_ids": null,
+  "rules": [
+    {
+      "name": "Greater LA",
+      "rule_id": "2aa6953d-fa8f-4018-9b54-84c8b4b83c6d",
+      "rule_type": "speed",
+      "rule_units": "mph",
+      "geographies": ["1f943d59-ccc9-4d91-b6e2-0c5e771cbc49"],
+      "states": {
+        "on_trip": []
+      },
+      "vehicle_types": ["bicycle", "scooter"],
+      "maximum": 15
+    }
+  ]
+}

@@ -38,7 +38,7 @@ export const DeviceDomainToEntityCreate = ModelMapper<
   DeviceDomainCreateModel,
   DeviceEntityCreateModel,
   DeviceEntityCreateOptions
->(({ year = null, mfgr = null, model = null, ...domain }, options) => {
+>(({ year = null, mfgr = null, model = null, accessibility_options = null, ...domain }, options) => {
   const { recorded } = options ?? {}
-  return { year, mfgr, model, recorded, ...domain }
+  return { year, mfgr, model, recorded, accessibility_options, ...domain }
 })

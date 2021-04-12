@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import { UUID, Policy, Timestamp, Recorded, Rule, PolicyMetadata, Nullable } from '@mds-core/mds-types'
+import {
+  UUID,
+  Timestamp,
+  Recorded,
+  PolicyMetadata,
+  Nullable,
+  PolicyTypeInfo,
+  ModalityPolicy
+} from '@mds-core/mds-types'
 import {
   now,
   NotFoundError,
@@ -32,7 +40,7 @@ import { vals_sql, cols_sql, vals_list, SqlVals } from './sql-utils'
 import { isGeographyPublished } from './geographies'
 import { getReadOnlyClient, getWriteableClient } from './client'
 
-export async function readPolicies(params?: {
+export async function readPolicies<PInfo extends PolicyTypeInfo>(params?: {
   policy_id?: UUID
   rule_id?: UUID
   name?: string
@@ -40,7 +48,7 @@ export async function readPolicies(params?: {
   start_date?: Timestamp
   get_unpublished?: Nullable<boolean>
   get_published?: Nullable<boolean>
-}): Promise<Policy[]> {
+}): Promise<PInfo['Policy'][]> {
   // use params to filter
   // query
   // return policies
@@ -86,7 +94,9 @@ export async function readPolicies(params?: {
   return res.rows.map(row => row.policy_json)
 }
 
-export async function readActivePolicies(timestamp: Timestamp = now()): Promise<Policy[]> {
+export async function readActivePolicies<PInfo extends PolicyTypeInfo>(
+  timestamp: Timestamp = now()
+): Promise<PInfo['Policy'][]> {
   const client = await getReadOnlyClient()
   const conditions = []
   const vals = new SqlVals()
@@ -139,7 +149,7 @@ export async function readSinglePolicyMetadata(policy_id: UUID): Promise<PolicyM
   throw new NotFoundError(`metadata for policy_id ${policy_id} not found`)
 }
 
-export async function readPolicy(policy_id: UUID): Promise<Policy> {
+export async function readPolicy<PInfo extends PolicyTypeInfo>(policy_id: UUID): Promise<PInfo['Policy']> {
   const client = await getReadOnlyClient()
 
   const sql = `select * from ${schema.TABLE.policies} where policy_id = '${policy_id}'`
@@ -151,10 +161,12 @@ export async function readPolicy(policy_id: UUID): Promise<Policy> {
   throw new NotFoundError(`policy_id ${policy_id} not found`)
 }
 
-async function throwIfRulesAlreadyExist(policy: Policy) {
-  const unflattenedPolicies: Policy[][] = await Promise.all(
+async function throwIfRulesAlreadyExist<PInfo extends PolicyTypeInfo>(policy: PInfo['Policy']) {
+  const unflattenedPolicies: PInfo['Policy'][][] = await Promise.all(
     policy.rules.map(rule => {
-      return readPolicies({ rule_id: rule.rule_id })
+      return readPolicies<PInfo>({
+        rule_id: rule.rule_id
+      })
     })
   )
 
@@ -167,7 +179,9 @@ async function throwIfRulesAlreadyExist(policy: Policy) {
   })
 }
 
-export async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
+export async function writePolicy<PInfo extends PolicyTypeInfo>(
+  policy: PInfo['Policy']
+): Promise<Recorded<PInfo['Policy']>> {
   // validate TODO
   const client = await getWriteableClient()
   await throwIfRulesAlreadyExist(policy)
@@ -179,7 +193,7 @@ export async function writePolicy(policy: Policy): Promise<Recorded<Policy>> {
   try {
     const {
       rows: [recorded_policy]
-    }: { rows: Recorded<Policy>[] } = await client.query(sql, values)
+    }: { rows: Recorded<PInfo['Policy']>[] } = await client.query(sql, values)
     return { ...policy, ...recorded_policy }
   } catch (error) {
     if (error.code === '23505') {
@@ -200,8 +214,7 @@ export async function isPolicyPublished(policy_id: UUID) {
   return Boolean(result.rows[0].policy_json.publish_date)
 }
 
-export async function editPolicy(policy: Policy) {
-  // validate TODO
+export async function editPolicy<PInfo extends PolicyTypeInfo>(policy: PInfo['Policy']) {
   const { policy_id } = policy
 
   if (await isPolicyPublished(policy_id)) {
@@ -275,7 +288,7 @@ export async function publishPolicy(policy_id: UUID, publish_date = now()) {
      where policy_id='${policy_id}' RETURNING *`
     const {
       rows: [published_policy]
-    }: { rows: Policy[] } = await client.query(publishPolicySQL).catch(err => {
+    }: { rows: ModalityPolicy[] } = await client.query(publishPolicySQL).catch(err => {
       throw err
     })
     return { ...published_policy }
@@ -323,7 +336,7 @@ export async function updatePolicyMetadata(policy_metadata: PolicyMetadata) {
   }
 }
 
-export async function readRule(rule_id: UUID): Promise<Rule> {
+export async function readRule<PInfo extends PolicyTypeInfo>(rule_id: UUID): Promise<PInfo['Rule']> {
   const client = await getReadOnlyClient()
   const sql = `SELECT * from ${schema.TABLE.policies} where EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? '${rule_id}');`
   const res = await client.query(sql).catch(err => {
@@ -332,7 +345,7 @@ export async function readRule(rule_id: UUID): Promise<Rule> {
   if (res.rowCount !== 1) {
     throw new Error(`invalid rule_id ${rule_id}`)
   } else {
-    const [{ policy_json }]: { policy_json: Policy }[] = res.rows
+    const [{ policy_json }]: { policy_json: PInfo['Policy'] }[] = res.rows
     const [rule] = policy_json.rules.filter(r => {
       return r.rule_id === rule_id
     })
@@ -340,7 +353,9 @@ export async function readRule(rule_id: UUID): Promise<Rule> {
   }
 }
 
-export async function findPoliciesByGeographyID(geography_id: UUID): Promise<Policy[]> {
+export async function findPoliciesByGeographyID<PInfo extends PolicyTypeInfo>(
+  geography_id: UUID
+): Promise<PInfo['Policy'][]> {
   const client = await getReadOnlyClient()
   const sql = `select * from ${schema.TABLE.policies}
     where ${schema.COLUMN.policy_json}::jsonb

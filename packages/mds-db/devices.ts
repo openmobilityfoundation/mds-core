@@ -16,7 +16,7 @@
 
 import { QueryResult } from 'pg'
 import { UUID, Device, Recorded, DeviceID } from '@mds-core/mds-types'
-import { now, yesterday, isUUID, csv, NotFoundError } from '@mds-core/mds-utils'
+import { now, isUUID, csv, NotFoundError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
 
 import schema from './schema'
@@ -111,7 +111,8 @@ export async function readDeviceList(device_ids: UUID[]): Promise<Recorded<Devic
   return result.rows
 }
 
-export async function writeDevice(device: Device): Promise<Recorded<Device>> {
+export async function writeDevice(baseDevice: Device): Promise<Recorded<Device>> {
+  const device = { accessibility_options: [], ...baseDevice }
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.devices} (${cols_sql(schema.TABLE_COLUMNS.devices)}) VALUES (${vals_sql(
     schema.TABLE_COLUMNS.devices
@@ -121,7 +122,7 @@ export async function writeDevice(device: Device): Promise<Recorded<Device>> {
   const {
     rows: [recorded_device]
   }: { rows: Recorded<Device>[] } = await client.query(sql, values)
-  return { ...device, ...recorded_device }
+  return { ...baseDevice, ...recorded_device }
 }
 
 export async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial<Device>): Promise<Device> {
@@ -156,15 +157,4 @@ export async function wipeDevice(device_id: UUID): Promise<QueryResult> {
 export async function getVehicleCountsPerProvider(): Promise<{ provider_id: UUID; count: number }[]> {
   const sql = `select provider_id, count(provider_id) from ${schema.TABLE.devices} group by provider_id`
   return makeReadOnlyQuery(sql)
-}
-
-export async function getNumVehiclesRegisteredLast24HoursByProvider(
-  start = yesterday(),
-  stop = now()
-): Promise<{ provider_id: UUID; count: number }[]> {
-  const vals = new SqlVals()
-  const sql = `select provider_id, count(device_id) from ${schema.TABLE.devices} where recorded > ${vals.add(
-    start
-  )} and recorded < ${vals.add(stop)} group by provider_id`
-  return makeReadOnlyQuery(sql, vals)
 }

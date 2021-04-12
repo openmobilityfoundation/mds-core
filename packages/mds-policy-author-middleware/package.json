@@ -1,0 +1,27 @@
+{
+  "name": "@mds-core/mds-policy-author-middleware",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MDS Policy Author API Shared Middleware",
+  "author": "City of Los Angeles",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "test": "exit 0",
+    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config"
+  },
+  "dependencies": {
+    "@mds-core/mds-api-server": "0.1.28",
+    "@mds-core/mds-schema-validators": "0.1.4",
+    "@mds-core/mds-types": "0.1.25",
+    "@mds-core/mds-utils": "0.1.28",
+    "@types/express": "4.17.8",
+    "express": "4.17.1",
+    "http-status-codes": "2.1.4"
+  },
+  "licence": "Apache-2.0"
+}

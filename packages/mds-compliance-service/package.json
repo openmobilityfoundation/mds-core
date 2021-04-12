@@ -1,0 +1,38 @@
+{
+  "name": "@mds-core/mds-compliance-service",
+  "version": "0.1.0",
+  "description": "Compliance Service",
+  "keywords": [
+    "mds",
+    "compliance"
+  ],
+  "license": "UNLICENSED",
+  "author": "Lacuna Technologies",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "start": "yarn watch server",
+    "pretest": "pnpm typeorm -- schema:drop",
+    "test": "DOTENV_CONFIG_PATH=../../.env jest",
+    "ts-node": "DOTENV_CONFIG_PATH=../../.env node --experimental-repl-await -r ts-node/register -r dotenv/config",
+    "typeorm": "ts-node ./node_modules/typeorm/cli.js",
+    "watch": "yarn build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
+  },
+  "dependencies": {
+    "@mds-core/mds-db": "0.1.28",
+    "@mds-core/mds-logger": "0.2.2",
+    "@mds-core/mds-providers": "0.1.28",
+    "@mds-core/mds-repository": "0.1.2",
+    "@mds-core/mds-rpc-common": "0.1.2",
+    "@mds-core/mds-schema-validators": "0.1.4",
+    "@mds-core/mds-service-helpers": "0.1.2",
+    "@mds-core/mds-types": "0.1.25",
+    "@mds-core/mds-utils": "0.1.28",
+    "joi": "17.4.0",
+    "typeorm": "0.2.32"
+  }
+}

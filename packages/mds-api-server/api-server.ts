@@ -39,8 +39,10 @@ export interface ApiServerOptions {
   prometheus: PrometheusMiddlewareOptions
 }
 
-export const ApiServer = (
-  api: (server: express.Express) => express.Express,
+export const ApiServer = <T extends {} = {}>(
+  // The linter does not realize that the type variable is used.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  api: <G = T>(server: express.Express) => express.Express,
   options: Partial<ApiServerOptions> = {},
   app: express.Express = express()
 ): express.Express => {
@@ -82,5 +84,5 @@ export const ApiServer = (
   // Everything except /health will return a 503 when in maintenance mode
   app.use(MaintenanceModeMiddleware(options.maintenanceMode))
 
-  return api(app)
+  return api<T>(app)
 }

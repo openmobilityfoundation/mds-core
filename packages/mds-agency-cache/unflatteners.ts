@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-import { VEHICLE_TYPE, VEHICLE_EVENT, VEHICLE_STATUS, Device, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+import {
+  VEHICLE_TYPE,
+  VEHICLE_EVENT,
+  VEHICLE_STATE,
+  PROPULSION_TYPE,
+  Device,
+  Telemetry,
+  VehicleEvent,
+  ACCESSIBILITY_OPTION,
+  MODALITY,
+  TRIP_STATE
+} from '@mds-core/mds-types'
 
 import { ParseError } from '@mds-core/mds-utils'
 import { HasPropertyAssertion } from '@mds-core/mds-schema-validators'
@@ -61,12 +72,13 @@ function parseEvent(
       timestamp: Number(event.timestamp),
       timestamp_long: event.timestamp_long ? event.timestamp_long : null,
       delta: event.delta ? Number(event.delta) : null,
-      event_type: event.event_type as VEHICLE_EVENT,
+      event_types: event.event_types as VEHICLE_EVENT[],
       telemetry_timestamp: event.telemetry_timestamp ? Number(event.telemetry_timestamp) : null,
       telemetry: event.telemetry ? parseTelemetry(event.telemetry) : null,
       trip_id: event.trip_id ? event.trip_id : null,
-      service_area_id: event.service_area_id ? event.service_area_id : null,
-      recorded: Number(event.recorded)
+      recorded: Number(event.recorded),
+      vehicle_state: event.vehicle_state as VEHICLE_STATE,
+      trip_state: event.trip_state ? (event.trip_state as TRIP_STATE) : null
     }
   }
   return event
@@ -75,16 +87,20 @@ function parseEvent(
 function parseDevice(device: StringifiedCacheReadDeviceResult): Device {
   if (device) {
     return {
+      accessibility_options: device.accessibility_options
+        ? (device.accessibility_options as ACCESSIBILITY_OPTION[])
+        : [],
       device_id: device.device_id,
       provider_id: device.provider_id,
       vehicle_id: device.vehicle_id,
-      type: device.type as VEHICLE_TYPE,
-      propulsion: device.propulsion,
+      vehicle_type: device.vehicle_type as VEHICLE_TYPE,
+      propulsion_types: device.propulsion_types as PROPULSION_TYPE[],
       year: device.year ? Number(device.year) : null,
       mfgr: device.mfgr ? device.mfgr : null,
+      modality: device.modality as MODALITY,
       model: device.model ? device.model : null,
       recorded: Number(device.recorded),
-      status: device.status ? (device.status as VEHICLE_STATUS) : null
+      state: device.state ? (device.state as VEHICLE_STATE) : null
     }
   }
   return device
@@ -94,10 +110,16 @@ const isStringifiedTelemetry = (telemetry: unknown): telemetry is StringifiedTel
   HasPropertyAssertion<StringifiedTelemetry>(telemetry, 'gps')
 
 const isStringifiedEventWithTelemetry = (event: unknown): event is StringifiedEventWithTelemetry =>
-  HasPropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_type', 'telemetry')
+  HasPropertyAssertion<StringifiedEventWithTelemetry>(event, 'event_types', 'telemetry')
 
 const isStringifiedCacheReadDeviceResult = (device: unknown): device is StringifiedCacheReadDeviceResult =>
-  HasPropertyAssertion<StringifiedCacheReadDeviceResult>(device, 'device_id', 'provider_id', 'type', 'propulsion')
+  HasPropertyAssertion<StringifiedCacheReadDeviceResult>(
+    device,
+    'device_id',
+    'provider_id',
+    'vehicle_type',
+    'propulsion_types'
+  )
 
 function parseCachedItem(item: CachedItem): Device | Telemetry | VehicleEvent {
   if (isStringifiedTelemetry(item)) {
