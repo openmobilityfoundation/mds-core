@@ -17,22 +17,25 @@
 import type { Express } from 'express'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
 import { checkAccess } from '@mds-core/mds-api-server'
-import { CollectorApiAccessTokenScopes } from './@types'
 import { CollectorApiVersionMiddleware } from './middleware/collector-api-version'
 import { CollectorApiErrorMiddleware } from './middleware/collector-api-error'
 import { GetMessageSchemaHandler } from './handlers/get-message-schema'
 import { WriteSchemaMessagesHandler } from './handlers/write-schema-messages'
 
-const checkCollectorApiAccess = checkAccess<CollectorApiAccessTokenScopes>((scopes, claims) =>
-  isUUID(claims?.provider_id)
-)
-
 export const api = (app: Express): Express =>
   app
     .use(CollectorApiVersionMiddleware)
 
-    .get(pathPrefix('/schema/:schema_id'), checkCollectorApiAccess, GetMessageSchemaHandler)
+    .get(
+      pathPrefix('/schema/:schema_id'),
+      checkAccess(scopes => scopes.includes('collector:schemas:read')),
+      GetMessageSchemaHandler
+    )
 
-    .post(pathPrefix('/schema/:schema_id'), checkCollectorApiAccess, WriteSchemaMessagesHandler)
+    .post(
+      pathPrefix('/messages/:schema_id'),
+      checkAccess((scopes, claims) => scopes.includes('collector:messages:write') && isUUID(claims?.provider_id)),
+      WriteSchemaMessagesHandler
+    )
 
     .use(CollectorApiErrorMiddleware)

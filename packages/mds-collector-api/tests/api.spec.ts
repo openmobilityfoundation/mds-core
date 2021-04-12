@@ -77,7 +77,7 @@ const Post = (path: string, body: {}, provider_id?: UUID, ...scopes: CollectorAp
 
 describe('Collector API', () => {
   describe('Service Unavailable', () => {
-    Get('/schema/test', TEST_PROVIDER_ID).Responds(HttpStatus.SERVICE_UNAVAILABLE, {
+    Get('/schema/test', TEST_PROVIDER_ID, 'collector:schemas:read').Responds(HttpStatus.SERVICE_UNAVAILABLE, {
       headers: { 'content-type': CollectorApiContentType },
       body: { error: { isServiceError: true, type: 'ServiceUnavailable' } }
     })
@@ -97,39 +97,48 @@ describe('Collector API', () => {
 
     Get('/schema/forbidden').Responds(HttpStatus.FORBIDDEN)
 
-    Get('/schema/notfound', TEST_PROVIDER_ID).Responds(HttpStatus.NOT_FOUND, {
+    Get('/schema/forbidden', TEST_PROVIDER_ID).Responds(HttpStatus.FORBIDDEN)
+
+    Get('/schema/notfound', TEST_PROVIDER_ID, 'collector:schemas:read').Responds(HttpStatus.NOT_FOUND, {
       headers: { 'content-type': CollectorApiContentType },
       body: { error: { isServiceError: true, type: 'NotFoundError' } }
     })
 
-    Get('/schema/test', TEST_PROVIDER_ID).Responds(HttpStatus.OK, {
+    Get('/schema/test', TEST_PROVIDER_ID, 'collector:schemas:read').Responds(HttpStatus.OK, {
       headers: { 'content-type': CollectorApiContentType },
       body: { $schema: 'http://json-schema.org/draft-07/schema#' }
     })
 
-    Post('/schema/forbidden', {}).Responds(HttpStatus.FORBIDDEN)
+    Post('/messages/forbidden', {}).Responds(HttpStatus.FORBIDDEN)
 
-    Post('/schema/notfound', [{}], TEST_PROVIDER_ID).Responds(HttpStatus.NOT_FOUND, {
+    Post('/messages/forbidden', {}, TEST_PROVIDER_ID).Responds(HttpStatus.FORBIDDEN)
+
+    Post('/messages/notfound', [{}], TEST_PROVIDER_ID, 'collector:messages:write').Responds(HttpStatus.NOT_FOUND, {
       headers: { 'content-type': CollectorApiContentType },
       body: { error: { isServiceError: true, type: 'NotFoundError' } }
     })
 
-    Post('/schema/test', TEST_COLLECTOR_MESSAGES, TEST_PROVIDER_ID).Responds(HttpStatus.CREATED, {
-      headers: { 'content-type': CollectorApiContentType },
-      body: TEST_COLLECTOR_MESSAGES.map(message => ({
-        schema_id: TEST_SCHEMA_ID,
-        provider_id: TEST_PROVIDER_ID,
-        message
-      }))
-    })
-
-    Post('/schema/test', [{ ...TEST_COLLECTOR_MESSAGES[0], email: 'invalid' }], TEST_PROVIDER_ID).Responds(
-      HttpStatus.BAD_REQUEST,
+    Post('/messages/test', TEST_COLLECTOR_MESSAGES, TEST_PROVIDER_ID, 'collector:messages:write').Responds(
+      HttpStatus.CREATED,
       {
         headers: { 'content-type': CollectorApiContentType },
-        body: { error: { isServiceError: true, type: 'ValidationError' } }
+        body: TEST_COLLECTOR_MESSAGES.map(message => ({
+          schema_id: TEST_SCHEMA_ID,
+          provider_id: TEST_PROVIDER_ID,
+          message
+        }))
       }
     )
+
+    Post(
+      '/messages/test',
+      [{ ...TEST_COLLECTOR_MESSAGES[0], email: 'invalid' }],
+      TEST_PROVIDER_ID,
+      'collector:messages:write'
+    ).Responds(HttpStatus.BAD_REQUEST, {
+      headers: { 'content-type': CollectorApiContentType },
+      body: { error: { isServiceError: true, type: 'ValidationError' } }
+    })
 
     afterAll(async () => {
       await CollectorBackend.stop()

@@ -24,6 +24,6 @@ export const [COLLECTOR_API_DEFAULT_VERSION] = COLLECTOR_API_SUPPORTED_VERSIONS
 
 export type CollectorApiRequest<B = {}> = ApiRequest<B>
 
-export type CollectorApiAccessTokenScopes = 'collector:schema:read' | 'collector:stream:write'
+export type CollectorApiAccessTokenScopes = 'collector:schemas:read' | 'collector:messages:write'
 
 export type CollectorApiResponse<B = {}> = ApiResponse<B> & ApiResponseLocalsClaims<CollectorApiAccessTokenScopes>
