@@ -15,6 +15,8 @@
  */
 import { FeatureCollection } from 'geojson'
 
+export * from './transformers'
+
 export const Enum = <T extends string>(...keys: T[]) =>
   Object.freeze(
     keys.reduce((e, key) => {

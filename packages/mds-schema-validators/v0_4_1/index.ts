@@ -3,7 +3,7 @@
 // **************************
 import Joi from 'joi'
 
-import { VehicleEvent_v0_4_1, VEHICLE_EVENTS_v0_4_1 } from '@mds-core/mds-types/transformers/@types'
+import { VehicleEvent_v0_4_1, VEHICLE_EVENTS_v0_4_1 } from '@mds-core/mds-types'
 import {
   ValidatorOptions,
   ValidateSchema,
