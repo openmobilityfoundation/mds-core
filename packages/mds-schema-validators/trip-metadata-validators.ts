@@ -10,6 +10,9 @@ import {
   stringSchema
 } from './validators'
 
+/**
+ * Note: This schema is still very-much-so in flux (especially dependent on mode), so we're keeping this minimal for now. If you see any required bits commented out, this is due to wanting to retain some previous iterations for posterity.
+ */
 export const tripMetadataSchema = Joi.object().keys({
   trip_id: uuidSchema.required(),
   provider_id: uuidSchema.required(),
@@ -19,10 +22,10 @@ export const tripMetadataSchema = Joi.object().keys({
       lat: numberSchema.required()
     })
     .optional(),
-  reservation_time: timestampSchema.required(),
-  reservation_method: stringSchema.valid(...RESERVATION_METHODS).required(),
-  reservation_type: stringSchema.valid(...RESERVATION_TYPES).required(),
-  quoted_trip_start_time: timestampSchema.required(),
+  reservation_time: timestampSchema.optional() /*.required()*/,
+  reservation_method: stringSchema.valid(...RESERVATION_METHODS).optional() /*.required()*/,
+  reservation_type: stringSchema.valid(...RESERVATION_TYPES).optional() /*.required()*/,
+  quoted_trip_start_time: timestampSchema.optional() /*.required()*/,
   dispatch_time: timestampSchema.optional(),
   trip_start_time: timestampSchema.optional(),
   trip_end_time: timestampSchema.optional(),
@@ -43,6 +46,6 @@ export const tripMetadataSchema = Joi.object().keys({
 })
 
 export const validateTripMetadata = (metadata: unknown) => {
-  if (ValidateSchema<TripMetadata>(metadata, tripMetadataSchema, { assert: true, allowUnknown: false })) return metadata
+  if (ValidateSchema<TripMetadata>(metadata, tripMetadataSchema, { assert: true, allowUnknown: true })) return metadata
   throw new RuntimeError('This should never happen')
 }

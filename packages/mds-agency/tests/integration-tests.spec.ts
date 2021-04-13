@@ -1628,7 +1628,7 @@ describe('Tests for tnc modality', async () => {
 })
 
 describe('Tests TripMetadata', async () => {
-  const metadata: Required<Omit<TripMetadata, 'provider_id'>> = {
+  const metadata: () => Required<Omit<TripMetadata, 'provider_id'>> = () => ({
     trip_id: uuid(),
     requested_trip_start_location: { lat: 34.0522, lng: -118.2437 },
     reservation_time: now(),
@@ -1648,18 +1648,30 @@ describe('Tests TripMetadata', async () => {
     },
     reservation_type: 'on_demand',
     reservation_method: 'app'
-  }
-
-  it('Tests valid payload returns success code', async () => {
-    await request.post(pathPrefix('/trips')).set('Authorization', AUTH).send(metadata).expect(201)
   })
 
-  for (const key of ['trip_id', 'reservation_time', 'reservation_type', 'reservation_method'] as (keyof Omit<
-    TripMetadata,
-    'provider_id'
-  >)[]) {
+  it('Tests valid POST payload returns success code', async () => {
+    await request.post(pathPrefix('/trips')).set('Authorization', AUTH).send(metadata()).expect(201)
+  })
+
+  it('Tests valid PATCH payload returns success code', async () => {
+    await request.patch(pathPrefix('/trips')).set('Authorization', AUTH).send(metadata()).expect(201)
+  })
+
+  it('Tests unknown properties are allowed', async () => {
+    await request
+      .patch(pathPrefix('/trips'))
+      .set('Authorization', AUTH)
+      .send({ ...metadata(), potato: 'I am good in a stew' })
+      .expect(201)
+  })
+
+  /**
+   * Note: Right now trip_id is the only required property, but this may change down the road. Keeping this test harness around even though it's excessive at the moment, because it could prove very useful 🛠
+   */
+  for (const key of ['trip_id'] as (keyof Omit<TripMetadata, 'provider_id'>)[]) {
     it(`Tests invalid TripMetadata payload without ${key}`, async () => {
-      const { [key]: foo, ...subsetMetadata } = metadata
+      const { [key]: foo, ...subsetMetadata } = metadata()
 
       // eslint-disable-next-line no-await-in-loop
       const result = await request

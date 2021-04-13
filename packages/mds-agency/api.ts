@@ -150,7 +150,7 @@ function api(app: express.Express): express.Express {
 
   /* Experimental Endpoint */
   app.post(pathPrefix('/trips'), writeTripMetadata)
-
+  app.patch(pathPrefix('/trips'), writeTripMetadata)
   return app
 }
 
