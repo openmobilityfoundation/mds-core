@@ -1,4 +1,5 @@
-import { PROPULSION_TYPE, Telemetry, Timestamp, UUID, VEHICLE_TYPE } from '../../index'
+import { PROPULSION_TYPE, Telemetry, Timestamp, UUID } from '../../index'
+import { VEHICLE_TYPE } from '../../vehicle/vehicle_types'
 
 export const VEHICLE_STATES_v1_0_0 = [
   'available',

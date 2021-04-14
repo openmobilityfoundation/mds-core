@@ -31,8 +31,6 @@ import {
   Telemetry,
   Timestamp,
   AUDIT_EVENT_TYPES,
-  PROPULSION_TYPES,
-  VEHICLE_TYPES,
   VehicleEvent
 } from '@mds-core/mds-types'
 import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
@@ -112,8 +110,8 @@ describe('Testing API', () => {
       modality: 'micromobility',
       provider_id,
       vehicle_id: provider_vehicle_id,
-      propulsion_types: [PROPULSION_TYPES.electric],
-      vehicle_type: VEHICLE_TYPES.scooter,
+      propulsion_types: ['electric'],
+      vehicle_type: 'scooter',
       recorded: AUDIT_START
     }).then(() => {
       db.writeEvent({
@@ -706,8 +704,8 @@ describe('Testing API', () => {
           modality: 'micromobility',
           provider_id,
           vehicle_id: provider_vehicle_id,
-          propulsion_types: [PROPULSION_TYPES.electric],
-          vehicle_type: VEHICLE_TYPES.scooter,
+          propulsion_types: ['electric'],
+          vehicle_type: 'scooter',
           recorded: AUDIT_START
         })
         await db.writeAudit(audit)

@@ -1,5 +1,5 @@
 import { days, now, uuid } from '@mds-core/mds-utils'
-import { ModalityPolicy, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { ModalityPolicy } from '@mds-core/mds-types'
 
 export const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 export const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
@@ -35,7 +35,7 @@ export const POLICY_JSON: ModalityPolicy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 3000,
       minimum: 500
     }
@@ -58,7 +58,7 @@ export const SUPERSEDING_POLICY_JSON: ModalityPolicy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 1000,
       minimum: 500
     }
@@ -83,7 +83,7 @@ export const POLICY2_JSON: ModalityPolicy = {
       rule_units: 'minutes',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], reserved: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 7200
     },
     {
@@ -93,7 +93,7 @@ export const POLICY2_JSON: ModalityPolicy = {
       rule_units: 'minutes',
       geographies: [GEOGRAPHY_UUID],
       states: { removed: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 720
     }
   ]
@@ -117,7 +117,7 @@ export const POLICY3_JSON: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 15
     },
     {
@@ -127,7 +127,7 @@ export const POLICY3_JSON: ModalityPolicy = {
       rule_type: 'speed',
       rule_units: 'mph',
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       days: ['sat', 'sun'],
       start_time: '12:00',
       end_time: '23:59',
@@ -157,7 +157,7 @@ export const POLICY4_JSON: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -179,7 +179,7 @@ export const POLICY5_JSON: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -201,7 +201,7 @@ export const PUBLISH_DATE_VALIDATION_JSON: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -222,7 +222,7 @@ export const POLICY_JSON_MISSING_POLICY_ID = {
       rule_units: 'mph',
       geographies: [NONEXISTENT_GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -244,7 +244,7 @@ export const POLICY_WITH_DUPE_RULE: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [NONEXISTENT_GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -267,7 +267,7 @@ export const PUBLISHED_POLICY: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -289,7 +289,7 @@ export const DELETEABLE_POLICY: ModalityPolicy = {
       rule_units: 'mph',
       geographies: [GEOGRAPHY_UUID],
       states: { on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 25
     }
   ]
@@ -312,7 +312,7 @@ export const TAXI_POLICY: ModalityPolicy = {
       geographies: [GEOGRAPHY_UUID],
       modality: 'taxi',
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.car],
+      vehicle_types: ['car'],
       maximum: 3000,
       minimum: 500
     }

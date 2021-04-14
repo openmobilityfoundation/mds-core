@@ -32,7 +32,6 @@ import {
   VehicleEvent,
   UUID,
   RULE_TYPES,
-  VEHICLE_TYPES,
   Telemetry,
   CountRule
 } from '@mds-core/mds-types'
@@ -352,7 +351,7 @@ describe('Tests Compliance Engine Count Functionality:', () => {
             rule_type: RULE_TYPES.count,
             geographies: veniceSpecOpsPointIds,
             states: { available: ['provider_drop_off'] },
-            vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter]
+            vehicle_types: ['bicycle', 'scooter']
           },
           {
             name: 'Drop-off No-Fly Zones',
@@ -360,7 +359,7 @@ describe('Tests Compliance Engine Count Functionality:', () => {
             rule_type: RULE_TYPES.count,
             geographies: ['e0e4a085-7a50-43e0-afa4-6792ca897c5a'],
             states: { available: ['provider_drop_off'] },
-            vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+            vehicle_types: ['bicycle', 'scooter'],
             maximum: 0
           }
         ]

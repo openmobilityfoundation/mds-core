@@ -16,7 +16,7 @@
 
 import { ComplianceAggregateDomainModel, ComplianceSnapshotDomainModel } from '@mds-core/mds-compliance-service'
 import { days } from '@mds-core/mds-utils'
-import { ModalityPolicy, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { ModalityPolicy } from '@mds-core/mds-types'
 
 export const POLICY_ID_1 = '6d7a9c7e-853c-4ff7-a86f-e17c06d3bd80'
 export const POLICY_ID_2 = 'dfe3f757-c43a-4eb6-b85e-abc00f3e8387'
@@ -330,7 +330,7 @@ export const POLICY1: ModalityPolicy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 3000,
       minimum: 500
     }
@@ -353,7 +353,7 @@ export const POLICY2: ModalityPolicy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 3000,
       minimum: 500
     }

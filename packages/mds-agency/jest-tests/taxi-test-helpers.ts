@@ -1,4 +1,4 @@
-import { Device, TripMetadata, UUID, VehicleEvent, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { Device, TripMetadata, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { now, uuid } from '@mds-core/mds-utils'
 import type supertest from 'supertest'
@@ -15,7 +15,7 @@ const TEST_TAXI: () => Omit<Device, 'recorded'> = () => ({
   device_id: uuid(),
   provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
-  vehicle_type: VEHICLE_TYPES.car,
+  vehicle_type: 'car',
   propulsion_types: ['electric'],
   year: 2018,
   mfgr: 'Schwinn',

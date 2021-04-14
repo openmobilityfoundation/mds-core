@@ -1,14 +1,7 @@
 import { Polygon } from 'geojson'
 import { veniceSpecOps, LA_CITY_BOUNDARY, restrictedAreas } from '@mds-core/mds-test-data'
 
-import {
-  Geography,
-  ModalityCountPolicy,
-  ModalityPolicy,
-  ModalitySpeedPolicy,
-  RULE_TYPES,
-  VEHICLE_TYPES
-} from '@mds-core/mds-types'
+import { Geography, ModalityCountPolicy, ModalityPolicy, ModalitySpeedPolicy, RULE_TYPES } from '@mds-core/mds-types'
 import { days, now } from '@mds-core/mds-utils'
 
 export const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
@@ -40,7 +33,7 @@ export const COUNT_POLICY_JSON: ModalityCountPolicy = {
       rule_type: RULE_TYPES.count,
       geographies: [CITY_OF_LA],
       states: { available: [], non_operational: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 10,
       minimum: 5
     }
@@ -86,7 +79,7 @@ export const COUNT_POLICY_JSON_3: ModalityCountPolicy = {
       rule_type: RULE_TYPES.count,
       geographies: [CITY_OF_LA],
       states: { available: ['on_hours'], non_operational: [], reserved: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 10
     }
   ]
@@ -300,7 +293,7 @@ export const VENICE_OVERFLOW_POLICY: ModalityCountPolicy = {
       geographies: [INNER_GEO.geography_id],
       states: { available: ['provider_drop_off'] },
       maximum: 1,
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter]
+      vehicle_types: ['bicycle', 'scooter']
     },
     {
       name: 'Outer Zone',
@@ -308,7 +301,7 @@ export const VENICE_OVERFLOW_POLICY: ModalityCountPolicy = {
       rule_type: RULE_TYPES.count,
       geographies: [OUTER_GEO.geography_id],
       states: { available: ['provider_drop_off'] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 2
     }
   ]
@@ -331,7 +324,7 @@ export const VENICE_MIXED_VIOLATIONS_POLICY: ModalityCountPolicy = {
       geographies: [INNER_GEO.geography_id],
       states: { available: ['provider_drop_off'] },
       maximum: 1,
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter]
+      vehicle_types: ['bicycle', 'scooter']
     },
     {
       name: 'Outer Zone',
@@ -339,7 +332,7 @@ export const VENICE_MIXED_VIOLATIONS_POLICY: ModalityCountPolicy = {
       rule_type: RULE_TYPES.count,
       geographies: [OUTER_GEO.geography_id],
       states: { available: ['provider_drop_off'] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 1000,
       minimum: 10
     }
@@ -363,7 +356,7 @@ export const MANY_OVERFLOWS_POLICY: ModalityCountPolicy = {
       geographies: [INNER_GEO.geography_id],
       states: { available: ['provider_drop_off'] },
       maximum: 1,
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter]
+      vehicle_types: ['bicycle', 'scooter']
     },
     {
       name: 'Somewhere in Tanzania',
@@ -371,7 +364,7 @@ export const MANY_OVERFLOWS_POLICY: ModalityCountPolicy = {
       rule_type: RULE_TYPES.count,
       geographies: [TANZANIA_GEO.geography_id],
       states: { available: ['provider_drop_off'] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 5,
       minimum: 1
     }

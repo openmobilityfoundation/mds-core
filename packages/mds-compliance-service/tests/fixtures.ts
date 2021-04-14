@@ -15,7 +15,7 @@
  */
 
 import { now, days, uuid, minutes } from '@mds-core/mds-utils'
-import { ModalityPolicy, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { ModalityPolicy } from '@mds-core/mds-types'
 import { ComplianceSnapshotDomainModel } from '../@types'
 
 export const TIME = 1605821758034
@@ -325,7 +325,7 @@ export const POLICY1: ModalityPolicy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 3000,
       minimum: 500
     }
@@ -348,7 +348,7 @@ export const POLICY2: ModalityPolicy = {
       name: 'Greater LA',
       geographies: [GEOGRAPHY_UUID],
       states: { available: [], removed: [], reserved: [], on_trip: [] },
-      vehicle_types: [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter],
+      vehicle_types: ['bicycle', 'scooter'],
       maximum: 3000,
       minimum: 500
     }

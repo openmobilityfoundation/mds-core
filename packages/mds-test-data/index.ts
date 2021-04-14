@@ -17,8 +17,6 @@
 import {
   PROPULSION_TYPE,
   VEHICLE_EVENT,
-  VEHICLE_TYPES,
-  PROPULSION_TYPES,
   UUID,
   Device,
   Timestamp,
@@ -89,8 +87,8 @@ const JUMP_TEST_DEVICE_1: Device = {
   provider_id: JUMP_PROVIDER_ID,
   device_id: 'e9edbe74-f7be-48e0-a63a-92f4bc1af5ed',
   vehicle_id: '1230987',
-  vehicle_type: VEHICLE_TYPES.scooter,
-  propulsion_types: [PROPULSION_TYPES.electric],
+  vehicle_type: 'scooter',
+  propulsion_types: ['electric'],
   year: 2018,
   mfgr: 'Schwinn',
   modality: 'micromobility',
@@ -292,33 +290,31 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
     switch (provider_id) {
       case LIME_PROVIDER_ID:
       case JUMP_PROVIDER_ID:
-        vehicle_type = [VEHICLE_TYPES.bicycle, VEHICLE_TYPES.scooter][coin]
-        if (vehicle_type === VEHICLE_TYPES.bicycle) {
-          propulsion_types = [[PROPULSION_TYPES.human, PROPULSION_TYPES.electric], [PROPULSION_TYPES.human]][
-            coin
-          ] as PROPULSION_TYPE[]
+        vehicle_type = ['bicycle', 'scooter'][coin]
+        if (vehicle_type === 'bicycle') {
+          propulsion_types = [['human', 'electric'], ['human']][coin] as PROPULSION_TYPE[]
         } else {
-          propulsion_types = [PROPULSION_TYPES.electric]
+          propulsion_types = ['electric']
         }
         break
       case BIRD_PROVIDER_ID:
-        vehicle_type = VEHICLE_TYPES.scooter
-        propulsion_types = [PROPULSION_TYPES.electric]
+        vehicle_type = 'scooter'
+        propulsion_types = ['electric']
         break
       default:
-        vehicle_type = VEHICLE_TYPES.bicycle
-        propulsion_types = [PROPULSION_TYPES.human]
+        vehicle_type = 'bicycle'
+        propulsion_types = ['human']
         break
     }
     let mfgr
     let model
     const year = rangeRandomInt(2016, 2020)
     switch (vehicle_type) {
-      case VEHICLE_TYPES.scooter:
+      case 'scooter':
         mfgr = 'Xiaomi'
         model = 'M365'
         break
-      case VEHICLE_TYPES.bicycle:
+      case 'bicycle':
         mfgr = 'Schwinn'
         model = 'Mantaray'
         break

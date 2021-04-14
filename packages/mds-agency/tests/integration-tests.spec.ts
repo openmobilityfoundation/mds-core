@@ -30,8 +30,6 @@
 import supertest from 'supertest'
 import test from 'unit.js'
 import {
-  VEHICLE_TYPES,
-  PROPULSION_TYPES,
   Timestamp,
   Device,
   VehicleEvent,
@@ -99,8 +97,8 @@ const TEST_BICYCLE: Omit<Device, 'recorded' | 'accessibility_options'> = {
   device_id: DEVICE_UUID,
   provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
-  vehicle_type: VEHICLE_TYPES.bicycle,
-  propulsion_types: [PROPULSION_TYPES.human],
+  vehicle_type: 'bicycle',
+  propulsion_types: ['human'],
   year: 2018,
   mfgr: 'Schwinn',
   modality: 'micromobility',
@@ -112,7 +110,7 @@ const TEST_TAXI: Omit<Device, 'recorded'> = {
   device_id: uuid(),
   provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
-  vehicle_type: VEHICLE_TYPES.car,
+  vehicle_type: 'car',
   propulsion_types: ['electric'],
   year: 2018,
   mfgr: 'Schwinn',
@@ -125,7 +123,7 @@ const TEST_TNC: Omit<Device, 'recorded'> = {
   device_id: uuid(),
   provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-1',
-  vehicle_type: VEHICLE_TYPES.car,
+  vehicle_type: 'car',
   propulsion_types: ['electric'],
   year: 2018,
   mfgr: 'Schwinn',

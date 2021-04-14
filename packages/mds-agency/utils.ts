@@ -25,7 +25,6 @@ import {
   VehicleEvent,
   Telemetry,
   ErrorObject,
-  isEnum,
   VEHICLE_TYPES,
   PROPULSION_TYPES,
   BoundingBox,
@@ -74,7 +73,7 @@ export function badDevice(device: Device): { error: string; error_description: s
     }
   }
   for (const prop of device.propulsion_types) {
-    if (!isEnum(PROPULSION_TYPES, prop)) {
+    if (!PROPULSION_TYPES.includes(prop)) {
       return {
         error: 'bad_param',
         error_description: `invalid propulsion type ${prop}`
@@ -107,7 +106,7 @@ export function badDevice(device: Device): { error: string; error_description: s
       error_description: 'missing enum field "type"'
     }
   }
-  if (!isEnum(VEHICLE_TYPES, device.vehicle_type)) {
+  if (!VEHICLE_TYPES.includes(device.vehicle_type)) {
     return {
       error: 'bad_param',
       error_description: `invalid device type ${device.vehicle_type}`

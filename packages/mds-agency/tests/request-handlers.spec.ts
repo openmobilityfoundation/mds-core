@@ -1,7 +1,7 @@
 import Sinon from 'sinon'
 import assert from 'assert'
 import { uuid } from '@mds-core/mds-utils'
-import { Device, VEHICLE_TYPES } from '@mds-core/mds-types'
+import { Device } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
 import stream from '@mds-core/mds-stream'
@@ -34,7 +34,7 @@ describe('Agency API request handlers', () => {
     const getFakeBody = () => {
       const device_id = uuid()
       const vehicle_id = uuid()
-      const vehicle_type: Device['vehicle_type'] = VEHICLE_TYPES.car
+      const vehicle_type: Device['vehicle_type'] = 'car'
       const propulsion_types: Device['propulsion_types'] = ['combustion']
       const body = {
         device_id,
