@@ -9,7 +9,7 @@ apis:
     pathPrefix: /audit
     version: latest
     migration: false
-  mds-policy:
+  mds-modality-policy:
     enabled: true
     pathPrefix: /policy
     version: latest
@@ -23,7 +23,7 @@ apis:
     enabled: true
     version: latest
     migration: false
-  mds-policy-author:
+  mds-modality-policy-author:
     enabled: true
     pathPrefix: /policy-author
     version: latest
