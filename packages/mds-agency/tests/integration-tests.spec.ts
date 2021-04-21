@@ -1131,6 +1131,21 @@ describe('Tests API', () => {
         done(err)
       })
   })
+  it('verifies post telemetry handling of empty data payload', done => {
+    request
+      .post(pathPrefix('/vehicles/telemetry'))
+      .set('Authorization', AUTH)
+      .send({})
+      .expect(400)
+      .end((err, result) => {
+        if (err) {
+          log('telemetry err', err)
+        } else {
+          test.string(result.body.error_description).contains('Missing data from post-body')
+        }
+        done(err)
+      })
+  })
   it('verifies posting the same telemetry does not break things', done => {
     request
       .post(pathPrefix('/vehicles/telemetry'))
