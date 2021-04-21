@@ -282,19 +282,20 @@ export function badTelemetry(telemetry: Telemetry | null | undefined): ErrorObje
       error_description: `invalid lng ${lng}`
     }
   }
-  if (altitude !== undefined && !isFloat(altitude)) {
+  if (altitude !== undefined && altitude !== null && !isFloat(altitude)) {
     return {
       error: 'bad_param',
       error_description: `invalid altitude ${altitude}`
     }
   }
-  if (accuracy !== undefined && !isFloat(accuracy)) {
+
+  if (accuracy !== undefined && accuracy !== null && !isFloat(accuracy)) {
     return {
       error: 'bad_param',
       error_description: `invalid accuracy ${accuracy}`
     }
   }
-  if (speed !== undefined && !isFloat(speed)) {
+  if (speed !== undefined && speed !== null && !isFloat(speed)) {
     return {
       error: 'bad_param',
       error_description: `invalid speed ${speed}`
@@ -306,7 +307,7 @@ export function badTelemetry(telemetry: Telemetry | null | undefined): ErrorObje
       error_description: `invalid satellites ${satellites}`
     }
   }
-  if (charge !== undefined && !isPct(charge)) {
+  if (charge !== undefined && charge !== null && !isPct(charge)) {
     return {
       error: 'bad_param',
       error_description: `invalid charge ${charge}`

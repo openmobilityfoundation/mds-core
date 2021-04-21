@@ -74,7 +74,10 @@ const TEST_TELEMETRY = {
     lng: -121.8863,
     speed: 0,
     hdop: 1,
-    heading: 180
+    heading: 180,
+    accuracy: null,
+    altitude: null,
+    charge: null
   },
   charge: 0.5,
   timestamp: now()
@@ -1125,6 +1128,7 @@ describe('Tests API', () => {
       .end((err, result) => {
         if (err) {
           log('telemetry err', err)
+          log('telemetry res', result)
         } else {
           // log('telemetry result', result)
         }
