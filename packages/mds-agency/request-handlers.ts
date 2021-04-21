@@ -377,6 +377,13 @@ export const submitVehicleTelemetry = async (
     })
     return
   }
+  if (!data) {
+    res.status(400).send({
+      error: 'bad_param',
+      error_description: 'Missing data from post-body'
+    })
+    return
+  }
   const name = providerName(provider_id)
   const failures: string[] = []
   const valid: Telemetry[] = []

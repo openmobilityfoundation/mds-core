@@ -46,7 +46,7 @@ export type AgencyApiGetVehicleByIdRequest = AgencyApiRequest & ApiRequestParams
 export type AgencyApiGetVehiclesByProviderRequest = AgencyApiRequest
 export type AgencyApiUpdateVehicleRequest = AgencyApiRequest<Device> & ApiRequestParams<'device_id'>
 export type AgencyApiSubmitVehicleEventRequest = AgencyApiRequest<VehicleEvent> & ApiRequestParams<'device_id'>
-export type AgencyApiSubmitVehicleTelemetryRequest = AgencyApiRequest<{ data: Telemetry[] }>
+export type AgencyApiSubmitVehicleTelemetryRequest = AgencyApiRequest<{ data?: Telemetry[] }>
 export type AgencyApiPostTripMetadataRequest = AgencyApiRequest<TripMetadata>
 export type AgencyApiAccessTokenScopes = 'admin:all' | 'vehicles:read'
 
