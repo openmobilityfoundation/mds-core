@@ -27,6 +27,11 @@ const getProperty = <T extends string>(property: T, error: unknown): string | un
 export const RepositoryError = (error: unknown) => {
   if (isError(error)) {
     const code = getProperty('code', error)
+    // READ ONLY SQL TRANSACTION: PG may return this error in the event of a failover to a replica; force a restart
+    if (code === '25006') {
+      process.exit(Number(code))
+    }
+    // UNIQUE VIOLATION
     if (code === '23505') {
       return new ConflictError(getProperty('detail', error), error)
     }
