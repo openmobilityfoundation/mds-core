@@ -4,7 +4,7 @@ MDS Compliance Engine
 
 ## Build Instructions
 
-Clone https://github.com/openmobilityfoundation/mds-core. Run `yarn install` and `yarn build`.
+Clone https://github.com/openmobilityfoundation/mds-core. Run `pnpm install` and `pnpm build`.
 
 ## Notes on business logic
 

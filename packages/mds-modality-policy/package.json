@@ -11,12 +11,10 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
-    "start": "PATH_PREFIX=/modality-policy yarn watch server",
-    "test": "yarn test:eslint && yarn test:unit",
-    "test:eslint": "eslint --ignore-path ../../.gitignore '**/*.ts'",
-    "test:unit": "PATH_PREFIX=/modality-policy DOTENV_CONFIG_PATH=../../.env nyc ts-mocha --project ../../tsconfig.json",
-    "ts-node": "yarn build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
-    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec yarn ts-node --"
+    "start": "PATH_PREFIX=/modality-policy pnpm watch server",
+    "test": "PATH_PREFIX=/modality-policy DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap  ts-mocha --project ../../tsconfig.json",
+    "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
+    "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
     "@mds-core/mds-api-server": "0.1.28",
@@ -24,7 +22,7 @@
     "@mds-core/mds-policy": "0.0.29",
     "@mds-core/mds-schema-validators": "0.1.4",
     "@mds-core/mds-types": "0.1.25",
-    "@types/express": "4.17.8",
+    "@types/express": "4.17.11",
     "express": "4.17.1"
   }
 }

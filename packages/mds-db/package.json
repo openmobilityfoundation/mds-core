@@ -27,7 +27,7 @@
     "@mds-core/mds-utils": "0.1.28",
     "@types/pg": "7.14.11",
     "await-lock": "2.1.0",
-    "pg": "8.5.1"
+    "pg": "8.6.0"
   },
   "devDependencies": {
     "@mds-core/mds-test-data": "0.1.28"

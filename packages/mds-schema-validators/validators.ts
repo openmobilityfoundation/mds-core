@@ -354,7 +354,6 @@ export function validateGeographies(geographies: unknown): geographies is Geogra
 export function validateEvents(events: unknown): events is VehicleEvent[] {
   const { error } = eventsSchema.validate(events)
   if (error) {
-    console.log(error)
     throw new ValidationError('invalid events', {
       events,
       details: Format('events', error)
