@@ -49,14 +49,16 @@ const log = (level: LogLevel) => (
   const log_ISO_timestamp = new Date(log_timestamp).toISOString()
   const log_requestId = httpContext.get('x-request-id')
 
-  logger[level]({
-    log_level: level.toUpperCase(),
-    log_ISO_timestamp,
-    log_timestamp,
-    ...(log_requestId ? { log_requestId } : {}),
-    log_message,
-    log_data
-  })
+  logger[level](
+    JSON.stringify({
+      log_level: level.toUpperCase(),
+      log_ISO_timestamp,
+      log_timestamp,
+      ...(log_requestId ? { log_requestId } : {}),
+      log_message,
+      log_data
+    })
+  )
 
   return { log_message, log_data }
 }

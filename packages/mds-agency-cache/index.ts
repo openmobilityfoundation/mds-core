@@ -160,18 +160,28 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
 }
 
 const writeTripMetadata = async (metadata: TripMetadata) => {
-  const { trip_id } = metadata
+  try {
+    const { trip_id } = metadata
 
-  return client.set(decorateKey(`trip:${trip_id}:metadata`), JSON.stringify(metadata))
+    return client.set(decorateKey(`trip:${trip_id}:metadata`), JSON.stringify(metadata))
+  } catch (err) {
+    logger.error('Failed to write TripMetadata to cache', err)
+    throw err
+  }
 }
 
 // put basics of device in the cache
 async function writeDevice(device: Device) {
-  if (!device) {
-    throw new Error('null device not legal to write')
-  }
+  try {
+    if (!device) {
+      throw new Error('null device not legal to write')
+    }
 
-  return hwrite('device', device)
+    return hwrite('device', device)
+  } catch (err) {
+    logger.error('Failed to write device to cache', err)
+    throw err
+  }
 }
 
 async function readKeys(pattern: string) {
@@ -424,7 +434,12 @@ async function writeOneTelemetry(telemetry: Telemetry) {
 }
 
 async function writeTelemetry(telemetries: Telemetry[]) {
-  await Promise.all(telemetries.map(telemetry => writeOneTelemetry(telemetry)))
+  try {
+    await Promise.all(telemetries.map(telemetry => writeOneTelemetry(telemetry)))
+  } catch (err) {
+    logger.error('Failed to write telemetry to cache', err)
+    throw err
+  }
 }
 
 async function readAllTelemetry() {

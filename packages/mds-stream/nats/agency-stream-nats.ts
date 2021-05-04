@@ -15,7 +15,7 @@
  */
 
 import { VehicleEvent, Telemetry, Device, TripMetadata } from '@mds-core/mds-types'
-import { getEnvVar } from '@mds-core/mds-utils'
+import { ClientDisconnectedError, getEnvVar } from '@mds-core/mds-utils'
 import { AgencyStreamInterface } from '../agency-stream-interface'
 import { NatsStreamProducer } from './stream-producer'
 
@@ -36,10 +36,46 @@ export const AgencyStreamNats: AgencyStreamInterface = {
       tripMetadataProducer.initialize()
     ])
   },
-  writeEvent: eventProducer.write,
-  writeTelemetry: telemetryProducer.write,
-  writeDevice: deviceProducer.write,
-  writeTripMetadata: tripMetadataProducer.write,
+  writeEvent: async msg => {
+    try {
+      await eventProducer.write(msg)
+    } catch (err) {
+      if (err instanceof ClientDisconnectedError) {
+        await eventProducer.initialize()
+        await eventProducer.write(msg)
+      }
+    }
+  },
+  writeTelemetry: async msg => {
+    try {
+      await telemetryProducer.write(msg)
+    } catch (err) {
+      if (err instanceof ClientDisconnectedError) {
+        await telemetryProducer.initialize()
+        await telemetryProducer.write(msg)
+      }
+    }
+  },
+  writeDevice: async msg => {
+    try {
+      await deviceProducer.write(msg)
+    } catch (err) {
+      if (err instanceof ClientDisconnectedError) {
+        await deviceProducer.initialize()
+        await deviceProducer.write(msg)
+      }
+    }
+  },
+  writeTripMetadata: async msg => {
+    try {
+      await tripMetadataProducer.write(msg)
+    } catch (err) {
+      if (err instanceof ClientDisconnectedError) {
+        await tripMetadataProducer.initialize()
+        await tripMetadataProducer.write(msg)
+      }
+    }
+  },
   shutdown: async () => {
     await Promise.all([
       deviceProducer.shutdown(),
