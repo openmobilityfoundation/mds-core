@@ -72,12 +72,12 @@ export const telemetrySchema = Joi.object().keys({
     .keys({
       lat: numberSchema.min(-90).max(90).required(),
       lng: numberSchema.min(-180).max(180).required(),
-      speed: numberSchema.optional(),
-      heading: numberSchema.optional(),
-      accuracy: numberSchema.optional(),
-      hdop: numberSchema.optional(),
-      altitude: numberSchema.optional(),
-      satellites: numberSchema.optional()
+      speed: numberSchema.optional().allow(null),
+      heading: numberSchema.optional().allow(null),
+      accuracy: numberSchema.optional().allow(null),
+      hdop: numberSchema.optional().allow(null),
+      altitude: numberSchema.optional().allow(null),
+      satellites: numberSchema.optional().allow(null)
     })
     .required(),
   charge: numberSchema.optional(),

@@ -106,7 +106,9 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
   try {
     isValidDevice(device)
   } catch (err) {
-    logger.info(`Device ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(err)}`)
+    logger.info(
+      `Non-critical prototype Device ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(err)}`
+    )
   }
 
   const failure = badDevice(device)
@@ -268,7 +270,9 @@ export const submitVehicleEvent = async (
   try {
     validateEvent(event)
   } catch (err) {
-    logger.info(`Event ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(err)}`)
+    logger.info(
+      `Non-critical prototype Event ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(err)}`
+    )
   }
 
   if (event.telemetry) {
@@ -419,7 +423,11 @@ export const submitVehicleTelemetry = async (
       try {
         isValidTelemetry(telemetry)
       } catch (err) {
-        logger.info(`Telemetry ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(err)}`)
+        logger.info(
+          `Non-critical prototype Telemetry ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(
+            err
+          )}`
+        )
       }
 
       const bad_telemetry: ErrorObject | null = badTelemetry(telemetry)
