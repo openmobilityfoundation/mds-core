@@ -17,7 +17,6 @@
 import express from 'express'
 
 import logger from '@mds-core/mds-logger'
-import { isProviderId } from '@mds-core/mds-providers'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
 import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { AgencyApiRequest, AgencyApiResponse, AgencyApiAccessTokenScopes } from './types'
@@ -57,13 +56,6 @@ function api(app: express.Express): express.Express {
             return res.status(400).send({
               error: 'authentication_error',
               error_description: `invalid provider_id ${provider_id} is not a UUID`
-            })
-          }
-
-          if (!isProviderId(provider_id)) {
-            return res.status(400).send({
-              error: 'authentication_error',
-              error_description: `invalid provider_id ${provider_id} is not a known provider`
             })
           }
 

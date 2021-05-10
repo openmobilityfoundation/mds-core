@@ -15,7 +15,6 @@
  */
 
 import express, { NextFunction } from 'express'
-// import { isProviderId, providerName } from '@mds-core/mds-providers'
 import { PolicyTypeInfo, UUID } from '@mds-core/mds-types'
 import db from '@mds-core/mds-db'
 import { now, pathPrefix, NotFoundError, isUUID, BadParamsError, ServerError } from '@mds-core/mds-utils'
@@ -23,8 +22,6 @@ import logger from '@mds-core/mds-logger'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import {
-  PolicyApiRequest,
-  PolicyApiResponse,
   PolicyApiGetPoliciesResponse,
   PolicyApiGetPolicyResponse,
   PolicyApiGetPoliciesRequest,
@@ -34,43 +31,6 @@ import { PolicyApiVersionMiddleware } from './middleware'
 
 function api<PInfo extends PolicyTypeInfo>(app: express.Express): express.Express {
   app.use(PolicyApiVersionMiddleware)
-  /**
-   * Policy-specific middleware to extract provider_id into locals, do some logging, etc.
-   */
-  app.use(async (req: PolicyApiRequest, res: PolicyApiResponse, next: express.NextFunction) => {
-    res.header('Access-Control-Allow-Origin', '*')
-    try {
-      // verify presence of provider_id
-      if (!(req.path.includes('/health') || req.path.includes('/schema/policy'))) {
-        if (res.locals.claims) {
-          /* TEMPORARILY REMOVING SO NON-PROVIDERS CAN ACCESS POLICY API */
-          // const { provider_id } = res.locals.claims
-          // /* istanbul ignore next */
-          // if (!provider_id) {
-          //   logger.warn('Missing provider_id in', req.originalUrl)
-          //   return res.status(400).send({ result: 'missing provider_id' })
-          // }
-          // /* istanbul ignore next */
-          // if (!isUUID(provider_id)) {
-          //   logger.warn(req.originalUrl, 'bogus provider_id', provider_id)
-          //   return res.status(400).send({ result: `invalid provider_id ${provider_id} is not a UUID` })
-          // }
-          // if (!isProviderId(provider_id)) {
-          //   return res.status(400).send({
-          //     result: `invalid provider_id ${provider_id} is not a known provider`
-          //   })
-          // }
-          // logger.info(providerName(provider_id), req.method, req.originalUrl)
-        } else {
-          return res.status(401).send({ error: 'Unauthorized' })
-        }
-      }
-    } catch (error) {
-      /* istanbul ignore next */
-      logger.error('request validation fail', { error, originalUrl: req.originalUrl })
-    }
-    next()
-  })
 
   app.get(
     pathPrefix('/policies'),

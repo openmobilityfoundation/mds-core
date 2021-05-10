@@ -1363,6 +1363,15 @@ describe('Tests API', () => {
     test.assert(JSON.stringify(result.body.prev_events) === JSON.stringify(['decommissioned']))
   })
 
+  it('verifies can make request for foreign provider_id', async () => {
+    const provider_id = uuid()
+    const AUTH = `basic ${Buffer.from(`${provider_id}|${PROVIDER_SCOPES}`).toString('base64')}`
+
+    const [device] = makeDevices(1, now(), provider_id)
+
+    await request.post(pathPrefix('/vehicles')).set('Authorization', AUTH).send(device).expect(201)
+  })
+
   it('get multiple devices endpoint has vehicle status default to `inactive` if event is missing for a device', async () => {
     const result = await request.get(pathPrefix(`/vehicles/`)).set('Authorization', AUTH).expect(200)
     const ids = result.body.vehicles.map((device: any) => device.device_id)
