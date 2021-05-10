@@ -22,7 +22,7 @@ import { TransactionApiRequest, TransactionApiResponse } from '../@types'
 export type TransactionApiAddTransactionOperationRequest = TransactionApiRequest<TransactionOperationDomainModel>
 
 export type TransactionApiAddTransactionOperationResponse = TransactionApiResponse<{
-  transaction: TransactionOperationDomainModel
+  operation: TransactionOperationDomainModel
 }>
 
 export const AddTransactionOperationHandler = async (
@@ -31,9 +31,9 @@ export const AddTransactionOperationHandler = async (
   next: express.NextFunction
 ) => {
   try {
-    const transaction = await TransactionServiceClient.addTransactionOperation(req.body)
+    const operation = await TransactionServiceClient.addTransactionOperation(req.body)
     const { version } = res.locals
-    return res.status(201).send({ version, transaction })
+    return res.status(201).send({ version, operation })
   } catch (error) {
     next(error)
   }
