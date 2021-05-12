@@ -6,7 +6,7 @@ import logger from '@mds-core/mds-logger'
  */
 export const { decode: decodeAsUInt8Array, encode: encodeAsUInt8Array } = StringCodec()
 
-export type DecodedNatsMsg = Omit<Msg, 'data'> & { data: string }
+export type DecodedNatsMsg = { data: string } & Pick<Msg, 'subject'>
 
 export type NatsProcessorFn = (message: DecodedNatsMsg) => void
 
@@ -20,8 +20,8 @@ export const natsCbWrapper: (processor: NatsProcessorFn) => SubOpts<Msg>['callba
     logger.error('NATS Error', { err })
     return
   }
-  const { data, ...msgMeta } = msg
+  const { data, subject } = msg
 
-  const decodedMsg = { ...msgMeta, data: decodeAsUInt8Array(data) }
+  const decodedMsg = { data: decodeAsUInt8Array(data), subject }
   processor(decodedMsg)
 }
