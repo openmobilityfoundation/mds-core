@@ -297,7 +297,7 @@ export const submitVehicleEvent = async (
   }
 
   /* istanbul ignore next */
-  async function fail(err: Error | Partial<{ message: string }>): Promise<void> {
+  async function fail(err: Error | Partial<{ message: string }>, event: Partial<VehicleEvent>): Promise<void> {
     const message = err.message || String(err)
     if (message.includes('duplicate')) {
       logger.info('duplicate event', { name, event })
@@ -315,6 +315,13 @@ export const submitVehicleEvent = async (
       logger.error('post event fail:', { event, message })
       res.status(500).send(agencyServerError)
     }
+
+    await stream.writeEventError({
+      provider_id,
+      data: event,
+      recorded: now(),
+      error_message: message
+    })
   }
 
   // TODO switch to cache for speed?
@@ -336,6 +343,12 @@ export const submitVehicleEvent = async (
     const failure = (await badEvent(device, event)) || (event.telemetry ? badTelemetry(event.telemetry) : null)
     // TODO unify with fail() above
     if (failure) {
+      await stream.writeEventError({
+        provider_id,
+        data: event,
+        recorded: now(),
+        error_message: failure.error_description
+      })
       logger.info('event failure', { name, failure, event })
       return res.status(400).send(failure)
     }
@@ -362,7 +375,7 @@ export const submitVehicleEvent = async (
       await success()
     }
   } catch (err) {
-    await fail(err)
+    await fail(err, event)
   }
 }
 

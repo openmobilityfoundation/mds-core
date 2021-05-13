@@ -25,7 +25,8 @@ import {
   DEVICE_INDEX_STREAM,
   DEVICE_RAW_STREAM,
   ReadStreamOptions,
-  StreamItemID
+  StreamItemID,
+  BadDataError
 } from './types'
 import { AgencyStreamKafka } from './kafka/agency-stream-kafka'
 import { KafkaStreamConsumer, KafkaStreamProducer } from './kafka'
@@ -187,6 +188,16 @@ async function writeEvent(event: VehicleEvent) {
   return writeStream(DEVICE_RAW_STREAM, 'event', event)
 }
 
+async function writeEventError(error: BadDataError) {
+  if (env.NATS) {
+    await AgencyStreamNats.writeEventError(error)
+  }
+  if (env.KAFKA_HOST) {
+    await AgencyStreamKafka.writeEventError(error)
+  }
+  return writeStream(DEVICE_RAW_STREAM, 'event', error)
+}
+
 // put latest locations in the cache
 async function writeTelemetry(telemetry: Telemetry[]) {
   if (env.NATS) {
@@ -325,6 +336,7 @@ export default {
   startup,
   writeDevice,
   writeEvent,
+  writeEventError,
   writeStream,
   writeStreamBatch,
   writeTelemetry,

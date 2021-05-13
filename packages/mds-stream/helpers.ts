@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-import { VehicleEvent, Telemetry, Device, TripMetadata } from '@mds-core/mds-types'
-import { BadDataError } from './types'
+import { ClientDisconnectedError } from '@mds-core/mds-utils'
+import { StreamProducer } from './stream-interface'
 
-export interface AgencyStreamInterface {
-  writeEvent: (event: VehicleEvent) => Promise<void>
-  writeEventError: (error: BadDataError) => Promise<void>
-  writeTelemetry: (telemetry: Telemetry[]) => Promise<void>
-  writeDevice: (device: Device) => Promise<void>
-  writeTripMetadata: (metadata: TripMetadata) => Promise<void>
-  shutdown: () => Promise<void>
-  initialize: () => Promise<void>
+/**
+ * If the producer is disconnected, it re-initializes, tries to write again
+ * @param producer an instance of StreamProducer
+ * @throws ClientDisconnectedError
+ */
+export const safeWrite = async <T>(producer: StreamProducer<T>, message: T | T[]) => {
+  try {
+    await producer.write(message)
+  } catch (err) {
+    if (err instanceof ClientDisconnectedError) {
+      await producer.initialize()
+      await producer.write(message)
+    }
+  }
 }
