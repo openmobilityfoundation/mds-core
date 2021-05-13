@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-policy",
-  "version": "0.0.29",
+  "version": "0.1.0",
   "description": "MDS Policy API",
   "license": "Apache-2.0",
   "author": "City of Los Angeles",

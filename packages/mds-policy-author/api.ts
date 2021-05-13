@@ -51,11 +51,13 @@ import {
   PolicyAuthorApiGetPolicyMetadatumRequest,
   PolicyAuthorApiEditPolicyMetadataRequest
 } from './types'
+import { PolicyAuthorApiVersionMiddleware } from './policy-author-api-version'
 
 const checkPolicyAuthorApiAccess = (validator: AccessTokenScopeValidator<PolicyAuthorApiAccessTokenScopes>) =>
   checkAccess(validator)
 
 function api<PInfo extends PolicyTypeInfo>(app: express.Express): express.Express {
+  app.use(PolicyAuthorApiVersionMiddleware)
   app.post(
     pathPrefix('/policies'),
     checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:write')),

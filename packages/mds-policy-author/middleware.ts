@@ -3,7 +3,7 @@ import { pathPrefix } from '@mds-core/mds-utils'
 import { validateModalityPolicy } from '@mds-core/mds-schema-validators'
 import { PolicyAuthorApiVersionMiddleware } from './policy-author-api-version'
 
-export function injectVersion(app: express.Express): express.Express {
+export const injectVersionMiddleware = (app: express.Express): express.Express => {
   app.use(PolicyAuthorApiVersionMiddleware)
   return app
 }

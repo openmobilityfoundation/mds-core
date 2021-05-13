@@ -87,7 +87,7 @@ export const telemetrySchema = Joi.object().keys({
   recorded: timestampSchema.optional()
 })
 
-const baseRuleSchema = Joi.object().keys({
+export const baseRuleSchema = Joi.object().keys({
   accessibility_options: Joi.array()
     .items(Joi.string().valid(...ACCESSIBILITY_OPTIONS))
     .optional(),
@@ -109,7 +109,7 @@ const baseRuleSchema = Joi.object().keys({
   vehicle_types: Joi.array().items(Joi.string().valid(...Object.values(VEHICLE_TYPES)))
 })
 
-const modalityRuleSchema = baseRuleSchema.keys({
+export const modalityRuleSchema = baseRuleSchema.keys({
   states: Joi.object()
     .keys(
       VEHICLE_STATES_v1_1_0.reduce(

@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-policy-author",
-  "version": "0.0.25",
+  "version": "0.1.0",
   "description": "MDS Policy Author API",
   "license": "Apache-2.0",
   "author": "City of Los Angeles",
@@ -18,7 +18,6 @@
     "@mds-core/mds-api-server": "0.1.28",
     "@mds-core/mds-db": "0.1.28",
     "@mds-core/mds-logger": "0.2.2",
-    "@mds-core/mds-policy-author-middleware": "0.1.0",
     "@mds-core/mds-providers": "0.1.28",
     "@mds-core/mds-schema-validators": "0.1.4",
     "@mds-core/mds-types": "0.1.25",

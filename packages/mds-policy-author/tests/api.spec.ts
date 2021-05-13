@@ -44,7 +44,7 @@ import {
   PUBLISHED_POLICY,
   TAXI_POLICY
 } from '@mds-core/mds-test-data'
-import { injectModalityValidator, injectVersion } from '@mds-core/mds-policy-author-middleware'
+import { injectModalityValidator, injectVersionMiddleware } from '../middleware'
 import { api } from '../api'
 import { POLICY_AUTHOR_API_DEFAULT_VERSION } from '../types'
 
@@ -54,7 +54,7 @@ const log = console.log.bind(console)
 const request = supertest(
   api<ModalityPolicyTypeInfo>(
     injectModalityValidator(
-      injectVersion(
+      injectVersionMiddleware(
         ApiServer((app: express.Express) => {
           return app
         })
