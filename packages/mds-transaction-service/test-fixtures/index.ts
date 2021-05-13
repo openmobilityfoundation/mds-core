@@ -7,7 +7,12 @@ import {
   FEE_TYPE
 } from '../@types'
 
-const receipt = { receipt_id: uuid(), timestamp: Date.now(), receipt_details: {}, origin_url: '' }
+const receipt = {
+  receipt_id: uuid(),
+  timestamp: Date.now(),
+  receipt_details: {},
+  origin_url: 'https://mds.coruscant.com/compliance/snapshot/c78280ff-4e58-4e30-afa9-d72673037799'
+}
 
 /**
  * Generator for Transactions.

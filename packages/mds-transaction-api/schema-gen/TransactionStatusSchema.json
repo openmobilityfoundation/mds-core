@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "properties": {
+    "transaction_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 100000000000,
+      "maximum": 99999999999999
+    },
+    "status_type": {
+      "type": "string",
+      "enum": [
+        "order_submitted",
+        "order_canceled",
+        "order_complete",
+        "order_incomplete"
+      ]
+    },
+    "author": {
+      "description": "Who/what updated the status of the transaction?",
+      "type": "string"
+    }
+  },
+  "required": [
+    "author",
+    "status_id",
+    "status_type",
+    "timestamp",
+    "transaction_id"
+  ]
+}

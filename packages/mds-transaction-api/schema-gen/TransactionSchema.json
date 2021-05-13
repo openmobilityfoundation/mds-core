@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "properties": {
+    "transaction_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "provider_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "What Provider is being charged for this transaction?"
+    },
+    "device_id": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 100000000000,
+      "maximum": 99999999999999
+    },
+    "fee_type": {
+      "type": "string",
+      "enum": [
+        "base_fee",
+        "upgrade_fee",
+        "congestion_fee",
+        "trip_fee",
+        "parking_fee",
+        "reservation_fee",
+        "distance_fee",
+        "tolls_fee"
+      ]
+    },
+    "amount": {
+      "type": "integer"
+    },
+    "receipt": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "timestamp": {
+          "type": "integer",
+          "minimum": 100000000000,
+          "maximum": 99999999999999
+        },
+        "origin_url": {
+          "description": "Where did this transaction originate?",
+          "type": "string",
+          "format": "uri",
+          "example": "https://mds.coruscant.com/compliance/snapshot/c78280ff-4e58-4e30-afa9-d72673037799"
+        },
+        "receipt_details": {
+          "description": "Free-form object which describes the details of this transaction. Highly use-case dependent.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "origin_url",
+        "receipt_details",
+        "receipt_id",
+        "timestamp"
+      ]
+    }
+  },
+  "required": [
+    "amount",
+    "device_id",
+    "fee_type",
+    "provider_id",
+    "receipt",
+    "timestamp",
+    "transaction_id"
+  ]
+}

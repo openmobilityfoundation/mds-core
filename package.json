@@ -10,6 +10,7 @@
     "bundle:development": "pnpm run:concurrent bundle:development",
     "bundle:production": "pnpm run:concurrent bundle:production",
     "clean": "git clean -fdX -e '!.env' -e '!helm/mds/charts' -e '!helm/mds/charts/**' -e '!helm/mds/files' -e '!helm/mds/files/**' && pnpm install",
+    "generate": "pnpm run:concurrent generate",
     "image": "pnpm run:concurrent image",
     "image:development": "pnpm run:concurrent image:development",
     "image:production": "pnpm run:concurrent image:production",

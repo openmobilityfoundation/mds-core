@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "transaction_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 100000000000,
+      "maximum": 99999999999999
+    },
+    "operation_type": {
+      "type": "string",
+      "enum": [
+        "transaction_posted",
+        "invoice_generated",
+        "dispute_requested",
+        "dispute_approved",
+        "dispute_declined",
+        "dispute_canceled"
+      ]
+    },
+    "author": {
+      "description": "Who/what executed this operation?",
+      "type": "string"
+    }
+  },
+  "required": [
+    "author",
+    "operation_id",
+    "operation_type",
+    "timestamp",
+    "transaction_id"
+  ]
+}

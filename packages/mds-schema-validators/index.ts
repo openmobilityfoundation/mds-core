@@ -15,6 +15,7 @@
  */
 
 import Joi from 'joi'
+export type { SchemaObject } from 'ajv'
 import Ajv, { SchemaObject, JSONSchemaType, Options, ValidateFunction } from 'ajv'
 import withFormats from 'ajv-formats'
 import { ValidationError } from '@mds-core/mds-utils'
@@ -66,3 +67,4 @@ export const schemaValidator = <T>(
 export * from './validators'
 export * from './trip-metadata-validators'
 export * from './v0_4_1'
+export * from './generators'

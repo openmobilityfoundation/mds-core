@@ -14,12 +14,16 @@
     "start": "PATH_PREFIX=/transaction pnpm watch server",
     "test": "PATH_PREFIX=/transaction DOTENV_CONFIG_PATH=../../.env jest",
     "ts-node": "DOTENV_CONFIG_PATH=../../.env node -r ts-node/register -r dotenv/config",
-    "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
+    "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --",
+    "generate": "pnpm generate:schema && pnpm generate:flatspec",
+    "generate:flatspec": "ts-node ./generate-flat-spec.ts && git add spec/flat-spec.json",
+    "generate:schema": "ts-node ./generate-schemas.ts && git add schema-gen"
   },
   "dependencies": {
     "@mds-core/mds-api-helpers": "0.1.28",
     "@mds-core/mds-api-server": "0.1.28",
     "@mds-core/mds-logger": "0.2.2",
+    "@mds-core/mds-schema-validators": "0.1.4",
     "@mds-core/mds-service-helpers": "0.1.2",
     "@mds-core/mds-transaction-service": "0.1.2",
     "@mds-core/mds-types": "0.1.25",

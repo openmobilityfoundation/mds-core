@@ -180,7 +180,7 @@ describe('Transaction Service Tests', () => {
         })
 
         it('Get Bulk Transactions within a time range, with default paging', async () => {
-          const [start_timestamp, end_timestamp] = [100_000, 200_000] // Garbage arbitrary timestamps
+          const [start_timestamp, end_timestamp] = [1620100000000, 1620100000300] // Garbage arbitrary timestamps
 
           /**
            * Will generate transactions with differing timestamps **WITHIN** our time bounds, like 100_000, 100_001, 100_002, ..., 100_014

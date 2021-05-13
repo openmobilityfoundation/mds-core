@@ -1,0 +1,675 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "MDS Transaction API",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.server.test/v1"
+    }
+  ],
+  "paths": {
+    "/transaction": {
+      "post": {
+        "summary": "Create a Transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transaction_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "provider_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "What Provider is being charged for this transaction?"
+                  },
+                  "device_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "timestamp": {
+                    "type": "integer",
+                    "minimum": 100000000000,
+                    "maximum": 99999999999999
+                  },
+                  "fee_type": {
+                    "type": "string",
+                    "enum": [
+                      "base_fee",
+                      "upgrade_fee",
+                      "congestion_fee",
+                      "trip_fee",
+                      "parking_fee",
+                      "reservation_fee",
+                      "distance_fee",
+                      "tolls_fee"
+                    ]
+                  },
+                  "amount": {
+                    "type": "integer"
+                  },
+                  "receipt": {
+                    "type": "object",
+                    "properties": {
+                      "receipt_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "timestamp": {
+                        "type": "integer",
+                        "minimum": 100000000000,
+                        "maximum": 99999999999999
+                      },
+                      "origin_url": {
+                        "description": "Where did this transaction originate?",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://mds.coruscant.com/compliance/snapshot/c78280ff-4e58-4e30-afa9-d72673037799"
+                      },
+                      "receipt_details": {
+                        "description": "Free-form object which describes the details of this transaction. Highly use-case dependent.",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "origin_url",
+                      "receipt_details",
+                      "receipt_id",
+                      "timestamp"
+                    ]
+                  }
+                },
+                "required": [
+                  "amount",
+                  "device_id",
+                  "fee_type",
+                  "provider_id",
+                  "receipt",
+                  "timestamp",
+                  "transaction_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "description": "API version in SemVer",
+                      "type": "string",
+                      "enum": [
+                        "0.1.0"
+                      ],
+                      "example": "0.1.0"
+                    },
+                    "transaction": {
+                      "$ref": "#/paths/~1transaction/post/requestBody/content/application~1json/schema"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST"
+          },
+          "409": {
+            "description": "CONFLICT"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "/transactions": {
+      "get": {
+        "summary": "Get a collection of Transactions",
+        "tags": [
+          "Transactions"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "order_column",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "timestamp"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "order_direction",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider_id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "schema": {
+              "type": "string",
+              "format": "byte"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_timestamp",
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_timestamp",
+            "schema": {
+              "$ref": "#/components/schemas/Timestamp"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "number",
+              "format": "i64",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "prev": {
+                          "type": "string",
+                          "format": "url",
+                          "nullable": true
+                        },
+                        "next": {
+                          "type": "string",
+                          "format": "url",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/paths/~1transaction/post/requestBody/content/application~1json/schema"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a collection of Transactions",
+        "tags": [
+          "Transactions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/paths/~1transaction/post/requestBody/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/paths/~1transaction/post/requestBody/content/application~1json/schema"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST"
+          },
+          "409": {
+            "description": "CONFLICT"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "/transactions/{transaction_id}": {
+      "get": {
+        "summary": "Get a transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "transaction": {
+                      "$ref": "#/paths/~1transaction/post/requestBody/content/application~1json/schema"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "/transactions/{transaction_id}/operations": {
+      "get": {
+        "summary": "Get a transaction's operations",
+        "tags": [
+          "Operations"
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "operations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/paths/~1transactions~1%7Btransaction_id%7D~1statuses/post/requestBody/content/application~1json/schema"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add an operation for a transaction",
+        "tags": [
+          "Operations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/paths/~1transactions~1%7Btransaction_id%7D~1statuses/post/requestBody/content/application~1json/schema"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "operation": {
+                      "$ref": "#/paths/~1transactions~1%7Btransaction_id%7D~1statuses/post/requestBody/content/application~1json/schema"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST"
+          },
+          "409": {
+            "description": "CONFLICT"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "/transactions/{transaction_id}/statuses": {
+      "get": {
+        "summary": "Get a transaction's statuses",
+        "tags": [
+          "Statuses"
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "statuses": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/paths/~1transactions~1%7Btransaction_id%7D~1statuses/post/responses/201/content/application~1json/schema/properties/status"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a status for a transaction",
+        "tags": [
+          "Statuses"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transaction_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "operation_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "timestamp": {
+                    "type": "integer",
+                    "minimum": 100000000000,
+                    "maximum": 99999999999999
+                  },
+                  "operation_type": {
+                    "type": "string",
+                    "enum": [
+                      "transaction_posted",
+                      "invoice_generated",
+                      "dispute_requested",
+                      "dispute_approved",
+                      "dispute_declined",
+                      "dispute_canceled"
+                    ]
+                  },
+                  "author": {
+                    "description": "Who/what executed this operation?",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "author",
+                  "operation_id",
+                  "operation_type",
+                  "timestamp",
+                  "transaction_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "status": {
+                      "type": "object",
+                      "properties": {
+                        "transaction_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "status_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "timestamp": {
+                          "type": "integer",
+                          "minimum": 100000000000,
+                          "maximum": 99999999999999
+                        },
+                        "status_type": {
+                          "type": "string",
+                          "enum": [
+                            "order_submitted",
+                            "order_canceled",
+                            "order_complete",
+                            "order_incomplete"
+                          ]
+                        },
+                        "author": {
+                          "description": "Who/what updated the status of the transaction?",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "author",
+                        "status_id",
+                        "status_type",
+                        "timestamp",
+                        "transaction_id"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BAD_REQUEST"
+          },
+          "409": {
+            "description": "CONFLICT"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    },
+    "/transactions/statuses": {
+      "get": {
+        "summary": "Get a transaction's statuses",
+        "tags": [
+          "Statuses"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "transaction_id",
+            "description": "transaction_ids to get all statuses for",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "$ref": "#/paths/~1transaction/post/responses/201/content/application~1json/schema/properties/version"
+                    },
+                    "statuses": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/paths/~1transactions~1%7Btransaction_id%7D~1statuses/post/responses/201/content/application~1json/schema/properties/status"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND"
+          },
+          "500": {
+            "description": "SERVER_ERROR"
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Timestamp": {
+        "description": "Timestamp in Milliseconds since Epoch",
+        "type": "integer",
+        "format": "i64"
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
 {
-  "*.ts": "pnpm lint:eslint -- --fix",
+  "*.ts": ["pnpm lint:eslint -- --fix"],
   "package.json": ["pnpm lint:prettier -- --write ", "pnpm lint:audit"]
 }

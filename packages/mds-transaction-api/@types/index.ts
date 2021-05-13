@@ -16,7 +16,7 @@
 
 import { ApiRequest, ApiVersionedResponse, ApiResponseLocalsClaims } from '@mds-core/mds-api-server'
 
-export const TRANSACTION_API_SUPPORTED_VERSIONS = ['0.0.1'] as const
+export const TRANSACTION_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
 export type TRANSACTION_API_SUPPORTED_VERSION = typeof TRANSACTION_API_SUPPORTED_VERSIONS[number]
 export const [TRANSACTION_API_DEFAULT_VERSION] = TRANSACTION_API_SUPPORTED_VERSIONS
 
