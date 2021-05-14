@@ -19,11 +19,12 @@ import {
   ComplianceSnapshotDomainModel,
   GetComplianceSnapshotOptions
 } from '@mds-core/mds-compliance-service'
-import { isServiceError } from '@mds-core/mds-service-helpers'
+import { isError } from '@mds-core/mds-service-helpers'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
-import { isDefined, now } from '@mds-core/mds-utils'
+import { isDefined, NotFoundError, now, ServerError } from '@mds-core/mds-utils'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ComplianceApiResponse, ComplianceApiRequest } from '../@types'
+import logger from '@mds-core/mds-logger'
 
 export type ComplianceApiGetViolationDetailsSnapshotRequest = ComplianceApiRequest &
   ApiRequestParams<'', 'compliance_snapshot_id' | 'provider_id' | 'policy_id' | 'compliance_as_of'>
@@ -71,12 +72,9 @@ export const GetViolationDetailsSnapshotHandler = async (
     const { version } = res.locals
     return res.status(200).send({ version, compliance })
   } catch (error) {
-    if (isServiceError(error)) {
-      if (error.type === 'NotFoundError') {
-        return res.status(404).send({ error })
-      }
-    }
+    if (isError(error, NotFoundError)) return res.status(404).send(error)
 
-    return res.status(404).send({ error })
+    logger.error(error)
+    return res.status(500).send({ error: new ServerError() })
   }
 }

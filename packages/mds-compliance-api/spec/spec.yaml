@@ -1,0 +1,322 @@
+openapi: "3.0.2"
+info:
+  title: MDS Compliance API
+  version: "1.0"
+servers:
+  - url: https://lawa.develop.api.lacuna-tech.io/compliance
+paths:
+  /violation_periods:
+    get:
+      security:
+        - bearerAuth: ["compliance:read", "compliance:read:provider"]
+      summary: Get violation periods
+      parameters:
+        - in: query
+          name: start_time
+          schema:
+            $ref: "#/components/schemas/Timestamp"
+          required: true
+        - in: query
+          name: end_time
+          schema:
+            $ref: "#/components/schemas/Timestamp"
+        - in: query
+          name: provider_id
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/uuid"
+        - in: query
+          name: policy_id
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/uuid"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    $ref: "#/components/schemas/ComplianceApiVersion"
+                  start_time:
+                    $ref: "#/components/schemas/Timestamp"
+                  end_time:
+                    $ref: "#/components/schemas/Timestamp"
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ComplianceAggregate"
+          description: OK
+        "400":
+          description: Bad Parameters
+        "401":
+          description: Unauthorized
+        "403":
+          description: No Access Without Scope
+        "500":
+          description: Fatal Server Error
+
+  /violation_details_snapshot:
+    get:
+      security:
+        - bearerAuth: ["compliance:read", "compliance:read:provider"]
+      summary: Get violation snapshot details
+      parameters:
+        - in: query
+          name: compliance_snapshot_id
+          description: ID of particular snapshot to pull. If this parameter is provided, then none of the other parameters are considered.
+          schema:
+            $ref: "#/components/schemas/uuid"
+        - in: query
+          name: compliance_as_of
+          description: When to pull a snapshot for. Defaults to current time if undefined.
+          schema:
+            $ref: "#/components/schemas/Timestamp"
+        - in: query
+          name: policy_id
+          description: ID of MDS Policy to pull compliance for.
+          schema:
+            $ref: "#/components/schemas/uuid"
+        - in: query
+          name: provider_id
+          description: Provider to pull compliance for. If there's a provider_id claim in the JWT, this will be extracted and used instead of this parameter.
+          schema:
+            $ref: "#/components/schemas/uuid"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    $ref: "#/components/schemas/ComplianceApiVersion"
+                  data:
+                    $ref: "#/components/schemas/ComplianceSnapshot"
+          description: OK
+        "400":
+          description: Bad Parameters
+        "401":
+          description: Unauthorized
+        "403":
+          description: No Access Without Scope
+        "404":
+          description: Not Found
+        "500":
+          description: Fatal Server Error
+
+  /compliance_snapshot_ids:
+    get:
+      security:
+        - bearerAuth: ["compliance:read", "compliance:read:provider"]
+      summary: Get compliance snapshot_ids
+      parameters:
+        - in: query
+          name: compliance_ids_token
+          schema:
+            type: string
+            format: byte
+          required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    $ref: "#/components/schemas/ComplianceApiVersion"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/uuid"
+          description: OK
+        "401":
+          description: Unauthorized
+        "403":
+          description: No Access Without Scope
+        "500":
+          description: Fatal Server Error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ComplianceApiVersion:
+      description: API Version in SemVer
+      type: string
+      enum: ["1.1.0"]
+      example: "1.1.0"
+    Timestamp:
+      description: Timestamp in Milliseconds since Epoch
+      type: integer
+      minimum: 100000000000
+      maximum: 99999999999999
+    uuid:
+      type: string
+      format: uuid
+    ComplianceViolationPeriod:
+      type: object
+      properties:
+        start_time:
+          nullable: true
+          $ref: "#/components/schemas/Timestamp"
+        end_time:
+          nullable: true
+          $ref: "#/components/schemas/Timestamp"
+        snapshots_uri:
+          type: string
+          format: url
+    ComplianceAggregate:
+      type: object
+      properties:
+        policy_id:
+          $ref: "#/components/schemas/uuid"
+        provider_id:
+          $ref: "#/components/schemas/uuid"
+        provider_name:
+          type: string
+        violation_periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComplianceViolationPeriod"
+    MatchedVehicleInformation:
+      type: object
+      properties:
+        device_id:
+          $ref: "#/components/schemas/uuid"
+        state: # TODO -- auto-gen schema
+          type: string
+          enum:
+            [
+              "available",
+              "elsewhere",
+              "non_operational",
+              "on_trip",
+              "removed",
+              "reserved",
+              "unknown",
+              "stopped",
+            ]
+        event_types: # TODO -- auto-gen schema
+          type: string
+          enum:
+            [
+              "agency_drop_off",
+              "agency_pick_up",
+              "battery_charged",
+              "battery_low",
+              "comms_lost",
+              "comms_restored",
+              "compliance_pick_up",
+              "decommissioned",
+              "located",
+              "maintenance",
+              "maintenance_pick_up",
+              "missing",
+              "off_hours",
+              "on_hours",
+              "provider_drop_off",
+              "rebalance_pick_up",
+              "reservation_cancel",
+              "reservation_start",
+              "system_resume",
+              "system_suspend",
+              "trip_cancel",
+              "trip_end",
+              "trip_enter_jurisdiction",
+              "trip_leave_jurisdiction",
+              "trip_start",
+              "unspecified",
+              "comms_lost",
+              "comms_restored",
+              "decommissioned",
+              "maintenance_start",
+              "maintenance_end",
+              "driver_cancellation",
+              "enter_jurisdiction",
+              "leave_jurisdiction",
+              "maintenance",
+              "passenger_cancellation",
+              "provider_cancellation",
+              "recommissioned",
+              "reservation_start",
+              "reservation_stop",
+              "service_end",
+              "service_start",
+              "trip_end",
+              "trip_resume",
+              "trip_start",
+              "trip_stop",
+              "comms_lost",
+              "comms_restored",
+              "driver_cancellation",
+              "enter_jurisdiction",
+              "leave_jurisdiction",
+              "maintenance",
+              "passenger_cancellation",
+              "provider_cancellation",
+              "reservation_start",
+              "reservation_stop",
+              "service_end",
+              "service_start",
+              "trip_end",
+              "trip_resume",
+              "trip_start",
+              "trip_stop",
+              "unspecified",
+            ]
+        timestamp:
+          $ref: "#/components/schemas/Timestamp"
+        rules_matched:
+          type: array
+          items:
+            $ref: "#/components/schemas/uuid"
+        rules_applied:
+          type: array
+          items:
+            $ref: "#/components/schemas/uuid"
+          nullable: true
+        speed:
+          type: number
+          format: float
+          nullable: true
+        gps:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: float
+            lng:
+              type: number
+              format: float
+    ComplianceSnapshot:
+      type: object
+      properties:
+        compliance_as_of:
+          $ref: "#/components/schemas/Timestamp"
+        compliance_snapshot_id:
+          $ref: "#/components/schemas/uuid"
+        policy:
+          type: object
+          properties:
+            name:
+              type: string
+            policy_id:
+              $ref: "#/components/schemas/uuid"
+        provider_id:
+          $ref: "#/components/schemas/uuid"
+        vehicles_found:
+          type: array
+          $ref: "#/components/schemas/MatchedVehicleInformation"
+        excess_vehicles_count:
+          type: integer
+        total_violations:
+          type: integer
+security:
+  - bearerAuth: []

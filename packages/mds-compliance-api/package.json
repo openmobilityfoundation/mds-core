@@ -11,6 +11,8 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
+    "generate": "pnpm generate:flatspec",
+    "generate:flatspec": "ts-node ./generate-flat-spec.ts && git add spec/flat-spec.json",
     "start": "PATH_PREFIX=/compliance-api pnpm watch server",
     "test": "PATH_PREFIX=/compliance-api DOTENV_CONFIG_PATH=../../.env jest",
     "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",

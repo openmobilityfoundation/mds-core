@@ -20,9 +20,10 @@ import express from 'express'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { Timestamp } from '@mds-core/mds-types'
 import { base64EncodeArray } from './helpers'
-import { BadParamsError, isDefined, now } from '@mds-core/mds-utils'
+import { AuthorizationError, BadParamsError, isDefined, now, ServerError } from '@mds-core/mds-utils'
 import { ComplianceAggregate, ComplianceApiRequest, ComplianceApiResponse } from '../@types'
-
+import logger from '@mds-core/mds-logger'
+import { isError } from '@mds-core/mds-service-helpers'
 export type ComplianceApiGetViolationPeriodsRequest = ComplianceApiRequest &
   ApiRequestQuery<'start_time' | 'end_time' | 'provider_ids' | 'policy_ids'>
 
@@ -43,7 +44,7 @@ export const GetViolationPeriodsHandler = async (
       .single({ parser: Number })
       .query('start_time', 'end_time')
     if (!isDefined(start_time)) {
-      return res.status(400).send({ error: 'Missing required query param start_time' })
+      throw new BadParamsError('Missing required query param start_time')
     }
     const { policy_id: policy_ids, provider_id: provider_ids } = parseRequest(req)
       .list()
@@ -58,7 +59,7 @@ export const GetViolationPeriodsHandler = async (
           const { provider_id } = res.locals.claims
           return [provider_id]
         }
-        throw new BadParamsError('provider_id missing from token with compliance:read:provider scope')
+        throw new AuthorizationError('provider_id missing from token with only compliance:read:provider scope')
       }
     })()
 
@@ -89,9 +90,11 @@ export const GetViolationPeriodsHandler = async (
     const { version } = res.locals
     return res.status(200).send({ version, start_time, end_time, results })
   } catch (error) {
-    if (error instanceof BadParamsError) {
-      return res.status(403).send({ error })
-    }
-    res.status(500).send({ error })
+    if (isError(error, BadParamsError)) return res.status(400).send({ error })
+
+    if (isError(error, AuthorizationError)) return res.status(403).send({ error })
+
+    logger.error(error)
+    res.status(500).send({ error: new ServerError() })
   }
 }
