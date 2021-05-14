@@ -16,8 +16,8 @@
 
 import express from 'express'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { TransactionApiVersionMiddleware, TransactionApiErrorMiddleware } from '../middleware'
+import { checkAccess, AccessTokenScopeValidator, ApiErrorHandlingMiddleware } from '@mds-core/mds-api-server'
+import { TransactionApiVersionMiddleware } from '../middleware'
 
 import { CreateTransactionHandler } from '../handlers/create-transaction'
 import { CreateTransactionsHandler } from '../handlers/create-transactions'
@@ -89,4 +89,4 @@ export const api = (app: express.Express): express.Express =>
       checkTransactionApiAccess(scopes => scopes.includes('transactions:read')),
       GetTransactionStatusesHandler
     )
-    .use(TransactionApiErrorMiddleware)
+    .use(ApiErrorHandlingMiddleware)

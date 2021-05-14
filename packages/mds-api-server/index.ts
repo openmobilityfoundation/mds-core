@@ -26,3 +26,4 @@ export { RequestLoggingMiddlewareOptions, RequestLoggingMiddleware } from './mid
 export { RawBodyParserMiddlewareOptions, RawBodyParserMiddleware } from './middleware/raw-body-parser'
 export { PrometheusMiddlewareOptions, PrometheusMiddleware } from './middleware/prometheus'
 export { AccessTokenScopeValidator, checkAccess } from './utils'
+export { ApiErrorHandlingMiddleware } from './middleware/api-error-handling'

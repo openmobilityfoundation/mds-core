@@ -16,9 +16,8 @@
 
 import type { Express } from 'express'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
-import { checkAccess } from '@mds-core/mds-api-server'
+import { ApiErrorHandlingMiddleware, checkAccess } from '@mds-core/mds-api-server'
 import { CollectorApiVersionMiddleware } from './middleware/collector-api-version'
-import { CollectorApiErrorMiddleware } from './middleware/collector-api-error'
 import { GetMessageSchemaHandler } from './handlers/get-message-schema'
 import { WriteSchemaMessagesHandler } from './handlers/write-schema-messages'
 
@@ -38,4 +37,4 @@ export const api = (app: Express): Express =>
       WriteSchemaMessagesHandler
     )
 
-    .use(CollectorApiErrorMiddleware)
+    .use(ApiErrorHandlingMiddleware)

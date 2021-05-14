@@ -352,6 +352,7 @@ importers:
     specifiers:
       '@mds-core/mds-api-authorizer': 0.1.28
       '@mds-core/mds-logger': 0.2.2
+      '@mds-core/mds-service-helpers': 0.1.2
       '@mds-core/mds-utils': 0.1.28
       '@types/body-parser': 1.19.0
       '@types/compression': 1.7.0
@@ -370,6 +371,7 @@ importers:
     dependencies:
       '@mds-core/mds-api-authorizer': link:../mds-api-authorizer
       '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-service-helpers': link:../mds-service-helpers
       '@mds-core/mds-utils': link:../mds-utils
       '@types/body-parser': 1.19.0
       '@types/compression': 1.7.0
