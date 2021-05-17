@@ -60,38 +60,12 @@ autoscaling:
   targetMemoryUtilizationPercentage: 80
 
 ingress:
-  enabled: false
+  enabled: true
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/use-regex: "true"
-  #tls:
-  #  secretName:
-
-gloo:
-  enabled: false
-  namespace: gloo-system  # where gloo is installed
-  tls:
-    enabled: false
-    certManager:
-      enabled: false
-      issuer: ""
-  jwt:
-    enabled: false
-    issuerHostname: ""
-    jwks:
-      urlSuffix: .well-known/jwks.json
-      cacheDuration: 5m
-    audiences: []
-
-istio:
-  # overridden by ingress.enabled
-  enabled: false
-  ingressgateway: ingressgateway
-  backendNamespaces:
-    - backend
-  tls:
-    enabled: false
-    elbTermination: false
+# tls:
+#   secretName:
 
 nodeSelector: {}
 
