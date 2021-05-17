@@ -1,0 +1,15 @@
+dependencies:
+- name: redis
+  repository: https://charts.helm.sh/stable
+  version: 10.5.7
+- name: postgresql
+  repository: https://charts.helm.sh/stable
+  version: 8.6.4
+- name: nats
+  repository: https://charts.bitnami.com/bitnami
+  version: 4.5.1
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.5.1
+digest: sha256:4bae2a8310a816d9908ee06823cfec0888fd459df3fa6598d25db131711846df
+generated: "2020-12-02T15:51:11.0110824-08:00"

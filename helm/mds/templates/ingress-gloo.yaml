@@ -1,0 +1,131 @@
+{{- if .Values.gloo.enabled -}}
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- if .Values.gloo.tls.enabled }}
+  sslConfig:
+    secretRef:
+      name: {{ .Values.domain }}
+      namespace: {{ .Release.Namespace }}
+    sniDomains:
+      - {{ .Values.domain }}
+  {{- end }}
+
+  virtualHost:
+    domains:
+    - {{ .Values.domain }}
+    routes:
+
+    {{- range $name, $deploy := .Values.deployments }}
+    {{- if $deploy.enabled }}
+    {{- if (hasKey $deploy "pathPrefix") }}
+    - matchers:
+      - exact: {{ $deploy.pathPrefix }}/health
+    {{- if (eq $name "lacuna-identity-api") }}
+      - prefix: /identity/authorize
+      - prefix: /identity/logout
+      - prefix: /identity/oauth/token
+    {{- end }}
+    {{- if (eq $name "mds-web-sockets") }}
+      - prefix: /web-sockets
+    {{- end }}
+      options:
+        jwt:
+          disable: true
+      routeAction:
+        single:
+          upstream:
+            name: {{ $.Release.Namespace }}-{{ $name }}-{{ $.Values.httpPort }}
+            namespace: {{ $.Values.gloo.namespace }}
+    {{- if (not (eq $name "mds-web-sockets")) }}
+    - matchers:
+      - regex: {{ $deploy.pathPrefix }}($|/.*$)
+      routeAction:
+        single:
+          upstream:
+            name: {{ $.Release.Namespace }}-{{ $name }}-{{ $.Values.httpPort }}
+            namespace: {{ $.Values.gloo.namespace }}
+      options:
+        {{- if (eq $name "mds-agency") }}
+        timeout: 5m
+        retries:
+          retryOn: 5xx
+          numRetries: 3
+          perTryTimeout: 1m
+        {{- else }}
+        retries:
+          retryOn: 5xx
+          numRetries: 5
+          perTryTimeout: 10s
+        {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+
+    options:
+      cors:
+        allowOrigin:
+          - "*"
+        allowMethods:
+        - POST
+        - GET
+        - HEAD
+        - OPTIONS
+        - PATCH
+        - PUT
+        - DELETE
+        allowCredentials: false
+        allowHeaders:
+        - Content-Type
+        - Authorization
+        maxAge: "10m"
+
+      {{- if .Values.gloo.jwt.enabled }}
+      jwt:
+        providers:
+          solo-provider:
+            issuer: https://{{ .Values.gloo.jwt.issuerHostname }}/
+            audiences:
+              {{- range .Values.gloo.jwt.audiences }}
+              - {{ . }}
+              {{- end }}
+            keepToken: true
+            jwks:
+              remote:
+                cacheDuration: {{ .Values.gloo.jwt.jwks.cacheDuration }}
+                upstream_ref:
+                  name: {{ .Release.Name }}-jwks
+                  namespace: {{ .Release.Name }}
+                url: https://{{ .Values.gloo.jwt.issuerHostname }}/{{ .Values.gloo.jwt.jwks.urlSuffix }}
+      {{- end }}
+---
+apiVersion: gloo.solo.io/v1
+kind: Upstream
+metadata:
+  name: {{ .Release.Name }}-jwks
+  namespace: {{ .Release.Namespace }}
+spec:
+  static:
+    hosts:
+    - addr: {{ .Values.gloo.jwt.issuerHostname }}
+      port: 443
+{{- if .Values.gloo.tls.certManager.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.domain }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  dnsNames:
+  - {{ .Values.domain }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: {{ .Values.gloo.tls.certManager.issuer }}
+  secretName: {{ .Values.domain }}
+{{- end }}
+{{- end }}

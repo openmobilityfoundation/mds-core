@@ -1,15 +1,15 @@
 dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami
-  version: 10.5.7
+  version: 12.1.1
 - name: postgresql
   repository: https://charts.bitnami.com/bitnami
-  version: 8.6.4
+  version: 10.1.1
 - name: nats
   repository: https://charts.bitnami.com/bitnami
-  version: 4.5.1
+  version: 6.0.0
 - name: kafka
   repository: https://charts.bitnami.com/bitnami
-  version: 11.5.1
-digest: sha256:8d0e7ad1a7365385bc25fb7a22dc794e799507383ff0c71fd177495e0482ef19
-generated: "2020-12-23T19:16:36.701964-05:00"
+  version: 12.2.2
+digest: sha256:5def2abc8234bc9028c91439b240c3e25c89f75cc645cc3b529d506b1cd11f9a
+generated: "2020-12-03T09:25:34.200729567-08:00"

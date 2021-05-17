@@ -1,0 +1,65 @@
+{{- if .Values.scheduler.enabled }}
+{{- range $name, $job := .Values.scheduler.jobs }}
+{{- if $job.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ $name | replace "_" "-" }}
+spec:
+  schedule: {{ $job.schedule }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            # workaround for injected-sidecar lifecycle bug
+            sidecar.istio.io/inject: "false"
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: box_auth
+              secret:
+                items:
+                - key: box_creds
+                secretName: lacuna-secrets
+          containers:
+            - name: lacuna-scheduler
+              volumeMounts:
+              - name: box_auth
+                mountPath: "/mds/box_auth.json"
+                readOnly: true
+              {{- if $.Values.registry }}
+              image: {{ $.Values.registry }}/lacuna-scheduler:{{ $.Values.scheduler.version }}
+              {{- else }}
+              image: lacuna-scheduler:{{ $.Values.scheduler.version }}
+              {{- end }}
+              args:
+                - {{ $name }}
+              env:
+                - name: PG_USER
+                  value: {{ $.Values.postgresql.postgresqlUsername }}
+                - name: PG_NAME
+                  value: {{ $.Values.postgresql.postgresqlDatabase }}
+                - name: PG_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: mds-secrets
+                      key: postgresql-password
+                - name: PG_HOST
+                  value: {{ $.Values.postgresql.host }}
+                {{- if $.Values.postgresql.hostReader }}
+                - name: PG_HOST_READER
+                  value: {{ $.Values.postgresql.hostReader }}
+                {{- end }}
+                {{- if $.Values.postgresql.port }}
+                - name: PG_PORT
+                  value: {{ $.Values.postgresql.port | quote }}
+                {{- end }}
+                - name: REDIS_HOST
+                  value: {{ $.Values.redis.host }}
+                - name: REDIS_PORT
+                  value: {{ $.Values.redis.port | quote }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

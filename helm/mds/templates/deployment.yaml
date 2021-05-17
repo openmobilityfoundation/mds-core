@@ -1,5 +1,7 @@
-{{- range $name, $api := .Values.apis }}
-{{- if $api.enabled }}
+{{- $outer := . }}
+{{- range $name, $deploy := .Values.deployments }}
+{{- if $deploy.enabled }}
+{{- with $outer }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -7,143 +9,198 @@ metadata:
   name: {{ $name }}
   labels:
     app: {{ $name }}
-  namespace: {{ $.Release.Namespace }}
+    {{- include "mds.labels" $ | nindent 4 }}
 spec:
-  replicas: 1
+  {{- if hasKey $deploy "replicas" }}
+  replicas: {{ $deploy.replicas }}
+  {{- else }}
+  replicas: {{ .Values.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       app: {{ $name }}
+      {{- include "mds.selectorLabels" $ | nindent 6 }}
   template:
     metadata:
+    {{- with .Values.podAnnotations }}
       annotations:
-        prometheus.io/path: /prometheus
-        prometheus.io/port: "4000"
-        prometheus.io/scrape: "true"
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       labels:
         app: {{ $name }}
+        {{- include "mds.selectorLabels" $ | nindent 8 }}
     spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml $ | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "mds.serviceAccountName" $ }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: mds-config-files
+          configMap:
+            name: mds-config-files
       containers:
-      - name: {{ $name }}
-        image: {{ if $.Values.registry }}{{ printf "%s/" $.Values.registry }}{{- end}}{{ $name }}:{{ $api.version }}
-        {{- if $.Values.imagePullPolicy }}
-        imagePullPolicy: {{ $.Values.imagePullPolicy }}
-        {{- else if $.Values.registry }}
-        imagePullPolicy: IfNotPresent
-        {{- else }}
-        imagePullPolicy: Never
-        {{- end }}
-        resources:
-          limits:
-            cpu: {{ $api.resourcesLimitsCpu | default "1000m" }}
-            memory: {{ $api.resourcesLimitsMemory | default "1024Mi" }}
-          requests:
-            cpu: {{ $api.resourcesRequestsCpu | default "5m" }}
-            memory: {{ $api.resourcesRequestsMemory | default "64Mi" }}
-        ports:
-        - containerPort: 4000
-          name: user-port
-          protocol: TCP
-        - containerPort: 7375
-          name: repl-port
-          protocol: TCP
-        env:
-          - name: PORT
-            value: "4000"
-          - name: PATH_PREFIX
-            value: {{ $api.pathPrefix }}
-          - name: TIMEZONE
-            value: {{ $.Values.timezone }}
-          - name: PG_USER
-            value: {{ $.Values.postgresql.postgresqlUsername }}
-          - name: PG_NAME
-            value: {{ $.Values.postgresql.postgresqlDatabase }}
-          - name: PG_PASS
-            valueFrom:
-              secretKeyRef:
-                name: mds-secrets
-                key: postgresql-password
-          - name: PG_HOST
-          {{- if $.Values.postgresql.internal }}
-            value: {{ $.Release.Name }}-postgresql
+        - name: {{ $name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- $version := $deploy.version | default "latest" }}
+          {{- if .Values.image.registry }}
+          image: {{ .Values.image.registry | trimSuffix "/" }}/{{ $name }}:{{ $version }}
           {{- else }}
-            value: {{ $.Values.postgresql.host }}
+          image: "{{ $name }}:{{ $version }}"
           {{- end }}
-          {{- if $.Values.postgresql.hostReader }}
-          - name: PG_HOST_READER
-            value: {{ $.Values.postgresql.hostReader }}
-          {{- end }}
-          {{- if $.Values.postgresql.port }}
-          - name: PG_PORT
-            value: {{ $.Values.postgresql.port | quote }}
-          {{- end}}
-          {{- if $api.migration }}
-          - name: PG_MIGRATIONS
-            value: {{ $api.migration | quote }}
-          {{- end }}
-          - name: REDIS_HOST
-          {{- if $.Values.redis.internal }}
-            value: {{ $.Release.Name }}-redis-master
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: mds-config-files
+              mountPath: /mds-config/
+          ports:
+            - containerPort: {{ .Values.httpPort }}
+              name: http
+              protocol: TCP
+            - containerPort: {{ .Values.replPort }}
+              name: repl
+              protocol: TCP
+          {{- if hasKey $deploy "pathPrefix" }}
+          livenessProbe:
+          {{- if hasKey $deploy "livenessProbe" }}
+            {{- toYaml $deploy.livenessProbe | nindent 12 }}
           {{- else }}
-            value: {{ $.Values.redis.host }}
+            httpGet:
+              path: {{ $deploy.pathPrefix }}/health
+              port: http
           {{- end }}
-          - name: REDIS_PORT
-            value: {{ $.Values.redis.port | quote }}
-          {{- if $.Values.nats.enabled }}
-          - name: NATS
-          {{- if $.Values.nats.internal }}
-            value: {{ $.Release.Name }}-nats-client
+          readinessProbe:
+          {{- if hasKey $deploy "readinessProbe" }}
+            {{- toYaml $deploy.readinessProbe | nindent 12 }}
           {{- else }}
-            value: {{ $.Values.nats.host }}
+            httpGet:
+              path: {{ $deploy.pathPrefix }}/health
+              port: http
           {{- end }}
           {{- end }}
-          {{- if $.Values.kafka.enabled }}
-          - name: KAFKA_HOST
-          {{- if $.Values.kafka.internal }}
-            value: {{ $.Release.Name }}-kafka:{{ $.Values.kafka.port }}
+          resources:
+          {{- if hasKey $deploy "resources" }}
+            {{- toYaml $deploy.resources | nindent 12 }}
           {{- else }}
-            value: {{ $.Values.kafka.host }}:{{ $.Values.kafka.port }}
+            {{- toYaml .Values.resources | nindent 12 }}
           {{- end }}
-          {{- end }}
-          - name: ATTACHMENT_SERVICE_RPC_HOST
-            value: http://mds-attachment-service
-          - name: AUDIT_SERVICE_RPC_HOST
-            value: http://mds-audit-service
-          - name: GEOGRAPHY_SERVICE_RPC_HOST
-            value: http://mds-geography-service
-          - name: INGEST_SERVICE_RPC_HOST
-            value: http://mds-ingest-service
-          - name: JURISDICTION_SERVICE_RPC_HOST
-            value: http://mds-jurisdiction-service
-          - name: POLICY_SERVICE_RPC_HOST
-            value: http://mds-policy-service
-          - name: COLLECTOR_BACKEND_RPC_HOST
-            value: http://mds-collector-backend
-          - name: TRANSACTION_SERVICE_RPC_HOST
-            value: http://mds-transaction-service
-          - name: TENANT_ID
-          {{- if hasKey $.Values "tenantId" }}
-            value: {{ $.Values.tenantId }}
-          {{- else }}
-            value: {{ $.Release.Namespace }}
-          {{- end }}
-          {{- if $api.env }}
-{{ toYaml $api.env | indent 10 }}
-          {{- end }}
-          {{- if hasKey $.Values "global" }}
-          {{- if hasKey $.Values.global "env" }}
-{{ toYaml $.Values.global.env | indent 10 }}
-          {{- end }}
-          {{- end }}
-  {{- end }}
+          env:
+            - name: PORT
+              value: {{ .Values.appPort }}
+            - name: PATH_PREFIX
+              value: {{ $deploy.pathPrefix }}
+            - name: TIMEZONE
+              value: {{ .Values.timezone }}
+            - name: PG_USER
+              value: {{ .Values.postgresql.postgresqlUsername }}
+            - name: PG_NAME
+              value: {{ .Values.postgresql.postgresqlDatabase }}
+            - name: PG_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mds-secrets
+                  key: postgresql-password
+            - name: PG_HOST
+            {{- if .Values.postgresql.internal }}
+              value: {{ .Release.Name }}-postgresql
+            {{- else }}
+              value: {{ .Values.postgresql.host }}
+            {{- end }}
+            {{- if .Values.postgresql.hostReader }}
+            - name: PG_HOST_READER
+              value: {{ .Values.postgresql.hostReader }}
+            {{- end }}
+            - name: PG_PORT
+              value: {{ .Values.postgresql.port | quote }}
+            - name: REDIS_HOST
+            {{- if .Values.redis.internal }}
+              value: {{ .Release.Name }}-redis-master
+            {{- else }}
+              value: {{ .Values.redis.host }}
+            {{- end }}
+            - name: REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            {{- if .Values.redis.password }}
+            - name: REDIS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mds-secrets
+                  key: redis-password
+            {{- end }}
+            {{- if .Values.nats.enabled }}
+            - name: NATS
+            {{- if .Values.nats.internal }}
+              value: {{ .Release.Name }}-nats-client
+            {{- else }}
+              value: {{ .Values.nats.host }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.kafka.enabled }}
+            - name: KAFKA_HOST
+            {{- if .Values.kafka.internal }}
+              value: {{ .Release.Name }}-kafka:{{ .Values.kafka.port }}
+            {{- else }}
+              value: {{ .Values.kafka.host }}:{{ .Values.kafka.port }}
+            {{- end }}
+            {{- end }}
+            - name: ATTACHMENT_SERVICE_RPC_HOST
+              value: http://mds-attachment-service
+            - name: AUDIT_SERVICE_RPC_HOST
+              value: http://mds-audit-service
+            - name: GEOGRAPHY_SERVICE_RPC_HOST
+              value: http://mds-geography-service
+            - name: INGEST_SERVICE_RPC_HOST
+              value: http://mds-ingest-service
+            - name: JURISDICTION_SERVICE_RPC_HOST
+              value: http://mds-jurisdiction-service
+            - name: POLICY_SERVICE_RPC_HOST
+              value: http://mds-policy-service
+            - name: TRANSACTION_SERVICE_RPC_HOST
+              value: http://mds-transaction-service
+            - name: COLLECTOR_BACKEND_RPC_HOST
+              value: http://mds-collector-backend
+            - name: TENANT_ID
+            {{- if hasKey .Values "tenantId" }}
+              value: {{ .Values.tenantId }}
+            {{- end }}
+            {{- if $deploy.env }}
+{{ toYaml $deploy.env | indent 12 }}
+            {{- end }}
+            {{- if hasKey .Values "global" }}
+            {{- if hasKey .Values.global "env" }}
+{{ toYaml .Values.global.env | indent 12 }}
+            {{- end }}
+            {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: mds-secrets
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
 data:
-  {{- if .Values.postgresql.password }}
+  {{- if hasKey .Values.postgresql "password" }}
   postgresql-password: {{ .Values.postgresql.password | b64enc }}
+  postgresql-postgres-password: {{ .Values.postgresql.password | b64enc }}
+  {{- end }}
+  {{- if .Values.redis.password }}
+  redis-password: {{ .Values.redis.password }}
   {{- end }}
 type: Opaque
+---
+{{- if hasKey .Values "secrets" }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: lacuna-secrets
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- range $secret := .Values.secrets }}
+  {{ $secret.name }}: {{ $secret.value | b64enc }}
+  {{- end }}
+type: Opaque
+{{- end }}

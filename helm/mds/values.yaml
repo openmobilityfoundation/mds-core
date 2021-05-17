@@ -1,115 +1,279 @@
-apis:
-  mds-agency:
-    enabled: true
-    pathPrefix: /agency
-    version: latest
-    migration: false
-  mds-audit:
-    enabled: true
-    pathPrefix: /audit
-    version: latest
-    migration: false
-  mds-policy:
-    enabled: true
-    pathPrefix: /policy
-    version: latest
-    migration: false
-  mds-jurisdiction:
-    enabled: true
-    pathPrefix: /jurisdiction
-    version: latest
-    migration: false
-  mds-jurisdiction-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-policy-author:
-    enabled: true
-    pathPrefix: /policy-author
-    version: latest
-    migration: false
-  mds-geography:
-    enabled: true
-    pathPrefix: /geography
-    version: latest
-    migration: false
-  mds-geography-author:
-    enabled: true
-    pathPrefix: /geography-author
-    version: latest
-    migration: false
-  mds-compliance-api:
-    enabled: true
-    pathPrefix: /compliance
-    version: latest
-    migration: false
-  mds-compliance-service:
-    enabled: true
-    version: latest
-  mds-geography-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-policy-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-ingest-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-transaction-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-transaction-api:
-    enabled: true
-    version: latest
-    migration: false
-  mds-attachment-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-audit-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-collector-api:
-    enabled: true
-    version: latest
-    pathPrefix: /collector
-    migration: false
-  mds-collector-backend:
-    enabled: true
-    version: latest
-    migration: false
+# Default values for mds.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  registry:
+
+nameOverride: ""
+fullnameOverride: ""
+
+httpPort: "4000"
+replPort: "7375"  # NOTE: cannot currently be changed
+
+replicas: 1
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/path: /prometheus
+  prometheus.io/port: "4000"
+  prometheus.io/scrape: "true"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+ingress:
+  enabled: false
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  #tls:
+  #  secretName:
+
+gloo:
+  enabled: false
+  namespace: gloo-system  # where gloo is installed
+  tls:
+    enabled: false
+    certManager:
+      enabled: false
+      issuer: ""
+  jwt:
+    enabled: false
+    issuerHostname: ""
+    jwks:
+      urlSuffix: .well-known/jwks.json
+      cacheDuration: 5m
+    audiences: []
+
+istio:
+  # overridden by ingress.enabled
+  enabled: false
+  ingressgateway: ingressgateway
+  backendNamespaces:
+    - backend
+  tls:
+    enabled: false
+    elbTermination: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+domain: localhost
 tenantId:
 timezone: America/Los_Angeles
-registry:
-useLatestImage: true
-domain: "*"
-ingressgateway: ingressgateway
-tls:
+
+
+scheduler:
   enabled: false
-  elbTermination: false
-  domain:
-jwt:
-  issuer:
-  enabled: false
-  bypassInternal: false
-  firstInstall: false
-  audiences: []
+  jobs:
+    transaction_log_csv:
+      schedule: "0 0 2 * *"
+
+deployments:
+  mds-agency:
+    enabled: false
+    pathPrefix: /agency
+  mds-audit:
+    enabled: false
+    pathPrefix: /audit
+  mds-compliance:
+    enabled: false
+    pathPrefix: /compliance
+  mds-daily:
+    enabled: false
+    pathPrefix: /daily
+  mds-jurisdiction:
+    enabled: false
+    pathPrefix: /jurisdiction
+  mds-jurisdiction-service:
+    enabled: false
+  mds-policy:
+    enabled: false
+    pathPrefix: /policy
+  mds-policy-author:
+    enabled: false
+    pathPrefix: /policy-author
+  mds-policy-service:
+    enabled: false
+  mds-web-sockets:
+    enabled: false
+    pathPrefix: /web-sockets
+  mds-geography:
+    enabled: false
+    pathPrefix: /geography
+  mds-geography-author:
+    enabled: false
+    pathPrefix: /geography-author
+  mds-geography-service:
+    enabled: false
+  mds-ingest-service:
+    enabled: false
+  mds-attachment-service:
+    enabled: false
+  mds-audit-service:
+    enabled: false
+  mds-config:
+    enabled: false
+    pathPrefix: /config
+  mds-config-service:
+    enabled: false
+  lacuna-identity-service:
+    enabled: false
+    env:
+      - name: OAUTH_TOKEN_TIMEOUT
+        value: "10000"
+      - name: AUTH0_MGMT_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: mds-secrets
+            key: auth0-mgmt-client-secret
+  lacuna-identity-api:
+    enabled: false
+    pathPrefix: /identity
+    env:
+      - name: OAUTH_AUTHORIZE_CALLBACK_PATH
+        value: "/identity/authorize/callback"
+      - name: OAUTH_LOGOUT_CALLBACK_PATH
+        value: "/identity/logout/callback"
+  lacuna-test-client:
+    enabled: false
+  mds-native:
+    enabled: false
+    pathPrefix: /native
+  mds-metrics-api:
+    enabled: false
+    pathPrefix: /metrics
+  mds-event-processor:
+    enabled: false
+  mds-telemetry-processor:
+    enabled: false
+  mds-metrics-service:
+    enabled: false
+  mds-metrics-processor:
+    enabled: false
+  mds-curb-api:
+    enabled: false
+    pathPrefix: /curb
+  mds-curb-service:
+    enabled: false
+  lacuna-invoice-service:
+    enabled: false
+  lacuna-invoice-api:
+    enabled: false
+    pathPrefix: /invoice
+  agtm-abt-api:
+    enabled: false
+    pathPrefix: /legacy
+  agtm-abt-service:
+    enabled: false
+  agtm-ingest-api:
+    enabled: false
+    pathPrefix: /ingest
+  agtm-ingest-service:
+    enabled: false
+  mds-trip-api:
+    enabled: false
+    pathPrefix: /trip
+  mds-trip-processor:
+    enabled: false
+  mds-trip-backend:
+    enabled: false
+  agtm-event-processor:
+    enabled: false
+  agtm-abt-event-processor:
+    enabled: false
+  agtm-audit-api:
+    enabled: false
+    pathPrefix: /agtm-audit
+  agtm-audit-service:
+    enabled: false
+  agtm-violation-processor:
+    enabled: false
+  agtm-auditor-processor:
+    enabled: false
+  mds-sensor-fetch:
+    fybr:
+      apiUrl: ""
+      username: ""
+      fetchLoopSec: ""
+      agencyKeysToFetch: ""
+      # FYBR_PASSWORD taken from secrets.fybr-password value
+    enabled: false
+  mds-transaction-processor:
+    enabled: false
+  mds-transaction-api:
+    enabled: false
+    pathPrefix: /transaction
+  mds-transaction-service:
+    enabled: false
+  mds-collector-api:
+    enabled: false
+    pathPrefix: /collector
+  mds-collector-backend:
+    enabled: false
+  mds-geofence-backend:
+    enabled: false
+  mds-geofence-crossing-processor:
+    enabled: false
+
+# backendNamespace:
+
 nats:
   internal: true
   host:
+  auth:
+    enabled: false
   podAnnotations:
     sidecar.istio.io/inject: "false"
+
 kafka:
   internal: true
   host:
   port: 9092
   podAnnotations:
     sidecar.istio.io/inject: "false"
+
 postgresql:
   internal: true
   host:
@@ -122,14 +286,16 @@ postgresql:
   image:
     repository: postgres
     tag: 10
+
 redis:
   internal: true
   host:
   port: 6379
-  usePassword: false
+  password:
   cluster:
     enabled: false
   master:
     disableCommands: []
   slave:
     disableCommands: []
+

@@ -1,18 +1,18 @@
 # !! File must end with empty line !!
 dependencies:
   - name: redis
-    version: 10.5.7
+    version: 12.1.1
     repository: alias:bitnami
     condition: redis.internal
   - name: postgresql
     repository: alias:bitnami
-    version: 8.6.4
+    version: 10.1.1
     condition: postgresql.internal
   - name: nats
     repository: alias:bitnami
-    version: 4.5.1
+    version: 6.0.0
     condition: nats.internal
   - name: kafka
     repository: alias:bitnami
-    version: 11.5.1
+    version: 12.2.2
     condition: kafka.internal

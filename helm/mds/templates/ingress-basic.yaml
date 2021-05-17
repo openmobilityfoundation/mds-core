@@ -1,0 +1,41 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "mds.fullname" . -}}
+{{- $svcPort := .Values.httpPort -}}
+{{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "mds.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.ingress.tls .Values.domain }}
+  tls:
+    - hosts:
+        - {{ .Values.domain }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - http:
+        paths:
+          {{- range $name, $deploy := .Values.deployments }}
+          {{- if hasKey $deploy "pathPrefix" }}
+          {{- if $deploy.enabled }}
+          - path: {{ printf "%s($|/.*$)" $deploy.pathPrefix | quote }}
+            backend:
+              serviceName: {{ $name }}
+              servicePort: {{ $.Values.httpPort }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+      {{- if .Values.domain }}
+      host: {{ .Values.domain | quote }}
+      {{- end }}
+{{- end }}
