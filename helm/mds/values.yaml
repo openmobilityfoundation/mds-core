@@ -265,7 +265,7 @@ redis:
   internal: true
   host:
   port: 6379
-  password:
+  usePassword: false
   cluster:
     enabled: false
   master:

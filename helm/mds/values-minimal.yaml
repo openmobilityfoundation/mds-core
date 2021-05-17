@@ -1,0 +1,3 @@
+deployments:
+  mds-agency:
+    enabled: true
