@@ -1,18 +1,20 @@
-{{- range $name, $api := .Values.apis }}
-{{- if $api.enabled }}
+{{- range $name, $deploy := .Values.deployments }}
+{{- if $deploy.enabled }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $name }}
-  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "mds.labels" $ | nindent 4 }}
 spec:
   selector:
     app: {{ $name }}
+    {{- include "mds.selectorLabels" $ | nindent 4 }}
   ports:
-  - name: http-{{ $name }}
-    port: 4000
-  - name: repl-{{ $name }}
-    port: 7375
+  - name: http
+    port: {{ $.Values.httpPort }}
+  - name: repl
+    port: {{ $.Values.replPort }}
 {{- end }}
 {{- end }}

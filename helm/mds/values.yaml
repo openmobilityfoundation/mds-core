@@ -1,115 +1,152 @@
-apis:
-  mds-agency:
-    enabled: true
-    pathPrefix: /agency
-    version: latest
-    migration: false
-  mds-audit:
-    enabled: true
-    pathPrefix: /audit
-    version: latest
-    migration: false
-  mds-policy:
-    enabled: true
-    pathPrefix: /policy
-    version: latest
-    migration: false
-  mds-jurisdiction:
-    enabled: true
-    pathPrefix: /jurisdiction
-    version: latest
-    migration: false
-  mds-jurisdiction-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-policy-author:
-    enabled: true
-    pathPrefix: /policy-author
-    version: latest
-    migration: false
-  mds-geography:
-    enabled: true
-    pathPrefix: /geography
-    version: latest
-    migration: false
-  mds-geography-author:
-    enabled: true
-    pathPrefix: /geography-author
-    version: latest
-    migration: false
-  mds-compliance-api:
-    enabled: true
-    pathPrefix: /compliance
-    version: latest
-    migration: false
-  mds-compliance-service:
-    enabled: true
-    version: latest
-  mds-geography-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-policy-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-ingest-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-transaction-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-transaction-api:
-    enabled: true
-    version: latest
-    migration: false
-  mds-attachment-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-audit-service:
-    enabled: true
-    version: latest
-    migration: false
-  mds-collector-api:
-    enabled: true
-    version: latest
-    pathPrefix: /collector
-    migration: false
-  mds-collector-backend:
-    enabled: true
-    version: latest
-    migration: false
+# Global configuration
+
+image:
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  registry:
+
+nameOverride: ""
+fullnameOverride: ""
+
+httpPort: "4000"
+replPort: "7375"  # NOTE: cannot currently be changed
+
+replicas: 1
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/path: /prometheus
+  prometheus.io/port: "4000"
+  prometheus.io/scrape: "true"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+ingress:
+  enabled: false
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+# tls:
+#   secretName:
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+domain: localhost
 tenantId:
 timezone: America/Los_Angeles
-registry:
-useLatestImage: true
-domain: "*"
-ingressgateway: ingressgateway
-tls:
-  enabled: false
-  elbTermination: false
-  domain:
-jwt:
-  issuer:
-  enabled: false
-  bypassInternal: false
-  firstInstall: false
-  audiences: []
+
+
+# microservice-specific configuration
+# most global parameters can be overridden here (e.g. resources, autoscaling)
+
+deployments:
+  mds-agency:
+    enabled: false
+    pathPrefix: /agency
+  mds-attachment-service:
+    enabled: false
+  mds-audit:
+    enabled: false
+    pathPrefix: /audit
+  mds-audit-service:
+    enabled: false
+  mds-collector-api:
+    enabled: false
+    pathPrefix: /collector
+  mds-collector-backend:
+    enabled: false
+  mds-compliance-api:
+    enabled: false
+    pathPrefix: /compliance
+  mds-compliance-service:
+    enabled: false
+  mds-geography:
+    enabled: false
+    pathPrefix: /geography
+  mds-geography-author:
+    enabled: false
+    pathPrefix: /geography-author
+  mds-geography-service:
+    enabled: false
+  mds-ingest-service:
+    enabled: false
+  mds-jurisdiction:
+    enabled: false
+    pathPrefix: /jurisdiction
+  mds-jurisdiction-service:
+    enabled: false
+  mds-policy:
+    enabled: false
+    pathPrefix: /policy
+  mds-policy-author:
+    enabled: false
+    pathPrefix: /policy-author
+  mds-policy-service:
+    enabled: false
+  mds-transaction-api:
+    enabled: false
+    pathPrefix: /transaction
+  mds-transaction-service:
+    enabled: false
+
+#
+# Backend services
+
 nats:
   internal: true
   host:
+  auth:
+    enabled: false
   podAnnotations:
     sidecar.istio.io/inject: "false"
+
 kafka:
   internal: true
   host:
   port: 9092
   podAnnotations:
     sidecar.istio.io/inject: "false"
+
 postgresql:
   internal: true
   host:
@@ -122,11 +159,13 @@ postgresql:
   image:
     repository: postgres
     tag: 10
+
 redis:
   internal: true
   host:
   port: 6379
   usePassword: false
+  password:
   cluster:
     enabled: false
   master:

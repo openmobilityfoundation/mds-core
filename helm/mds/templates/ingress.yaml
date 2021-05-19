@@ -1,132 +1,41 @@
-{{- range $name, $api := .Values.apis }}
-{{- if $api.enabled }}
-{{- if hasKey $api "pathPrefix" }}
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "mds.fullname" . -}}
+{{- $svcPort := .Values.httpPort -}}
+{{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Ingress
 metadata:
-  name: {{ $name }}-route
-  namespace: {{ $.Release.Namespace }}
-spec:
-  hosts:
-  - {{ $.Values.domain | quote }}
-  gateways:
-  - mds-gateway
-  http:
-  {{- if (eq $name "mds-policy") }}
-  # comply with MDS 0.4 spec
-  - match:
-    - uri:
-        prefix: /policy/geographies
-    rewrite:
-      uri: /geography/geographies
-    route:
-    - destination:
-        host: mds-geography.{{ $.Release.Namespace}}.svc.cluster.local
-        port:
-          number: 4000
-    {{- if $.Values.tls.elbTermination }}
-    headers:
-      request:
-        set:
-          x-forwarded-proto: https
-    {{- end }}
-    corsPolicy:
-      allowOrigin:
-      - "*"
-      allowMethods:
-      - POST
-      - GET
-      - HEAD
-      - OPTIONS
-      - PATCH
-      - PUT
-      - DELETE
-      allowCredentials: false
-      allowHeaders:
-      - Content-Type
-      - Authorization
-      maxAge: "10m"
+  name: {{ $fullName }}
+  labels:
+    {{- include "mds.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  - match:
-    - uri:
-        regex: {{ printf "^%s($|/.*$)" $api.pathPrefix | quote }}
-    route:
-    - destination:
-        host: {{ $name }}.{{ $.Release.Namespace}}.svc.cluster.local
-        port:
-          number: 4000
-    {{- if $.Values.tls.elbTermination }}
-    headers:
-      request:
-        set:
-          x-forwarded-proto: https
-    {{- end }}
-    corsPolicy:
-      allowOrigin:
-      - "*"
-      allowMethods:
-      - POST
-      - GET
-      - HEAD
-      - OPTIONS
-      - PATCH
-      - PUT
-      - DELETE
-      allowCredentials: false
-      allowHeaders:
-      - Content-Type
-      - Authorization
-      maxAge: "10m"
----
-{{- end }}
-{{- end }}
-{{- end }}
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: mds-gateway
-  namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    istio: {{ .Values.ingressgateway }}
-  servers:
-  {{- if .Values.tls.enabled }}
-  - port:
-      number: 443
-      name: https
-      protocol: HTTPS
-    tls:
-      mode: SIMPLE
-      serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
-      privateKey: /etc/istio/ingressgateway-certs/tls.key
-  {{- else if .Values.tls.elbTermination }}
-  - port:
-      number: 443
-      name: http443
-      protocol: HTTP
-  {{- else }}
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
+  {{- if and .Values.ingress.tls .Values.domain }}
+  tls:
+    - hosts:
+        - {{ .Values.domain }}
+      secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
-    hosts:
-    - {{ .Values.domain | quote }}
----
-# see https://github.com/istio/istio/issues/13848
-# "Node.js has 5 sec default connection idleTimeout, and envoy has the same one.
-# In rare time it generate this error - envoy send reqest in the moment when nodejs closing it."
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: mds-resolve-timeout-race
-  namespace: {{ .Release.Namespace }}
-spec:
-  host: {{ printf "*.%s.svc.cluster.local" .Release.Namespace | quote }}
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
-    connectionPool:
-      http:
-        idleTimeout: 3s
-        maxRetries: 3
+  rules:
+    - http:
+        paths:
+          {{- range $name, $deploy := .Values.deployments }}
+          {{- if hasKey $deploy "pathPrefix" }}
+          {{- if $deploy.enabled }}
+          - path: {{ printf "%s($|/.*$)" $deploy.pathPrefix | quote }}
+            backend:
+              serviceName: {{ $name }}
+              servicePort: {{ $.Values.httpPort }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+      {{- if .Values.domain }}
+      host: {{ .Values.domain | quote }}
+      {{- end }}
+{{- end }}
