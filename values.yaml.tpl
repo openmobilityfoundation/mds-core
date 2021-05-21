@@ -8,7 +8,7 @@ deployments:
   mds-audit:
     version: ${AUDIT_VERSION}
   mds-policy:
-    version: ${MODALITY_POLICY_VERSION}
+    version: ${POLICY_VERSION}
   mds-policy-service:
     version: ${POLICY_SERVICE_VERSION}
   mds-compliance-api:
@@ -20,7 +20,7 @@ deployments:
   mds-jurisdiction-service:
     version: ${JURISDICTION_SERVICE_VERSION}
   mds-policy-author:
-    version: ${MODALITY_POLICY_AUTHOR_VERSION}
+    version: ${POLICY_AUTHOR_VERSION}
   mds-geography:
     version: ${GEOGRAPHY_VERSION}
   mds-geography-author:
