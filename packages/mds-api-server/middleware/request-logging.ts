@@ -62,5 +62,17 @@ export const RequestLoggingMiddleware = ({
       httpContext.set('x-request-id', xRequestId)
     }
     return next()
+  },
+  (req: ApiRequest, res: ApiResponse, next: express.NextFunction) => {
+    const { REQUEST_DEBUG } = process.env
+
+    if (REQUEST_DEBUG === 'true') {
+      const { body, params, query } = req
+      logger.debug('REQUEST_DEBUG::BODY', { body })
+      logger.debug('REQUEST_DEBUG::PARAMS', { params })
+      logger.debug('REQUEST_DEBUG::QUERY', { query })
+    }
+
+    return next()
   }
 ]

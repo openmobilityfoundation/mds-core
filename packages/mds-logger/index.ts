@@ -23,7 +23,7 @@ if (inspect?.defaultOptions) {
   inspect.defaultOptions.depth = null
 }
 
-const logger: Pick<Console, 'info' | 'warn' | 'error'> = console
+const logger: Pick<Console, 'info' | 'warn' | 'error' | 'debug'> = console
 type LogLevel = keyof typeof logger
 
 const redact = (arg: string | Record<string, unknown> | Error | undefined) => {
@@ -65,6 +65,7 @@ const log = (level: LogLevel) => (
 
 export default {
   log: (level: LogLevel, ...args: Parameters<ReturnType<typeof log>>) => log(level)(...args),
+  debug: log('debug'),
   info: log('info'),
   warn: log('warn'),
   error: log('error')
