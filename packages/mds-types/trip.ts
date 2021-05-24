@@ -25,13 +25,13 @@ export interface TripsStats {
   mystery_examples: { [key: string]: UUID[] }
 }
 
-export interface TripMetadata {
+export type TripMetadata<T = {}> = {
   trip_id: UUID
   provider_id: UUID
-  reservation_time: Timestamp
-  reservation_method: RESERVATION_METHOD
-  reservation_type: RESERVATION_TYPE
-  quoted_trip_start_time: Timestamp
+  reservation_time?: Timestamp
+  reservation_method?: RESERVATION_METHOD
+  reservation_type?: RESERVATION_TYPE
+  quoted_trip_start_time?: Timestamp
   requested_trip_start_location?: Pick<GpsData, 'lat' | 'lng'>
   cancellation_reason?: string
   dispatch_time?: Timestamp
@@ -46,4 +46,4 @@ export interface TripMetadata {
     currency?: string
     payment_methods?: PAYMENT_METHOD[]
   }
-}
+} & T
