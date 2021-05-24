@@ -71,7 +71,6 @@ export const TNC_VEHICLE_EVENT = [
   'driver_cancellation',
   'enter_jurisdiction',
   'leave_jurisdiction',
-  'maintenance',
   'passenger_cancellation',
   'provider_cancellation',
   'reservation_start',

@@ -66,7 +66,6 @@ export const TNC_EVENT_STATES_MAP: {
   driver_cancellation: ['available', 'on_trip', 'reserved', 'stopped'],
   enter_jurisdiction: ['available', 'reserved', 'on_trip', 'non_operational'],
   leave_jurisdiction: ['elsewhere'],
-  maintenance: ['available', 'non_operational'],
   passenger_cancellation: ['available', 'on_trip', 'reserved', 'stopped'],
   provider_cancellation: ['available', 'on_trip', 'reserved', 'stopped'],
   reservation_start: ['reserved'],
