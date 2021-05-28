@@ -20,14 +20,12 @@ createImagesFileIfNotExists() {
 buildImage() {
   local image=$1
   createImagesFileIfNotExists
-  if [[ "$NODE_ENV" == "development" ]]; then
-    image_name=$(echo $image | cut -f1 -d":")
-    docker build -t ${REGISTRY}${image_name}:latest .
-    echo ${REGISTRY}${image_name}:latest >> $BASE_DIR/dist/images.txt
-  else
-    docker build -t ${REGISTRY}${image}$(getBranchSuffix)$(getCommitHash) .
-    echo ${REGISTRY}${image}$(getBranchSuffix)$(getCommitHash) >> $BASE_DIR/dist/images.txt
+  local tag=$(echo $image | cut -f2 -d":")
+  if [[ "$tag" != "latest" ]]; then
+    image=${REGISTRY}${image}$(getBranchSuffix)$(getCommitHash)
   fi
+  docker build -t ${REGISTRY}${image} .
+  echo ${REGISTRY}${image} >> $BASE_DIR/dist/images.txt
 }
 
 pushImages() {

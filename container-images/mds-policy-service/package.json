@@ -17,7 +17,7 @@
     "bundle:development": "webpack --mode=development --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
     "bundle:production": "webpack --mode=production --env npm_package_name=${npm_package_name} --env npm_package_version=${npm_package_version}",
     "image": "pnpm image:production",
-    "image:development": "pnpm bundle:development && ../../bin/build-helper buildImage mds-policy-service:${npm_package_version}",
+    "image:development": "pnpm bundle:development && ../../bin/build-helper buildImage mds-policy-service:latest",
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-policy-service:${npm_package_version}"
   },
   "dependencies": {
