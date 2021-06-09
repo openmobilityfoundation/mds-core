@@ -22,12 +22,12 @@
     "@mds-core/mds-providers": "0.1.28",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
-    "@types/pg": "7.14.11",
+    "@types/pg": "8.6.0",
     "await-lock": "2.1.0",
     "pg": "8.6.0"
   },
   "devDependencies": {
-    "typeorm": "0.2.32"
+    "typeorm": "0.2.34"
   },
   "peerDependencies": {
     "typeorm": "0.2.30"

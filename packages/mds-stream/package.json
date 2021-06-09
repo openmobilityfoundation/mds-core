@@ -21,13 +21,13 @@
     "@mds-core/mds-logger": "0.2.2",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
-    "@types/bluebird": "3.5.33",
-    "@types/redis": "2.8.28",
+    "@types/bluebird": "3.5.35",
+    "@types/redis": "2.8.29",
     "bluebird": "3.7.2",
     "flat": "5.0.2",
     "kafkajs": "1.15.0",
-    "nats": "2.0.2",
+    "nats": "2.0.6",
     "redis": "3.1.2",
-    "sinon": "10.0.0"
+    "sinon": "11.1.1"
   }
 }

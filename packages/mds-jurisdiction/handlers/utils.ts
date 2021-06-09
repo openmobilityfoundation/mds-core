@@ -17,8 +17,8 @@
 import { JurisdictionDomainModel } from '@mds-core/mds-jurisdiction-service'
 import { JurisdictionApiResponse } from '../@types'
 
-export const HasJurisdictionClaim = <TBody extends {}>(res: JurisdictionApiResponse<TBody>) => (
-  jurisdiction: JurisdictionDomainModel
-): boolean =>
-  res.locals.scopes.includes('jurisdictions:read') ||
-  (res.locals.claims?.jurisdictions?.split(' ') ?? []).includes(jurisdiction.agency_key)
+export const HasJurisdictionClaim =
+  <TBody extends {}>(res: JurisdictionApiResponse<TBody>) =>
+  (jurisdiction: JurisdictionDomainModel): boolean =>
+    res.locals.scopes.includes('jurisdictions:read') ||
+    (res.locals.claims?.jurisdictions?.split(' ') ?? []).includes(jurisdiction.agency_key)

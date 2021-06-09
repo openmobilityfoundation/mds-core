@@ -293,22 +293,8 @@ async function readStreamGroup(
 async function getStreamInfo(stream: Stream) {
   const client = await getClient()
   try {
-    const [
-      ,
-      length,
-      ,
-      radixTreeKeys,
-      ,
-      radixTreeNodes,
-      ,
-      groups,
-      ,
-      lastGeneratedId,
-      ,
-      firstEntry,
-      ,
-      lastEntry
-    ] = await client.xinfoAsync('STREAM', stream)
+    const [, length, , radixTreeKeys, , radixTreeNodes, , groups, , lastGeneratedId, , firstEntry, , lastEntry] =
+      await client.xinfoAsync('STREAM', stream)
     return { length, radixTreeKeys, radixTreeNodes, groups, lastGeneratedId, firstEntry, lastEntry }
   } catch (err) {
     return null

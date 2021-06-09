@@ -241,19 +241,8 @@ WHERE         timestamp < '${end_date}'`
 
   const { rows } = await client.query(sql, values)
   const events = rows.reduce((acc: VehicleEvent[], row) => {
-    const {
-      provider_id,
-      device_id,
-      event_type,
-      timestamp,
-      recorded,
-      lat,
-      lng,
-      speed,
-      heading,
-      accuracy,
-      altitude
-    } = row
+    const { provider_id, device_id, event_type, timestamp, recorded, lat, lng, speed, heading, accuracy, altitude } =
+      row
     return [
       ...acc,
       {

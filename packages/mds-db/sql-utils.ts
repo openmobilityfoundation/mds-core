@@ -197,10 +197,12 @@ export class SqlVals {
   }
 }
 
-export const SqlExecuter = (client: MDSPostgresClient) => async (command: string, values: (string | number)[] = []) => {
-  await logSql(command, values)
-  return client.query(command, values)
-}
+export const SqlExecuter =
+  (client: MDSPostgresClient) =>
+  async (command: string, values: (string | number)[] = []) => {
+    await logSql(command, values)
+    return client.query(command, values)
+  }
 
 export type SqlExecuterFunction = ReturnType<typeof SqlExecuter>
 

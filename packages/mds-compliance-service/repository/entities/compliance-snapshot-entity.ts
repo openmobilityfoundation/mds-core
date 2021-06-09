@@ -32,7 +32,8 @@ export interface ComplianceSnapshotEntityModel extends IdentityColumn, RecordedC
 @Entity('compliance_snapshots')
 export class ComplianceSnapshotEntity
   extends IdentityColumn(RecordedColumn(class {}))
-  implements ComplianceSnapshotEntityModel {
+  implements ComplianceSnapshotEntityModel
+{
   @Column('uuid', { primary: true })
   compliance_snapshot_id: ComplianceSnapshotEntityModel['compliance_snapshot_id']
 

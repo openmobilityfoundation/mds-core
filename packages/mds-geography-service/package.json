@@ -32,6 +32,6 @@
     "@mds-core/mds-utils": "0.1.28",
     "geojson-validation": "1.0.2",
     "joi": "17.4.0",
-    "typeorm": "0.2.32"
+    "typeorm": "0.2.34"
   }
 }

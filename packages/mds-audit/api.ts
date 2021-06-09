@@ -621,9 +621,11 @@ function api(app: express.Express): express.Express {
         const { scopes } = res.locals
         const { skip, take } = parsePagingQueryParams(req)
 
-        const { provider_id: queried_provider_id, provider_vehicle_id, audit_subject_id } = parseRequest(req)
-          .single()
-          .query('provider_id', 'provider_vehicle_id', 'audit_subject_id')
+        const {
+          provider_id: queried_provider_id,
+          provider_vehicle_id,
+          audit_subject_id
+        } = parseRequest(req).single().query('provider_id', 'provider_vehicle_id', 'audit_subject_id')
 
         const provider_id = scopes.includes('audits:read') ? queried_provider_id : res.locals.claims?.provider_id
 
@@ -680,7 +682,11 @@ function api(app: express.Express): express.Express {
     checkAuditApiAccess(scopes => scopes.includes('audits:vehicles:read')),
     async (req: AuditApiGetVehicleRequest, res: GetAuditVehiclesResponse) => {
       const { skip, take } = { skip: 0, take: 10000 }
-      const { strict = true, bbox, provider_id } = {
+      const {
+        strict = true,
+        bbox,
+        provider_id
+      } = {
         ...parseRequest(req).single({ parser: JSON.parse }).query('strict', 'bbox'),
         ...parseRequest(req).single().query('provider_id')
       }

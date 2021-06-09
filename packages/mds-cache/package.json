@@ -18,8 +18,8 @@
     "@mds-core/mds-logger": "0.2.2",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
-    "@types/ioredis": "4.26.1",
+    "@types/ioredis": "4.26.4",
     "envalid": "7.1.0",
-    "ioredis": "4.27.1"
+    "ioredis": "4.27.5"
   }
 }

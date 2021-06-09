@@ -99,58 +99,52 @@ const {
   { keywords: ['example'] }
 )
 
-export const {
-  validate: validateTransactionDomainModel,
-  $schema: TransactionSchema
-} = SchemaValidator<TransactionDomainModel>(
-  {
-    $id: 'Transaction',
+export const { validate: validateTransactionDomainModel, $schema: TransactionSchema } =
+  SchemaValidator<TransactionDomainModel>(
+    {
+      $id: 'Transaction',
+      type: 'object',
+      properties: {
+        transaction_id: uuidSchema,
+        provider_id: { ...uuidSchema, description: 'What Provider is being charged for this transaction?' },
+        device_id: { ...uuidSchema, nullable: true },
+        timestamp: timestampSchema,
+        fee_type: { type: 'string', enum: [...FEE_TYPE] },
+        amount: { type: 'integer' },
+        receipt: receiptSchema
+      },
+      required: ['amount', 'device_id', 'fee_type', 'provider_id', 'receipt', 'timestamp', 'transaction_id']
+    },
+    { keywords: ['example'] }
+  )
+
+export const { validate: validateTransactionOperationDomainModel, $schema: TransactionOperationSchema } =
+  SchemaValidator<TransactionOperationDomainModel>({
+    $id: 'TransactionOperation',
     type: 'object',
     properties: {
       transaction_id: uuidSchema,
-      provider_id: { ...uuidSchema, description: 'What Provider is being charged for this transaction?' },
-      device_id: { ...uuidSchema, nullable: true },
+      operation_id: uuidSchema,
       timestamp: timestampSchema,
-      fee_type: { type: 'string', enum: [...FEE_TYPE] },
-      amount: { type: 'integer' },
-      receipt: receiptSchema
+      operation_type: { type: 'string', enum: [...TRANSACTION_OPERATION_TYPE] },
+      author: { description: 'Who/what executed this operation?', type: 'string' }
     },
-    required: ['amount', 'device_id', 'fee_type', 'provider_id', 'receipt', 'timestamp', 'transaction_id']
-  },
-  { keywords: ['example'] }
-)
+    required: ['author', 'operation_id', 'operation_type', 'timestamp', 'transaction_id']
+  })
 
-export const {
-  validate: validateTransactionOperationDomainModel,
-  $schema: TransactionOperationSchema
-} = SchemaValidator<TransactionOperationDomainModel>({
-  $id: 'TransactionOperation',
-  type: 'object',
-  properties: {
-    transaction_id: uuidSchema,
-    operation_id: uuidSchema,
-    timestamp: timestampSchema,
-    operation_type: { type: 'string', enum: [...TRANSACTION_OPERATION_TYPE] },
-    author: { description: 'Who/what executed this operation?', type: 'string' }
-  },
-  required: ['author', 'operation_id', 'operation_type', 'timestamp', 'transaction_id']
-})
-
-export const {
-  validate: validateTransactionStatusDomainModel,
-  $schema: TransactionStatusSchema
-} = SchemaValidator<TransactionStatusDomainModel>({
-  $id: 'TransactionStatus',
-  type: 'object',
-  properties: {
-    transaction_id: uuidSchema,
-    status_id: uuidSchema,
-    timestamp: timestampSchema,
-    status_type: { type: 'string', enum: [...TRANSACTION_STATUS_TYPE] },
-    author: { description: 'Who/what updated the status of the transaction?', type: 'string' }
-  },
-  required: ['author', 'status_id', 'status_type', 'timestamp', 'transaction_id']
-})
+export const { validate: validateTransactionStatusDomainModel, $schema: TransactionStatusSchema } =
+  SchemaValidator<TransactionStatusDomainModel>({
+    $id: 'TransactionStatus',
+    type: 'object',
+    properties: {
+      transaction_id: uuidSchema,
+      status_id: uuidSchema,
+      timestamp: timestampSchema,
+      status_type: { type: 'string', enum: [...TRANSACTION_STATUS_TYPE] },
+      author: { description: 'Who/what updated the status of the transaction?', type: 'string' }
+    },
+    required: ['author', 'status_id', 'status_type', 'timestamp', 'transaction_id']
+  })
 
 export const { validate: validateTransactionId } = SchemaValidator<UUID>(uuidSchema)
 

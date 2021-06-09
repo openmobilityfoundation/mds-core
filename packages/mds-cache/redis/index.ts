@@ -116,7 +116,7 @@ export const RedisCache = () => {
         }
 
         const [first] = data
-        const args = ([key, first] as unknown) as [key: KeyType, field: string, value: ValueType]
+        const args = [key, first] as unknown as [key: KeyType, field: string, value: ValueType]
         return theClient.hset(...args)
       })
     },

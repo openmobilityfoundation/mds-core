@@ -16,6 +16,7 @@
 
 import { AttachmentServiceManager } from '../service/manager'
 import { AttachmentRepository } from '../repository'
+import { AttachmentServiceClient } from '../client'
 
 describe('Attachment Repository Tests', () => {
   beforeAll(async () => {
@@ -40,6 +41,11 @@ const AttachmentServer = AttachmentServiceManager.controller()
 describe('Attachment Service Tests', () => {
   beforeAll(async () => {
     await AttachmentServer.start()
+  })
+
+  it('Test Name Method', async () => {
+    const attachments = await AttachmentServiceClient.readAttachments({ attachment_ids: [] })
+    expect(attachments).toHaveLength(0)
   })
 
   afterAll(async () => {

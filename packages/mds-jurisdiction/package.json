@@ -23,7 +23,7 @@
     "@mds-core/mds-logger": "0.2.2",
     "@mds-core/mds-service-helpers": "0.1.2",
     "@mds-core/mds-utils": "0.1.28",
-    "@types/express": "4.17.11",
+    "@types/express": "4.17.12",
     "express": "4.17.1"
   },
   "devDependencies": {

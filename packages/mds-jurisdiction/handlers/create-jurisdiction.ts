@@ -34,7 +34,8 @@ export type JurisdictionApiCreateJurisdictionResponseBody =
       jurisdictions: JurisdictionDomainModel[]
     }
 
-export type JurisdictionApiCreateJurisdictionResponse = JurisdictionApiResponse<JurisdictionApiCreateJurisdictionResponseBody>
+export type JurisdictionApiCreateJurisdictionResponse =
+  JurisdictionApiResponse<JurisdictionApiCreateJurisdictionResponseBody>
 
 export const CreateJurisdictionHandler = async (
   req: JurisdictionApiCreateJurisdictionRequest,

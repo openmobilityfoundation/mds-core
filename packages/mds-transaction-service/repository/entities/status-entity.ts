@@ -22,7 +22,8 @@ import { TransactionStatusDomainModel, TRANSACTION_STATUS_TYPE } from '../../@ty
 @Entity('transaction_statuses')
 export class TransactionStatusEntity
   extends IdentityColumn(RecordedColumn(class {}))
-  implements TransactionStatusDomainModel {
+  implements TransactionStatusDomainModel
+{
   @Column('uuid', { primary: true })
   transaction_id: string
 

@@ -23,43 +23,42 @@ import { ComplianceEngineResult } from './@types'
 import { getSupersedingPolicies, filterEvents, generateDeviceMap } from './engine/helpers'
 import { createComplianceSnapshot } from './engine'
 
-const args = yargs
-  .options('provider_id', {
-    alias: 'i',
-    demand: true,
-    description: 'provider_id',
-    type: 'string'
-  })
-  .options('geographies', {
-    alias: 'g',
-    demand: true,
-    description: 'Path to geographies JSON',
-    type: 'string'
-  })
-  .option('devices', {
-    alias: 'd',
-    demand: true,
-    description: 'Path to devices JSON',
-    type: 'string'
-  })
-  .options('events', {
-    alias: 'e',
-    demand: true,
-    description: 'Path to events JSON',
-    type: 'string'
-  })
-  .option('policies', {
-    alias: 'p',
-    demand: true,
-    description: 'Path to policies JSON',
-    type: 'string'
-  }).argv
-
 async function readJson(path: string): Promise<object> {
   return Promise.resolve(JSON.parse(fs.readFileSync(path).toString()))
 }
 
 async function main(): Promise<(ComplianceEngineResult | undefined)[]> {
+  const args = await yargs
+    .options('provider_id', {
+      alias: 'i',
+      demand: true,
+      description: 'provider_id',
+      type: 'string'
+    })
+    .options('geographies', {
+      alias: 'g',
+      demand: true,
+      description: 'Path to geographies JSON',
+      type: 'string'
+    })
+    .option('devices', {
+      alias: 'd',
+      demand: true,
+      description: 'Path to devices JSON',
+      type: 'string'
+    })
+    .options('events', {
+      alias: 'e',
+      demand: true,
+      description: 'Path to events JSON',
+      type: 'string'
+    })
+    .option('policies', {
+      alias: 'p',
+      demand: true,
+      description: 'Path to policies JSON',
+      type: 'string'
+    }).argv
   const geographies = (await readJson(args.geographies)) as Geography[]
   if (!geographies || !validateGeographies(geographies)) {
     logger.error('unable to read geographies')

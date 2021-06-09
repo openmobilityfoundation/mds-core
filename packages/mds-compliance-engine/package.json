@@ -31,12 +31,12 @@
     "@mds-core/mds-stream": "0.1.28",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
-    "@types/express": "4.17.11",
-    "@types/yargs": "16.0.1",
+    "@types/express": "4.17.12",
+    "@types/yargs": "17.0.0",
     "express": "4.17.1",
     "fs": "0.0.1-security",
     "moment-timezone": "0.5.33",
-    "yargs": "17.0.0"
+    "yargs": "17.0.1"
   },
   "devDependencies": {
     "@mds-core/mds-agency": "0.0.30",

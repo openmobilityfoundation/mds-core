@@ -26,7 +26,8 @@ export interface AuditAttachmentEntityModel extends IdentityColumn, RecordedColu
 @Entity('audit_attachments')
 export class AuditAttachmentEntity
   extends IdentityColumn(RecordedColumn(class {}))
-  implements AuditAttachmentEntityModel {
+  implements AuditAttachmentEntityModel
+{
   @Column('uuid', { primary: true })
   audit_trip_id: AuditAttachmentEntityModel['audit_trip_id']
 

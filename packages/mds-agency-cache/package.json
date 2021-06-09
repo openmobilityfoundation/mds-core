@@ -24,8 +24,8 @@
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",
     "@types/flat": "5.0.1",
-    "@types/ioredis": "4.26.1",
+    "@types/ioredis": "4.26.4",
     "flat": "5.0.2",
-    "ioredis": "4.27.1"
+    "ioredis": "4.27.5"
   }
 }

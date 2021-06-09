@@ -679,11 +679,10 @@ const isDefined = <T>(elem: T | undefined | null, options: isDefinedOptions = {}
   return false
 }
 
-const filterDefined = (options: isDefinedOptions = {}) => <T>(
-  value: T | undefined | null,
-  index: number,
-  array: (T | undefined | null)[]
-): value is T => isDefined(value, options, index)
+const filterDefined =
+  (options: isDefinedOptions = {}) =>
+  <T>(value: T | undefined | null, index: number, array: (T | undefined | null)[]): value is T =>
+    isDefined(value, options, index)
 
 function moved(latA: number, lngA: number, latB: number, lngB: number) {
   const limit = 0.00001 // arbitrary amount

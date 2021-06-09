@@ -21,7 +21,8 @@ import { TransactionOperationDomainModel, TRANSACTION_OPERATION_TYPE } from '../
 @Entity('transaction_operations')
 export class TransactionOperationEntity
   extends IdentityColumn(RecordedColumn(class {}))
-  implements TransactionOperationDomainModel {
+  implements TransactionOperationDomainModel
+{
   @Column('uuid', { primary: true })
   transaction_id: UUID
 

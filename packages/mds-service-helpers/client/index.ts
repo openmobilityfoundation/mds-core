@@ -34,12 +34,12 @@ export const isError = <E extends Error>(error: unknown, type: new () => E) =>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ServiceResponseMethod<R = any> = AnyFunction<Promise<ServiceResponse<R>>>
 
-export const UnwrapServiceResult = <M extends ServiceResponseMethod>(method: M) => async (
-  ...args: Parameters<M>
-): Promise<ReturnType<M> extends Promise<ServiceResponse<infer R>> ? R : never> => {
-  const response = await method(...args)
-  if (response.error) {
-    throw response.error
+export const UnwrapServiceResult =
+  <M extends ServiceResponseMethod>(method: M) =>
+  async (...args: Parameters<M>): Promise<ReturnType<M> extends Promise<ServiceResponse<infer R>> ? R : never> => {
+    const response = await method(...args)
+    if (response.error) {
+      throw response.error
+    }
+    return response.result
   }
-  return response.result
-}
