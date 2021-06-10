@@ -93,7 +93,7 @@ export async function readDevice(
     return res.rows[0]
   }
   logger.info(`readDevice db failed for ${device_id}: rows=${res.rows.length}`)
-  throw new Error(`device_id ${device_id} not found`)
+  throw new NotFoundError(`device_id ${device_id} not found`)
 }
 
 export async function readDeviceList(device_ids: UUID[]): Promise<Recorded<Device>[]> {

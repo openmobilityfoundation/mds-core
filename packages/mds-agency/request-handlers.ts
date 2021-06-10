@@ -15,7 +15,7 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { isUUID, now, ValidationError, normalizeToArray, ServerError } from '@mds-core/mds-utils'
+import { isUUID, now, ValidationError, normalizeToArray, ServerError, NotFoundError } from '@mds-core/mds-utils'
 import { isValidDevice, validateEvent, isValidTelemetry, validateTripMetadata } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
@@ -61,6 +61,7 @@ import {
   readPayload,
   computeCompositeVehicleData
 } from './utils'
+import { isError } from 'packages/mds-service-helpers'
 
 const agencyServerError = { error: 'server_error', error_description: 'Unknown server error' }
 
@@ -494,11 +495,14 @@ export const submitVehicleTelemetry = async (
       })
     }
   } catch (err) {
-    res.status(500).send({
-      error: 'server_error',
-      error_description: 'None of the provided data was valid',
-      error_details: [`device_id ${data[0].device_id}: not found`]
-    })
+    if (isError(err, NotFoundError))
+      return res.status(400).send({
+        error: 'unregistered',
+        error_description: 'Some of the devices are unregistered',
+        error_details: [data[0].device_id]
+      })
+
+    return res.status(500).send({ error: new ServerError() })
   }
 }
 

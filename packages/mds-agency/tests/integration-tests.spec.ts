@@ -1294,7 +1294,27 @@ describe('Tests API', () => {
       .send({
         data: [TEST_TELEMETRY]
       })
-      .expect(500)
+      .expect(400)
+      .end((err, result) => {
+        if (err) {
+          log('telemetry err with mismatched provider', err)
+        } else {
+          log('telemetry result with mismatched provider', result.body)
+          test.value(result.body.error_details.length).is(1)
+        }
+        done(err)
+      })
+  })
+  it('verifies post telemetry with unregistered device', done => {
+    const telemetry = { ...TEST_TELEMETRY, device_id: uuid() } // randomly generate a new uuid, obviously not registered
+
+    request
+      .post(pathPrefix('/vehicles/telemetry'))
+      .set('Authorization', AUTH)
+      .send({
+        data: [telemetry]
+      })
+      .expect(400)
       .end((err, result) => {
         if (err) {
           log('telemetry err with mismatched provider', err)
