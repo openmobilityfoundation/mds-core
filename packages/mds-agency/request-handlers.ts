@@ -61,7 +61,7 @@ import {
   readPayload,
   computeCompositeVehicleData
 } from './utils'
-import { isError } from 'packages/mds-service-helpers'
+import { isError } from '@mds-core/mds-service-helpers'
 
 const agencyServerError = { error: 'server_error', error_description: 'Unknown server error' }
 
