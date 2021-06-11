@@ -101,11 +101,11 @@ export const TNC_TRIP_EXIT_EVENTS: TNC_VEHICLE_EVENT[] = [
   'driver_cancellation'
 ]
 
-export const VEHICLE_EVENTS_v1_1_0 = [
+export const VEHICLE_EVENTS_v1_1_0 = [...new Set([
   ...MICRO_MOBILITY_VEHICLE_EVENTS,
   ...TAXI_VEHICLE_EVENTS,
   ...TNC_VEHICLE_EVENT
-] as const
+])] as const
 export type VEHICLE_EVENT_v1_1_0 = typeof VEHICLE_EVENTS[number]
 
 export const VEHICLE_EVENTS = VEHICLE_EVENTS_v1_1_0
