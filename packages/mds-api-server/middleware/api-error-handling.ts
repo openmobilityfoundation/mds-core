@@ -1,16 +1,15 @@
 import logger from '@mds-core/mds-logger'
 import type express from 'express'
-import { isError, isServiceError } from '@mds-core/mds-service-helpers'
-import {
-  AuthorizationError,
-  BadParamsError,
-  ConflictError,
-  NotFoundError,
-  ServerError,
-  ValidationError
-} from '@mds-core/mds-utils'
+import { isServiceError, ErrorCheckFunction } from '@mds-core/mds-service-helpers'
+import { AuthorizationError, BadParamsError, ConflictError, NotFoundError, ValidationError } from '@mds-core/mds-utils'
 import HttpStatus from 'http-status-codes'
 import { ApiRequest, ApiResponse } from '../@types'
+
+const isValidationError = ErrorCheckFunction(ValidationError)
+const isBadParamsError = ErrorCheckFunction(BadParamsError)
+const isNotFoundError = ErrorCheckFunction(NotFoundError)
+const isConflictError = ErrorCheckFunction(ConflictError)
+const isAuthorizationError = ErrorCheckFunction(AuthorizationError)
 
 /**
  *
@@ -31,11 +30,10 @@ export const ApiErrorHandlingMiddleware = (
 ) => {
   const { method, originalUrl } = req
 
-  if (isError(error, ValidationError) || isError(error, BadParamsError))
-    return res.status(HttpStatus.BAD_REQUEST).send({ error })
-  if (isError(error, NotFoundError)) return res.status(HttpStatus.NOT_FOUND).send({ error })
-  if (isError(error, ConflictError)) return res.status(HttpStatus.CONFLICT).send({ error })
-  if (isError(error, AuthorizationError)) return res.status(HttpStatus.FORBIDDEN).send({ error })
+  if (isValidationError(error) || isBadParamsError(error)) return res.status(HttpStatus.BAD_REQUEST).send({ error })
+  if (isNotFoundError(error)) return res.status(HttpStatus.NOT_FOUND).send({ error })
+  if (isConflictError(error)) return res.status(HttpStatus.CONFLICT).send({ error })
+  if (isAuthorizationError(error)) return res.status(HttpStatus.FORBIDDEN).send({ error })
   if (isServiceError(error, 'ServiceUnavailable')) return res.status(HttpStatus.SERVICE_UNAVAILABLE).send({ error })
 
   logger.error('Fatal API Error (global error handling middleware)', {
@@ -43,5 +41,5 @@ export const ApiErrorHandlingMiddleware = (
     originalUrl,
     error
   })
-  return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ error: new ServerError() })
+  return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send({ error })
 }
