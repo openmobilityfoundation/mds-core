@@ -27,7 +27,7 @@ import {
   tail,
   setEmptyArraysToUndefined
 } from '@mds-core/mds-utils'
-import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox, TripMetadata } from '@mds-core/mds-types'
+import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from '@mds-core/mds-types'
 import { RedisCache } from '@mds-core/mds-cache'
 
 import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
@@ -157,17 +157,6 @@ async function hwrite(suffix: string, item: CacheReadDeviceResult | Telemetry | 
   await Promise.all(keys.map(k => client.hset(k, hmap)))
 
   return updateVehicleList(device_id)
-}
-
-const writeTripMetadata = async (metadata: TripMetadata) => {
-  try {
-    const { trip_id } = metadata
-
-    return client.set(decorateKey(`trip:${trip_id}:metadata`), JSON.stringify(metadata))
-  } catch (err) {
-    logger.error('Failed to write TripMetadata to cache', err)
-    throw err
-  }
 }
 
 // put basics of device in the cache
@@ -562,6 +551,5 @@ export default {
   readKeys,
   wipeDevice,
   updateVehicleList,
-  cleanup,
-  writeTripMetadata
+  cleanup
 }

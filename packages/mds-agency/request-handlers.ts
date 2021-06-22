@@ -515,7 +515,7 @@ export const writeTripMetadata = async (
     const { provider_id } = res.locals
     /* TODO Add better validation once trip metadata proposal is solidified */
     const tripMetadata = { ...validateTripMetadata({ ...req.body, provider_id }), recorded: Date.now() }
-    await Promise.all([cache.writeTripMetadata(tripMetadata), stream.writeTripMetadata(tripMetadata)])
+    await stream.writeTripMetadata(tripMetadata)
 
     return res.status(201).send(tripMetadata)
   } catch (error) {
