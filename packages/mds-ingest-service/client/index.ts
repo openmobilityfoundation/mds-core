@@ -25,5 +25,6 @@ const IngestServiceRpcClient = RpcClient(IngestServiceDefinition, {
 
 // What the API layer, and any other clients, will invoke.
 export const IngestServiceClient: ServiceClient<IngestService> = {
-  name: (...args) => RpcRequest(IngestServiceRpcClient.name, args)
+  name: (...args) => RpcRequest(IngestServiceRpcClient.name, args),
+  getEvents: (...args) => RpcRequest(IngestServiceRpcClient.getEvents, args)
 }

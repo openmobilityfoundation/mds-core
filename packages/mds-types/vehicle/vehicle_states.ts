@@ -35,11 +35,9 @@ export const TNC_VEHICLE_STATE = <const>[
 ]
 export type TNC_VEHICLE_STATE = typeof TNC_VEHICLE_STATE[number]
 
-export const VEHICLE_STATES_v1_1_0 = [...new Set([
-  ...MICRO_MOBILITY_VEHICLE_STATES_v1_1_0,
-  ...TAXI_VEHICLE_STATES,
-  ...TNC_VEHICLE_STATE
-])] as const
+export const VEHICLE_STATES_v1_1_0 = [
+  ...new Set([...MICRO_MOBILITY_VEHICLE_STATES_v1_1_0, ...TAXI_VEHICLE_STATES, ...TNC_VEHICLE_STATE])
+] as const
 export type VEHICLE_STATE_v1_1_0 = typeof VEHICLE_STATES_v1_1_0[number]
 
 export const VEHICLE_STATES = VEHICLE_STATES_v1_1_0

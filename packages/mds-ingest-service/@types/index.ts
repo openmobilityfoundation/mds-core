@@ -63,6 +63,27 @@ export interface TelemetryDomainModel
 
 export type TelemetryDomainCreateModel = DomainModelCreate<Omit<TelemetryDomainModel, keyof RecordedColumn>>
 
+export const GROUPING_TYPES = ['latest_per_vehicle', 'latest_per_trip', 'all_events'] as const
+export type GROUPING_TYPE = typeof GROUPING_TYPES[number]
+
+export type TimeRange = {
+  start: Timestamp
+  end: Timestamp
+}
+export interface GetVehicleEventsFilterParams {
+  vehicle_types?: VEHICLE_TYPE[]
+  propulsion_types?: PROPULSION_TYPE[]
+  provider_ids?: UUID[]
+  vehicle_states?: VEHICLE_STATE[]
+  time_range: TimeRange
+  grouping_type: GROUPING_TYPE
+  vehicle_id?: string
+  device_ids?: UUID[]
+  event_types?: VEHICLE_EVENT[]
+  geography_ids?: UUID[]
+  limit?: number
+}
+
 export interface EventDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID
@@ -81,8 +102,10 @@ export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, ke
 
 export interface IngestService {
   name: () => string
+  getEvents: (params: GetVehicleEventsFilterParams) => EventDomainModel[]
 }
 
 export const IngestServiceDefinition: RpcServiceDefinition<IngestService> = {
-  name: RpcRoute<IngestService['name']>()
+  name: RpcRoute<IngestService['name']>(),
+  getEvents: RpcRoute<IngestService['getEvents']>()
 }

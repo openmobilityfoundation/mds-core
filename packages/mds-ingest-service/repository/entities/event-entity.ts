@@ -17,6 +17,8 @@
 import { Entity, Column, Index } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { EventDomainModel } from '../../@types'
+import { TelemetryEntity, TelemetryEntityModel } from './telemetry-entity'
+import { Nullable } from '@mds-core/mds-types'
 
 export interface EventEntityModel extends IdentityColumn, RecordedColumn {
   device_id: EventDomainModel['device_id']
@@ -28,6 +30,7 @@ export interface EventEntityModel extends IdentityColumn, RecordedColumn {
   telemetry_timestamp: EventDomainModel['telemetry_timestamp']
   trip_id: EventDomainModel['trip_id']
   service_area_id: EventDomainModel['service_area_id']
+  telemetry?: Nullable<TelemetryEntityModel>
 }
 
 @Entity('events')
@@ -59,4 +62,6 @@ export class EventEntity extends IdentityColumn(RecordedColumn(class {})) implem
 
   @Column('uuid', { nullable: true })
   service_area_id: EventEntityModel['service_area_id']
+
+  telemetry?: TelemetryEntity
 }

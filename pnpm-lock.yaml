@@ -762,6 +762,8 @@ importers:
 
   packages/mds-ingest-service:
     specifiers:
+      '@mds-core/mds-logger': 0.2.2
+      '@mds-core/mds-providers': 0.1.28
       '@mds-core/mds-repository': 0.1.2
       '@mds-core/mds-rpc-common': 0.1.2
       '@mds-core/mds-schema-validators': 0.1.4
@@ -771,6 +773,8 @@ importers:
       joi: 17.4.0
       typeorm: 0.2.34
     dependencies:
+      '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-repository': link:../mds-repository
       '@mds-core/mds-rpc-common': link:../mds-rpc-common
       '@mds-core/mds-schema-validators': link:../mds-schema-validators
@@ -1122,7 +1126,7 @@ importers:
       webpack-merge: 5.8.0
     devDependencies:
       '@types/git-revision-webpack-plugin': 3.0.2
-      webpack: 5.38.1
+      webpack: 5.38.1_webpack-cli@4.7.2
 
 packages:
 
@@ -6028,7 +6032,7 @@ packages:
     peerDependencies:
       webpack: ^5.0.0
     dependencies:
-      webpack: 5.38.1
+      webpack: 5.38.1_webpack-cli@4.7.2
 
   /git-semver-tags/4.1.1:
     resolution: {integrity: sha512-OWyMt5zBe7xFs8vglMmhM9lRQzCWL3WjHtxNNfJTMngGym7pC1kh8sP6jevfydJ6LP3ZvGxfb6ABYgPUM0mtsA==}
@@ -10990,7 +10994,7 @@ packages:
       serialize-javascript: 5.0.1
       source-map: 0.6.1
       terser: 5.7.0
-      webpack: 5.38.1
+      webpack: 5.38.1_webpack-cli@4.7.2
     dev: true
 
   /terser/5.7.0:
@@ -11701,41 +11705,6 @@ packages:
     dependencies:
       source-list-map: 2.0.1
       source-map: 0.6.1
-    dev: true
-
-  /webpack/5.38.1:
-    resolution: {integrity: sha512-OqRmYD1OJbHZph6RUMD93GcCZy4Z4wC0ele4FXyYF0J6AxO1vOSuIlU1hkS/lDlR9CDYBz64MZRmdbdnFFoT2g==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    peerDependencies:
-      webpack-cli: '*'
-    peerDependenciesMeta:
-      webpack-cli:
-        optional: true
-    dependencies:
-      '@types/eslint-scope': 3.7.0
-      '@types/estree': 0.0.47
-      '@webassemblyjs/ast': 1.11.0
-      '@webassemblyjs/wasm-edit': 1.11.0
-      '@webassemblyjs/wasm-parser': 1.11.0
-      acorn: 8.3.0
-      browserslist: 4.16.6
-      chrome-trace-event: 1.0.3
-      enhanced-resolve: 5.8.2
-      es-module-lexer: 0.4.1
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.6
-      json-parse-better-errors: 1.0.2
-      loader-runner: 4.2.0
-      mime-types: 2.1.31
-      neo-async: 2.6.2
-      schema-utils: 3.0.0
-      tapable: 2.2.0
-      terser-webpack-plugin: 5.1.3_webpack@5.38.1
-      watchpack: 2.2.0
-      webpack-sources: 2.3.0
     dev: true
 
   /webpack/5.38.1_webpack-cli@4.7.2:
