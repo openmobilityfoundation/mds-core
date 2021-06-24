@@ -46,7 +46,7 @@ import {
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
 import stream from '@mds-core/mds-stream'
-import { makeDevices, makeEvents, JUMP_TEST_DEVICE_1 } from '@mds-core/mds-test-data'
+import { makeDevices, makeEvents, JUMP_TEST_DEVICE_1, makeTelemetry } from '@mds-core/mds-test-data'
 import { ApiServer } from '@mds-core/mds-api-server'
 import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
 import { pathPrefix, uuid } from '@mds-core/mds-utils'
@@ -765,7 +765,6 @@ describe('Tests API', () => {
       })
       .expect(201)
       .end((err, result) => {
-        console.log(result.body)
         done(err)
       })
   })
@@ -1124,7 +1123,7 @@ describe('Tests API', () => {
       .send({
         data: [TEST_TELEMETRY, TEST_TELEMETRY2]
       })
-      .expect(201)
+      .expect(200)
       .end((err, result) => {
         if (err) {
           log('telemetry err', err)
@@ -1307,7 +1306,6 @@ describe('Tests API', () => {
   })
   it('verifies post telemetry with unregistered device', done => {
     const telemetry = { ...TEST_TELEMETRY, device_id: uuid() } // randomly generate a new uuid, obviously not registered
-
     request
       .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
@@ -1324,6 +1322,52 @@ describe('Tests API', () => {
         }
         done(err)
       })
+  })
+  it('verifies post telemetry bulk with unregistered devices fails', async () => {
+    const telemetry = [
+      { ...TEST_TELEMETRY, device_id: uuid() },
+      { ...TEST_TELEMETRY, device_id: uuid() }
+    ]
+
+    await request
+      .post(pathPrefix('/vehicles/telemetry'))
+      .set('Authorization', AUTH)
+      .send({
+        data: telemetry
+      })
+      .expect(400)
+  })
+  it('verifies post telemetry bulk with one unregistered device partially succeeds', async () => {
+    const telemetry = [
+      { ...TEST_TELEMETRY, timestamp: TEST_TELEMETRY.timestamp + 1 },
+      { ...TEST_TELEMETRY, device_id: uuid() }
+    ]
+
+    const result = await request
+      .post(pathPrefix('/vehicles/telemetry'))
+      .set('Authorization', AUTH)
+      .send({
+        data: telemetry
+      })
+      .expect(200)
+
+    test.value(result.body.failures.length).is(1)
+  })
+  it('verifies post telemetry with one registered device and one device registered to another provider partially succeeds', async () => {
+    const devices = [...makeDevices(1, now(), TEST1_PROVIDER_ID), ...makeDevices(1, now(), TEST2_PROVIDER_ID)]
+    const telemetry = makeTelemetry(devices, now())
+
+    await Promise.all([db.seed({ devices }), cache.seed({ devices, telemetry: [], events: [] })])
+
+    const result = await request
+      .post(pathPrefix('/vehicles/telemetry'))
+      .set('Authorization', AUTH)
+      .send({
+        data: telemetry
+      })
+      .expect(200)
+
+    test.value(result.body.failures.length).is(1)
   })
   it('verifies get device readback w/telemetry success (database)', done => {
     request
