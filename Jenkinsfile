@@ -25,6 +25,9 @@ pipeline {
       }
     }
     stage('Test') {
+      environment {
+        NODE_OPTIONS = '--max_old_space_size=4096'  // fixes nodejs out-of-memory errors such as "Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory"
+      }
       steps {
         nvm('version': 'v15.11.0') {
           sh '''
