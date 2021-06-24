@@ -109,3 +109,9 @@ export type PaginatedVehiclesList = {
   links: { first: string; last: string; prev: string | null; next: string | null }
   vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
 }
+
+export type AgencyApiError = {
+  error: 'bad_param' | 'missing_param'
+  error_description: 'A validation error occurred.' | 'A required parameter is missing.'
+  error_details: any
+}

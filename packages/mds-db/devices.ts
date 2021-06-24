@@ -111,8 +111,7 @@ export async function readDeviceList(device_ids: UUID[]): Promise<Recorded<Devic
   return result.rows
 }
 
-export async function writeDevice(baseDevice: Device): Promise<Recorded<Device>> {
-  const device = { accessibility_options: [], ...baseDevice }
+export async function writeDevice(device: Device): Promise<Recorded<Device>> {
   const client = await getWriteableClient()
   const sql = `INSERT INTO ${schema.TABLE.devices} (${cols_sql(schema.TABLE_COLUMNS.devices)}) VALUES (${vals_sql(
     schema.TABLE_COLUMNS.devices
@@ -122,7 +121,7 @@ export async function writeDevice(baseDevice: Device): Promise<Recorded<Device>>
   const {
     rows: [recorded_device]
   }: { rows: Recorded<Device>[] } = await client.query(sql, values)
-  return { ...baseDevice, ...recorded_device }
+  return { ...device, ...recorded_device }
 }
 
 export async function updateDevice(device_id: UUID, provider_id: UUID, changes: Partial<Device>): Promise<Device> {

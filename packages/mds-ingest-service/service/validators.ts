@@ -15,8 +15,16 @@
  */
 
 import Joi from 'joi'
-import { schemaValidator } from '@mds-core/mds-schema-validators'
-import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_STATES, UUID } from '@mds-core/mds-types'
+import { schemaValidator, SchemaValidator } from '@mds-core/mds-schema-validators'
+import {
+  VEHICLE_TYPES,
+  PROPULSION_TYPES,
+  VEHICLE_EVENTS,
+  VEHICLE_STATES,
+  MODALITIES,
+  ACCESSIBILITY_OPTIONS,
+  UUID
+} from '@mds-core/mds-types'
 import {
   DeviceDomainModel,
   EventDomainModel,
@@ -24,27 +32,44 @@ import {
   GROUPING_TYPES,
   GetVehicleEventsFilterParams
 } from '../@types'
-import { SchemaValidator } from '@mds-core/mds-schema-validators'
 
 const uuidSchema = { type: 'string', format: 'uuid' }
 
-export const { validate: validateDeviceDomainModel, isValid: isValidDeviceDomainModel } =
-  schemaValidator<DeviceDomainModel>(
-    Joi.object<DeviceDomainModel>()
-      .keys({
-        device_id: Joi.string().uuid().required(),
-        provider_id: Joi.string().uuid().required(),
-        vehicle_id: Joi.string().required(),
-        vehicle_type: Joi.string()
-          .valid(...Object.keys(VEHICLE_TYPES))
-          .required(),
-        propulsion_types: Joi.array().valid(Joi.string().valid(...Object.keys(PROPULSION_TYPES))),
-        year: Joi.number().allow(null),
-        mfgr: Joi.string().allow(null),
-        model: Joi.string().allow(null)
-      })
-      .unknown(false)
-  )
+export const { validate: validateDeviceDomainModel, $schema: DeviceSchema } = SchemaValidator<DeviceDomainModel>(
+  {
+    $id: 'Device',
+    type: 'object',
+    properties: {
+      device_id: uuidSchema,
+      provider_id: uuidSchema,
+      vehicle_id: {
+        type: 'string'
+      },
+      vehicle_type: { type: 'string', enum: VEHICLE_TYPES },
+      propulsion_types: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: PROPULSION_TYPES
+        }
+      },
+      accessibility_options: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: ACCESSIBILITY_OPTIONS
+        },
+        default: []
+      },
+      modality: { type: 'string', enum: MODALITIES, default: 'micromobility' },
+      year: { type: 'integer' },
+      mfgr: { type: 'string' },
+      model: { type: 'string' }
+    },
+    required: ['device_id', 'provider_id', 'vehicle_id', 'vehicle_type', 'propulsion_types']
+  },
+  { useDefaults: true }
+)
 
 /* Separate so we can re-use in the event domain model validator */
 const telemetrySchema = Joi.object<TelemetryDomainModel>()

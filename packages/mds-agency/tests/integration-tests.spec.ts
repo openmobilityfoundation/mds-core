@@ -213,6 +213,17 @@ describe('Tests API', () => {
       })
   })
   it('verifies post device bad device id', done => {
+    const badDeviceIdErr = {
+      error: 'bad_param',
+      error_description: 'A validation error occurred.',
+      error_details: [
+        {
+          property: 'device_id',
+          message: 'must match format "uuid"'
+        }
+      ]
+    }
+
     const badVehicle = deepCopy(TEST_BICYCLE)
     badVehicle.device_id = 'bad'
     request
@@ -221,8 +232,7 @@ describe('Tests API', () => {
       .send(badVehicle)
       .expect(400)
       .end((err, result) => {
-        // log('err', err, 'body', result.body)
-        test.string(result.body.error_description).contains('not a UUID')
+        test.object(result.body).is(badDeviceIdErr)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -256,7 +266,17 @@ describe('Tests API', () => {
       })
   })
 
-  it('verifies post device bad propulsion', done => {
+  it('verifies post device bad propulsion_types', done => {
+    const badPropulsionErr = {
+      error: 'bad_param',
+      error_description: 'A validation error occurred.',
+      error_details: [
+        {
+          property: 'propulsion_types',
+          message: 'must be equal to one of the allowed values'
+        }
+      ]
+    }
     const badVehicle = deepCopy(TEST_BICYCLE)
     // @ts-ignore: Spoofing garbage data
     badVehicle.propulsion_types = ['hamster']
@@ -267,8 +287,7 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         // log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('bad')
-        test.string(result.body.error_description).contains('invalid')
+        test.object(result.body).is(badPropulsionErr)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -287,6 +306,17 @@ describe('Tests API', () => {
   //         })
   // })
   it('verifies post device bad year', done => {
+    const badYearErr = {
+      error: 'bad_param',
+      error_description: 'A validation error occurred.',
+      error_details: [
+        {
+          property: 'year',
+          message: 'must be integer'
+        }
+      ]
+    }
+
     const badVehicle = deepCopy(TEST_BICYCLE)
     // @ts-ignore: Spoofing garbage data
     badVehicle.year = 'hamster'
@@ -296,25 +326,7 @@ describe('Tests API', () => {
       .send(badVehicle)
       .expect(400)
       .end((err, result) => {
-        // log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('bad')
-        test.string(result.body.error_description).contains('invalid')
-        test.value(result).hasHeader('content-type', APP_JSON)
-        done(err)
-      })
-  })
-  it('verifies post device out-of-range year', done => {
-    const badVehicle = deepCopy(TEST_BICYCLE)
-    badVehicle.year = 3000
-    request
-      .post(pathPrefix('/vehicles'))
-      .set('Authorization', AUTH)
-      .send(badVehicle)
-      .expect(400)
-      .end((err, result) => {
-        // log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('bad')
-        test.string(result.body.error_description).contains('invalid')
+        test.object(result.body).is(badYearErr)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })
@@ -335,6 +347,16 @@ describe('Tests API', () => {
       })
   })
   it('verifies post device bad vehicle_type', done => {
+    const badVehicleTypeErr = {
+      error: 'bad_param',
+      error_description: 'A validation error occurred.',
+      error_details: [
+        {
+          property: 'vehicle_type',
+          message: 'must be equal to one of the allowed values'
+        }
+      ]
+    }
     const badVehicle = deepCopy(TEST_BICYCLE)
     // @ts-ignore: Spoofing garbage data
     badVehicle.vehicle_type = 'hamster'
@@ -345,8 +367,7 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         // log('err', err, 'body', result.body)
-        test.string(result.body.error).contains('bad')
-        test.string(result.body.error_description).contains('invalid')
+        test.object(result.body).is(badVehicleTypeErr)
         test.value(result).hasHeader('content-type', APP_JSON)
         done(err)
       })

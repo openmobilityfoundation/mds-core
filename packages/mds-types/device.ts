@@ -1,4 +1,4 @@
-import { Timestamp, UUID } from './utils'
+import { Nullable, Timestamp, UUID } from './utils'
 import { VEHICLE_STATE } from './vehicle/vehicle_states'
 import { VEHICLE_TYPE } from './vehicle/vehicle_types'
 
@@ -21,7 +21,7 @@ export interface CoreDevice {
 // Represents a row in the "devices" table
 export interface Device_v1_1_0 extends CoreDevice {
   vehicle_type: VEHICLE_TYPE // changed name in 1.0
-  accessibility_options?: ACCESSIBILITY_OPTION[]
+  accessibility_options: Nullable<ACCESSIBILITY_OPTION[]>
   propulsion_types: PROPULSION_TYPE[] // changed name in 1.0
   year?: number | null
   mfgr?: string | null

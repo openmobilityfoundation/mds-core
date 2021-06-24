@@ -17,7 +17,15 @@
 import express from 'express'
 import { Query } from 'express-serve-static-core'
 
-import { isUUID, isPct, isTimestamp, isFloat, isInsideBoundingBox, areThereCommonElements } from '@mds-core/mds-utils'
+import {
+  isUUID,
+  isPct,
+  isTimestamp,
+  isFloat,
+  isInsideBoundingBox,
+  areThereCommonElements,
+  ValidationError
+} from '@mds-core/mds-utils'
 import stream from '@mds-core/mds-stream'
 import {
   UUID,
@@ -25,12 +33,8 @@ import {
   VehicleEvent,
   Telemetry,
   ErrorObject,
-  VEHICLE_TYPES,
-  PROPULSION_TYPES,
   BoundingBox,
   VEHICLE_STATE,
-  ACCESSIBILITY_OPTIONS,
-  MODALITIES,
   MICRO_MOBILITY_VEHICLE_EVENTS,
   MICRO_MOBILITY_VEHICLE_STATES,
   TAXI_VEHICLE_EVENTS,
@@ -49,104 +53,66 @@ import {
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
-import { isArray } from 'util'
-import { VehiclePayload, TelemetryResult, CompositeVehicle, PaginatedVehiclesList } from './types'
+import { VehiclePayload, TelemetryResult, CompositeVehicle, PaginatedVehiclesList, AgencyApiError } from './types'
+import { DefinedError } from 'ajv'
 
-export function badDevice(device: Device): { error: string; error_description: string } | null {
-  if (!device.device_id) {
-    return {
-      error: 'missing_param',
-      error_description: 'missing device_id'
-    }
+/**
+ *
+ * @param error ValidationError to parse
+ * @returns Error formatted in accordance with the [MDS-Agency spec](https://github.com/openmobilityfoundation/mobility-data-specification/tree/main/agency#vehicle---register)
+ *
+ * Note: It is assumed that these errors are typically emitted from AJV, and they are parsed accordingly. All non-AJV based validation errors will result in loose error emission.
+ */
+export const agencyValidationErrorParser = (error: ValidationError): AgencyApiError => {
+  // Not the best typeguard in the world, but ¯\_(ツ)_/¯
+  const isAjvErrors = (x: unknown): x is DefinedError[] => {
+    return Array.isArray(x)
   }
-  if (!isUUID(device.device_id)) {
-    return {
-      error: 'bad_param',
-      error_description: `device_id ${device.device_id} is not a UUID`
-    }
-  }
-  // propulsion is a list
-  if (!Array.isArray(device.propulsion_types)) {
-    return {
-      error: 'missing_param',
-      error_description: 'missing propulsion types'
-    }
-  }
-  for (const prop of device.propulsion_types) {
-    if (!PROPULSION_TYPES.includes(prop)) {
-      return {
-        error: 'bad_param',
-        error_description: `invalid propulsion type ${prop}`
-      }
-    }
-  }
-  // if (device.year === undefined) {
-  //     return {
-  //         error: 'missing_param',
-  //         error_description: 'missing integer field "year"'
-  //     }
-  // }
-  if (device.year !== null && device.year !== undefined) {
-    if (!Number.isInteger(device.year)) {
-      return {
-        error: 'bad_param',
-        error_description: `invalid device year ${device.year} is not an integer`
-      }
-    }
-    if (device.year < 1980 || device.year > 2020) {
-      return {
-        error: 'bad_param',
-        error_description: `invalid device year ${device.year} is out of range`
-      }
-    }
-  }
-  if (device.vehicle_type === undefined) {
-    return {
-      error: 'missing_param',
-      error_description: 'missing enum field "type"'
-    }
-  }
-  if (!VEHICLE_TYPES.includes(device.vehicle_type)) {
-    return {
-      error: 'bad_param',
-      error_description: `invalid device type ${device.vehicle_type}`
-    }
-  }
-  if (!Array.isArray(device.accessibility_options)) {
-    return {
-      error: 'missing_param',
-      error_description: 'missing accessibility_options'
-    }
-  }
-  if (device.accessibility_options.length !== 0) {
-    for (const accessibility_option of device.accessibility_options) {
-      if (!ACCESSIBILITY_OPTIONS.includes(accessibility_option)) {
-        return {
-          error: 'bad_param',
-          error_description: `invalid accessibility_option ${accessibility_option} in accessibility_options list`
+
+  const { info } = error
+
+  if (isAjvErrors(info)) {
+    const [{ keyword }] = info
+
+    /**
+     * If the first error we see is a missing property, then only report missing property errors.
+     */
+    if (keyword === 'required') {
+      // See MDS-Agency spec
+      const error = 'missing_param'
+      const error_description = 'A required parameter is missing.'
+
+      // Report all missing properties, ignore other errors
+      const error_details = info.reduce<string[]>((acc, subErr) => {
+        const { params } = subErr
+
+        if ('missingProperty' in params) {
+          const { missingProperty } = params
+          return [...acc, missingProperty]
         }
-      }
+
+        return acc
+      }, [])
+
+      return { error, error_description, error_details }
     }
+
+    // If the error is something other than a missing param error...
+    const error = 'bad_param'
+    const error_description = 'A validation error occurred.'
+    const error_details = info.reduce<{ property: string; message: string | undefined }[]>((acc, subErr) => {
+      const { instancePath, message } = subErr
+
+      const property = instancePath.replace(/\W|[0-9]/g, '')
+
+      return [...acc, { property, message }]
+    }, [])
+
+    return { error, error_description, error_details }
   }
-  if (!MODALITIES.includes(device.modality)) {
-    return {
-      error: 'bad_param',
-      error_description: `invalid modality ${device.modality}`
-    }
-  }
-  // if (device.mfgr === undefined) {
-  //     return {
-  //         error: 'missing_param',
-  //         error_description: 'missing string field "mfgr"'
-  //     }
-  // }
-  // if (device.model === undefined) {
-  //     return {
-  //         error: 'missing_param',
-  //         error_description: 'missing string field "model"'
-  //     }
-  // }
-  return null
+
+  logger.error('agencyErrorParser unmatched error', error)
+  return { error: 'bad_param', error_description: 'A validation error occurred.', error_details: { error } }
 }
 
 export async function getVehicles(
@@ -546,7 +512,7 @@ export function computeCompositeVehicleData(payload: VehiclePayload) {
 }
 
 const normalizeTelemetry = (telemetry: TelemetryResult) => {
-  if (isArray(telemetry)) {
+  if (Array.isArray(telemetry)) {
     return telemetry[0]
   }
   return telemetry

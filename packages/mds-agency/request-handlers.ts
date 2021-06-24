@@ -16,7 +16,7 @@
 
 import logger from '@mds-core/mds-logger'
 import { isUUID, now, ValidationError, normalizeToArray, ServerError, NotFoundError } from '@mds-core/mds-utils'
-import { isValidDevice, validateEvent, validateTripMetadata } from '@mds-core/mds-schema-validators'
+import { validateEvent, validateTripMetadata } from '@mds-core/mds-schema-validators'
 import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
 import stream from '@mds-core/mds-stream'
@@ -50,16 +50,17 @@ import {
   AgencyApiRegisterVehicleRequest
 } from './types'
 import {
-  badDevice,
   getVehicles,
   lower,
   writeTelemetry,
   badEvent,
   badTelemetry,
   readPayload,
-  computeCompositeVehicleData
+  computeCompositeVehicleData,
+  agencyValidationErrorParser
 } from './utils'
 import { isError } from '@mds-core/mds-service-helpers'
+import { validateDeviceDomainModel } from '@mds-core/mds-ingest-service'
 
 const agencyServerError = { error: 'server_error', error_description: 'Unknown server error' }
 
@@ -72,73 +73,63 @@ export const registerVehicle = async (req: AgencyApiRegisterVehicleRequest, res:
   if (!version || version === '0.4.1') {
     // TODO: Transform 0.4.1 -> 1.0.0
   }
-  // const { device_id, vehicle_id, type, propulsion, year, mfgr, model } = body
-  const {
-    accessibility_options = [],
-    device_id,
-    vehicle_id,
-    vehicle_type,
-    propulsion_types,
-    year,
-    mfgr,
-    modality = 'micromobility',
-    model
-  } = body
-
-  const status: VEHICLE_STATE = 'removed'
-
-  const device = {
-    accessibility_options,
-    provider_id,
-    device_id,
-    vehicle_id,
-    vehicle_type,
-    propulsion_types,
-    year,
-    mfgr,
-    modality,
-    model,
-    recorded,
-    status
-  }
 
   try {
-    isValidDevice(device)
-  } catch (err) {
-    logger.info(
-      `Non-critical prototype Device ValidationError for ${providerName(provider_id)}. Error: ${JSON.stringify(err)}`
-    )
-  }
+    const {
+      accessibility_options,
+      device_id,
+      vehicle_id,
+      vehicle_type,
+      propulsion_types,
+      year,
+      mfgr,
+      modality,
+      model
+    } = body
 
-  const failure = badDevice(device)
-  if (failure) {
-    return res.status(400).send(failure)
-  }
+    const status: VEHICLE_STATE = 'removed'
 
-  // writing to the DB is the crucial part.  other failures should be noted as bugs but tolerated
-  // and fixed later.
-  try {
+    const unvalidatedDevice = {
+      accessibility_options,
+      provider_id,
+      device_id,
+      vehicle_id,
+      vehicle_type,
+      propulsion_types,
+      year,
+      mfgr,
+      modality,
+      model,
+      recorded,
+      status
+    }
+    const device = validateDeviceDomainModel(unvalidatedDevice)
+
+    // DB Write is critical, and failures to write to the cache/stream should be considered non-critical (though they are likely indicative of a bug).
     await db.writeDevice(device)
     try {
       await Promise.all([cache.writeDevice(device), stream.writeDevice(device)])
-    } catch (err) {
-      logger.error('failed to write device stream/cache', err)
+    } catch (error) {
+      logger.error('failed to write device stream/cache', error)
     }
+
     logger.info('new vehicle added', { providerName: providerName(res.locals.provider_id), device })
-    res.status(201).send({})
-  } catch (err) {
-    if (String(err).includes('duplicate')) {
-      res.status(409).send({
+    return res.status(201).send({})
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      const parsedError = agencyValidationErrorParser(error)
+      return res.status(400).send(parsedError)
+    }
+
+    if (String(error).includes('duplicate')) {
+      return res.status(409).send({
         error: 'already_registered',
         error_description: 'A vehicle with this device_id is already registered'
       })
-    } else if (String(err).includes('db')) {
-      logger.error('register vehicle failed:', { err, providerName: providerName(res.locals.provider_id) })
-      res.status(500).send(agencyServerError)
-    } else {
-      logger.error('register vehicle failed:', { err, providerName: providerName(res.locals.provider_id) })
-      res.status(500).send(agencyServerError)
     }
+
+    logger.error('register vehicle failed:', { err: error, providerName: providerName(res.locals.provider_id) })
+    return res.status(500).send(agencyServerError)
   }
 }
 

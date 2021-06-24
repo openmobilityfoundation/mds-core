@@ -264,6 +264,7 @@ importers:
       '@mds-core/mds-api-helpers': 0.1.28
       '@mds-core/mds-api-server': 0.1.28
       '@mds-core/mds-db': 0.1.28
+      '@mds-core/mds-ingest-service': 0.1.2
       '@mds-core/mds-logger': 0.2.2
       '@mds-core/mds-providers': 0.1.28
       '@mds-core/mds-schema-validators': 0.1.4
@@ -273,12 +274,14 @@ importers:
       '@mds-core/mds-types': 0.1.25
       '@mds-core/mds-utils': 0.1.28
       '@types/express': 4.17.12
+      ajv: 8.6.0
       express: 4.17.1
     dependencies:
       '@mds-core/mds-agency-cache': link:../mds-agency-cache
       '@mds-core/mds-api-helpers': link:../mds-api-helpers
       '@mds-core/mds-api-server': link:../mds-api-server
       '@mds-core/mds-db': link:../mds-db
+      '@mds-core/mds-ingest-service': link:../mds-ingest-service
       '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-schema-validators': link:../mds-schema-validators
@@ -287,6 +290,7 @@ importers:
       '@mds-core/mds-types': link:../mds-types
       '@mds-core/mds-utils': link:../mds-utils
       '@types/express': 4.17.12
+      ajv: 8.6.0
       express: 4.17.1
     devDependencies:
       '@mds-core/mds-test-data': link:../mds-test-data
