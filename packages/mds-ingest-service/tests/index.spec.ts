@@ -19,7 +19,7 @@ import { IngestServiceManager } from '../service/manager'
 import { IngestServiceClient } from '../client'
 import { IngestRepository } from '../repository'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { now, uuid } from '@mds-core/mds-utils'
+import { now, uuid, ValidationError } from '@mds-core/mds-utils'
 import { Device, VehicleEvent } from '@mds-core/mds-types'
 import { EventEntityCreateModel } from '../repository/mappers'
 import { EventDomainCreateModel, TelemetryDomainCreateModel } from '../@types'
@@ -191,9 +191,32 @@ describe('Ingest Service Tests', () => {
     await IngestRepository.deleteAll()
   })
 
+  describe('getDevices', () => {
+    beforeEach(async () => {
+      await IngestRepository.createDevices([TEST_TNC_A, TEST_TNC_B])
+    })
+    describe('all_devices', () => {
+      it('gets 2 devices', async () => {
+        const devices = await IngestServiceClient.getDevices([DEVICE_UUID_A, DEVICE_UUID_B])
+        expect(devices.length).toEqual(2)
+      })
+      it('gets 0 devices', async () => {
+        const devices = await IngestServiceClient.getDevices([uuid()])
+        expect(devices.length).toEqual(0)
+      })
+      it('get invalid device uuid', async () => {
+        await expect(IngestServiceClient.getDevices(['foo-bar'])).rejects.toMatchObject({ type: 'ValidationError' })
+      })
+      it('get with valid and invalid device uuid', async () => {
+        await expect(IngestServiceClient.getDevices([DEVICE_UUID_A, 'foo-bar'])).rejects.toMatchObject({
+          type: 'ValidationError'
+        })
+      })
+    })
+  })
+
   describe('getEvents', () => {
     beforeEach(async () => {
-      const name = await IngestServiceClient.name()
       await IngestRepository.createDevices([TEST_TNC_A, TEST_TNC_B])
       await IngestRepository.createEvents([TEST_EVENT_A1, TEST_EVENT_B1])
       await IngestRepository.createEvents([TEST_EVENT_A2, TEST_EVENT_B2])

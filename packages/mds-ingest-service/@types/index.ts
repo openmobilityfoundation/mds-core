@@ -103,9 +103,11 @@ export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, ke
 export interface IngestService {
   name: () => string
   getEvents: (params: GetVehicleEventsFilterParams) => EventDomainModel[]
+  getDevices: (ids: UUID[]) => DeviceDomainModel[]
 }
 
 export const IngestServiceDefinition: RpcServiceDefinition<IngestService> = {
   name: RpcRoute<IngestService['name']>(),
-  getEvents: RpcRoute<IngestService['getEvents']>()
+  getEvents: RpcRoute<IngestService['getEvents']>(),
+  getDevices: RpcRoute<IngestService['getDevices']>()
 }

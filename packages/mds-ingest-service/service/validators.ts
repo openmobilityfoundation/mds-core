@@ -16,7 +16,7 @@
 
 import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
-import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_STATES } from '@mds-core/mds-types'
+import { VEHICLE_TYPES, PROPULSION_TYPES, VEHICLE_EVENTS, VEHICLE_STATES, UUID } from '@mds-core/mds-types'
 import {
   DeviceDomainModel,
   EventDomainModel,
@@ -26,25 +26,25 @@ import {
 } from '../@types'
 import { SchemaValidator } from '@mds-core/mds-schema-validators'
 
-export const {
-  validate: validateDeviceDomainModel,
-  isValid: isValidDeviceDomainModel
-} = schemaValidator<DeviceDomainModel>(
-  Joi.object<DeviceDomainModel>()
-    .keys({
-      device_id: Joi.string().uuid().required(),
-      provider_id: Joi.string().uuid().required(),
-      vehicle_id: Joi.string().required(),
-      vehicle_type: Joi.string()
-        .valid(...Object.keys(VEHICLE_TYPES))
-        .required(),
-      propulsion_types: Joi.array().valid(Joi.string().valid(...Object.keys(PROPULSION_TYPES))),
-      year: Joi.number().allow(null),
-      mfgr: Joi.string().allow(null),
-      model: Joi.string().allow(null)
-    })
-    .unknown(false)
-)
+const uuidSchema = { type: 'string', format: 'uuid' }
+
+export const { validate: validateDeviceDomainModel, isValid: isValidDeviceDomainModel } =
+  schemaValidator<DeviceDomainModel>(
+    Joi.object<DeviceDomainModel>()
+      .keys({
+        device_id: Joi.string().uuid().required(),
+        provider_id: Joi.string().uuid().required(),
+        vehicle_id: Joi.string().required(),
+        vehicle_type: Joi.string()
+          .valid(...Object.keys(VEHICLE_TYPES))
+          .required(),
+        propulsion_types: Joi.array().valid(Joi.string().valid(...Object.keys(PROPULSION_TYPES))),
+        year: Joi.number().allow(null),
+        mfgr: Joi.string().allow(null),
+        model: Joi.string().allow(null)
+      })
+      .unknown(false)
+  )
 
 /* Separate so we can re-use in the event domain model validator */
 const telemetrySchema = Joi.object<TelemetryDomainModel>()
@@ -64,31 +64,27 @@ const telemetrySchema = Joi.object<TelemetryDomainModel>()
   })
   .unknown(false)
 
-export const {
-  validate: validateTelemetryDomainModel,
-  isValid: isValidTelemetryDomainModel
-} = schemaValidator<DeviceDomainModel>(telemetrySchema)
+export const { validate: validateTelemetryDomainModel, isValid: isValidTelemetryDomainModel } =
+  schemaValidator<DeviceDomainModel>(telemetrySchema)
 
-export const {
-  validate: validateEventDomainModel,
-  isValid: isValidEventDomainModel
-} = schemaValidator<DeviceDomainModel>(
-  Joi.object<EventDomainModel>()
-    .keys({
-      device_id: Joi.string().uuid().required(),
-      provider_id: Joi.string().uuid().required(),
-      timestamp: Joi.number().required(),
-      event_types: Joi.array()
-        .valid(Joi.string().valid(...VEHICLE_EVENTS))
-        .required(),
-      vehicle_state: Joi.string().valid(...VEHICLE_STATES),
-      telemetry_timestamp: Joi.number().allow(null),
-      telemetry: telemetrySchema.allow(null),
-      trip_id: Joi.string().uuid().allow(null),
-      service_area_id: Joi.string().uuid().allow(null)
-    })
-    .unknown(false)
-)
+export const { validate: validateEventDomainModel, isValid: isValidEventDomainModel } =
+  schemaValidator<DeviceDomainModel>(
+    Joi.object<EventDomainModel>()
+      .keys({
+        device_id: Joi.string().uuid().required(),
+        provider_id: Joi.string().uuid().required(),
+        timestamp: Joi.number().required(),
+        event_types: Joi.array()
+          .valid(Joi.string().valid(...VEHICLE_EVENTS))
+          .required(),
+        vehicle_state: Joi.string().valid(...VEHICLE_STATES),
+        telemetry_timestamp: Joi.number().allow(null),
+        telemetry: telemetrySchema.allow(null),
+        trip_id: Joi.string().uuid().allow(null),
+        service_area_id: Joi.string().uuid().allow(null)
+      })
+      .unknown(false)
+  )
 
 export const { validate: validateGetVehicleEventsFilterParams } = SchemaValidator<GetVehicleEventsFilterParams>({
   type: 'object',
@@ -111,4 +107,9 @@ export const { validate: validateGetVehicleEventsFilterParams } = SchemaValidato
     limit: { type: 'integer' }
   },
   required: ['time_range']
+})
+
+export const { validate: validateUUIDs } = SchemaValidator<UUID[]>({
+  type: 'array',
+  items: uuidSchema
 })

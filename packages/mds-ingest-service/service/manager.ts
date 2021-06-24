@@ -27,7 +27,8 @@ export const IngestServiceManager = RpcServer(
   },
   {
     name: args => IngestServiceProvider.name(...args),
-    getEvents: args => IngestServiceProvider.getEvents(...args)
+    getEvents: args => IngestServiceProvider.getEvents(...args),
+    getDevices: args => IngestServiceProvider.getDevices(...args)
   },
   {
     port: process.env.INGEST_SERVICE_RPC_PORT,

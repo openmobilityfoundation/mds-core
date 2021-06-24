@@ -18,7 +18,8 @@ import { ServiceProvider, ProcessController, ServiceResult, ServiceException } f
 import { IngestService } from '../@types'
 import { IngestRepository } from '../repository'
 import logger from '@mds-core/mds-logger'
-import { validateGetVehicleEventsFilterParams } from './validators'
+import { validateGetVehicleEventsFilterParams, validateUUIDs } from './validators'
+import { UUID } from '@mds-core/mds-types'
 
 export const IngestServiceProvider: ServiceProvider<IngestService> & ProcessController = {
   start: IngestRepository.initialize,
@@ -27,6 +28,15 @@ export const IngestServiceProvider: ServiceProvider<IngestService> & ProcessCont
   getEvents: async params => {
     try {
       return ServiceResult(await IngestRepository.getEvents(validateGetVehicleEventsFilterParams(params)))
+    } catch (error) {
+      const exception = ServiceException(`Error in getEvents `, error)
+      logger.error('getEvents exception', { exception, error })
+      return exception
+    }
+  },
+  getDevices: async (ids: UUID[]) => {
+    try {
+      return ServiceResult(await IngestRepository.getDevices(validateUUIDs(ids)))
     } catch (error) {
       const exception = ServiceException(`Error in getEvents `, error)
       logger.error('getEvents exception', { exception, error })
