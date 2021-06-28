@@ -10,7 +10,7 @@ export interface TelemetryData {
   hdop?: number | null
   altitude?: number | null
   satellites?: number | null
-  charge?: number | null
+  charge?: number | null // NOTE: Charge is not included in the `gps` property of Telemetry
 }
 
 export type GpsData = Omit<TelemetryData, 'charge'>
@@ -28,5 +28,6 @@ export interface Telemetry extends WithGpsProperty<TelemetryData> {
   device_id: UUID
   timestamp: Timestamp
   recorded?: Timestamp
+  charge?: number | null
   stop_id?: UUID | null
 }

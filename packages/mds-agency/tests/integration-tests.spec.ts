@@ -27,29 +27,29 @@
 /* eslint-disable promise/no-callback-in-promise */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import supertest from 'supertest'
-import test from 'unit.js'
+import cache from '@mds-core/mds-agency-cache'
+import { ApiServer } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
+import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
+import stream from '@mds-core/mds-stream'
+import { JUMP_TEST_DEVICE_1, makeDevices, makeEvents, makeTelemetry } from '@mds-core/mds-test-data'
 import {
-  Timestamp,
   Device,
-  VehicleEvent,
-  TAXI_VEHICLE_EVENTS,
-  TAXI_VEHICLE_EVENT,
+  MICRO_MOBILITY_EVENT_STATES_MAP,
   MICRO_MOBILITY_VEHICLE_EVENTS,
   TAXI_EVENT_STATES_MAP,
-  MICRO_MOBILITY_EVENT_STATES_MAP,
+  TAXI_VEHICLE_EVENT,
+  TAXI_VEHICLE_EVENTS,
+  Timestamp,
+  TNC_EVENT_STATES_MAP,
+  TNC_VEHICLE_EVENT,
   TripMetadata,
   TRIP_STATE,
-  TNC_VEHICLE_EVENT,
-  TNC_EVENT_STATES_MAP
+  VehicleEvent
 } from '@mds-core/mds-types'
-import db from '@mds-core/mds-db'
-import cache from '@mds-core/mds-agency-cache'
-import stream from '@mds-core/mds-stream'
-import { makeDevices, makeEvents, JUMP_TEST_DEVICE_1, makeTelemetry } from '@mds-core/mds-test-data'
-import { ApiServer } from '@mds-core/mds-api-server'
-import { TEST1_PROVIDER_ID, TEST2_PROVIDER_ID } from '@mds-core/mds-providers'
 import { pathPrefix, uuid } from '@mds-core/mds-utils'
+import supertest from 'supertest'
+import test from 'unit.js'
 import { api } from '../api'
 
 /* eslint-disable-next-line no-console */
@@ -141,7 +141,8 @@ const test_event: Omit<VehicleEvent, 'recorded' | 'provider_id'> = {
   event_types: ['decommissioned'],
   vehicle_state: 'removed',
   trip_state: null,
-  timestamp: testTimestamp
+  timestamp: testTimestamp,
+  telemetry: makeTelemetry([TEST_BICYCLE as any], testTimestamp)[0]
 }
 
 testTimestamp += 1
@@ -914,7 +915,7 @@ describe('Tests API', () => {
 
   const { gps, ...telemetry_without_location } = deepCopy(TEST_TELEMETRY)
 
-  it('verifies post trip start missing location', done => {
+  it('verifies post trip start missing location fails', done => {
     request
       .post(pathPrefix(`/vehicles/${DEVICE_UUID}/event`))
       .set('Authorization', AUTH)
@@ -927,8 +928,6 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         log(result.body)
-        test.string(result.body.error).contains('missing')
-        test.string(result.body.error_description).contains('invalid')
         done(err)
       })
   })
@@ -970,8 +969,9 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         log(result.body)
-        test.string(result.body.error).contains('bad')
-        test.string(result.body.error_description).contains('invalid')
+        test.string(result.body.error).contains('bad_param')
+        test.string(result.body.error_description).contains('A validation error occurred')
+        test.string(result.body.error_details[0].property).contains('lat')
         done(err)
       })
   })
@@ -993,8 +993,9 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         log(result.body)
-        test.string(result.body.error).contains('bad')
-        test.string(result.body.error_description).contains('invalid altitude')
+        test.string(result.body.error).contains('bad_param')
+        test.string(result.body.error_description).contains('A validation error occurred')
+        test.string(result.body.error_details[0].property).contains('altitude')
         done(err)
       })
   })
@@ -1016,7 +1017,8 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         test.string(result.body.error).contains('bad_param')
-        test.string(result.body.error_description).contains('invalid accuracy')
+        test.string(result.body.error_description).contains('A validation error occurred')
+        test.string(result.body.error_details[0].property).contains('accuracy')
         done(err)
       })
   })
@@ -1038,7 +1040,8 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         test.string(result.body.error).contains('bad_param')
-        test.string(result.body.error_description).contains('invalid speed')
+        test.string(result.body.error_description).contains('A validation error occurred')
+        test.string(result.body.error_details[0].property).contains('speed')
         done(err)
       })
   })
@@ -1060,7 +1063,8 @@ describe('Tests API', () => {
       .expect(400)
       .end((err, result) => {
         test.string(result.body.error).contains('bad_param')
-        test.string(result.body.error_description).contains('invalid satellites')
+        test.string(result.body.error_description).contains('A validation error occurred')
+        test.string(result.body.error_details[0].property).contains('satellites')
         done(err)
       })
   })
@@ -1155,7 +1159,7 @@ describe('Tests API', () => {
         done(err)
       })
   })
-  it('verifies post telemetry handling of empty data payload', done => {
+  it('verifies post telemetry handling of empty data payload fails', done => {
     request
       .post(pathPrefix('/vehicles/telemetry'))
       .set('Authorization', AUTH)
@@ -1165,7 +1169,9 @@ describe('Tests API', () => {
         if (err) {
           log('telemetry err', err)
         } else {
-          test.string(result.body.error_description).contains('Missing data from post-body')
+          test.string(result.body.error).contains('missing_param')
+          test.string(result.body.error_description).contains('A required parameter is missing.')
+          test.string(result.body.error_details[0]).contains('data')
         }
         done(err)
       })
@@ -1390,6 +1396,22 @@ describe('Tests API', () => {
 
     test.value(result.body.failures.length).is(1)
   })
+  it('verifies post telemetry with one schema-valid and one not schema-valid succeeds', async () => {
+    const devices = makeDevices(1, now(), TEST1_PROVIDER_ID)
+    const telemetry = [...makeTelemetry(devices, now()), { device_id: uuid(), spider: 'I am itsy-bitsy 🕷' }]
+
+    await Promise.all([db.seed({ devices }), cache.seed({ devices, telemetry: [], events: [] })])
+
+    const result = await request
+      .post(pathPrefix('/vehicles/telemetry'))
+      .set('Authorization', AUTH)
+      .send({
+        data: telemetry
+      })
+      .expect(200)
+
+    test.value(result.body.failures.length).is(1)
+  })
   it('verifies get device readback w/telemetry success (database)', done => {
     request
       .get(pathPrefix(`/vehicles/${DEVICE_UUID}`))
@@ -1429,6 +1451,7 @@ describe('Tests API', () => {
   it('verifies get device defaults to `deregister` if cache misses reads for associated events', async () => {
     await request.post(pathPrefix('/vehicles')).set('Authorization', AUTH).send(JUMP_TEST_DEVICE_1).expect(201)
 
+    const [telemetry] = makeTelemetry([JUMP_TEST_DEVICE_1], now())
     await request
       .post(pathPrefix(`/vehicles/${JUMP_TEST_DEVICE_1_ID}/event`))
       .set('Authorization', AUTH)
@@ -1436,7 +1459,8 @@ describe('Tests API', () => {
         device_id: JUMP_TEST_DEVICE_1,
         timestamp: now(),
         event_types: ['decommissioned'],
-        vehicle_state: 'removed'
+        vehicle_state: 'removed',
+        telemetry
       })
       .expect(201)
 

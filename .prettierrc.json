@@ -12,5 +12,8 @@
       }
     }
   ],
-  "plugins": ["./node_modules/prettier-plugin-packagejson"]
+  "plugins": [
+    "./node_modules/prettier-plugin-packagejson",
+    "./node_modules/prettier-plugin-organize-imports"
+  ]
 }

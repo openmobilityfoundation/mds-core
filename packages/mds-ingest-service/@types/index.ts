@@ -53,12 +53,12 @@ type WithGpsData<T extends TelemetryData, P extends string = 'gps'> = Omit<T, ke
     [p in P]: Omit<T, 'charge'>
   }
 
-export interface TelemetryDomainModel
-  extends WithGpsData<NullableOptional<Omit<TelemetryData, 'hdop' | 'satellites'>>>,
-    RecordedColumn {
+export interface TelemetryDomainModel extends WithGpsData<NullableOptional<TelemetryData>>, RecordedColumn {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
+  charge: Nullable<number>
+  stop_id: Nullable<UUID>
 }
 
 export type TelemetryDomainCreateModel = DomainModelCreate<Omit<TelemetryDomainModel, keyof RecordedColumn>>

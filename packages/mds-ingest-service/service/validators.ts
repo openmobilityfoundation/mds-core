@@ -14,26 +14,29 @@
  * limitations under the License.
  */
 
-import Joi from 'joi'
 import { schemaValidator, SchemaValidator } from '@mds-core/mds-schema-validators'
 import {
-  VEHICLE_TYPES,
+  ACCESSIBILITY_OPTIONS,
+  MODALITIES,
   PROPULSION_TYPES,
+  UUID,
   VEHICLE_EVENTS,
   VEHICLE_STATES,
-  MODALITIES,
-  ACCESSIBILITY_OPTIONS,
-  UUID
+  VEHICLE_TYPES
 } from '@mds-core/mds-types'
+import Joi from 'joi'
 import {
   DeviceDomainModel,
   EventDomainModel,
-  TelemetryDomainModel,
+  GetVehicleEventsFilterParams,
   GROUPING_TYPES,
-  GetVehicleEventsFilterParams
+  TelemetryDomainModel
 } from '../@types'
 
 const uuidSchema = { type: 'string', format: 'uuid' }
+const nullableInteger = { type: 'integer', nullable: true, default: null }
+const nullableFloat = { type: 'number', format: 'float', nullable: true, default: null }
+const nullableString = { type: 'string', nullable: true, default: null }
 
 export const { validate: validateDeviceDomainModel, $schema: DeviceSchema } = SchemaValidator<DeviceDomainModel>(
   {
@@ -62,9 +65,10 @@ export const { validate: validateDeviceDomainModel, $schema: DeviceSchema } = Sc
         default: []
       },
       modality: { type: 'string', enum: MODALITIES, default: 'micromobility' },
-      year: { type: 'integer' },
-      mfgr: { type: 'string' },
-      model: { type: 'string' }
+      // ⬇⬇⬇ NULLABLE/OPTIONAL PROPERTIES ⬇⬇⬇
+      year: nullableInteger,
+      mfgr: nullableString,
+      model: nullableString
     },
     required: ['device_id', 'provider_id', 'vehicle_id', 'vehicle_type', 'propulsion_types']
   },
@@ -89,8 +93,38 @@ const telemetrySchema = Joi.object<TelemetryDomainModel>()
   })
   .unknown(false)
 
-export const { validate: validateTelemetryDomainModel, isValid: isValidTelemetryDomainModel } =
-  schemaValidator<DeviceDomainModel>(telemetrySchema)
+export const { validate: validateTelemetryDomainModel, $schema: TelemetrySchema } =
+  SchemaValidator<TelemetryDomainModel>(
+    {
+      $id: 'Telemetry',
+      type: 'object',
+      properties: {
+        device_id: uuidSchema,
+        provider_id: uuidSchema,
+        timestamp: { type: 'integer' },
+        gps: {
+          type: 'object',
+          properties: {
+            lat: { type: 'number', format: 'float' },
+            lng: { type: 'number', format: 'float' },
+            // ⬇⬇⬇ NULLABLE/OPTIONAL PROPERTIES ⬇⬇⬇
+            altitude: nullableFloat,
+            heading: nullableFloat,
+            speed: nullableFloat,
+            accuracy: nullableFloat,
+            hdop: nullableFloat,
+            satellites: nullableInteger
+          },
+          required: ['lat', 'lng']
+        },
+        // ⬇⬇⬇ NULLABLE/OPTIONAL PROPERTIES ⬇⬇⬇
+        charge: { ...nullableFloat, minimum: 0, maximum: 1.0 },
+        stop_id: { ...uuidSchema, nullable: true, default: null }
+      },
+      required: ['device_id', 'provider_id', 'timestamp', 'gps']
+    },
+    { useDefaults: true }
+  )
 
 export const { validate: validateEventDomainModel, isValid: isValidEventDomainModel } =
   schemaValidator<DeviceDomainModel>(

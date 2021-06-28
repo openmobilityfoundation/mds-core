@@ -39,7 +39,9 @@ const TEST_TELEMETRY_A1: TelemetryDomainCreateModel = {
     speed: 0,
     heading: 180,
     accuracy: null,
-    altitude: null
+    altitude: null,
+    hdop: null,
+    satellites: null
   },
   charge: 0.5,
   timestamp: testTimestamp
@@ -53,7 +55,9 @@ const TEST_TELEMETRY_A2: TelemetryDomainCreateModel = {
     speed: 0,
     heading: 180,
     accuracy: null,
-    altitude: null
+    altitude: null,
+    hdop: null,
+    satellites: null
   },
   charge: 0.5,
   timestamp: testTimestamp + 1000
@@ -68,7 +72,9 @@ const TEST_TELEMETRY_B1: TelemetryDomainCreateModel = {
     speed: 0,
     heading: 180,
     accuracy: null,
-    altitude: null
+    altitude: null,
+    hdop: null,
+    satellites: null
   },
   charge: 0.5,
   timestamp: testTimestamp
@@ -82,7 +88,9 @@ const TEST_TELEMETRY_B2: TelemetryDomainCreateModel = {
     speed: 0,
     heading: 180,
     accuracy: null,
-    altitude: null
+    altitude: null,
+    hdop: null,
+    satellites: null
   },
   charge: 0.5,
   timestamp: testTimestamp + 1000

@@ -15,25 +15,25 @@
  */
 
 import {
-  UUID,
-  Device,
-  VehicleEvent,
-  Telemetry,
-  Timestamp,
-  Recorded,
-  VEHICLE_STATE,
-  VEHICLE_EVENT,
-  TripMetadata
-} from '@mds-core/mds-types'
-import { MultiPolygon } from 'geojson'
-import {
   ApiRequest,
+  ApiRequestParams,
   ApiResponse,
   ApiResponseLocals,
-  ApiRequestParams,
   ApiResponseLocalsClaims,
   ApiResponseLocalsVersion
 } from '@mds-core/mds-api-server'
+import {
+  Device,
+  Recorded,
+  Telemetry,
+  Timestamp,
+  TripMetadata,
+  UUID,
+  VehicleEvent,
+  VEHICLE_EVENT,
+  VEHICLE_STATE
+} from '@mds-core/mds-types'
+import { MultiPolygon } from 'geojson'
 
 export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1', '1.0.0'] as const
 export type AGENCY_API_SUPPORTED_VERSION = typeof AGENCY_API_SUPPORTED_VERSIONS[number]
@@ -68,7 +68,7 @@ export type AgencyApiSubmitVehicleEventResponse = AgencyApiResponse<{
 export type AgencyApiSubmitVehicleTelemetryResponse = AgencyApiResponse<{
   success: number
   total: number
-  failures: Telemetry[]
+  failures: Object[]
 }>
 
 export type AgencyApiPostTripMetadataResponse = AgencyApiResponse<TripMetadata>

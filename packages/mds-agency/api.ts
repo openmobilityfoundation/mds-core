@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-import express from 'express'
-
+import { AccessTokenScopeValidator, checkAccess } from '@mds-core/mds-api-server'
 import logger from '@mds-core/mds-logger'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { AgencyApiRequest, AgencyApiResponse, AgencyApiAccessTokenScopes } from './types'
+import express from 'express'
+import { readAllVehicleIds } from './agency-candidate-request-handlers'
+import { createTelemetryHandler } from './handlers/create-telemetry'
+import { AgencyApiVersionMiddleware } from './middleware/agency-api-version'
 import {
-  registerVehicle,
   getVehicleById,
   getVehiclesByProvider,
-  updateVehicle,
+  registerVehicle,
   submitVehicleEvent,
-  submitVehicleTelemetry,
+  updateVehicle,
   writeTripMetadata
 } from './request-handlers'
-import { readAllVehicleIds } from './agency-candidate-request-handlers'
-import { getCacheInfo, wipeDevice, refreshCache } from './sandbox-admin-request-handlers'
+import { getCacheInfo, refreshCache, wipeDevice } from './sandbox-admin-request-handlers'
+import { AgencyApiAccessTokenScopes, AgencyApiRequest, AgencyApiResponse } from './types'
 import { validateDeviceId } from './utils'
-
-import { AgencyApiVersionMiddleware } from './middleware/agency-api-version'
 
 const checkAgencyApiAccess = (validator: AccessTokenScopeValidator<AgencyApiAccessTokenScopes>) =>
   checkAccess(validator)
@@ -105,7 +103,7 @@ function api(app: express.Express): express.Express {
    * Endpoint to submit telemetry
    * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicles---update-telemetry Telemetry}
    */
-  app.post(pathPrefix('/vehicles/telemetry'), submitVehicleTelemetry)
+  app.post(pathPrefix('/vehicles/telemetry'), createTelemetryHandler)
 
   // ///////////////////// begin Agency candidate endpoints ///////////////////////
 

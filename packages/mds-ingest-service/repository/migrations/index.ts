@@ -20,6 +20,7 @@ import { CreateEventsTable1603212540962 } from './1603212540962-CreateEventsTabl
 import { CreateTelemetryTable1603212619514 } from './1603212619514-CreateTelemetryTable'
 import { AddAccessibilityOptionsColumn1616681612878 } from './1616681612878-AddAccessibilityOptionsColumn'
 import { AddTripStateColumn1616686180925 } from './1616686180925-AddTripStateColumn'
+import { AddTelemetryStopIdHdopSatellitesColumns1624574421590 } from './1624574421590-AddTelemetryStopIdHdopSatellitesColumns'
 
 export default [
   CreateDevicesTable1603212409274,
@@ -27,5 +28,6 @@ export default [
   CreateTelemetryTable1603212619514,
   AddAccessibilityOptionsColumn1616681612878,
   AddModalityColumn1616682680014,
-  AddTripStateColumn1616686180925
+  AddTripStateColumn1616686180925,
+  AddTelemetryStopIdHdopSatellitesColumns1624574421590
 ]

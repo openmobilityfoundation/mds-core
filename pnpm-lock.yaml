@@ -35,6 +35,7 @@ importers:
       nyc: 15.1.0
       pnpm-ci-tools: 1.0.1
       prettier: 2.3.1
+      prettier-plugin-organize-imports: 2.2.0
       prettier-plugin-packagejson: 2.2.11
       should: 13.2.3
       sinon: 11.1.1
@@ -86,6 +87,7 @@ importers:
       nyc: 15.1.0
       pnpm-ci-tools: 1.0.1
       prettier: 2.3.1
+      prettier-plugin-organize-imports: 2.2.0_prettier@2.3.1+typescript@4.2.4
       prettier-plugin-packagejson: 2.2.11_prettier@2.3.1
       should: 13.2.3
       sinon: 11.1.1
@@ -9474,6 +9476,16 @@ packages:
     engines: {node: '>=6.0.0'}
     dependencies:
       fast-diff: 1.2.0
+    dev: true
+
+  /prettier-plugin-organize-imports/2.2.0_prettier@2.3.1+typescript@4.2.4:
+    resolution: {integrity: sha512-2WM3moc/cAPCCsSneYhaL4+mMws0Bypbxz+98wuRyaA7GMokhOECVkQCG7l2hcH+9/4d5NsgZs9yktfwDy4r7A==}
+    peerDependencies:
+      prettier: '>=2.0'
+      typescript: '>=2.9'
+    dependencies:
+      prettier: 2.3.1
+      typescript: 4.2.4
     dev: true
 
   /prettier-plugin-packagejson/2.2.11_prettier@2.3.1:

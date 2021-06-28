@@ -16,19 +16,22 @@
 
 import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { TelemetryDomainModel } from '../../@types'
+import { Timestamp, UUID, Nullable } from '@mds-core/mds-types'
 
 export interface TelemetryEntityModel extends IdentityColumn, RecordedColumn {
-  device_id: TelemetryDomainModel['device_id']
-  provider_id: TelemetryDomainModel['provider_id']
-  timestamp: TelemetryDomainModel['timestamp']
-  lat: TelemetryDomainModel['gps']['lat']
-  lng: TelemetryDomainModel['gps']['lng']
-  speed: TelemetryDomainModel['gps']['speed']
-  heading: TelemetryDomainModel['gps']['heading']
-  accuracy: TelemetryDomainModel['gps']['accuracy']
-  altitude: TelemetryDomainModel['gps']['altitude']
-  charge: TelemetryDomainModel['charge']
+  device_id: UUID
+  provider_id: UUID
+  timestamp: Timestamp
+  lat: number
+  lng: number
+  altitude: Nullable<number>
+  heading: Nullable<number>
+  speed: Nullable<number>
+  accuracy: Nullable<number>
+  hdop: Nullable<number>
+  satellites: Nullable<number>
+  charge: Nullable<number>
+  stop_id: Nullable<UUID>
 }
 
 @Entity('telemetry')
@@ -49,6 +52,9 @@ export class TelemetryEntity extends IdentityColumn(RecordedColumn(class {})) im
   lng: TelemetryEntityModel['lng']
 
   @Column('real', { nullable: true })
+  altitude: TelemetryEntityModel['altitude']
+
+  @Column('real', { nullable: true })
   speed: TelemetryEntityModel['speed']
 
   @Column('real', { nullable: true })
@@ -58,8 +64,14 @@ export class TelemetryEntity extends IdentityColumn(RecordedColumn(class {})) im
   accuracy: TelemetryEntityModel['accuracy']
 
   @Column('real', { nullable: true })
-  altitude: TelemetryEntityModel['altitude']
+  hdop: TelemetryEntityModel['hdop']
+
+  @Column('real', { nullable: true })
+  satellites: TelemetryEntityModel['satellites']
 
   @Column('real', { nullable: true })
   charge: TelemetryEntityModel['charge']
+
+  @Column('uuid', { nullable: true })
+  stop_id: TelemetryEntityModel['stop_id']
 }
