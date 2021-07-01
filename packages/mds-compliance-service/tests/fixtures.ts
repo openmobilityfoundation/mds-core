@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { now, days, uuid, minutes } from '@mds-core/mds-utils'
 import { ModalityPolicy } from '@mds-core/mds-types'
+import { days, minutes, now, uuid } from '@mds-core/mds-utils'
 import { ComplianceSnapshotDomainModel } from '../@types'
 
 export const TIME = 1605821758034

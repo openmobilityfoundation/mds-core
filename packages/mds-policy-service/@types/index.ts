@@ -15,8 +15,8 @@
  */
 
 import { DomainModelCreate } from '@mds-core/mds-repository'
-import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
-import { Nullable, Timestamp, UUID, BaseRule, RULE_TYPE, ModalityStatesToEvents } from '@mds-core/mds-types'
+import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
+import { BaseRule, ModalityStatesToEvents, Nullable, RULE_TYPE, Timestamp, UUID } from '@mds-core/mds-types'
 
 export interface PolicyDomainModel {
   policy_id: UUID

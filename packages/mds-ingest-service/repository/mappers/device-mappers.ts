@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Timestamp } from '@mds-core/mds-types'
 import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repository'
-import { DeviceEntityModel } from '../entities/device-entity'
+import { Timestamp } from '@mds-core/mds-types'
 import { DeviceDomainCreateModel, DeviceDomainModel } from '../../@types'
+import { DeviceEntityModel } from '../entities/device-entity'
 
 type DeviceEntityToDomainOptions = Partial<{}>
 

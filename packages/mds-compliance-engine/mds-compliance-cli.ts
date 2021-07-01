@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs'
 import logger from '@mds-core/mds-logger'
-import * as yargs from 'yargs'
-import { ModalityPolicy, Geography, VehicleEvent, Device } from '@mds-core/mds-types'
 import { validateEvents, validateGeographies, validateModalityPolicies } from '@mds-core/mds-schema-validators'
+import { Device, Geography, ModalityPolicy, VehicleEvent } from '@mds-core/mds-types'
+import * as fs from 'fs'
+import * as yargs from 'yargs'
 import { ComplianceEngineResult } from './@types'
-import { getSupersedingPolicies, filterEvents, generateDeviceMap } from './engine/helpers'
 import { createComplianceSnapshot } from './engine'
+import { filterEvents, generateDeviceMap, getSupersedingPolicies } from './engine/helpers'
 
 async function readJson(path: string): Promise<object> {
   return Promise.resolve(JSON.parse(fs.readFileSync(path).toString()))

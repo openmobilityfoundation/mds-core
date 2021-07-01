@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-import express from 'express'
+import { AccessTokenScopeValidator, ApiErrorHandlingMiddleware, checkAccess } from '@mds-core/mds-api-server'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
-import { checkAccess, AccessTokenScopeValidator, ApiErrorHandlingMiddleware } from '@mds-core/mds-api-server'
-import { TransactionApiVersionMiddleware } from '../middleware'
-
+import express from 'express'
+import { TransactionApiAccessTokenScopes } from '../@types'
+import { AddTransactionOperationHandler } from '../handlers/add-operation'
 import { CreateTransactionHandler } from '../handlers/create-transaction'
 import { CreateTransactionsHandler } from '../handlers/create-transactions'
+import { GetTransactionOperationsHandler } from '../handlers/get-operations'
+import { GetTransactionStatusesHandler } from '../handlers/get-statuses'
 import { GetTransactionHandler } from '../handlers/get-transaction'
 import { GetTransactionsHandler } from '../handlers/get-transactions'
-
-import { GetTransactionOperationsHandler } from '../handlers/get-operations'
-import { AddTransactionOperationHandler } from '../handlers/add-operation'
-import { SetTransactionStatusHandler } from '../handlers/set-status'
-import { GetTransactionStatusesHandler } from '../handlers/get-statuses'
 import { GetTransactionsStatusesHandler } from '../handlers/get-transactions-statuses'
-
-import { TransactionApiAccessTokenScopes } from '../@types'
+import { SetTransactionStatusHandler } from '../handlers/set-status'
+import { TransactionApiVersionMiddleware } from '../middleware'
 
 const checkTransactionApiAccess = (validator: AccessTokenScopeValidator<TransactionApiAccessTokenScopes>) =>
   checkAccess(validator)

@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-import { getManager } from 'typeorm'
-
-import { InsertReturning, RepositoryError, ReadWriteRepository } from '@mds-core/mds-repository'
-import { isDefined, NotFoundError, now } from '@mds-core/mds-utils'
+import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
+import { isDefined, NotFoundError, now } from '@mds-core/mds-utils'
+import { getManager } from 'typeorm'
 import {
   ComplianceSnapshotDomainModel,
-  GetComplianceSnapshotsByTimeIntervalOptions,
+  ComplianceViolationPeriodEntityModel,
   GetComplianceSnapshotOptions,
-  GetComplianceViolationPeriodsOptions,
-  ComplianceViolationPeriodEntityModel
+  GetComplianceSnapshotsByTimeIntervalOptions,
+  GetComplianceViolationPeriodsOptions
 } from '../@types'
-import { ComplianceSnapshotEntityToDomain, ComplianceSnapshotDomainToEntityCreate } from './mappers'
 import { ComplianceSnapshotEntity } from './entities/compliance-snapshot-entity'
+import { ComplianceSnapshotDomainToEntityCreate, ComplianceSnapshotEntityToDomain } from './mappers'
 import migrations from './migrations'
 
 export class SqlVals {

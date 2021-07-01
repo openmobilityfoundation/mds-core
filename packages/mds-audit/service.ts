@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
-import { Query } from 'express-serve-static-core'
+import db from '@mds-core/mds-db'
+import logger from '@mds-core/mds-logger'
 import {
   Audit,
   AuditEvent,
+  BoundingBox,
   Device,
   Recorded,
   Telemetry,
+  TelemetryData,
   Timestamp,
   UUID,
   VehicleEvent,
-  TelemetryData,
-  WithGpsProperty,
-  BoundingBox
+  WithGpsProperty
 } from '@mds-core/mds-types'
-import logger from '@mds-core/mds-logger'
 import { now, tail } from '@mds-core/mds-utils'
+import { Query } from 'express-serve-static-core'
 
 export async function deleteAudit(audit_trip_id: UUID): Promise<number> {
   const result: number = await db.deleteAudit(audit_trip_id)

@@ -15,12 +15,12 @@
  */
 import {
   Device,
-  VehicleEvent,
-  Timestamp,
-  Telemetry,
+  PROPULSION_TYPE,
   Stringify,
+  Telemetry,
   TelemetryData,
-  PROPULSION_TYPE
+  Timestamp,
+  VehicleEvent
 } from '@mds-core/mds-types'
 
 export type StringifiedEvent = Stringify<Omit<VehicleEvent, 'telemetry' | 'event_types'>> &

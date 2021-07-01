@@ -25,6 +25,7 @@ import {
   GetGeographiesOptions,
   GetPublishedGeographiesOptions
 } from '../@types'
+import { GeographyEntity } from './entities/geography-entity'
 import { GeographyMetadataEntity } from './entities/geography-metadata-entity'
 import {
   GeographyDomainToEntityCreate,
@@ -32,7 +33,6 @@ import {
   GeographyMetadataDomainToEntityCreate,
   GeographyMetadataEntityToDomain
 } from './mappers'
-import { GeographyEntity } from './entities/geography-entity'
 import migrations from './migrations'
 
 class GeographyReadWriteRepository extends ReadWriteRepository {

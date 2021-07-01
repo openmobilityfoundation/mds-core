@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-import { Optional, Timestamp } from '@mds-core/mds-types'
 import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repository'
-import { TransactionEntity } from './entities/transaction-entity'
-import { TransactionOperationEntity } from './entities/operation-entity'
-import { TransactionStatusEntity } from './entities/status-entity'
+import { Optional, Timestamp } from '@mds-core/mds-types'
 import {
   TransactionDomainCreateModel,
   TransactionDomainModel,
@@ -27,6 +24,9 @@ import {
   TransactionStatusDomainCreateModel,
   TransactionStatusDomainModel
 } from '../@types'
+import { TransactionOperationEntity } from './entities/operation-entity'
+import { TransactionStatusEntity } from './entities/status-entity'
+import { TransactionEntity } from './entities/transaction-entity'
 
 type TransactionEntityToDomainOptions = Partial<{}>
 

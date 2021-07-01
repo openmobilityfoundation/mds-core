@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { Nullable, Timestamp } from '@mds-core/mds-types'
+import { Column, Entity } from 'typeorm'
 import { AuditDomainModel } from '../../@types'
 
 export interface AuditEntityModel extends IdentityColumn, RecordedColumn {

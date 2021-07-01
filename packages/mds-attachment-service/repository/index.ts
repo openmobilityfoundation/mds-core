@@ -17,11 +17,10 @@
 import { DeleteReturning, InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
 import { In } from 'typeorm'
-import { AttachmentDomainToEntityCreate, AttachmentEntityToDomain } from './mappers'
 import { AttachmentDomainModel, ReadAttachmentsOptions } from '../@types'
-import { AttachmentEntity } from './entities/attachment-entity'
-
 import entities from './entities'
+import { AttachmentEntity } from './entities/attachment-entity'
+import { AttachmentDomainToEntityCreate, AttachmentEntityToDomain } from './mappers'
 import migrations from './migrations'
 
 class AttachmentReadWriteRepository extends ReadWriteRepository {

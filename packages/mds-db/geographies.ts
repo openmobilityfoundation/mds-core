@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-import { Geography, GeographySummary, UUID, Recorded, GeographyMetadata, Timestamp } from '@mds-core/mds-types'
-import {
-  BadParamsError,
-  NotFoundError,
-  DependencyMissingError,
-  AlreadyPublishedError,
-  ConflictError
-} from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-
-import schema from './schema'
-
-import { vals_sql, cols_sql, vals_list, SqlVals } from './sql-utils'
-
+import { Geography, GeographyMetadata, GeographySummary, Recorded, Timestamp, UUID } from '@mds-core/mds-types'
+import {
+  AlreadyPublishedError,
+  BadParamsError,
+  ConflictError,
+  DependencyMissingError,
+  NotFoundError
+} from '@mds-core/mds-utils'
 import { getReadOnlyClient, getWriteableClient } from './client'
-import { ReadGeographiesParams, PublishGeographiesParams } from './types'
+import schema from './schema'
+import { cols_sql, SqlVals, vals_list, vals_sql } from './sql-utils'
+import { PublishGeographiesParams, ReadGeographiesParams } from './types'
 
 export async function readSingleGeography(geography_id: UUID): Promise<Geography> {
   const client = await getReadOnlyClient()

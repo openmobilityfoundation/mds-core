@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
-import db from '@mds-core/mds-db'
-import { ServerError } from '@mds-core/mds-utils'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequestParams, ApiRequestQuery } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
+import logger from '@mds-core/mds-logger'
+import { ServerError } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from './types'
 import { refresh } from './utils'
 

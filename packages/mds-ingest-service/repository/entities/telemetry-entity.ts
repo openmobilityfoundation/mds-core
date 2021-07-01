@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { Timestamp, UUID, Nullable } from '@mds-core/mds-types'
+import { Nullable, Timestamp, UUID } from '@mds-core/mds-types'
+import { Column, Entity } from 'typeorm'
 
 export interface TelemetryEntityModel extends IdentityColumn, RecordedColumn {
   device_id: UUID

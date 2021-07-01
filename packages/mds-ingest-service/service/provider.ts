@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { ServiceProvider, ProcessController, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
+import logger from '@mds-core/mds-logger'
+import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
+import { UUID } from '@mds-core/mds-types'
 import { IngestService } from '../@types'
 import { IngestRepository } from '../repository'
-import logger from '@mds-core/mds-logger'
 import { validateGetVehicleEventsFilterParams, validateUUIDs } from './validators'
-import { UUID } from '@mds-core/mds-types'
 
 export const IngestServiceProvider: ServiceProvider<IngestService> & ProcessController = {
   start: IngestRepository.initialize,

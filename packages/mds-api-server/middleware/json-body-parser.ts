@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { RequestHandler } from 'express'
 import type { OptionsJson } from 'body-parser'
 import bodyParser from 'body-parser'
+import type { RequestHandler } from 'express'
 
 export type JsonBodyParserMiddlewareOptions = Partial<OptionsJson>
 

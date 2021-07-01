@@ -14,44 +14,42 @@
  * limitations under the License.
  */
 
-import express, { NextFunction } from 'express'
-import HttpStatus from 'http-status-codes'
-import {
-  uuid,
-  pathPrefix,
-  AlreadyPublishedError,
-  BadParamsError,
-  NotFoundError,
-  ValidationError,
-  ServerError,
-  isUUID,
-  ConflictError,
-  isDefined
-} from '@mds-core/mds-utils'
+import { AccessTokenScopeValidator, ApiRequest, ApiResponse, checkAccess } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
-
 import logger from '@mds-core/mds-logger'
-
-import { checkAccess, AccessTokenScopeValidator, ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
 import { PolicyMetadata, PolicyTypeInfo } from '@mds-core/mds-types'
 import {
-  PolicyAuthorApiPostPolicyResponse,
-  PolicyAuthorApiEditPolicyResponse,
-  PolicyAuthorApiDeletePolicyResponse,
-  PolicyAuthorApiAccessTokenScopes,
-  PolicyAuthorApiPublishPolicyResponse,
-  PolicyAuthorApiEditPolicyMetadataResponse,
-  PolicyAuthorApiGetPolicyMetadatumResponse,
-  PolicyAuthorApiGetPolicyMetadataResponse,
-  PolicyAuthorApiPostPolicyRequest,
-  PolicyAuthorApiPublishPolicyRequest,
-  PolicyAuthorApiEditPolicyRequest,
-  PolicyAuthorApiDeletePolicyRequest,
-  PolicyAuthorApiGetPolicyMetadataRequest,
-  PolicyAuthorApiGetPolicyMetadatumRequest,
-  PolicyAuthorApiEditPolicyMetadataRequest
-} from './types'
+  AlreadyPublishedError,
+  BadParamsError,
+  ConflictError,
+  isDefined,
+  isUUID,
+  NotFoundError,
+  pathPrefix,
+  ServerError,
+  uuid,
+  ValidationError
+} from '@mds-core/mds-utils'
+import express, { NextFunction } from 'express'
+import HttpStatus from 'http-status-codes'
 import { PolicyAuthorApiVersionMiddleware } from './policy-author-api-version'
+import {
+  PolicyAuthorApiAccessTokenScopes,
+  PolicyAuthorApiDeletePolicyRequest,
+  PolicyAuthorApiDeletePolicyResponse,
+  PolicyAuthorApiEditPolicyMetadataRequest,
+  PolicyAuthorApiEditPolicyMetadataResponse,
+  PolicyAuthorApiEditPolicyRequest,
+  PolicyAuthorApiEditPolicyResponse,
+  PolicyAuthorApiGetPolicyMetadataRequest,
+  PolicyAuthorApiGetPolicyMetadataResponse,
+  PolicyAuthorApiGetPolicyMetadatumRequest,
+  PolicyAuthorApiGetPolicyMetadatumResponse,
+  PolicyAuthorApiPostPolicyRequest,
+  PolicyAuthorApiPostPolicyResponse,
+  PolicyAuthorApiPublishPolicyRequest,
+  PolicyAuthorApiPublishPolicyResponse
+} from './types'
 
 const checkPolicyAuthorApiAccess = (validator: AccessTokenScopeValidator<PolicyAuthorApiAccessTokenScopes>) =>
   checkAccess(validator)

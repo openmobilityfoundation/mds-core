@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { ServiceClient } from '@mds-core/mds-service-helpers'
 import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common'
+import { ServiceClient } from '@mds-core/mds-service-helpers'
 import {
-  CollectorServiceRpcDefinition,
-  CollectorService,
+  CollectorMessageDomainModel,
   CollectorSchemaDomainModel,
-  CollectorMessageDomainModel
+  CollectorService,
+  CollectorServiceRpcDefinition
 } from '../@types'
 
 const CollectorServiceRpcClient = RpcClient(CollectorServiceRpcDefinition, {

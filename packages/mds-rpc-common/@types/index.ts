@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { AnyFunction } from '@mds-core/mds-types'
 import { ServiceResponse } from '@mds-core/mds-service-helpers'
+import { AnyFunction } from '@mds-core/mds-types'
 
 export type RpcRouteDefinition<M extends AnyFunction> = {
   request: Parameters<M>

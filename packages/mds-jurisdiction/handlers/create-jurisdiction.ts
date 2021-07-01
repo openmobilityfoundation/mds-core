@@ -15,9 +15,9 @@
  */
 
 import {
-  JurisdictionServiceClient,
   CreateJurisdictionDomainModel,
-  JurisdictionDomainModel
+  JurisdictionDomainModel,
+  JurisdictionServiceClient
 } from '@mds-core/mds-jurisdiction-service'
 import { isServiceError } from '@mds-core/mds-service-helpers'
 import { JurisdictionApiRequest, JurisdictionApiResponse } from '../@types'

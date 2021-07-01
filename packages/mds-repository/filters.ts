@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FindOperator, In, Equal, IsNull } from 'typeorm'
+import { Equal, FindOperator, In, IsNull } from 'typeorm'
 
 export const PropertyValue = <TProperty extends string>(
   property: TProperty,

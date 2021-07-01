@@ -15,7 +15,7 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
-import { POLICY_API_SUPPORTED_VERSIONS, POLICY_API_DEFAULT_VERSION } from '../types'
+import { POLICY_API_DEFAULT_VERSION, POLICY_API_SUPPORTED_VERSIONS } from '../types'
 
 export const PolicyApiVersionMiddleware = ApiVersionMiddleware(
   'application/vnd.mds.policy+json',

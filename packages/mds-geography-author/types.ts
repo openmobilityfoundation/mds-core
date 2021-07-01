@@ -16,12 +16,12 @@
 
 import {
   ApiRequest,
-  ApiVersionedResponse,
-  ApiRequestQuery,
   ApiRequestParams,
-  ApiResponseLocalsClaims
+  ApiRequestQuery,
+  ApiResponseLocalsClaims,
+  ApiVersionedResponse
 } from '@mds-core/mds-api-server'
-import { GeographyMetadata, Geography, UUID } from '@mds-core/mds-types'
+import { Geography, GeographyMetadata, UUID } from '@mds-core/mds-types'
 
 export const GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
 export type GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSION = typeof GEOGRAPHY_AUTHOR_API_SUPPORTED_VERSIONS[number]

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { AnyConstructor, Timestamp } from '@mds-core/mds-types'
 import { Column, Index } from 'typeorm'
 import { ColumnCommonOptions } from 'typeorm/decorator/options/ColumnCommonOptions'
 import { ColumnWithWidthOptions } from 'typeorm/decorator/options/ColumnWithWidthOptions'
-import { Timestamp, AnyConstructor } from '@mds-core/mds-types'
 import { BigintTransformer } from '../transformers'
 
 export interface RecordedColumn {

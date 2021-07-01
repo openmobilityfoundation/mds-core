@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ModuleRpcProtocolClient } from 'rpc_ts/lib/protocol/client'
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport'
-import { ClientRpcError } from 'rpc_ts/lib/client/errors'
 import { ServiceError, ServiceResponse } from '@mds-core/mds-service-helpers'
 import { AnyFunction } from '@mds-core/mds-types'
+import { ClientRpcError } from 'rpc_ts/lib/client/errors'
+import { ModuleRpcProtocolClient } from 'rpc_ts/lib/protocol/client'
 import { RpcServiceDefinition, RPC_HOST, RPC_PORT } from '../@types'
 
 export interface RpcClientOptions {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { NullableKeys, Optional } from '@mds-core/mds-types'
 import { DeleteResult, InsertResult, UpdateResult } from 'typeorm'
-import { Optional, NullableKeys } from '@mds-core/mds-types'
 
 export interface InsertReturning<T> extends InsertResult {
   raw: T[]

@@ -1,5 +1,5 @@
-import { days, now, uuid } from '@mds-core/mds-utils'
 import { ModalityPolicy } from '@mds-core/mds-types'
+import { days, now, uuid } from '@mds-core/mds-utils'
 
 export const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 export const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'

@@ -15,23 +15,23 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { ServiceResult, ServiceException, ServiceProvider, ProcessController } from '@mds-core/mds-service-helpers'
+import { providerName } from '@mds-core/mds-providers'
+import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
 import { UUID } from '@mds-core/mds-types'
 import { isDefined } from '@mds-core/mds-utils'
-import { providerName } from '@mds-core/mds-providers'
 import {
-  ComplianceService,
-  GetComplianceSnapshotsByTimeIntervalOptions,
-  GetComplianceViolationPeriodsOptions,
   ComplianceAggregateDomainModel,
-  ComplianceViolationPeriodDomainModel
+  ComplianceService,
+  ComplianceViolationPeriodDomainModel,
+  GetComplianceSnapshotsByTimeIntervalOptions,
+  GetComplianceViolationPeriodsOptions
 } from '../@types'
 import { ComplianceRepository } from '../repository'
+import { ComplianceViolationPeriodEntityToDomainCreate } from '../repository/mappers'
 import {
   ValidateComplianceSnapshotDomainModel,
   ValidateGetComplianceSnapshotsByTimeIntervalOptions
 } from './validators'
-import { ComplianceViolationPeriodEntityToDomainCreate } from '../repository/mappers'
 
 export const ComplianceServiceProvider: ServiceProvider<ComplianceService> & ProcessController = {
   start: ComplianceRepository.initialize,

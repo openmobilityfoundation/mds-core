@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { VehicleEvent, Telemetry, Device, TripMetadata } from '@mds-core/mds-types'
+import { Device, Telemetry, TripMetadata, VehicleEvent } from '@mds-core/mds-types'
 import { getEnvVar } from '@mds-core/mds-utils'
 import { AgencyStreamInterface } from '../agency-stream-interface'
-import { NatsStreamProducer } from './stream-producer'
 import { safeWrite } from '../helpers'
+import { NatsStreamProducer } from './stream-producer'
 
 const { TENANT_ID } = getEnvVar({
   TENANT_ID: 'mds'

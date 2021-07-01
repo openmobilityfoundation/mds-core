@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type { NextFunction } from 'express'
-import HttpStatus from 'http-status-codes'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
 import { CollectorService, CollectorServiceClient } from '@mds-core/mds-collector-backend'
 import { ValidationError } from '@mds-core/mds-utils'
-import { CollectorApiResponse, CollectorApiRequest } from '../@types'
+import type { NextFunction } from 'express'
+import HttpStatus from 'http-status-codes'
+import { CollectorApiRequest, CollectorApiResponse } from '../@types'
 
 export type CollectorApiWriteSchemaMessagesRequest = CollectorApiRequest<Array<{}>> & ApiRequestParams<'schema_id'>
 

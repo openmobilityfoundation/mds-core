@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { SubscriptionOptions, NatsConnection } from 'nats'
 import { Nullable, SingleOrArray } from '@mds-core/mds-types'
-import { createStreamConsumer, disconnectClient } from './helpers'
+import { NatsConnection, SubscriptionOptions } from 'nats'
 import { StreamConsumer } from '../stream-interface'
 import { NatsProcessorFn } from './codecs'
+import { createStreamConsumer, disconnectClient } from './helpers'
 
 export const NatsStreamConsumer = (
   topics: SingleOrArray<string>,

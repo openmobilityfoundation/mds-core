@@ -1,10 +1,10 @@
 import {
-  VEHICLE_REASON_v0_4_1,
-  VehicleEvent_v0_4_1,
-  VEHICLE_EVENT_v0_4_1,
   TRANSFORMER_VEHICLE_EVENT,
+  VehicleEvent_v0_4_1,
   VehicleEvent_v1_0_0,
-  VEHICLE_EVENT_v1_0_0
+  VEHICLE_EVENT_v0_4_1,
+  VEHICLE_EVENT_v1_0_0,
+  VEHICLE_REASON_v0_4_1
 } from '../@types'
 
 export const FULL_STATE_MAPPING_v1_0_0_to_v0_4_1: {

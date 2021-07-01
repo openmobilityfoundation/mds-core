@@ -15,12 +15,12 @@
  */
 
 import {
-  uuidSchema,
+  SchemaBuilder,
   stringSchema,
   timestampSchema,
+  uuidSchema,
   ValidateSchema,
-  ValidationError,
-  SchemaBuilder
+  ValidationError
 } from '@mds-core/mds-schema-validators'
 import { CreateJurisdictionDomainModel } from '../@types'
 

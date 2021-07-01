@@ -1,8 +1,7 @@
-import { Polygon } from 'geojson'
-import { veniceSpecOps, LA_CITY_BOUNDARY, restrictedAreas } from '@mds-core/mds-test-data'
-
+import { LA_CITY_BOUNDARY, restrictedAreas, veniceSpecOps } from '@mds-core/mds-test-data'
 import { Geography, ModalityCountPolicy, ModalityPolicy, ModalitySpeedPolicy, RULE_TYPES } from '@mds-core/mds-types'
 import { days, now } from '@mds-core/mds-utils'
+import { Polygon } from 'geojson'
 
 export const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 export const LA_GEOGRAPHY = { name: 'la', geography_id: CITY_OF_LA, geography_json: LA_CITY_BOUNDARY }

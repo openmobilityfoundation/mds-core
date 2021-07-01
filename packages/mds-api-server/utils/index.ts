@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import express from 'express'
 import { AuthorizerClaims } from '@mds-core/mds-api-authorizer'
 import { AuthorizationError } from '@mds-core/mds-utils'
+import express from 'express'
 import { ApiRequest, ApiResponse, ApiResponseLocalsClaims } from '../@types'
 
 export const healthInfo = () => {

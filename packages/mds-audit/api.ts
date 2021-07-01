@@ -14,67 +14,47 @@
  * limitations under the License.
  */
 
+import { asJsonApiLinks, parsePagingQueryParams, parseRequest } from '@mds-core/mds-api-helpers'
+import { AccessTokenScopeValidator, checkAccess } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
-import express from 'express'
-import {
-  uuid,
-  pathPrefix,
-  seconds,
-  AuthorizationError,
-  ConflictError,
-  NotFoundError,
-  ServerError,
-  UnsupportedTypeError
-} from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-import urls from 'url'
-
+import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
 import {
   isValidAuditDeviceId,
   isValidAuditEventId,
   isValidAuditEventType,
+  isValidAuditIssueCode,
+  isValidAuditNote,
   isValidAuditTripId,
   isValidProviderId,
   isValidProviderVehicleId,
   isValidTelemetry,
   isValidTimestamp,
   isValidVehicleEventType,
-  isValidAuditIssueCode,
-  isValidAuditNote,
   ValidationError
 } from '@mds-core/mds-schema-validators'
-
-import { providerName } from '@mds-core/mds-providers' // map of uuids -> obj
-import { AUDIT_EVENT_TYPES, AuditEvent, Timestamp, Telemetry, TelemetryData } from '@mds-core/mds-types'
-import { parsePagingQueryParams, asJsonApiLinks, parseRequest } from '@mds-core/mds-api-helpers'
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
 import { isError } from '@mds-core/mds-service-helpers'
+import { AuditEvent, AUDIT_EVENT_TYPES, Telemetry, TelemetryData, Timestamp } from '@mds-core/mds-types'
 import {
-  AuditApiAuditEndRequest,
-  AuditApiAuditNoteRequest,
-  AuditApiAuditStartRequest,
-  AuditApiGetTripRequest,
-  AuditApiGetTripsRequest,
-  AuditApiGetVehicleRequest,
-  AuditApiRequest,
-  AuditApiResponse,
-  AuditApiTripRequest,
-  AuditApiVehicleEventRequest,
-  AuditApiVehicleTelemetryRequest,
-  AuditApiAccessTokenScopes,
-  PostAuditTripStartResponse,
-  PostAuditTripVehicleEventResponse,
-  PostAuditTripTelemetryResponse,
-  PostAuditTripNoteResponse,
-  PostAuditTripEndResponse,
-  GetAuditTripDetailsResponse,
-  PostAuditTripEventResponse,
-  DeleteAuditTripResponse,
-  GetAuditVehiclesResponse,
-  GetVehicleByVinResponse,
-  PostAuditAttachmentResponse,
-  GetAuditTripsDetailsResponse
-} from './types'
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  pathPrefix,
+  seconds,
+  ServerError,
+  UnsupportedTypeError,
+  uuid
+} from '@mds-core/mds-utils'
+import express from 'express'
+import urls from 'url'
+import {
+  attachmentSummary,
+  deleteAuditAttachment,
+  multipartFormUpload,
+  readAttachments,
+  writeAttachment
+} from './attachments'
+import { AuditApiVersionMiddleware } from './middleware'
 import {
   deleteAudit,
   getVehicle,
@@ -90,13 +70,31 @@ import {
   writeAuditEvent
 } from './service'
 import {
-  attachmentSummary,
-  deleteAuditAttachment,
-  multipartFormUpload,
-  readAttachments,
-  writeAttachment
-} from './attachments'
-import { AuditApiVersionMiddleware } from './middleware'
+  AuditApiAccessTokenScopes,
+  AuditApiAuditEndRequest,
+  AuditApiAuditNoteRequest,
+  AuditApiAuditStartRequest,
+  AuditApiGetTripRequest,
+  AuditApiGetTripsRequest,
+  AuditApiGetVehicleRequest,
+  AuditApiRequest,
+  AuditApiResponse,
+  AuditApiTripRequest,
+  AuditApiVehicleEventRequest,
+  AuditApiVehicleTelemetryRequest,
+  DeleteAuditTripResponse,
+  GetAuditTripDetailsResponse,
+  GetAuditTripsDetailsResponse,
+  GetAuditVehiclesResponse,
+  GetVehicleByVinResponse,
+  PostAuditAttachmentResponse,
+  PostAuditTripEndResponse,
+  PostAuditTripEventResponse,
+  PostAuditTripNoteResponse,
+  PostAuditTripStartResponse,
+  PostAuditTripTelemetryResponse,
+  PostAuditTripVehicleEventResponse
+} from './types'
 
 // TODO lib
 function flattenTelemetry(telemetry?: Telemetry): TelemetryData {

@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import express, { NextFunction } from 'express'
-import { PolicyTypeInfo, UUID } from '@mds-core/mds-types'
-import db from '@mds-core/mds-db'
-import { now, pathPrefix, NotFoundError, isUUID, BadParamsError, ServerError } from '@mds-core/mds-utils'
-import logger from '@mds-core/mds-logger'
 import { parseRequest } from '@mds-core/mds-api-helpers'
 import { ApiRequest, ApiResponse } from '@mds-core/mds-api-server'
-import {
-  PolicyApiGetPoliciesResponse,
-  PolicyApiGetPolicyResponse,
-  PolicyApiGetPoliciesRequest,
-  PolicyApiGetPolicyRequest
-} from './types'
+import db from '@mds-core/mds-db'
+import logger from '@mds-core/mds-logger'
+import { PolicyTypeInfo, UUID } from '@mds-core/mds-types'
+import { BadParamsError, isUUID, NotFoundError, now, pathPrefix, ServerError } from '@mds-core/mds-utils'
+import express, { NextFunction } from 'express'
 import { PolicyApiVersionMiddleware } from './middleware'
+import {
+  PolicyApiGetPoliciesRequest,
+  PolicyApiGetPoliciesResponse,
+  PolicyApiGetPolicyRequest,
+  PolicyApiGetPolicyResponse
+} from './types'
 
 function api<PInfo extends PolicyTypeInfo>(app: express.Express): express.Express {
   app.use(PolicyApiVersionMiddleware)

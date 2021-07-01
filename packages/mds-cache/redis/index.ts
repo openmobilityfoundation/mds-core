@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import Redis, { KeyType, ValueType } from 'ioredis'
 import { Nullable, Timestamp, TimestampInSeconds } from '@mds-core/mds-types'
-import { isDefined, ClientDisconnectedError, ExceptionMessages } from '@mds-core/mds-utils'
-import { initClient } from './helpers/client'
+import { ClientDisconnectedError, ExceptionMessages, isDefined } from '@mds-core/mds-utils'
+import Redis, { KeyType, ValueType } from 'ioredis'
 import { OrderedFields } from '../@types'
+import { initClient } from './helpers/client'
 
 export type ExpireAtOptions = {
   key: KeyType

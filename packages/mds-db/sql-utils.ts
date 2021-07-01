@@ -15,9 +15,9 @@
  */
 
 // /////////////////////////////// SQL-related utilities /////////////////////////////
-import { Client as PostgresClient, types as PostgresTypes } from 'pg'
-import { csv } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
+import { csv } from '@mds-core/mds-utils'
+import { Client as PostgresClient, types as PostgresTypes } from 'pg'
 import schema from './schema'
 
 export interface PGInfo {

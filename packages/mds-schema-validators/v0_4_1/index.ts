@@ -1,16 +1,15 @@
 // **************************
 // 0.4.1 Validators, eventually to be deprecated
 // **************************
-import Joi from 'joi'
-
 import { VehicleEvent_v0_4_1, VEHICLE_EVENTS_v0_4_1 } from '@mds-core/mds-types'
+import Joi from 'joi'
 import {
-  ValidatorOptions,
-  ValidateSchema,
-  uuidSchema,
-  timestampSchema,
+  stringSchema,
   telemetrySchema,
-  stringSchema
+  timestampSchema,
+  uuidSchema,
+  ValidateSchema,
+  ValidatorOptions
 } from '../validators'
 
 const vehicleEventTypeSchema_v0_4_1 = stringSchema.valid(...VEHICLE_EVENTS_v0_4_1)

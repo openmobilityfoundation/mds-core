@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
 import { IdentityColumn } from '@mds-core/mds-repository'
+import { Column, Entity } from 'typeorm'
 import { PolicyDomainModel } from '../../@types'
 
 export interface PolicyEntityModel extends IdentityColumn {

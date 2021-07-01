@@ -14,14 +14,12 @@
     limitations under the License.
  */
 
-import { Device, Geography, UUID, RULE_TYPES, VehicleEvent, ModalityPolicy } from '@mds-core/mds-types'
-
-import { now, UnsupportedTypeError, uuid } from '@mds-core/mds-utils'
 import { ComplianceSnapshotDomainModel } from '@mds-core/mds-compliance-service/@types'
+import { Device, Geography, ModalityPolicy, RULE_TYPES, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { now, UnsupportedTypeError, uuid } from '@mds-core/mds-utils'
 import { VehicleEventWithTelemetry } from '../@types'
-import { getProviderIDs, getComplianceInputs, isPolicyActive, getPolicyType } from './helpers'
-
 import { processCountPolicy } from './count_processors'
+import { getComplianceInputs, getPolicyType, getProviderIDs, isPolicyActive } from './helpers'
 import { processSpeedPolicy } from './speed_processors'
 import { processTimePolicy } from './time_processors'
 

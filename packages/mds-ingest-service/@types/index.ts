@@ -15,6 +15,7 @@
  */
 
 import { DomainModelCreate, RecordedColumn } from '@mds-core/mds-repository'
+import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
 import {
   ACCESSIBILITY_OPTION,
   MODALITY,
@@ -29,7 +30,6 @@ import {
   VEHICLE_STATE,
   VEHICLE_TYPE
 } from '@mds-core/mds-types'
-import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
 
 export interface DeviceDomainModel extends RecordedColumn {
   device_id: UUID

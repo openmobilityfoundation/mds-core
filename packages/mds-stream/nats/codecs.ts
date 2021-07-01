@@ -1,5 +1,5 @@
-import { Msg, StringCodec, SubOpts } from 'nats'
 import logger from '@mds-core/mds-logger'
+import { Msg, StringCodec, SubOpts } from 'nats'
 
 /**
  * We must encode/decode messages between strings & UInt8Arrays

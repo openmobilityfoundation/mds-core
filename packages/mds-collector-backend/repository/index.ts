@@ -23,9 +23,9 @@ import {
   CollectorSchemaDomainModel
 } from '../@types'
 import {
-  CollectorSchemaEntity,
   CollectorMessageEntity,
   CollectorMessageEntityModel,
+  CollectorSchemaEntity,
   CollectorSchemaEntityModel
 } from './entities'
 import {

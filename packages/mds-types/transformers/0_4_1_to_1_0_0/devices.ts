@@ -1,4 +1,4 @@
-import { Device_v0_4_1, VEHICLE_STATE_v0_4_1, Device_v1_0_0, VEHICLE_STATE_v1_0_0 } from '../@types'
+import { Device_v0_4_1, Device_v1_0_0, VEHICLE_STATE_v0_4_1, VEHICLE_STATE_v1_0_0 } from '../@types'
 
 const STATE_TO_STATUS_MAPPING: { [P in VEHICLE_STATE_v0_4_1]: VEHICLE_STATE_v1_0_0 } = {
   available: 'available',

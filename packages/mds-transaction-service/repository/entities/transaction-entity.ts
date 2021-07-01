@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Entity, Column, Index } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { UUID, Timestamp, Nullable } from '@mds-core/mds-types'
+import { Nullable, Timestamp, UUID } from '@mds-core/mds-types'
+import { Column, Entity, Index } from 'typeorm'
 import { FEE_TYPE } from '../../@types'
 
 @Entity('transactions')

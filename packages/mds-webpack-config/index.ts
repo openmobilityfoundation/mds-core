@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Configuration, ContextReplacementPlugin, IgnorePlugin, BannerPlugin } from 'webpack'
 import { GitRevisionPlugin } from 'git-revision-webpack-plugin'
-import { merge as WebpackMerge } from 'webpack-merge'
 import { parse, resolve } from 'path'
+import { BannerPlugin, Configuration, ContextReplacementPlugin, IgnorePlugin } from 'webpack'
+import { merge as WebpackMerge } from 'webpack-merge'
 
 const gitRevisionPlugin = new GitRevisionPlugin({ commithashCommand: 'rev-parse --short HEAD' })
 

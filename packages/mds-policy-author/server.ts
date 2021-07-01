@@ -15,7 +15,7 @@ import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { ModalityPolicyTypeInfo } from '@mds-core/mds-types'
 import express from 'express'
 import { api } from './api'
-import { injectVersionMiddleware, injectModalityValidator } from './middleware'
+import { injectModalityValidator, injectVersionMiddleware } from './middleware'
 
 /**
  * Runs API server with Vanilla MDS Policy (no foreign property injection)

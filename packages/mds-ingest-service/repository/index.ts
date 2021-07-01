@@ -15,16 +15,16 @@
  */
 
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
-import { Any } from 'typeorm'
-import { isUUID } from '@mds-core/mds-utils'
 import { UUID } from '@mds-core/mds-types'
+import { isUUID } from '@mds-core/mds-utils'
+import { Any } from 'typeorm'
 import {
-  EventDomainModel,
-  EventDomainCreateModel,
-  TelemetryDomainCreateModel,
   DeviceDomainCreateModel,
+  DeviceDomainModel,
+  EventDomainCreateModel,
+  EventDomainModel,
   GetVehicleEventsFilterParams,
-  DeviceDomainModel
+  TelemetryDomainCreateModel
 } from '../@types'
 import entities from './entities'
 import { DeviceEntity } from './entities/device-entity'

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import express from 'express'
-import jwt from 'jsonwebtoken'
 import { UUID } from '@mds-core/mds-types'
 import { getEnvVar } from '@mds-core/mds-utils'
+import express from 'express'
+import jwt from 'jsonwebtoken'
 
 export interface AuthorizerClaims {
   principalId: string

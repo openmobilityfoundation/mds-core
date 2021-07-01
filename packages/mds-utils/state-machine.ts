@@ -15,12 +15,12 @@
  */
 
 import {
-  MICRO_MOBILITY_VEHICLE_STATES,
-  MICRO_MOBILITY_VEHICLE_STATE,
-  VEHICLE_EVENT,
+  MicroMobilityVehicleEvent,
   MICRO_MOBILITY_EVENT_STATES_MAP,
   MICRO_MOBILITY_VEHICLE_EVENT,
-  MicroMobilityVehicleEvent
+  MICRO_MOBILITY_VEHICLE_STATE,
+  MICRO_MOBILITY_VEHICLE_STATES,
+  VEHICLE_EVENT
 } from '@mds-core/mds-types'
 
 /* Start with a state, then there's a list of valid event_types by which one

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Nullable, Timestamp } from '@mds-core/mds-types'
 import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repository'
+import { Nullable, Timestamp } from '@mds-core/mds-types'
 import { EventDomainCreateModel, EventDomainModel, TelemetryDomainModel } from '../../@types'
 import { EventEntityModel } from '../entities/event-entity'
 import { TelemetryEntityToDomain } from './telemetry-mappers'

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { TransactionServiceClient, TransactionDomainModel } from '@mds-core/mds-transaction-service'
 import { ApiRequestParams } from '@mds-core/mds-api-server'
+import { TransactionDomainModel, TransactionServiceClient } from '@mds-core/mds-transaction-service'
 import express from 'express'
-import { TransactionApiResponse, TransactionApiRequest } from '../@types'
+import { TransactionApiRequest, TransactionApiResponse } from '../@types'
 
 export type TransactionApiGetTransactionRequest = TransactionApiRequest & ApiRequestParams<'id'>
 

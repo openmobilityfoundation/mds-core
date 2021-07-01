@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Connection } from 'typeorm'
 import logger from '@mds-core/mds-logger'
 import { pluralize, tail } from '@mds-core/mds-utils'
-import { ConnectionManager, ConnectionManagerOptions, ConnectionMode, ConnectionManagerCliOptions } from './connection'
+import { Connection } from 'typeorm'
+import { ConnectionManager, ConnectionManagerCliOptions, ConnectionManagerOptions, ConnectionMode } from './connection'
 import { CreateRepositoryMigration } from './migration'
 
 export type RepositoryOptions = Pick<ConnectionManagerOptions, 'entities' | 'migrations'>

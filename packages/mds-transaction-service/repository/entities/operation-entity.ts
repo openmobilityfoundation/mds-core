@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { UUID, Timestamp } from '@mds-core/mds-types'
+import { Timestamp, UUID } from '@mds-core/mds-types'
+import { Column, Entity } from 'typeorm'
 import { TransactionOperationDomainModel, TRANSACTION_OPERATION_TYPE } from '../../@types'
 @Entity('transaction_operations')
 export class TransactionOperationEntity

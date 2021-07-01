@@ -15,7 +15,7 @@
  */
 
 import { DomainModelCreate } from '@mds-core/mds-repository'
-import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
+import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
 import { Nullable, Timestamp, UUID } from '@mds-core/mds-types'
 import { FeatureCollection } from 'geojson'
 

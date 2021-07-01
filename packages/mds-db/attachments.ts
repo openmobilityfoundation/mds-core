@@ -16,9 +16,9 @@
 
 import { Attachment, AuditAttachment, Recorded, UUID } from '@mds-core/mds-types'
 import { NotFoundError, now } from '@mds-core/mds-utils'
-import schema from './schema'
-import { vals_sql, cols_sql, vals_list, logSql } from './sql-utils'
 import { getReadOnlyClient, getWriteableClient } from './client'
+import schema from './schema'
+import { cols_sql, logSql, vals_list, vals_sql } from './sql-utils'
 
 export async function writeAttachment(attachment: Attachment): Promise<Recorded<Attachment>> {
   const client = await getWriteableClient()

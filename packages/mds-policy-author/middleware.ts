@@ -1,6 +1,6 @@
-import express from 'express'
-import { pathPrefix } from '@mds-core/mds-utils'
 import { validateModalityPolicy } from '@mds-core/mds-schema-validators'
+import { pathPrefix } from '@mds-core/mds-utils'
+import express from 'express'
 import { PolicyAuthorApiVersionMiddleware } from './policy-author-api-version'
 
 export const injectVersionMiddleware = (app: express.Express): express.Express => {

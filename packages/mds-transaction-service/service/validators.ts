@@ -15,6 +15,7 @@
  */
 
 import { SchemaObject, SchemaValidator } from '@mds-core/mds-schema-validators'
+import { UUID } from '@mds-core/mds-types'
 import {
   FEE_TYPE,
   ReceiptDomainModel,
@@ -24,7 +25,6 @@ import {
   TRANSACTION_OPERATION_TYPE,
   TRANSACTION_STATUS_TYPE
 } from '../@types'
-import { UUID } from '@mds-core/mds-types'
 
 const uuidSchema = { type: 'string', format: 'uuid' }
 

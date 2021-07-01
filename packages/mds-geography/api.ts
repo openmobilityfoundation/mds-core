@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-import express, { NextFunction } from 'express'
+import { AccessTokenScopeValidator, ApiRequest, ApiResponse, checkAccess } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
-
-import { pathPrefix, ServerError, NotFoundError, InsufficientPermissionsError } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-
-import { checkAccess, AccessTokenScopeValidator, ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
+import { InsufficientPermissionsError, NotFoundError, pathPrefix, ServerError } from '@mds-core/mds-utils'
+import express, { NextFunction } from 'express'
 import { GeographyApiVersionMiddleware } from './middleware'
 import {
   GeographyApiAccessTokenScopes,
-  GeographyApiGetGeographyResponse,
+  GeographyApiGetGeographiesRequest,
   GeographyApiGetGeographiesResponse,
   GeographyApiGetGeographyRequest,
-  GeographyApiGetGeographiesRequest
+  GeographyApiGetGeographyResponse
 } from './types'
 
 const checkGeographyApiAccess = (validator: AccessTokenScopeValidator<GeographyApiAccessTokenScopes>) =>

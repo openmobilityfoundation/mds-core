@@ -1,5 +1,5 @@
-import { writeFileSync, existsSync, mkdirSync } from 'fs'
 import { SchemaObject } from 'ajv'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
 
 /**
  *

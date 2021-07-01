@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
+import logger from '@mds-core/mds-logger'
 import { api } from './api'
 
 cache

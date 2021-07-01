@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { mockStream } from '../test-utils'
-import { StreamProducer } from '../stream-interface'
 import { KafkaStreamProducer } from '../kafka'
+import { StreamProducer } from '../stream-interface'
+import { mockStream } from '../test-utils'
 
 type FakeStreamPayload = 'foo'
 

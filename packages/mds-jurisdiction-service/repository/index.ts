@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-import { InsertReturning, UpdateReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
-
-import { ValidationError, ConflictError, NotFoundError, filterDefined } from '@mds-core/mds-utils'
-
+import { InsertReturning, ReadWriteRepository, RepositoryError, UpdateReturning } from '@mds-core/mds-repository'
+import { ConflictError, filterDefined, NotFoundError, ValidationError } from '@mds-core/mds-utils'
+import {
+  CreateJurisdictionDomainModel,
+  GetJurisdictionsOptions,
+  JurisdictionDomainModel,
+  JurisdictionIdType,
+  UpdateJurisdictionDomainModel
+} from '../@types'
 import { JurisdictionEntity } from './entities/jurisdiction-entity'
 import migrations from './migrations'
-import {
-  JurisdictionDomainModel,
-  GetJurisdictionsOptions,
-  UpdateJurisdictionDomainModel,
-  CreateJurisdictionDomainModel,
-  JurisdictionIdType
-} from '../@types'
-import { JurisdictionEntityToDomain, JurisdictionDomainToEntityCreate } from './utils/mappers'
+import { JurisdictionDomainToEntityCreate, JurisdictionEntityToDomain } from './utils/mappers'
 
 class JurisdictionReadWriteRepository extends ReadWriteRepository {
   public createJurisdictions = async (

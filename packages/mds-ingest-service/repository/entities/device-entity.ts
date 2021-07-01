@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Entity, Column } from 'typeorm'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { Column, Entity } from 'typeorm'
 import { DeviceDomainModel } from '../../@types'
 
 export interface DeviceEntityModel extends IdentityColumn, RecordedColumn {

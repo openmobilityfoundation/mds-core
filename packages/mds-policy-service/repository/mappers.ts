@@ -15,13 +15,13 @@
  */
 
 import { IdentityColumn, ModelMapper } from '@mds-core/mds-repository'
-import { PolicyEntityModel } from './entities/policy-entity'
 import {
   PolicyDomainCreateModel,
   PolicyDomainModel,
-  PolicyMetadataDomainModel,
-  PolicyMetadataDomainCreateModel
+  PolicyMetadataDomainCreateModel,
+  PolicyMetadataDomainModel
 } from '../@types'
+import { PolicyEntityModel } from './entities/policy-entity'
 import { PolicyMetadataEntityModel } from './entities/policy-metadata-entity'
 
 type PolicyEntityToDomainOptions = Partial<{}>

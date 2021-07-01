@@ -15,8 +15,8 @@
  */
 
 import { DomainModelCreate } from '@mds-core/mds-repository'
-import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
-import { Nullable, Timestamp, UUID, VEHICLE_TYPE, VehicleEvent } from '@mds-core/mds-types'
+import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
+import { Nullable, Timestamp, UUID, VehicleEvent, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { Cursor } from 'typeorm-cursor-pagination'
 
 export interface PaginationLinks {

@@ -1,10 +1,10 @@
 import { UUID } from '@mds-core/mds-types'
 import { uuid } from '@mds-core/mds-utils'
 import {
+  FEE_TYPE,
   TransactionDomainModel,
-  TransactionStatusDomainModel,
   TransactionOperationDomainCreateModel,
-  FEE_TYPE
+  TransactionStatusDomainModel
 } from '../@types'
 
 const receipt = {

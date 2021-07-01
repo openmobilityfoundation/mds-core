@@ -15,13 +15,13 @@
  */
 
 import { IdentityColumn, ModelMapper } from '@mds-core/mds-repository'
-import { GeographyEntityModel } from './entities/geography-entity'
 import {
   GeographyDomainCreateModel,
   GeographyDomainModel,
-  GeographyMetadataDomainModel,
-  GeographyMetadataDomainCreateModel
+  GeographyMetadataDomainCreateModel,
+  GeographyMetadataDomainModel
 } from '../@types'
+import { GeographyEntityModel } from './entities/geography-entity'
 import { GeographyMetadataEntityModel } from './entities/geography-metadata-entity'
 
 type GeographyEntityToDomainOptions = Partial<{}>

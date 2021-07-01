@@ -14,32 +14,23 @@
  * limitations under the License.
  */
 
-import { VehicleEvent, Device, Telemetry } from '@mds-core/mds-types'
-import logger from '@mds-core/mds-logger'
-
 import { AttachmentRepository } from '@mds-core/mds-attachment-service'
 import { AuditRepository } from '@mds-core/mds-audit-service'
 import { GeographyRepository } from '@mds-core/mds-geography-service'
 import { IngestRepository } from '@mds-core/mds-ingest-service'
+import logger from '@mds-core/mds-logger'
 import { PolicyRepository } from '@mds-core/mds-policy-service'
-import { dropTables, createTables } from './migration'
-import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
-
-import * as devices from './devices'
-
-import * as events from './events'
-
-import * as policies from './policies'
-
-import * as geographies from './geographies'
-
-import * as audit from './audits'
-
-import * as trips from './trips'
-
-import * as telemetry from './telemetry'
-
+import { Device, Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import * as attachments from './attachments'
+import * as audit from './audits'
+import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
+import * as devices from './devices'
+import * as events from './events'
+import * as geographies from './geographies'
+import { createTables, dropTables } from './migration'
+import * as policies from './policies'
+import * as telemetry from './telemetry'
+import * as trips from './trips'
 
 const { writeDevice } = devices
 const { writeTelemetry } = telemetry

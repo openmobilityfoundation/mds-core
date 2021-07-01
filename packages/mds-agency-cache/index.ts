@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
+import { RedisCache } from '@mds-core/mds-cache'
 import logger from '@mds-core/mds-logger'
-
+import { BoundingBox, Device, Telemetry, Timestamp, UUID, VehicleEvent } from '@mds-core/mds-types'
+import {
+  isInsideBoundingBox,
+  NotFoundError,
+  now,
+  nullKeys,
+  routeDistance,
+  setEmptyArraysToUndefined,
+  stripNulls,
+  tail
+} from '@mds-core/mds-utils'
 import flatten, { unflatten } from 'flat'
 import {
-  NotFoundError,
-  nullKeys,
-  stripNulls,
-  now,
-  isInsideBoundingBox,
-  routeDistance,
-  tail,
-  setEmptyArraysToUndefined
-} from '@mds-core/mds-utils'
-import { UUID, Timestamp, Device, VehicleEvent, Telemetry, BoundingBox } from '@mds-core/mds-types'
-import { RedisCache } from '@mds-core/mds-cache'
-
-import { parseTelemetry, parseEvent, parseDevice, parseCachedItem } from './unflatteners'
-import {
-  CacheReadDeviceResult,
   CachedItem,
+  CacheReadDeviceResult,
   StringifiedCacheReadDeviceResult,
+  StringifiedEvent,
   StringifiedEventWithTelemetry,
-  StringifiedTelemetry,
-  StringifiedEvent
+  StringifiedTelemetry
 } from './types'
+import { parseCachedItem, parseDevice, parseEvent, parseTelemetry } from './unflatteners'
 
 const { env } = process
 

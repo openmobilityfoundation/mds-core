@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Entity, Column, Index } from 'typeorm'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { Column, Entity, Index } from 'typeorm'
 import { AttachmentDomainModel } from '../../@types'
 
 export interface AttachmentEntityModel extends IdentityColumn, RecordedColumn {

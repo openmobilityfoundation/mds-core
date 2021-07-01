@@ -16,10 +16,10 @@
 
 import {
   ApiRequest,
-  ApiVersionedResponse,
   ApiRequestParams,
   ApiRequestQuery,
-  ApiResponseLocalsClaims
+  ApiResponseLocalsClaims,
+  ApiVersionedResponse
 } from '@mds-core/mds-api-server'
 import { Geography, GeographySummary } from '@mds-core/mds-types'
 

@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-import {
-  VEHICLE_TYPE,
-  VEHICLE_EVENT,
-  VEHICLE_STATE,
-  PROPULSION_TYPE,
-  Device,
-  Telemetry,
-  VehicleEvent,
-  ACCESSIBILITY_OPTION,
-  MODALITY,
-  TRIP_STATE
-} from '@mds-core/mds-types'
-
-import { ParseError } from '@mds-core/mds-utils'
 import { HasPropertyAssertion } from '@mds-core/mds-schema-validators'
 import {
+  ACCESSIBILITY_OPTION,
+  Device,
+  MODALITY,
+  PROPULSION_TYPE,
+  Telemetry,
+  TRIP_STATE,
+  VehicleEvent,
+  VEHICLE_EVENT,
+  VEHICLE_STATE,
+  VEHICLE_TYPE
+} from '@mds-core/mds-types'
+import { ParseError } from '@mds-core/mds-utils'
+import {
+  CachedItem,
+  StringifiedCacheReadDeviceResult,
   StringifiedEvent,
   StringifiedEventWithTelemetry,
-  StringifiedTelemetry,
-  StringifiedCacheReadDeviceResult,
-  CachedItem
+  StringifiedTelemetry
 } from './types'
 
 function parseTelemetry(telemetry: StringifiedTelemetry): Telemetry {

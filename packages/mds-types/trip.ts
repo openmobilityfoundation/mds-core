@@ -1,6 +1,6 @@
-import { Timestamp, UUID } from './utils'
 import { ACCESSIBILITY_OPTION } from './device'
 import { GpsData } from './telemetry'
+import { Timestamp, UUID } from './utils'
 
 export const TRIP_STATES = ['on_trip', 'reserved', 'stopped'] as const
 export type TRIP_STATE = typeof TRIP_STATES[number]

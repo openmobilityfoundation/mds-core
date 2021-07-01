@@ -16,10 +16,10 @@
 
 import {
   ApiRequest,
-  ApiVersionedResponse,
-  ApiRequestQuery,
   ApiRequestParams,
-  ApiResponseLocalsClaims
+  ApiRequestQuery,
+  ApiResponseLocalsClaims,
+  ApiVersionedResponse
 } from '@mds-core/mds-api-server'
 import { PolicyTypeInfo } from '@mds-core/mds-types'
 

@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
+import {
+  HealthRequestHandler,
+  HttpServer,
+  PrometheusMiddleware,
+  RawBodyParserMiddleware,
+  RawBodyParserMiddlewareOptions,
+  RequestLoggingMiddleware
+} from '@mds-core/mds-api-server'
+import logger from '@mds-core/mds-logger'
+import { ProcessManager } from '@mds-core/mds-service-helpers'
+import { Nullable } from '@mds-core/mds-types'
 import express from 'express'
 import http from 'http'
 import net from 'net'
 import REPL from 'repl'
-import { ServiceHandlerFor } from 'rpc_ts/lib/server/server'
 import { ModuleRpcProtocolServer } from 'rpc_ts/lib/protocol/server'
-import logger from '@mds-core/mds-logger'
-import {
-  HttpServer,
-  HealthRequestHandler,
-  PrometheusMiddleware,
-  RequestLoggingMiddleware,
-  RawBodyParserMiddlewareOptions,
-  RawBodyParserMiddleware
-} from '@mds-core/mds-api-server'
-import { Nullable } from '@mds-core/mds-types'
-import { ProcessManager } from '@mds-core/mds-service-helpers'
-import { RpcServiceDefinition, RPC_PORT, RPC_CONTENT_TYPE, REPL_PORT } from '../@types'
+import { ServiceHandlerFor } from 'rpc_ts/lib/server/server'
+import { REPL_PORT, RpcServiceDefinition, RPC_CONTENT_TYPE, RPC_PORT } from '../@types'
 
 export interface RpcServiceHandlers {
   onStart: () => Promise<void>

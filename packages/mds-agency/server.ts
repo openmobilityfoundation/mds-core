@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import cache from '@mds-core/mds-agency-cache'
-import stream from '@mds-core/mds-stream'
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
+import logger from '@mds-core/mds-logger'
+import stream from '@mds-core/mds-stream'
 import { api } from './api'
 
 Promise.all([cache.startup(), stream.initialize()])

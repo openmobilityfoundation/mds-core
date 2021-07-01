@@ -1,21 +1,21 @@
-import {
-  Geography,
-  UUID,
-  Device,
-  VehicleEvent,
-  ModalityRule,
-  DAY_OF_WEEK,
-  TIME_FORMAT,
-  DAYS_OF_WEEK,
-  ModalityPolicy,
-  RULE_TYPE
-} from '@mds-core/mds-types'
 import cache from '@mds-core/mds-agency-cache'
+import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service'
 import db from '@mds-core/mds-db'
+import { providers } from '@mds-core/mds-providers'
+import {
+  DAYS_OF_WEEK,
+  DAY_OF_WEEK,
+  Device,
+  Geography,
+  ModalityPolicy,
+  ModalityRule,
+  RULE_TYPE,
+  TIME_FORMAT,
+  UUID,
+  VehicleEvent
+} from '@mds-core/mds-types'
 import { isDefined, now, RuntimeError } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
-import { providers } from '@mds-core/mds-providers'
-import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service'
 import { VehicleEventWithTelemetry } from '../@types'
 
 const { env } = process

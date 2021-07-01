@@ -14,31 +14,28 @@
  * limitations under the License.
  */
 
+import logger from '@mds-core/mds-logger'
 import {
-  UUID,
-  Timestamp,
-  Recorded,
-  PolicyMetadata,
+  ModalityPolicy,
   Nullable,
+  PolicyMetadata,
   PolicyTypeInfo,
-  ModalityPolicy
+  Recorded,
+  Timestamp,
+  UUID
 } from '@mds-core/mds-types'
 import {
-  now,
-  NotFoundError,
-  BadParamsError,
   AlreadyPublishedError,
+  BadParamsError,
+  ConflictError,
   DependencyMissingError,
-  ConflictError
+  NotFoundError,
+  now
 } from '@mds-core/mds-utils'
-import logger from '@mds-core/mds-logger'
-
-import schema from './schema'
-
-import { vals_sql, cols_sql, vals_list, SqlVals } from './sql-utils'
-
-import { isGeographyPublished } from './geographies'
 import { getReadOnlyClient, getWriteableClient } from './client'
+import { isGeographyPublished } from './geographies'
+import schema from './schema'
+import { cols_sql, SqlVals, vals_list, vals_sql } from './sql-utils'
 
 export async function readPolicies<PInfo extends PolicyTypeInfo>(params?: {
   policy_id?: UUID

@@ -17,24 +17,23 @@
 import {
   Device,
   Geography,
-  VehicleEvent,
-  UUID,
-  TimeRule,
-  Telemetry,
   ModalityPolicy,
-  RULE_TYPES
+  RULE_TYPES,
+  Telemetry,
+  TimeRule,
+  UUID,
+  VehicleEvent
 } from '@mds-core/mds-types'
-
 import {
-  pointInShape,
   getPolygon,
   isInStatesOrEvents,
   now,
+  pointInShape,
   RULE_UNIT_MAP,
   UnsupportedTypeError
 } from '@mds-core/mds-utils'
-import { annotateVehicleMap, getPolicyType, isInVehicleTypes, isRuleActive } from './helpers'
 import { ComplianceEngineResult } from '../@types'
+import { annotateVehicleMap, getPolicyType, isInVehicleTypes, isRuleActive } from './helpers'
 
 export function isTimeRuleMatch(
   rule: TimeRule,

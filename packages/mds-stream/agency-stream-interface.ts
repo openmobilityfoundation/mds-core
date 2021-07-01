@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { VehicleEvent, Telemetry, Device, TripMetadata } from '@mds-core/mds-types'
+import { Device, Telemetry, TripMetadata, VehicleEvent } from '@mds-core/mds-types'
 import { BadDataError } from './types'
 
 export interface AgencyStreamInterface {

@@ -15,31 +15,28 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import redis from 'redis'
+import { Device, Telemetry, TripMetadata, VehicleEvent } from '@mds-core/mds-types'
 import bluebird from 'bluebird'
-import { Device, VehicleEvent, Telemetry, TripMetadata } from '@mds-core/mds-types'
+import redis from 'redis'
+import { KafkaStreamConsumer, KafkaStreamProducer } from './kafka'
+import { AgencyStreamKafka } from './kafka/agency-stream-kafka'
+import { AgencyStreamNats } from './nats/agency-stream-nats'
+import { NatsStreamConsumer } from './nats/stream-consumer'
+import { NatsStreamProducer } from './nats/stream-producer'
+import { mockStream } from './test-utils'
 import {
-  Stream,
-  StreamItem,
-  ReadStreamResult,
+  BadDataError,
   DEVICE_INDEX_STREAM,
   DEVICE_RAW_STREAM,
   ReadStreamOptions,
-  StreamItemID,
-  BadDataError
+  ReadStreamResult,
+  Stream,
+  StreamItem,
+  StreamItemID
 } from './types'
-import { AgencyStreamKafka } from './kafka/agency-stream-kafka'
-import { KafkaStreamConsumer, KafkaStreamProducer } from './kafka'
-
-import { NatsStreamConsumer } from './nats/stream-consumer'
-import { NatsStreamProducer } from './nats/stream-producer'
-
-import { AgencyStreamNats } from './nats/agency-stream-nats'
-import { mockStream } from './test-utils'
-
-export { NatsProcessorFn } from './nats/codecs'
 
 export { KafkaStreamConsumerOptions, KafkaStreamProducerOptions } from './kafka'
+export { NatsProcessorFn } from './nats/codecs'
 export { StreamConsumer, StreamProducer } from './stream-interface'
 
 const { env } = process

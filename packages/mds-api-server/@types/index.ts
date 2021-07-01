@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import express from 'express'
 import { AuthorizerClaims } from '@mds-core/mds-api-authorizer'
+import express from 'express'
 
 export type ApiRequest<B = {}> = express.Request<{}, unknown, B, {}>
 

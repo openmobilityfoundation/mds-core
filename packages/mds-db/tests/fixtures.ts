@@ -1,5 +1,5 @@
+import { DISTRICT_SEVEN, GEOGRAPHY2_UUID, GEOGRAPHY_UUID, LA_CITY_BOUNDARY } from '@mds-core/mds-test-data'
 import { Geography } from '@mds-core/mds-types'
-import { GEOGRAPHY_UUID, GEOGRAPHY2_UUID, LA_CITY_BOUNDARY, DISTRICT_SEVEN } from '@mds-core/mds-test-data'
 
 export const LAGeography: Geography = {
   name: 'Los Angeles',

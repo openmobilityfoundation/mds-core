@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { Optional, Timestamp } from '@mds-core/mds-types'
 import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repository'
-import { ComplianceSnapshotEntityModel } from './entities/compliance-snapshot-entity'
+import { Optional, Timestamp } from '@mds-core/mds-types'
 import {
   ComplianceSnapshotDomainModel,
   ComplianceViolationPeriodDomainModel,
   ComplianceViolationPeriodEntityModel
 } from '../@types'
+import { ComplianceSnapshotEntityModel } from './entities/compliance-snapshot-entity'
 
 type ComplianceSnapshotEntityToDomainOptions = Partial<{}>
 

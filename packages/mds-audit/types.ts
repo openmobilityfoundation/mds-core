@@ -15,27 +15,27 @@
  */
 
 import {
+  ApiRequest,
+  ApiRequestParams,
+  ApiRequestQuery,
+  ApiResponseLocals,
+  ApiResponseLocalsClaims,
+  ApiVersionedResponse
+} from '@mds-core/mds-api-server'
+import {
+  AttachmentSummary,
   Audit,
+  AuditEvent,
+  Device,
+  Nullable,
   Telemetry,
   Timestamp,
   UUID,
-  Device,
   VehicleEvent,
-  AttachmentSummary,
-  AuditEvent,
-  WithGpsProperty,
   VEHICLE_EVENT,
   VEHICLE_STATE,
-  Nullable
+  WithGpsProperty
 } from '@mds-core/mds-types'
-import {
-  ApiRequest,
-  ApiRequestQuery,
-  ApiVersionedResponse,
-  ApiRequestParams,
-  ApiResponseLocals,
-  ApiResponseLocalsClaims
-} from '@mds-core/mds-api-server'
 
 export const AUDIT_API_SUPPORTED_VERSIONS = ['0.1.0'] as const
 export type AUDIT_API_SUPPORTED_VERSION = typeof AUDIT_API_SUPPORTED_VERSIONS[number]

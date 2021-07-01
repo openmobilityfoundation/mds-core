@@ -15,8 +15,8 @@
  */
 
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
-import { ModalityPolicyTypeInfo } from '@mds-core/mds-types'
 import { modalityPolicySchemaJson } from '@mds-core/mds-schema-validators'
+import { ModalityPolicyTypeInfo } from '@mds-core/mds-types'
 import { api, injectSchema } from './api'
 
 /**

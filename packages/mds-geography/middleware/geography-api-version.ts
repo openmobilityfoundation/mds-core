@@ -15,7 +15,7 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
-import { GEOGRAPHY_API_SUPPORTED_VERSIONS, GEOGRAPHY_API_DEFAULT_VERSION } from '../types'
+import { GEOGRAPHY_API_DEFAULT_VERSION, GEOGRAPHY_API_SUPPORTED_VERSIONS } from '../types'
 
 export const GeographyApiVersionMiddleware = ApiVersionMiddleware(
   'application/vnd.mds-geography+json',

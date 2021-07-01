@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Timestamp, Nullable, Optional } from '@mds-core/mds-types'
-import { ModelMapper, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repository'
+import { Nullable, Optional, Timestamp } from '@mds-core/mds-types'
 import { uuid } from '@mds-core/mds-utils'
-import { JurisdictionDomainModel, CreateJurisdictionDomainModel } from '../../@types'
+import { CreateJurisdictionDomainModel, JurisdictionDomainModel } from '../../@types'
 import { JurisdictionEntityModel } from '../entities/jurisdiction-entity'
 
 type MapJurisdictionEntityToDomainModelOptions = Partial<{

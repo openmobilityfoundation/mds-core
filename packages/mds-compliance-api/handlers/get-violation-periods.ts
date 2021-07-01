@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { ComplianceServiceClient, ComplianceViolationPeriodDomainModel } from '@mds-core/mds-compliance-service'
-import { ApiRequestQuery } from '@mds-core/mds-api-server'
-import express from 'express'
 import { parseRequest } from '@mds-core/mds-api-helpers'
-import { Timestamp } from '@mds-core/mds-types'
-import { base64EncodeArray } from './helpers'
-import { AuthorizationError, BadParamsError, isDefined, now, ServerError } from '@mds-core/mds-utils'
-import { ComplianceAggregate, ComplianceApiRequest, ComplianceApiResponse } from '../@types'
+import { ApiRequestQuery } from '@mds-core/mds-api-server'
+import { ComplianceServiceClient, ComplianceViolationPeriodDomainModel } from '@mds-core/mds-compliance-service'
 import logger from '@mds-core/mds-logger'
 import { isError } from '@mds-core/mds-service-helpers'
+import { Timestamp } from '@mds-core/mds-types'
+import { AuthorizationError, BadParamsError, isDefined, now, ServerError } from '@mds-core/mds-utils'
+import express from 'express'
+import { ComplianceAggregate, ComplianceApiRequest, ComplianceApiResponse } from '../@types'
+import { base64EncodeArray } from './helpers'
 export type ComplianceApiGetViolationPeriodsRequest = ComplianceApiRequest &
   ApiRequestQuery<'start_time' | 'end_time' | 'provider_ids' | 'policy_ids'>
 

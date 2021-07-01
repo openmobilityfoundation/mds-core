@@ -15,17 +15,16 @@
  */
 
 import {
+  CountRule,
   Device,
   Geography,
-  VehicleEvent,
-  UUID,
-  CountRule,
-  Telemetry,
   ModalityPolicy,
-  RULE_TYPES
+  RULE_TYPES,
+  Telemetry,
+  UUID,
+  VehicleEvent
 } from '@mds-core/mds-types'
-
-import { pointInShape, getPolygon, isInStatesOrEvents, isDefined, UnsupportedTypeError } from '@mds-core/mds-utils'
+import { getPolygon, isDefined, isInStatesOrEvents, pointInShape, UnsupportedTypeError } from '@mds-core/mds-utils'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../@types'
 import { annotateVehicleMap, getPolicyType, isInVehicleTypes, isRuleActive } from './helpers'
 

@@ -14,41 +14,39 @@
  * limitations under the License.
  */
 
-import express, { NextFunction } from 'express'
+import { AccessTokenScopeValidator, ApiRequest, ApiResponse, checkAccess } from '@mds-core/mds-api-server'
 import db from '@mds-core/mds-db'
-
+import logger from '@mds-core/mds-logger'
+import { geographyValidationDetails } from '@mds-core/mds-schema-validators'
 import {
+  AlreadyPublishedError,
+  BadParamsError,
+  ConflictError,
+  DependencyMissingError,
+  InsufficientPermissionsError,
+  NotFoundError,
   pathPrefix,
   ServerError,
-  NotFoundError,
-  DependencyMissingError,
-  ValidationError,
-  AlreadyPublishedError,
-  InsufficientPermissionsError,
-  BadParamsError,
-  ConflictError
+  ValidationError
 } from '@mds-core/mds-utils'
-import { geographyValidationDetails } from '@mds-core/mds-schema-validators'
-import logger from '@mds-core/mds-logger'
-
-import { checkAccess, AccessTokenScopeValidator, ApiResponse, ApiRequest } from '@mds-core/mds-api-server'
+import express, { NextFunction } from 'express'
 import { GeographyAuthorApiVersionMiddleware } from './middleware'
 import {
   GeographyAuthorApiAccessTokenScopes,
-  GeographyAuthorApiGetGeographyMetadatumResponse,
-  GeographyAuthorApiDeleteGeographyResponse,
-  GeographyAuthorApiPostGeographyResponse,
-  GeographyAuthorApiPutGeographyResponse,
-  GeographyAuthorApiPutGeographyMetadataResponse,
-  GeographyAuthorApiGetGeographyMetadataResponse,
-  GeographyAuthorApiGetGeographyMetadataRequest,
-  GeographyAuthorApiPostGeographyRequest,
-  GeographyAuthorApiPutGeographyRequest,
   GeographyAuthorApiDeleteGeographyRequest,
+  GeographyAuthorApiDeleteGeographyResponse,
+  GeographyAuthorApiGetGeographyMetadataRequest,
+  GeographyAuthorApiGetGeographyMetadataResponse,
   GeographyAuthorApiGetGeographyMetadatumRequest,
-  GeographyAuthorApiPutGeographyMetadataRequest,
+  GeographyAuthorApiGetGeographyMetadatumResponse,
+  GeographyAuthorApiPostGeographyRequest,
+  GeographyAuthorApiPostGeographyResponse,
   GeographyAuthorApiPublishGeographyRequest,
-  GeographyAuthorApiPublishGeographyResponse
+  GeographyAuthorApiPublishGeographyResponse,
+  GeographyAuthorApiPutGeographyMetadataRequest,
+  GeographyAuthorApiPutGeographyMetadataResponse,
+  GeographyAuthorApiPutGeographyRequest,
+  GeographyAuthorApiPutGeographyResponse
 } from './types'
 
 const checkGeographyAuthorApiAccess = (validator: AccessTokenScopeValidator<GeographyAuthorApiAccessTokenScopes>) =>

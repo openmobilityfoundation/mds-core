@@ -1,10 +1,10 @@
-import MDSDBPostgres from '../index'
-import { dropTables, createTables } from '../migration'
 import { AttachmentRepository } from '@mds-core/mds-attachment-service'
 import { AuditRepository } from '@mds-core/mds-audit-service'
 import { GeographyRepository } from '@mds-core/mds-geography-service'
 import { IngestRepository } from '@mds-core/mds-ingest-service'
 import { PolicyRepository } from '@mds-core/mds-policy-service'
+import MDSDBPostgres from '../index'
+import { createTables, dropTables } from '../migration'
 import { PGInfo } from '../sql-utils'
 
 const { env } = process

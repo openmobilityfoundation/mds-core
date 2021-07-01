@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import express from 'express'
+import { AccessTokenScopeValidator, checkAccess } from '@mds-core/mds-api-server'
 import { pathPrefix } from '@mds-core/mds-utils'
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { JurisdictionApiVersionMiddleware } from './middleware'
+import express from 'express'
+import { JurisdictionApiAccessTokenScopes } from './@types'
 import {
   CreateJurisdictionHandler,
   DeleteJurisdictionHandler,
-  GetJurisdictionsHandler,
   GetJurisdictionHandler,
+  GetJurisdictionsHandler,
   UpdateJurisdictionHandler
 } from './handlers'
-import { JurisdictionApiAccessTokenScopes } from './@types'
+import { JurisdictionApiVersionMiddleware } from './middleware'
 
 const checkJurisdictionApiAccess = (validator: AccessTokenScopeValidator<JurisdictionApiAccessTokenScopes>) =>
   checkAccess(validator)

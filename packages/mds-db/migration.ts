@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import logger from '@mds-core/mds-logger'
 import { AttachmentRepository } from '@mds-core/mds-attachment-service'
+import { AuditRepository } from '@mds-core/mds-audit-service'
 import { GeographyRepository } from '@mds-core/mds-geography-service'
 import { IngestRepository } from '@mds-core/mds-ingest-service'
+import logger from '@mds-core/mds-logger'
 import { PolicyRepository } from '@mds-core/mds-policy-service'
-import { AuditRepository } from '@mds-core/mds-audit-service'
 
 async function dropTables() {
   await Promise.all(

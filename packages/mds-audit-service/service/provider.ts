@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ServiceProvider, ProcessController, ServiceResult } from '@mds-core/mds-service-helpers'
+import { ProcessController, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
 import { AuditService } from '../@types'
 import { AuditRepository } from '../repository'
 

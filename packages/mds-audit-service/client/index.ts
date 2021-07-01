@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ServiceClient } from '@mds-core/mds-service-helpers'
 import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common'
+import { ServiceClient } from '@mds-core/mds-service-helpers'
 import { AuditService, AuditServiceDefinition } from '../@types'
 
 const AuditServiceRpcClient = RpcClient(AuditServiceDefinition, {

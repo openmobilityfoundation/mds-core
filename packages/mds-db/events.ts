@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-import { VehicleEvent, Device, UUID, Timestamp, Recorded } from '@mds-core/mds-types'
-import { now, isUUID, isTimestamp, seconds, yesterday } from '@mds-core/mds-utils'
 import logger from '@mds-core/mds-logger'
-import { ReadEventsResult, ReadEventsQueryParams, ReadHistoricalEventsQueryParams } from './types'
-
-import schema from './schema'
-
-import { vals_sql, cols_sql, vals_list, logSql, SqlVals, SqlExecuter } from './sql-utils'
-
-import { readDevice } from './devices'
+import { Device, Recorded, Timestamp, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { isTimestamp, isUUID, now, seconds, yesterday } from '@mds-core/mds-utils'
 import { getReadOnlyClient, getWriteableClient, makeReadOnlyQuery } from './client'
+import { readDevice } from './devices'
+import schema from './schema'
+import { cols_sql, logSql, SqlExecuter, SqlVals, vals_list, vals_sql } from './sql-utils'
+import { ReadEventsQueryParams, ReadEventsResult, ReadHistoricalEventsQueryParams } from './types'
 
 export async function writeEvent(event: VehicleEvent) {
   const client = await getWriteableClient()

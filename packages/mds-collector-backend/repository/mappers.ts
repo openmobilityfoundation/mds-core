@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Timestamp } from '@mds-core/mds-types'
 import { ModelMapper } from '@mds-core/mds-repository'
+import { Timestamp } from '@mds-core/mds-types'
 import {
   CollectorMessageDomainCreateModel,
   CollectorMessageDomainModel,

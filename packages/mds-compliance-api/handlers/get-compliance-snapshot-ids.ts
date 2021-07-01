@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { UUID } from '@mds-core/mds-types'
 import { parseRequest } from '@mds-core/mds-api-helpers'
+import logger from '@mds-core/mds-logger'
+import { UUID } from '@mds-core/mds-types'
 import { isDefined, ServerError } from '@mds-core/mds-utils'
 import { ComplianceApiRequest, ComplianceApiResponse } from '../@types'
 import { base64DecodeComplianceIDsToken } from './helpers'
-import logger from '@mds-core/mds-logger'
 export type ComplianceApiGetComplianceSnapshotIDsRequest = ComplianceApiRequest
 
 export type ComplianceApiGetComplianceSnapshotIDsResponse = ComplianceApiResponse<{

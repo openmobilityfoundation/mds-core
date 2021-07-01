@@ -15,9 +15,9 @@
  */
 
 import { RpcServer } from '@mds-core/mds-rpc-common'
-import { CollectorServiceProvider } from './provider'
-import { CollectorServiceClient } from '../client'
 import { CollectorServiceRpcDefinition } from '../@types'
+import { CollectorServiceClient } from '../client'
+import { CollectorServiceProvider } from './provider'
 
 export const { monitor: CollectorBackend, controller: CollectorBackendController } = RpcServer(
   CollectorServiceRpcDefinition,

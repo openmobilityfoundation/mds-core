@@ -15,20 +15,20 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { Nullable } from '@mds-core/mds-types'
-import stream, { StreamProducer } from '@mds-core/mds-stream'
+import { SchemaValidator } from '@mds-core/mds-schema-validators'
 import {
-  ServiceProvider,
   ProcessController,
-  ServiceResult,
+  ServiceError,
   ServiceException,
-  ServiceError
+  ServiceProvider,
+  ServiceResult
 } from '@mds-core/mds-service-helpers'
+import stream, { StreamProducer } from '@mds-core/mds-stream'
+import { Nullable } from '@mds-core/mds-types'
 import { getEnvVar, pluralize, ServerError } from '@mds-core/mds-utils'
 import { ErrorObject } from 'ajv'
 import { CollectorService } from '../@types'
 import { CollectorRepository } from '../repository'
-import { SchemaValidator } from '@mds-core/mds-schema-validators'
 
 const SchemaValidators = new Map<string, SchemaValidator<unknown>>()
 type CollectorStreamProducer = Nullable<StreamProducer<{}>>

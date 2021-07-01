@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { isUUID } from '@mds-core/mds-utils'
+import { parseRequest } from '@mds-core/mds-api-helpers'
 import db from '@mds-core/mds-db'
 import { providerName } from '@mds-core/mds-providers'
-import { parseRequest } from '@mds-core/mds-api-helpers'
+import { isUUID } from '@mds-core/mds-utils'
 import { AgencyApiRequest, AgencyApiResponse } from './types'
 
 export const readAllVehicleIds = async (req: AgencyApiRequest, res: AgencyApiResponse) => {

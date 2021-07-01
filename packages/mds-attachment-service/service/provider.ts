@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { ServiceProvider, ProcessController, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
-import { UUID } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
+import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
+import { UUID } from '@mds-core/mds-types'
 import { AttachmentService, ReadAttachmentsOptions } from '../@types'
 import { AttachmentRepository } from '../repository'
-import { writeAttachmentS3, deleteAttachmentS3, validateFile } from './helpers'
+import { deleteAttachmentS3, validateFile, writeAttachmentS3 } from './helpers'
 
 export const AttachmentServiceProvider: ServiceProvider<AttachmentService> & ProcessController = {
   start: AttachmentRepository.initialize,

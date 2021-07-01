@@ -1,6 +1,6 @@
-import { Enum, Timestamp, UUID, Nullable } from './utils'
 import { Telemetry } from './telemetry'
 import { TRIP_STATE } from './trip'
+import { Enum, Nullable, Timestamp, UUID } from './utils'
 import {
   MICRO_MOBILITY_VEHICLE_STATE,
   TAXI_VEHICLE_STATE,

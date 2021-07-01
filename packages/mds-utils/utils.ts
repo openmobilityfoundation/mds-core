@@ -16,38 +16,37 @@
 
 // utility functions
 
-import circleToPolygon from 'circle-to-polygon'
-import pointInPoly from 'point-in-polygon'
+import logger from '@mds-core/mds-logger'
 import {
-  UUID,
-  Timestamp,
-  VehicleEvent,
-  Telemetry,
-  BoundingBox,
-  Geography,
-  Rule,
-  MICRO_MOBILITY_EVENT_STATES_MAP,
-  MICRO_MOBILITY_VEHICLE_STATE,
   BBox,
-  SingleOrArray,
+  BoundingBox,
   Device,
+  Geography,
   MicroMobilityVehicleEvent,
+  MICRO_MOBILITY_EVENT_STATES_MAP,
   MICRO_MOBILITY_VEHICLE_EVENTS,
-  TAXI_VEHICLE_EVENTS,
-  TAXI_EVENT_STATES_MAP,
-  TAXI_VEHICLE_STATE,
+  MICRO_MOBILITY_VEHICLE_STATE,
+  Rule,
+  SingleOrArray,
   TaxiVehicleEvent,
+  TAXI_EVENT_STATES_MAP,
+  TAXI_VEHICLE_EVENTS,
+  TAXI_VEHICLE_STATE,
+  Telemetry,
+  Timestamp,
   TNCVehicleEvent,
+  TNC_EVENT_STATES_MAP,
   TNC_VEHICLE_EVENT,
   TNC_VEHICLE_STATE,
-  TNC_EVENT_STATES_MAP
+  UUID,
+  VehicleEvent
 } from '@mds-core/mds-types'
-import logger from '@mds-core/mds-logger'
-import { MultiPolygon, Polygon, FeatureCollection, Geometry, Feature } from 'geojson'
-
+import circleToPolygon from 'circle-to-polygon'
+import { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from 'geojson'
+import pointInPoly from 'point-in-polygon'
 import { isArray, isString } from 'util'
+import { getCurrentDate, parseRelative } from './date-time-utils'
 import { getNextStates, isEventSequenceValid } from './state-machine'
-import { parseRelative, getCurrentDate } from './date-time-utils'
 
 const RADIUS = 30.48 // 100 feet, in meters
 const NUMBER_OF_EDGES = 32 // Number of edges to add, geojson doesn't support real circles

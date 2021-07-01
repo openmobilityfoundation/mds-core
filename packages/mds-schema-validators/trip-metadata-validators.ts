@@ -1,13 +1,13 @@
-import Joi from 'joi'
-import { TripMetadata, RESERVATION_METHODS, RESERVATION_TYPES, PAYMENT_METHODS } from '@mds-core/mds-types'
+import { PAYMENT_METHODS, RESERVATION_METHODS, RESERVATION_TYPES, TripMetadata } from '@mds-core/mds-types'
 import { RuntimeError } from '@mds-core/mds-utils'
+import Joi from 'joi'
 import {
-  uuidSchema,
-  ValidateSchema,
-  numberSchema,
-  timestampSchema,
   accessibilityOptionsSchema,
-  stringSchema
+  numberSchema,
+  stringSchema,
+  timestampSchema,
+  uuidSchema,
+  ValidateSchema
 } from './validators'
 
 /**

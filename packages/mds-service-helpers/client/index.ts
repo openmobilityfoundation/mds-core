@@ -15,7 +15,7 @@
  */
 
 import { AnyFunction } from '@mds-core/mds-types'
-import { ServiceResponse, ServiceErrorDescriptor, ServiceErrorDescriptorType } from '../@types'
+import { ServiceErrorDescriptor, ServiceErrorDescriptorType, ServiceResponse } from '../@types'
 
 export const isServiceError = <E extends string = ServiceErrorDescriptorType>(
   error: unknown,

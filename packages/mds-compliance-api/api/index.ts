@@ -1,13 +1,13 @@
-import express from 'express'
+import { AccessTokenScopeValidator, checkAccess } from '@mds-core/mds-api-server'
 import { pathPrefix } from '@mds-core/mds-utils'
-import { checkAccess, AccessTokenScopeValidator } from '@mds-core/mds-api-server'
-import { ComplianceApiVersionMiddleware } from '../middleware'
+import express from 'express'
+import { ComplianceApiAccessTokenScopes } from '../@types'
 import {
   GetComplianceSnapshotIDsHandler,
   GetViolationDetailsSnapshotHandler,
   GetViolationPeriodsHandler
 } from '../handlers'
-import { ComplianceApiAccessTokenScopes } from '../@types'
+import { ComplianceApiVersionMiddleware } from '../middleware'
 
 const checkComplianceApiAccess = (validator: AccessTokenScopeValidator<ComplianceApiAccessTokenScopes>) =>
   checkAccess(validator)

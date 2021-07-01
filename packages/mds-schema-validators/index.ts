@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
+import { ValidationError } from '@mds-core/mds-utils'
+import Ajv, { JSONSchemaType, Options, SchemaObject, ValidateFunction } from 'ajv'
+import withFormats from 'ajv-formats'
 import Joi from 'joi'
 export type { SchemaObject } from 'ajv'
-import Ajv, { SchemaObject, JSONSchemaType, Options, ValidateFunction } from 'ajv'
-import withFormats from 'ajv-formats'
-import { ValidationError } from '@mds-core/mds-utils'
+export * from './generators'
+// Export an example schema for testing purposes
+export * from './tests/test.schema'
+export * from './trip-metadata-validators'
+export * from './v0_4_1'
+export * from './validators'
 
 export type Schema<T> = SchemaObject | JSONSchemaType<T>
 
@@ -44,9 +50,6 @@ export const SchemaValidator = <T>(schema: Schema<T>, options: Options = { allEr
   }
 }
 
-// Export an example schema for testing purposes
-export * from './tests/test.schema'
-
 /**
  * @deprecated JSON Schema based validation is preferable to Joi. Please use the SchemaValidator instead.
  */
@@ -63,8 +66,3 @@ export const schemaValidator = <T>(
   },
   isValid: (input: unknown): input is T => !schema.validate(input, options).error
 })
-
-export * from './validators'
-export * from './trip-metadata-validators'
-export * from './v0_4_1'
-export * from './generators'

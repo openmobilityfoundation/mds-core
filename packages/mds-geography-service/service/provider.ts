@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ServiceProvider, ProcessController, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
 import logger from '@mds-core/mds-logger'
+import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
 import { GeographyService } from '../@types'
 import { GeographyRepository } from '../repository'
 import {

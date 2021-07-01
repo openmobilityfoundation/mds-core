@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import express from 'express'
 import logger from '@mds-core/mds-logger'
+import express from 'express'
 import { serverVersion } from './utils'
 
 export type HttpServerOptions = Partial<{

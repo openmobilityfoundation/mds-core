@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
 import { AUDIT_EVENT_TYPES, VEHICLE_EVENTS } from '@mds-core/mds-types'
+import Joi from 'joi'
 import { AuditAttachmentDomainModel, AuditDomainModel, AuditEventDomainModel } from '../@types'
 
 export const { validate: validateAuditDomainModel, isValid: isValidAuditDomainModel } =

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Joi from 'joi'
-import gjv from 'geojson-validation'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
+import gjv from 'geojson-validation'
+import Joi from 'joi'
 import {
   GeographyDomainCreateModel,
   GeographyMetadataDomainCreateModel,

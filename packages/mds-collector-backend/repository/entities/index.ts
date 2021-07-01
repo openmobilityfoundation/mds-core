@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Column, Entity, Index } from 'typeorm'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
 import { SchemaObject } from 'ajv'
+import { Column, Entity, Index } from 'typeorm'
 
 @Entity('collector-schemas')
 export class CollectorSchemaEntity extends IdentityColumn(RecordedColumn(class {})) {

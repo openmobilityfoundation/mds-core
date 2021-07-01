@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { NatsConnection, StringCodec } from 'nats'
 import { Nullable } from '@mds-core/mds-types'
+import { NatsConnection, StringCodec } from 'nats'
 import { StreamProducer } from '../stream-interface'
 import { createStreamProducer, disconnectClient } from './helpers'
 

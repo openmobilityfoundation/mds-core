@@ -15,14 +15,14 @@
  */
 
 import {
-  Recorded,
-  UUID,
-  Timestamp,
-  VehicleEvent,
-  TelemetryData,
-  VEHICLE_TYPE,
+  Nullable,
   PROPULSION_TYPE,
-  Nullable
+  Recorded,
+  TelemetryData,
+  Timestamp,
+  UUID,
+  VehicleEvent,
+  VEHICLE_TYPE
 } from '@mds-core/mds-types'
 import { FeatureCollection } from 'geojson'
 

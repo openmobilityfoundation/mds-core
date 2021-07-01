@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import logger from '@mds-core/mds-logger'
+import { Nullable } from '@mds-core/mds-types'
+import { ClientDisconnectedError, ExceptionMessages, isDefined } from '@mds-core/mds-utils'
 import { Kafka, Producer } from 'kafkajs'
 import { isArray } from 'util'
-import { Nullable } from '@mds-core/mds-types'
-import logger from '@mds-core/mds-logger'
-import { isDefined, ClientDisconnectedError, ExceptionMessages } from '@mds-core/mds-utils'
 import { StreamProducer } from '../stream-interface'
 import { getKafkaBrokers } from './helpers'
 

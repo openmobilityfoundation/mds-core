@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
+import logger from '@mds-core/mds-logger'
+import { BIRD_PROVIDER_ID, JUMP_PROVIDER_ID, LIME_PROVIDER_ID, TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import {
-  PROPULSION_TYPE,
-  VEHICLE_EVENT,
-  UUID,
   Device,
-  Timestamp,
+  MODALITY,
+  PROPULSION_TYPE,
   Telemetry,
+  Timestamp,
+  UUID,
   VehicleEvent,
-  VEHICLE_STATE,
-  MODALITY
+  VEHICLE_EVENT,
+  VEHICLE_STATE
 } from '@mds-core/mds-types'
-import { Geometry } from 'geojson'
-
 import {
   addDistanceBearing,
   makePointInShape,
@@ -37,39 +37,35 @@ import {
   rangeRandomInt,
   uuid
 } from '@mds-core/mds-utils'
-
-import logger from '@mds-core/mds-logger'
-
-import { JUMP_PROVIDER_ID, LIME_PROVIDER_ID, BIRD_PROVIDER_ID, TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { serviceAreaMap, restrictedAreas, veniceSpecOps } from './test-areas/test-areas'
-
+import { Geometry } from 'geojson'
 import {
-  POLICY_JSON,
-  TAXI_POLICY,
-  SUPERSEDING_POLICY_JSON,
-  POLICY2_JSON,
-  POLICY3_JSON,
-  POLICY4_JSON,
-  POLICY5_JSON,
-  POLICY_JSON_MISSING_POLICY_ID,
-  POLICY_WITH_DUPE_RULE,
-  PUBLISH_DATE_VALIDATION_JSON,
-  POLICY_UUID,
-  PUBLISHED_POLICY,
   DELETEABLE_POLICY,
-  SUPERSEDING_POLICY_UUID,
-  POLICY2_UUID,
-  POLICY3_UUID,
-  POLICY4_UUID,
-  GEOGRAPHY_UUID,
   GEOGRAPHY2_UUID,
+  GEOGRAPHY_UUID,
   NONEXISTENT_GEOGRAPHY_UUID,
+  POLICY2_JSON,
+  POLICY2_UUID,
+  POLICY3_JSON,
+  POLICY3_UUID,
+  POLICY4_JSON,
+  POLICY4_UUID,
+  POLICY5_JSON,
+  POLICY_JSON,
+  POLICY_JSON_MISSING_POLICY_ID,
+  POLICY_UUID,
+  POLICY_WITH_DUPE_RULE,
+  PUBLISHED_POLICY,
+  PUBLISH_DATE_VALIDATION_JSON,
   START_ONE_MONTH_AGO,
+  START_ONE_MONTH_FROM_NOW,
   START_ONE_WEEK_AGO,
-  START_ONE_MONTH_FROM_NOW
+  SUPERSEDING_POLICY_JSON,
+  SUPERSEDING_POLICY_UUID,
+  TAXI_POLICY
 } from './policies'
-import { LA_CITY_BOUNDARY } from './test-areas/la-city-boundary'
 import { DISTRICT_SEVEN } from './test-areas/district-seven'
+import { LA_CITY_BOUNDARY } from './test-areas/la-city-boundary'
+import { restrictedAreas, serviceAreaMap, veniceSpecOps } from './test-areas/test-areas'
 
 const PROVIDER_SCOPES = 'admin:all'
 

@@ -16,33 +16,32 @@
 
 import { providers } from '@mds-core/mds-providers' // map of uuids -> obb
 import {
-  Geography,
-  VehicleEvent,
-  VEHICLE_TYPES,
-  DAYS_OF_WEEK,
-  AUDIT_EVENT_TYPES,
-  VEHICLE_EVENTS,
-  AUDIT_EVENT_TYPE,
-  VEHICLE_EVENT,
-  RULE_TYPES,
-  UUID,
-  Timestamp,
-  Telemetry,
-  PROPULSION_TYPES,
-  VEHICLE_STATES,
-  Device,
-  MODALITIES,
   ACCESSIBILITY_OPTIONS,
+  AUDIT_EVENT_TYPE,
+  AUDIT_EVENT_TYPES,
+  DAYS_OF_WEEK,
+  Device,
+  Geography,
+  MODALITIES,
+  ModalityPolicy,
+  PROPULSION_TYPES,
   RATE_RECURRENCE_VALUES,
+  RULE_TYPES,
+  Telemetry,
+  Timestamp,
   TRIP_STATES,
-  VEHICLE_STATES_v1_1_0,
+  UUID,
+  VehicleEvent,
+  VEHICLE_EVENT,
+  VEHICLE_EVENTS,
   VEHICLE_EVENTS_v1_1_0,
-  ModalityPolicy
+  VEHICLE_STATES,
+  VEHICLE_STATES_v1_1_0,
+  VEHICLE_TYPES
 } from '@mds-core/mds-types'
+import { areThereCommonElements, ValidationError } from '@mds-core/mds-utils'
 import * as Joi from 'joi'
 import joiToJson from 'joi-to-json'
-
-import { ValidationError, areThereCommonElements } from '@mds-core/mds-utils'
 
 export { ValidationError }
 

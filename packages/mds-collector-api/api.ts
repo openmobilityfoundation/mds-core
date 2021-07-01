@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type { Express } from 'express'
-import { isUUID, pathPrefix } from '@mds-core/mds-utils'
 import { ApiErrorHandlingMiddleware, checkAccess } from '@mds-core/mds-api-server'
-import { CollectorApiVersionMiddleware } from './middleware/collector-api-version'
+import { isUUID, pathPrefix } from '@mds-core/mds-utils'
+import type { Express } from 'express'
 import { GetMessageSchemaHandler } from './handlers/get-message-schema'
 import { WriteSchemaMessagesHandler } from './handlers/write-schema-messages'
+import { CollectorApiVersionMiddleware } from './middleware/collector-api-version'
 
 export const api = (app: Express): Express =>
   app

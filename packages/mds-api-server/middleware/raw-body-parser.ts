@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { RequestHandler } from 'express'
 import type { Options as OptionsRaw } from 'body-parser'
 import bodyParser from 'body-parser'
+import type { RequestHandler } from 'express'
 
 export type RawBodyParserMiddlewareOptions = Partial<OptionsRaw>
 

@@ -15,18 +15,18 @@
  */
 
 import logger from '@mds-core/mds-logger'
+import { Nullable } from '@mds-core/mds-types'
 import {
+  ConflictError,
   hours,
   minutes,
-  seconds,
   NotFoundError,
-  ValidationError,
-  ConflictError,
-  UnsupportedTypeError
+  seconds,
+  UnsupportedTypeError,
+  ValidationError
 } from '@mds-core/mds-utils'
-import { Nullable } from '@mds-core/mds-types'
 import retry, { Options as RetryOptions } from 'async-retry'
-import { ServiceResultType, ServiceErrorDescriptor, ServiceErrorType, ProcessController } from '../@types'
+import { ProcessController, ServiceErrorDescriptor, ServiceErrorType, ServiceResultType } from '../@types'
 
 type ProcessMonitorOptions = Partial<
   Omit<RetryOptions, 'onRetry'> & {

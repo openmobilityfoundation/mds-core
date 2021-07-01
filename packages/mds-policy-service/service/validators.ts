@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import Joi from 'joi'
 import { schemaValidator } from '@mds-core/mds-schema-validators'
+import Joi from 'joi'
 import { PolicyDomainModel, PolicyMetadataDomainModel } from '../@types'
 
 export const { validate: validatePolicyDomainModel, isValid: isValidPolicyDomainModel } =

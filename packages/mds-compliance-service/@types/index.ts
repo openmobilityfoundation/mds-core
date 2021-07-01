@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { RpcServiceDefinition, RpcRoute } from '@mds-core/mds-rpc-common'
-import { UUID, Timestamp, VEHICLE_STATE, VEHICLE_EVENT } from '@mds-core/mds-types'
+import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
+import { Timestamp, UUID, VEHICLE_EVENT, VEHICLE_STATE } from '@mds-core/mds-types'
 
 export interface MatchedVehicleInformation {
   device_id: UUID

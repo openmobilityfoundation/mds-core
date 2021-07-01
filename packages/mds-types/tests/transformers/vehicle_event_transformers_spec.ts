@@ -1,11 +1,10 @@
 import assert from 'assert'
-import { VehicleEvent_v0_4_1, VehicleEvent_v1_0_0 } from '../../transformers/@types'
-
 import {
-  convert_v1_0_0_vehicle_event_to_v0_4_1,
   convert_v0_4_1_vehicle_event_to_v1_0_0,
+  convert_v1_0_0_vehicle_event_to_v0_4_1,
   UnsupportedEventTypeError
 } from '../../transformers'
+import { VehicleEvent_v0_4_1, VehicleEvent_v1_0_0 } from '../../transformers/@types'
 
 const TIME = Date.now()
 const DEVICE_ID = 'd0d9c274-773f-46c4-8c3a-f3cd35e4f99c'

@@ -15,9 +15,9 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { ServiceProvider, ProcessController, ServiceResult, ServiceException } from '@mds-core/mds-service-helpers'
-import { JurisdictionRepository } from '../repository'
+import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
 import { JurisdictionService } from '../@types'
+import { JurisdictionRepository } from '../repository'
 import { ValidateJurisdictionForCreate } from './validators'
 
 export const JurisdictionServiceProvider: ServiceProvider<JurisdictionService> & ProcessController = {

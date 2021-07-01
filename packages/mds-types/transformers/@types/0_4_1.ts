@@ -7,7 +7,7 @@
  *  former `event_type_reasons`.
  */
 
-import { UUID, Timestamp, Telemetry, VEHICLE_TYPE, PROPULSION_TYPE } from '../../index'
+import { PROPULSION_TYPE, Telemetry, Timestamp, UUID, VEHICLE_TYPE } from '../../index'
 
 export const VEHICLE_REASONS_v0_4_1 = [
   'battery_charged',

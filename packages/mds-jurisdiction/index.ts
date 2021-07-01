@@ -16,11 +16,11 @@
 
 export { api } from './api'
 export {
+  JurisdictionApiCreateJurisdictionRequest,
+  JurisdictionApiCreateJurisdictionResponseBody,
+  JurisdictionApiDeleteJurisdictionResponseBody,
   JurisdictionApiGetJurisdictionResponseBody,
   JurisdictionApiGetJurisdictionsResponseBody,
-  JurisdictionApiCreateJurisdictionResponseBody,
-  JurisdictionApiCreateJurisdictionRequest,
   JurisdictionApiUpdateJurisdictionRequest,
-  JurisdictionApiUpdateJurisdictionResponseBody,
-  JurisdictionApiDeleteJurisdictionResponseBody
+  JurisdictionApiUpdateJurisdictionResponseBody
 } from './handlers'

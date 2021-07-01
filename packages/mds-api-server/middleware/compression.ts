@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { RequestHandler } from 'express'
 import type { CompressionOptions } from 'compression'
 import compression from 'compression'
+import type { RequestHandler } from 'express'
 
 export type CompressionMiddlewareOptions = Partial<CompressionOptions>
 

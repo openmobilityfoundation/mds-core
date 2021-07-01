@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { Entity, Column, Index } from 'typeorm'
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { Nullable } from '@mds-core/mds-types'
+import { Column, Entity, Index } from 'typeorm'
 import { EventDomainModel } from '../../@types'
 import { TelemetryEntity, TelemetryEntityModel } from './telemetry-entity'
-import { Nullable } from '@mds-core/mds-types'
 
 export interface EventEntityModel extends IdentityColumn, RecordedColumn {
   device_id: EventDomainModel['device_id']

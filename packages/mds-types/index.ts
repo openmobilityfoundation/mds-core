@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { FeatureCollection } from 'geojson'
-import { AUDIT_EVENT_TYPE, VehicleEvent, VEHICLE_EVENT } from './event'
-import { Timestamp, UUID } from './utils'
 import { Device } from './device'
+import { AUDIT_EVENT_TYPE, VehicleEvent, VEHICLE_EVENT } from './event'
 import { Telemetry, TelemetryData, WithGpsProperty } from './telemetry'
+import { Timestamp, UUID } from './utils'
 
 // Represents a row in the "attachments" table
 export interface Attachment {
@@ -131,7 +131,6 @@ export interface Provider {
   gbfs_api_url?: string
 }
 
-export * from './utils'
 export * from './device'
 export * from './event'
 export * from './event_states_maps'
@@ -139,5 +138,6 @@ export * from './policy'
 export * from './telemetry'
 export * from './transformers'
 export * from './trip'
+export * from './utils'
 export * from './vehicle/vehicle_states'
 export * from './vehicle/vehicle_types'

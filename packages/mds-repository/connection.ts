@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { Connection, ConnectionOptions, createConnection } from 'typeorm'
-import { types as PostgresTypes } from 'pg'
-import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
+import logger from '@mds-core/mds-logger'
 import { Nullable, UUID } from '@mds-core/mds-types'
 import { uuid } from '@mds-core/mds-utils'
-import logger from '@mds-core/mds-logger'
 import AwaitLock from 'await-lock'
-import { MdsNamingStrategy } from './naming-strategies'
+import { types as PostgresTypes } from 'pg'
+import { Connection, ConnectionOptions, createConnection } from 'typeorm'
+import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions'
+import { LoggerOptions } from 'typeorm/logger/LoggerOptions'
 import { RepositoryError } from './exceptions'
+import { MdsNamingStrategy } from './naming-strategies'
 
 const loggingOption = (options: string): LoggerOptions => {
   return ['false', 'true', 'all'].includes(options) ? options !== 'false' : (options.split(' ') as LoggerOptions)

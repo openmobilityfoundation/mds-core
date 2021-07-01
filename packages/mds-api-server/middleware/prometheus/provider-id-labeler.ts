@@ -15,8 +15,8 @@
  */
 
 import type { Labels as PrometheusLabels } from 'express-prom-bundle'
-import { PrometheusLabeler } from './@types'
 import { ApiRequest, ApiResponse, ApiResponseLocalsClaims } from '../../@types'
+import { PrometheusLabeler } from './@types'
 
 const providerIdLabelTransformer = (
   labels: PrometheusLabels,

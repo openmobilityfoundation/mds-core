@@ -15,9 +15,9 @@
  */
 
 import { RpcServer } from '@mds-core/mds-rpc-common'
-import { JurisdictionServiceProvider } from './provider'
-import { JurisdictionServiceClient } from '../client'
 import { JurisdictionServiceDefinition } from '../@types'
+import { JurisdictionServiceClient } from '../client'
+import { JurisdictionServiceProvider } from './provider'
 
 export const JurisdictionServiceManager = RpcServer(
   JurisdictionServiceDefinition,

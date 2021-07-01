@@ -16,8 +16,7 @@
 
 import logger from '@mds-core/mds-logger'
 import AwaitLock from 'await-lock'
-
-import { logSql, configureClient, MDSPostgresClient, SqlVals } from './sql-utils'
+import { configureClient, logSql, MDSPostgresClient, SqlVals } from './sql-utils'
 
 const { env } = process
 

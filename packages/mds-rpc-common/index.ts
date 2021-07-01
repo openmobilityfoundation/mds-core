@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-export { RpcServiceDefinition, RpcRouteDefinition, RpcRoute } from './@types'
-export { RpcClientOptions, RpcClient, RpcRequest } from './client'
-export { RpcServerOptions, RpcServiceHandlers, RpcServer } from './server'
+export { RpcRoute, RpcRouteDefinition, RpcServiceDefinition } from './@types'
+export { RpcClient, RpcClientOptions, RpcRequest } from './client'
+export { RpcServer, RpcServerOptions, RpcServiceHandlers } from './server'

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import logger from '@mds-core/mds-logger'
 import express from 'express'
-import morgan from 'morgan'
 import httpContext from 'express-http-context'
 import HttpStatus from 'http-status-codes'
-import logger from '@mds-core/mds-logger'
+import morgan from 'morgan'
 import { ApiRequest, ApiResponse, ApiResponseLocalsClaims } from '../@types'
 
 const { REQUEST_LOGGING_LEVEL = HttpStatus.OK } = process.env

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Entity, Column, Index } from 'typeorm'
-import { Nullable } from '@mds-core/mds-types'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { Nullable } from '@mds-core/mds-types'
+import { Column, Entity, Index } from 'typeorm'
 import { JurisdictionDomainModel } from '../../@types'
 
 export interface JurisdictionVersionedProperties {

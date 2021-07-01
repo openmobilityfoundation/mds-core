@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { connect, SubscriptionOptions, NatsConnection } from 'nats'
 import logger from '@mds-core/mds-logger'
-import { getEnvVar, asArray } from '@mds-core/mds-utils'
 import { SingleOrArray } from '@mds-core/mds-types'
+import { asArray, getEnvVar } from '@mds-core/mds-utils'
+import { connect, NatsConnection, SubscriptionOptions } from 'nats'
 import { natsCbWrapper, NatsProcessorFn } from './codecs'
 
 const initializeNatsClient = () => {

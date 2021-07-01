@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Joi from 'joi'
-import { isDefined, now, ValidationError } from '@mds-core/mds-utils'
 import { numberSchema, uuidSchema, vehicleEventTypeSchema, vehicleStatusSchema } from '@mds-core/mds-schema-validators'
+import { isDefined, now, ValidationError } from '@mds-core/mds-utils'
+import Joi from 'joi'
 import { ComplianceSnapshotDomainModel, GetComplianceSnapshotsByTimeIntervalOptions } from '../@types'
 
 const policySchema = Joi.object().keys({

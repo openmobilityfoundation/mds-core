@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+export * from './add-operation'
 export * from './create-transaction'
 export * from './create-transactions'
+export * from './get-operations'
+export * from './get-statuses'
 export * from './get-transaction'
 export * from './get-transactions'
-export * from './get-operations'
-export * from './add-operation'
 export * from './set-status'
-export * from './get-statuses'

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import urls from 'url'
 import { ApiRequest } from '@mds-core/mds-api-server'
+import urls from 'url'
 import {
   parseObjectPropertiesList,
-  parseObjectPropertiesSingle,
+  ParseObjectPropertiesOptionsList,
   ParseObjectPropertiesOptionsSingle,
-  ParseObjectPropertiesOptionsList
+  parseObjectPropertiesSingle
 } from './object-properties-parser'
 
 const jsonApiLink = (req: ApiRequest, skip: number, take: number): string =>

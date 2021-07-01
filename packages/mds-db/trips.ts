@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-import { UUID, Timestamp } from '@mds-core/mds-types'
 import logger from '@mds-core/mds-logger'
-
-import schema from './schema'
-
-import { logSql, SqlVals } from './sql-utils'
-
+import { Timestamp, UUID } from '@mds-core/mds-types'
 import { getReadOnlyClient } from './client'
+import schema from './schema'
+import { logSql, SqlVals } from './sql-utils'
 
 export interface ReadTripIdsResult {
   count: number

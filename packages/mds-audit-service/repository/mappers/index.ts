@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-export * from './audit-mapper'
 export * from './audit-event-mapper'
+export * from './audit-mapper'

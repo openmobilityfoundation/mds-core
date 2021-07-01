@@ -1,9 +1,9 @@
-import { Device, TripMetadata, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { now, uuid } from '@mds-core/mds-utils'
-import type supertest from 'supertest'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { PROVIDER_SCOPES } from '@mds-core/mds-test-data'
+import { Device, TripMetadata, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { now, uuid } from '@mds-core/mds-utils'
+import type supertest from 'supertest'
 
 export type POSTableVehicleEvent = Omit<VehicleEvent, 'provider_id' | 'recorded'>
 

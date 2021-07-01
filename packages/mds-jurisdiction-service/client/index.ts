@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ServiceClient } from '@mds-core/mds-service-helpers'
 import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common'
-import { JurisdictionServiceDefinition, JurisdictionService } from '../@types'
+import { ServiceClient } from '@mds-core/mds-service-helpers'
+import { JurisdictionService, JurisdictionServiceDefinition } from '../@types'
 
 const JurisdictionServiceRpcClient = RpcClient(JurisdictionServiceDefinition, {
   host: process.env.JURISDICTION_SERVICE_RPC_HOST,
