@@ -63,6 +63,8 @@ export const RedisCache = () => {
 
     set: async (key: KeyType, val: ValueType) => safelyExec(theClient => theClient.set(key, val)),
 
+    mset: async (data: { [key: string]: ValueType } | string[]) => safelyExec(theClient => theClient.mset(data)),
+
     /**
      * Expires a key at Unix time in seconds, or time in milliseconds.
      * Don't add both parameters, only one of them will be used.

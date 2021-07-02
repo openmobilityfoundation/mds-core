@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ClientDisconnectedError, now, hours, ExceptionMessages, minutes } from '@mds-core/mds-utils'
+import { ClientDisconnectedError, ExceptionMessages, hours, minutes, now } from '@mds-core/mds-utils'
 import { RedisCache } from '../redis'
 
 const redis = RedisCache()
@@ -36,6 +36,45 @@ describe('Redis Tests', () => {
     it('set()', async () => {
       const res = await redis.set('foo', 'bar')
       expect(res).toEqual('OK')
+    })
+
+    it('mset() obj', async () => {
+      const testVal = 1
+      const testArr = [2, 3]
+      const testObj = { a: 1, b: 2, c: { foo: 'a', bar: 'b' } }
+      const res = await redis.mset({
+        val: JSON.stringify(testVal),
+        arr: JSON.stringify(testArr),
+        obj: JSON.stringify(testObj)
+      })
+      expect(res).toEqual('OK')
+      const resVal = await redis.get('val')
+      expect(JSON.parse(resVal || '')).toEqual(testVal)
+      const resArr = await redis.get('arr')
+      expect(JSON.parse(resArr || '')).toEqual(testArr)
+      const resObj = await redis.get('obj')
+      expect(JSON.parse(resObj || '')).toEqual(testObj)
+    })
+
+    it('mset() arr', async () => {
+      const testVal = 1
+      const testArr = [2, 3]
+      const testObj = { a: 1, b: 2, c: { foo: 'a', bar: 'b' } }
+      const res = await redis.mset([
+        'val',
+        JSON.stringify(testVal),
+        'arr',
+        JSON.stringify(testArr),
+        'obj',
+        JSON.stringify(testObj)
+      ])
+      expect(res).toEqual('OK')
+      const resVal = await redis.get('val')
+      expect(JSON.parse(resVal || '')).toEqual(testVal)
+      const resArr = await redis.get('arr')
+      expect(JSON.parse(resArr || '')).toEqual(testArr)
+      const resObj = await redis.get('obj')
+      expect(JSON.parse(resObj || '')).toEqual(testObj)
     })
 
     it('get()', async () => {
@@ -195,6 +234,12 @@ describe('Redis Tests', () => {
 
     it('set()', async () => {
       await expect(redis.set('foo', 'bar')).rejects.toEqual(
+        new ClientDisconnectedError(ExceptionMessages.INITIALIZE_CLIENT_MESSAGE)
+      )
+    })
+
+    it('mset()', async () => {
+      await expect(redis.mset(['foo', 'bar'])).rejects.toEqual(
         new ClientDisconnectedError(ExceptionMessages.INITIALIZE_CLIENT_MESSAGE)
       )
     })
