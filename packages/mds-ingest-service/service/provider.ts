@@ -25,9 +25,18 @@ export const IngestServiceProvider: ServiceProvider<IngestService> & ProcessCont
   start: IngestRepository.initialize,
   stop: IngestRepository.shutdown,
   name: async () => ServiceResult('mds-ingest-service'),
-  getEvents: async params => {
+  getEventsUsingOptions: async params => {
     try {
-      return ServiceResult(await IngestRepository.getEvents(validateGetVehicleEventsFilterParams(params)))
+      return ServiceResult(await IngestRepository.getEventsUsingOptions(validateGetVehicleEventsFilterParams(params)))
+    } catch (error) {
+      const exception = ServiceException(`Error in getEvents `, error)
+      logger.error('getEvents exception', { exception, error })
+      return exception
+    }
+  },
+  getEventsUsingCursor: async cursor => {
+    try {
+      return ServiceResult(await IngestRepository.getEventsUsingCursor(cursor))
     } catch (error) {
       const exception = ServiceException(`Error in getEvents `, error)
       logger.error('getEvents exception', { exception, error })

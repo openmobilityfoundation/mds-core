@@ -16,14 +16,15 @@
 
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
-import { isUUID } from '@mds-core/mds-utils'
+import { isUUID, ValidationError } from '@mds-core/mds-utils'
 import { Any } from 'typeorm'
+import { buildPaginator, Cursor } from 'typeorm-cursor-pagination'
 import {
   DeviceDomainCreateModel,
   DeviceDomainModel,
   EventDomainCreateModel,
-  EventDomainModel,
   GetVehicleEventsFilterParams,
+  GetVehicleEventsResponse,
   TelemetryDomainCreateModel
 } from '../@types'
 import entities from './entities'
@@ -40,6 +41,8 @@ import {
 } from './mappers'
 import migrations from './migrations'
 
+type VehicleEventsQueryParams = GetVehicleEventsFilterParams & Cursor
+
 /**
  * Aborts execution if not running under a test environment.
  */
@@ -51,6 +54,17 @@ const testEnvSafeguard = () => {
 class IngestReadWriteRepository extends ReadWriteRepository {
   constructor() {
     super('ingest', { entities, migrations })
+  }
+
+  private buildCursor = (cursor: VehicleEventsQueryParams) =>
+    Buffer.from(JSON.stringify(cursor), 'utf-8').toString('base64')
+
+  private parseCursor = (cursor: string): VehicleEventsQueryParams & { limit: number } => {
+    try {
+      return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'))
+    } catch (error) {
+      throw new ValidationError('Invalid cursor', error)
+    }
   }
 
   public createEvents = async (events: EventDomainCreateModel[]) => {
@@ -114,10 +128,10 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public getEvents = async (params: GetVehicleEventsFilterParams): Promise<EventDomainModel[]> => {
+  private getEvents = async (params: VehicleEventsQueryParams): Promise<GetVehicleEventsResponse> => {
     const { connect } = this
     const {
-      time_range: { start, end },
+      time_range,
       // geography_ids,
       grouping_type = 'latest_per_vehicle',
       event_types,
@@ -127,8 +141,14 @@ class IngestReadWriteRepository extends ReadWriteRepository {
       device_ids,
       propulsion_types,
       provider_ids,
-      limit
+      limit,
+      beforeCursor,
+      afterCursor,
+      order
     } = params
+
+    const { start, end } = time_range
+
     try {
       const connection = await connect('ro')
 
@@ -199,13 +219,55 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         query.andWhere('events.provider_id = ANY(:provider_ids)', { provider_ids })
       }
 
-      const entities = await query.limit(limit).getMany()
+      const pager = buildPaginator({
+        entity: EventEntity,
+        alias: 'events',
+        paginationKeys: [order?.column ?? 'timestamp', 'id'],
+        query: {
+          limit,
+          order: order?.direction ?? (order?.column === undefined ? 'DESC' : 'ASC'),
+          beforeCursor: beforeCursor ?? undefined, // typeorm-cursor-pagination type weirdness
+          afterCursor: afterCursor ?? undefined // typeorm-cursor-pagination type weirdness
+        }
+      })
 
-      return entities.map(EventEntityToDomain.map)
+      const {
+        data,
+        cursor: { beforeCursor: nextBeforeCursor, afterCursor: nextAfterCursor }
+      } = await pager.paginate(query)
+
+      const cursor = {
+        time_range,
+        // geography_ids,
+        grouping_type,
+        event_types,
+        vehicle_states,
+        vehicle_types,
+        vehicle_id,
+        device_ids,
+        propulsion_types,
+        provider_ids,
+        limit,
+        order
+      }
+
+      return {
+        events: data.map(EventEntityToDomain.map),
+        cursor: {
+          next: nextAfterCursor && this.buildCursor({ ...cursor, beforeCursor: null, afterCursor: nextAfterCursor }),
+          prev: nextBeforeCursor && this.buildCursor({ ...cursor, beforeCursor: nextBeforeCursor, afterCursor: null })
+        }
+      }
     } catch (error) {
       throw RepositoryError(error)
     }
   }
+
+  public getEventsUsingOptions = async (options: GetVehicleEventsFilterParams): Promise<GetVehicleEventsResponse> =>
+    this.getEvents({ ...options, beforeCursor: null, afterCursor: null, limit: options.limit ?? 100 })
+
+  public getEventsUsingCursor = async (cursor: string): Promise<GetVehicleEventsResponse> =>
+    this.getEvents(this.parseCursor(cursor))
 
   /**
    * Nukes everything from orbit. Boom.

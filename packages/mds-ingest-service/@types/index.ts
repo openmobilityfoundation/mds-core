@@ -70,6 +70,19 @@ export type TimeRange = {
   start: Timestamp
   end: Timestamp
 }
+
+export const GetVehicleEventsOrderColumn = <const>['timestamp', 'provider_id', 'vehicle_state']
+
+export type GetVehicleEventsOrderColumn = typeof GetVehicleEventsOrderColumn[number]
+
+export const GetVehicleEventsOrderDirection = <const>['ASC', 'DESC']
+
+export type GetVehicleEventsOrderDirection = typeof GetVehicleEventsOrderDirection[number]
+
+export type GetVehicleEventsOrderOption = {
+  column: GetVehicleEventsOrderColumn
+  direction?: GetVehicleEventsOrderDirection
+}
 export interface GetVehicleEventsFilterParams {
   vehicle_types?: VEHICLE_TYPE[]
   propulsion_types?: PROPULSION_TYPE[]
@@ -82,6 +95,15 @@ export interface GetVehicleEventsFilterParams {
   event_types?: VEHICLE_EVENT[]
   geography_ids?: UUID[]
   limit?: number
+  order?: GetVehicleEventsOrderOption
+}
+
+export type GetVehicleEventsResponse = {
+  events: EventDomainModel[]
+  cursor: {
+    prev: Nullable<string>
+    next: Nullable<string>
+  }
 }
 
 export interface EventDomainModel extends RecordedColumn {
@@ -102,12 +124,14 @@ export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, ke
 
 export interface IngestService {
   name: () => string
-  getEvents: (params: GetVehicleEventsFilterParams) => EventDomainModel[]
+  getEventsUsingOptions: (params: GetVehicleEventsFilterParams) => GetVehicleEventsResponse
+  getEventsUsingCursor: (cursor: string) => GetVehicleEventsResponse
   getDevices: (ids: UUID[]) => DeviceDomainModel[]
 }
 
 export const IngestServiceDefinition: RpcServiceDefinition<IngestService> = {
   name: RpcRoute<IngestService['name']>(),
-  getEvents: RpcRoute<IngestService['getEvents']>(),
+  getEventsUsingOptions: RpcRoute<IngestService['getEventsUsingOptions']>(),
+  getEventsUsingCursor: RpcRoute<IngestService['getEventsUsingCursor']>(),
   getDevices: RpcRoute<IngestService['getDevices']>()
 }

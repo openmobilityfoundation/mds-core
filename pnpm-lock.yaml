@@ -778,6 +778,7 @@ importers:
       '@mds-core/mds-utils': 0.1.28
       joi: 17.4.0
       typeorm: 0.2.34
+      typeorm-cursor-pagination: 0.6.1
     dependencies:
       '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-providers': link:../mds-providers
@@ -789,6 +790,7 @@ importers:
       '@mds-core/mds-utils': link:../mds-utils
       joi: 17.4.0
       typeorm: 0.2.34
+      typeorm-cursor-pagination: 0.6.1_typeorm@0.2.34
 
   packages/mds-jurisdiction:
     specifiers:

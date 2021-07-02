@@ -29,6 +29,8 @@ import {
   DeviceDomainModel,
   EventDomainModel,
   GetVehicleEventsFilterParams,
+  GetVehicleEventsOrderColumn,
+  GetVehicleEventsOrderDirection,
   GROUPING_TYPES,
   TelemetryDomainModel
 } from '../@types'
@@ -163,7 +165,15 @@ export const { validate: validateGetVehicleEventsFilterParams } = SchemaValidato
     vehicle_id: { type: 'string' },
     device_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
     event_types: { type: 'array', items: { type: 'string', enum: [...new Set(VEHICLE_EVENTS)] } },
-    limit: { type: 'integer' }
+    limit: { type: 'integer' },
+    order: {
+      type: 'object',
+      properties: {
+        column: { type: 'string', enum: [...GetVehicleEventsOrderColumn] },
+        direction: { type: 'string', enum: [...GetVehicleEventsOrderDirection] }
+      },
+      additionalProperties: false
+    }
   },
   required: ['time_range']
 })

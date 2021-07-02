@@ -15,7 +15,7 @@
  */
 
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
-import { Nullable } from '@mds-core/mds-types'
+import { Nullable, Timestamp, TRIP_STATE, UUID, VEHICLE_EVENT, VEHICLE_STATE } from '@mds-core/mds-types'
 import { Column, Entity, Index } from 'typeorm'
 import { EventDomainModel } from '../../@types'
 import { TelemetryEntity, TelemetryEntityModel } from './telemetry-entity'
@@ -36,32 +36,32 @@ export interface EventEntityModel extends IdentityColumn, RecordedColumn {
 @Entity('events')
 export class EventEntity extends IdentityColumn(RecordedColumn(class {})) implements EventEntityModel {
   @Column('uuid', { primary: true })
-  device_id: EventEntityModel['device_id']
+  device_id: UUID
 
   @Column('uuid')
-  provider_id: EventEntityModel['provider_id']
+  provider_id: UUID
 
   @Column('bigint', { transformer: BigintTransformer, primary: true })
-  timestamp: EventEntityModel['timestamp']
+  timestamp: Timestamp
 
   @Column('varchar', { array: true, length: 31 })
-  event_types: EventEntityModel['event_types']
+  event_types: VEHICLE_EVENT[]
 
   @Column('varchar', { length: 31 })
-  vehicle_state: EventEntityModel['vehicle_state']
+  vehicle_state: VEHICLE_STATE
 
   @Column('varchar', { length: 31, nullable: true })
-  trip_state: EventEntityModel['trip_state']
+  trip_state: TRIP_STATE
 
   @Column('bigint', { transformer: BigintTransformer, nullable: true })
-  telemetry_timestamp: EventEntityModel['telemetry_timestamp']
+  telemetry_timestamp: Nullable<Timestamp>
 
   @Index()
   @Column('uuid', { nullable: true })
-  trip_id: EventEntityModel['trip_id']
+  trip_id: Nullable<UUID>
 
   @Column('uuid', { nullable: true })
-  service_area_id: EventEntityModel['service_area_id']
+  service_area_id: Nullable<UUID>
 
   telemetry?: TelemetryEntity
 }
