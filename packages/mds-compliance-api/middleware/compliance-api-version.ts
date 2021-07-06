@@ -15,9 +15,10 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
+import type { RequestHandler } from 'express'
 import { COMPLIANCE_API_DEFAULT_VERSION, COMPLIANCE_API_SUPPORTED_VERSIONS } from '../@types'
 
-export const ComplianceApiVersionMiddleware = ApiVersionMiddleware(
+export const ComplianceApiVersionMiddleware: RequestHandler = ApiVersionMiddleware(
   'application/vnd.mds.compliance+json',
   COMPLIANCE_API_SUPPORTED_VERSIONS
 ).withDefaultVersion(COMPLIANCE_API_DEFAULT_VERSION)

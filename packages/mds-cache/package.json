@@ -20,6 +20,6 @@
     "@mds-core/mds-utils": "0.1.28",
     "@types/ioredis": "4.26.4",
     "envalid": "7.1.0",
-    "ioredis": "4.27.5"
+    "ioredis": "4.27.6"
   }
 }

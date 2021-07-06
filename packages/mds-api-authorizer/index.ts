@@ -66,7 +66,7 @@ const decode = (token: string) => {
 const decoders: { [scheme: string]: (token: string) => AuthorizerClaims } = {
   bearer: (token: string) => {
     const {
-      sub: principalId,
+      sub: principalId = '',
       scope,
       [ProviderIdClaim()]: provider_id = null,
       [UserEmailClaim()]: user_email = null,

@@ -15,9 +15,10 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
+import type { RequestHandler } from 'express'
 import { AGENCY_API_DEFAULT_VERSION, AGENCY_API_SUPPORTED_VERSIONS } from '../types'
 
-export const AgencyApiVersionMiddleware = ApiVersionMiddleware(
+export const AgencyApiVersionMiddleware: RequestHandler = ApiVersionMiddleware(
   'application/vnd.mds.agency+json',
   AGENCY_API_SUPPORTED_VERSIONS
 ).withDefaultVersion(AGENCY_API_DEFAULT_VERSION)

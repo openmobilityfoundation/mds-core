@@ -15,9 +15,10 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
+import type { RequestHandler } from 'express'
 import { GEOGRAPHY_API_DEFAULT_VERSION, GEOGRAPHY_API_SUPPORTED_VERSIONS } from '../types'
 
-export const GeographyApiVersionMiddleware = ApiVersionMiddleware(
+export const GeographyApiVersionMiddleware: RequestHandler = ApiVersionMiddleware(
   'application/vnd.mds-geography+json',
   GEOGRAPHY_API_SUPPORTED_VERSIONS
 ).withDefaultVersion(GEOGRAPHY_API_DEFAULT_VERSION)

@@ -15,9 +15,10 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
+import type { RequestHandler } from 'express'
 import { JURISDICTION_API_DEFAULT_VERSION, JURISDICTION_API_SUPPORTED_VERSIONS } from '../@types'
 
-export const JurisdictionApiVersionMiddleware = ApiVersionMiddleware(
+export const JurisdictionApiVersionMiddleware: RequestHandler = ApiVersionMiddleware(
   'application/vnd.mds.jurisdiction+json',
   JURISDICTION_API_SUPPORTED_VERSIONS
 ).withDefaultVersion(JURISDICTION_API_DEFAULT_VERSION)

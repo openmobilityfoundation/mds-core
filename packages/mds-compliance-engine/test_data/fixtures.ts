@@ -4,10 +4,14 @@ import { days, now } from '@mds-core/mds-utils'
 import { Polygon } from 'geojson'
 
 export const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
-export const LA_GEOGRAPHY = { name: 'la', geography_id: CITY_OF_LA, geography_json: LA_CITY_BOUNDARY }
+export const LA_GEOGRAPHY: Geography = { name: 'la', geography_id: CITY_OF_LA, geography_json: LA_CITY_BOUNDARY }
 export const LA_BEACH = 'ff822e26-a70c-4721-ac32-2f6734beff9b'
-export const LA_BEACH_GEOGRAPHY = { name: 'la beach', geography_id: LA_BEACH, geography_json: restrictedAreas }
-export const RESTRICTED_GEOGRAPHY = {
+export const LA_BEACH_GEOGRAPHY: Geography = {
+  name: 'la beach',
+  geography_id: LA_BEACH,
+  geography_json: restrictedAreas
+}
+export const RESTRICTED_GEOGRAPHY: Geography = {
   name: 'la',
   geography_id: 'c0591267-bb6a-4f28-a612-ff7f4a8f8b2a',
   geography_json: restrictedAreas

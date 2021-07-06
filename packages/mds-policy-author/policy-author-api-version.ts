@@ -15,9 +15,10 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
+import type { RequestHandler } from 'express'
 import { POLICY_AUTHOR_API_DEFAULT_VERSION, POLICY_AUTHOR_API_SUPPORTED_VERSIONS } from './types'
 
-export const PolicyAuthorApiVersionMiddleware = ApiVersionMiddleware(
+export const PolicyAuthorApiVersionMiddleware: RequestHandler = ApiVersionMiddleware(
   'application/vnd.mds.policy-author+json',
   POLICY_AUTHOR_API_SUPPORTED_VERSIONS
 ).withDefaultVersion(POLICY_AUTHOR_API_DEFAULT_VERSION)

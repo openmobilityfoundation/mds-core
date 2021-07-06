@@ -15,9 +15,10 @@
  */
 
 import { ApiVersionMiddleware } from '@mds-core/mds-api-server'
+import type { RequestHandler } from 'express'
 import { COLLECTOR_API_DEFAULT_VERSION, COLLECTOR_API_MIME_TYPE, COLLECTOR_API_SUPPORTED_VERSIONS } from '../@types'
 
-export const CollectorApiVersionMiddleware = ApiVersionMiddleware(
+export const CollectorApiVersionMiddleware: RequestHandler = ApiVersionMiddleware(
   COLLECTOR_API_MIME_TYPE,
   COLLECTOR_API_SUPPORTED_VERSIONS
 ).withDefaultVersion(COLLECTOR_API_DEFAULT_VERSION)

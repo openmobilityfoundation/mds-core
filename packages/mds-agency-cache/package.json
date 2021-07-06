@@ -26,6 +26,6 @@
     "@types/flat": "5.0.1",
     "@types/ioredis": "4.26.4",
     "flat": "5.0.2",
-    "ioredis": "4.27.5"
+    "ioredis": "4.27.6"
   }
 }

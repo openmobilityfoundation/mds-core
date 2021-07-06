@@ -742,6 +742,9 @@ function api(app: express.Express): express.Express {
       if (!audit) return res.status(404).send({ error: new NotFoundError('audit not found', { audit_trip_id }) })
 
       try {
+        if (!req.file) {
+          throw new ServerError('Request contains no file property')
+        }
         const attachment = await writeAttachment(req.file, audit_trip_id)
         res.status(200).send({
           version: res.locals.version,
