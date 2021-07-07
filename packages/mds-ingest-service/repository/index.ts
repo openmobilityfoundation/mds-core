@@ -191,6 +191,10 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         )
       }
 
+      if (grouping_type === 'all_events') {
+        query.andWhere('events.timestamp >= :start AND events.timestamp <= :end', { start, end })
+      }
+
       if (event_types) {
         query.andWhere('events.event_types && :event_types', { event_types })
       }
