@@ -18,6 +18,7 @@ import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repos
 import { Timestamp } from '@mds-core/mds-types'
 import { TelemetryDomainCreateModel, TelemetryDomainModel } from '../../@types'
 import { TelemetryEntityModel } from '../entities/telemetry-entity'
+import { MigratedEntityModel } from '../mixins/migrated-entity'
 
 type TelemetryEntityToDomainOptions = Partial<{}>
 
@@ -26,12 +27,29 @@ export const TelemetryEntityToDomain = ModelMapper<
   TelemetryDomainModel,
   TelemetryEntityToDomainOptions
 >((entity, options) => {
-  const { id, lat, lng, speed, heading, accuracy, altitude, hdop, satellites, charge, stop_id, ...domain } = entity
+  const {
+    id,
+    lat,
+    lng,
+    speed,
+    heading,
+    accuracy,
+    altitude,
+    hdop,
+    satellites,
+    charge,
+    stop_id,
+    migrated_from_source,
+    migrated_from_version,
+    migrated_from_id,
+    ...domain
+  } = entity
   return { gps: { lat, lng, speed, heading, accuracy, altitude, hdop, satellites }, charge, stop_id, ...domain }
 })
 
 type TelemetryEntityCreateOptions = Partial<{
   recorded: Timestamp
+  migrated_from: MigratedEntityModel
 }>
 
 export type TelemetryEntityCreateModel = Omit<TelemetryEntityModel, keyof IdentityColumn | keyof RecordedColumn>
@@ -50,7 +68,8 @@ export const TelemetryDomainToEntityCreate = ModelMapper<
     },
     options
   ) => {
-    const { recorded } = options ?? {}
+    const { recorded, migrated_from } = options ?? {}
+
     return {
       lat,
       lng,
@@ -63,6 +82,9 @@ export const TelemetryDomainToEntityCreate = ModelMapper<
       stop_id,
       charge,
       recorded,
+      migrated_from_source: migrated_from?.migrated_from_source ?? null,
+      migrated_from_version: migrated_from?.migrated_from_version ?? null,
+      migrated_from_id: migrated_from?.migrated_from_id ?? null,
       ...domain
     }
   }

@@ -18,13 +18,21 @@ import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repos
 import { Nullable, Timestamp } from '@mds-core/mds-types'
 import { EventDomainCreateModel, EventDomainModel, TelemetryDomainModel } from '../../@types'
 import { EventEntityModel } from '../entities/event-entity'
+import { MigratedEntityModel } from '../mixins/migrated-entity'
 import { TelemetryEntityToDomain } from './telemetry-mappers'
 
 type EventEntityToDomainOptions = Partial<{}>
 
 export const EventEntityToDomain = ModelMapper<EventEntityModel, EventDomainModel, EventEntityToDomainOptions>(
   (entity, options) => {
-    const { id, telemetry: telemetry_entity, ...domain } = entity
+    const {
+      id,
+      telemetry: telemetry_entity,
+      migrated_from_source,
+      migrated_from_version,
+      migrated_from_id,
+      ...domain
+    } = entity
     const telemetry: Nullable<TelemetryDomainModel> = telemetry_entity
       ? TelemetryEntityToDomain.map(telemetry_entity)
       : null
@@ -34,6 +42,7 @@ export const EventEntityToDomain = ModelMapper<EventEntityModel, EventDomainMode
 
 type EventEntityCreateOptions = Partial<{
   recorded: Timestamp
+  migrated_from: MigratedEntityModel
 }>
 
 export type EventEntityCreateModel = Omit<EventEntityModel, keyof IdentityColumn | keyof RecordedColumn | 'telemetry'>
@@ -43,6 +52,15 @@ export const EventDomainToEntityCreate = ModelMapper<
   EventEntityCreateModel,
   EventEntityCreateOptions
 >(({ telemetry_timestamp = null, trip_id = null, service_area_id = null, ...domain }, options) => {
-  const { recorded } = options ?? {}
-  return { telemetry_timestamp, trip_id, service_area_id, recorded, ...domain }
+  const { recorded, migrated_from } = options ?? {}
+  return {
+    telemetry_timestamp,
+    trip_id,
+    service_area_id,
+    recorded,
+    migrated_from_source: migrated_from?.migrated_from_source ?? null,
+    migrated_from_version: migrated_from?.migrated_from_version ?? null,
+    migrated_from_id: migrated_from?.migrated_from_id ?? null,
+    ...domain
+  }
 })

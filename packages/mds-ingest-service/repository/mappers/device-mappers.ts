@@ -18,18 +18,20 @@ import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repos
 import { Timestamp } from '@mds-core/mds-types'
 import { DeviceDomainCreateModel, DeviceDomainModel } from '../../@types'
 import { DeviceEntityModel } from '../entities/device-entity'
+import { MigratedEntityModel } from '../mixins/migrated-entity'
 
 type DeviceEntityToDomainOptions = Partial<{}>
 
 export const DeviceEntityToDomain = ModelMapper<DeviceEntityModel, DeviceDomainModel, DeviceEntityToDomainOptions>(
   (entity, options) => {
-    const { id, ...domain } = entity
+    const { id, migrated_from_source, migrated_from_version, migrated_from_id, ...domain } = entity
     return { ...domain }
   }
 )
 
 type DeviceEntityCreateOptions = Partial<{
   recorded: Timestamp
+  migrated_from: MigratedEntityModel
 }>
 
 export type DeviceEntityCreateModel = Omit<DeviceEntityModel, keyof IdentityColumn | keyof RecordedColumn>
@@ -39,6 +41,16 @@ export const DeviceDomainToEntityCreate = ModelMapper<
   DeviceEntityCreateModel,
   DeviceEntityCreateOptions
 >(({ year = null, mfgr = null, model = null, accessibility_options = null, ...domain }, options) => {
-  const { recorded } = options ?? {}
-  return { year, mfgr, model, recorded, accessibility_options, ...domain }
+  const { recorded, migrated_from } = options ?? {}
+  return {
+    year,
+    mfgr,
+    model,
+    accessibility_options,
+    recorded,
+    migrated_from_source: migrated_from?.migrated_from_source ?? null,
+    migrated_from_version: migrated_from?.migrated_from_version ?? null,
+    migrated_from_id: migrated_from?.migrated_from_id ?? null,
+    ...domain
+  }
 })

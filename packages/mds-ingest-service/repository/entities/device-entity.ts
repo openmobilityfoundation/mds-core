@@ -15,61 +15,41 @@
  */
 
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { ACCESSIBILITY_OPTION, MODALITY, Nullable, PROPULSION_TYPE, UUID, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { Column, Entity } from 'typeorm'
-import { DeviceDomainModel } from '../../@types'
-
-export interface DeviceEntityModel extends IdentityColumn, RecordedColumn {
-  device_id: DeviceDomainModel['device_id']
-  provider_id: DeviceDomainModel['provider_id']
-  vehicle_id: DeviceDomainModel['vehicle_id']
-  vehicle_type: DeviceDomainModel['vehicle_type']
-  propulsion_types: DeviceDomainModel['propulsion_types']
-  year: DeviceDomainModel['year']
-  mfgr: DeviceDomainModel['mfgr']
-  model: DeviceDomainModel['model']
-  accessibility_options: DeviceDomainModel['accessibility_options']
-  modality: DeviceDomainModel['modality']
-}
+import { MigratedEntity } from '../mixins/migrated-entity'
 
 @Entity('devices')
-export class DeviceEntity extends IdentityColumn(RecordedColumn(class {})) implements DeviceEntityModel {
+export class DeviceEntity extends MigratedEntity(IdentityColumn(RecordedColumn(class {}))) {
   @Column('uuid', { primary: true })
-  device_id: DeviceEntityModel['device_id']
+  device_id: UUID
 
   @Column('uuid')
-  provider_id: DeviceEntityModel['provider_id']
+  provider_id: UUID
 
   @Column('varchar', { length: 255 })
-  vehicle_id: DeviceEntityModel['vehicle_id']
+  vehicle_id: string
 
   @Column('varchar', { length: 31 })
-  vehicle_type: DeviceEntityModel['vehicle_type']
+  vehicle_type: VEHICLE_TYPE
 
   @Column('varchar', { array: true, length: 31 })
-  propulsion_types: DeviceEntityModel['propulsion_types']
+  propulsion_types: PROPULSION_TYPE[]
 
   @Column('smallint', { nullable: true })
-  year: DeviceEntityModel['year']
+  year: Nullable<number>
 
   @Column('varchar', { length: 127, nullable: true })
-  mfgr: DeviceEntityModel['mfgr']
+  mfgr: Nullable<string>
 
   @Column('varchar', { length: 127, nullable: true })
-  model: DeviceEntityModel['model']
+  model: Nullable<string>
 
   @Column('varchar', { array: true, length: 255 })
-  accessibility_options: DeviceEntityModel['accessibility_options']
+  accessibility_options: Nullable<ACCESSIBILITY_OPTION[]>
 
   @Column('varchar', { length: 255 })
-  modality: DeviceEntityModel['modality']
+  modality: MODALITY
 }
 
-/*
- await exec(`ALTER TABLE ${schema.TABLE.devices} ADD COLUMN ${schema.COLUMN.accessibility_options} varchar(255)[]`)
-  await exec(`UPDATE ${schema.TABLE.devices} SET ${schema.COLUMN.accessibility_options} = {}`)
-  await exec(`ALTER TABLE ${schema.TABLE.devices} ALTER COLUMN ${schema.COLUMN.accessibility_options} SET NOT NULL`)
-
-  await exec(`ALTER TABLE ${schema.TABLE.devices} ADD COLUMN ${schema.COLUMN.modality} varchar(255)`)
-  await exec(`UPDATE ${schema.TABLE.devices} SET ${schema.COLUMN.modality} = 'micro_mobility'`)
-  await exec(`ALTER TABLE ${schema.TABLE.devices} ALTER COLUMN ${schema.COLUMN.modality} SET NOT NULL`)
-  */
+export type DeviceEntityModel = DeviceEntity
