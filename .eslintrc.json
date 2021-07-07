@@ -38,6 +38,7 @@
       { "ignoreRestSiblings": true, "args": "none" }
     ],
     "@typescript-eslint/no-useless-constructor": "error",
+    "@typescript-eslint/switch-exhaustiveness-check": "error",
     "array-callback-return": "off",
     "camelcase": "off",
     "class-methods-use-this": "off",

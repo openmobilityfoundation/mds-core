@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-import { schemaValidator, SchemaValidator } from '@mds-core/mds-schema-validators'
+import { SchemaValidator } from '@mds-core/mds-schema-validators'
 import {
   ACCESSIBILITY_OPTIONS,
   MODALITIES,
   PROPULSION_TYPES,
+  TRIP_STATES,
   UUID,
   VEHICLE_EVENTS,
   VEHICLE_STATES,
-  VEHICLE_TYPES
+  VEHICLE_TYPES,
+  WithNonNullableKeys
 } from '@mds-core/mds-types'
-import Joi from 'joi'
 import {
   DeviceDomainModel,
   EventDomainModel,
@@ -77,24 +78,6 @@ export const { validate: validateDeviceDomainModel, $schema: DeviceSchema } = Sc
   { useDefaults: true }
 )
 
-/* Separate so we can re-use in the event domain model validator */
-const telemetrySchema = Joi.object<TelemetryDomainModel>()
-  .keys({
-    device_id: Joi.string().uuid().required(),
-    provider_id: Joi.string().uuid().required(),
-    timestamp: Joi.number().required(),
-    gps: Joi.object<TelemetryDomainModel['gps']>().keys({
-      lat: Joi.number().required(),
-      lng: Joi.number().required(),
-      speed: Joi.number().allow(null),
-      heading: Joi.number().allow(null),
-      accuracy: Joi.number().allow(null),
-      altitude: Joi.number().allow(null)
-    }),
-    charge: Joi.number().allow(null)
-  })
-  .unknown(false)
-
 export const { validate: validateTelemetryDomainModel, $schema: TelemetrySchema } =
   SchemaValidator<TelemetryDomainModel>(
     {
@@ -128,24 +111,60 @@ export const { validate: validateTelemetryDomainModel, $schema: TelemetrySchema 
     { useDefaults: true }
   )
 
-export const { validate: validateEventDomainModel, isValid: isValidEventDomainModel } =
-  schemaValidator<DeviceDomainModel>(
-    Joi.object<EventDomainModel>()
-      .keys({
-        device_id: Joi.string().uuid().required(),
-        provider_id: Joi.string().uuid().required(),
-        timestamp: Joi.number().required(),
-        event_types: Joi.array()
-          .valid(Joi.string().valid(...VEHICLE_EVENTS))
-          .required(),
-        vehicle_state: Joi.string().valid(...VEHICLE_STATES),
-        telemetry_timestamp: Joi.number().allow(null),
-        telemetry: telemetrySchema.allow(null),
-        trip_id: Joi.string().uuid().allow(null),
-        service_area_id: Joi.string().uuid().allow(null)
-      })
-      .unknown(false)
-  )
+export const { validate: validateEventDomainModel, $schema: EventSchema } = SchemaValidator<
+  WithNonNullableKeys<EventDomainModel, 'telemetry'>
+>(
+  {
+    $id: 'Event',
+    type: 'object',
+    properties: {
+      device_id: uuidSchema,
+      provider_id: uuidSchema,
+      timestamp: { type: 'integer' },
+      event_types: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: [...new Set(VEHICLE_EVENTS)]
+        },
+        minItems: 1
+      },
+      vehicle_state: {
+        type: 'string',
+        enum: [...new Set(VEHICLE_STATES)]
+      },
+      /** NOTE:
+       * Telemetry is considered non-optional as of MDS 1.0, even though some legacy events do not have
+       * telemetry (e.g. `register`). This is why the schema is more restrictive (non-nullable)
+       * than the standard EventDomainModel, and why this returns a more restrictive type post-validation.
+       */
+      telemetry: TelemetrySchema,
+      // ⬇⬇⬇ NULLABLE/OPTIONAL PROPERTIES ⬇⬇⬇
+      trip_state: {
+        type: 'string',
+        enum: [...new Set(TRIP_STATES), null],
+        nullable: true,
+        default: null
+      },
+      telemetry_timestamp: nullableInteger,
+      trip_id: { ...uuidSchema, nullable: true, default: null }
+    },
+    if: {
+      properties: {
+        event_types: {
+          type: 'array',
+          contains: {
+            type: 'string',
+            enum: ['trip_start', 'trip_end', 'trip_enter_jurisdiction', 'trip_leave_jurisdiction']
+          }
+        }
+      }
+    },
+    then: { properties: { trip_id: uuidSchema }, required: ['trip_id'] },
+    required: ['device_id', 'provider_id', 'timestamp', 'event_types', 'vehicle_state', 'telemetry']
+  },
+  { useDefaults: true }
+)
 
 export const { validate: validateGetVehicleEventsFilterParams } = SchemaValidator<GetVehicleEventsFilterParams>({
   type: 'object',

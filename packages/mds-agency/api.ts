@@ -19,13 +19,13 @@ import logger from '@mds-core/mds-logger'
 import { isUUID, pathPrefix } from '@mds-core/mds-utils'
 import express from 'express'
 import { readAllVehicleIds } from './agency-candidate-request-handlers'
+import { createEventHandler } from './handlers/create-event'
 import { createTelemetryHandler } from './handlers/create-telemetry'
 import { AgencyApiVersionMiddleware } from './middleware/agency-api-version'
 import {
   getVehicleById,
   getVehiclesByProvider,
   registerVehicle,
-  submitVehicleEvent,
   updateVehicle,
   writeTripMetadata
 } from './request-handlers'
@@ -97,7 +97,7 @@ function api(app: express.Express): express.Express {
    * Endpoint to submit vehicle events
    * See {@link https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/agency#vehicle---event Events}
    */
-  app.post(pathPrefix('/vehicles/:device_id/event'), validateDeviceId, submitVehicleEvent)
+  app.post(pathPrefix('/vehicles/:device_id/event'), validateDeviceId, createEventHandler)
 
   /**
    * Endpoint to submit telemetry

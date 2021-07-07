@@ -110,6 +110,12 @@ export type PaginatedVehiclesList = {
   vehicles: (Device & { updated?: number | null; telemetry?: Telemetry | null })[]
 }
 
+/**
+ * Fatal agency server error (status 500)
+ */
+export const AgencyServerError = <const>{ error: 'server_error', error_description: 'Unknown server error' }
+export type AgencyServerError = typeof AgencyServerError
+
 export type AgencyApiError = {
   error: 'bad_param' | 'missing_param'
   error_description: 'A validation error occurred.' | 'A required parameter is missing.'

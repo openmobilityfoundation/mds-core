@@ -16,13 +16,11 @@
 
 import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
-import { validateTelemetryDomainModel } from '@mds-core/mds-ingest-service'
 import logger from '@mds-core/mds-logger'
 import stream from '@mds-core/mds-stream'
 import {
   BoundingBox,
   Device,
-  ErrorObject,
   MICRO_MOBILITY_VEHICLE_EVENT,
   MICRO_MOBILITY_VEHICLE_EVENTS,
   MICRO_MOBILITY_VEHICLE_STATE,
@@ -42,7 +40,7 @@ import {
   VehicleEvent,
   VEHICLE_STATE
 } from '@mds-core/mds-types'
-import { areThereCommonElements, isInsideBoundingBox, isTimestamp, isUUID, ValidationError } from '@mds-core/mds-utils'
+import { areThereCommonElements, isInsideBoundingBox, isUUID, ValidationError } from '@mds-core/mds-utils'
 import { DefinedError } from 'ajv'
 import express from 'express'
 import { Query } from 'express-serve-static-core'
@@ -186,163 +184,88 @@ export async function getVehicles(
   }
 }
 
-// TODO Joi
-export async function badEvent({ modality }: Pick<Device, 'modality'>, event: VehicleEvent) {
-  if (event.timestamp === undefined) {
-    return {
-      error: 'missing_param',
-      error_description: 'missing enum field "timestamp"'
-    }
-  }
-  if (!isTimestamp(event.timestamp)) {
-    return {
-      error: 'bad_param',
-      error_description: `invalid timestamp ${event.timestamp}`
-    }
-  }
-
-  if (!event.event_types) {
-    return {
-      error: 'missing_param',
-      error_description: 'missing enum field "event_type"'
-    }
-  }
-
-  if (!Array.isArray(event.event_types)) {
-    return { error: 'bad_param', error_description: `invalid event_types ${event.event_types}` }
-  }
-
-  if (event.event_types.length === 0) {
-    return {
-      error: 'bad_param',
-      error_description: 'empty event_types array'
-    }
-  }
-
-  if (!event.vehicle_state) {
-    return { error: 'missing_param', error_description: 'missing enum field "vehicle_state"' }
-  }
-
-  if (modality === 'micromobility') {
-    for (const event_type of event.event_types) {
-      if (!MICRO_MOBILITY_VEHICLE_EVENTS.includes(event_type as MICRO_MOBILITY_VEHICLE_EVENT))
-        return { error: 'bad_param', error_description: `invalid event_type in event_types ${event_type}` }
-    }
-
-    if (!MICRO_MOBILITY_VEHICLE_STATES.includes(event.vehicle_state as MICRO_MOBILITY_VEHICLE_STATE)) {
-      return { error: 'bad_param', error_description: `invalid vehicle_state ${event.vehicle_state}` }
-    }
-  } else if (modality === 'taxi') {
-    for (const event_type of event.event_types) {
-      if (!TAXI_VEHICLE_EVENTS.includes(event_type as TAXI_VEHICLE_EVENT))
-        return { error: 'bad_param', error_description: `invalid event_type in event_types ${event_type}` }
-    }
-
-    if (!TAXI_VEHICLE_STATES.includes(event.vehicle_state as TAXI_VEHICLE_STATE)) {
-      return { error: 'bad_param', error_description: `invalid vehicle_state ${event.vehicle_state}` }
-    }
-
-    if (
-      event.trip_id &&
-      TRIP_STATES.includes(event.vehicle_state as TRIP_STATE) &&
-      !areThereCommonElements(TAXI_TRIP_EXIT_EVENTS, event.event_types)
-    ) {
-      if (!event.trip_state) {
-        return { error: 'missing_param', error_description: `missing enum field "trip_state" required on trip events` }
+/**
+ *
+ * @param param0 Some object containing a modality (e.g. `Device`)
+ * @param event MDS Event
+ * @returns Error if applicable, null otherwise.
+ */
+export function eventValidForMode({ modality }: Pick<Device, 'modality'>, event: VehicleEvent) {
+  switch (modality) {
+    case 'micromobility': {
+      for (const event_type of event.event_types) {
+        if (!MICRO_MOBILITY_VEHICLE_EVENTS.includes(event_type as MICRO_MOBILITY_VEHICLE_EVENT))
+          return { error: 'bad_param', error_description: `invalid event_type in event_types ${event_type}` }
       }
 
-      if (event.trip_state && !TRIP_STATES.includes(event.trip_state)) {
-        return { error: 'bad_param', error_description: `invalid trip_state ${event.trip_state}` }
-      }
-    }
-  } else if (modality === 'tnc') {
-    for (const event_type of event.event_types) {
-      if (!TNC_VEHICLE_EVENT.includes(event_type as TNC_VEHICLE_EVENT))
-        return { error: 'bad_param', error_description: `invalid event_type in event_types ${event_type}` }
-    }
-
-    if (!TNC_VEHICLE_STATE.includes(event.vehicle_state as TNC_VEHICLE_STATE)) {
-      return { error: 'bad_param', error_description: `invalid vehicle_state ${event.vehicle_state}` }
-    }
-
-    if (
-      event.trip_id &&
-      TRIP_STATES.includes(event.vehicle_state as TRIP_STATE) &&
-      !areThereCommonElements(TNC_TRIP_EXIT_EVENTS, event.event_types)
-    ) {
-      if (!event.trip_state) {
-        return { error: 'missing_param', error_description: `missing enum field "trip_state" required on trip events` }
+      if (!MICRO_MOBILITY_VEHICLE_STATES.includes(event.vehicle_state as MICRO_MOBILITY_VEHICLE_STATE)) {
+        return { error: 'bad_param', error_description: `invalid vehicle_state ${event.vehicle_state}` }
       }
 
-      if (event.trip_state && !TRIP_STATES.includes(event.trip_state)) {
-        return { error: 'bad_param', error_description: `invalid trip_state ${event.trip_state}` }
+      break
+    }
+    case 'taxi': {
+      for (const event_type of event.event_types) {
+        if (!TAXI_VEHICLE_EVENTS.includes(event_type as TAXI_VEHICLE_EVENT))
+          return { error: 'bad_param', error_description: `invalid event_type in event_types ${event_type}` }
       }
-    }
-  } else {
-    return { error: 'bad_param', error_description: `invalid event_types in ${event.event_types}` }
-  }
 
-  if (event.trip_id === '') {
-    /* eslint-reason TODO remove eventually -- Lime is spraying empty-string values */
-    /* eslint-disable-next-line no-param-reassign */
-    event.trip_id = null
-  }
-
-  const { trip_id } = event
-  if (trip_id !== null && trip_id !== undefined && !isUUID(event.trip_id)) {
-    return {
-      error: 'bad_param',
-      error_description: `invalid trip_id ${event.trip_id} is not a UUID`
-    }
-  }
-
-  function missingTripId(): ErrorObject | null {
-    if (!trip_id) {
-      return {
-        error: 'missing_param',
-        error_description: 'missing trip_id'
+      if (!TAXI_VEHICLE_STATES.includes(event.vehicle_state as TAXI_VEHICLE_STATE)) {
+        return { error: 'bad_param', error_description: `invalid vehicle_state ${event.vehicle_state}` }
       }
-    }
-    return null
-  }
 
-  // event-specific checking goes last
-  // TODO update events here
-  if (
-    areThereCommonElements(
-      ['trip_start', 'trip_end', 'trip_enter_jurisdiction', 'trip_leave_jurisdiction'],
-      event.event_types
-    )
-  ) {
-    const invalidTripId = missingTripId()
-    if (invalidTripId) return invalidTripId
-  }
+      if (
+        event.trip_id &&
+        TRIP_STATES.includes(event.vehicle_state as TRIP_STATE) &&
+        !areThereCommonElements(TAXI_TRIP_EXIT_EVENTS, event.event_types)
+      ) {
+        if (!event.trip_state) {
+          return {
+            error: 'missing_param',
+            error_description: `missing enum field "trip_state" required on trip events`
+          }
+        }
 
-  try {
-    const { telemetry } = event
-
-    // We need to do this until we switch to AJV for event validation
-    if (!telemetry) {
-      return {
-        error: 'missing_param',
-        error_description: 'A required parameter is missing.',
-        error_details: [{ property: 'telemetry', reason: 'missing' }]
+        if (event.trip_state && !TRIP_STATES.includes(event.trip_state)) {
+          return { error: 'bad_param', error_description: `invalid trip_state ${event.trip_state}` }
+        }
       }
+
+      break
     }
+    case 'tnc':
+      {
+        for (const event_type of event.event_types) {
+          if (!TNC_VEHICLE_EVENT.includes(event_type as TNC_VEHICLE_EVENT))
+            return { error: 'bad_param', error_description: `invalid event_type in event_types ${event_type}` }
+        }
 
-    validateTelemetryDomainModel(telemetry)
-  } catch (error) {
-    return agencyValidationErrorParser(error)
+        if (!TNC_VEHICLE_STATE.includes(event.vehicle_state as TNC_VEHICLE_STATE)) {
+          return { error: 'bad_param', error_description: `invalid vehicle_state ${event.vehicle_state}` }
+        }
+
+        if (
+          event.trip_id &&
+          TRIP_STATES.includes(event.vehicle_state as TRIP_STATE) &&
+          !areThereCommonElements(TNC_TRIP_EXIT_EVENTS, event.event_types)
+        ) {
+          if (!event.trip_state) {
+            return {
+              error: 'missing_param',
+              error_description: `missing enum field "trip_state" required on trip events`
+            }
+          }
+
+          if (event.trip_state && !TRIP_STATES.includes(event.trip_state)) {
+            return { error: 'bad_param', error_description: `invalid trip_state ${event.trip_state}` }
+          }
+        }
+      }
+
+      break
   }
 
-  return null // we good
-}
-
-export function lower(s: string): string {
-  if (typeof s === 'string') {
-    return s.toLowerCase()
-  }
-  return s
+  return null
 }
 
 export async function writeTelemetry(telemetry: Telemetry | Telemetry[]) {
@@ -390,10 +313,10 @@ export async function validateDeviceId(req: express.Request, res: express.Respon
     return
   }
   if (device_id && !isUUID(device_id)) {
-    logger.warn('agency: bogus device_id', { device_id, originalUrl: req.originalUrl })
     res.status(400).send({
       error: 'bad_param',
-      error_description: `invalid device_id ${device_id} is not a UUID`
+      error_description: 'A validation error occurred.',
+      error_details: [{ property: 'device_id', reason: 'Must be a UUID' }]
     })
     return
   }

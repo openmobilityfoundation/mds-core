@@ -27,6 +27,13 @@ export type Nullable<T> = T | null
 export type NullableProperties<T extends object> = {
   [P in keyof T]-?: T[P] extends null ? T[P] : Nullable<T[P]>
 }
+/**
+ * Returns type with some properties set to NonNullable
+ */
+export type WithNonNullableKeys<T, P extends keyof T> = Omit<T, P> &
+  {
+    [K in keyof Pick<T, P>]: NonNullable<T[P]>
+  }
 export type SingleOrArray<T> = T | T[]
 export type NullableKeys<T> = {
   [P in keyof T]: null extends T[P] ? P : never
