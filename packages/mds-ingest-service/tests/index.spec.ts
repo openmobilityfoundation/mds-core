@@ -18,7 +18,7 @@
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { Device } from '@mds-core/mds-types'
 import { now, uuid } from '@mds-core/mds-utils'
-import { EventDomainCreateModel, TelemetryDomainCreateModel } from '../@types'
+import { EventAnnotationDomainCreateModel, EventDomainCreateModel, TelemetryDomainCreateModel } from '../@types'
 import { IngestServiceClient } from '../client'
 import { IngestRepository } from '../repository'
 import { IngestServiceManager } from '../service/manager'
@@ -167,6 +167,28 @@ const TEST_EVENT_B2: EventDomainCreateModel = {
   provider_id: TEST1_PROVIDER_ID,
   trip_id: TRIP_UUID_B
   // test-id-2
+}
+
+const TEST_EVENT_ANNOTATION_A: EventAnnotationDomainCreateModel = {
+  device_id: DEVICE_UUID_A,
+  timestamp: testTimestamp,
+  vehicle_id: 'test-id-1',
+  vehicle_type: 'scooter',
+  propulsion_types: ['electric'],
+  geography_ids: [uuid(), uuid()],
+  geography_types: ['jurisdiction', null],
+  latency_ms: 100
+}
+
+const TEST_EVENT_ANNOTATION_B: EventAnnotationDomainCreateModel = {
+  device_id: DEVICE_UUID_B,
+  timestamp: testTimestamp,
+  vehicle_id: 'test-id-2',
+  vehicle_type: 'scooter',
+  propulsion_types: ['electric'],
+  geography_ids: [uuid(), uuid()],
+  geography_types: [null, 'spot'],
+  latency_ms: 150
 }
 
 describe('Ingest Repository Tests', () => {
@@ -494,6 +516,39 @@ describe('Ingest Service Tests', () => {
       expect(nextEvents.length).toEqual(1)
       expect(nextEvents[0]).not.toStrictEqual(events[0])
       expect(prev).not.toBeNull()
+    })
+  })
+
+  describe('writeEventAnnotations', () => {
+    it('writes two event annotations', async () => {
+      const eventAnnotations = await IngestServiceClient.writeEventAnnotations([
+        TEST_EVENT_ANNOTATION_A,
+        TEST_EVENT_ANNOTATION_B
+      ])
+      expect(eventAnnotations.length).toEqual(2)
+      // Test for partial object match since eventAnnotations also have `recorded`
+      expect(eventAnnotations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining(TEST_EVENT_ANNOTATION_A),
+          expect.objectContaining(TEST_EVENT_ANNOTATION_B)
+        ])
+      )
+    })
+
+    it('rejects invalid event annotations', async () => {
+      const INVALID_EVENT_ANNOTATION = { ...TEST_EVENT_ANNOTATION_A, geography_ids: ['not-a-uuid'] }
+      await expect(IngestServiceClient.writeEventAnnotations([INVALID_EVENT_ANNOTATION])).rejects.toMatchObject({
+        type: 'ValidationError'
+      })
+    })
+
+    it('rejects duplicate event annotations', async () => {
+      // Event annotations require device_id + timestamp to be unique
+      await expect(
+        IngestServiceClient.writeEventAnnotations([TEST_EVENT_ANNOTATION_A, TEST_EVENT_ANNOTATION_A])
+      ).rejects.toMatchObject({
+        type: 'ConflictError'
+      })
     })
   })
 

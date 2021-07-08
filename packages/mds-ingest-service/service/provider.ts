@@ -17,9 +17,13 @@
 import logger from '@mds-core/mds-logger'
 import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
 import { UUID } from '@mds-core/mds-types'
-import { IngestService } from '../@types'
+import { EventAnnotationDomainCreateModel, IngestService } from '../@types'
 import { IngestRepository } from '../repository'
-import { validateGetVehicleEventsFilterParams, validateUUIDs } from './validators'
+import {
+  validateEventAnnotationDomainCreateModels,
+  validateGetVehicleEventsFilterParams,
+  validateUUIDs
+} from './validators'
 
 export const IngestServiceProvider: ServiceProvider<IngestService> & ProcessController = {
   start: IngestRepository.initialize,
@@ -47,8 +51,19 @@ export const IngestServiceProvider: ServiceProvider<IngestService> & ProcessCont
     try {
       return ServiceResult(await IngestRepository.getDevices(validateUUIDs(ids)))
     } catch (error) {
-      const exception = ServiceException(`Error in getEvents `, error)
-      logger.error('getEvents exception', { exception, error })
+      const exception = ServiceException(`Error in getDevices `, error)
+      logger.error('getDevices exception', { exception, error })
+      return exception
+    }
+  },
+  writeEventAnnotations: async (eventAnnotations: EventAnnotationDomainCreateModel[]) => {
+    try {
+      return ServiceResult(
+        await IngestRepository.createEventAnnotations(validateEventAnnotationDomainCreateModels(eventAnnotations))
+      )
+    } catch (error) {
+      const exception = ServiceException(`Error in writeEventAnnotations `, error)
+      logger.error('writeEventAnnotations exception', { exception, error })
       return exception
     }
   }

@@ -83,6 +83,7 @@ export type GetVehicleEventsOrderOption = {
   column: GetVehicleEventsOrderColumn
   direction?: GetVehicleEventsOrderDirection
 }
+
 export interface GetVehicleEventsFilterParams {
   vehicle_types?: VEHICLE_TYPE[]
   propulsion_types?: PROPULSION_TYPE[]
@@ -122,16 +123,67 @@ export interface EventDomainModel extends RecordedColumn {
 
 export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, keyof RecordedColumn>>
 
+/**
+ * Labels which can be used to annotate events.
+ */
+export interface DeviceLabel {
+  vehicle_id: string
+  vehicle_type: VEHICLE_TYPE
+  propulsion_types: PROPULSION_TYPE[]
+}
+
+export interface GeographyLabel {
+  geography_type: Nullable<string>
+  geography_id: UUID
+}
+
+export interface GeographiesLabel {
+  geographies: Array<GeographyLabel>
+}
+
+interface FlatGeographiesLabel {
+  geography_ids: UUID[]
+  geography_types: (string | null)[]
+}
+
+export interface LatencyLabel {
+  latency_ms: Timestamp
+}
+
+export interface TelemetryLabel {
+  telemetry_timestamp: Timestamp
+  telemetry_gps_lat: number
+  telemetry_gps_lng: number
+  telemetry_gps_altitude: Nullable<number>
+  telemetry_gps_heading: Nullable<number>
+  telemetry_gps_speed: Nullable<number>
+  telemetry_gps_accuracy: Nullable<number>
+  telemetry_charge: Nullable<number>
+}
+
+/**
+ * An object to persist the above (non-telemetry) event labels,
+ * joinable to EventDomainModels by device_id + timestamp.
+ */
+export interface EventAnnotationDomainModel extends DeviceLabel, FlatGeographiesLabel, LatencyLabel, RecordedColumn {
+  device_id: UUID
+  timestamp: Timestamp
+}
+
+export type EventAnnotationDomainCreateModel = DomainModelCreate<Omit<EventAnnotationDomainModel, keyof RecordedColumn>>
+
 export interface IngestService {
   name: () => string
   getEventsUsingOptions: (params: GetVehicleEventsFilterParams) => GetVehicleEventsResponse
   getEventsUsingCursor: (cursor: string) => GetVehicleEventsResponse
   getDevices: (ids: UUID[]) => DeviceDomainModel[]
+  writeEventAnnotations: (params: EventAnnotationDomainCreateModel[]) => EventAnnotationDomainModel[]
 }
 
 export const IngestServiceDefinition: RpcServiceDefinition<IngestService> = {
   name: RpcRoute<IngestService['name']>(),
   getEventsUsingOptions: RpcRoute<IngestService['getEventsUsingOptions']>(),
   getEventsUsingCursor: RpcRoute<IngestService['getEventsUsingCursor']>(),
-  getDevices: RpcRoute<IngestService['getDevices']>()
+  getDevices: RpcRoute<IngestService['getDevices']>(),
+  writeEventAnnotations: RpcRoute<IngestService['writeEventAnnotations']>()
 }

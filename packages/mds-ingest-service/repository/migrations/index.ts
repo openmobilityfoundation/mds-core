@@ -21,6 +21,7 @@ import { AddAccessibilityOptionsColumn1616681612878 } from './1616681612878-AddA
 import { AddModalityColumn1616682680014 } from './1616682680014-AddModalityColumn'
 import { AddTripStateColumn1616686180925 } from './1616686180925-AddTripStateColumn'
 import { AddTelemetryStopIdHdopSatellitesColumns1624574421590 } from './1624574421590-AddTelemetryStopIdHdopSatellitesColumns'
+import { AddEventAnnotationEntity1624574823000 } from './1624574823000-AddEventAnnotationEntity'
 import { CreateMigrationColumns1625241719659 } from './1625241719659-CreateMigrationColumns'
 
 export default [
@@ -31,5 +32,6 @@ export default [
   AddModalityColumn1616682680014,
   AddTripStateColumn1616686180925,
   AddTelemetryStopIdHdopSatellitesColumns1624574421590,
+  AddEventAnnotationEntity1624574823000,
   CreateMigrationColumns1625241719659
 ]
