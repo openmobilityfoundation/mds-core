@@ -30,6 +30,6 @@
     "typeorm": "0.2.34"
   },
   "peerDependencies": {
-    "typeorm": "0.2.30"
+    "typeorm": "0.2.34"
   }
 }
