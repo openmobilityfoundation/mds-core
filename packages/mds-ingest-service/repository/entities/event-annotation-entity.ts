@@ -15,50 +15,38 @@
  */
 
 import { BigintTransformer, IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { PROPULSION_TYPE, Timestamp, UUID, VEHICLE_TYPE } from '@mds-core/mds-types'
 import { Column, Entity, Index } from 'typeorm'
-import { EventAnnotationDomainModel } from '../../@types'
-
-export interface EventAnnotationEntityModel extends IdentityColumn, RecordedColumn {
-  device_id: EventAnnotationDomainModel['device_id']
-  timestamp: EventAnnotationDomainModel['timestamp']
-  vehicle_id: EventAnnotationDomainModel['vehicle_id']
-  vehicle_type: EventAnnotationDomainModel['vehicle_type']
-  propulsion_types: EventAnnotationDomainModel['propulsion_types']
-  geography_ids: EventAnnotationDomainModel['geography_ids']
-  geography_types: EventAnnotationDomainModel['geography_types']
-  latency_ms: EventAnnotationDomainModel['latency_ms']
-}
 
 @Entity('event_annotations')
-export class EventAnnotationEntity
-  extends IdentityColumn(RecordedColumn(class {}))
-  implements EventAnnotationEntityModel
-{
+export class EventAnnotationEntity extends IdentityColumn(RecordedColumn(class {})) {
   @Column('uuid', { primary: true })
-  device_id: EventAnnotationEntityModel['device_id']
+  device_id: UUID
 
   @Column('bigint', { transformer: BigintTransformer, primary: true })
-  timestamp: EventAnnotationEntityModel['timestamp']
+  timestamp: Timestamp
 
   @Index()
   @Column('varchar', { length: 255 })
-  vehicle_id: EventAnnotationEntityModel['vehicle_id']
+  vehicle_id: string
 
   @Index()
   @Column('varchar', { length: 31 })
-  vehicle_type: EventAnnotationEntityModel['vehicle_type']
+  vehicle_type: VEHICLE_TYPE
 
   @Index()
   @Column('varchar', { array: true, length: 31 })
-  propulsion_types: EventAnnotationEntityModel['propulsion_types']
+  propulsion_types: PROPULSION_TYPE[]
 
   @Index()
   @Column('uuid', { array: true })
-  geography_ids: EventAnnotationEntityModel['geography_ids']
+  geography_ids: UUID[]
 
   @Column('varchar', { array: true, length: 255 })
-  geography_types: EventAnnotationEntityModel['geography_types']
+  geography_types: (string | null)[]
 
   @Column('bigint', { transformer: BigintTransformer })
-  latency_ms: EventAnnotationEntityModel['latency_ms']
+  latency_ms: Timestamp
 }
+
+export type EventAnnotationEntityModel = EventAnnotationEntity
