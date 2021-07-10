@@ -5,9 +5,9 @@ export class AddEventsTripIdTimestampIndex1625676583247 implements MigrationInte
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_trip_id_timestamp_events" ON "events" ("trip_id", "timestamp") `
+      `CREATE INDEX IF NOT EXISTS "idx_trip_id_timestamp_events" ON "events" ("trip_id", "timestamp") `
     )
-    await queryRunner.query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_timestamp_events" ON "events" ("timestamp") `)
+    await queryRunner.query(`CREATE INDEX IF NOT EXISTS "idx_timestamp_events" ON "events" ("timestamp") `)
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
