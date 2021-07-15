@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { createConnection, ConnectionOptions } from 'typeorm'
-import { now, days } from '@mds-core/mds-utils'
-import { ComplianceServiceManager } from '../service/manager'
+import { days, now } from '@mds-core/mds-utils'
+import { ConnectionOptions, createConnection } from 'typeorm'
+import { ComplianceAggregateDomainModel } from '../@types'
 import { ComplianceServiceClient } from '../client'
+import { ComplianceServiceManager } from '../service/manager'
 import {
   COMPLIANCE_SNAPSHOT,
   COMPLIANCE_SNAPSHOTS,
@@ -31,7 +32,6 @@ import {
   PROVIDER_ID_2,
   TIME
 } from './fixtures'
-import { ComplianceAggregateDomainModel } from '../@types'
 import ormconfig = require('../ormconfig')
 
 describe('Test Migrations', () => {

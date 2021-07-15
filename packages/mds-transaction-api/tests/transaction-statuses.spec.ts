@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import supertest from 'supertest'
 import { ApiServer } from '@mds-core/mds-api-server'
 import {
-  transactionStatusesGenerator,
   TransactionServiceClient,
-  TransactionStatusDomainModel
+  TransactionStatusDomainModel,
+  transactionStatusesGenerator
 } from '@mds-core/mds-transaction-service'
 import { UUID } from '@mds-core/mds-types'
-import { uuid } from '@mds-core/mds-utils'
-// import { SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { pathPrefix } from '@mds-core/mds-utils'
+import { pathPrefix, uuid } from '@mds-core/mds-utils'
+import supertest from 'supertest'
 import { api } from '../api'
 
 const request = supertest(ApiServer(api))

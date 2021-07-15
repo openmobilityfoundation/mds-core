@@ -15,10 +15,10 @@
  */
 
 import { uuid } from '@mds-core/mds-utils'
-import { TransactionServiceManager } from '../service/manager'
+import { TransactionDomainModel } from '../@types'
 import { TransactionServiceClient } from '../client'
 import { TransactionRepository } from '../repository'
-import { TransactionDomainModel } from '../@types'
+import { TransactionServiceManager } from '../service/manager'
 import { transactionsGenerator } from '../test-fixtures'
 
 describe('Transaction Repository Tests', () => {

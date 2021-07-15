@@ -14,30 +14,32 @@
  * limitations under the License.
  */
 
-import assert from 'assert'
 /* eslint-reason extends object.prototype */
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import should from 'should'
-import test from 'unit.js'
-
-import { FeatureCollection } from 'geojson'
-import { Telemetry, Recorded, Device, Geography, VehicleEvent } from '@mds-core/mds-types'
+/* eslint-enable prettier/prettier */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 import {
-  JUMP_TEST_DEVICE_1,
-  JUMP_PROVIDER_ID,
-  POLICY3_JSON,
-  GEOGRAPHY_UUID,
-  GEOGRAPHY2_UUID,
-  START_ONE_MONTH_AGO,
-  LA_CITY_BOUNDARY,
   DISTRICT_SEVEN,
+  GEOGRAPHY2_UUID,
+  GEOGRAPHY_UUID,
+  JUMP_PROVIDER_ID,
+  JUMP_TEST_DEVICE_1,
+  LA_CITY_BOUNDARY,
   makeDevices,
-  makeEventsWithTelemetry
+  makeEventsWithTelemetry,
+  POLICY3_JSON,
+  START_ONE_MONTH_AGO
 } from '@mds-core/mds-test-data'
-import { now, clone, rangeRandomInt, ConflictError, days, uuid } from '@mds-core/mds-utils'
+import { Device, Geography, Recorded, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+import { clone, ConflictError, days, now, rangeRandomInt, uuid } from '@mds-core/mds-utils'
+import assert from 'assert'
+import { FeatureCollection } from 'geojson'
+import test from 'unit.js'
 import { isNullOrUndefined } from 'util'
 import MDSDBPostgres from '../index'
-import { initializeDB, shutdownDB, pg_info } from './helpers'
+import { initializeDB, pg_info, shutdownDB } from './helpers'
 
 const startTime = now() - 200
 const shapeUUID = 'e3ed0a0e-61d3-4887-8b6a-4af4f3769c14'

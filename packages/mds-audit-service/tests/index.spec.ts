@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { AuditServiceManager } from '../service/manager'
 import { AuditServiceClient } from '../client'
 import { AuditRepository } from '../repository'
+import { AuditServiceManager } from '../service/manager'
 
 describe('Audit Repository Tests', () => {
   beforeAll(async () => {

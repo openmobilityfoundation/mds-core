@@ -22,30 +22,33 @@
 /* eslint-disable promise/prefer-await-to-callbacks */
 
 /* eslint-reason extends object.prototype */
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import should from 'should'
-import supertest from 'supertest'
-import express from 'express'
-import test from 'unit.js'
-import db from '@mds-core/mds-db'
-import { clone, isUUID, uuid, pathPrefix } from '@mds-core/mds-utils'
-import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
+/* eslint-enable prettier/prettier */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 import { ApiServer } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
 import {
-  POLICY_JSON,
-  POLICY2_JSON,
-  POLICY3_JSON,
-  POLICY_JSON_MISSING_POLICY_ID,
-  POLICY_UUID,
-  POLICY2_UUID,
   GEOGRAPHY_UUID,
   LA_CITY_BOUNDARY,
-  SCOPED_AUTH,
+  POLICY2_JSON,
+  POLICY2_UUID,
+  POLICY3_JSON,
+  POLICY_JSON,
+  POLICY_JSON_MISSING_POLICY_ID,
+  POLICY_UUID,
   PUBLISHED_POLICY,
+  SCOPED_AUTH,
   TAXI_POLICY
 } from '@mds-core/mds-test-data'
-import { injectModalityValidator, injectVersionMiddleware } from '../middleware'
+import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
+import { clone, isUUID, pathPrefix, uuid } from '@mds-core/mds-utils'
+import express from 'express'
+import supertest from 'supertest'
+import test from 'unit.js'
 import { api } from '../api'
+import { injectModalityValidator, injectVersionMiddleware } from '../middleware'
 import { POLICY_AUTHOR_API_DEFAULT_VERSION } from '../types'
 
 /* eslint-disable-next-line no-console */

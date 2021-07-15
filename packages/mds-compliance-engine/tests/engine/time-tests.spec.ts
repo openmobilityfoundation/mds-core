@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
-
-import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Geography, ModalityPolicy, Device, VehicleEvent, Telemetry, TimeRule } from '@mds-core/mds-types'
-
-import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
-import { FeatureCollection } from 'geojson'
-import { minutes } from '@mds-core/mds-utils'
 import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service/@types'
+import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import { Device, Geography, ModalityPolicy, Telemetry, TimeRule, VehicleEvent } from '@mds-core/mds-types'
+import { minutes } from '@mds-core/mds-utils'
+import { FeatureCollection } from 'geojson'
+import test from 'unit.js'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../../@types'
 import { generateDeviceMap } from '../../engine/helpers'
 import { isTimeRuleMatch, processTimePolicy } from '../../engine/time_processors'
 import {
-  INNER_POLYGON_2,
-  INNER_POLYGON,
-  OVERLAPPING_GEOS_TIME_POLICY,
   INNER_GEO,
-  OUTER_GEO
+  INNER_POLYGON,
+  INNER_POLYGON_2,
+  OUTER_GEO,
+  OVERLAPPING_GEOS_TIME_POLICY
 } from '../../test_data/fixtures'
 
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'

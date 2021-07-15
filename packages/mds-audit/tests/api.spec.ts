@@ -22,27 +22,27 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable promise/catch-or-return */
 
-import supertest from 'supertest'
+import cache from '@mds-core/mds-agency-cache'
+import { ApiServer } from '@mds-core/mds-api-server'
+import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
+import db from '@mds-core/mds-db'
+import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
+import { ServiceError } from '@mds-core/mds-service-helpers'
+import { makeDevices, makeEventsWithTelemetry, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
 import {
   Attachment,
   Audit,
   AuditAttachment,
+  AUDIT_EVENT_TYPES,
   Device,
   Telemetry,
   Timestamp,
-  AUDIT_EVENT_TYPES,
   VehicleEvent
 } from '@mds-core/mds-types'
-import { makeEventsWithTelemetry, makeDevices, makeTelemetryInArea, SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { NotFoundError, now, rangeRandomInt, uuid, pathPrefix } from '@mds-core/mds-utils'
-import cache from '@mds-core/mds-agency-cache'
-import test from 'unit.js'
-import { ApiServer } from '@mds-core/mds-api-server'
-import db from '@mds-core/mds-db'
-import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
+import { NotFoundError, now, pathPrefix, rangeRandomInt, uuid } from '@mds-core/mds-utils'
 import Sinon from 'sinon'
-import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
-import { ServiceError } from '@mds-core/mds-service-helpers'
+import supertest from 'supertest'
+import test from 'unit.js'
 import { api } from '../api'
 import * as attachments from '../attachments'
 import { AUDIT_API_DEFAULT_VERSION } from '../types'

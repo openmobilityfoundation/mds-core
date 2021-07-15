@@ -23,21 +23,21 @@
 /* eslint-reason extends object.prototype */
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 
+import { ApiServer } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
+import {
+  DISTRICT_SEVEN,
+  GEOGRAPHY2_UUID,
+  GEOGRAPHY_UUID,
+  LA_CITY_BOUNDARY,
+  POLICY_UUID,
+  SCOPED_AUTH
+} from '@mds-core/mds-test-data'
+import { pathPrefix, uuid } from '@mds-core/mds-utils'
 import assert from 'assert'
 import sinon from 'sinon'
 import supertest from 'supertest'
 import test from 'unit.js'
-import db from '@mds-core/mds-db'
-import { uuid, pathPrefix } from '@mds-core/mds-utils'
-import { ApiServer } from '@mds-core/mds-api-server'
-import {
-  POLICY_UUID,
-  GEOGRAPHY_UUID,
-  GEOGRAPHY2_UUID,
-  LA_CITY_BOUNDARY,
-  DISTRICT_SEVEN,
-  SCOPED_AUTH
-} from '@mds-core/mds-test-data'
 import { api } from '../api'
 import { GEOGRAPHY_AUTHOR_API_DEFAULT_VERSION } from '../types'
 

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
-import assert from 'assert'
 import {
-  MICRO_MOBILITY_VEHICLE_EVENTS,
-  MICRO_MOBILITY_VEHICLE_STATES,
+  MicroMobilityVehicleEvent,
   MICRO_MOBILITY_EVENT_STATES_MAP,
-  MicroMobilityVehicleEvent
+  MICRO_MOBILITY_VEHICLE_EVENTS,
+  MICRO_MOBILITY_VEHICLE_STATES
 } from '@mds-core/mds-types'
-import { routeDistance, isEventSequenceValid, normalizeToArray, filterDefined } from '../utils'
+import assert from 'assert'
+import test from 'unit.js'
 import { isEventValid, stateTransitionDict } from '../state-machine'
+import { filterDefined, isEventSequenceValid, normalizeToArray, routeDistance } from '../utils'
 
 const Boston = { lat: 42.360081, lng: -71.058884 }
 const LosAngeles = { lat: 34.052235, lng: -118.243683 }

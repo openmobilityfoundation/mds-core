@@ -22,16 +22,16 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable promise/catch-or-return */
 
+import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
 import db from '@mds-core/mds-db'
 import { Attachment, AuditAttachment, Recorded } from '@mds-core/mds-types'
 import { isUUID, NotFoundError, uuid } from '@mds-core/mds-utils'
 import assert from 'assert'
 import fs from 'fs'
 import Sinon from 'sinon'
-import { AttachmentServiceClient } from '@mds-core/mds-attachment-service'
-import { attachmentSummary, deleteAuditAttachment, readAttachments, writeAttachment } from '../attachments'
 import { getWriteableClient } from '../../mds-db/client'
 import schema from '../../mds-db/schema'
+import { attachmentSummary, deleteAuditAttachment, readAttachments, writeAttachment } from '../attachments'
 
 /* eslint-disable-next-line */
 const aws = require('aws-sdk')

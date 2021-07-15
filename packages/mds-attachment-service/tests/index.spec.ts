@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { AttachmentServiceManager } from '../service/manager'
-import { AttachmentRepository } from '../repository'
 import { AttachmentServiceClient } from '../client'
+import { AttachmentRepository } from '../repository'
+import { AttachmentServiceManager } from '../service/manager'
 
 describe('Attachment Repository Tests', () => {
   beforeAll(async () => {

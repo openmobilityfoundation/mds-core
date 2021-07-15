@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import supertest from 'supertest'
-import HttpStatus from 'http-status-codes'
+import { ApiServer } from '@mds-core/mds-api-server'
 import { CollectorServiceClient } from '@mds-core/mds-collector-backend'
 import { CollectorBackendController } from '@mds-core/mds-collector-backend/service/backend'
 import { TestSchema } from '@mds-core/mds-schema-validators'
-import { ApiServer } from '@mds-core/mds-api-server'
-import { pathPrefix, uuid } from '@mds-core/mds-utils'
 import { UUID } from '@mds-core/mds-types'
+import { pathPrefix, uuid } from '@mds-core/mds-utils'
+import HttpStatus from 'http-status-codes'
+import supertest from 'supertest'
 import { CollectorApiAccessTokenScopes, COLLECTOR_API_DEFAULT_VERSION, COLLECTOR_API_MIME_TYPE } from '../@types'
 import { api } from '../api'
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
 import { ValidationError } from '@mds-core/mds-utils'
-import { ServiceResult, ServiceError, ServiceException, isServiceError, ProcessManager } from '../index'
+import test from 'unit.js'
 import { isError, UnwrapServiceResult } from '../client'
+import { isServiceError, ProcessManager, ServiceError, ServiceException, ServiceResult } from '../index'
 
 describe('Tests Service Helpers', () => {
   it('ServiceResult', async () => {

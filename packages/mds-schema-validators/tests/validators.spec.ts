@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-import { now, uuid } from '@mds-core/mds-utils'
-import { AUDIT_EVENT_TYPES } from '@mds-core/mds-types'
 import { providers } from '@mds-core/mds-providers' // map of uuids -> obj
 import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { AUDIT_EVENT_TYPES } from '@mds-core/mds-types'
+import { now, uuid } from '@mds-core/mds-utils'
 import {
-  isValidAuditTripId,
-  isValidVehicleEventType,
-  isValidTelemetry,
-  isValidDeviceId,
   isValidAuditDeviceId,
   isValidAuditEventId,
-  isValidProviderVehicleId,
-  isValidProviderId,
-  isValidTimestamp,
   isValidAuditEventType,
   isValidAuditIssueCode,
   isValidAuditNote,
+  isValidAuditTripId,
+  isValidDeviceId,
+  isValidEvent,
   isValidNumber,
-  ValidationError,
+  isValidProviderId,
+  isValidProviderVehicleId,
+  isValidTelemetry,
+  isValidTimestamp,
+  isValidVehicleEventType,
   validateEvent,
   validateEvents,
+  validateGeographies,
   validateModalityPolicies,
-  isValidEvent,
-  validateGeographies
+  ValidationError
 } from '../validators'
 
 describe('Tests validators', () => {

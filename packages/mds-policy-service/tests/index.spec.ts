@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { PolicyServiceManager } from '../service/manager'
 import { PolicyServiceClient } from '../client'
 import { PolicyRepository } from '../repository'
+import { PolicyServiceManager } from '../service/manager'
 
 describe('Policy Repository Tests', () => {
   beforeAll(async () => {

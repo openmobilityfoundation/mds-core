@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { days, uuid } from '@mds-core/mds-utils'
 import test from 'unit.js'
-import { uuid, days } from '@mds-core/mds-utils'
-import { JurisdictionRepository } from '../repository'
 import { JurisdictionServiceClient } from '../index'
+import { JurisdictionRepository } from '../repository'
 import { JurisdictionServiceManager } from '../service/manager'
 
 const records = 5_000

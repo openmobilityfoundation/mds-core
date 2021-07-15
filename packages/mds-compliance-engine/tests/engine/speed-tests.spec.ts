@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
-
-import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Geography, ModalityPolicy, Device, SpeedRule, Telemetry, VehicleEvent } from '@mds-core/mds-types'
-
-import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
-import { FeatureCollection } from 'geojson'
 import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service/@types'
+import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import { Device, Geography, ModalityPolicy, SpeedRule, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+import { FeatureCollection } from 'geojson'
+import test from 'unit.js'
+import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../../@types'
+import { filterEvents, generateDeviceMap } from '../../engine/helpers'
+import { isSpeedRuleMatch, processSpeedPolicy } from '../../engine/speed_processors'
 import {
   INNER_GEO,
-  OUTER_GEO,
-  INNER_POLYGON_2,
   INNER_POLYGON,
+  INNER_POLYGON_2,
+  OUTER_GEO,
   OVERLAPPING_GEOS_SPEED_POLICY
 } from '../../test_data/fixtures'
-import { isSpeedRuleMatch, processSpeedPolicy } from '../../engine/speed_processors'
-import { filterEvents, generateDeviceMap } from '../../engine/helpers'
-
-import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../../@types'
 
 const SPEED_POLICY: ModalityPolicy = {
   policy_id: '95645117-fd85-463e-a2c9-fc95ea47463e',

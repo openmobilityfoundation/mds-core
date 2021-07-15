@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
 import { uuid } from '@mds-core/mds-utils'
+import test from 'unit.js'
 import { parseRequest } from '../index'
 
 const arraysEqual = <T>(array1?: T[], array2?: T[]) => JSON.stringify(array1) === JSON.stringify(array2)

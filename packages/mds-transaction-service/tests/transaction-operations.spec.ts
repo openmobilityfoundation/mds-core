@@ -1,7 +1,7 @@
 import { uuid } from '@mds-core/mds-utils'
-import { TransactionServiceManager } from '../service/manager'
 import { TransactionServiceClient } from '../client'
 import { TransactionRepository } from '../repository'
+import { TransactionServiceManager } from '../service/manager'
 import { transactionOperationsGenerator } from '../test-fixtures'
 
 const TransactionServer = TransactionServiceManager.controller()

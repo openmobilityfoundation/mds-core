@@ -1,8 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const baseConfig = require('../../jest.config')
-
 module.exports = {
-  ...baseConfig,
+  ...require('../../jest.config.js'),
   coverageThreshold: {
     global: {
       lines: 45

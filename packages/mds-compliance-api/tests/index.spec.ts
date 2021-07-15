@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 
-import supertest from 'supertest'
-import HttpStatus from 'http-status-codes'
 import { ApiServer } from '@mds-core/mds-api-server'
-import { ModalityPolicy } from '@mds-core/mds-types'
 import { ComplianceServiceClient } from '@mds-core/mds-compliance-service'
 import db from '@mds-core/mds-db'
-
-import { pathPrefix } from '@mds-core/mds-utils'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
+import { ModalityPolicy } from '@mds-core/mds-types'
+import { pathPrefix } from '@mds-core/mds-utils'
+import HttpStatus from 'http-status-codes'
+import supertest from 'supertest'
+import { api } from '../api'
 import {
-  TIME,
-  PROVIDER_ID_2,
-  PROVIDER_ID_1,
-  POLICY_ID_1,
-  POLICY_ID_2,
+  ALL_COMPLIANCE_AGGREGATES,
+  COMPLIANCE_AGGREGATE_PROVIDER_1_POLICY_1,
+  COMPLIANCE_SNAPSHOTS_PROVIDER_1_POLICY_1,
+  COMPLIANCE_SNAPSHOTS_PROVIDER_2_POLICY_2,
+  COMPLIANCE_SNAPSHOT_ID,
   POLICY1,
   POLICY2,
-  COMPLIANCE_SNAPSHOTS_PROVIDER_2_POLICY_2,
-  COMPLIANCE_SNAPSHOTS_PROVIDER_1_POLICY_1,
-  COMPLIANCE_SNAPSHOT_ID,
-  ALL_COMPLIANCE_AGGREGATES,
-  COMPLIANCE_AGGREGATE_PROVIDER_1_POLICY_1
+  POLICY_ID_1,
+  POLICY_ID_2,
+  PROVIDER_ID_1,
+  PROVIDER_ID_2,
+  TIME
 } from './fixtures'
-import { api } from '../api'
 
 const request = supertest(ApiServer(api))
 const SNAPSHOT_IDS = COMPLIANCE_SNAPSHOTS_PROVIDER_2_POLICY_2.map(snapshot => snapshot.compliance_snapshot_id)
@@ -54,11 +53,9 @@ const utils = require('@mds-core/mds-utils')
 describe('Test Compliances API', () => {
   beforeEach(() => {
     jest.spyOn(utils, 'now').mockImplementation(() => TIME + 500)
-    jest.spyOn(db, 'readActivePolicies').mockImplementation(
-      async (): Promise<ModalityPolicy[]> => {
-        return [POLICY1, POLICY2]
-      }
-    )
+    jest.spyOn(db, 'readActivePolicies').mockImplementation(async (): Promise<ModalityPolicy[]> => {
+      return [POLICY1, POLICY2]
+    })
   })
 
   afterEach(() => {

@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import { isEnum, Enum } from '../index'
+import { Enum, isEnum } from '../index'
 
 const values = ['one', 'two', 'three']
 

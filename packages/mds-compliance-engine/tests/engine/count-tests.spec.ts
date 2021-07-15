@@ -21,49 +21,48 @@
 /* eslint-disable promise/catch-or-return */
 /* eslint-disable promise/prefer-await-to-callbacks */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { makeDevices, makeEventsWithTelemetry, veniceSpecOps, makeTelemetryInArea } from '@mds-core/mds-test-data'
-import test from 'unit.js'
-import { FeatureCollection, Feature } from 'geojson'
-import { now, rangeRandomInt, uuid } from '@mds-core/mds-utils'
+import { makeDevices, makeEventsWithTelemetry, makeTelemetryInArea, veniceSpecOps } from '@mds-core/mds-test-data'
+import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
 import {
+  CountRule,
   Device,
-  ModalityPolicy,
   Geography,
-  VehicleEvent,
-  UUID,
+  ModalityPolicy,
   RULE_TYPES,
   Telemetry,
-  CountRule
+  UUID,
+  VehicleEvent
 } from '@mds-core/mds-types'
-
+import { now, rangeRandomInt, uuid } from '@mds-core/mds-utils'
+import { Feature, FeatureCollection } from 'geojson'
 import MockDate from 'mockdate'
-import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import test from 'unit.js'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../../@types'
+import { isCountRuleMatch, processCountPolicy } from '../../engine/count_processors'
 import { generateDeviceMap } from '../../engine/helpers'
 import {
   CITY_OF_LA,
   COUNT_POLICY_JSON,
-  INNER_POLYGON,
-  LA_GEOGRAPHY,
-  VENICE_POLICY_UUID,
+  COUNT_POLICY_JSON_2,
   COUNT_POLICY_JSON_3,
+  COUNT_POLICY_JSON_5,
+  HIGH_COUNT_POLICY,
+  INNER_GEO,
+  INNER_POLYGON,
+  INNER_POLYGON_2,
   LA_BEACH,
   LA_BEACH_GEOGRAPHY,
-  COUNT_POLICY_JSON_2,
-  COUNT_POLICY_JSON_5,
-  RESTRICTED_GEOGRAPHY,
-  INNER_GEO,
+  LA_GEOGRAPHY,
+  MANY_OVERFLOWS_POLICY,
   OUTER_GEO,
+  RESTRICTED_GEOGRAPHY,
   TANZANIA_GEO,
   TANZANIA_POLYGON,
-  HIGH_COUNT_POLICY,
-  VENICE_OVERFLOW_POLICY,
-  VENICE_MIXED_VIOLATIONS_POLICY,
-  MANY_OVERFLOWS_POLICY,
   TEST_ZONE_NO_VALID_DROP_OFF_POINTS,
-  INNER_POLYGON_2
+  VENICE_MIXED_VIOLATIONS_POLICY,
+  VENICE_OVERFLOW_POLICY,
+  VENICE_POLICY_UUID
 } from '../../test_data/fixtures'
-import { isCountRuleMatch, processCountPolicy } from '../../engine/count_processors'
 
 process.env.TIMEZONE = 'America/Los_Angeles'
 const COUNT_POLICY = {
@@ -317,7 +316,7 @@ describe('Tests Compliance Engine Count Functionality:', () => {
   describe('Verifies count logic behaves properly when one geography is contained in another', () => {
     it('has the correct number of matches per rule', done => {
       const veniceSpecOpsPointIds: UUID[] = []
-      const geographies = (veniceSpecOps.features.map((feature: Feature) => {
+      const geographies = veniceSpecOps.features.map((feature: Feature) => {
         if (feature.geometry.type === 'Point') {
           const geography_id = uuid()
           // points where drop-offs are allowed
@@ -332,7 +331,7 @@ describe('Tests Compliance Engine Count Functionality:', () => {
           geography_id: 'e0e4a085-7a50-43e0-afa4-6792ca897c5a',
           geography_json: feature.geometry
         }
-      }) as unknown) as Geography[]
+      }) as unknown as Geography[]
 
       const VENICE_SPEC_OPS_POLICY: ModalityPolicy = {
         name: 'Venice Special Operations Zone',

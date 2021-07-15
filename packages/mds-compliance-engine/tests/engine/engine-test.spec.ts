@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
-
-import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Device, Geography, ModalityPolicy, VehicleEvent } from '@mds-core/mds-types'
 import cache from '@mds-core/mds-agency-cache'
-
-import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
-import { FeatureCollection } from 'geojson'
-import db from '@mds-core/mds-db'
-import assert from 'assert'
-import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { ComplianceSnapshotDomainModel } from '@mds-core/mds-compliance-service/@types'
-import { EXPIRED_POLICY, LOW_COUNT_POLICY } from '../../test_data/fixtures'
+import db from '@mds-core/mds-db'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import { Device, Geography, ModalityPolicy, VehicleEvent } from '@mds-core/mds-types'
+import assert from 'assert'
+import { FeatureCollection } from 'geojson'
+import test from 'unit.js'
 import { VehicleEventWithTelemetry } from '../../@types'
+import { filterEvents, getSupersedingPolicies } from '../../engine/helpers'
 import { processPolicy } from '../../engine/mds-compliance-engine'
-import { getSupersedingPolicies, filterEvents } from '../../engine/helpers'
+import { EXPIRED_POLICY, LOW_COUNT_POLICY } from '../../test_data/fixtures'
 import { readJson } from './helpers'
 
 let policies: ModalityPolicy[] = []

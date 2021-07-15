@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import test from 'unit.js'
 import { MOCHA_PROVIDER_ID } from '@mds-core/mds-providers'
+import { uuid } from '@mds-core/mds-utils'
 import express from 'express'
 import jwt from 'jsonwebtoken'
-import { uuid } from '@mds-core/mds-utils'
-import { AuthorizationHeaderApiAuthorizer, WebSocketAuthorizer, CustomClaim } from '../index'
+import test from 'unit.js'
+import { AuthorizationHeaderApiAuthorizer, CustomClaim, WebSocketAuthorizer } from '../index'
 
 const PROVIDER_SCOPES = 'admin:all'
 const PROVIDER_SUBJECT = uuid()

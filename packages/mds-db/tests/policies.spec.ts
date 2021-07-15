@@ -1,23 +1,26 @@
-import assert from 'assert'
 /* eslint-reason extends object.prototype */
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+/* eslint-disable prettier/prettier */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import should from 'should'
-import { RULE_TYPE, BaseRule, BasePolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
+/* eslint-enable prettier/prettier */
+/* eslint-enable @typescript-eslint/no-unused-vars */
 import {
-  POLICY_JSON,
+  DELETEABLE_POLICY,
   POLICY2_JSON,
   POLICY3_JSON,
-  START_ONE_MONTH_AGO,
+  POLICY_JSON,
   POLICY_WITH_DUPE_RULE,
   PUBLISHED_POLICY,
   PUBLISH_DATE_VALIDATION_JSON,
-  START_ONE_MONTH_FROM_NOW,
-  DELETEABLE_POLICY
+  START_ONE_MONTH_AGO,
+  START_ONE_MONTH_FROM_NOW
 } from '@mds-core/mds-test-data'
-import { now, clone, NotFoundError, ConflictError, yesterday } from '@mds-core/mds-utils'
-import { LAGeography } from './fixtures'
-import { initializeDB, shutdownDB, pg_info } from './helpers'
+import { BasePolicy, BaseRule, ModalityPolicyTypeInfo, RULE_TYPE } from '@mds-core/mds-types'
+import { clone, ConflictError, NotFoundError, now, yesterday } from '@mds-core/mds-utils'
+import assert from 'assert'
 import MDSDBPostgres from '../index'
+import { LAGeography } from './fixtures'
+import { initializeDB, pg_info, shutdownDB } from './helpers'
 
 const ACTIVE_POLICY_JSON = { ...POLICY_JSON, publish_date: yesterday(), start_date: yesterday() }
 

@@ -1,18 +1,18 @@
-import { ApiServer } from '@mds-core/mds-api-server'
-import supertest from 'supertest'
-import db from '@mds-core/mds-db'
 import cache from '@mds-core/mds-agency-cache'
+import { ApiServer } from '@mds-core/mds-api-server'
+import db from '@mds-core/mds-db'
 import stream from '@mds-core/mds-stream'
 import { uuid } from '@mds-core/mds-utils'
+import supertest from 'supertest'
 import { api } from '../api'
 import {
   basicTripFlow,
   constructTripMetadata,
   fakeVehicle,
   POSTableVehicleEvent,
-  registerVehicleRequest,
   postEvent,
-  postTripMetadata
+  postTripMetadata,
+  registerVehicleRequest
 } from './taxi-test-helpers'
 
 const HOSTNAME = process.env.AGENCY_URL ?? ''

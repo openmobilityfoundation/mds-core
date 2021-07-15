@@ -15,7 +15,7 @@
  */
 
 import test from 'unit.js'
-import { OptionalPropertyValue, NullablePropertyValue, PropertyValue } from '../filters'
+import { NullablePropertyValue, OptionalPropertyValue, PropertyValue } from '../filters'
 
 describe('Test Filters', () => {
   it('Test Scalar PropertyValue', async () => {

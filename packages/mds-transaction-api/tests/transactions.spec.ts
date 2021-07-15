@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import supertest from 'supertest'
 import { ApiServer } from '@mds-core/mds-api-server'
 import {
-  transactionsGenerator,
+  TransactionDomainModel,
   TransactionServiceClient,
-  TransactionDomainModel
+  transactionsGenerator
 } from '@mds-core/mds-transaction-service'
 // import { SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { pathPrefix, uuid, NotFoundError } from '@mds-core/mds-utils'
+import { NotFoundError, pathPrefix, uuid } from '@mds-core/mds-utils'
+import supertest from 'supertest'
 import { api } from '../api'
 // FIXME: Should be importing from @mds-core/mds-test-data, but that's resulting an OOM crash...
 const SCOPED_AUTH = (scopes: string[], principalId = '5f7114d1-4091-46ee-b492-e55875f7de00') =>

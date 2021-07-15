@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { uuid, now, days } from '@mds-core/mds-utils'
-import { GeographyServiceManager } from '../service/manager'
+import { days, now, uuid } from '@mds-core/mds-utils'
 import { GeographyServiceClient } from '../client'
 import { GeographyRepository } from '../repository'
+import { GeographyServiceManager } from '../service/manager'
 
 const geography_id = uuid()
 
