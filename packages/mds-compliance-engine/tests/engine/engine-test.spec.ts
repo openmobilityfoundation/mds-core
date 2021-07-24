@@ -73,7 +73,7 @@ describe('Tests General Compliance Engine Functionality', () => {
     // Mimic what we do in the real world to get inputs to feed into the compliance engine.
     const supersedingPolicies = getSupersedingPolicies(policies)
 
-    const policyResults = await Promise.all(supersedingPolicies.map(async policy => processPolicy(policy, geographies)))
+    const policyResults = await Promise.all(supersedingPolicies.map(policy => processPolicy(policy, geographies)))
     policyResults.forEach(complianceSnapshots => {
       complianceSnapshots.forEach(complianceSnapshot => {
         test.assert.deepEqual(complianceSnapshot?.vehicles_found.length, 0)
