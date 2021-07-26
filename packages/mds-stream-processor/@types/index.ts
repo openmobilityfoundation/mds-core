@@ -18,6 +18,7 @@ import { StreamConsumer, StreamProducer } from '@mds-core/mds-stream'
 
 export type StreamSource<TMessage> = (processor: (message: TMessage) => Promise<void>) => StreamConsumer
 export type StreamSink<TMessage> = () => StreamProducer<TMessage>
+export type DeadLetterSink<TMessage> = StreamSink<{ error: unknown; data: TMessage }>
 
 export type StreamTransform<TMessageIn, TMessageOut> = (
   message: TMessageIn
