@@ -24,6 +24,9 @@ import { AddTelemetryStopIdHdopSatellitesColumns1624574421590 } from './16245744
 import { AddEventAnnotationEntity1624574823000 } from './1624574823000-AddEventAnnotationEntity'
 import { CreateMigrationColumns1625241719659 } from './1625241719659-CreateMigrationColumns'
 import { AddEventsTripIdTimestampIndex1625676583247 } from './1625676583247-AddEventsTripIdTimestampIndex'
+import { AddEventsTimestampIdIndex1627315083728 } from './1627315083728-AddEventsTimestampIdIndex'
+import { AddEventsProviderIdIdIndex1627315276644 } from './1627315276644-AddEventsProviderIdIdIndex'
+import { AddEventsVehicleStateIdIndex1627315357677 } from './1627315357677-AddEventsVehicleStateIdIndex'
 
 export default [
   CreateDevicesTable1603212409274,
@@ -35,5 +38,8 @@ export default [
   AddTelemetryStopIdHdopSatellitesColumns1624574421590,
   AddEventAnnotationEntity1624574823000,
   CreateMigrationColumns1625241719659,
-  AddEventsTripIdTimestampIndex1625676583247
+  AddEventsTripIdTimestampIndex1625676583247,
+  AddEventsTimestampIdIndex1627315083728,
+  AddEventsProviderIdIdIndex1627315276644,
+  AddEventsVehicleStateIdIndex1627315357677
 ]

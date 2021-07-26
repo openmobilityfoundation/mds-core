@@ -17,8 +17,8 @@
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
 import { isUUID, ValidationError } from '@mds-core/mds-utils'
-import { Any } from 'typeorm'
-import { buildPaginator, Cursor } from 'typeorm-cursor-pagination'
+import { Any, SelectQueryBuilder } from 'typeorm'
+import { buildPaginator, Cursor, PagingResult } from 'typeorm-cursor-pagination'
 import {
   DeviceDomainCreateModel,
   DeviceDomainModel,
@@ -26,6 +26,7 @@ import {
   EventAnnotationDomainModel,
   EventDomainCreateModel,
   GetVehicleEventsFilterParams,
+  GetVehicleEventsOrderOption,
   GetVehicleEventsResponse,
   TelemetryDomainCreateModel
 } from '../@types'
@@ -59,17 +60,6 @@ const testEnvSafeguard = () => {
 class IngestReadWriteRepository extends ReadWriteRepository {
   constructor() {
     super('ingest', { entities, migrations })
-  }
-
-  private buildCursor = (cursor: VehicleEventsQueryParams) =>
-    Buffer.from(JSON.stringify(cursor), 'utf-8').toString('base64')
-
-  private parseCursor = (cursor: string): VehicleEventsQueryParams & { limit: number } => {
-    try {
-      return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'))
-    } catch (error) {
-      throw new ValidationError('Invalid cursor', error)
-    }
   }
 
   public createEvents = async (events: EventDomainCreateModel[]) => {
@@ -165,7 +155,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
       device_ids,
       propulsion_types,
       provider_ids,
-      limit,
+      limit = 100,
       beforeCursor,
       afterCursor,
       order
@@ -247,22 +237,10 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         query.andWhere('events.provider_id = ANY(:provider_ids)', { provider_ids })
       }
 
-      const pager = buildPaginator({
-        entity: EventEntity,
-        alias: 'events',
-        paginationKeys: [order?.column ?? 'timestamp', 'id'],
-        query: {
-          limit,
-          order: order?.direction ?? (order?.column === undefined ? 'DESC' : 'ASC'),
-          beforeCursor: beforeCursor ?? undefined, // typeorm-cursor-pagination type weirdness
-          afterCursor: afterCursor ?? undefined // typeorm-cursor-pagination type weirdness
-        }
-      })
-
       const {
         data,
         cursor: { beforeCursor: nextBeforeCursor, afterCursor: nextAfterCursor }
-      } = await pager.paginate(query)
+      } = await this.paginateEventTelemetry(query, limit, beforeCursor, afterCursor, order)
 
       const cursor = {
         time_range,
@@ -289,6 +267,74 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     } catch (error) {
       throw RepositoryError(error)
     }
+  }
+
+  private buildCursor = (cursor: VehicleEventsQueryParams) =>
+    Buffer.from(JSON.stringify(cursor), 'utf-8').toString('base64')
+
+  private parseCursor = (cursor: string): VehicleEventsQueryParams & { limit: number } => {
+    try {
+      return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'))
+    } catch (error) {
+      throw new ValidationError('Invalid cursor', error)
+    }
+  }
+
+  /**
+   * TypeORM does not handle joined-models and pagination very well, at all.
+   * The second you supply a .take(N) value, it follows a completely different builder plan
+   * to generate your results in a two-phase query. The results were at least 100x slower
+   * than just doing a join and parsing the objects.
+   *
+   * this method is yanked from the `typeorm-cursor-pagination/Paginator.paginate()` source,
+   * and avoids calling .getMany()
+   */
+  private paginateEventTelemetry = async (
+    query: SelectQueryBuilder<EventEntity>,
+    limit: number,
+    beforeCursor: string | null,
+    afterCursor: string | null,
+    order?: GetVehicleEventsOrderOption
+  ): Promise<PagingResult<EventEntity>> => {
+    const pager = buildPaginator({
+      entity: EventEntity,
+      alias: 'events',
+      paginationKeys: [order?.column ?? 'timestamp', 'id'],
+      query: {
+        limit,
+        order: order?.direction ?? (order?.column === undefined ? 'DESC' : 'ASC'),
+        beforeCursor: beforeCursor ?? undefined, // typeorm-cursor-pagination type weirdness
+        afterCursor: afterCursor ?? undefined // typeorm-cursor-pagination type weirdness
+      }
+    })
+
+    /* you have to manually declare a limit, since we're skipping the .take() call that normally happens in .getMany() */
+    query.limit(limit + 1)
+    const pagedQuery: SelectQueryBuilder<{ event: EventEntity; telemetry: TelemetryEntity }> =
+      pager['appendPagingQuery'](query)
+    /**
+     * results are selected as JSON, so that we can skip the TypeORM entity builder.
+     */
+    pagedQuery.select('row_to_json(events.*) as event, row_to_json(telemetry.*) as telemetry')
+    const results: { event: EventEntity; telemetry: TelemetryEntity }[] = await pagedQuery.getRawMany()
+    const entities = results.map(({ event, telemetry }) => ({ ...event, telemetry }))
+    const hasMore = entities.length > (limit || 100)
+    if (hasMore) {
+      entities.splice(entities.length - 1, 1)
+    }
+    if (entities.length === 0) {
+      return pager['toPagingResult'](entities)
+    }
+    if (!pager['hasAfterCursor']() && pager['hasBeforeCursor']()) {
+      entities.reverse()
+    }
+    if (pager['hasBeforeCursor']() || hasMore) {
+      pager['nextAfterCursor'] = pager['encode'](entities[entities.length - 1])
+    }
+    if (pager['hasAfterCursor']() || (hasMore && pager['hasBeforeCursor']())) {
+      pager['nextBeforeCursor'] = pager['encode'](entities[0])
+    }
+    return pager['toPagingResult'](entities) as PagingResult<EventEntity>
   }
 
   public getEventsUsingOptions = async (options: GetVehicleEventsFilterParams): Promise<GetVehicleEventsResponse> =>
