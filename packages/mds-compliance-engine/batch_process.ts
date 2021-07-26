@@ -17,37 +17,32 @@
 import cache from '@mds-core/mds-agency-cache'
 import { ComplianceServiceClient } from '@mds-core/mds-compliance-service'
 import db from '@mds-core/mds-db'
+import logger from '@mds-core/mds-logger'
 import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
 import { processPolicy } from './engine'
-
-async function getActiveUnsupersededPolicies(): Promise<ModalityPolicy[]> {
-  return db.filterUnsupersededPolicies<ModalityPolicyTypeInfo>(await db.readActivePolicies<ModalityPolicyTypeInfo>())
-}
+import { getSupersedingPolicies } from './engine/helpers'
 
 async function main() {
   await cache.startup()
-  const policies: ModalityPolicy[] = await getActiveUnsupersededPolicies()
+  const policies: ModalityPolicy[] = getSupersedingPolicies(await db.readActivePolicies<ModalityPolicyTypeInfo>())
   const geographies = await db.readGeographies({ get_published: true })
-  console.log('promise.all')
   const results = await Promise.all(
     policies.map(policy => {
       return processPolicy(policy, geographies)
     })
   )
-  await cache.shutdown()
-  console.log('snapshots')
   const snapshots = results.flat()
-  console.log(snapshots)
   await ComplianceServiceClient.createComplianceSnapshots(snapshots)
+  logger.info('mds-compliance-engine successfully computed snapshots for the following policies: ', {
+    policy_ids: policies.map(p => p.policy_id)
+  })
 }
 
 main()
   .then(res => {
-    console.log('success')
-    console.log(res)
     return cache.shutdown()
   })
   .then(res => {
     return db.shutdown()
   })
-  .catch(err => console.log('failure: ', err))
+  .catch(err => logger.error('mds-compliance-engine batch script failure: ', err))

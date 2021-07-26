@@ -360,15 +360,3 @@ export async function findPoliciesByGeographyID<PInfo extends PolicyTypeInfo>(
   const res = await client.query(sql)
   return res.rows.map(row => row.policy_json)
 }
-
-export function filterUnsupersededPolicies<PInfo extends PolicyTypeInfo>(
-  policies: PInfo['Policy'][]
-): PInfo['Policy'][] {
-  const prev_policies: UUID[] = policies.reduce((prev_policies_acc: UUID[], policy: PInfo['Policy']) => {
-    if (policy.prev_policies) {
-      prev_policies_acc.push(...policy.prev_policies)
-    }
-    return prev_policies_acc
-  }, [])
-  return policies.filter(policy => !prev_policies.includes(policy.policy_id))
-}
