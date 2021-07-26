@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "0.2.2",
+    "@mds-core/mds-service-helpers": "0.1.2",
     "@mds-core/mds-stream": "0.1.28",
     "@mds-core/mds-types": "0.1.25",
     "@mds-core/mds-utils": "0.1.28",

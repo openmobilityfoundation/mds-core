@@ -1031,6 +1031,7 @@ importers:
   packages/mds-stream-processor:
     specifiers:
       '@mds-core/mds-logger': 0.2.2
+      '@mds-core/mds-service-helpers': 0.1.2
       '@mds-core/mds-stream': 0.1.28
       '@mds-core/mds-types': 0.1.25
       '@mds-core/mds-utils': 0.1.28
@@ -1038,6 +1039,7 @@ importers:
       event-stream: 4.0.1
     dependencies:
       '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-service-helpers': link:../mds-service-helpers
       '@mds-core/mds-stream': link:../mds-stream
       '@mds-core/mds-types': link:../mds-types
       '@mds-core/mds-utils': link:../mds-utils

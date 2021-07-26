@@ -6,7 +6,7 @@
       "packages/*": ["/dev/null"],
       "*": ["@types/*", "*"]
     },
-    "target": "ES2019",
+    "target": "ES2020",
     "skipLibCheck": true,
     "module": "commonjs",
     "strict": true,
