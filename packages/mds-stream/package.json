@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-stream",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "Mobility Data Specification stream interface",
   "keywords": [
     "mds",
@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "0.2.2",
-    "@mds-core/mds-types": "0.1.25",
-    "@mds-core/mds-utils": "0.1.28",
+    "@mds-core/mds-types": "0.2.0",
+    "@mds-core/mds-utils": "0.1.29",
     "@types/bluebird": "3.5.35",
     "@types/redis": "2.8.30",
     "bluebird": "3.7.2",

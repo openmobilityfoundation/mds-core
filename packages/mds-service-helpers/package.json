@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-service-helpers",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Mobility Data Specification Service Helpers",
   "keywords": [
     "mds"
@@ -18,8 +18,8 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "0.2.2",
-    "@mds-core/mds-types": "0.1.25",
-    "@mds-core/mds-utils": "0.1.28",
+    "@mds-core/mds-types": "0.2.0",
+    "@mds-core/mds-utils": "0.1.29",
     "@types/async-retry": "1.4.2",
     "async-retry": "1.3.1"
   }
