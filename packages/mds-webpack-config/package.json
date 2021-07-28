@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-webpack-config",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Webpack Configuration",
   "keywords": [
     "mds"
