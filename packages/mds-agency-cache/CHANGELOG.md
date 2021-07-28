@@ -1,6 +1,19 @@
 # @mds-core/mds-agency-cache
 
+## 0.1.30
+
+### Patch Changes
+
+- 8ab4569d: Minor patch change for every package to get versioning aligned with changeset workflows
+- Updated dependencies [8ab4569d]
+  - @mds-core/mds-cache@0.0.5
+  - @mds-core/mds-logger@0.2.3
+  - @mds-core/mds-schema-validators@0.1.6
+  - @mds-core/mds-types@0.2.1
+  - @mds-core/mds-utils@0.1.30
+
 ## 0.1.29
+
 ### Patch Changes
 
 - Updated dependencies [cc0a3bae]
