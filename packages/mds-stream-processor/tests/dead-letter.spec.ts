@@ -47,7 +47,7 @@ describe('Tests dead-letter handling', () => {
       sink: deadLetterSink
     } = MockSinkFactory()
 
-    const streamProcessor = StreamProcessor(source, transformer, standardSink, deadLetterSink)
+    const streamProcessor = StreamProcessor(source, transformer, [standardSink], [deadLetterSink])
 
     await streamProcessor.start()
 
@@ -80,7 +80,7 @@ describe('Tests dead-letter handling', () => {
       sink: deadLetterSink
     } = MockSinkFactory()
 
-    const streamProcessor = StreamProcessor(source, transformer, standardSink, deadLetterSink)
+    const streamProcessor = StreamProcessor(source, transformer, [standardSink], [deadLetterSink])
 
     await streamProcessor.start()
 
@@ -122,7 +122,7 @@ describe('Tests dead-letter handling', () => {
       })
     })
 
-    const streamProcessor = StreamProcessor(source, transformer, standardSink, deadLetterSink)
+    const streamProcessor = StreamProcessor(source, transformer, [standardSink], [deadLetterSink])
 
     await streamProcessor.start()
 
@@ -170,10 +170,12 @@ describe('Tests dead-letter handling', () => {
       sink: healthyDeadLetterSink
     } = MockSinkFactory()
 
-    const streamProcessor = StreamProcessor(source, transformer, standardSink, [
-      healthyDeadLetterSink,
-      throwingDeadLetterSink
-    ])
+    const streamProcessor = StreamProcessor(
+      source,
+      transformer,
+      [standardSink],
+      [healthyDeadLetterSink, throwingDeadLetterSink]
+    )
 
     await streamProcessor.start()
 

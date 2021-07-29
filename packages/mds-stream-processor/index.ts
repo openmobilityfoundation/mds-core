@@ -15,7 +15,6 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { SingleOrArray } from '@mds-core/mds-types'
 import { asArray } from '@mds-core/mds-utils'
 import { DeadLetterSink, StreamProcessorController, StreamSink, StreamSource, StreamTransform } from './@types'
 
@@ -23,11 +22,11 @@ import { DeadLetterSink, StreamProcessorController, StreamSink, StreamSource, St
 export const StreamProcessor = <TMessageIn, TMessageOut>(
   source: StreamSource<TMessageIn>,
   transform: StreamTransform<TMessageIn, TMessageOut>,
-  sinks: SingleOrArray<StreamSink<TMessageOut>>,
-  deadLetterSinks: SingleOrArray<DeadLetterSink<TMessageIn>>
+  sinks: Array<StreamSink<TMessageOut>>,
+  deadLetterSinks: Array<DeadLetterSink<TMessageIn>>
 ): StreamProcessorController => {
-  const sinkProducers = asArray(sinks).map(sink => sink())
-  const deadLetterProducers = asArray(deadLetterSinks).map(sink => sink())
+  const sinkProducers = sinks.map(sink => sink())
+  const deadLetterProducers = deadLetterSinks.map(sink => sink())
 
   const consumer = source(async message => {
     try {
@@ -89,8 +88,8 @@ export const StreamProcessor = <TMessageIn, TMessageOut>(
 // StreamTap - Read from source and write to sink (no transform)
 export const StreamForwarder = <TMessage>(
   source: StreamSource<TMessage>,
-  sinks: SingleOrArray<StreamSink<TMessage>>,
-  deadLetterSinks: SingleOrArray<DeadLetterSink<TMessage>>
+  sinks: Array<StreamSink<TMessage>>,
+  deadLetterSinks: Array<DeadLetterSink<TMessage>>
 ) => StreamProcessor(source, message => Promise.resolve(message), sinks, deadLetterSinks)
 
 const launch = async (processor: StreamProcessorController) => {
