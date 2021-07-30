@@ -31,26 +31,25 @@ export const DeviceEntityToDomain = ModelMapper<DeviceEntityModel, DeviceDomainM
 
 type DeviceEntityCreateOptions = Partial<{
   recorded: Timestamp
-  migrated_from: MigratedEntityModel
 }>
 
-export type DeviceEntityCreateModel = Omit<DeviceEntityModel, keyof IdentityColumn | keyof RecordedColumn>
+export type DeviceEntityCreateModel = Omit<
+  DeviceEntityModel,
+  keyof IdentityColumn | keyof RecordedColumn | keyof MigratedEntityModel
+>
 
 export const DeviceDomainToEntityCreate = ModelMapper<
   DeviceDomainCreateModel,
   DeviceEntityCreateModel,
   DeviceEntityCreateOptions
 >(({ year = null, mfgr = null, model = null, accessibility_options = null, ...domain }, options) => {
-  const { recorded, migrated_from } = options ?? {}
+  const { recorded } = options ?? {}
   return {
     year,
     mfgr,
     model,
     accessibility_options,
     recorded,
-    migrated_from_source: migrated_from?.migrated_from_source ?? null,
-    migrated_from_version: migrated_from?.migrated_from_version ?? null,
-    migrated_from_id: migrated_from?.migrated_from_id ?? null,
     ...domain
   }
 })

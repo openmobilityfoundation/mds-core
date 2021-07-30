@@ -39,7 +39,7 @@ export class EventEntity extends MigratedEntity(IdentityColumn(RecordedColumn(cl
   vehicle_state: VEHICLE_STATE
 
   @Column('varchar', { length: 31, nullable: true })
-  trip_state: TRIP_STATE
+  trip_state: Nullable<TRIP_STATE>
 
   @Column('bigint', { transformer: BigintTransformer, nullable: true })
   telemetry_timestamp: Nullable<Timestamp>

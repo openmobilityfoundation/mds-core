@@ -1,0 +1,28 @@
+{
+  "name": "@mds-core/mds-ingest-migration-processor",
+  "version": "0.0.1",
+  "description": "MDS Ingest Data Migration Processor",
+  "keywords": [
+    "mds"
+  ],
+  "license": "Apache-2.0",
+  "author": "City of Los Angeles",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "start": "pnpm watch index.ts",
+    "test": "DOTENV_CONFIG_PATH=../../.env jest --passWithNoTests",
+    "ts-node": "DOTENV_CONFIG_PATH=../../.env node --experimental-repl-await -r ts-node/register -r dotenv/config",
+    "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
+  },
+  "dependencies": {
+    "@mds-core/mds-ingest-service": "0.1.4",
+    "@mds-core/mds-stream-processor": "0.1.1",
+    "@mds-core/mds-types": "0.2.1",
+    "envalid": "7.1.0"
+  }
+}

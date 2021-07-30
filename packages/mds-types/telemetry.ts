@@ -1,7 +1,7 @@
 import { Timestamp, UUID } from './utils'
 
 // Standard telemetry columns (used in more than one table)
-export interface TelemetryData {
+export interface GpsData {
   lat: number
   lng: number
   speed?: number | null
@@ -10,24 +10,26 @@ export interface TelemetryData {
   hdop?: number | null
   altitude?: number | null
   satellites?: number | null
-  charge?: number | null // NOTE: Charge is not included in the `gps` property of Telemetry
 }
 
-export type GpsData = Omit<TelemetryData, 'charge'>
+export interface TelemetryData extends GpsData {
+  charge?: number | null
+}
 
 // While telemetry data is stored in a flattened format, when passed as a parameter it has
 // a different shape: { gps: { lat, lng, speed, heading, accurace, altitude } charge }. This
 // type alias defines the parameter shape using the types of the underlying flattened data.
 
-export type WithGpsProperty<T extends TelemetryData> = Omit<T, keyof Omit<TelemetryData, 'charge'>> & {
-  gps: Omit<TelemetryData, 'charge'>
+export type WithGpsProperty<T extends TelemetryData> = Omit<T, keyof GpsData> & {
+  gps: GpsData
 }
 
-export interface Telemetry extends WithGpsProperty<TelemetryData> {
+export interface Telemetry {
   provider_id: UUID
   device_id: UUID
   timestamp: Timestamp
   recorded?: Timestamp
+  gps: GpsData
   charge?: number | null
   stop_id?: UUID | null
 }

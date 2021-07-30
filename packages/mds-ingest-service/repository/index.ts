@@ -25,16 +25,18 @@ import {
   EventAnnotationDomainCreateModel,
   EventAnnotationDomainModel,
   EventDomainCreateModel,
+  EventDomainModel,
   GetVehicleEventsFilterParams,
   GetVehicleEventsOrderOption,
   GetVehicleEventsResponse,
-  TelemetryDomainCreateModel
+  TelemetryDomainCreateModel,
+  TelemetryDomainModel
 } from '../@types'
 import entities from './entities'
-import { DeviceEntity } from './entities/device-entity'
+import { DeviceEntity, DeviceEntityModel } from './entities/device-entity'
 import { EventAnnotationEntity } from './entities/event-annotation-entity'
-import { EventEntity } from './entities/event-entity'
-import { TelemetryEntity } from './entities/telemetry-entity'
+import { EventEntity, EventEntityModel } from './entities/event-entity'
+import { TelemetryEntity, TelemetryEntityModel } from './entities/telemetry-entity'
 import {
   DeviceDomainToEntityCreate,
   DeviceEntityToDomain,
@@ -46,6 +48,7 @@ import {
   TelemetryEntityToDomain
 } from './mappers'
 import migrations from './migrations'
+import { MigratedEntityModel } from './mixins/migrated-entity'
 
 type VehicleEventsQueryParams = GetVehicleEventsFilterParams & Cursor
 
@@ -342,6 +345,66 @@ class IngestReadWriteRepository extends ReadWriteRepository {
 
   public getEventsUsingCursor = async (cursor: string): Promise<GetVehicleEventsResponse> =>
     this.getEvents(this.parseCursor(cursor))
+
+  public writeMigratedDevice = async (
+    devices: DeviceDomainCreateModel[],
+    migrated_from: MigratedEntityModel
+  ): Promise<DeviceDomainModel[]> => {
+    try {
+      const connection = await this.connect('rw')
+      const { raw: entities }: InsertReturning<DeviceEntityModel> = await connection
+        .getRepository(DeviceEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(devices.map(DeviceDomainToEntityCreate.mapper()))
+        .onConflict('DO NOTHING') /* May need DO UPDATE to support PUT vehicle_id */
+        .returning('*')
+        .execute()
+      return entities.map(DeviceEntityToDomain.mapper())
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public writeMigratedEvent = async (
+    events: EventDomainCreateModel[],
+    migrated_from: MigratedEntityModel
+  ): Promise<EventDomainModel[]> => {
+    try {
+      const connection = await this.connect('rw')
+      const { raw: entities }: InsertReturning<EventEntityModel> = await connection
+        .getRepository(EventEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(events.map(EventDomainToEntityCreate.mapper()))
+        .onConflict('DO NOTHING')
+        .returning('*')
+        .execute()
+      return entities.map(EventEntityToDomain.mapper())
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public writeMigratedTelemetry = async (
+    telemetry: TelemetryDomainCreateModel[],
+    migrated_from: MigratedEntityModel
+  ): Promise<TelemetryDomainModel[]> => {
+    try {
+      const connection = await this.connect('rw')
+      const { raw: entities }: InsertReturning<TelemetryEntityModel> = await connection
+        .getRepository(TelemetryEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(telemetry.map(TelemetryDomainToEntityCreate.mapper()))
+        .onConflict('DO NOTHING')
+        .returning('*')
+        .execute()
+      return entities.map(TelemetryEntityToDomain.mapper())
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
 
   /**
    * Nukes everything from orbit. Boom.

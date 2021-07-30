@@ -344,18 +344,20 @@ describe('Ingest Service Tests', () => {
           limit: 2
         })
         expect(events.length).toEqual(2)
-        expect(next).not.toBeNull()
         expect(events[0].vehicle_state).toEqual('removed')
+        expect(next).not.toBeNull()
 
-        // reverse order
-        const {
-          events: nextEvents,
-          cursor: { prev }
-        } = await IngestServiceClient.getEventsUsingCursor(next!)
+        if (next) {
+          // reverse order
+          const {
+            events: nextEvents,
+            cursor: { prev }
+          } = await IngestServiceClient.getEventsUsingCursor(next)
 
-        expect(nextEvents.length).toEqual(2)
-        expect(prev).not.toBeNull()
-        expect(nextEvents[0].vehicle_state).toEqual('unknown')
+          expect(nextEvents.length).toEqual(2)
+          expect(prev).not.toBeNull()
+          expect(nextEvents[0].vehicle_state).toEqual('unknown')
+        }
       })
 
       it('uses secondary (timestamp) sort order when primary sort values are equal', async () => {
@@ -508,14 +510,16 @@ describe('Ingest Service Tests', () => {
       expect(next).not.toBeNull()
 
       // Use cursor for next page
-      const {
-        events: nextEvents,
-        cursor: { prev }
-      } = await IngestServiceClient.getEventsUsingCursor(next!)
+      if (next) {
+        const {
+          events: nextEvents,
+          cursor: { prev }
+        } = await IngestServiceClient.getEventsUsingCursor(next)
 
-      expect(nextEvents.length).toEqual(1)
-      expect(nextEvents[0]).not.toStrictEqual(events[0])
-      expect(prev).not.toBeNull()
+        expect(nextEvents.length).toEqual(1)
+        expect(nextEvents[0]).not.toStrictEqual(events[0])
+        expect(prev).not.toBeNull()
+      }
     })
   })
 

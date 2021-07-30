@@ -20,7 +20,6 @@ import {
   ACCESSIBILITY_OPTION,
   MODALITY,
   Nullable,
-  NullableOptional,
   PROPULSION_TYPE,
   TelemetryData,
   Timestamp,
@@ -30,6 +29,7 @@ import {
   VEHICLE_STATE,
   VEHICLE_TYPE
 } from '@mds-core/mds-types'
+import { MigratedEntityModel } from '../repository/mixins/migrated-entity'
 
 export interface DeviceDomainModel extends RecordedColumn {
   device_id: UUID
@@ -47,21 +47,20 @@ export interface DeviceDomainModel extends RecordedColumn {
 
 export type DeviceDomainCreateModel = DomainModelCreate<Omit<DeviceDomainModel, keyof RecordedColumn>>
 
-/* More flexible version of WithGpsProperty */
-type WithGpsData<T extends TelemetryData, P extends string = 'gps'> = Omit<T, keyof Omit<TelemetryData, 'charge'>> &
-  {
-    [p in P]: Omit<T, 'charge'>
-  }
+export type GpsData = Omit<TelemetryData, 'charge'>
 
-export interface TelemetryDomainModel extends WithGpsData<NullableOptional<TelemetryData>>, RecordedColumn {
+export interface TelemetryDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
+  gps: GpsData
   charge: Nullable<number>
   stop_id: Nullable<UUID>
 }
 
-export type TelemetryDomainCreateModel = DomainModelCreate<Omit<TelemetryDomainModel, keyof RecordedColumn>>
+export type TelemetryDomainCreateModel = DomainModelCreate<Omit<TelemetryDomainModel, keyof RecordedColumn | 'gps'>> & {
+  gps: DomainModelCreate<GpsData>
+}
 
 export const GROUPING_TYPES = ['latest_per_vehicle', 'latest_per_trip', 'all_events'] as const
 export type GROUPING_TYPE = typeof GROUPING_TYPES[number]
@@ -113,7 +112,7 @@ export interface EventDomainModel extends RecordedColumn {
   timestamp: Timestamp
   event_types: VEHICLE_EVENT[]
   vehicle_state: VEHICLE_STATE
-  trip_state: TRIP_STATE
+  trip_state: Nullable<TRIP_STATE>
 
   telemetry_timestamp: Nullable<Timestamp>
   telemetry: Nullable<TelemetryDomainModel>
@@ -121,7 +120,9 @@ export interface EventDomainModel extends RecordedColumn {
   service_area_id: Nullable<UUID>
 }
 
-export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, keyof RecordedColumn>>
+export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, keyof RecordedColumn | 'telemetry'>> & {
+  telemetry?: Nullable<TelemetryDomainCreateModel>
+}
 
 /**
  * Labels which can be used to annotate events.
@@ -172,18 +173,39 @@ export interface EventAnnotationDomainModel extends DeviceLabel, FlatGeographies
 
 export type EventAnnotationDomainCreateModel = DomainModelCreate<Omit<EventAnnotationDomainModel, keyof RecordedColumn>>
 
+export interface GetLastMigratedEntityOptions {
+  migrated_from_source: string
+  migrated_from_version: string
+}
+
 export interface IngestService {
-  name: () => string
   getEventsUsingOptions: (params: GetVehicleEventsFilterParams) => GetVehicleEventsResponse
   getEventsUsingCursor: (cursor: string) => GetVehicleEventsResponse
   getDevices: (ids: UUID[]) => DeviceDomainModel[]
   writeEventAnnotations: (params: EventAnnotationDomainCreateModel[]) => EventAnnotationDomainModel[]
 }
 
-export const IngestServiceDefinition: RpcServiceDefinition<IngestService> = {
-  name: RpcRoute<IngestService['name']>(),
+export interface IngestMigrationService {
+  writeMigratedDevice: (
+    device: DeviceDomainCreateModel,
+    migrated_from: MigratedEntityModel
+  ) => Nullable<DeviceDomainModel>
+  writeMigratedVehicleEvent: (
+    event: EventDomainCreateModel,
+    migrated_from: MigratedEntityModel
+  ) => Nullable<EventDomainModel>
+  writeMigratedTelemetry: (
+    telemetry: TelemetryDomainCreateModel,
+    migrated_from: MigratedEntityModel
+  ) => Nullable<TelemetryDomainModel>
+}
+
+export const IngestServiceDefinition: RpcServiceDefinition<IngestService & IngestMigrationService> = {
   getEventsUsingOptions: RpcRoute<IngestService['getEventsUsingOptions']>(),
   getEventsUsingCursor: RpcRoute<IngestService['getEventsUsingCursor']>(),
   getDevices: RpcRoute<IngestService['getDevices']>(),
-  writeEventAnnotations: RpcRoute<IngestService['writeEventAnnotations']>()
+  writeEventAnnotations: RpcRoute<IngestService['writeEventAnnotations']>(),
+  writeMigratedDevice: RpcRoute<IngestMigrationService['writeMigratedDevice']>(),
+  writeMigratedVehicleEvent: RpcRoute<IngestMigrationService['writeMigratedVehicleEvent']>(),
+  writeMigratedTelemetry: RpcRoute<IngestMigrationService['writeMigratedTelemetry']>()
 }

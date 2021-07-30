@@ -42,25 +42,30 @@ export const EventEntityToDomain = ModelMapper<EventEntityModel, EventDomainMode
 
 type EventEntityCreateOptions = Partial<{
   recorded: Timestamp
-  migrated_from: MigratedEntityModel
 }>
 
-export type EventEntityCreateModel = Omit<EventEntityModel, keyof IdentityColumn | keyof RecordedColumn | 'telemetry'>
+export type EventEntityCreateModel = Omit<
+  EventEntityModel,
+  keyof IdentityColumn | keyof RecordedColumn | keyof MigratedEntityModel | 'telemetry'
+>
 
 export const EventDomainToEntityCreate = ModelMapper<
   EventDomainCreateModel,
   EventEntityCreateModel,
   EventEntityCreateOptions
->(({ telemetry_timestamp = null, trip_id = null, service_area_id = null, ...domain }, options) => {
-  const { recorded, migrated_from } = options ?? {}
-  return {
-    telemetry_timestamp,
-    trip_id,
-    service_area_id,
-    recorded,
-    migrated_from_source: migrated_from?.migrated_from_source ?? null,
-    migrated_from_version: migrated_from?.migrated_from_version ?? null,
-    migrated_from_id: migrated_from?.migrated_from_id ?? null,
-    ...domain
+>(
+  (
+    { telemetry, telemetry_timestamp = null, trip_id = null, service_area_id = null, trip_state = null, ...domain },
+    options
+  ) => {
+    const { recorded } = options ?? {}
+    return {
+      telemetry_timestamp,
+      trip_id,
+      service_area_id,
+      trip_state,
+      recorded,
+      ...domain
+    }
   }
-})
+)

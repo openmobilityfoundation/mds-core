@@ -49,10 +49,12 @@ export const TelemetryEntityToDomain = ModelMapper<
 
 type TelemetryEntityCreateOptions = Partial<{
   recorded: Timestamp
-  migrated_from: MigratedEntityModel
 }>
 
-export type TelemetryEntityCreateModel = Omit<TelemetryEntityModel, keyof IdentityColumn | keyof RecordedColumn>
+export type TelemetryEntityCreateModel = Omit<
+  TelemetryEntityModel,
+  keyof IdentityColumn | keyof RecordedColumn | keyof MigratedEntityModel
+>
 
 export const TelemetryDomainToEntityCreate = ModelMapper<
   TelemetryDomainCreateModel,
@@ -68,7 +70,7 @@ export const TelemetryDomainToEntityCreate = ModelMapper<
     },
     options
   ) => {
-    const { recorded, migrated_from } = options ?? {}
+    const { recorded } = options ?? {}
 
     return {
       lat,
@@ -82,9 +84,6 @@ export const TelemetryDomainToEntityCreate = ModelMapper<
       stop_id,
       charge,
       recorded,
-      migrated_from_source: migrated_from?.migrated_from_source ?? null,
-      migrated_from_version: migrated_from?.migrated_from_version ?? null,
-      migrated_from_id: migrated_from?.migrated_from_id ?? null,
       ...domain
     }
   }

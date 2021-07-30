@@ -16,7 +16,7 @@
 
 import { RpcClient, RpcRequest } from '@mds-core/mds-rpc-common'
 import { ServiceClient } from '@mds-core/mds-service-helpers'
-import { IngestService, IngestServiceDefinition } from '../@types'
+import { IngestMigrationService, IngestService, IngestServiceDefinition } from '../@types'
 
 const IngestServiceRpcClient = RpcClient(IngestServiceDefinition, {
   host: process.env.INGEST_SERVICE_RPC_HOST,
@@ -24,10 +24,12 @@ const IngestServiceRpcClient = RpcClient(IngestServiceDefinition, {
 })
 
 // What the API layer, and any other clients, will invoke.
-export const IngestServiceClient: ServiceClient<IngestService> = {
-  name: (...args) => RpcRequest(IngestServiceRpcClient.name, args),
+export const IngestServiceClient: ServiceClient<IngestService & IngestMigrationService> = {
   getEventsUsingOptions: (...args) => RpcRequest(IngestServiceRpcClient.getEventsUsingOptions, args),
   getEventsUsingCursor: (...args) => RpcRequest(IngestServiceRpcClient.getEventsUsingCursor, args),
   getDevices: (...args) => RpcRequest(IngestServiceRpcClient.getDevices, args),
-  writeEventAnnotations: (...args) => RpcRequest(IngestServiceRpcClient.writeEventAnnotations, args)
+  writeEventAnnotations: (...args) => RpcRequest(IngestServiceRpcClient.writeEventAnnotations, args),
+  writeMigratedDevice: (...args) => RpcRequest(IngestServiceRpcClient.writeMigratedDevice, args),
+  writeMigratedVehicleEvent: (...args) => RpcRequest(IngestServiceRpcClient.writeMigratedVehicleEvent, args),
+  writeMigratedTelemetry: (...args) => RpcRequest(IngestServiceRpcClient.writeMigratedTelemetry, args)
 }
