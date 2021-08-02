@@ -48,9 +48,6 @@ export class EventEntity extends MigratedEntity(IdentityColumn(RecordedColumn(cl
   @Column('uuid', { nullable: true })
   trip_id: Nullable<UUID>
 
-  @Column('uuid', { nullable: true })
-  service_area_id: Nullable<UUID>
-
   telemetry?: TelemetryEntityModel
 
   @OneToOne(() => EventAnnotationEntity, annotation => annotation.event)

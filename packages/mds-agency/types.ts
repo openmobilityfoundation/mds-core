@@ -33,7 +33,6 @@ import {
   VEHICLE_EVENT,
   VEHICLE_STATE
 } from '@mds-core/mds-types'
-import { MultiPolygon } from 'geojson'
 
 export const AGENCY_API_SUPPORTED_VERSIONS = ['0.4.1', '1.0.0'] as const
 export type AGENCY_API_SUPPORTED_VERSION = typeof AGENCY_API_SUPPORTED_VERSIONS[number]
@@ -72,17 +71,6 @@ export type AgencyApiSubmitVehicleTelemetryResponse = AgencyApiResponse<{
 }>
 
 export type AgencyApiPostTripMetadataResponse = AgencyApiResponse<TripMetadata>
-
-export interface ServiceArea {
-  service_area_id: UUID
-  start_date: number
-  end_date: number
-  prev_area: UUID
-  replacement_area: UUID
-  type: string
-  description: string
-  area: MultiPolygon
-}
 
 export interface VehiclePayload {
   device?: Device

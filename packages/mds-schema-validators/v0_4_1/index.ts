@@ -21,7 +21,6 @@ const eventSchema_v0_4_1 = Joi.object().keys({
   event_type: vehicleEventTypeSchema_v0_4_1.required(),
   telemetry_timestamp: timestampSchema.optional(),
   telemetry: telemetrySchema.required(),
-  service_area_id: uuidSchema.allow(null).optional(),
   recorded: timestampSchema.optional()
 })
 export const isValidEvent_v0_4_1 = (

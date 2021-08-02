@@ -126,8 +126,6 @@ export interface CoreEvent {
  * This alias must be updated if this type is updated.
  */
 export interface VehicleEvent_v1_1_0 extends CoreEvent {
-  timestamp_long?: string | null
-  delta?: Timestamp | null
   event_types: VEHICLE_EVENT[]
   telemetry_timestamp?: Timestamp | null
   trip_id?: UUID | null

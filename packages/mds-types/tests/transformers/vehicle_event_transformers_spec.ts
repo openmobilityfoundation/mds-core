@@ -25,7 +25,6 @@ describe('Test transformers', () => {
 
       const transformedEvent = convert_v0_4_1_vehicle_event_to_v1_0_0(event)
       assert.deepEqual(transformedEvent, {
-        delta: null,
         device_id: DEVICE_ID,
         provider_id: PROVIDER_ID,
         timestamp: TIME,
@@ -34,7 +33,6 @@ describe('Test transformers', () => {
         recorded: TIME,
         telemetry: null,
         telemetry_timestamp: null,
-        timestamp_long: null,
         trip_id: null
       })
     })
@@ -51,7 +49,6 @@ describe('Test transformers', () => {
 
       const transformedEvent = convert_v0_4_1_vehicle_event_to_v1_0_0(event)
       assert.deepEqual(transformedEvent, {
-        delta: null,
         device_id: DEVICE_ID,
         provider_id: PROVIDER_ID,
         timestamp: TIME,
@@ -60,7 +57,6 @@ describe('Test transformers', () => {
         recorded: TIME,
         telemetry: null,
         telemetry_timestamp: null,
-        timestamp_long: null,
         trip_id: null
       })
     })
@@ -77,7 +73,6 @@ describe('Test transformers', () => {
       const transformedEvent = convert_v0_4_1_vehicle_event_to_v1_0_0(event)
 
       assert.deepEqual(transformedEvent, {
-        delta: null,
         device_id: DEVICE_ID,
         provider_id: PROVIDER_ID,
         timestamp: TIME,
@@ -86,7 +81,6 @@ describe('Test transformers', () => {
         recorded: TIME,
         telemetry: null,
         telemetry_timestamp: null,
-        timestamp_long: null,
         trip_id: null
       })
     })

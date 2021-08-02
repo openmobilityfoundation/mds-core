@@ -82,7 +82,6 @@ const COLUMN = Enum(
   'provider_vehicle_id',
   'publish_date',
   'recorded',
-  'service_area_id',
   'speed',
   'telemetry_timestamp',
   'thumbnail_filename',
@@ -170,7 +169,6 @@ const TABLE_COLUMNS: { [T in TABLE_NAME]: Readonly<COLUMN_NAME[]> } = {
     COLUMN.telemetry_timestamp,
     COLUMN.trip_id,
     COLUMN.trip_state,
-    COLUMN.service_area_id,
     COLUMN.recorded
   ],
   [TABLE.geographies]: [

@@ -45,14 +45,11 @@ export interface VehicleEvent_v0_4_1 {
   device_id: UUID
   provider_id: UUID
   timestamp: Timestamp
-  timestamp_long?: string | null
-  delta?: Timestamp | null
   event_type: VEHICLE_EVENT_v0_4_1 | TRANSFORMER_VEHICLE_EVENT
   event_type_reason?: VEHICLE_REASON_v0_4_1 | null | TRANSFORMER_EVENT_TYPE_REASON
   telemetry_timestamp?: Timestamp | null
   telemetry?: Telemetry | null
   trip_id?: UUID | null
-  service_area_id?: UUID | null
   recorded: Timestamp
 }
 

@@ -118,7 +118,6 @@ export interface EventDomainModel extends RecordedColumn {
   telemetry: Nullable<TelemetryDomainModel>
   annotation: Nullable<EventAnnotationDomainModel>
   trip_id: Nullable<UUID>
-  service_area_id: Nullable<UUID>
 }
 
 export type EventDomainCreateModel = DomainModelCreate<Omit<EventDomainModel, keyof RecordedColumn | 'telemetry'>> & {

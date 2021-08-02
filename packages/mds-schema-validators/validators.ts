@@ -191,8 +191,6 @@ const eventSchema = Joi.object().keys({
   device_id: uuidSchema.required(),
   provider_id: uuidSchema.required(),
   timestamp: timestampSchema.required(),
-  timestamp_long: stringSchema.optional(),
-  delta: timestampSchema.optional(),
   event_types: Joi.array().items(vehicleEventTypeSchema).required(),
   telemetry_timestamp: timestampSchema.optional(),
   telemetry: telemetrySchema.allow(null).optional(),

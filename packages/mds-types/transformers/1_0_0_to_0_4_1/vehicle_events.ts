@@ -108,14 +108,11 @@ function convert_v1_0_0_to_v0_4_1_helper(
     device_id: event.device_id,
     provider_id: event.provider_id,
     timestamp: event.timestamp,
-    timestamp_long: event.timestamp_long,
-    delta: event.delta,
     event_type,
     event_type_reason,
     telemetry_timestamp: event.telemetry_timestamp,
     telemetry,
     trip_id: event.trip_id,
-    service_area_id: null,
     recorded: event.recorded
   }
 }
