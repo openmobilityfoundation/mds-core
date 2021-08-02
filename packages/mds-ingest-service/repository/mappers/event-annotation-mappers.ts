@@ -26,17 +26,15 @@ export const EventAnnotationEntityToDomain = ModelMapper<
   EventAnnotationDomainModel,
   EventAnnotationEntityToDomainOptions
 >((entity, options) => {
-  const { id, ...domain } = entity
+  const { id, events_row_id, ...domain } = entity
   return { ...domain }
 })
 
-type EventAnnotationEntityCreateOptions = Partial<{
-  recorded: Timestamp
-}>
+type EventAnnotationEntityCreateOptions = Partial<{ recorded: Timestamp }>
 
 export type EventAnnotationEntityCreateModel = Omit<
   EventAnnotationEntityModel,
-  keyof IdentityColumn | keyof RecordedColumn
+  keyof IdentityColumn | keyof RecordedColumn | 'event'
 >
 
 export const EventAnnotationDomainToEntityCreate = ModelMapper<

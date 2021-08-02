@@ -27,6 +27,7 @@ import { AddEventsTripIdTimestampIndex1625676583247 } from './1625676583247-AddE
 import { AddEventsTimestampIdIndex1627315083728 } from './1627315083728-AddEventsTimestampIdIndex'
 import { AddEventsProviderIdIdIndex1627315276644 } from './1627315276644-AddEventsProviderIdIdIndex'
 import { AddEventsVehicleStateIdIndex1627315357677 } from './1627315357677-AddEventsVehicleStateIdIndex'
+import { AddEventsRowIdColumn1627427307591 } from './1627427307591-AddEventsRowIdColumn'
 
 export default [
   CreateDevicesTable1603212409274,
@@ -41,5 +42,6 @@ export default [
   AddEventsTripIdTimestampIndex1625676583247,
   AddEventsTimestampIdIndex1627315083728,
   AddEventsProviderIdIdIndex1627315276644,
-  AddEventsVehicleStateIdIndex1627315357677
+  AddEventsVehicleStateIdIndex1627315357677,
+  AddEventsRowIdColumn1627427307591
 ]

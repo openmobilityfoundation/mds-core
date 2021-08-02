@@ -170,6 +170,7 @@ const TEST_EVENT_B2: EventDomainCreateModel = {
 }
 
 const TEST_EVENT_ANNOTATION_A: EventAnnotationDomainCreateModel = {
+  events_row_id: 1,
   device_id: DEVICE_UUID_A,
   timestamp: testTimestamp,
   vehicle_id: 'test-id-1',
@@ -181,6 +182,7 @@ const TEST_EVENT_ANNOTATION_A: EventAnnotationDomainCreateModel = {
 }
 
 const TEST_EVENT_ANNOTATION_B: EventAnnotationDomainCreateModel = {
+  events_row_id: 2,
   device_id: DEVICE_UUID_B,
   timestamp: testTimestamp,
   vehicle_id: 'test-id-2',
@@ -529,13 +531,13 @@ describe('Ingest Service Tests', () => {
         TEST_EVENT_ANNOTATION_A,
         TEST_EVENT_ANNOTATION_B
       ])
+      // Remove event_row_id since this is not returned.
+      const { events_row_id: EVENT_ROW_ID_A, ...RESULT_A } = TEST_EVENT_ANNOTATION_A
+      const { events_row_id: EVENT_ROW_ID_B, ...RESULT_B } = TEST_EVENT_ANNOTATION_B
       expect(eventAnnotations.length).toEqual(2)
       // Test for partial object match since eventAnnotations also have `recorded`
       expect(eventAnnotations).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining(TEST_EVENT_ANNOTATION_A),
-          expect.objectContaining(TEST_EVENT_ANNOTATION_B)
-        ])
+        expect.arrayContaining([expect.objectContaining(RESULT_A), expect.objectContaining(RESULT_B)])
       )
     })
 
@@ -553,6 +555,18 @@ describe('Ingest Service Tests', () => {
       ).rejects.toMatchObject({
         type: 'ConflictError'
       })
+    })
+
+    it('gets events with 2 annotations', async () => {
+      await IngestRepository.createDevices([TEST_TNC_A, TEST_TNC_B])
+      await IngestRepository.createEvents([TEST_EVENT_A1, TEST_EVENT_B1])
+      await IngestRepository.createEvents([TEST_EVENT_A2, TEST_EVENT_B2])
+      await IngestServiceClient.writeEventAnnotations([TEST_EVENT_ANNOTATION_A, TEST_EVENT_ANNOTATION_B])
+      const { events } = await IngestServiceClient.getEventsUsingOptions({
+        time_range: { start: testTimestamp, end: testTimestamp + 2000 },
+        grouping_type: 'all_events'
+      })
+      expect(events.filter(e => e.annotation).length).toEqual(2)
     })
   })
 

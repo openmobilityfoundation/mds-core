@@ -173,6 +173,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .getRepository(EventEntity)
         .createQueryBuilder('events')
         .innerJoin(qb => qb.from(DeviceEntity, 'd'), 'devices', 'devices.device_id = events.device_id')
+        .leftJoinAndSelect('events.annotation', 'annotation')
         .leftJoinAndMapOne(
           'events.telemetry',
           TelemetryEntity,
@@ -313,14 +314,20 @@ class IngestReadWriteRepository extends ReadWriteRepository {
 
     /* you have to manually declare a limit, since we're skipping the .take() call that normally happens in .getMany() */
     query.limit(limit + 1)
-    const pagedQuery: SelectQueryBuilder<{ event: EventEntity; telemetry: TelemetryEntity }> =
-      pager['appendPagingQuery'](query)
+    const pagedQuery: SelectQueryBuilder<{
+      event: EventEntity
+      telemetry: TelemetryEntity
+      annotation: EventAnnotationEntity
+    }> = pager['appendPagingQuery'](query)
     /**
      * results are selected as JSON, so that we can skip the TypeORM entity builder.
      */
-    pagedQuery.select('row_to_json(events.*) as event, row_to_json(telemetry.*) as telemetry')
-    const results: { event: EventEntity; telemetry: TelemetryEntity }[] = await pagedQuery.getRawMany()
-    const entities = results.map(({ event, telemetry }) => ({ ...event, telemetry }))
+    pagedQuery.select(
+      'row_to_json(events.*) as event, row_to_json(telemetry.*) as telemetry, row_to_json(annotation.*) as annotation'
+    )
+    const results: { event: EventEntity; telemetry: TelemetryEntity; annotation: EventAnnotationEntity }[] =
+      await pagedQuery.getRawMany()
+    const entities = results.map(({ event, telemetry, annotation }) => ({ ...event, telemetry, annotation }))
     const hasMore = entities.length > (limit || 100)
     if (hasMore) {
       entities.splice(entities.length - 1, 1)
@@ -414,7 +421,9 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     testEnvSafeguard()
     try {
       const connection = await this.connect('rw')
-      await connection.getRepository(EventEntity).query('TRUNCATE events, devices, telemetry RESTART IDENTITY')
+      await connection
+        .getRepository(EventEntity)
+        .query('TRUNCATE events, devices, telemetry, event_annotations RESTART IDENTITY')
     } catch (error) {
       throw RepositoryError(error)
     }
