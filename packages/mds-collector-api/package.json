@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-collector-api",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Mobility Data Specification Collector API",
   "keywords": [
     "mds"
@@ -20,7 +20,7 @@
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-api-helpers": "0.1.30",
+    "@mds-core/mds-api-helpers": "0.1.31",
     "@mds-core/mds-api-server": "0.1.30",
     "@mds-core/mds-collector-backend": "0.1.4",
     "@mds-core/mds-logger": "0.2.3",

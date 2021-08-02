@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-stream-processor",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MDS Stream Processor",
   "keywords": [
     "mds"

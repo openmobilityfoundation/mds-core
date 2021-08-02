@@ -1,5 +1,11 @@
 # @mds-core/mds-stream-processor
 
+## 0.2.0
+
+### Minor Changes
+
+- bf7a01db: StreamProcessor & StreamForwarder sinks must always be arrays.
+
 ## 0.1.1
 
 ### Patch Changes
