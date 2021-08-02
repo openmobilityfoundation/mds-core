@@ -1,5 +1,13 @@
 # @container-images/mds-ingest-service
 
+## 0.0.5
+
+### Patch Changes
+
+- 62a188ae: Add initial ingest migration processor
+- Updated dependencies [62a188ae]
+  - @mds-core/mds-ingest-service@0.1.5
+
 ## 0.0.4
 
 ### Patch Changes

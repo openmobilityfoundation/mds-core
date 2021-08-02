@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-transaction-api",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "MDS Transaction API",
   "license": "Apache-2.0",
   "author": "City of Los Angeles",
@@ -20,7 +20,7 @@
     "generate:schema": "ts-node ./generate-schemas.ts && git add schema-gen"
   },
   "dependencies": {
-    "@mds-core/mds-api-helpers": "0.1.30",
+    "@mds-core/mds-api-helpers": "0.1.31",
     "@mds-core/mds-api-server": "0.1.30",
     "@mds-core/mds-logger": "0.2.3",
     "@mds-core/mds-schema-validators": "0.1.6",

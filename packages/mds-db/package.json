@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-db",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Mobility Data Specification database interface",
   "keywords": [
     "mds",
@@ -20,7 +20,7 @@
     "@mds-core/mds-attachment-service": "0.1.4",
     "@mds-core/mds-audit-service": "0.1.4",
     "@mds-core/mds-geography-service": "0.1.4",
-    "@mds-core/mds-ingest-service": "0.1.4",
+    "@mds-core/mds-ingest-service": "0.1.5",
     "@mds-core/mds-logger": "0.2.3",
     "@mds-core/mds-policy-service": "0.1.4",
     "@mds-core/mds-types": "0.2.1",

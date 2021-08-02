@@ -1,5 +1,11 @@
 # @mds-core/mds-ingest-service
 
+## 0.1.5
+
+### Patch Changes
+
+- 62a188ae: Add initial ingest migration processor
+
 ## 0.1.4
 
 ### Patch Changes
