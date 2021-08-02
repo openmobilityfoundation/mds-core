@@ -58,6 +58,7 @@
     "node-rsa": "1.1.1",
     "nodemon": "2.0.9",
     "nyc": "15.1.0",
+    "pls-changeset-me": "0.0.9",
     "pnpm-ci-tools": "1.0.1",
     "prettier": "2.3.2",
     "prettier-plugin-organize-imports": "2.2.0",
