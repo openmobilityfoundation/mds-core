@@ -721,6 +721,15 @@ const asArray = <T>(value: SingleOrArray<T>): T[] => (Array.isArray(value) ? val
 
 const pluralize = (count: number, singular: string, plural: string) => (count === 1 ? singular : plural)
 
+/**
+ * Aborts execution if not running under a test environment.
+ */
+const testEnvSafeguard = () => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('This function must be called in a test environment.')
+  }
+}
+
 export {
   UUID_REGEX,
   isUUID,
@@ -773,5 +782,6 @@ export {
   areThereCommonElements,
   isMicroMobilityEvent,
   isTaxiEvent,
-  setEmptyArraysToUndefined
+  setEmptyArraysToUndefined,
+  testEnvSafeguard
 }

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { schemaValidator } from '@mds-core/mds-schema-validators'
+import { SchemaValidator, schemaValidator } from '@mds-core/mds-schema-validators'
+import { UUID } from '@mds-core/mds-types'
 import gjv from 'geojson-validation'
 import Joi from 'joi'
 import {
@@ -79,3 +80,11 @@ export const { validate: validateGetPublishedGeographiesOptions, isValid: isVali
       })
       .unknown(false)
   )
+
+export const { validate: validateUuids, isValid: isValidUuids } = SchemaValidator<UUID[]>({
+  type: 'array',
+  items: {
+    type: 'string',
+    format: 'uuid'
+  }
+})

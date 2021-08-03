@@ -16,7 +16,7 @@
 
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { UUID } from '@mds-core/mds-types'
-import { isUUID, ValidationError } from '@mds-core/mds-utils'
+import { isUUID, testEnvSafeguard, ValidationError } from '@mds-core/mds-utils'
 import { Any, SelectQueryBuilder } from 'typeorm'
 import { buildPaginator, Cursor, PagingResult } from 'typeorm-cursor-pagination'
 import {
@@ -52,14 +52,6 @@ import { MigratedEntityModel } from './mixins/migrated-entity'
 
 type VehicleEventsQueryParams = GetVehicleEventsFilterParams & Cursor
 
-/**
- * Aborts execution if not running under a test environment.
- */
-const testEnvSafeguard = () => {
-  if (process.env.NODE_ENV !== 'test') {
-    throw new Error(`This method is only supported when executing tests`)
-  }
-}
 class IngestReadWriteRepository extends ReadWriteRepository {
   constructor() {
     super('ingest', { entities, migrations })

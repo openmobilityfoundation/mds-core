@@ -30,5 +30,6 @@ export const GeographyServiceClient: ServiceClient<GeographyService> = {
   getUnpublishedGeographies: (...args) => RpcRequest(GeographyServiceRpcClient.getUnpublishedGeographies, args),
   getPublishedGeographies: (...args) => RpcRequest(GeographyServiceRpcClient.getPublishedGeographies, args),
   writeGeographies: (...args) => RpcRequest(GeographyServiceRpcClient.writeGeographies, args),
-  writeGeographiesMetadata: (...args) => RpcRequest(GeographyServiceRpcClient.writeGeographiesMetadata, args)
+  writeGeographiesMetadata: (...args) => RpcRequest(GeographyServiceRpcClient.writeGeographiesMetadata, args),
+  getGeographiesByIds: (...args) => RpcRequest(GeographyServiceRpcClient.getGeographiesByIds, args)
 }

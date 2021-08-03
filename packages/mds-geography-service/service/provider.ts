@@ -16,13 +16,14 @@
 
 import logger from '@mds-core/mds-logger'
 import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
-import { GeographyService } from '../@types'
+import { GeographyDomainModel, GeographyService } from '../@types'
 import { GeographyRepository } from '../repository'
 import {
   validateGeographyDomainCreateModel,
   validateGeographyMetadataDomainCreateModel,
   validateGetGeographiesOptions,
-  validateGetPublishedGeographiesOptions
+  validateGetPublishedGeographiesOptions,
+  validateUuids
 } from './validators'
 
 export const GeographyServiceProvider: ServiceProvider<GeographyService> & ProcessController = {
@@ -100,6 +101,29 @@ export const GeographyServiceProvider: ServiceProvider<GeographyService> & Proce
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Writing Geographies Metadata', error)
       logger.error('mds-geography-service::writeGeographiesMetadata error', { exception, error })
+      return exception
+    }
+  },
+
+  getGeographiesByIds: async geography_ids => {
+    try {
+      const geographies = await GeographyRepository.getGeographiesByIds(validateUuids(geography_ids))
+
+      const geographyMap = geographies.reduce<{ [k: string]: GeographyDomainModel | undefined }>((acc, geography) => {
+        acc[geography.geography_id] = geography
+        return acc
+      }, {})
+
+      // For any geography_ids which were missing in the DB, set to null in result
+      const result = geography_ids.map(geography_id => {
+        const geography = geographyMap[geography_id]
+        return geography ? geography : null
+      })
+
+      return ServiceResult(result)
+    } catch (error) /* istanbul ignore next */ {
+      const exception = ServiceException('Error Getting Geographies', error)
+      logger.error('mds-geography-service::getGeographiesByIds error', { exception, error })
       return exception
     }
   }

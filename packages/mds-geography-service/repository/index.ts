@@ -15,6 +15,7 @@
  */
 
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
+import { testEnvSafeguard } from '@mds-core/mds-utils'
 import { FindManyOptions, In, IsNull, MoreThan, Not } from 'typeorm'
 import {
   GeographyDomainCreateModel,
@@ -139,6 +140,35 @@ class GeographyReadWriteRepository extends ReadWriteRepository {
       }
     }
     return []
+  }
+
+  /**
+   * Fetches geographies by ids, returns null for ids that don't exist in the database. Note: order is important!
+   */
+  public getGeographiesByIds = async (geographyIds: string[]): Promise<GeographyDomainModel[]> => {
+    try {
+      const connection = await this.connect('ro')
+      const entities = await connection.getRepository(GeographyEntity).find({
+        where: { geography_id: In(geographyIds) }
+      })
+
+      return entities.map(GeographyEntityToDomain.mapper())
+    } catch (error) /* istanbul ignore next */ {
+      throw RepositoryError(error)
+    }
+  }
+
+  /**
+   * Nukes everything from orbit. Boom.
+   */
+  public deleteAll = async () => {
+    testEnvSafeguard()
+    try {
+      const connection = await this.connect('rw')
+      await connection.getRepository(GeographyEntity).query('TRUNCATE geographies, geography_metadata RESTART IDENTITY')
+    } catch (error) {
+      throw RepositoryError(error)
+    }
   }
 
   constructor() {

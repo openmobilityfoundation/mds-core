@@ -60,6 +60,7 @@ export interface GeographyService {
   getPublishedGeographies: (options?: GetPublishedGeographiesOptions) => GeographyWithMetadataDomainModel[]
   writeGeographies: (geographies: GeographyDomainCreateModel[]) => GeographyDomainModel[]
   writeGeographiesMetadata: (metadata: GeographyMetadataDomainCreateModel[]) => GeographyMetadataDomainModel[]
+  getGeographiesByIds: (geography_ids: UUID[]) => Nullable<GeographyDomainModel>[]
 }
 
 export const GeographyServiceDefinition: RpcServiceDefinition<GeographyService> = {
@@ -68,5 +69,6 @@ export const GeographyServiceDefinition: RpcServiceDefinition<GeographyService> 
   getUnpublishedGeographies: RpcRoute<GeographyService['getUnpublishedGeographies']>(),
   getPublishedGeographies: RpcRoute<GeographyService['getPublishedGeographies']>(),
   writeGeographies: RpcRoute<GeographyService['writeGeographies']>(),
-  writeGeographiesMetadata: RpcRoute<GeographyService['writeGeographiesMetadata']>()
+  writeGeographiesMetadata: RpcRoute<GeographyService['writeGeographiesMetadata']>(),
+  getGeographiesByIds: RpcRoute<GeographyService['getGeographiesByIds']>()
 }
