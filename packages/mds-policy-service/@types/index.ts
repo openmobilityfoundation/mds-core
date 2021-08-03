@@ -46,3 +46,14 @@ export interface PolicyService {
 export const PolicyServiceDefinition: RpcServiceDefinition<PolicyService> = {
   name: RpcRoute<PolicyService['name']>()
 }
+
+export interface ReadPolicyQueryParams {
+  policy_ids?: UUID[]
+  rule_id?: UUID
+  name?: string
+  description?: string
+  start_date?: Timestamp
+  get_unpublished?: Nullable<boolean>
+  get_published?: Nullable<boolean>
+  geography_id?: Nullable<UUID>
+}

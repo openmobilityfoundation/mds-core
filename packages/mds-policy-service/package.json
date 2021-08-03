@@ -31,5 +31,8 @@
     "@mds-core/mds-utils": "0.1.30",
     "joi": "17.4.0",
     "typeorm": "0.2.34"
+  },
+  "devDependencies": {
+    "@mds-core/mds-test-data": "0.1.30"
   }
 }

@@ -15,26 +15,7 @@
  */
 
 import { PolicyServiceClient } from '../client'
-import { PolicyRepository } from '../repository'
 import { PolicyServiceManager } from '../service/manager'
-
-describe('Policy Repository Tests', () => {
-  beforeAll(async () => {
-    await PolicyRepository.initialize()
-  })
-
-  it('Run Migrations', async () => {
-    await PolicyRepository.runAllMigrations()
-  })
-
-  it('Revert Migrations', async () => {
-    await PolicyRepository.revertAllMigrations()
-  })
-
-  afterAll(async () => {
-    await PolicyRepository.shutdown()
-  })
-})
 
 const PolicyServer = PolicyServiceManager.controller()
 

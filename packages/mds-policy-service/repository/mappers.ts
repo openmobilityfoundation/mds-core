@@ -37,13 +37,16 @@ type PolicyEntityCreateOptions = Partial<{}>
 
 export type PolicyEntityCreateModel = Omit<PolicyEntityModel, keyof IdentityColumn>
 
+/**
+ * publish_date is set to null if passed through this mapper
+ */
 export const PolicyDomainToEntityCreate = ModelMapper<
   PolicyDomainCreateModel,
   PolicyEntityCreateModel,
   PolicyEntityCreateOptions
->(({ provider_ids = null, end_date = null, prev_policies = null, publish_date = null, ...domain }, options) => {
+>(({ provider_ids = null, end_date = null, prev_policies = null, ...domain }, _options) => {
   const { policy_id } = domain
-  return { policy_id, policy_json: { provider_ids, end_date, prev_policies, publish_date, ...domain } }
+  return { policy_id, policy_json: { provider_ids, end_date, prev_policies, ...domain, publish_date: null } }
 })
 
 type PolicyMetadataEntityToDomainOptions = Partial<{}>

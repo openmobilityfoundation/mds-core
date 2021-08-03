@@ -14,13 +14,361 @@
  * limitations under the License.
  */
 
-import { ReadWriteRepository } from '@mds-core/mds-repository'
+import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
+import { Timestamp, UUID } from '@mds-core/mds-types'
+import {
+  AlreadyPublishedError,
+  BadParamsError,
+  ConflictError,
+  NotFoundError,
+  now,
+  testEnvSafeguard
+} from '@mds-core/mds-utils'
+import { PolicyDomainCreateModel, PolicyDomainModel, PolicyMetadataDomainModel, ReadPolicyQueryParams } from '../@types'
 import entities from './entities'
+import { PolicyEntity } from './entities/policy-entity'
+import { PolicyMetadataEntity } from './entities/policy-metadata-entity'
+import {
+  PolicyDomainToEntityCreate,
+  PolicyEntityToDomain,
+  PolicyMetadataDomainToEntityCreate,
+  PolicyMetadataEntityToDomain
+} from './mappers'
 import migrations from './migrations'
-
 class PolicyReadWriteRepository extends ReadWriteRepository {
   constructor() {
     super('policies', { entities, migrations })
+  }
+
+  public readPolicies = async (params?: ReadPolicyQueryParams) => {
+    try {
+      const connection = await this.connect('ro')
+      const query = connection.getRepository(PolicyEntity).createQueryBuilder()
+
+      if (params) {
+        const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_id } = params
+
+        if (policy_ids) {
+          query.andWhere('policy_id = ANY(:policy_ids)', { policy_ids })
+        }
+
+        if (rule_id) {
+          query.andWhere(
+            "EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? :rule_id)",
+            { rule_id }
+          )
+        }
+
+        if (get_unpublished) {
+          query.andWhere("policy_json->>'publish_date' IS NULL")
+        }
+
+        if (get_published) {
+          query.andWhere("policy_json->>'publish_date' IS NOT NULL")
+        }
+
+        if (get_unpublished && get_published) {
+          throw new BadParamsError('cannot have get_unpublished and get_published both be true')
+        }
+
+        if (start_date) {
+          query.andWhere("policy_json->>'start_date' >= :start_date", { start_date })
+        }
+
+        if (geography_id) {
+          query.andWhere(`policy_json::jsonb @> :json_query`, {
+            json_query: { rules: [{ geographies: [geography_id] }] }
+          })
+        }
+      }
+
+      const entities = await query.getMany()
+      return entities.map(PolicyEntityToDomain.map)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public readActivePolicies = async (timestamp: Timestamp = now()) => {
+    try {
+      const connection = await this.connect('ro')
+      const entities = await connection
+        .getRepository(PolicyEntity)
+        .createQueryBuilder()
+        .where("policy_json->>'start_date' >= :start_date", { start_date: timestamp })
+        .andWhere("policy_json->>'end_date' <= :end_date OR policy_json->>'end_date' IS NULL ", { end_date: timestamp })
+        .andWhere("policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= :publish_date ", {
+          publish_date: timestamp
+        })
+        .getMany()
+      return entities.map(PolicyEntityToDomain.map)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public readBulkPolicyMetadata = async <M>(params?: ReadPolicyQueryParams) => {
+    const policies = await this.readPolicies(params)
+
+    if (policies.length === 0) {
+      return []
+    }
+
+    const connection = await this.connect('ro')
+    const entities = await connection
+      .getRepository(PolicyMetadataEntity)
+      .createQueryBuilder()
+      .andWhere('policy_id = ANY(:policy_ids)', { policy_ids: policies.map(p => p.policy_id) })
+      .getMany()
+
+    return entities.map(PolicyMetadataEntityToDomain.map) as PolicyMetadataDomainModel<M>[]
+  }
+
+  public readSinglePolicyMetadata = async (policy_id: UUID) => {
+    try {
+      const connection = await this.connect('ro')
+      const entity = await connection.getRepository(PolicyMetadataEntity).findOneOrFail({ policy_id })
+      return PolicyMetadataEntityToDomain.map(entity)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public readPolicy = async (policy_id: UUID) => {
+    try {
+      const connection = await this.connect('ro')
+      const entity = await connection.getRepository(PolicyEntity).findOneOrFail({ policy_id })
+      return PolicyEntityToDomain.map(entity)
+    } catch (error) {
+      if (error.name === 'EntityNotFound') {
+        throw new NotFoundError(error)
+      }
+      throw RepositoryError(error)
+    }
+  }
+
+  private throwIfRulesAlreadyExist = async (policy: PolicyDomainCreateModel) => {
+    const policies = await Promise.all(policy.rules.map(({ rule_id }) => this.readPolicies({ rule_id })))
+    const policyIds = policies.flat().map(({ policy_id }) => policy_id)
+
+    if (policyIds.some(policy_id => policy_id !== policy.policy_id)) {
+      throw new ConflictError(`Policies containing rules with the same id or ids already exist`)
+    }
+  }
+
+  public writePolicy = async (policy: PolicyDomainCreateModel): Promise<PolicyDomainModel> => {
+    await this.throwIfRulesAlreadyExist(policy)
+    try {
+      const connection = await this.connect('rw')
+      const {
+        raw: [entity]
+      }: InsertReturning<PolicyEntity> = await connection
+        .getRepository(PolicyEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(PolicyDomainToEntityCreate.map(policy))
+        .returning('*')
+        .execute()
+      return PolicyEntityToDomain.map(entity)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public isPolicyPublished = async (policy_id: UUID) => {
+    try {
+      const connection = await this.connect('ro')
+      const entity = await connection.getRepository(PolicyEntity).findOneOrFail({ policy_id })
+      if (!entity) {
+        return false
+      }
+      return Boolean(PolicyEntityToDomain.map(entity).publish_date)
+    } catch (error) {
+      if (error.name === 'EntityNotFound') {
+        throw new NotFoundError(error)
+      }
+      throw RepositoryError(error)
+    }
+  }
+
+  public editPolicy = async (policy: PolicyDomainCreateModel) => {
+    const { policy_id } = policy
+
+    if (await this.isPolicyPublished(policy_id)) {
+      throw new AlreadyPublishedError('Cannot edit published policy')
+    }
+
+    const result = await this.readPolicies({ policy_ids: [policy_id], get_unpublished: true, get_published: false })
+    if (result.length === 0) {
+      throw new NotFoundError(`no policy of id ${policy_id} was found`)
+    }
+    await this.throwIfRulesAlreadyExist(policy)
+    try {
+      const connection = await this.connect('rw')
+      const {
+        raw: [updated]
+      } = await connection
+        .getRepository(PolicyEntity)
+        .createQueryBuilder()
+        .update()
+        .set({ policy_json: { ...policy } })
+        .where('policy_id = :policy_id', { policy_id })
+        .andWhere("policy_json->>'publish_date' IS NULL")
+        .returning('*')
+        .execute()
+      return PolicyEntityToDomain.map(updated)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public deletePolicy = async (policy_id: UUID) => {
+    if (await this.isPolicyPublished(policy_id)) {
+      throw new Error('Cannot edit published Policy')
+    }
+
+    try {
+      const connection = await this.connect('rw')
+      const {
+        raw: [deleted]
+      } = await connection
+        .getRepository(PolicyEntity)
+        .createQueryBuilder()
+        .delete()
+        .where('policy_id = :policy_id', { policy_id })
+        .andWhere("policy_json->>'publish_date' IS NULL")
+        .returning('*')
+        .execute()
+      return PolicyEntityToDomain.map(deleted).policy_id
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  /* Only publish the policy if the geographies are successfully published first */
+  // TODO: move "check for published geographies" to service.
+  public publishPolicy = async (policy_id: UUID, publish_date = now()) => {
+    try {
+      if (await this.isPolicyPublished(policy_id)) {
+        throw new AlreadyPublishedError('Cannot re-publish existing policy')
+      }
+
+      const policy = (
+        await this.readPolicies({ policy_ids: [policy_id], get_unpublished: true, get_published: null })
+      )[0]
+      if (!policy) {
+        throw new NotFoundError('cannot publish nonexistent policy')
+      }
+
+      if (policy.start_date < publish_date) {
+        throw new ConflictError('Policies cannot be published after their start_date')
+      }
+
+      // const geographies: UUID[] = policy.rules.map(r => r.geographies).flat()
+
+      // await Promise.all(
+      //   geographies.map(async geography_id => {
+      //     const isPublished = await db.isGeographyPublished(geography_id)
+
+      //     if (!isPublished) {
+      //       throw new DependencyMissingError(`Geography with ${geography_id} is not published!`)
+      //     }
+      //   })
+      // )
+
+      const published_policy: PolicyDomainModel = { ...policy, publish_date }
+      try {
+        const connection = await this.connect('rw')
+        const {
+          raw: [updated]
+        } = await connection
+          .getRepository(PolicyEntity)
+          .createQueryBuilder()
+          .update()
+          .set({ policy_json: { ...published_policy } })
+          .where('policy_id = :policy_id', { policy_id })
+          .andWhere("policy_json->>'publish_date' IS NULL")
+          .returning('*')
+          .execute()
+        return PolicyEntityToDomain.map(updated)
+      } catch (error) {
+        throw RepositoryError(error)
+      }
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public writePolicyMetadata = async (policy_metadata: PolicyMetadataDomainModel) => {
+    try {
+      const connection = await this.connect('rw')
+      const {
+        raw: [entity]
+      }: InsertReturning<PolicyMetadataEntity> = await connection
+        .getRepository(PolicyMetadataEntity)
+        .createQueryBuilder()
+        .insert()
+        .values(PolicyMetadataDomainToEntityCreate.map(policy_metadata))
+        .returning('*')
+        .execute()
+      return PolicyMetadataEntityToDomain.map(entity)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public updatePolicyMetadata = async <M>(policy_metadata: PolicyMetadataDomainModel<M>) => {
+    try {
+      const { policy_id } = policy_metadata
+      await this.readSinglePolicyMetadata(policy_id)
+
+      const connection = await this.connect('rw')
+      const {
+        raw: [updated]
+      } = await connection
+        .getRepository(PolicyMetadataEntity)
+        .createQueryBuilder()
+        .update()
+        .set({ policy_metadata })
+        .where('policy_id = :policy_id', { policy_id })
+        .returning('*')
+        .execute()
+      return PolicyMetadataEntityToDomain.map(updated) as PolicyMetadataDomainModel<M>
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public readRule = async (rule_id: UUID) => {
+    try {
+      const connection = await this.connect('rw')
+      const policy = await connection
+        .getRepository(PolicyEntity)
+        .createQueryBuilder()
+        .select()
+        .where(
+          "EXISTS (SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? :rule_id) ",
+          { rule_id }
+        )
+        .getOneOrFail()
+      return PolicyEntityToDomain.map(policy).rules.filter(r => r.rule_id === rule_id)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public findPoliciesByGeographyID = async (geography_id: UUID) => {
+    return await this.readPolicies({ geography_id })
+  }
+
+  public deleteAll = async () => {
+    testEnvSafeguard()
+    try {
+      const connection = await this.connect('rw')
+      await connection.getRepository(PolicyEntity).query('TRUNCATE policies, policy_metadata RESTART IDENTITY')
+    } catch (error) {
+      throw RepositoryError(error)
+    }
   }
 }
 
