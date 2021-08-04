@@ -1,5 +1,26 @@
 # @mds-core/mds-ingest-service
 
+## 0.2.0
+
+### Minor Changes
+
+- 24231359: Remove delta, service_area_id, and timestamp_long from a variety of vehicle event types
+- aeedb169: Add new foreign key to event_annotations to associate with events.
+
+### Patch Changes
+
+- 93493a19: Move testEnvSafeguard method to mds-utils
+- da513885: Add missing name property to mds-ingst-service migration AddEventsRowIdColumn1627427307591
+- Updated dependencies [24231359]
+- Updated dependencies [93493a19]
+  - @mds-core/mds-schema-validators@0.2.0
+  - @mds-core/mds-types@0.3.0
+  - @mds-core/mds-utils@0.1.31
+  - @mds-core/mds-providers@0.1.31
+  - @mds-core/mds-repository@0.1.5
+  - @mds-core/mds-rpc-common@0.1.5
+  - @mds-core/mds-service-helpers@0.1.5
+
 ## 0.1.5
 
 ### Patch Changes

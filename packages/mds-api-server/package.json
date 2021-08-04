@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-api-server",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "MDS API Server",
   "keywords": [
     "mds"
@@ -17,10 +17,10 @@
     "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap ts-mocha --project ../../tsconfig.json"
   },
   "dependencies": {
-    "@mds-core/mds-api-authorizer": "0.1.30",
+    "@mds-core/mds-api-authorizer": "0.1.31",
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-service-helpers": "0.1.4",
-    "@mds-core/mds-utils": "0.1.30",
+    "@mds-core/mds-service-helpers": "0.1.5",
+    "@mds-core/mds-utils": "0.1.31",
     "@types/body-parser": "1.19.0",
     "@types/compression": "1.7.0",
     "@types/cors": "2.8.10",
