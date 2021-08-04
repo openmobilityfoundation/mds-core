@@ -8,7 +8,7 @@ import {
   UUID,
   VehicleEvent
 } from '@mds-core/mds-types'
-import { getPolygon, isInStatesOrEvents, pointInShape, UnsupportedTypeError } from '@mds-core/mds-utils'
+import { clone, getPolygon, isInStatesOrEvents, pointInShape, UnsupportedTypeError } from '@mds-core/mds-utils'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../@types'
 import { annotateVehicleMap, getPolicyType, isInVehicleTypes, isRuleActive } from './helpers'
 
@@ -38,7 +38,7 @@ export function processSpeedPolicy(
   policy: ModalityPolicy,
   events: (VehicleEvent & { telemetry: Telemetry })[],
   geographies: Geography[],
-  devicesToCheck: { [d: string]: Device }
+  devices: { [d: string]: Device }
 ): ComplianceEngineResult | undefined {
   if (getPolicyType(policy) !== RULE_TYPES.speed) {
     throw new UnsupportedTypeError(`${getPolicyType(policy)} with id ${policy.policy_id} submitted to speed processor`)
@@ -46,6 +46,8 @@ export function processSpeedPolicy(
   const matchedVehicles: {
     [d: string]: { device: Device; speed?: number; rule_applied: UUID; rules_matched: UUID[] }
   } = {}
+  // Necessary because we destructively modify the devices list to keep track of which devices we've seen.
+  const devicesToCheck = clone(devices)
   policy.rules.forEach(rule => {
     events.forEach(event => {
       if (devicesToCheck[event.device_id]) {

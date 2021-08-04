@@ -16,7 +16,7 @@ import {
 } from '@mds-core/mds-types'
 import { isDefined, now, RuntimeError } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
-import { VehicleEventWithTelemetry } from '../@types'
+import { ProviderInputs, VehicleEventWithTelemetry } from '../@types'
 
 const { env } = process
 
@@ -36,7 +36,15 @@ export function isPolicyUniversal(policy: ModalityPolicy) {
   return !policy.provider_ids || policy.provider_ids.length === 0
 }
 
-export async function getComplianceInputs(provider_id: string | undefined) {
+export async function getAllInputs() {
+  const inputs = await Promise.all(Object.keys(providers).map(provider_id => getProviderInputs(provider_id)))
+  return inputs.reduce((acc: ProviderInputs, cur) => {
+    acc[cur.provider_id] = cur
+    return acc
+  }, {})
+}
+
+export async function getProviderInputs(provider_id: string) {
   const deviceRecords = await db.readDeviceIds(provider_id)
   const deviceIdSubset = deviceRecords.map((record: { device_id: UUID; provider_id: UUID }) => record.device_id)
   const devices = await cache.readDevices(deviceIdSubset)
@@ -52,7 +60,7 @@ export async function getComplianceInputs(provider_id: string | undefined) {
    * We also don't consider events that have no associated telemetry.
    */
   const filteredEvents = filterEvents(events)
-  return { filteredEvents, deviceMap }
+  return { filteredEvents, deviceMap, provider_id }
 }
 
 export function isPolicyActive(policy: ModalityPolicy, end_time: number = now()): boolean {

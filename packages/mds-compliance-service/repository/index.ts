@@ -170,6 +170,7 @@ class ComplianceReadWriteRepository extends ReadWriteRepository {
   public createComplianceSnapshots = async (
     ComplianceSnapshots: ComplianceSnapshotDomainModel[]
   ): Promise<ComplianceSnapshotDomainModel[]> => {
+    if (ComplianceSnapshots.length === 0) return []
     const { connect } = this
     try {
       const connection = await connect('rw')

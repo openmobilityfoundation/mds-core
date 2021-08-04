@@ -61,6 +61,10 @@ describe('ComplianceSnapshots Service Tests', () => {
     expect(complianceSnapshot.vehicles_found.length).toEqual(3)
   })
 
+  it('Post ComplianceSnapshots does not throw if given an empty array', async () => {
+    await expect(ComplianceServiceClient.createComplianceSnapshots([])).resolves.toEqual([])
+  })
+
   it('Gets ComplianceSnapshots By TimeInterval (start_time, no end_time options)', async () => {
     const complianceSnapshots = await ComplianceServiceClient.getComplianceSnapshotsByTimeInterval({
       start_time: TIME - days(1)

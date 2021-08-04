@@ -8,3 +8,13 @@ export type ComplianceEngineResult = Pick<
   ComplianceSnapshotDomainModel,
   'vehicles_found' | 'excess_vehicles_count' | 'total_violations'
 >
+
+export interface ProviderInputs {
+  [key: string]: {
+    filteredEvents: VehicleEvent[]
+    deviceMap: {
+      [d: string]: Device
+    }
+    provider_id: string
+  }
+}

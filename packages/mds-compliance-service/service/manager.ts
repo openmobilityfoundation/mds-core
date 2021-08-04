@@ -39,6 +39,7 @@ export const ComplianceServiceManager = RpcServer(
     repl: {
       port: process.env.COMPLIANCE_SERVICE_REPL_PORT,
       context: { client: ComplianceServiceClient }
-    }
+    },
+    maxRequestSize: '30mb'
   }
 )

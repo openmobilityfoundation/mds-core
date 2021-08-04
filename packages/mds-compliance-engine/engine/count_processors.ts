@@ -24,7 +24,14 @@ import {
   UUID,
   VehicleEvent
 } from '@mds-core/mds-types'
-import { getPolygon, isDefined, isInStatesOrEvents, pointInShape, UnsupportedTypeError } from '@mds-core/mds-utils'
+import {
+  clone,
+  getPolygon,
+  isDefined,
+  isInStatesOrEvents,
+  pointInShape,
+  UnsupportedTypeError
+} from '@mds-core/mds-utils'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../@types'
 import { annotateVehicleMap, getPolicyType, isInVehicleTypes, isRuleActive } from './helpers'
 
@@ -65,11 +72,13 @@ export function processCountPolicy(
   policy: ModalityPolicy,
   events: (VehicleEvent & { telemetry: Telemetry })[],
   geographies: Geography[],
-  devicesToCheck: { [d: string]: Device }
+  devices: { [d: string]: Device }
 ): ComplianceEngineResult | undefined {
   if (getPolicyType(policy) !== RULE_TYPES.count) {
     throw new UnsupportedTypeError(`${getPolicyType(policy)} submitted to count processor`)
   }
+  // Necessary because we destructively modify the devices list to keep track of which devices we've seen.
+  const devicesToCheck = clone(devices)
   const matchedVehicles: { [d: string]: { device: Device; rule_applied: UUID; rules_matched?: UUID[] } } = {}
   const overflowedVehicles: { [d: string]: { device: Device; rules_matched: UUID[] } } = {}
   let countMinimumViolations = 0

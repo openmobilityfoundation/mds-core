@@ -25,7 +25,7 @@ import assert from 'assert'
 import { FeatureCollection } from 'geojson'
 import test from 'unit.js'
 import { VehicleEventWithTelemetry } from '../../@types'
-import { filterEvents, getSupersedingPolicies } from '../../engine/helpers'
+import { filterEvents, getAllInputs, getSupersedingPolicies } from '../../engine/helpers'
 import { processPolicy } from '../../engine/mds-compliance-engine'
 import { EXPIRED_POLICY, LOW_COUNT_POLICY } from '../../test_data/fixtures'
 import { readJson } from './helpers'
@@ -72,8 +72,10 @@ describe('Tests General Compliance Engine Functionality', () => {
 
     // Mimic what we do in the real world to get inputs to feed into the compliance engine.
     const supersedingPolicies = getSupersedingPolicies(policies)
-
-    const policyResults = await Promise.all(supersedingPolicies.map(async policy => processPolicy(policy, geographies)))
+    const inputs = await getAllInputs()
+    const policyResults = await Promise.all(
+      supersedingPolicies.map(policy => processPolicy(policy, geographies, inputs))
+    )
     policyResults.forEach(complianceSnapshots => {
       complianceSnapshots.forEach(complianceSnapshot => {
         test.assert.deepEqual(complianceSnapshot?.vehicles_found.length, 0)
@@ -90,7 +92,8 @@ describe('Tests General Compliance Engine Functionality', () => {
     })
     await cache.seed({ devices, events, telemetry: [] })
     await Promise.all(devices.map(async device => db.writeDevice(device)))
-    const result = await processPolicy(EXPIRED_POLICY, geographies)
+    const inputs = await getAllInputs()
+    const result = await processPolicy(EXPIRED_POLICY, geographies, inputs)
     test.assert.deepEqual(result, [])
   })
 })
@@ -115,8 +118,8 @@ describe('Verifies compliance engine processes by vehicle most recent event', ()
     }, []) as VehicleEventWithTelemetry[]
     await cache.seed({ devices, events, telemetry: [] })
     await Promise.all(devices.map(async device => db.writeDevice(device)))
-    const complianceResults = await processPolicy(LOW_COUNT_POLICY, geographies)
-    console.dir(complianceResults, { depth: null })
+    const inputs = await getAllInputs()
+    const complianceResults = await processPolicy(LOW_COUNT_POLICY, geographies, inputs)
     const { 0: result } = complianceResults.filter(
       complianceResult => complianceResult?.provider_id === TEST1_PROVIDER_ID
     ) as ComplianceSnapshotDomainModel[]
@@ -144,7 +147,8 @@ describe('Verifies errors are being properly thrown', async () => {
 
     await assert.rejects(
       async () => {
-        await processPolicy(policies[0], geographies)
+        const inputs = await getAllInputs()
+        await processPolicy(policies[0], geographies, inputs)
       },
       { name: 'RuntimeError' }
     )

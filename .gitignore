@@ -207,6 +207,7 @@ $RECYCLE.BIN/
 
 # vim
 *.swp
+*.swo
 
 # End of https://www.gitignore.io/api/osx,node,windows,serverless,sublimetext,visualstudiocode
 

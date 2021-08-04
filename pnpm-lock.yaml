@@ -609,6 +609,7 @@ importers:
       '@mds-core/mds-logger': 0.2.3
       '@mds-core/mds-providers': 0.1.31
       '@mds-core/mds-schema-validators': 0.2.0
+      '@mds-core/mds-service-helpers': 0.1.5
       '@mds-core/mds-stream': 0.1.31
       '@mds-core/mds-test-data': 0.1.31
       '@mds-core/mds-types': 0.3.0
@@ -628,6 +629,7 @@ importers:
       '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-schema-validators': link:../mds-schema-validators
+      '@mds-core/mds-service-helpers': link:../mds-service-helpers
       '@mds-core/mds-stream': link:../mds-stream
       '@mds-core/mds-types': link:../mds-types
       '@mds-core/mds-utils': link:../mds-utils

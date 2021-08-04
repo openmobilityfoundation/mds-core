@@ -25,6 +25,7 @@ import {
   VehicleEvent
 } from '@mds-core/mds-types'
 import {
+  clone,
   getPolygon,
   isInStatesOrEvents,
   now,
@@ -63,7 +64,7 @@ export function processTimePolicy(
   policy: ModalityPolicy,
   events: (VehicleEvent & { telemetry: Telemetry })[],
   geographies: Geography[],
-  devicesToCheck: { [d: string]: Device }
+  devices: { [d: string]: Device }
 ): ComplianceEngineResult | undefined {
   if (getPolicyType(policy) !== RULE_TYPES.time) {
     throw new UnsupportedTypeError(`${getPolicyType(policy)} submitted to time processor`)
@@ -71,6 +72,8 @@ export function processTimePolicy(
   const matchedVehicles: {
     [d: string]: { device: Device; rule_applied: UUID; rules_matched: UUID[] }
   } = {}
+  // Necessary because we destructively modify the devices list to keep track of which devices we've seen.
+  const devicesToCheck = clone(devices)
   policy.rules.forEach(rule => {
     events.forEach(event => {
       if (devicesToCheck[event.device_id]) {
