@@ -35,17 +35,18 @@ Read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document for rules and guide
 
 ### Stable Content
 #### APIs
-1. MDS-Agency 0.4.0 Implementation
-2. MDS-Policy 0.4.0 Implementation
+| API        | Compatible Versions |
+| ---------- | ------------------- |
+| MDS-Agency | `v1.0.0`            |
+| MDS-Policy | `v1.0.0`            |
 
 ### Experimental Content
 #### APIs
 1. MDS-Audit [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/326)
 2. MDS-Compliance [PR](https://github.com/openmobilityfoundation/mobility-data-specification/pull/333)
-3. MDS-Config
-4. MDS-Daily
-5. MDS-Metrics-Sheet
-6. MDS-Policy-Author
+3. MDS-Geography-Author
+4. MDS-Policy-Author
+5. MDS-Transaction
 
 ## Installation
 
