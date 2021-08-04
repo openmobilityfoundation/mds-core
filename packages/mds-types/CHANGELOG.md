@@ -1,5 +1,11 @@
 # @mds-core/mds-types
 
+## 0.3.0
+
+### Minor Changes
+
+- 24231359: Remove delta, service_area_id, and timestamp_long from a variety of vehicle event types
+
 ## 0.2.1
 
 ### Patch Changes

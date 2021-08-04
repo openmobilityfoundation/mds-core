@@ -1,5 +1,20 @@
 # @mds-core/mds-schema-validators
 
+## 0.2.0
+
+### Minor Changes
+
+- 24231359: Remove delta, service_area_id, and timestamp_long from a variety of vehicle event types
+
+### Patch Changes
+
+- Updated dependencies [24231359]
+- Updated dependencies [93493a19]
+  - @mds-core/mds-types@0.3.0
+  - @mds-core/mds-utils@0.1.31
+  - @mds-core/mds-providers@0.1.31
+  - @mds-core/mds-test-data@0.1.31
+
 ## 0.1.6
 
 ### Patch Changes

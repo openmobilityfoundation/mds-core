@@ -1,5 +1,19 @@
 # @mds-core/mds-geography-service
 
+## 0.1.5
+
+### Patch Changes
+
+- 93493a19: Add new method to fetch geographies by a list of ids, returning null if not found in the DB
+- Updated dependencies [24231359]
+- Updated dependencies [93493a19]
+  - @mds-core/mds-schema-validators@0.2.0
+  - @mds-core/mds-types@0.3.0
+  - @mds-core/mds-utils@0.1.31
+  - @mds-core/mds-repository@0.1.5
+  - @mds-core/mds-rpc-common@0.1.5
+  - @mds-core/mds-service-helpers@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @mds-core/mds-utils
 
+## 0.1.31
+
+### Patch Changes
+
+- 93493a19: Move testEnvSafeguard method to mds-utils
+- Updated dependencies [24231359]
+  - @mds-core/mds-types@0.3.0
+
 ## 0.1.30
 
 ### Patch Changes

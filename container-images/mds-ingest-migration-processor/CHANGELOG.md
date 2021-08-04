@@ -1,6 +1,13 @@
 # @container-images/mds-ingest-migration-processor
 
+## 0.0.4
+
+### Patch Changes
+
+- @mds-core/mds-ingest-migration-processor@0.0.3
+
 ## 0.0.3
+
 ### Patch Changes
 
 - 62a188ae: Add initial ingest migration processor

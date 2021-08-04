@@ -1,5 +1,29 @@
 # @mds-core/mds-agency
 
+## 0.1.0
+
+### Minor Changes
+
+- 24231359: Remove delta, service_area_id, and timestamp_long from a variety of vehicle event types
+
+### Patch Changes
+
+- Updated dependencies [24231359]
+- Updated dependencies [93493a19]
+- Updated dependencies [aeedb169]
+- Updated dependencies [da513885]
+  - @mds-core/mds-agency-cache@0.2.0
+  - @mds-core/mds-db@0.2.0
+  - @mds-core/mds-ingest-service@0.2.0
+  - @mds-core/mds-schema-validators@0.2.0
+  - @mds-core/mds-types@0.3.0
+  - @mds-core/mds-utils@0.1.31
+  - @mds-core/mds-api-helpers@0.1.32
+  - @mds-core/mds-providers@0.1.31
+  - @mds-core/mds-service-helpers@0.1.5
+  - @mds-core/mds-stream@0.1.31
+  - @mds-core/mds-api-server@0.1.31
+
 ## 0.0.33
 
 ### Patch Changes
