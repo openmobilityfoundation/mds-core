@@ -37,3 +37,5 @@ deployments:
     version: ${TRANSACTION_API_VERSION}
   mds-transaction-service:
     version: ${TRANSACTION_SERVICE_VERSION}
+  mds-ingest-migration-processor:
+    version: ${INGEST_MIGRATION_PROCESSOR_VERSION}

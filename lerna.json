@@ -1,9 +1,0 @@
-{
-  "version": "independent",
-  "command": {
-    "version": {
-      "allowBranch": "master"
-    }
-  },
-  "packages": ["packages/*", "container-images/*"]
-}
