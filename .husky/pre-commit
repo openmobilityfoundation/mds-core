@@ -1,9 +1,7 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-exec < /dev/tty # !Important! Ensures that the script is not run in the background, so stdin is available for pls-changeset-me.
-
 pnpx --no-install lint-staged
 pnpm generate --filter "...[origin/develop]"
-pnpm pls-changeset-me check
+exec < /dev/tty && pnpm pls-changeset-me check || true # !Important! Ensures that the script is not run in the background (if possible), so stdin is available for pls-changeset-me.
 pre-commit
