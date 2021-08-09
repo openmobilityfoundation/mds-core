@@ -18,6 +18,7 @@ import logger from '@mds-core/mds-logger'
 import { Nullable } from '@mds-core/mds-types'
 import {
   ConflictError,
+  DependencyMissingError,
   hours,
   minutes,
   NotFoundError,
@@ -158,6 +159,10 @@ export const ServiceException = (message: string, error?: unknown) => {
 
   if (error instanceof UnsupportedTypeError) {
     return ServiceError({ type: 'UnsupportedTypeError', message, details })
+  }
+
+  if (error instanceof DependencyMissingError) {
+    return ServiceError({ type: 'DependencyMissingError', message, details })
   }
 
   return ServiceError({ type: 'ServiceException', message, details })

@@ -921,6 +921,8 @@ importers:
 
   packages/mds-policy-service:
     specifiers:
+      '@mds-core/mds-geography-service': 0.1.5
+      '@mds-core/mds-logger': 0.2.3
       '@mds-core/mds-repository': 0.1.5
       '@mds-core/mds-rpc-common': 0.1.5
       '@mds-core/mds-schema-validators': 0.2.0
@@ -931,6 +933,8 @@ importers:
       joi: 17.4.0
       typeorm: 0.2.34
     dependencies:
+      '@mds-core/mds-geography-service': link:../mds-geography-service
+      '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-repository': link:../mds-repository
       '@mds-core/mds-rpc-common': link:../mds-rpc-common
       '@mds-core/mds-schema-validators': link:../mds-schema-validators

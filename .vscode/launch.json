@@ -4,7 +4,6 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
     {
       "name": "Server: mds-agency",
       "type": "node",
@@ -624,7 +623,7 @@
       "cwd": "${workspaceFolder}/packages/mds-compliance-engine",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-compliance-engine",
+        "npm_package_name": "@mds-core/mds-compliance-engine"
       }
     },
     {
@@ -886,6 +885,7 @@
       "cwd": "${workspaceFolder}/packages/mds-policy-service",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
+        "PG_DEBUG": "true",
         "npm_package_name": "@mds-core/mds-policy-service"
       }
     },
@@ -970,7 +970,7 @@
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
         "npm_package_name": "@mds-core/mds-stream-processor"
       }
-    }
+    },
     {
       "name": "Tests: mds-transaction-api",
       "type": "node",

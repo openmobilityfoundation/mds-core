@@ -14,33 +14,127 @@
  * limitations under the License.
  */
 
-import { schemaValidator } from '@mds-core/mds-schema-validators'
-import Joi from 'joi'
+import { SchemaObject, SchemaValidator } from '@mds-core/mds-schema-validators'
+import {
+  ACCESSIBILITY_OPTIONS,
+  DAYS_OF_WEEK,
+  MICRO_MOBILITY_VEHICLE_EVENTS,
+  MICRO_MOBILITY_VEHICLE_STATE,
+  MICRO_MOBILITY_VEHICLE_STATES,
+  MODALITIES,
+  RULE_TYPES,
+  TAXI_VEHICLE_EVENTS,
+  TAXI_VEHICLE_STATE,
+  TAXI_VEHICLE_STATES,
+  TNC_VEHICLE_EVENT,
+  TNC_VEHICLE_STATE
+} from '@mds-core/mds-types'
 import { PolicyDomainModel, PolicyMetadataDomainModel } from '../@types'
 
+const stringSchema = (options = {}) => ({ type: 'string', ...options })
+const uuidSchema = { type: 'string', format: 'uuid' }
+// Timestamp Schema that ensures milliseconds
+const TimestampSchema = (options = {}) => ({
+  type: 'integer',
+  minimum: 100_000_000_000,
+  maximum: 99_999_999_999_999,
+  ...options
+})
+
+const arraySchema = (items = {}, options = {}) => ({
+  type: 'array',
+  items,
+  ...options
+})
+
+const enumSchema = <T>(enumType: T[]) => ({ type: 'string', enum: enumType })
+
+const micromobilityStateMap = MICRO_MOBILITY_VEHICLE_STATES.reduce<
+  { [k in MICRO_MOBILITY_VEHICLE_STATE]?: SchemaObject }
+>((acc, state) => {
+  acc[state] = {
+    type: 'array',
+    items: { type: 'string', enum: [...MICRO_MOBILITY_VEHICLE_EVENTS] }
+  }
+  return acc
+}, {})
+
+const tncStateMap = TNC_VEHICLE_STATE.reduce<{ [k in TNC_VEHICLE_STATE]?: SchemaObject }>((acc, state) => {
+  acc[state] = arraySchema(enumSchema([...TNC_VEHICLE_EVENT]))
+  return acc
+}, {})
+
+const taxiStateMap = TAXI_VEHICLE_STATES.reduce<{ [k in TAXI_VEHICLE_STATE]?: SchemaObject }>((acc, state) => {
+  acc[state] = arraySchema(enumSchema([...TAXI_VEHICLE_EVENTS]))
+  return acc
+}, {})
+
+const stateModalityIfConditionSchema = (constString: string, props: {}) => ({
+  if: { properties: { modality: { type: 'string', const: constString } } },
+  then: {
+    properties: {
+      states: { type: 'object', properties: props, nullable: true }
+    }
+  }
+})
+
 export const { validate: validatePolicyDomainModel, isValid: isValidPolicyDomainModel } =
-  schemaValidator<PolicyDomainModel>(
-    Joi.object<PolicyDomainModel>()
-      .keys({
-        policy_id: Joi.string().uuid().required(),
-        name: Joi.string().required(),
-        description: Joi.string().required(),
-        provider_ids: Joi.array().items(Joi.string().uuid()).allow(null),
-        start_date: Joi.number().integer().required(),
-        end_date: Joi.number().integer().allow(null),
-        prev_policies: Joi.array().items(Joi.string().uuid()).allow(null),
-        rules: Joi.array().required(),
-        publish_date: Joi.number().integer().allow(null)
-      })
-      .unknown(false)
-  )
+  SchemaValidator<PolicyDomainModel>({
+    $id: 'PolicyDomainModel',
+    type: 'object',
+
+    properties: {
+      policy_id: uuidSchema,
+      name: stringSchema(),
+      description: stringSchema(),
+      provider_ids: arraySchema(uuidSchema, { nullable: true }),
+      start_date: TimestampSchema(),
+      end_date: TimestampSchema({ nullable: true }),
+      prev_policies: arraySchema(uuidSchema, { nullable: true }),
+      publish_date: TimestampSchema({ nullable: true }),
+      rules: {
+        type: 'array',
+        items: {
+          $id: 'BaseRule',
+          type: 'object',
+          properties: {
+            accessibility_options: arraySchema(enumSchema([...ACCESSIBILITY_OPTIONS]), { nullable: true }),
+            days: arraySchema(enumSchema(Object.keys(DAYS_OF_WEEK)), { nullable: true }),
+            end_time: stringSchema({ nullable: true }),
+            geographies: arraySchema(uuidSchema),
+            maximum: { type: 'number', nullable: true },
+            messages: {
+              $id: 'PolicyMessage',
+              type: 'object'
+            },
+            minimum: { type: 'number', nullable: true },
+            modality: enumSchema([...MODALITIES]),
+            name: stringSchema(),
+            rule_id: uuidSchema,
+            rule_type: enumSchema(Object.keys(RULE_TYPES)),
+            rule_units: stringSchema(),
+            start_time: stringSchema({ nullable: true }),
+            value_url: stringSchema({ nullable: true }),
+            vehicle_types: arraySchema(stringSchema(), { nullable: true })
+          },
+          allOf: [
+            stateModalityIfConditionSchema('micromobility', micromobilityStateMap),
+            stateModalityIfConditionSchema('taxi', taxiStateMap),
+            stateModalityIfConditionSchema('tnc', tncStateMap)
+          ],
+          required: ['geographies', 'name', 'rule_id', 'rule_type', 'states']
+        }
+      }
+    },
+    required: ['policy_id', 'name', 'description', 'start_date', 'rules']
+  })
 
 export const { validate: validatePolicyMetadataDomainModel, isValid: isValidPolicyMetadataDomainModel } =
-  schemaValidator<PolicyMetadataDomainModel>(
-    Joi.object<PolicyMetadataDomainModel>()
-      .keys({
-        policy_id: Joi.string().uuid().required(),
-        policy_metadata: Joi.any()
-      })
-      .unknown(false)
-  )
+  SchemaValidator<PolicyMetadataDomainModel>({
+    $id: 'PolicyMetadataDomainModel',
+    type: 'object',
+    properties: {
+      policy_id: { type: 'string', format: 'uuid' },
+      policy_metadata: { type: 'object' }
+    }
+  })

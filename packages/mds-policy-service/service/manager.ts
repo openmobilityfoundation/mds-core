@@ -26,7 +26,18 @@ export const PolicyServiceManager = RpcServer(
     onStop: PolicyServiceProvider.stop
   },
   {
-    name: args => PolicyServiceProvider.name(...args)
+    name: args => PolicyServiceProvider.name(...args),
+    writePolicy: args => PolicyServiceProvider.writePolicy(...args),
+    readPolicies: args => PolicyServiceProvider.readPolicies(...args),
+    readActivePolicies: args => PolicyServiceProvider.readActivePolicies(...args),
+    deletePolicy: args => PolicyServiceProvider.deletePolicy(...args),
+    editPolicy: args => PolicyServiceProvider.editPolicy(...args),
+    publishPolicy: args => PolicyServiceProvider.publishPolicy(...args),
+    readBulkPolicyMetadata: args => PolicyServiceProvider.readBulkPolicyMetadata(...args),
+    readPolicy: args => PolicyServiceProvider.readPolicy(...args),
+    readSinglePolicyMetadata: args => PolicyServiceProvider.readSinglePolicyMetadata(...args),
+    updatePolicyMetadata: args => PolicyServiceProvider.updatePolicyMetadata(...args),
+    writePolicyMetadata: args => PolicyServiceProvider.writePolicyMetadata(...args)
   },
   {
     port: process.env.POLICY_SERVICE_RPC_PORT,

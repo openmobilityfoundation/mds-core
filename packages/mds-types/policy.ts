@@ -42,7 +42,7 @@ export interface BaseRule<StatesToEventsMap extends GenericStatesToEvents, RuleT
   rule_units?: string
   start_time?: string | null
   states: StatesToEventsMap | null
-  value_url?: URL | null
+  value_url?: string | null
   vehicle_types?: string[] | null
 }
 

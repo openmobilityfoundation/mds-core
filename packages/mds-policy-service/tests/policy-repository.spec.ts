@@ -18,7 +18,6 @@ import { PolicyRepository } from '../repository'
 const ACTIVE_POLICY_JSON = { ...POLICY_JSON, publish_date: yesterday(), start_date: yesterday() }
 
 const SIMPLE_POLICY_JSON: PolicyDomainCreateModel = {
-  // TODO guts
   name: 'MDSPolicy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: 'a7ca9ece-ca59-42fb-af5d-4668655b547a',
@@ -62,7 +61,6 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
   describe('Policy Repository Tests', () => {
     beforeAll(async () => {
       await PolicyRepository.initialize()
-      // await mdsDB.reinitialize()
     })
 
     beforeEach(async () => {
@@ -88,26 +86,10 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
 
     // TODO: Only call from publishPolicy after validating geography in policy-service.ts
     it('can publish a SimplePolicy', async () => {
-      // await mdsDB.writeGeography(LAGeography)
-      // await mdsDB.publishGeography({ geography_id: LAGeography.geography_id })
       await PolicyRepository.writePolicy(SIMPLE_POLICY_JSON)
       await PolicyRepository.publishPolicy(SIMPLE_POLICY_JSON.policy_id, yesterday())
       const result = await PolicyRepository.readPolicies({ get_published: true })
       expect(result.length).toEqual(1)
-    })
-  })
-
-  describe('unit test policy functions with MDSPolicy', () => {
-    beforeAll(async () => {
-      await PolicyRepository.initialize()
-    })
-
-    beforeEach(async () => {
-      await PolicyRepository.deleteAll()
-    })
-
-    afterAll(async () => {
-      await PolicyRepository.shutdown()
     })
 
     it('can delete an unpublished Policy', async () => {
@@ -129,10 +111,6 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
     })
 
     it('can write, read, and publish a Policy', async () => {
-      // TODO: make sure geography validation exists in PolicyProvider service
-      // await MDSDBPostgres.writeGeography(LAGeography)
-      // await MDSDBPostgres.publishGeography({ geography_id: LAGeography.geography_id })
-
       await PolicyRepository.writePolicy(ACTIVE_POLICY_JSON)
       /* must publish policy, b/c writePolicy filters out `publish_date` */
       await PolicyRepository.publishPolicy(ACTIVE_POLICY_JSON.policy_id, ACTIVE_POLICY_JSON.start_date)
@@ -323,6 +301,10 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
         ...metadata,
         policy_metadata: { name: 'steve' }
       })
+      const changedMetadata = (await PolicyRepository.readSinglePolicyMetadata(
+        ACTIVE_POLICY_JSON.policy_id
+      )) as PolicyMetadataDomainModel<{ name: string }>
+      expect(changedMetadata.policy_metadata?.name).toStrictEqual('steve')
     })
   })
 })

@@ -17,11 +17,12 @@
 import { AnyFunction, Nullable } from '@mds-core/mds-types'
 
 export const ServiceErrorDescriptorTypes = [
-  'ServiceException',
-  'NotFoundError',
   'ConflictError',
-  'ValidationError',
-  'UnsupportedTypeError'
+  'DependencyMissingError',
+  'NotFoundError',
+  'ServiceException',
+  'UnsupportedTypeError',
+  'ValidationError'
 ] as const
 
 export type ServiceErrorDescriptorType = typeof ServiceErrorDescriptorTypes[number]

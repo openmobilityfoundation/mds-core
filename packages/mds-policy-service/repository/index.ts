@@ -16,14 +16,7 @@
 
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { Timestamp, UUID } from '@mds-core/mds-types'
-import {
-  AlreadyPublishedError,
-  BadParamsError,
-  ConflictError,
-  NotFoundError,
-  now,
-  testEnvSafeguard
-} from '@mds-core/mds-utils'
+import { BadParamsError, ConflictError, NotFoundError, now, testEnvSafeguard } from '@mds-core/mds-utils'
 import { PolicyDomainCreateModel, PolicyDomainModel, PolicyMetadataDomainModel, ReadPolicyQueryParams } from '../@types'
 import entities from './entities'
 import { PolicyEntity } from './entities/policy-entity'
@@ -40,7 +33,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     super('policies', { entities, migrations })
   }
 
-  public readPolicies = async (params?: ReadPolicyQueryParams) => {
+  public readPolicies = async (params: ReadPolicyQueryParams = {}) => {
     try {
       const connection = await this.connect('ro')
       const query = connection.getRepository(PolicyEntity).createQueryBuilder()
@@ -107,7 +100,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public readBulkPolicyMetadata = async <M>(params?: ReadPolicyQueryParams) => {
+  public readBulkPolicyMetadata = async <M>(params: ReadPolicyQueryParams = {}) => {
     const policies = await this.readPolicies(params)
 
     if (policies.length === 0) {
@@ -195,7 +188,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     const { policy_id } = policy
 
     if (await this.isPolicyPublished(policy_id)) {
-      throw new AlreadyPublishedError('Cannot edit published policy')
+      throw new ConflictError('Cannot edit published policy')
     }
 
     const result = await this.readPolicies({ policy_ids: [policy_id], get_unpublished: true, get_published: false })
@@ -224,7 +217,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
 
   public deletePolicy = async (policy_id: UUID) => {
     if (await this.isPolicyPublished(policy_id)) {
-      throw new Error('Cannot edit published Policy')
+      throw new ConflictError('Cannot edit published Policy')
     }
 
     try {
@@ -250,7 +243,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
   public publishPolicy = async (policy_id: UUID, publish_date = now()) => {
     try {
       if (await this.isPolicyPublished(policy_id)) {
-        throw new AlreadyPublishedError('Cannot re-publish existing policy')
+        throw new ConflictError('Cannot re-publish existing policy')
       }
 
       const policy = (
@@ -263,18 +256,6 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
       if (policy.start_date < publish_date) {
         throw new ConflictError('Policies cannot be published after their start_date')
       }
-
-      // const geographies: UUID[] = policy.rules.map(r => r.geographies).flat()
-
-      // await Promise.all(
-      //   geographies.map(async geography_id => {
-      //     const isPublished = await db.isGeographyPublished(geography_id)
-
-      //     if (!isPublished) {
-      //       throw new DependencyMissingError(`Geography with ${geography_id} is not published!`)
-      //     }
-      //   })
-      // )
 
       const published_policy: PolicyDomainModel = { ...policy, publish_date }
       try {
@@ -317,9 +298,9 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public updatePolicyMetadata = async <M>(policy_metadata: PolicyMetadataDomainModel<M>) => {
+  public updatePolicyMetadata = async <M>(metadata: PolicyMetadataDomainModel<M>) => {
     try {
-      const { policy_id } = policy_metadata
+      const { policy_id, policy_metadata } = metadata
       await this.readSinglePolicyMetadata(policy_id)
 
       const connection = await this.connect('rw')

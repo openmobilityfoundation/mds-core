@@ -34,17 +34,39 @@ export type PolicyDomainCreateModel = DomainModelCreate<PolicyDomainModel>
 
 export interface PolicyMetadataDomainModel<M extends {} = {}> {
   policy_id: UUID
-  policy_metadata: Nullable<M>
+  policy_metadata: Nullable<Partial<M>>
 }
 
 export type PolicyMetadataDomainCreateModel = DomainModelCreate<PolicyMetadataDomainModel>
 
 export interface PolicyService {
   name: () => string
+  writePolicy: (policy: PolicyDomainCreateModel) => PolicyDomainModel
+  readPolicies: (params: ReadPolicyQueryParams) => PolicyDomainModel[]
+  readActivePolicies: (timestamp: Timestamp) => PolicyDomainModel[]
+  deletePolicy: (policy_id: UUID) => UUID
+  editPolicy: (policy: PolicyDomainCreateModel) => PolicyDomainModel
+  publishPolicy: (policy_id: UUID, publish_date: Timestamp) => PolicyDomainModel
+  readBulkPolicyMetadata: <M>(params: ReadPolicyQueryParams) => PolicyMetadataDomainModel<M>[]
+  readPolicy: (policy_id: UUID) => PolicyDomainModel
+  readSinglePolicyMetadata: <M>(policy_id: UUID) => PolicyMetadataDomainModel<M>
+  updatePolicyMetadata: (policy_metadata: PolicyMetadataDomainModel) => PolicyMetadataDomainModel
+  writePolicyMetadata: (policy_metadata: PolicyMetadataDomainModel) => PolicyMetadataDomainModel
 }
 
 export const PolicyServiceDefinition: RpcServiceDefinition<PolicyService> = {
-  name: RpcRoute<PolicyService['name']>()
+  name: RpcRoute<PolicyService['name']>(),
+  writePolicy: RpcRoute<PolicyService['writePolicy']>(),
+  readPolicies: RpcRoute<PolicyService['readPolicies']>(),
+  readActivePolicies: RpcRoute<PolicyService['readActivePolicies']>(),
+  deletePolicy: RpcRoute<PolicyService['deletePolicy']>(),
+  editPolicy: RpcRoute<PolicyService['editPolicy']>(),
+  publishPolicy: RpcRoute<PolicyService['publishPolicy']>(),
+  readBulkPolicyMetadata: RpcRoute<PolicyService['readBulkPolicyMetadata']>(),
+  readPolicy: RpcRoute<PolicyService['readPolicy']>(),
+  readSinglePolicyMetadata: RpcRoute<PolicyService['readSinglePolicyMetadata']>(),
+  updatePolicyMetadata: RpcRoute<PolicyService['updatePolicyMetadata']>(),
+  writePolicyMetadata: RpcRoute<PolicyService['writePolicyMetadata']>()
 }
 
 export interface ReadPolicyQueryParams {

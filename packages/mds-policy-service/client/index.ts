@@ -25,5 +25,16 @@ const PolicyServiceRpcClient = RpcClient(PolicyServiceDefinition, {
 
 // What the API layer, and any other clients, will invoke.
 export const PolicyServiceClient: ServiceClient<PolicyService> = {
-  name: (...args) => RpcRequest(PolicyServiceRpcClient.name, args)
+  name: (...args) => RpcRequest(PolicyServiceRpcClient.name, args),
+  writePolicy: (...args) => RpcRequest(PolicyServiceRpcClient.writePolicy, args),
+  readPolicies: (...args) => RpcRequest(PolicyServiceRpcClient.readPolicies, args),
+  readActivePolicies: (...args) => RpcRequest(PolicyServiceRpcClient.readActivePolicies, args),
+  deletePolicy: (...args) => RpcRequest(PolicyServiceRpcClient.deletePolicy, args),
+  editPolicy: (...args) => RpcRequest(PolicyServiceRpcClient.editPolicy, args),
+  publishPolicy: (...args) => RpcRequest(PolicyServiceRpcClient.publishPolicy, args),
+  readBulkPolicyMetadata: (...args) => RpcRequest(PolicyServiceRpcClient.readBulkPolicyMetadata, args),
+  readPolicy: (...args) => RpcRequest(PolicyServiceRpcClient.readPolicy, args),
+  readSinglePolicyMetadata: (...args) => RpcRequest(PolicyServiceRpcClient.readSinglePolicyMetadata, args),
+  updatePolicyMetadata: (...args) => RpcRequest(PolicyServiceRpcClient.updatePolicyMetadata, args),
+  writePolicyMetadata: (...args) => RpcRequest(PolicyServiceRpcClient.writePolicyMetadata, args)
 }
