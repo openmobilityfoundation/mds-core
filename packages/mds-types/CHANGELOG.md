@@ -1,5 +1,11 @@
 # @mds-core/mds-types
 
+## 0.3.1
+
+### Patch Changes
+
+- 5eb4121b: Fixed BaseRule.value_url, to have 'string' instead of URL, so that it can be serialized on the RPC client
+
 ## 0.3.0
 
 ### Minor Changes

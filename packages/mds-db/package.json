@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-db",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Mobility Data Specification database interface",
   "keywords": [
     "mds",
@@ -17,19 +17,19 @@
     "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap --lines 64  ts-mocha --project ../../tsconfig.json"
   },
   "dependencies": {
-    "@mds-core/mds-attachment-service": "0.1.5",
-    "@mds-core/mds-audit-service": "0.1.5",
-    "@mds-core/mds-geography-service": "0.1.5",
-    "@mds-core/mds-ingest-service": "0.2.0",
+    "@mds-core/mds-attachment-service": "0.1.6",
+    "@mds-core/mds-audit-service": "0.1.6",
+    "@mds-core/mds-geography-service": "0.1.6",
+    "@mds-core/mds-ingest-service": "0.3.0",
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-policy-service": "0.1.5",
-    "@mds-core/mds-types": "0.3.0",
-    "@mds-core/mds-utils": "0.1.31",
+    "@mds-core/mds-policy-service": "0.2.0",
+    "@mds-core/mds-types": "0.3.1",
+    "@mds-core/mds-utils": "0.1.32",
     "@types/pg": "8.6.0",
     "await-lock": "2.1.0",
     "pg": "8.6.0"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "0.1.31"
+    "@mds-core/mds-test-data": "0.1.32"
   }
 }
