@@ -1,5 +1,24 @@
 # @mds-core/mds-ingest-service
 
+## 0.3.0
+
+### Minor Changes
+
+- 12455bee: Implement filtering vehicle events by geography ids.
+
+### Patch Changes
+
+- Updated dependencies [5eb4121b]
+- Updated dependencies [7e56b9b6]
+- Updated dependencies [5eb4121b]
+  - @mds-core/mds-service-helpers@0.2.0
+  - @mds-core/mds-providers@0.1.32
+  - @mds-core/mds-types@0.3.1
+  - @mds-core/mds-rpc-common@0.1.6
+  - @mds-core/mds-repository@0.1.6
+  - @mds-core/mds-schema-validators@0.2.1
+  - @mds-core/mds-utils@0.1.32
+
 ## 0.2.0
 
 ### Minor Changes

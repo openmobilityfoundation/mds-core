@@ -1,5 +1,13 @@
 # @mds-core/mds-providers
 
+## 0.1.32
+
+### Patch Changes
+
+- 7e56b9b6: Add Superpedestrian provider_id.
+- Updated dependencies [5eb4121b]
+  - @mds-core/mds-types@0.3.1
+
 ## 0.1.31
 
 ### Patch Changes

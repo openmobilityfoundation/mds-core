@@ -1,5 +1,17 @@
 # @mds-core/mds-stream-processor
 
+## 0.2.2
+
+### Patch Changes
+
+- 000fa6fb: Properly redact processor logs
+- Updated dependencies [5eb4121b]
+- Updated dependencies [5eb4121b]
+  - @mds-core/mds-service-helpers@0.2.0
+  - @mds-core/mds-types@0.3.1
+  - @mds-core/mds-stream@0.1.32
+  - @mds-core/mds-utils@0.1.32
+
 ## 0.2.1
 
 ### Patch Changes

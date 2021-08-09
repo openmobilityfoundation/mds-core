@@ -1,5 +1,17 @@
 # @mds-core/mds-service-helpers
 
+## 0.2.0
+
+### Minor Changes
+
+- 5eb4121b: Adds serviceException support for DepedencyMissingError
+
+### Patch Changes
+
+- Updated dependencies [5eb4121b]
+  - @mds-core/mds-types@0.3.1
+  - @mds-core/mds-utils@0.1.32
+
 ## 0.1.5
 
 ### Patch Changes
