@@ -141,7 +141,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     const { connect } = this
     const {
       time_range,
-      // geography_ids,
+      geography_ids,
       grouping_type = 'latest_per_vehicle',
       event_types,
       vehicle_states,
@@ -165,13 +165,20 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .getRepository(EventEntity)
         .createQueryBuilder('events')
         .innerJoin(qb => qb.from(DeviceEntity, 'd'), 'devices', 'devices.device_id = events.device_id')
-        .leftJoinAndSelect('events.annotation', 'annotation')
         .leftJoinAndMapOne(
           'events.telemetry',
           TelemetryEntity,
           'telemetry',
           'telemetry.device_id = events.device_id AND telemetry.timestamp = events.telemetry_timestamp'
         )
+
+      if (geography_ids) {
+        query.innerJoin('events.annotation', 'annotation', 'annotation.geography_ids && :geography_ids', {
+          geography_ids
+        })
+      } else {
+        query.leftJoinAndSelect('events.annotation', 'annotation')
+      }
 
       if (grouping_type === 'latest_per_vehicle') {
         query.innerJoin(
@@ -240,7 +247,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
 
       const cursor = {
         time_range,
-        // geography_ids,
+        geography_ids,
         grouping_type,
         event_types,
         vehicle_states,

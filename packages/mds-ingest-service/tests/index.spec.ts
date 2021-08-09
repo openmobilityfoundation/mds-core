@@ -169,6 +169,11 @@ const TEST_EVENT_B2: EventDomainCreateModel = {
   // test-id-2
 }
 
+const GEOGRAPHY_ID_A = uuid()
+const GEOGRAPHY_ID_B = uuid()
+const GEOGRAPHY_ID_C = uuid()
+const GEOGRAPHY_ID_D = uuid()
+
 const TEST_EVENT_ANNOTATION_A: EventAnnotationDomainCreateModel = {
   events_row_id: 1,
   device_id: DEVICE_UUID_A,
@@ -176,7 +181,7 @@ const TEST_EVENT_ANNOTATION_A: EventAnnotationDomainCreateModel = {
   vehicle_id: 'test-id-1',
   vehicle_type: 'scooter',
   propulsion_types: ['electric'],
-  geography_ids: [uuid(), uuid()],
+  geography_ids: [GEOGRAPHY_ID_A, GEOGRAPHY_ID_B],
   geography_types: ['jurisdiction', null],
   latency_ms: 100
 }
@@ -188,7 +193,7 @@ const TEST_EVENT_ANNOTATION_B: EventAnnotationDomainCreateModel = {
   vehicle_id: 'test-id-2',
   vehicle_type: 'scooter',
   propulsion_types: ['electric'],
-  geography_ids: [uuid(), uuid()],
+  geography_ids: [GEOGRAPHY_ID_C, GEOGRAPHY_ID_D],
   geography_types: [null, 'spot'],
   latency_ms: 150
 }
@@ -257,8 +262,33 @@ describe('Ingest Service Tests', () => {
       await IngestRepository.createEvents([TEST_EVENT_A2, TEST_EVENT_B2])
       await IngestRepository.createTelemetries([TEST_TELEMETRY_A1, TEST_TELEMETRY_B1])
       await IngestRepository.createTelemetries([TEST_TELEMETRY_A2, TEST_TELEMETRY_B2])
+      await IngestServiceClient.writeEventAnnotations([TEST_EVENT_ANNOTATION_A, TEST_EVENT_ANNOTATION_B])
     })
     describe('all_events', () => {
+      it('filter on one valid geography id', async () => {
+        const { events } = await IngestServiceClient.getEventsUsingOptions({
+          time_range: { start: testTimestamp, end: testTimestamp + 2000 },
+          grouping_type: 'all_events',
+          geography_ids: [GEOGRAPHY_ID_A]
+        })
+        expect(events.length).toEqual(1)
+      })
+      it('filter on two valid geography id', async () => {
+        const { events } = await IngestServiceClient.getEventsUsingOptions({
+          time_range: { start: testTimestamp, end: testTimestamp + 2000 },
+          grouping_type: 'all_events',
+          geography_ids: [GEOGRAPHY_ID_A, GEOGRAPHY_ID_C]
+        })
+        expect(events.length).toEqual(2)
+      })
+      it('filter on non-existent geography id', async () => {
+        const { events } = await IngestServiceClient.getEventsUsingOptions({
+          time_range: { start: testTimestamp, end: testTimestamp + 2000 },
+          grouping_type: 'all_events',
+          geography_ids: [uuid()]
+        })
+        expect(events.length).toEqual(0)
+      })
       it('gets 4 events', async () => {
         const { events } = await IngestServiceClient.getEventsUsingOptions({
           time_range: { start: testTimestamp, end: testTimestamp + 2000 },
@@ -266,7 +296,6 @@ describe('Ingest Service Tests', () => {
         })
         expect(events.length).toEqual(4)
       })
-
       it('gets no events, filtered on time start/end', async () => {
         const { events } = await IngestServiceClient.getEventsUsingOptions({
           time_range: { start: testTimestamp + 4000, end: testTimestamp + 8000 },
