@@ -15,7 +15,6 @@
  */
 
 import {
-  ConsoleSink,
   DeadLetterSink,
   KafkaSink,
   KafkaSource,
@@ -39,7 +38,7 @@ import { cleanEnv, str } from 'envalid'
 
 const { SOURCE_TENANT_ID, TENANT_ID } = cleanEnv(process.env, { SOURCE_TENANT_ID: str(), TENANT_ID: str() })
 
-type MigrationEntityType = 'devices' | 'events' | 'telemetry'
+type MigrationEntityType = 'device' | 'event' | 'telemetry'
 const MigrationTopic = (tenant: string, entityType: MigrationEntityType) => `${tenant}.${entityType}`
 
 const MigrationDataSource: <MigrationSourceEntity>(entity: MigrationEntityType) => StreamSource<MigrationSourceEntity> =
@@ -58,22 +57,22 @@ const MigrationErrorSink: <MigrationSourceEntity>(
 }
 
 const DevicesMigrationProcessor = StreamProcessor<Device_v0_4_1 & { id: number }, Device_v1_1_0>(
-  MigrationDataSource('devices'),
+  MigrationDataSource('device'),
   async device => convert_v1_0_0_device_to_1_1_0(convert_v0_4_1_device_to_1_0_0(device)),
-  [ConsoleSink()],
-  [MigrationErrorSink('devices')]
+  [],
+  [MigrationErrorSink('device')]
 )
 
 const EventsMigrationProcessor = StreamProcessor<VehicleEvent_v0_4_1 & { id: number }, VehicleEvent_v1_1_0>(
-  MigrationDataSource('events'),
+  MigrationDataSource('event'),
   async event => convert_v1_0_0_vehicle_event_to_v1_1_0(convert_v0_4_1_vehicle_event_to_v1_0_0(event)),
-  [ConsoleSink()],
-  [MigrationErrorSink('events')]
+  [],
+  [MigrationErrorSink('event')]
 )
 
 const TelemetryMigrationProcessor = StreamForwarder<Telemetry & { id: number }>(
   MigrationDataSource('telemetry'),
-  [ConsoleSink()],
+  [],
   [MigrationErrorSink('telemetry')]
 )
 

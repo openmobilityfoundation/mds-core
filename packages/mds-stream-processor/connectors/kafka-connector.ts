@@ -38,7 +38,9 @@ export const KafkaSource =
         } = payload
         if (value) {
           const message: TMessage = JSON.parse(value.toString())
-          logger.info(`Processing ${topic}/${offset}: ${(messageLogger && messageLogger(message)) ?? value.toString()}`)
+          logger.info(`Processing ${topic}/${offset}`, {
+            message: (messageLogger && messageLogger(message)) ?? message
+          })
           return processor(message)
         }
       },
