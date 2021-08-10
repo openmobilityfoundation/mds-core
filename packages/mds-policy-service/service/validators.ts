@@ -27,7 +27,8 @@ import {
   TAXI_VEHICLE_STATE,
   TAXI_VEHICLE_STATES,
   TNC_VEHICLE_EVENT,
-  TNC_VEHICLE_STATE
+  TNC_VEHICLE_STATE,
+  VEHICLE_TYPES
 } from '@mds-core/mds-types'
 import { PolicyDomainModel, PolicyMetadataDomainModel } from '../@types'
 
@@ -115,7 +116,7 @@ export const { validate: validatePolicyDomainModel, isValid: isValidPolicyDomain
             rule_units: stringSchema(),
             start_time: stringSchema({ nullable: true }),
             value_url: stringSchema({ nullable: true }),
-            vehicle_types: arraySchema(stringSchema(), { nullable: true })
+            vehicle_types: arraySchema(enumSchema([...VEHICLE_TYPES]), { nullable: true })
           },
           allOf: [
             stateModalityIfConditionSchema('micromobility', micromobilityStateMap),
