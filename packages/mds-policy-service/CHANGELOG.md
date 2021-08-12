@@ -1,5 +1,21 @@
 # @mds-core/mds-policy-service
 
+## 0.2.1
+
+### Patch Changes
+
+- e0860f5b: refactored mds-policy-author to use PolicyServiceClient instead of mds-db
+- 6609400b: `vehicle_types` field in BaseRule should be restricted to `VEHICLE_TYPE[]`, not `string[]`
+- Updated dependencies [e0860f5b]
+- Updated dependencies [6609400b]
+  - @mds-core/mds-service-helpers@0.3.0
+  - @mds-core/mds-types@0.3.2
+  - @mds-core/mds-rpc-common@0.1.7
+  - @mds-core/mds-geography-service@0.1.7
+  - @mds-core/mds-repository@0.1.7
+  - @mds-core/mds-schema-validators@0.2.2
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.2.0
 
 ### Minor Changes

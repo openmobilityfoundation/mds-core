@@ -1,5 +1,17 @@
 # @mds-core/mds-service-helpers
 
+## 0.3.0
+
+### Minor Changes
+
+- e0860f5b: includes more supported service-error types, to process rpc errors
+
+### Patch Changes
+
+- Updated dependencies [6609400b]
+  - @mds-core/mds-types@0.3.2
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.2.0
 
 ### Minor Changes

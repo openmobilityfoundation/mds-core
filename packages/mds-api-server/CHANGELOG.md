@@ -1,5 +1,18 @@
 # @mds-core/mds-api-server
 
+## 0.2.0
+
+### Minor Changes
+
+- e0860f5b: includes more supported service-error types, to process rpc errors
+
+### Patch Changes
+
+- Updated dependencies [e0860f5b]
+  - @mds-core/mds-service-helpers@0.3.0
+  - @mds-core/mds-api-authorizer@0.1.33
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.1.32
 
 ### Patch Changes

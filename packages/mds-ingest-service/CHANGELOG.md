@@ -1,5 +1,20 @@
 # @mds-core/mds-ingest-service
 
+## 0.3.1
+
+### Patch Changes
+
+- 0b917ead: Persist migrated entities to database
+- Updated dependencies [e0860f5b]
+- Updated dependencies [6609400b]
+  - @mds-core/mds-service-helpers@0.3.0
+  - @mds-core/mds-types@0.3.2
+  - @mds-core/mds-rpc-common@0.1.7
+  - @mds-core/mds-providers@0.1.33
+  - @mds-core/mds-repository@0.1.7
+  - @mds-core/mds-schema-validators@0.2.2
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.3.0
 
 ### Minor Changes

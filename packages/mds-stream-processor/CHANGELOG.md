@@ -1,5 +1,17 @@
 # @mds-core/mds-stream-processor
 
+## 0.2.3
+
+### Patch Changes
+
+- bb19758f: Initialize deadLetterProducers at StreamProcessor start time
+- Updated dependencies [e0860f5b]
+- Updated dependencies [6609400b]
+  - @mds-core/mds-service-helpers@0.3.0
+  - @mds-core/mds-types@0.3.2
+  - @mds-core/mds-stream@0.1.33
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.2.2
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-stream-processor",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "MDS Stream Processor",
   "keywords": [
     "mds"
@@ -22,10 +22,10 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-service-helpers": "0.2.0",
-    "@mds-core/mds-stream": "0.1.32",
-    "@mds-core/mds-types": "0.3.1",
-    "@mds-core/mds-utils": "0.1.32",
+    "@mds-core/mds-service-helpers": "0.3.0",
+    "@mds-core/mds-stream": "0.1.33",
+    "@mds-core/mds-types": "0.3.2",
+    "@mds-core/mds-utils": "0.1.33",
     "@types/event-stream": "3.3.34",
     "event-stream": "4.0.1"
   }
