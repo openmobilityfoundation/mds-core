@@ -43,13 +43,15 @@ describe('Tests dead-letter handling', () => {
       sink: standardSink
     } = MockSinkFactory()
     const {
-      mockedMethods: { write: deadLetterSinkWrite },
+      mockedMethods: { write: deadLetterSinkWrite, initialize: deadLetterSinkInitialize },
       sink: deadLetterSink
     } = MockSinkFactory()
 
     const streamProcessor = StreamProcessor(source, transformer, [standardSink], [deadLetterSink])
 
     await streamProcessor.start()
+
+    expect(deadLetterSinkInitialize).toHaveBeenCalledTimes(1)
 
     expect(standardSinkWrite).toBeCalledTimes(2)
     expect(deadLetterSinkWrite).toBeCalledTimes(0)
@@ -76,13 +78,15 @@ describe('Tests dead-letter handling', () => {
       sink: standardSink
     } = MockSinkFactory()
     const {
-      mockedMethods: { write: deadLetterSinkWrite },
+      mockedMethods: { write: deadLetterSinkWrite, initialize: deadLetterSinkInitialize },
       sink: deadLetterSink
     } = MockSinkFactory()
 
     const streamProcessor = StreamProcessor(source, transformer, [standardSink], [deadLetterSink])
 
     await streamProcessor.start()
+
+    expect(deadLetterSinkInitialize).toBeCalledTimes(1)
 
     expect(standardSinkWrite).toBeCalledTimes(0)
     expect(deadLetterSinkWrite).toBeCalledTimes(2)
@@ -114,7 +118,7 @@ describe('Tests dead-letter handling', () => {
     } = MockSinkFactory()
 
     const {
-      mockedMethods: { write: deadLetterSinkWrite },
+      mockedMethods: { write: deadLetterSinkWrite, initialize: deadLetterSinkInitialize },
       sink: deadLetterSink
     } = MockSinkFactory({
       write: jest.fn(() => {
@@ -125,6 +129,8 @@ describe('Tests dead-letter handling', () => {
     const streamProcessor = StreamProcessor(source, transformer, [standardSink], [deadLetterSink])
 
     await streamProcessor.start()
+
+    expect(deadLetterSinkInitialize).toBeCalledTimes(1)
 
     expect(standardSinkWrite).toBeCalledTimes(0)
     expect(deadLetterSinkWrite).toBeCalledTimes(1)
@@ -157,7 +163,7 @@ describe('Tests dead-letter handling', () => {
     } = MockSinkFactory()
 
     const {
-      mockedMethods: { write: throwingDeadLetterSinkWrite },
+      mockedMethods: { write: throwingDeadLetterSinkWrite, initialize: throwingDeadLetterSinkInitialize },
       sink: throwingDeadLetterSink
     } = MockSinkFactory({
       write: jest.fn(async () => {
@@ -166,7 +172,7 @@ describe('Tests dead-letter handling', () => {
     })
 
     const {
-      mockedMethods: { write: healthyDeadLetterSinkWrite },
+      mockedMethods: { write: healthyDeadLetterSinkWrite, initialize: healthyDeadLetterSinkInitialize },
       sink: healthyDeadLetterSink
     } = MockSinkFactory()
 
@@ -178,6 +184,9 @@ describe('Tests dead-letter handling', () => {
     )
 
     await streamProcessor.start()
+
+    expect(throwingDeadLetterSinkInitialize).toBeCalledTimes(1)
+    expect(healthyDeadLetterSinkInitialize).toBeCalledTimes(1)
 
     expect(standardSinkWrite).toBeCalledTimes(0)
     expect(throwingDeadLetterSinkWrite).toBeCalledTimes(1)

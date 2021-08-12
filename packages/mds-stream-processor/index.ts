@@ -75,12 +75,12 @@ export const StreamProcessor = <TMessageIn, TMessageOut>(
 
   return {
     start: async () => {
-      await Promise.all(sinkProducers.map(producer => producer.initialize()))
+      await Promise.all([...sinkProducers, ...deadLetterProducers].map(producer => producer.initialize()))
       await consumer.initialize()
     },
     stop: async () => {
       await consumer.shutdown()
-      await Promise.all(sinkProducers.map(producer => producer.shutdown()))
+      await Promise.all([...sinkProducers, ...deadLetterProducers].map(producer => producer.shutdown()))
     }
   }
 }
