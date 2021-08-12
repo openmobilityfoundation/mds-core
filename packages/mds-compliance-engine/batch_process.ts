@@ -37,7 +37,7 @@ async function batchComplianceSnapshots(snapshots: ComplianceSnapshotDomainModel
   await Promise.all(computeSnapshotPromises)
 }
 
-async function computeSnapshot() {
+export async function computeSnapshot() {
   // mds-db does a lazy init, so only the cache start is needed
   await cache.startup()
   const policies: ModalityPolicy[] = getSupersedingPolicies(await db.readActivePolicies<ModalityPolicyTypeInfo>())
