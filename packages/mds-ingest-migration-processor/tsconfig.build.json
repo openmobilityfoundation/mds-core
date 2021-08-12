@@ -5,7 +5,10 @@
   },
   "references": [
     { "path": "../../packages/mds-ingest-service/tsconfig.build.json" },
+    { "path": "../../packages/mds-logger/tsconfig.build.json" },
+    { "path": "../../packages/mds-repository/tsconfig.build.json" },
     { "path": "../../packages/mds-stream-processor/tsconfig.build.json" },
-    { "path": "../../packages/mds-types/tsconfig.build.json" }
+    { "path": "../../packages/mds-types/tsconfig.build.json" },
+    { "path": "../../packages/mds-utils/tsconfig.build.json" }
   ]
 }

@@ -21,8 +21,11 @@
   },
   "dependencies": {
     "@mds-core/mds-ingest-service": "0.3.0",
+    "@mds-core/mds-logger": "0.2.3",
+    "@mds-core/mds-repository": "0.1.6",
     "@mds-core/mds-stream-processor": "0.2.2",
     "@mds-core/mds-types": "0.3.1",
+    "@mds-core/mds-utils": "0.1.32",
     "envalid": "7.1.0"
   }
 }

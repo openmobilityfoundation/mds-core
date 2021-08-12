@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+import { IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
+import logger from '@mds-core/mds-logger'
+import { IdentityColumn } from '@mds-core/mds-repository'
 import {
   DeadLetterSink,
   KafkaSink,
   KafkaSource,
-  StreamForwarder,
   StreamProcessor,
   StreamProcessorController,
+  StreamSink,
   StreamSource
 } from '@mds-core/mds-stream-processor'
 import {
@@ -30,49 +33,150 @@ import {
   convert_v1_0_0_vehicle_event_to_v1_1_0,
   Device_v0_4_1,
   Device_v1_1_0,
+  Nullable,
   Telemetry,
+  UUID,
   VehicleEvent_v0_4_1,
   VehicleEvent_v1_1_0
 } from '@mds-core/mds-types'
+import { asArray } from '@mds-core/mds-utils'
 import { cleanEnv, str } from 'envalid'
 
 const { SOURCE_TENANT_ID, TENANT_ID } = cleanEnv(process.env, { SOURCE_TENANT_ID: str(), TENANT_ID: str() })
 
 type MigrationEntityType = 'device' | 'event' | 'telemetry'
-const MigrationTopic = (tenant: string, entityType: MigrationEntityType) => `${tenant}.${entityType}`
+
+const MigrationSourceTopic = (entityType: MigrationEntityType) => `${SOURCE_TENANT_ID}.${entityType}`
 
 const MigrationDataSource: <MigrationSourceEntity>(entity: MigrationEntityType) => StreamSource<MigrationSourceEntity> =
   entity => {
-    const topic = MigrationTopic(SOURCE_TENANT_ID, entity)
+    const topic = MigrationSourceTopic(entity)
     return KafkaSource(topic, { groupId: `${topic}.ingest-migration-processor` })
   }
+
+const MigrationErrorTopic = (entityType: MigrationEntityType) => `${TENANT_ID}.${entityType}.error`
 
 const MigrationErrorSink: <MigrationSourceEntity>(
   entity: MigrationEntityType
 ) => DeadLetterSink<MigrationSourceEntity> = entity => {
-  const topic = `${MigrationTopic(TENANT_ID, entity)}.error`
+  const topic = MigrationErrorTopic(entity)
   return KafkaSink(topic, {
     clientId: `${topic}.ingest-migration-processor`
   })
 }
 
-const DevicesMigrationProcessor = StreamProcessor<Device_v0_4_1 & { id: number }, Device_v1_1_0>(
+const MigratedFrom = (entityType: MigrationEntityType, migrated_from_id: number) => ({
+  migrated_from_source: MigrationSourceTopic(entityType),
+  migrated_from_version: '0.4.1',
+  migrated_from_id
+})
+
+interface MigratedDevice {
+  device: Device_v1_1_0
+  migrated_from: MigratedEntityModel
+}
+
+const IngestServiceMigratedDeviceSink = (): StreamSink<MigratedDevice> => () => {
+  const topic = MigrationSourceTopic('device')
+  return {
+    initialize: async () => undefined,
+    write: async message => {
+      try {
+        const [{ device, migrated_from }] = asArray(message)
+        const migrated = await IngestServiceClient.writeMigratedDevice(device, migrated_from)
+        if (migrated) {
+          logger.info(`Migrated device ${migrated.device_id}`)
+        }
+      } catch (error) {
+        logger.error(`Error migrating device`, { topic, message })
+        throw error
+      }
+    },
+    shutdown: async () => undefined
+  }
+}
+
+const DevicesMigrationProcessor = StreamProcessor<Device_v0_4_1 & IdentityColumn, MigratedDevice>(
   MigrationDataSource('device'),
-  async device => convert_v1_0_0_device_to_1_1_0(convert_v0_4_1_device_to_1_0_0(device)),
-  [],
+  async ({ id, ...device }) => ({
+    device: convert_v1_0_0_device_to_1_1_0(convert_v0_4_1_device_to_1_0_0(device)),
+    migrated_from: MigratedFrom('device', id)
+  }),
+  [IngestServiceMigratedDeviceSink()],
   [MigrationErrorSink('device')]
 )
 
-const EventsMigrationProcessor = StreamProcessor<VehicleEvent_v0_4_1 & { id: number }, VehicleEvent_v1_1_0>(
+interface MigratedVehicleEvent {
+  event: VehicleEvent_v1_1_0
+  migrated_from: MigratedEntityModel
+}
+
+const IngestServiceMigratedVehicleEventSink = (): StreamSink<MigratedVehicleEvent> => () => {
+  const topic = MigrationSourceTopic('event')
+  return {
+    initialize: async () => undefined,
+    write: async message => {
+      try {
+        const [{ event, migrated_from }] = asArray(message)
+        const migrated = await IngestServiceClient.writeMigratedVehicleEvent(event, migrated_from)
+        if (migrated) {
+          logger.info(`Migrated event ${migrated.device_id}/${migrated.timestamp}`)
+        }
+      } catch (error) {
+        logger.error(`Error migrating event`, { topic, message })
+        throw error
+      }
+    },
+    shutdown: async () => undefined
+  }
+}
+
+const EventsMigrationProcessor = StreamProcessor<
+  VehicleEvent_v0_4_1 & { service_area_id: Nullable<UUID> } & IdentityColumn,
+  MigratedVehicleEvent
+>(
   MigrationDataSource('event'),
-  async event => convert_v1_0_0_vehicle_event_to_v1_1_0(convert_v0_4_1_vehicle_event_to_v1_0_0(event)),
-  [],
+  async ({ id, service_area_id, ...event }) => ({
+    event: convert_v1_0_0_vehicle_event_to_v1_1_0(convert_v0_4_1_vehicle_event_to_v1_0_0(event)),
+    migrated_from: MigratedFrom('event', id)
+  }),
+  [IngestServiceMigratedVehicleEventSink()],
   [MigrationErrorSink('event')]
 )
 
-const TelemetryMigrationProcessor = StreamForwarder<Telemetry & { id: number }>(
+interface MigratedTelemetry {
+  telemetry: Telemetry
+  migrated_from: MigratedEntityModel
+}
+
+const IngestServiceMigratedTelemetrySink = (): StreamSink<MigratedTelemetry> => () => {
+  const topic = MigrationSourceTopic('telemetry')
+  return {
+    initialize: async () => undefined,
+    write: async message => {
+      try {
+        const [{ telemetry, migrated_from }] = asArray(message)
+        const migrated = await IngestServiceClient.writeMigratedTelemetry(telemetry, migrated_from)
+        if (migrated) {
+          logger.info(`Migrated telemetry ${migrated.device_id}/${migrated.timestamp}`)
+        }
+      } catch (error) {
+        logger.error(`Error migrating telemetry`, { topic, message })
+        throw error
+      }
+    },
+    shutdown: async () => undefined
+  }
+}
+
+const TelemetryMigrationProcessor = StreamProcessor<Telemetry & IdentityColumn, MigratedTelemetry>(
   MigrationDataSource('telemetry'),
-  [],
+
+  async ({ id, ...telemetry }) => ({
+    telemetry,
+    migrated_from: MigratedFrom('telemetry', id)
+  }),
+  [IngestServiceMigratedTelemetrySink()],
   [MigrationErrorSink('telemetry')]
 )
 

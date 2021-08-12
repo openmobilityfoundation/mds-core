@@ -779,13 +779,19 @@ importers:
   packages/mds-ingest-migration-processor:
     specifiers:
       '@mds-core/mds-ingest-service': 0.3.0
+      '@mds-core/mds-logger': 0.2.3
+      '@mds-core/mds-repository': 0.1.6
       '@mds-core/mds-stream-processor': 0.2.2
       '@mds-core/mds-types': 0.3.1
+      '@mds-core/mds-utils': 0.1.32
       envalid: 7.1.0
     dependencies:
       '@mds-core/mds-ingest-service': link:../mds-ingest-service
+      '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-repository': link:../mds-repository
       '@mds-core/mds-stream-processor': link:../mds-stream-processor
       '@mds-core/mds-types': link:../mds-types
+      '@mds-core/mds-utils': link:../mds-utils
       envalid: 7.1.0
 
   packages/mds-ingest-service:

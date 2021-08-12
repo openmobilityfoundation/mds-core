@@ -18,13 +18,16 @@ import { DomainModelCreate, RecordedColumn } from '@mds-core/mds-repository'
 import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
 import {
   ACCESSIBILITY_OPTION,
+  Device,
   MODALITY,
   Nullable,
   PROPULSION_TYPE,
+  Telemetry,
   TelemetryData,
   Timestamp,
   TRIP_STATE,
   UUID,
+  VehicleEvent,
   VEHICLE_EVENT,
   VEHICLE_STATE,
   VEHICLE_TYPE
@@ -189,18 +192,9 @@ export interface IngestService {
 }
 
 export interface IngestMigrationService {
-  writeMigratedDevice: (
-    device: DeviceDomainCreateModel,
-    migrated_from: MigratedEntityModel
-  ) => Nullable<DeviceDomainModel>
-  writeMigratedVehicleEvent: (
-    event: EventDomainCreateModel,
-    migrated_from: MigratedEntityModel
-  ) => Nullable<EventDomainModel>
-  writeMigratedTelemetry: (
-    telemetry: TelemetryDomainCreateModel,
-    migrated_from: MigratedEntityModel
-  ) => Nullable<TelemetryDomainModel>
+  writeMigratedDevice: (device: Device, migrated_from: MigratedEntityModel) => Nullable<DeviceDomainModel>
+  writeMigratedVehicleEvent: (event: VehicleEvent, migrated_from: MigratedEntityModel) => Nullable<EventDomainModel>
+  writeMigratedTelemetry: (telemetry: Telemetry, migrated_from: MigratedEntityModel) => Nullable<TelemetryDomainModel>
 }
 
 export const IngestServiceDefinition: RpcServiceDefinition<IngestService & IngestMigrationService> = {

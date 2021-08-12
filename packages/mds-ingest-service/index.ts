@@ -17,4 +17,5 @@
 export * from './@types'
 export * from './client'
 export * from './repository'
+export { MigratedEntityModel } from './repository/mixins/migrated-entity'
 export * from './service/validators'
