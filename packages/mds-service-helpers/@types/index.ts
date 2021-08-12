@@ -17,6 +17,7 @@
 import { AnyFunction, Nullable } from '@mds-core/mds-types'
 
 export const ServiceErrorDescriptorTypes = [
+  'BadParamsError',
   'ConflictError',
   'DependencyMissingError',
   'NotFoundError',

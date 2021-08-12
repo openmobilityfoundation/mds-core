@@ -16,7 +16,7 @@
 
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { Timestamp, UUID } from '@mds-core/mds-types'
-import { BadParamsError, ConflictError, NotFoundError, now, testEnvSafeguard } from '@mds-core/mds-utils'
+import { ConflictError, NotFoundError, now, testEnvSafeguard } from '@mds-core/mds-utils'
 import { PolicyDomainCreateModel, PolicyDomainModel, PolicyMetadataDomainModel, ReadPolicyQueryParams } from '../@types'
 import entities from './entities'
 import { PolicyEntity } from './entities/policy-entity'
@@ -34,45 +34,39 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
   }
 
   public readPolicies = async (params: ReadPolicyQueryParams = {}) => {
+    const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_id } = params
+
     try {
       const connection = await this.connect('ro')
       const query = connection.getRepository(PolicyEntity).createQueryBuilder()
 
-      if (params) {
-        const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_id } = params
+      if (policy_ids) {
+        query.andWhere('policy_id = ANY(:policy_ids)', { policy_ids })
+      }
 
-        if (policy_ids) {
-          query.andWhere('policy_id = ANY(:policy_ids)', { policy_ids })
-        }
+      if (rule_id) {
+        query.andWhere(
+          "EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? :rule_id)",
+          { rule_id }
+        )
+      }
 
-        if (rule_id) {
-          query.andWhere(
-            "EXISTS(SELECT FROM json_array_elements(policy_json->'rules') elem WHERE (elem->'rule_id')::jsonb ? :rule_id)",
-            { rule_id }
-          )
-        }
+      if (get_unpublished) {
+        query.andWhere("policy_json->>'publish_date' IS NULL")
+      }
 
-        if (get_unpublished) {
-          query.andWhere("policy_json->>'publish_date' IS NULL")
-        }
+      if (get_published) {
+        query.andWhere("policy_json->>'publish_date' IS NOT NULL")
+      }
 
-        if (get_published) {
-          query.andWhere("policy_json->>'publish_date' IS NOT NULL")
-        }
+      if (start_date) {
+        query.andWhere("policy_json->>'start_date' >= :start_date", { start_date })
+      }
 
-        if (get_unpublished && get_published) {
-          throw new BadParamsError('cannot have get_unpublished and get_published both be true')
-        }
-
-        if (start_date) {
-          query.andWhere("policy_json->>'start_date' >= :start_date", { start_date })
-        }
-
-        if (geography_id) {
-          query.andWhere(`policy_json::jsonb @> :json_query`, {
-            json_query: { rules: [{ geographies: [geography_id] }] }
-          })
-        }
+      if (geography_id) {
+        query.andWhere(`policy_json::jsonb @> :json_query`, {
+          json_query: { rules: [{ geographies: [geography_id] }] }
+        })
       }
 
       const entities = await query.getMany()
@@ -123,6 +117,9 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
       const entity = await connection.getRepository(PolicyMetadataEntity).findOneOrFail({ policy_id })
       return PolicyMetadataEntityToDomain.map(entity)
     } catch (error) {
+      if (error.name === 'EntityNotFound') {
+        throw new NotFoundError(error)
+      }
       throw RepositoryError(error)
     }
   }

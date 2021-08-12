@@ -28,10 +28,14 @@ import should from 'should'
 /* eslint-enable prettier/prettier */
 /* eslint-enable @typescript-eslint/no-unused-vars */
 import { ApiServer } from '@mds-core/mds-api-server'
-import db from '@mds-core/mds-db'
+import { GeographyServiceClient, GeographyServiceManager } from '@mds-core/mds-geography-service'
+// eslint-disable-next-line prettier/prettier
+import { PolicyDomainCreateModel, PolicyMetadataDomainModel, PolicyServiceClient } from '@mds-core/mds-policy-service'
+import { PolicyRepository } from '@mds-core/mds-policy-service/repository'
+import { PolicyServiceManager } from '@mds-core/mds-policy-service/service/manager'
+import { PolicyFactory } from '@mds-core/mds-policy-service/tests/helpers'
 import {
   GEOGRAPHY_UUID,
-  LA_CITY_BOUNDARY,
   POLICY2_JSON,
   POLICY2_UUID,
   POLICY3_JSON,
@@ -42,9 +46,9 @@ import {
   SCOPED_AUTH,
   TAXI_POLICY
 } from '@mds-core/mds-test-data'
-import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
-import { clone, isUUID, pathPrefix, uuid } from '@mds-core/mds-utils'
-import express from 'express'
+import venice from '@mds-core/mds-test-data/test-areas/venice'
+import { clone, isUUID, now, pathPrefix, uuid } from '@mds-core/mds-utils'
+import { StatusCodes } from 'http-status-codes'
 import supertest from 'supertest'
 import test from 'unit.js'
 import { api } from '../api'
@@ -55,16 +59,19 @@ import { POLICY_AUTHOR_API_DEFAULT_VERSION } from '../types'
 const log = console.log.bind(console)
 
 const request = supertest(
-  api<ModalityPolicyTypeInfo>(
+  api(
     injectModalityValidator(
       injectVersionMiddleware(
-        ApiServer((app: express.Express) => {
+        ApiServer(app => {
           return app
         })
       )
     )
   )
 )
+
+const GeographyServer = GeographyServiceManager.controller()
+const PolicyServer = PolicyServiceManager.controller()
 
 const APP_JSON = 'application/vnd.mds.policy-author+json; charset=utf-8; version=0.4'
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
@@ -76,163 +83,143 @@ const POLICIES_DELETE_SCOPE = SCOPED_AUTH(['policies:delete'])
 const POLICY_JSON_WITHOUT_PUBLISH_DATE = clone(POLICY_JSON)
 POLICY_JSON_WITHOUT_PUBLISH_DATE.publish_date = undefined
 
+const createPolicy = async (policy?: PolicyDomainCreateModel) =>
+  await PolicyServiceClient.writePolicy(policy || PolicyFactory())
+
+const createPolicyAndGeographyFactory = async (policy?: PolicyDomainCreateModel, geography_overrides = {}) => {
+  const createdPolicy = await PolicyServiceClient.writePolicy(policy || PolicyFactory())
+  await GeographyServiceClient.writeGeographies([
+    {
+      name: 'VENICE',
+      geography_id: createdPolicy.rules[0].geographies[0],
+      geography_json: venice,
+      ...geography_overrides
+    }
+  ])
+  return createdPolicy
+}
+
+const createPublishedPolicy = async (policy?: PolicyDomainCreateModel) => {
+  const policyContent = policy || PolicyFactory()
+  const newPolicy = await createPolicyAndGeographyFactory(policyContent, { publish_date: now() })
+  return await PolicyServiceClient.publishPolicy(newPolicy?.policy_id, policyContent.start_date)
+}
+
+const createPolicyMetadata = async (policy: PolicyDomainCreateModel, policy_metadata = {}) => {
+  return await PolicyServiceClient.writePolicyMetadata({ policy_id: policy?.policy_id, policy_metadata })
+}
+
 describe('Tests app', () => {
   describe('Policy tests', () => {
-    before(async () => {
-      await db.reinitialize()
+    beforeAll(async () => {
+      await GeographyServer.start()
+      await PolicyServer.start()
+      await PolicyRepository.initialize()
     })
 
-    after(async () => {
-      await db.shutdown()
+    beforeEach(async () => {
+      await PolicyRepository.deleteAll()
     })
 
-    it('cannot create one current policy (no authorization)', done => {
+    afterAll(async () => {
+      await PolicyRepository.deleteAll()
+      await PolicyRepository.shutdown()
+      await GeographyServer.stop()
+      await PolicyServer.stop()
+    })
+
+    it('cannot create one current policy (no authorization)', async () => {
       const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
-      request
+      await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', EMPTY_SCOPE)
         .send(policy)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('cannot create one current policy (wrong authorization)', done => {
+    it('cannot create one current policy (wrong authorization)', async () => {
       const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
-      request
+      await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', EVENTS_READ_SCOPE)
         .send(policy)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('tries to post invalid policy', done => {
-      const bad_policy_json: ModalityPolicy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+    it('tries to post invalid policy', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bad_policy_json: any = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
 
-      /* eslint-reason test intentionally does things that the compiler dissuades,
-         as it's testing an invalid data case.
-      */
-      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-      // @ts-ignore
-      delete bad_policy_json.rules[0].rule_type
+      bad_policy_json.rules[0].rule_type = 'blah'
 
       const bad_policy = bad_policy_json
-      request
+      const { body } = await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(bad_policy)
-        .expect(400)
-        .end((err, result) => {
-          const body = result.body
-          log('zazzy', body)
-          test.value(body.error.info.details[0].message).contains('rule_type')
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.BAD_REQUEST)
+
+      test.value(body.error.info.details[0].message).contains('rule_type')
     })
 
-    it('verifies cannot PUT policy (no auth)', done => {
+    it('verifies cannot PUT policy (no auth)', async () => {
       const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
-      request
+      await request
         .put(pathPrefix(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`))
         .set('Authorization', EMPTY_SCOPE)
         .send(policy)
-        .expect(403)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('verifies cannot PUT policy (wrong auth)', done => {
+    it('verifies cannot PUT policy (wrong auth)', async () => {
       const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
-      request
+      await request
         .put(pathPrefix(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`))
         .set('Authorization', EVENTS_READ_SCOPE)
         .send(policy)
-        .expect(403)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('verifies cannot PUT non-existent policy', done => {
-      request
+    it('verifies cannot PUT non-existent policy', async () => {
+      await request
         .put(pathPrefix(`/policies/d2e31798-f22f-4034-ad36-1f88621b276a`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(POLICY_JSON_WITHOUT_PUBLISH_DATE)
-        .expect(404)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.NOT_FOUND)
     })
 
-    it('fails to hit non-existent endpoint with a 404', done => {
-      request
-        .get(pathPrefix(`/foobar`))
-        .set('Authorization', POLICIES_WRITE_SCOPE)
-        .expect(404)
-        .end(err => {
-          done(err)
-        })
+    it('fails to hit non-existent endpoint with a 404', async () => {
+      await request.get(pathPrefix(`/foobar`)).set('Authorization', POLICIES_WRITE_SCOPE).expect(StatusCodes.NOT_FOUND)
     })
 
-    it('creates one current policy', done => {
+    it('creates one current policy', async () => {
       const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
-      request
+      await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
-        .expect(201)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          done(err)
-        })
+        .expect(StatusCodes.CREATED)
     })
 
-    it('creates one Taxi policy', done => {
+    it('creates one Taxi policy', async () => {
       const { publish_date, ...policy } = TAXI_POLICY
-      request
+      await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
-        .expect(201)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          done(err)
-        })
+        .expect(StatusCodes.CREATED)
     })
 
-    it('verifies cannot POST duplicate policy', done => {
+    it('verifies cannot POST duplicate policy', async () => {
       const policy = POLICY_JSON_WITHOUT_PUBLISH_DATE
-      request
-        .post(pathPrefix(`/policies`))
-        .set('Authorization', POLICIES_WRITE_SCOPE)
-        .send(policy)
-        .expect(409)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      await createPolicy(policy)
+      await request.post(pathPrefix(`/policies`)).set('Authorization', POLICIES_WRITE_SCOPE).send(policy).expect(409)
     })
 
     it('verifies cannot PUT invalid policy', async () => {
-      const bad_policy_json: ModalityPolicy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
-
-      /* eslint-reason test intentionally does things that the compiler dissuades,
-         as it's testing an invalid data case.
-      */
-      /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-      // @ts-ignore
-      delete bad_policy_json.rules[0].rule_type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bad_policy_json: any = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+      bad_policy_json.rules[0].rule_type = 'blueberries'
 
       const bad_policy = bad_policy_json
       await request
@@ -244,6 +231,7 @@ describe('Tests app', () => {
 
     it('edits one current policy', async () => {
       const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+      await createPolicy(policy)
       policy.name = 'a shiny new name'
       const apiResult = await request
         .put(pathPrefix(`/policies/${POLICY_UUID}`))
@@ -253,203 +241,163 @@ describe('Tests app', () => {
 
       test.value(apiResult.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
 
-      const [result] = await db.readPolicies({
-        policy_id: policy.policy_id,
+      const [result] = await PolicyServiceClient.readPolicies({
+        policy_ids: [policy.policy_id],
         get_unpublished: true,
         get_published: null
       })
       test.value(result.name).is('a shiny new name')
     })
 
-    it('creates one past policy', done => {
+    it('creates one past policy', async () => {
       const policy2 = POLICY2_JSON
-      request
+      await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy2)
-        .expect(201)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          done(err)
-        })
+        .expect(StatusCodes.CREATED)
     })
 
-    it('creates one future new policy', done => {
+    it('creates one future new policy', async () => {
       // TODO guts
       const policy3 = POLICY3_JSON
-      request
+      await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy3)
-        .expect(201)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          done(err)
-        })
+        .expect(StatusCodes.CREATED)
     })
 
-    it('verifies cannot publish a policy (no auth)', done => {
-      request
+    it('verifies cannot publish a policy (no auth)', async () => {
+      await request
         .post(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`))
         .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('verifies cannot publish a policy (wrong auth)', done => {
-      request
+    it('verifies cannot publish a policy (wrong auth)', async () => {
+      await request
         .post(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`))
         .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('verifies cannot publish a policy with missing geographies', done => {
-      request
+    it('verifies cannot publish a policy with missing geographies', async () => {
+      await request
         .post(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
-        .expect(404)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.NOT_FOUND)
     })
 
-    it('verifies cannot publish a policy that was never POSTed', done => {
-      request
+    it('verifies cannot publish a policy that was never POSTed', async () => {
+      await request
         .post(pathPrefix(`/policies/${GEOGRAPHY_UUID}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
-        .expect(404)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.NOT_FOUND)
     })
 
     it('cannot publish a policy if the geo is not published', async () => {
-      await db.writeGeography({ name: 'LA', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
+      const policy = await createPolicyAndGeographyFactory()
       const result = await request
-        .post(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`))
+        .post(pathPrefix(`/policies/${policy.policy_id}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
-        .expect(424)
+        .expect(StatusCodes.FAILED_DEPENDENCY)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
 
     it('can publish a policy if the geo is published', async () => {
-      await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
+      const policy = await createPolicyAndGeographyFactory(PolicyFactory(), { publish_date: now() })
       const result = await request
-        .post(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`))
+        .post(pathPrefix(`/policies/${policy.policy_id}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
-        .expect(200)
+        .expect(StatusCodes.OK)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
 
-    it('cannot double-publish a policy', done => {
-      request
-        .post(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}/publish`))
+    it('cannot double-publish a policy', async () => {
+      const policy = await createPolicyAndGeographyFactory(PolicyFactory(), { publish_date: now() })
+      await request
+        .post(pathPrefix(`/policies/${policy.policy_id}/publish`))
+        .set('Authorization', POLICIES_PUBLISH_SCOPE)
+        .expect(200)
+      await request
+        .post(pathPrefix(`/policies/${policy.policy_id}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
         .expect(409)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
     })
 
-    it('cannot edit a published policy (no auth)', done => {
-      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+    it('cannot edit a published policy (no auth)', async () => {
+      const policy = await createPublishedPolicy()
       policy.name = 'an even shinier new name'
-      request
-        .put(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}`))
+      await request
+        .put(pathPrefix(`/policies/${policy.policy_id}`))
         .set('Authorization', EMPTY_SCOPE)
         .send(policy)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('cannot edit a published policy (wrong auth)', done => {
-      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+    it('cannot edit a published policy (wrong auth)', async () => {
+      const policy = await createPublishedPolicy()
       policy.name = 'an even shinier new name'
-      request
-        .put(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}`))
+      await request
+        .put(pathPrefix(`/policies/${policy.policy_id}`))
         .set('Authorization', EVENTS_READ_SCOPE)
         .send(policy)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('cannot edit a published policy', done => {
-      const policy = clone(POLICY_JSON_WITHOUT_PUBLISH_DATE)
+    it('cannot edit a published policy', async () => {
+      const policy = await createPublishedPolicy()
       policy.name = 'an even shinier new name'
-      request
+      await request
         .put(pathPrefix(`/policies/${POLICY_JSON_WITHOUT_PUBLISH_DATE.policy_id}`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
-        .expect(409)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+        .expect(StatusCodes.BAD_REQUEST)
     })
 
-    it('cannot delete an unpublished policy (no auth)', done => {
-      request
+    it('cannot delete an unpublished policy (no auth)', async () => {
+      await request
         .delete(pathPrefix(`/policies/${POLICY2_UUID}`))
         .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
-        .end(async err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('cannot delete an unpublished policy (wrong auth)', done => {
-      request
+    it('cannot delete an unpublished policy (wrong auth)', async () => {
+      await request
         .delete(pathPrefix(`/policies/${POLICY2_UUID}`))
         .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
-        .end(async err => {
-          done(err)
-        })
+        .expect(StatusCodes.FORBIDDEN)
     })
 
-    it('can delete an unpublished policy', done => {
-      request
-        .delete(pathPrefix(`/policies/${POLICY2_UUID}`))
+    it('can delete an unpublished policy', async () => {
+      const policy = await createPolicy()
+      const result = await request
+        .delete(pathPrefix(`/policies/${policy.policy_id}`))
         .set('Authorization', POLICIES_DELETE_SCOPE)
-        .expect(200)
-        .end(async (err, result) => {
-          const body = result.body
-          log('read back nonexistent policy response:', body)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          await db
-            .readPolicies({ policy_id: POLICY2_UUID, get_published: null, get_unpublished: null })
-            .should.be.fulfilledWith([])
-          done(err)
-        })
+        .expect(StatusCodes.OK)
+
+      const body = result.body
+      log('read back nonexistent policy response:', body)
+      test.value(result).hasHeader('content-type', APP_JSON)
+      test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
+      await PolicyServiceClient.readPolicies({
+        policy_ids: [POLICY2_UUID],
+        get_published: null,
+        get_unpublished: null
+      }).should.be.fulfilledWith([])
     })
 
-    it('cannot delete a published policy', done => {
-      request
-        .delete(pathPrefix(`/policies/${POLICY_UUID}`))
+    it('cannot delete a published policy', async () => {
+      const policy = await createPublishedPolicy()
+      await request
+        .delete(pathPrefix(`/policies/${policy.policy_id}`))
         .set('Authorization', POLICIES_DELETE_SCOPE)
-        .expect(404)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.CONFLICT)
     })
 
     it('cannot publish a policy if the start_date would precede the publish_date', async () => {
-      await db.writePolicy(POLICY2_JSON)
+      await PolicyServiceClient.writePolicy(POLICY2_JSON)
       const result = await request
         .post(pathPrefix(`/policies/${POLICY2_JSON.policy_id}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
@@ -457,14 +405,11 @@ describe('Tests app', () => {
       test.value(result.body.error.reason, 'Policies cannot be published after their start_date')
     })
 
-    it('cannot GET policy metadata (no entries exist)', done => {
-      request
+    it('cannot GET policy metadata (no entries exist)', async () => {
+      await request
         .get(pathPrefix(`/policies/meta`))
         .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(404)
-        .end(err => {
-          done(err)
-        })
+        .expect(StatusCodes.NOT_FOUND)
     })
 
     it('cannot PUTing policy metadata to create (no auth)', async () => {
@@ -473,7 +418,7 @@ describe('Tests app', () => {
         .put(pathPrefix(`/policies/${POLICY_UUID}/meta`))
         .set('Authorization', EMPTY_SCOPE)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
-        .expect(403)
+        .expect(StatusCodes.FORBIDDEN)
     })
 
     it('cannot PUTing policy metadata to create (wrong auth)', async () => {
@@ -482,125 +427,117 @@ describe('Tests app', () => {
         .put(pathPrefix(`/policies/${POLICY_UUID}/meta`))
         .set('Authorization', EVENTS_READ_SCOPE)
         .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
-        .expect(403)
+        .expect(StatusCodes.FORBIDDEN)
     })
 
     it('verifies PUTing policy metadata to create', async () => {
+      const policy = await createPolicy()
       const metadata = { some_arbitrary_thing: 'boop' }
       const apiResult = await request
-        .put(pathPrefix(`/policies/${POLICY_UUID}/meta`))
+        .put(pathPrefix(`/policies/${policy.policy_id}/meta`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
-        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
-        .expect(201)
-      test.value(apiResult.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-      const result = await db.readSinglePolicyMetadata(POLICY_UUID)
-      test.assert(result.policy_metadata.some_arbitrary_thing === 'boop')
+        .send({ policy_id: policy.policy_id, policy_metadata: metadata })
+        .expect(StatusCodes.CREATED)
+
+      expect(apiResult.body.version).toStrictEqual(POLICY_AUTHOR_API_DEFAULT_VERSION)
+
+      const result: PolicyMetadataDomainModel<{ some_arbitrary_thing: string }> =
+        await PolicyServiceClient.readSinglePolicyMetadata(policy.policy_id)
+      expect(result.policy_metadata?.some_arbitrary_thing).toStrictEqual('boop')
     })
 
     it('verifies PUTing policy metadata to edit', async () => {
+      const policy = await createPolicy()
+      const meta = await createPolicyMetadata(policy, { some_arbitrary_thing: 'boop' })
       const metadata = { some_arbitrary_thing: 'beep' }
-      const apiResult = await request
-        .put(pathPrefix(`/policies/${POLICY_UUID}/meta`))
+      await request
+        .put(pathPrefix(`/policies/${meta.policy_id}/meta`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
-        .send({ policy_id: POLICY_UUID, policy_metadata: metadata })
-        .expect(200)
-      test.value(apiResult.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-      const result = await db.readSinglePolicyMetadata(POLICY_UUID)
-      test.assert(result.policy_metadata.some_arbitrary_thing === 'beep')
-    })
+        .send({ policy_id: meta.policy_id, policy_metadata: metadata })
+        .expect(StatusCodes.OK)
 
-    it('cannot GET policy metadata (no auth)', done => {
-      request
-        .get(pathPrefix(`/policies/${POLICY_UUID}/meta`))
-        .set('Authorization', EMPTY_SCOPE)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
-    })
-
-    it('cannot GET policy metadata (wrong auth)', done => {
-      request
-        .get(pathPrefix(`/policies/${POLICY_UUID}/meta`))
-        .set('Authorization', EVENTS_READ_SCOPE)
-        .expect(403)
-        .end(err => {
-          done(err)
-        })
-    })
-
-    it('verifies GETing policy metadata when given a policy_id', done => {
-      request
-        .get(pathPrefix(`/policies/${POLICY_UUID}/meta`))
-        .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(200)
-        .end((err, result) => {
-          test.value(result.body.data.policy_metadata.some_arbitrary_thing, 'beep')
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('verifies cannot GET non-uuid policy_id metadata', done => {
-      request
-        .get(pathPrefix(`/policies/beepbapboop/meta`))
-        .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(400)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
-    })
-
-    it('verifies cannot GET non-existent policy metadata', done => {
-      request
-        .get(pathPrefix(`/policies/${uuid()}/meta`))
-        .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(404)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          done(err)
-        })
+      const result: PolicyMetadataDomainModel<{ some_arbitrary_thing: string }> =
+        await PolicyServiceClient.readSinglePolicyMetadata(policy.policy_id)
+      expect(result.policy_metadata?.some_arbitrary_thing).toStrictEqual('beep')
     })
 
     it('cannot GET policy metadata (no auth)', async () => {
-      await request.get(pathPrefix(`/policies/meta`)).set('Authorization', EMPTY_SCOPE).expect(403)
+      const policy = await createPolicy()
+      await request
+        .get(pathPrefix(`/policies/${policy.policy_id}/meta`))
+        .set('Authorization', EMPTY_SCOPE)
+        .expect(StatusCodes.FORBIDDEN)
     })
 
     it('cannot GET policy metadata (wrong auth)', async () => {
-      await request.get(pathPrefix(`/policies/meta`)).set('Authorization', EVENTS_READ_SCOPE).expect(403)
+      const policy = await createPolicy()
+      await request
+        .get(pathPrefix(`/policies/${policy.policy_id}/meta`))
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(StatusCodes.FORBIDDEN)
+    })
+
+    it('verifies GETing policy metadata when given a policy_id', async () => {
+      const policy = await createPolicy()
+      const meta = await createPolicyMetadata(policy, { some_arbitrary_thing: 'beep' })
+      const result = await request
+        .get(pathPrefix(`/policies/${meta.policy_id}/meta`))
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(StatusCodes.OK)
+
+      expect(result.body.data.policy_metadata.policy_metadata.some_arbitrary_thing).toStrictEqual('beep')
+    })
+
+    it('verifies cannot GET non-uuid policy_id metadata', async () => {
+      await request
+        .get(pathPrefix(`/policies/beepbapboop/meta`))
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(StatusCodes.BAD_REQUEST)
+    })
+
+    it('verifies cannot GET non-existent policy metadata', async () => {
+      await request
+        .get(pathPrefix(`/policies/${uuid()}/meta`))
+        .set('Authorization', POLICIES_READ_SCOPE)
+        .expect(StatusCodes.NOT_FOUND)
+    })
+
+    it('cannot GET policy metadata (no auth)', async () => {
+      await request.get(pathPrefix(`/policies/meta`)).set('Authorization', EMPTY_SCOPE).expect(StatusCodes.FORBIDDEN)
+    })
+
+    it('cannot GET policy metadata (wrong auth)', async () => {
+      await request
+        .get(pathPrefix(`/policies/meta`))
+        .set('Authorization', EVENTS_READ_SCOPE)
+        .expect(StatusCodes.FORBIDDEN)
     })
 
     it('cannot GET policy metadata with both get_published and get_unpublished set to true', async () => {
       await request
         .get(pathPrefix(`/policies/meta?get_published=true&get_unpublished=true`))
         .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(400)
+        .expect(StatusCodes.BAD_REQUEST)
     })
 
     it('verifies GETting policy metadata with the same params as for bulk policy reads', async () => {
+      const policy = await createPolicy()
+      await createPolicyMetadata(policy, { some_arbitrary_thing: 'boop' })
+
       const result = await request
         .get(pathPrefix(`/policies/meta`))
         .set('Authorization', POLICIES_READ_SCOPE)
-        .expect(200)
-      test.assert(result.body.data.policy_metadata.length === 1)
-      test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-      test.value(result).hasHeader('content-type', APP_JSON)
+        .expect(StatusCodes.OK)
+      expect(result.body.data.policy_metadata.length).toStrictEqual(1)
     })
 
-    it('generates a UUID for a policy that has no UUID', done => {
-      request
+    it('generates a UUID for a policy that has no UUID', async () => {
+      const result = await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(POLICY_JSON_MISSING_POLICY_ID)
-        .expect(201)
-        .end((err, result) => {
-          test.value(result).hasHeader('content-type', APP_JSON)
-          test.value(result.body.version).is(POLICY_AUTHOR_API_DEFAULT_VERSION)
-          test.assert(isUUID(result.body.data.policy.policy_id))
-          done(err)
-        })
+        .expect(StatusCodes.CREATED)
+      expect(isUUID(result.body.data.policy.policy_id)).toBeTruthy()
     })
 
     it('Cannot PUT a policy with publish_date set', async () => {

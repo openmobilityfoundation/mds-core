@@ -900,10 +900,12 @@ importers:
     specifiers:
       '@mds-core/mds-api-helpers': 0.1.33
       '@mds-core/mds-api-server': 0.1.32
-      '@mds-core/mds-db': 0.2.1
+      '@mds-core/mds-geography-service': 0.1.6
       '@mds-core/mds-logger': 0.2.3
+      '@mds-core/mds-policy-service': 0.2.0
       '@mds-core/mds-providers': 0.1.32
       '@mds-core/mds-schema-validators': 0.2.1
+      '@mds-core/mds-service-helpers': 0.2.0
       '@mds-core/mds-test-data': 0.1.32
       '@mds-core/mds-types': 0.3.1
       '@mds-core/mds-utils': 0.1.32
@@ -913,16 +915,18 @@ importers:
     dependencies:
       '@mds-core/mds-api-helpers': link:../mds-api-helpers
       '@mds-core/mds-api-server': link:../mds-api-server
-      '@mds-core/mds-db': link:../mds-db
       '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-policy-service': link:../mds-policy-service
       '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-schema-validators': link:../mds-schema-validators
+      '@mds-core/mds-service-helpers': link:../mds-service-helpers
       '@mds-core/mds-types': link:../mds-types
       '@mds-core/mds-utils': link:../mds-utils
       '@types/express': 4.17.12
       express: 4.17.1
       http-status-codes: 2.1.4
     devDependencies:
+      '@mds-core/mds-geography-service': link:../mds-geography-service
       '@mds-core/mds-test-data': link:../mds-test-data
 
   packages/mds-policy-service:

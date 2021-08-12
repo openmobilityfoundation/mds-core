@@ -23,7 +23,6 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       await GeographyServer.start()
       await PolicyServer.start()
       await PolicyRepository.initialize()
-      // await GeographyServiceClient.writeGeographies([VENICE_GEOGRAPHY])
     })
 
     beforeEach(async () => {
@@ -31,6 +30,7 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
     })
 
     afterAll(async () => {
+      await PolicyRepository.deleteAll()
       await PolicyRepository.shutdown()
       await GeographyServer.stop()
       await PolicyServer.stop()

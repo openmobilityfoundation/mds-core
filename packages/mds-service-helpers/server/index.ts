@@ -17,6 +17,7 @@
 import logger from '@mds-core/mds-logger'
 import { Nullable } from '@mds-core/mds-types'
 import {
+  BadParamsError,
   ConflictError,
   DependencyMissingError,
   hours,
@@ -157,12 +158,19 @@ export const ServiceException = (message: string, error?: unknown) => {
     return ServiceError({ type: 'ConflictError', message, details })
   }
 
+  /* istanbul ignore if */
   if (error instanceof UnsupportedTypeError) {
     return ServiceError({ type: 'UnsupportedTypeError', message, details })
   }
 
+  /* istanbul ignore if */
   if (error instanceof DependencyMissingError) {
     return ServiceError({ type: 'DependencyMissingError', message, details })
+  }
+
+  /* istanbul ignore if */
+  if (error instanceof BadParamsError) {
+    return ServiceError({ type: 'BadParamsError', message, details })
   }
 
   return ServiceError({ type: 'ServiceException', message, details })

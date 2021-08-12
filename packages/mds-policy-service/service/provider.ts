@@ -17,12 +17,12 @@
 import { GeographyServiceClient } from '@mds-core/mds-geography-service'
 import logger from '@mds-core/mds-logger'
 import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
-import { DependencyMissingError } from '@mds-core/mds-utils'
+import { BadParamsError, DependencyMissingError } from '@mds-core/mds-utils'
 import { PolicyService } from '../@types'
 import { PolicyRepository } from '../repository'
 import { validatePolicyDomainModel, validatePolicyMetadataDomainModel } from './validators'
 
-const serviceToPolicyRepository = async <T>(method: string, exec: () => Promise<T>) => {
+const serviceErrorWrapper = async <T>(method: string, exec: () => Promise<T>) => {
   try {
     return ServiceResult(await exec())
   } catch (error) {
@@ -37,40 +37,39 @@ export const PolicyServiceProvider: ServiceProvider<PolicyService> & ProcessCont
   stop: PolicyRepository.shutdown,
   name: async () => ServiceResult('mds-policy-service'),
   writePolicy: policy =>
-    serviceToPolicyRepository('writePolicy', () => PolicyRepository.writePolicy(validatePolicyDomainModel(policy))),
-  readPolicies: params => serviceToPolicyRepository('readPolicies', () => PolicyRepository.readPolicies(params)),
+    serviceErrorWrapper('writePolicy', () => PolicyRepository.writePolicy(validatePolicyDomainModel(policy))),
+  readPolicies: params => serviceErrorWrapper('readPolicies', () => PolicyRepository.readPolicies(params)),
   readActivePolicies: timestamp =>
-    serviceToPolicyRepository('readActivePolicies', () => PolicyRepository.readActivePolicies(timestamp)),
-  deletePolicy: policy_id => serviceToPolicyRepository('deletePolicy', () => PolicyRepository.deletePolicy(policy_id)),
+    serviceErrorWrapper('readActivePolicies', () => PolicyRepository.readActivePolicies(timestamp)),
+  deletePolicy: policy_id => serviceErrorWrapper('deletePolicy', () => PolicyRepository.deletePolicy(policy_id)),
   editPolicy: policy =>
-    serviceToPolicyRepository('editPolicy', () => PolicyRepository.editPolicy(validatePolicyDomainModel(policy))),
-  readPolicy: policy_id => serviceToPolicyRepository('readPolicy', () => PolicyRepository.readPolicy(policy_id)),
+    serviceErrorWrapper('editPolicy', () => PolicyRepository.editPolicy(validatePolicyDomainModel(policy))),
+  readPolicy: policy_id => serviceErrorWrapper('readPolicy', () => PolicyRepository.readPolicy(policy_id)),
   readSinglePolicyMetadata: policy_id =>
-    serviceToPolicyRepository('readSinglePolicyMetadata', () => PolicyRepository.readSinglePolicyMetadata(policy_id)),
+    serviceErrorWrapper('readSinglePolicyMetadata', () => PolicyRepository.readSinglePolicyMetadata(policy_id)),
   readBulkPolicyMetadata: params =>
-    serviceToPolicyRepository('readSinglePolicyMetadata', () => PolicyRepository.readBulkPolicyMetadata(params)),
+    serviceErrorWrapper('readBulkPolicyMetadata', () => {
+      if (params.get_unpublished && params.get_published)
+        throw new BadParamsError('cannot have get_unpublished and get_published both be true')
+
+      return PolicyRepository.readBulkPolicyMetadata(params)
+    }),
   updatePolicyMetadata: policy_metadata =>
-    serviceToPolicyRepository('updatePolicyMetadata', () =>
+    serviceErrorWrapper('updatePolicyMetadata', () =>
       PolicyRepository.updatePolicyMetadata(validatePolicyMetadataDomainModel(policy_metadata))
     ),
   writePolicyMetadata: policy_metadata =>
-    serviceToPolicyRepository('writePolicyMetadata', () =>
+    serviceErrorWrapper('writePolicyMetadata', () =>
       PolicyRepository.writePolicyMetadata(validatePolicyMetadataDomainModel(policy_metadata))
     ),
-  publishPolicy: async (policy_id, publish_date) => {
-    try {
+  publishPolicy: (policy_id, publish_date) =>
+    serviceErrorWrapper('publishPolicy', async () => {
       const policy = await PolicyRepository.readPolicy(policy_id)
       const geographies = await GeographyServiceClient.getGeographiesByIds(policy.rules.map(r => r.geographies).flat())
 
-      if (geographies.some(geography => !geography?.publish_date)) {
+      if (geographies.some(geography => !geography?.publish_date))
         throw new DependencyMissingError(`some geographies not published!`)
-      }
 
-      return ServiceResult(await PolicyRepository.publishPolicy(policy_id, publish_date))
-    } catch (error) {
-      const exception = ServiceException(`Error Policy:publishPolicy`, error)
-      logger.error(`mds-policy-service::publishPolicy error`, { exception, error })
-      return exception
-    }
-  }
+      return await PolicyRepository.publishPolicy(policy_id, publish_date)
+    })
 }

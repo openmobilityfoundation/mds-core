@@ -12,8 +12,6 @@
  */
 
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
-import { ModalityPolicyTypeInfo } from '@mds-core/mds-types'
-import express from 'express'
 import { api } from './api'
 import { injectModalityValidator, injectVersionMiddleware } from './middleware'
 
@@ -23,10 +21,10 @@ import { injectModalityValidator, injectVersionMiddleware } from './middleware'
  * Note: The ordering of injection here is important, we need to make sure that the versioning middleware is applied even if there's a validation error.
  */
 HttpServer(
-  api<ModalityPolicyTypeInfo>(
+  api(
     injectModalityValidator(
       injectVersionMiddleware(
-        ApiServer((app: express.Express) => {
+        ApiServer(app => {
           return app
         })
       )
