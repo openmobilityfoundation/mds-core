@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-api-authorizer",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "description": "MDS API Authorizer",
   "keywords": [
     "mds"
@@ -17,15 +17,15 @@
     "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap  ts-mocha --project ../../tsconfig.json"
   },
   "dependencies": {
-    "@mds-core/mds-test-data": "0.1.32",
-    "@mds-core/mds-types": "0.3.1",
-    "@mds-core/mds-utils": "0.1.32",
+    "@mds-core/mds-test-data": "0.1.33",
+    "@mds-core/mds-types": "0.3.2",
+    "@mds-core/mds-utils": "0.1.33",
     "@types/express": "4.17.12",
     "@types/jsonwebtoken": "8.5.3",
     "express": "4.17.1",
     "jsonwebtoken": "8.5.1"
   },
   "devDependencies": {
-    "@mds-core/mds-providers": "0.1.32"
+    "@mds-core/mds-providers": "0.1.33"
   }
 }

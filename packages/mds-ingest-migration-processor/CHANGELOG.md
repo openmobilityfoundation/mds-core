@@ -1,5 +1,19 @@
 # @mds-core/mds-ingest-migration-processor
 
+## 0.0.5
+
+### Patch Changes
+
+- 0b917ead: Persist migrated entities to database
+- Updated dependencies [bb19758f]
+- Updated dependencies [0b917ead]
+- Updated dependencies [6609400b]
+  - @mds-core/mds-stream-processor@0.2.3
+  - @mds-core/mds-ingest-service@0.3.1
+  - @mds-core/mds-types@0.3.2
+  - @mds-core/mds-repository@0.1.7
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.0.4
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-test-data",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "description": "Mobility Data Specification test data generator",
   "keywords": [
     "mds",
@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-providers": "0.1.32",
-    "@mds-core/mds-types": "0.3.1",
-    "@mds-core/mds-utils": "0.1.32"
+    "@mds-core/mds-providers": "0.1.33",
+    "@mds-core/mds-types": "0.3.2",
+    "@mds-core/mds-utils": "0.1.33"
   }
 }

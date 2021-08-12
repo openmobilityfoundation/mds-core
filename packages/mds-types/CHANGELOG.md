@@ -1,5 +1,11 @@
 # @mds-core/mds-types
 
+## 0.3.2
+
+### Patch Changes
+
+- 6609400b: `vehicle_types` field in BaseRule should be restricted to `VEHICLE_TYPE[]`, not `string[]`
+
 ## 0.3.1
 
 ### Patch Changes

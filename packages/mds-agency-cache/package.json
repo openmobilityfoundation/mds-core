@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-agency-cache",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Mobility Data Specification cache interface",
   "keywords": [
     "mds",
@@ -18,11 +18,11 @@
     "test": "DOTENV_CONFIG_PATH=../../.env jest --passWithNoTests"
   },
   "dependencies": {
-    "@mds-core/mds-cache": "0.0.7",
+    "@mds-core/mds-cache": "0.0.8",
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-schema-validators": "0.2.1",
-    "@mds-core/mds-types": "0.3.1",
-    "@mds-core/mds-utils": "0.1.32",
+    "@mds-core/mds-schema-validators": "0.2.2",
+    "@mds-core/mds-types": "0.3.2",
+    "@mds-core/mds-utils": "0.1.33",
     "@types/flat": "5.0.1",
     "@types/ioredis": "4.26.4",
     "flat": "5.0.2",

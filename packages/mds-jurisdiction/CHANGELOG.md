@@ -1,5 +1,16 @@
 # @mds-core/mds-jurisdiction
 
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies [e0860f5b]
+  - @mds-core/mds-api-server@0.2.0
+  - @mds-core/mds-service-helpers@0.3.0
+  - @mds-core/mds-api-helpers@0.1.34
+  - @mds-core/mds-jurisdiction-service@0.1.7
+  - @mds-core/mds-utils@0.1.33
+
 ## 0.1.7
 
 ### Patch Changes
