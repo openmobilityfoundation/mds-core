@@ -179,11 +179,6 @@ export type EventAnnotationDomainCreateModel = DomainModelCreate<
   Omit<EventAnnotationDomainModel, keyof RecordedColumn>
 > & { events_row_id: number }
 
-export interface GetLastMigratedEntityOptions {
-  migrated_from_source: string
-  migrated_from_version: string
-}
-
 export interface IngestService {
   getEventsUsingOptions: (params: GetVehicleEventsFilterParams) => GetVehicleEventsResponse
   getEventsUsingCursor: (cursor: string) => GetVehicleEventsResponse
@@ -194,7 +189,10 @@ export interface IngestService {
 export interface IngestMigrationService {
   writeMigratedDevice: (device: Device, migrated_from: MigratedEntityModel) => Nullable<DeviceDomainModel>
   writeMigratedVehicleEvent: (event: VehicleEvent, migrated_from: MigratedEntityModel) => Nullable<EventDomainModel>
-  writeMigratedTelemetry: (telemetry: Telemetry, migrated_from: MigratedEntityModel) => Nullable<TelemetryDomainModel>
+  writeMigratedTelemetry: (
+    telemetry: Telemetry & Required<RecordedColumn>,
+    migrated_from: MigratedEntityModel
+  ) => Nullable<TelemetryDomainModel>
 }
 
 export const IngestServiceDefinition: RpcServiceDefinition<IngestService & IngestMigrationService> = {

@@ -16,7 +16,7 @@
 
 import { IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
 import logger from '@mds-core/mds-logger'
-import { IdentityColumn } from '@mds-core/mds-repository'
+import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import {
   DeadLetterSink,
   KafkaSink,
@@ -31,13 +31,13 @@ import {
   convert_v0_4_1_vehicle_event_to_v1_0_0,
   convert_v1_0_0_device_to_1_1_0,
   convert_v1_0_0_vehicle_event_to_v1_1_0,
+  Device,
   Device_v0_4_1,
-  Device_v1_1_0,
   Nullable,
   Telemetry,
   UUID,
-  VehicleEvent_v0_4_1,
-  VehicleEvent_v1_1_0
+  VehicleEvent,
+  VehicleEvent_v0_4_1
 } from '@mds-core/mds-types'
 import { asArray } from '@mds-core/mds-utils'
 import { cleanEnv, str } from 'envalid'
@@ -72,7 +72,7 @@ const MigratedFrom = (entityType: MigrationEntityType, migrated_from_id: number)
 })
 
 interface MigratedDevice {
-  device: Device_v1_1_0
+  device: Device & Required<RecordedColumn>
   migrated_from: MigratedEntityModel
 }
 
@@ -107,7 +107,7 @@ const DevicesMigrationProcessor = StreamProcessor<Device_v0_4_1 & IdentityColumn
 )
 
 interface MigratedVehicleEvent {
-  event: VehicleEvent_v1_1_0
+  event: VehicleEvent & Required<RecordedColumn>
   migrated_from: MigratedEntityModel
 }
 
@@ -145,7 +145,7 @@ const EventsMigrationProcessor = StreamProcessor<
 )
 
 interface MigratedTelemetry {
-  telemetry: Telemetry
+  telemetry: Telemetry & Required<RecordedColumn>
   migrated_from: MigratedEntityModel
 }
 
@@ -169,7 +169,10 @@ const IngestServiceMigratedTelemetrySink = (): StreamSink<MigratedTelemetry> => 
   }
 }
 
-const TelemetryMigrationProcessor = StreamProcessor<Telemetry & IdentityColumn, MigratedTelemetry>(
+const TelemetryMigrationProcessor = StreamProcessor<
+  Telemetry & IdentityColumn & Required<RecordedColumn>,
+  MigratedTelemetry
+>(
   MigrationDataSource('telemetry'),
 
   async ({ id, ...telemetry }) => ({

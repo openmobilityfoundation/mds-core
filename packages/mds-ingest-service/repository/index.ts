@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
+import { InsertReturning, ReadWriteRepository, RecordedColumn, RepositoryError } from '@mds-core/mds-repository'
 import { Device, Telemetry, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { isUUID, testEnvSafeguard, ValidationError } from '@mds-core/mds-utils'
 import { Any, SelectQueryBuilder } from 'typeorm'
@@ -44,6 +44,9 @@ import {
   EventAnnotationEntityToDomain,
   EventDomainToEntityCreate,
   EventEntityToDomain,
+  MigratedDeviceToEntityCreate,
+  MigratedEventToEntityCreate,
+  MigratedTelemetryToEntityCreate,
   TelemetryDomainToEntityCreate,
   TelemetryEntityToDomain
 } from './mappers'
@@ -353,7 +356,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     this.getEvents(this.parseCursor(cursor))
 
   public writeMigratedDevice = async (
-    devices: Device[],
+    devices: Array<Device & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
   ): Promise<DeviceDomainModel[]> => {
     try {
@@ -362,8 +365,11 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .getRepository(DeviceEntity)
         .createQueryBuilder()
         .insert()
-        .values(devices)
-        .onConflict('DO NOTHING') /* May need DO UPDATE to support PUT vehicle_id */
+        .values(devices.map(MigratedDeviceToEntityCreate.mapper({ migrated_from })))
+        /* DO UPDATE to support PUT vehicle_id */
+        .onConflict(
+          '("device_id") DO UPDATE SET "vehicle_id" = EXCLUDED."vehicle_id" WHERE "vehicle_id" <> EXCLUDED."vehicle_id"'
+        )
         .returning('*')
         .execute()
       return entities.map(DeviceEntityToDomain.mapper())
@@ -373,7 +379,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
   }
 
   public writeMigratedEvent = async (
-    events: VehicleEvent[],
+    events: Array<VehicleEvent & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
   ): Promise<EventDomainModel[]> => {
     try {
@@ -382,7 +388,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .getRepository(EventEntity)
         .createQueryBuilder()
         .insert()
-        .values(events.map(({ telemetry, ...event }) => event))
+        .values(events.map(MigratedEventToEntityCreate.mapper({ migrated_from })))
         .onConflict('DO NOTHING')
         .returning('*')
         .execute()
@@ -393,7 +399,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
   }
 
   public writeMigratedTelemetry = async (
-    telemetry: Telemetry[],
+    telemetry: Array<Telemetry & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
   ): Promise<TelemetryDomainModel[]> => {
     try {
@@ -402,7 +408,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .getRepository(TelemetryEntity)
         .createQueryBuilder()
         .insert()
-        .values(telemetry)
+        .values(telemetry.map(MigratedTelemetryToEntityCreate.mapper({ migrated_from })))
         .onConflict('DO NOTHING')
         .returning('*')
         .execute()
