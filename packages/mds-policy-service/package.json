@@ -17,7 +17,7 @@
     "build": "tsc --build tsconfig.build.json",
     "start": "pnpm watch server",
     "pretest": "pnpm typeorm -- schema:drop",
-    "test": "DOTENV_CONFIG_PATH=tests/.env.test jest",
+    "test": "DOTENV_CONFIG_PATH=../../.env jest",
     "ts-node": "DOTENV_CONFIG_PATH=../../.env node --experimental-repl-await -r ts-node/register -r dotenv/config",
     "typeorm": "ts-node ./node_modules/typeorm/cli.js",
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
