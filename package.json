@@ -47,6 +47,7 @@
     "eslint-plugin-prettier": "3.4.0",
     "eslint-plugin-progress": "0.0.1",
     "eslint-plugin-promise": "5.1.0",
+    "find-port-free-sync": "1.0.5",
     "git-revision-webpack-plugin": "5.0.0",
     "husky": "7.0.1",
     "jest": "27.0.6",

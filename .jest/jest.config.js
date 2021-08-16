@@ -13,7 +13,7 @@ module.exports = {
     }
   },
   preset: 'ts-jest',
-  setupFiles: ['dotenv/config'],
+  setupFiles: ['dotenv/config', '../../.jest/configurePorts.ts'],
   silent: false,
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
