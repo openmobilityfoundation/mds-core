@@ -1,5 +1,14 @@
 import { ModalityPolicy } from '@mds-core/mds-types'
-import { days, now, uuid } from '@mds-core/mds-utils'
+import {
+  now,
+  START_NOW,
+  START_ONE_MONTH_AGO,
+  START_ONE_MONTH_FROM_NOW,
+  START_ONE_WEEK_AGO,
+  START_TOMORROW,
+  START_YESTERDAY,
+  uuid
+} from '@mds-core/mds-utils'
 
 export const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 export const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
@@ -10,13 +19,6 @@ export const POLICY2_UUID = '5681364c-2ebf-4ba2-9ca0-50f4be2a5876'
 export const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
 export const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
 export const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
-
-export const START_ONE_MONTH_AGO = now() - (now() % days(1)) - days(30)
-export const START_ONE_WEEK_AGO = now() - (now() % days(1)) - days(7)
-export const START_YESTERDAY = now() - (now() % days(1))
-export const START_NOW = now()
-export const START_TOMORROW = now() + (now() % days(1))
-export const START_ONE_MONTH_FROM_NOW = now() - (now() % days(1)) + days(30)
 
 export const POLICY_JSON: ModalityPolicy = {
   // TODO guts

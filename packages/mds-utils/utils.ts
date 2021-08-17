@@ -730,6 +730,13 @@ const testEnvSafeguard = () => {
   }
 }
 
+export const START_ONE_MONTH_AGO = now() - (now() % days(1)) - days(30)
+export const START_ONE_WEEK_AGO = now() - (now() % days(1)) - days(7)
+export const START_YESTERDAY = now() - (now() % days(1))
+export const START_NOW = now()
+export const START_TOMORROW = now() + (now() % days(1))
+export const START_ONE_MONTH_FROM_NOW = now() - (now() % days(1)) + days(30)
+
 export {
   UUID_REGEX,
   isUUID,

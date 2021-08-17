@@ -6,11 +6,18 @@ import {
   POLICY_JSON,
   POLICY_WITH_DUPE_RULE,
   PUBLISHED_POLICY,
-  PUBLISH_DATE_VALIDATION_JSON,
-  START_ONE_MONTH_AGO,
-  START_ONE_MONTH_FROM_NOW
+  PUBLISH_DATE_VALIDATION_JSON
 } from '@mds-core/mds-test-data'
-import { clone, ConflictError, NotFoundError, now, uuid, yesterday } from '@mds-core/mds-utils'
+import {
+  clone,
+  ConflictError,
+  NotFoundError,
+  now,
+  START_ONE_MONTH_AGO,
+  START_ONE_MONTH_FROM_NOW,
+  uuid,
+  yesterday
+} from '@mds-core/mds-utils'
 import { PolicyDomainCreateModel, PolicyMetadataDomainModel } from '../@types'
 import { PolicyRepository } from '../repository'
 

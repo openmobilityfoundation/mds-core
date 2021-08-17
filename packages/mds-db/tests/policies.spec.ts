@@ -11,12 +11,18 @@ import {
   POLICY_JSON,
   POLICY_WITH_DUPE_RULE,
   PUBLISHED_POLICY,
-  PUBLISH_DATE_VALIDATION_JSON,
-  START_ONE_MONTH_AGO,
-  START_ONE_MONTH_FROM_NOW
+  PUBLISH_DATE_VALIDATION_JSON
 } from '@mds-core/mds-test-data'
 import { BasePolicy, BaseRule, ModalityPolicyTypeInfo, RULE_TYPE } from '@mds-core/mds-types'
-import { clone, ConflictError, NotFoundError, now, yesterday } from '@mds-core/mds-utils'
+import {
+  clone,
+  ConflictError,
+  NotFoundError,
+  now,
+  START_ONE_MONTH_AGO,
+  START_ONE_MONTH_FROM_NOW,
+  yesterday
+} from '@mds-core/mds-utils'
 import assert from 'assert'
 import MDSDBPostgres from '../index'
 import { LAGeography } from './fixtures'

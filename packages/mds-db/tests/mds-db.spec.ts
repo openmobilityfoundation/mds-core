@@ -29,11 +29,10 @@ import {
   LA_CITY_BOUNDARY,
   makeDevices,
   makeEventsWithTelemetry,
-  POLICY3_JSON,
-  START_ONE_MONTH_AGO
+  POLICY3_JSON
 } from '@mds-core/mds-test-data'
 import { Device, Geography, Recorded, Telemetry, VehicleEvent } from '@mds-core/mds-types'
-import { clone, ConflictError, days, now, rangeRandomInt, uuid } from '@mds-core/mds-utils'
+import { clone, ConflictError, days, now, rangeRandomInt, START_ONE_MONTH_AGO, uuid } from '@mds-core/mds-utils'
 import assert from 'assert'
 import { FeatureCollection } from 'geojson'
 import test from 'unit.js'

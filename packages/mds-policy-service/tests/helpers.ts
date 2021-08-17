@@ -1,9 +1,8 @@
-import { START_ONE_MONTH_FROM_NOW } from '@mds-core/mds-test-data'
-import VENICE from '@mds-core/mds-test-data/test-areas/venice'
 import { BaseRule, Geography, ModalityStatesToEvents, RULE_TYPE } from '@mds-core/mds-types'
-import { uuid, yesterday } from '@mds-core/mds-utils'
+import { START_ONE_MONTH_FROM_NOW, uuid, yesterday } from '@mds-core/mds-utils'
 import { FeatureCollection } from 'geojson'
 import { PolicyDomainCreateModel } from '../@types'
+import VENICE from './venice'
 
 export const GeographyFactory = (overrides = {}): Geography => ({
   name: 'random geo',

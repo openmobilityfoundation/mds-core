@@ -1,13 +1,7 @@
 /* eslint-disable no-console */
 import { GeographyServiceClient, GeographyServiceManager } from '@mds-core/mds-geography-service'
-import {
-  POLICY2_JSON,
-  POLICY3_JSON,
-  POLICY_WITH_DUPE_RULE,
-  START_ONE_MONTH_AGO,
-  START_ONE_MONTH_FROM_NOW
-} from '@mds-core/mds-test-data'
-import { clone, days, now, uuid, yesterday } from '@mds-core/mds-utils'
+import { POLICY2_JSON, POLICY3_JSON, POLICY_WITH_DUPE_RULE } from '@mds-core/mds-test-data'
+import { clone, days, now, START_ONE_MONTH_AGO, START_ONE_MONTH_FROM_NOW, uuid, yesterday } from '@mds-core/mds-utils'
 import { PolicyMetadataDomainModel } from '../@types'
 import { PolicyServiceClient } from '../client'
 import { PolicyRepository } from '../repository'
