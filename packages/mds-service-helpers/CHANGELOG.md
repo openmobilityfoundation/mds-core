@@ -1,5 +1,12 @@
 # @mds-core/mds-service-helpers
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [b6802757]
+  - @mds-core/mds-utils@0.1.34
+
 ## 0.3.0
 
 ### Minor Changes

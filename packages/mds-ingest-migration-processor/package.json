@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-ingest-migration-processor",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "MDS Ingest Data Migration Processor",
   "keywords": [
     "mds"
@@ -20,12 +20,12 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-ingest-service": "0.3.1",
+    "@mds-core/mds-ingest-service": "0.3.2",
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-repository": "0.1.7",
-    "@mds-core/mds-stream-processor": "0.2.3",
+    "@mds-core/mds-repository": "0.1.8",
+    "@mds-core/mds-stream-processor": "0.2.4",
     "@mds-core/mds-types": "0.3.2",
-    "@mds-core/mds-utils": "0.1.33",
+    "@mds-core/mds-utils": "0.1.34",
     "envalid": "7.1.0"
   }
 }

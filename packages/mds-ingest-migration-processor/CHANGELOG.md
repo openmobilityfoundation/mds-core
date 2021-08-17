@@ -1,5 +1,16 @@
 # @mds-core/mds-ingest-migration-processor
 
+## 0.0.6
+
+### Patch Changes
+
+- 74c631ee: Add mappers for migrated ingest data
+- Updated dependencies [b6802757]
+  - @mds-core/mds-utils@0.1.34
+  - @mds-core/mds-ingest-service@0.3.2
+  - @mds-core/mds-repository@0.1.8
+  - @mds-core/mds-stream-processor@0.2.4
+
 ## 0.0.5
 
 ### Patch Changes

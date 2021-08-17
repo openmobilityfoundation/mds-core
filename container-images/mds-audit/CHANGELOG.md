@@ -1,5 +1,11 @@
 # @container-images/mds-audit
 
+## 0.1.35
+
+### Patch Changes
+
+- @mds-core/mds-audit@0.1.47
+
 ## 0.1.34
 
 ### Patch Changes

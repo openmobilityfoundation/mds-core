@@ -1,5 +1,13 @@
 # @mds-core/mds-test-data
 
+## 0.1.34
+
+### Patch Changes
+
+- b6802757: Updating mds-policy-service so mds-test-data not required to build, and moving some constants to mds-utils
+- Updated dependencies [b6802757]
+  - @mds-core/mds-utils@0.1.34
+
 ## 0.1.33
 
 ### Patch Changes

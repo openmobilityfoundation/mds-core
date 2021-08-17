@@ -1,5 +1,19 @@
 # @mds-core/mds-policy-author
 
+## 0.2.1
+
+### Patch Changes
+
+- e6f408d4: fixes some test stability around random service ports
+- Updated dependencies [b6802757]
+- Updated dependencies [e6f408d4]
+  - @mds-core/mds-policy-service@0.2.2
+  - @mds-core/mds-utils@0.1.34
+  - @mds-core/mds-api-helpers@0.1.35
+  - @mds-core/mds-schema-validators@0.2.3
+  - @mds-core/mds-api-server@0.2.1
+  - @mds-core/mds-service-helpers@0.3.1
+
 ## 0.2.0
 
 ### Minor Changes
