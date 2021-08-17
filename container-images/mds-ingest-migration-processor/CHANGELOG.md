@@ -1,5 +1,12 @@
 # @container-images/mds-ingest-migration-processor
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [74c631ee]
+  - @mds-core/mds-ingest-migration-processor@0.0.6
+
 ## 0.0.6
 
 ### Patch Changes

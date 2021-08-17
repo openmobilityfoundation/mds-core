@@ -1,5 +1,19 @@
 # @mds-core/mds-policy-service
 
+## 0.2.2
+
+### Patch Changes
+
+- b6802757: Updating mds-policy-service so mds-test-data not required to build, and moving some constants to mds-utils
+- e6f408d4: fixes some test stability around random service ports
+- Updated dependencies [b6802757]
+  - @mds-core/mds-utils@0.1.34
+  - @mds-core/mds-schema-validators@0.2.3
+  - @mds-core/mds-geography-service@0.1.8
+  - @mds-core/mds-repository@0.1.8
+  - @mds-core/mds-service-helpers@0.3.1
+  - @mds-core/mds-rpc-common@0.1.8
+
 ## 0.2.1
 
 ### Patch Changes
