@@ -826,14 +826,12 @@
       "name": "Tests: mds-policy",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": [
-        "--project",
-        "${workspaceFolder}/tsconfig.json",
-        "-r",
-        "ts-node/register",
-        "--timeout",
-        "0"
+      "runtimeArgs": [
+        "--inspect-brk",
+        "${workspaceRoot}/node_modules/jest/bin/jest",
+        "--runInBand",
+        "--coverage",
+        "false"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
@@ -841,8 +839,7 @@
       "cwd": "${workspaceFolder}/packages/mds-policy",
       "env": {
         "DOTENV_CONFIG_PATH": "${workspaceFolder}/.env",
-        "npm_package_name": "@mds-core/mds-policy",
-        "PATH_PREFIX": "/policy"
+        "npm_package_name": "@mds-core/mds-policy"
       }
     },
     {

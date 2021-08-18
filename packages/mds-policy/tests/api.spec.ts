@@ -22,36 +22,33 @@
 /* eslint-disable prefer-destructuring */
 
 import { ApiServer } from '@mds-core/mds-api-server'
-import db from '@mds-core/mds-db'
-import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import { GeographyServiceClient, GeographyServiceManager } from '@mds-core/mds-geography-service'
 import {
-  GEOGRAPHY2_UUID,
-  GEOGRAPHY_UUID,
-  LA_CITY_BOUNDARY,
-  POLICY2_JSON,
-  POLICY2_UUID,
-  POLICY3_JSON,
-  POLICY4_JSON,
-  POLICY_JSON,
-  POLICY_UUID,
-  PROVIDER_SCOPES,
-  SCOPED_AUTH,
-  SUPERSEDING_POLICY_JSON,
-  veniceSpecOps
-} from '@mds-core/mds-test-data'
+  PolicyDomainCreateModel,
+  PolicyFactory,
+  PolicyRepository,
+  PolicyServiceClient,
+  PolicyServiceManager
+} from '@mds-core/mds-policy-service/'
+import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
+import { POLICY2_JSON, POLICY_JSON, PROVIDER_SCOPES, SCOPED_AUTH } from '@mds-core/mds-test-data'
+import venice from '@mds-core/mds-test-data/test-areas/venice'
 import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
 import {
   clone,
   days,
   now,
   pathPrefix,
+  START_NOW,
   START_ONE_MONTH_AGO,
   START_ONE_MONTH_FROM_NOW,
   START_ONE_WEEK_AGO,
+  START_TOMORROW,
+  uuid,
   yesterday
 } from '@mds-core/mds-utils'
+import { StatusCodes } from 'http-status-codes'
 import supertest from 'supertest'
-import test from 'unit.js'
 import { api } from '../api'
 import { POLICY_API_DEFAULT_VERSION } from '../types'
 
@@ -73,146 +70,170 @@ const APP_JSON = 'application/vnd.mds.policy+json; charset=utf-8; version=0.4'
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
 
+const GeographyServer = GeographyServiceManager.controller()
+const PolicyServer = PolicyServiceManager.controller()
+
+const createPolicy = async (policy?: PolicyDomainCreateModel) =>
+  await PolicyServiceClient.writePolicy(policy || PolicyFactory())
+
+const createPolicyAndGeographyFactory = async (policy?: PolicyDomainCreateModel, geography_overrides = {}) => {
+  const createdPolicy = await createPolicy(policy)
+  await GeographyServiceClient.writeGeographies([
+    {
+      name: 'VENICE',
+      geography_id: createdPolicy.rules[0].geographies[0],
+      geography_json: venice,
+      ...geography_overrides
+    }
+  ])
+  return createdPolicy
+}
+
+const createPublishedPolicy = async (policy?: PolicyDomainCreateModel) => {
+  const createdPolicy = await createPolicyAndGeographyFactory(policy, { publish_date: now() })
+  return await PolicyServiceClient.publishPolicy(createdPolicy?.policy_id, createdPolicy.start_date)
+}
+
 describe('Tests app', () => {
-  before('Initialize the DB', async () => {
-    await db.reinitialize()
-    await db.writeGeography({ name: 'Los Angeles', geography_id: GEOGRAPHY_UUID, geography_json: LA_CITY_BOUNDARY })
+  beforeAll(async () => {
+    await PolicyServer.start()
+    await GeographyServer.start()
   })
 
-  after('Shutdown the DB', async () => {
-    await db.shutdown()
+  beforeEach(async () => await PolicyRepository.deleteAll())
+
+  afterAll(async () => {
+    await PolicyServer.stop()
+    await GeographyServer.stop()
   })
 
   it('tries to get policy for invalid dates', async () => {
     const result = await request
       .get(pathPrefix('/policies?start_date=100000&end_date=100'))
       .set('Authorization', AUTH)
-      .expect(400)
-    test.value(result.body.result === 'start_date after end_date')
+      .expect(StatusCodes.BAD_REQUEST)
+    expect(result.body.error.reason).toStrictEqual('start_date must be after end_date')
   })
 
   it('read back one policy', async () => {
-    await db.writePolicy(ACTIVE_POLICY_JSON)
-    await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
+    const policy = await createPublishedPolicy()
     const result = await request
-      .get(pathPrefix(`/policies/${POLICY_UUID}`))
+      .get(pathPrefix(`/policies/${policy.policy_id}`))
       .set('Authorization', AUTH)
-      .expect(200)
+      .expect(StatusCodes.OK)
     const body = result.body
-    log('read back one policy response:', body)
-    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
-    test.value(result).hasHeader('content-type', APP_JSON)
-    test.value(result.body.data.policy.policies, POLICY_UUID)
+    expect(body.version).toStrictEqual(POLICY_API_DEFAULT_VERSION)
+    expect(result.header['content-type']).toStrictEqual(APP_JSON)
+    expect(result.body.data.policy.policy_id).toStrictEqual(policy.policy_id)
   })
 
   it('reads back all active policies', async () => {
-    const result = await request.get(pathPrefix(`/policies`)).set('Authorization', AUTH).expect(200)
+    const policy = await createPublishedPolicy(PolicyFactory({ start_date: now() }))
+    const result = await request.get(pathPrefix(`/policies`)).set('Authorization', AUTH).expect(StatusCodes.OK)
     const body = result.body
-    log('read back all policies response:', body)
-    test.value(body.data.policies.length).is(1) // only one should be currently valid
-    test.value(body.data.policies[0].policy_id).is(POLICY_UUID)
-    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
-    test.value(result).hasHeader('content-type', APP_JSON)
-    test.value(result.body.data.policies, [ACTIVE_POLICY_JSON])
+    expect(body.data.policies.length).toStrictEqual(1) // only one should be currently valid
+    expect(body.data.policies[0].policy_id).toStrictEqual(policy.policy_id)
+    expect(result.body.data.policies[0]).toStrictEqual(policy)
   })
 
   it('read back all published policies and no superseded ones', async () => {
-    await db.writeGeography({
-      name: 'Los Angeles',
-      geography_id: GEOGRAPHY2_UUID,
-      geography_json: veniceSpecOps
-    })
-    await db.writePolicy(ACTIVE_MONTH_OLD_POLICY_JSON)
-    await db.publishGeography({ geography_id: GEOGRAPHY_UUID })
-    await db.publishGeography({ geography_id: GEOGRAPHY2_UUID })
-    await db.writePolicy(POLICY3_JSON)
-    await db.publishPolicy(POLICY3_JSON.policy_id, POLICY3_JSON.start_date)
-    await db.writePolicy(SUPERSEDING_POLICY_JSON)
-    await db.publishPolicy(SUPERSEDING_POLICY_JSON.policy_id, SUPERSEDING_POLICY_JSON.start_date)
+    const activePolicy = await createPolicyAndGeographyFactory(
+      PolicyFactory({ start_date: START_TOMORROW, end_date: null }),
+      { publish_date: START_NOW }
+    )
+    await PolicyServiceClient.publishPolicy(activePolicy.policy_id, activePolicy.start_date)
+
+    // Active, one-month-old policy
+    await createPublishedPolicy(PolicyFactory({ start_date: START_ONE_MONTH_AGO, end_date: START_ONE_WEEK_AGO }))
+    // future policy
+    await createPublishedPolicy(PolicyFactory({ start_date: START_ONE_MONTH_FROM_NOW }))
+
+    const supersedingPolicy = await createPublishedPolicy(
+      PolicyFactory({
+        start_date: yesterday(),
+        end_date: null,
+        prev_policies: [activePolicy.policy_id],
+        name: 'Superceding Policy'
+      })
+    )
+
     const result = await request
       .get(pathPrefix(`/policies?start_date=${now() - days(365)}&end_date=${now() + days(365)}`))
       .set('Authorization', AUTH)
-      .expect(200)
-    const body = result.body
+      .expect(StatusCodes.OK)
     const policies = result.body.data.policies
-    log('read back all published policies response:', body)
-    test.value(policies.length).is(3)
-    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
-    test.value(result).hasHeader('content-type', APP_JSON)
+
+    expect(policies.length).toStrictEqual(3)
+
     const isSupersededPolicyPresent = policies.some((policy: ModalityPolicy) => {
-      return policy.policy_id === ACTIVE_POLICY_JSON.policy_id
+      return policy.policy_id === activePolicy.policy_id
     })
     const isSupersedingPolicyPresent = policies.some((policy: ModalityPolicy) => {
-      return policy.policy_id === SUPERSEDING_POLICY_JSON.policy_id
+      return policy.policy_id === supersedingPolicy.policy_id
     })
-    test.value(isSupersededPolicyPresent).is(false)
-    test.value(isSupersedingPolicyPresent).is(true)
+    expect(isSupersededPolicyPresent).toStrictEqual(false)
+    expect(isSupersedingPolicyPresent).toStrictEqual(true)
   })
 
   it('read back an old policy', async () => {
+    // Active, one-month-old policy
+    await createPublishedPolicy(PolicyFactory({ start_date: START_ONE_MONTH_AGO, end_date: START_ONE_WEEK_AGO }))
+
     const result = await request
       .get(pathPrefix(`/policies?start_date=${START_ONE_MONTH_AGO}&end_date=${START_ONE_WEEK_AGO}`))
       .set('Authorization', AUTH)
-      .expect(200)
-    const body = result.body
-    const policies = body.data.policies
-    log('read back all policies response:', body)
-    test.value(policies.length).is(1) // only one
-    test.value(policies[0].policy_id).is(POLICY2_UUID)
-    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
-    test.value(result).hasHeader('content-type', APP_JSON)
+      .expect(StatusCodes.OK)
+    const policies = result.body.data.policies
+
+    expect(policies.length).toStrictEqual(1) // only one
   })
 
   it('read back current and future policies', async () => {
+    // future policy
+    await createPublishedPolicy(PolicyFactory({ start_date: START_ONE_MONTH_FROM_NOW }))
+    // current policy
+    await createPublishedPolicy(PolicyFactory({ publish_date: yesterday(), start_date: yesterday() }))
+
     const result = await request
       .get(pathPrefix(`/policies?end_date=${now() + days(365)}`))
       .set('Authorization', AUTH)
-      .expect(200)
+      .expect(StatusCodes.OK)
     const body = result.body
     log('read back all policies response:', body)
-    test.value(body.data.policies.length).is(2) // current and future
-    test.value(body.version).is(POLICY_API_DEFAULT_VERSION)
-    test.value(result).hasHeader('content-type', APP_JSON)
+    expect(body.data.policies.length).toStrictEqual(2) // current and future
   })
 
   it('cannot GET a nonexistent policy', async () => {
-    const result = await request
-      .get(pathPrefix(`/policies/${GEOGRAPHY_UUID}`)) // obvs not a policy
+    await request
+      .get(pathPrefix(`/policies/${uuid()}`)) // obvs not a policy
       .set('Authorization', AUTH)
-      .expect(404)
-    const body = result.body
-    log('read back nonexistent policy response:', body)
-    test.value(result).hasHeader('content-type', APP_JSON)
+      .expect(StatusCodes.NOT_FOUND)
   })
 
   it('tries to read non-UUID policy', async () => {
-    const result = await request.get(pathPrefix('/policies/notarealpolicy')).set('Authorization', AUTH).expect(400)
-    test.value(result.body.result === 'not found')
+    await request.get(pathPrefix('/policies/notarealpolicy')).set('Authorization', AUTH).expect(StatusCodes.BAD_REQUEST)
   })
 
-  it('can GET all unpublished policies', async () => {
-    await db.writePolicy(POLICY4_JSON)
+  it('can GET all active, unpublished policies', async () => {
+    await createPolicy(PolicyFactory({ start_date: START_ONE_MONTH_AGO, end_date: now() + days(1) }))
+    await createPublishedPolicy()
+
     const result = await request
       .get(pathPrefix(`/policies?get_unpublished=true`))
       .set('Authorization', POLICIES_READ_SCOPE)
-      .expect(200)
-    test.assert(result.body.data.policies.length === 1)
+      .expect(StatusCodes.OK)
+    expect(result.body.data.policies.length).toStrictEqual(1)
   })
 
   it('can GET one unpublished policy', async () => {
+    const unpublished = await createPolicy()
     await request
-      .get(pathPrefix(`/policies/${POLICY4_JSON.policy_id}?get_unpublished=true`))
+      .get(pathPrefix(`/policies/${unpublished.policy_id}?get_unpublished=true`))
       .set('Authorization', POLICIES_READ_SCOPE)
-      .expect(200)
+      .expect(StatusCodes.OK)
   })
 
-  it('fails to hit non-existent endpoint with a 404', done => {
-    request
-      .get(pathPrefix(`/foobar`))
-      .set('Authorization', POLICIES_READ_SCOPE)
-      .expect(404)
-      .end(err => {
-        done(err)
-      })
+  it('fails to hit non-existent endpoint with a 404', async () => {
+    await request.get(pathPrefix(`/foobar`)).set('Authorization', POLICIES_READ_SCOPE).expect(StatusCodes.NOT_FOUND)
   })
 })

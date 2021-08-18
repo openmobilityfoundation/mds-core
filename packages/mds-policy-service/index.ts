@@ -17,4 +17,5 @@
 export * from './@types'
 export * from './client'
 export * from './repository'
+export * from './service/manager'
 export * from './tests/helpers'
