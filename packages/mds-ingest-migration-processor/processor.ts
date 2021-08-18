@@ -136,10 +136,13 @@ const EventsMigrationProcessor = StreamProcessor<
   MigratedVehicleEvent
 >(
   MigrationDataSource('event'),
-  async ({ id, service_area_id, ...event }) => ({
-    event: convert_v1_0_0_vehicle_event_to_v1_1_0(convert_v0_4_1_vehicle_event_to_v1_0_0(event)),
-    migrated_from: MigratedFrom('event', id)
-  }),
+  async ({ id, service_area_id, ...event }) =>
+    event.event_type === 'register'
+      ? null
+      : {
+          event: convert_v1_0_0_vehicle_event_to_v1_1_0(convert_v0_4_1_vehicle_event_to_v1_0_0(event)),
+          migrated_from: MigratedFrom('event', id)
+        },
   [IngestServiceMigratedVehicleEventSink()],
   [MigrationErrorSink('event')]
 )

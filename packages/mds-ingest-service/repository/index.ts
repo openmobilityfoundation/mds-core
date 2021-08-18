@@ -368,7 +368,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .values(devices.map(MigratedDeviceToEntityCreate.mapper({ migrated_from })))
         /* DO UPDATE to support PUT vehicle_id */
         .onConflict(
-          '("device_id") DO UPDATE SET "vehicle_id" = EXCLUDED."vehicle_id" WHERE "vehicle_id" <> EXCLUDED."vehicle_id"'
+          '("device_id") DO UPDATE SET "vehicle_id" = EXCLUDED."vehicle_id" WHERE "devices"."vehicle_id" <> EXCLUDED."vehicle_id"'
         )
         .returning('*')
         .execute()
