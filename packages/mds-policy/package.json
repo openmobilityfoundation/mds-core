@@ -31,7 +31,7 @@
     "http-status-codes": "2.1.4"
   },
   "devDependencies": {
-    "@mds-core/mds-geography-service": "0.1.7",
+    "@mds-core/mds-geography-service": "0.1.8",
     "@mds-core/mds-test-data": "0.1.34"
   }
 }
