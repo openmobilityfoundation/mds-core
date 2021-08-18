@@ -20,6 +20,7 @@ import {
 } from '@mds-core/mds-utils'
 import { PolicyDomainCreateModel, PolicyMetadataDomainModel } from '../@types'
 import { PolicyRepository } from '../repository'
+import { PolicyFactory, RulesFactory } from './helpers'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ACTIVE_POLICY_JSON = { ...POLICY_JSON, publish_date: yesterday(), start_date: yesterday() }
@@ -91,7 +92,6 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       await expect(async () => PolicyRepository.readPolicy(policy.policy_id)).rejects.toThrowError(NotFoundError)
     })
 
-    // TODO: Only call from publishPolicy after validating geography in policy-service.ts
     it('can publish a SimplePolicy', async () => {
       await PolicyRepository.writePolicy(SIMPLE_POLICY_JSON)
       await PolicyRepository.publishPolicy(SIMPLE_POLICY_JSON.policy_id, yesterday())
@@ -164,13 +164,6 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       const policy = await PolicyRepository.readPolicy(ACTIVE_POLICY_JSON.policy_id)
       expect(policy.policy_id).toStrictEqual(ACTIVE_POLICY_JSON.policy_id)
       expect(policy.name).toStrictEqual(ACTIVE_POLICY_JSON.name)
-    })
-
-    it('can find Policies by rule id', async () => {
-      await PolicyRepository.writePolicy(SIMPLE_POLICY_JSON)
-      const rule_id = '7ea0d16e-ad15-4337-9722-9924e3af9146'
-      const policies = await PolicyRepository.readPolicies({ rule_id })
-      expect(policies[0].rules.map(rule => rule.rule_id).includes(rule_id)).toBeTruthy()
     })
 
     it('can read rules by rule id', async () => {
@@ -249,6 +242,41 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       const policy = clone(POLICY2_JSON)
       policy.policy_id = '28218022-d333-41be-bda5-1dc4288516d2'
       await expect(PolicyRepository.editPolicy(policy)).rejects.toThrowError(NotFoundError)
+    })
+
+    describe('readPolicies', () => {
+      it('can find Policies by rule id', async () => {
+        await PolicyRepository.writePolicy(SIMPLE_POLICY_JSON)
+        const rule_id = '7ea0d16e-ad15-4337-9722-9924e3af9146'
+        const policies = await PolicyRepository.readPolicies({ rule_id })
+        expect(policies[0].rules.map(rule => rule.rule_id).includes(rule_id)).toBeTruthy()
+      })
+
+      it('can find Policies by geography_ids', async () => {
+        const policy = await PolicyRepository.writePolicy(
+          PolicyFactory({
+            rules: [
+              ...RulesFactory({ geographies: [uuid(), uuid()] }),
+              ...RulesFactory({ geographies: [uuid(), uuid()] })
+            ]
+          })
+        )
+        await PolicyRepository.writePolicy(
+          PolicyFactory({
+            rules: [
+              ...RulesFactory({ geographies: [uuid(), uuid()] }),
+              ...RulesFactory({ geographies: [uuid(), uuid()] })
+            ]
+          })
+        )
+        const geography_ids = policy.rules[0].geographies
+        const policies = await PolicyRepository.readPolicies({ geography_ids })
+        /* expect 1 policy to match */
+        expect(policies.length).toStrictEqual(1)
+        const rule_geography_ids = policies[0].rules.map(rule => rule.geographies).flat()
+        /* expect the geography IDs from rule[0] to both be contained within the rule geographies */
+        geography_ids.forEach(geography_id => expect(rule_geography_ids).toContain(geography_id))
+      })
     })
   })
 

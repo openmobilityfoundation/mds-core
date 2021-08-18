@@ -77,5 +77,5 @@ export interface ReadPolicyQueryParams {
   start_date?: Timestamp
   get_unpublished?: Nullable<boolean>
   get_published?: Nullable<boolean>
-  geography_id?: Nullable<UUID>
+  geography_ids?: Nullable<UUID[]>
 }

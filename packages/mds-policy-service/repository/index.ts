@@ -34,7 +34,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
   }
 
   public readPolicies = async (params: ReadPolicyQueryParams = {}) => {
-    const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_id } = params
+    const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_ids } = params
 
     try {
       const connection = await this.connect('ro')
@@ -63,10 +63,11 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
         query.andWhere("policy_json->>'start_date' >= :start_date", { start_date })
       }
 
-      if (geography_id) {
-        query.andWhere(`policy_json::jsonb @> :json_query`, {
-          json_query: { rules: [{ geographies: [geography_id] }] }
-        })
+      if (geography_ids) {
+        query.andWhere(
+          `array( select json_array_elements_text(json_array_elements(policy_json->'rules')->'geographies')) && :geography_ids`,
+          { geography_ids }
+        )
       }
 
       const entities = await query.getMany()
@@ -236,7 +237,6 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
   }
 
   /* Only publish the policy if the geographies are successfully published first */
-  // TODO: move "check for published geographies" to service.
   public publishPolicy = async (policy_id: UUID, publish_date = now()) => {
     try {
       if (await this.isPolicyPublished(policy_id)) {
@@ -333,10 +333,6 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     } catch (error) {
       throw RepositoryError(error)
     }
-  }
-
-  public findPoliciesByGeographyID = async (geography_id: UUID) => {
-    return await this.readPolicies({ geography_id })
   }
 
   public deleteAll = async () => {
