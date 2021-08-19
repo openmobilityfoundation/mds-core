@@ -30,7 +30,7 @@ import {
   TNC_VEHICLE_STATE,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
-import { PolicyDomainModel, PolicyMetadataDomainModel } from '../@types'
+import { PolicyDomainModel, PolicyMetadataDomainModel, PresentationOptions } from '../@types'
 
 const stringSchema = (options = {}) => ({ type: 'string', ...options })
 const uuidSchema = { type: 'string', format: 'uuid' }
@@ -137,5 +137,14 @@ export const { validate: validatePolicyMetadataDomainModel, isValid: isValidPoli
     properties: {
       policy_id: { type: 'string', format: 'uuid' },
       policy_metadata: { type: 'object' }
+    }
+  })
+
+export const { validate: validatePresentationOptions, isValid: isValidPresentationOptions } =
+  SchemaValidator<PresentationOptions>({
+    $id: 'PresentationOptions',
+    type: 'object',
+    properties: {
+      withStatus: { type: 'boolean' }
     }
   })

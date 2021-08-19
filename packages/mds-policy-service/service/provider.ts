@@ -20,7 +20,7 @@ import { ProcessController, ServiceException, ServiceProvider, ServiceResult } f
 import { BadParamsError, DependencyMissingError } from '@mds-core/mds-utils'
 import { PolicyService } from '../@types'
 import { PolicyRepository } from '../repository'
-import { validatePolicyDomainModel, validatePolicyMetadataDomainModel } from './validators'
+import { validatePolicyDomainModel, validatePolicyMetadataDomainModel, validatePresentationOptions } from './validators'
 
 const serviceErrorWrapper = async <T>(method: string, exec: () => Promise<T>) => {
   try {
@@ -38,13 +38,19 @@ export const PolicyServiceProvider: ServiceProvider<PolicyService> & ProcessCont
   name: async () => ServiceResult('mds-policy-service'),
   writePolicy: policy =>
     serviceErrorWrapper('writePolicy', () => PolicyRepository.writePolicy(validatePolicyDomainModel(policy))),
-  readPolicies: params => serviceErrorWrapper('readPolicies', () => PolicyRepository.readPolicies(params)),
+  readPolicies: (params, presentationOptions) =>
+    serviceErrorWrapper('readPolicies', () =>
+      PolicyRepository.readPolicies(params, validatePresentationOptions(presentationOptions ?? {}))
+    ),
   readActivePolicies: timestamp =>
     serviceErrorWrapper('readActivePolicies', () => PolicyRepository.readActivePolicies(timestamp)),
   deletePolicy: policy_id => serviceErrorWrapper('deletePolicy', () => PolicyRepository.deletePolicy(policy_id)),
   editPolicy: policy =>
     serviceErrorWrapper('editPolicy', () => PolicyRepository.editPolicy(validatePolicyDomainModel(policy))),
-  readPolicy: policy_id => serviceErrorWrapper('readPolicy', () => PolicyRepository.readPolicy(policy_id)),
+  readPolicy: (policy_id, presentationOptions) =>
+    serviceErrorWrapper('readPolicy', () =>
+      PolicyRepository.readPolicy(policy_id, validatePresentationOptions(presentationOptions ?? {}))
+    ),
   readSinglePolicyMetadata: policy_id =>
     serviceErrorWrapper('readSinglePolicyMetadata', () => PolicyRepository.readSinglePolicyMetadata(policy_id)),
   readBulkPolicyMetadata: params =>
@@ -64,12 +70,22 @@ export const PolicyServiceProvider: ServiceProvider<PolicyService> & ProcessCont
     ),
   publishPolicy: (policy_id, publish_date) =>
     serviceErrorWrapper('publishPolicy', async () => {
-      const policy = await PolicyRepository.readPolicy(policy_id)
-      const geographies = await GeographyServiceClient.getGeographiesByIds(policy.rules.map(r => r.geographies).flat())
+      const { rules, prev_policies } = await PolicyRepository.readPolicy(policy_id)
+      const geographies = await GeographyServiceClient.getGeographiesByIds(rules.map(r => r.geographies).flat())
 
       if (geographies.some(geography => !geography?.publish_date))
         throw new DependencyMissingError(`some geographies not published!`)
 
-      return await PolicyRepository.publishPolicy(policy_id, publish_date)
+      const publishedPolicy = await PolicyRepository.publishPolicy(policy_id, publish_date)
+
+      if (prev_policies) {
+        await Promise.all(
+          prev_policies.map(superseded_policy_id =>
+            PolicyRepository.updatePolicySupersededByColumn(superseded_policy_id, policy_id)
+          )
+        )
+      }
+
+      return publishedPolicy
     })
 }

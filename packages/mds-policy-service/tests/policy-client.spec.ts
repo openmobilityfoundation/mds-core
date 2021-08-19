@@ -6,7 +6,7 @@ import { PolicyMetadataDomainModel } from '../@types'
 import { PolicyServiceClient } from '../client'
 import { PolicyRepository } from '../repository'
 import { PolicyServiceManager } from '../service/manager'
-import { GeographyFactory, PolicyFactory, RulesFactory } from './helpers'
+import { createPolicyAndGeographyFactory, GeographyFactory, PolicyFactory, RulesFactory } from './helpers'
 
 const GeographyServer = GeographyServiceManager.controller()
 const PolicyServer = PolicyServiceManager.controller()
@@ -96,11 +96,14 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       const policy = await PolicyServiceClient.readPolicy(deletablePolicy.policy_id)
       expect(policy.publish_date).toBeFalsy()
       await PolicyServiceClient.deletePolicy(policy.policy_id)
-      const policy_result = await PolicyServiceClient.readPolicies({
-        policy_ids: [policy.policy_id],
-        get_published: null,
-        get_unpublished: null
-      })
+      const policy_result = await PolicyServiceClient.readPolicies(
+        {
+          policy_ids: [policy.policy_id],
+          get_published: null,
+          get_unpublished: null
+        },
+        {}
+      )
       expect(policy_result).toStrictEqual([])
     })
 
@@ -310,6 +313,213 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
         const changedMetadata: PolicyMetadataDomainModel<{ name: string }> =
           await PolicyServiceClient.readSinglePolicyMetadata(p1.policy_id)
         expect(changedMetadata.policy_metadata?.name).toStrictEqual('steve')
+      })
+    })
+
+    describe('Test "Policy Status" behavior', () => {
+      describe('Single filter tests', () => {
+        it('Can filter for draft policies', async () => {
+          const policies = [PolicyFactory(), PolicyFactory()]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          const [policyToPublish, draftPolicy] = policies
+
+          await PolicyServiceClient.publishPolicy(policyToPublish.policy_id, policyToPublish.start_date)
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['draft'] })
+
+          expect(results.length).toStrictEqual(1)
+          expect(results[0]).toMatchObject(draftPolicy)
+        })
+
+        it('Can filter for active policies', async () => {
+          const policies = [PolicyFactory({ start_date: yesterday() }), PolicyFactory()]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          const [policyToPublish] = policies
+
+          const activePolicy = await PolicyServiceClient.publishPolicy(
+            policyToPublish.policy_id,
+            policyToPublish.start_date
+          )
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['active'] })
+
+          expect(results.length).toStrictEqual(1)
+          expect(results[0]).toStrictEqual(activePolicy)
+        })
+
+        it('Can filter for pending policies', async () => {
+          const policies = [PolicyFactory({ start_date: now() + days(1) }), PolicyFactory()]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          const [policyToPublish] = policies
+
+          const pendingPolicy = await PolicyServiceClient.publishPolicy(policyToPublish.policy_id, yesterday())
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['pending'] })
+
+          expect(results.length).toStrictEqual(1)
+          expect(results[0]).toStrictEqual(pendingPolicy)
+        })
+
+        it('Can filter for deactivated policies', async () => {
+          const [firstPolicy, secondPolicy] = (() => {
+            const firstPolicy = PolicyFactory({ start_date: yesterday() })
+            const secondPolicy = PolicyFactory({ start_date: yesterday(), prev_policies: [firstPolicy.policy_id] })
+
+            return [firstPolicy, secondPolicy]
+          })()
+          const policies = [firstPolicy, secondPolicy]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          await PolicyServiceClient.publishPolicy(firstPolicy.policy_id, firstPolicy.start_date)
+          await PolicyServiceClient.publishPolicy(secondPolicy.policy_id, secondPolicy.start_date)
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['deactivated'] })
+          expect(results.length).toStrictEqual(1)
+          expect(results[0]).toMatchObject(firstPolicy)
+        })
+
+        it('Can filter for expired policies', async () => {
+          const policies = [PolicyFactory({ start_date: now() - days(2), end_date: now() - days(1) }), PolicyFactory()]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          // expiredPolicy is the first, cause ordered lists!
+          const [expiredPolicy] = await Promise.all(
+            policies.map(policy => PolicyServiceClient.publishPolicy(policy.policy_id, policy.start_date))
+          )
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['expired'] })
+
+          expect(results.length).toStrictEqual(1)
+          expect(results[0]).toStrictEqual(expiredPolicy)
+        })
+      })
+
+      describe('Multi-filter tests', () => {
+        it('Can filter on draft & pending policies simultaneously', async () => {
+          const policies = [PolicyFactory({ start_date: now() + days(1) }), PolicyFactory()]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          const [policyToPublish] = policies
+
+          await PolicyServiceClient.publishPolicy(policyToPublish.policy_id, yesterday())
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['pending', 'draft'] })
+
+          expect(results.length).toStrictEqual(2)
+        })
+
+        it('Can filter on draft and active policies simultaneously', async () => {
+          const policies = [PolicyFactory({ start_date: now() - days(1) }), PolicyFactory()]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          const [policyToPublish] = policies
+
+          await PolicyServiceClient.publishPolicy(policyToPublish.policy_id, policyToPublish.start_date)
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['active', 'draft'] })
+
+          expect(results.length).toStrictEqual(2)
+        })
+
+        it('Can filter on active and deactivated policies simultaneously', async () => {
+          const [firstPolicy, secondPolicy] = (() => {
+            const firstPolicy = PolicyFactory({ start_date: yesterday() })
+            const secondPolicy = PolicyFactory({ start_date: yesterday(), prev_policies: [firstPolicy.policy_id] })
+
+            return [firstPolicy, secondPolicy]
+          })()
+          const policies = [firstPolicy, secondPolicy]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          await PolicyServiceClient.publishPolicy(firstPolicy.policy_id, firstPolicy.start_date)
+          await PolicyServiceClient.publishPolicy(secondPolicy.policy_id, secondPolicy.start_date)
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['active', 'deactivated'] })
+
+          expect(results.length).toStrictEqual(2)
+        })
+
+        it('Can filter on active and expired policies simultaneously', async () => {
+          const policies = [
+            PolicyFactory({ start_date: now() - days(2), end_date: now() - days(1) }),
+            PolicyFactory({ start_date: now() - days(1) })
+          ]
+
+          await Promise.all(
+            policies.map(policy =>
+              createPolicyAndGeographyFactory(PolicyServiceClient, GeographyServiceClient, policy, {
+                publish_date: now()
+              })
+            )
+          )
+
+          await Promise.all(
+            policies.map(policy => PolicyServiceClient.publishPolicy(policy.policy_id, policy.start_date))
+          )
+
+          const results = await PolicyServiceClient.readPolicies({ statuses: ['expired', 'active'] })
+
+          expect(results.length).toStrictEqual(2)
+        })
       })
     })
   })

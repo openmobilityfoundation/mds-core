@@ -18,6 +18,9 @@ import { DomainModelCreate } from '@mds-core/mds-repository'
 import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
 import { BaseRule, ModalityStatesToEvents, Nullable, RULE_TYPE, Timestamp, UUID } from '@mds-core/mds-types'
 
+export const POLICY_STATUS = <const>['draft', 'pending', 'active', 'expired', 'deactivated', 'unknown']
+export type POLICY_STATUS = typeof POLICY_STATUS[number]
+
 export interface PolicyDomainModel {
   policy_id: UUID
   name: string
@@ -28,6 +31,7 @@ export interface PolicyDomainModel {
   prev_policies: Nullable<UUID[]>
   rules: BaseRule<ModalityStatesToEvents, Exclude<RULE_TYPE, 'rate'>>[]
   publish_date: Nullable<Timestamp>
+  status?: POLICY_STATUS // Computed property which is returned from the service, not written on creation.
 }
 
 export type PolicyDomainCreateModel = DomainModelCreate<PolicyDomainModel>
@@ -39,16 +43,18 @@ export interface PolicyMetadataDomainModel<M extends {} = {}> {
 
 export type PolicyMetadataDomainCreateModel = DomainModelCreate<PolicyMetadataDomainModel>
 
+export type PresentationOptions = { withStatus?: boolean }
+
 export interface PolicyService {
   name: () => string
   writePolicy: (policy: PolicyDomainCreateModel) => PolicyDomainModel
-  readPolicies: (params: ReadPolicyQueryParams) => PolicyDomainModel[]
+  readPolicies: (params: ReadPolicyQueryParams, presentationOptions?: PresentationOptions) => PolicyDomainModel[]
   readActivePolicies: (timestamp: Timestamp) => PolicyDomainModel[]
   deletePolicy: (policy_id: UUID) => UUID
   editPolicy: (policy: PolicyDomainCreateModel) => PolicyDomainModel
   publishPolicy: (policy_id: UUID, publish_date: Timestamp) => PolicyDomainModel
   readBulkPolicyMetadata: <M>(params: ReadPolicyQueryParams) => PolicyMetadataDomainModel<M>[]
-  readPolicy: (policy_id: UUID) => PolicyDomainModel
+  readPolicy: (policy_id: UUID, presentationOptions?: PresentationOptions) => PolicyDomainModel
   readSinglePolicyMetadata: <M>(policy_id: UUID) => PolicyMetadataDomainModel<M>
   updatePolicyMetadata: (policy_metadata: PolicyMetadataDomainModel) => PolicyMetadataDomainModel
   writePolicyMetadata: (policy_metadata: PolicyMetadataDomainModel) => PolicyMetadataDomainModel
@@ -77,5 +83,6 @@ export interface ReadPolicyQueryParams {
   start_date?: Timestamp
   get_unpublished?: Nullable<boolean>
   get_published?: Nullable<boolean>
+  statuses?: Exclude<POLICY_STATUS, 'unknown'>[]
   geography_ids?: Nullable<UUID[]>
 }

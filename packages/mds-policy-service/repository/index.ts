@@ -17,7 +17,14 @@
 import { InsertReturning, ReadWriteRepository, RepositoryError } from '@mds-core/mds-repository'
 import { Timestamp, UUID } from '@mds-core/mds-types'
 import { ConflictError, NotFoundError, now, testEnvSafeguard } from '@mds-core/mds-utils'
-import { PolicyDomainCreateModel, PolicyDomainModel, PolicyMetadataDomainModel, ReadPolicyQueryParams } from '../@types'
+import {
+  PolicyDomainCreateModel,
+  PolicyDomainModel,
+  PolicyMetadataDomainModel,
+  POLICY_STATUS,
+  PresentationOptions,
+  ReadPolicyQueryParams
+} from '../@types'
 import entities from './entities'
 import { PolicyEntity } from './entities/policy-entity'
 import { PolicyMetadataEntity } from './entities/policy-metadata-entity'
@@ -28,13 +35,14 @@ import {
   PolicyMetadataEntityToDomain
 } from './mappers'
 import migrations from './migrations'
+
 class PolicyReadWriteRepository extends ReadWriteRepository {
   constructor() {
     super('policies', { entities, migrations })
   }
 
-  public readPolicies = async (params: ReadPolicyQueryParams = {}) => {
-    const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_ids } = params
+  public readPolicies = async (params: ReadPolicyQueryParams = {}, presentationOptions: PresentationOptions = {}) => {
+    const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_ids, statuses } = params
 
     try {
       const connection = await this.connect('ro')
@@ -70,8 +78,47 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
         )
       }
 
+      if (statuses) {
+        /** Turns statuses into expressions with params */
+        const statusToExpressionWithParams: {
+          [key in Exclude<POLICY_STATUS, 'unknown'>]: { expression: string; params?: object }
+        } = {
+          draft: { expression: "policy_json->>'publish_date' IS NULL" },
+          deactivated: { expression: 'superseded_by IS NOT NULL AND array_length(superseded_by, 1) >= 1' },
+          expired: {
+            expression: "policy_json->>'end_date' IS NOT NULL AND policy_json->>'end_date' <= :now",
+            params: { now: now() }
+          },
+          pending: {
+            expression:
+              "policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= :now AND policy_json->>'start_date' >= :now",
+            params: { now: now() }
+          },
+          active: {
+            expression:
+              "policy_json->>'start_date' IS NOT NULL AND policy_json->>'start_date' <= :now AND policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= :now",
+            params: { now: now() }
+          }
+        }
+
+        const expressionsWithParams = statuses.map((status) => statusToExpressionWithParams[status])
+
+        if (expressionsWithParams.length === 1) {
+          const [{ expression, params }] = expressionsWithParams
+          query.andWhere(expression, params)
+        } else {
+          const { expressions, params } = expressionsWithParams.reduce<{ expressions: string[]; params: object }>(
+            ({ expressions, params: paramsList }, { expression, params }) => {
+              return { expressions: [...expressions, expression], params: { ...paramsList, ...params } }
+            },
+            { expressions: [], params: {} }
+          )
+          query.andWhere(`(${expressions.join(' OR ')})`, params)
+        }
+      }
+
       const entities = await query.getMany()
-      return entities.map(PolicyEntityToDomain.map)
+      return entities.map(entity => PolicyEntityToDomain.map(entity, presentationOptions))
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -89,7 +136,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
           publish_date: timestamp
         })
         .getMany()
-      return entities.map(PolicyEntityToDomain.map)
+      return entities.map(entity => PolicyEntityToDomain.map(entity))
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -125,11 +172,11 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public readPolicy = async (policy_id: UUID) => {
+  public readPolicy = async (policy_id: UUID, presentationOptions: PresentationOptions = {}) => {
     try {
       const connection = await this.connect('ro')
       const entity = await connection.getRepository(PolicyEntity).findOneOrFail({ policy_id })
-      return PolicyEntityToDomain.map(entity)
+      return PolicyEntityToDomain.map(entity, presentationOptions)
     } catch (error) {
       if (error.name === 'EntityNotFound') {
         throw new NotFoundError(error)
@@ -330,6 +377,35 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
         )
         .getOneOrFail()
       return PolicyEntityToDomain.map(policy).rules.filter(r => r.rule_id === rule_id)
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  /**
+   * @param {UUID} policy_id policy_id which is being superseded
+   * @param {UUID} superseding_policy_id policy_id which is superseding the original policy_id
+   */
+  public updatePolicySupersededByColumn = async (policy_id: UUID, superseding_policy_id: UUID) => {
+    try {
+      const connection = await this.connect('rw')
+
+      const { superseded_by } = await connection.getRepository(PolicyEntity).findOneOrFail({ policy_id })
+
+      const updatedSupersededBy = superseded_by ? [...superseded_by, superseding_policy_id] : [superseding_policy_id]
+
+      const {
+        raw: [updated]
+      } = await connection
+        .getRepository(PolicyEntity)
+        .createQueryBuilder()
+        .update()
+        .set({ superseded_by: updatedSupersededBy })
+        .where('policy_id = :policy_id', { policy_id })
+        .returning('*')
+        .execute()
+
+      return PolicyEntityToDomain.map(updated)
     } catch (error) {
       throw RepositoryError(error)
     }

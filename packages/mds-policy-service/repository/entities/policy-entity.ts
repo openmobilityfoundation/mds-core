@@ -15,12 +15,14 @@
  */
 
 import { IdentityColumn } from '@mds-core/mds-repository'
+import { Nullable, UUID } from '@mds-core/mds-types'
 import { Column, Entity } from 'typeorm'
 import { PolicyDomainModel } from '../../@types'
 
 export interface PolicyEntityModel extends IdentityColumn {
   policy_id: PolicyDomainModel['policy_id']
   policy_json: PolicyDomainModel
+  superseded_by: Nullable<UUID[]>
 }
 
 @Entity('policies')
@@ -30,4 +32,7 @@ export class PolicyEntity extends IdentityColumn(class {}) implements PolicyEnti
 
   @Column('json')
   policy_json: PolicyEntityModel['policy_json']
+
+  @Column('uuid', { nullable: true, array: true })
+  superseded_by: PolicyEntityModel['superseded_by']
 }

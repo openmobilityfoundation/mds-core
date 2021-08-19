@@ -228,8 +228,7 @@ describe('Tests app', () => {
     })
 
     it('creates one past policy', async () => {
-      const policy = PolicyFactory({start_date: now() - days(30),
-        end_date: now() - days(7)})
+      const policy = PolicyFactory({ start_date: now() - days(30), end_date: now() - days(7) })
       await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
@@ -238,8 +237,7 @@ describe('Tests app', () => {
     })
 
     it('creates one future new policy', async () => {
-      const policy = PolicyFactory({start_date: now() + days(30),
-        end_date: null})
+      const policy = PolicyFactory({ start_date: now() + days(30), end_date: null })
       await request
         .post(pathPrefix(`/policies`))
         .set('Authorization', POLICIES_WRITE_SCOPE)
@@ -381,7 +379,9 @@ describe('Tests app', () => {
     })
 
     it('cannot publish a policy if the start_date would precede the publish_date', async () => {
-      const policy = await createPolicyAndGeographyFactory(PolicyFactory({start_date: now() - days(30)}), { publish_date: now() })
+      const policy = await createPolicyAndGeographyFactory(PolicyFactory({ start_date: now() - days(30) }), {
+        publish_date: now()
+      })
       const result = await request
         .post(pathPrefix(`/policies/${policy.policy_id}/publish`))
         .set('Authorization', POLICIES_PUBLISH_SCOPE)
