@@ -1,6 +1,6 @@
 import findPort from 'find-port-free-sync'
 
-const randPort = () => `${findPort({ start: 1024 })}`
+const randPort = () => `${findPort({ start: 4000, end: 6000 })}`
 
 /**
  * Configures random ports for each API/Service
