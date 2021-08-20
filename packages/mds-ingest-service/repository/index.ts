@@ -71,7 +71,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .values(events.map(EventDomainToEntityCreate.mapper()))
         .returning('*')
         .execute()
-      return entities.map(EventEntityToDomain.map)
+      return entities.map(EventEntityToDomain.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -88,7 +88,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .values(events.map(TelemetryDomainToEntityCreate.mapper()))
         .returning('*')
         .execute()
-      return entities.map(TelemetryEntityToDomain.map)
+      return entities.map(TelemetryEntityToDomain.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -105,7 +105,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .values(events.map(DeviceDomainToEntityCreate.mapper()))
         .returning('*')
         .execute()
-      return entities.map(DeviceEntityToDomain.map)
+      return entities.map(DeviceEntityToDomain.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -124,7 +124,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .values(eventAnnotations.map(EventAnnotationDomainToEntityCreate.mapper()))
         .returning('*')
         .execute()
-      return entities.map(EventAnnotationEntityToDomain.map)
+      return entities.map(EventAnnotationEntityToDomain.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -134,7 +134,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     try {
       const connection = await this.connect('ro')
       const entities = await connection.getRepository(DeviceEntity).find({ where: { device_id: Any(ids) } })
-      return entities.map(DeviceEntityToDomain.map)
+      return entities.map(DeviceEntityToDomain.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -264,7 +264,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
       }
 
       return {
-        events: data.map(EventEntityToDomain.map),
+        events: data.map(EventEntityToDomain.mapper()),
         cursor: {
           next: nextAfterCursor && this.buildCursor({ ...cursor, beforeCursor: null, afterCursor: nextAfterCursor }),
           prev: nextBeforeCursor && this.buildCursor({ ...cursor, beforeCursor: nextBeforeCursor, afterCursor: null })
@@ -378,7 +378,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public writeMigratedEvent = async (
+  public writeMigratedVehicleEvent = async (
     events: Array<VehicleEvent & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
   ): Promise<EventDomainModel[]> => {

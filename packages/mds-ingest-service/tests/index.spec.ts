@@ -599,6 +599,35 @@ describe('Ingest Service Tests', () => {
     })
   })
 
+  describe('writes migrated data', () => {
+    it('writes migrated device', async () => {
+      expect(
+        await IngestServiceClient.writeMigratedDevice(
+          { recorded: 0, ...TEST_TNC_A },
+          { migrated_from_source: 'mds.device', migrated_from_version: '0.0', migrated_from_id: 1 }
+        )
+      ).toMatchObject(TEST_TNC_A)
+    })
+
+    it('writes migrated event', async () => {
+      expect(
+        await IngestServiceClient.writeMigratedVehicleEvent(
+          { trip_state: null, recorded: 0, ...TEST_EVENT_A1 },
+          { migrated_from_source: 'mds.event', migrated_from_version: '0.0', migrated_from_id: 1 }
+        )
+      ).toMatchObject(TEST_EVENT_A1)
+    })
+
+    it('writes migrated telemetry', async () => {
+      expect(
+        await IngestServiceClient.writeMigratedTelemetry(
+          { recorded: 0, ...TEST_TELEMETRY_A1 },
+          { migrated_from_source: 'mds.telemetry', migrated_from_version: '0.0', migrated_from_id: 1 }
+        )
+      ).toMatchObject(TEST_TELEMETRY_A1)
+    })
+  })
+
   afterAll(async () => {
     await IngestRepository.shutdown()
     await IngestServer.stop()

@@ -83,10 +83,7 @@ const IngestServiceMigratedDeviceSink = (): StreamSink<MigratedDevice> => () => 
     write: async message => {
       try {
         const [{ device, migrated_from }] = asArray(message)
-        const migrated = await IngestServiceClient.writeMigratedDevice(device, migrated_from)
-        if (migrated) {
-          logger.info(`Migrated device ${migrated.device_id}`)
-        }
+        await IngestServiceClient.writeMigratedDevice(device, migrated_from)
       } catch (error) {
         logger.error(`Error migrating device`, { topic, message })
         throw error
@@ -118,10 +115,7 @@ const IngestServiceMigratedVehicleEventSink = (): StreamSink<MigratedVehicleEven
     write: async message => {
       try {
         const [{ event, migrated_from }] = asArray(message)
-        const migrated = await IngestServiceClient.writeMigratedVehicleEvent(event, migrated_from)
-        if (migrated) {
-          logger.info(`Migrated event ${migrated.device_id}/${migrated.timestamp}`)
-        }
+        await IngestServiceClient.writeMigratedVehicleEvent(event, migrated_from)
       } catch (error) {
         logger.error(`Error migrating event`, { topic, message })
         throw error
@@ -159,10 +153,7 @@ const IngestServiceMigratedTelemetrySink = (): StreamSink<MigratedTelemetry> => 
     write: async message => {
       try {
         const [{ telemetry, migrated_from }] = asArray(message)
-        const migrated = await IngestServiceClient.writeMigratedTelemetry(telemetry, migrated_from)
-        if (migrated) {
-          logger.info(`Migrated telemetry ${migrated.device_id}/${migrated.timestamp}`)
-        }
+        await IngestServiceClient.writeMigratedTelemetry(telemetry, migrated_from)
       } catch (error) {
         logger.error(`Error migrating telemetry`, { topic, message })
         throw error

@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
+import cache from '@mds-core/mds-agency-cache'
 import logger from '@mds-core/mds-logger'
 import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
-import { UUID } from '@mds-core/mds-types'
-import { EventAnnotationDomainCreateModel, IngestMigrationService, IngestService } from '../@types'
+import stream from '@mds-core/mds-stream'
+import { Nullable, Telemetry, UUID } from '@mds-core/mds-types'
+import {
+  EventAnnotationDomainCreateModel,
+  EventDomainModel,
+  IngestMigrationService,
+  IngestService,
+  TelemetryDomainModel
+} from '../@types'
 import { IngestRepository } from '../repository'
 import {
   validateEventAnnotationDomainCreateModels,
@@ -26,9 +34,13 @@ import {
 } from './validators'
 
 export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrationService> & ProcessController = {
-  start: IngestRepository.initialize,
+  start: async () => {
+    await Promise.all([IngestRepository.initialize(), cache.startup(), stream.initialize()])
+  },
 
-  stop: IngestRepository.shutdown,
+  stop: async () => {
+    await Promise.all([IngestRepository.shutdown(), cache.shutdown(), stream.shutdown()])
+  },
 
   getEventsUsingOptions: async params => {
     try {
@@ -74,8 +86,17 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
 
   writeMigratedDevice: async (device, migrated_from) => {
     try {
-      const [migrated = null] = await IngestRepository.writeMigratedDevice([device], migrated_from)
-      return ServiceResult(migrated)
+      const [model = null] = await IngestRepository.writeMigratedDevice([device], migrated_from)
+      if (model) {
+        const [cached, streamed] = await Promise.allSettled([cache.writeDevice(model), stream.writeDevice(model)])
+        if (cached.status === 'rejected') {
+          logger.warn('Error writing device to cache', { device: model, error: cached.reason })
+        }
+        if (streamed.status === 'rejected') {
+          logger.warn('Error writing device to stream', { device: model, error: streamed.reason })
+        }
+      }
+      return ServiceResult(model)
     } catch (error) {
       const exception = ServiceException('Error in writeMigratedDevice', error)
       logger.error('writeMigratedDevice exception', { exception, error })
@@ -83,10 +104,61 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
     }
   },
 
-  writeMigratedVehicleEvent: async (event, migrated_from) => {
+  writeMigratedVehicleEvent: async ({ telemetry, ...event }, migrated_from) => {
+    // TODO: All this splitting apart and recombining of telemetry should be handled by the repository.
+    // The fact that event/telemetry data is split between tables should not be something the service
+    // need be aware of. The repository should split them apart for writes and join them togehter for reads.
+    // Will create a ticket for this refactoring to be done separately.
+    const eventTelemetryModel = (
+      telemetry: Nullable<Telemetry> | undefined,
+      options: { recorded: number }
+    ): Nullable<TelemetryDomainModel> => {
+      if (telemetry) {
+        const {
+          charge = null,
+          gps: {
+            lat,
+            lng,
+            speed = null,
+            heading = null,
+            accuracy = null,
+            hdop = null,
+            altitude = null,
+            satellites = null
+          },
+          stop_id = null,
+          recorded = options.recorded,
+          ...common
+        } = telemetry
+        return {
+          ...common,
+          stop_id,
+          charge,
+          recorded,
+          gps: { lat, lng, speed, heading, accuracy, hdop, altitude, satellites }
+        }
+      }
+      return null
+    }
+
     try {
-      const [migrated = null] = await IngestRepository.writeMigratedEvent([event], migrated_from)
-      return ServiceResult(migrated)
+      const [migrated = null] = await IngestRepository.writeMigratedVehicleEvent([event], migrated_from)
+      if (migrated) {
+        const model: EventDomainModel = {
+          ...event,
+          ...migrated,
+          telemetry: eventTelemetryModel(telemetry, { recorded: event.recorded })
+        }
+        const [cached, streamed] = await Promise.allSettled([cache.writeEvent(model), stream.writeEvent(model)])
+        if (cached.status === 'rejected') {
+          logger.warn('Error writing event to cache', { event: model, error: cached.reason })
+        }
+        if (streamed.status === 'rejected') {
+          logger.warn('Error writing event to stream', { event: model, error: streamed.reason })
+        }
+        return ServiceResult(model)
+      }
+      return ServiceResult(null)
     } catch (error) {
       const exception = ServiceException('Error in writeMigratedVehicleEvent', error)
       logger.error('writeMigratedVehicleEvent exception', { exception, error })
@@ -96,8 +168,20 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
 
   writeMigratedTelemetry: async (telemetry, migrated_from) => {
     try {
-      const [migrated = null] = await IngestRepository.writeMigratedTelemetry([telemetry], migrated_from)
-      return ServiceResult(migrated)
+      const [model = null] = await IngestRepository.writeMigratedTelemetry([telemetry], migrated_from)
+      if (model) {
+        const [cached, streamed] = await Promise.allSettled([
+          cache.writeTelemetry([model]),
+          stream.writeTelemetry([model])
+        ])
+        if (cached.status === 'rejected') {
+          logger.warn('Error writing telemetry to cache', { telemetry: model, error: cached.reason })
+        }
+        if (streamed.status === 'rejected') {
+          logger.warn('Error writing telemetry to stream', { telemetry: model, error: streamed.reason })
+        }
+      }
+      return ServiceResult(model)
     } catch (error) {
       const exception = ServiceException('Error in writeMigratedTelemetry', error)
       logger.error('writeMigratedTelemetry exception', { exception, error })
