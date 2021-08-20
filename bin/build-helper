@@ -5,8 +5,11 @@ set -u
 set -o pipefail
 
 BASE_DIR=$(dirname $0)/..
-NODE_ENV=${NODE_ENV:-""}
-REGISTRY=${REGISTRY:=""}
+: ${NODE_ENV:=""}
+: ${REGISTRY:=""}
+if [[ -n "$REGISTRY" ]]; then  # if non-empty
+  REGISTRY="$(echo $REGISTRY | sed 's#/$##')/"  # ensure '/' suffix
+fi
 
 createImagesFileIfNotExists() {
   if [[ ! -d $BASE_DIR/dist ]]; then
@@ -22,7 +25,7 @@ buildImage() {
   createImagesFileIfNotExists
   local tag=$(echo $image | cut -f2 -d":")
   if [[ "$tag" != "latest" ]]; then
-    image=${REGISTRY}${image}$(getBranchSuffix)$(getCommitHash)
+    image=${image}$(getBranchSuffix)$(getCommitHash)
   fi
   docker build -t ${REGISTRY}${image} .
   echo ${REGISTRY}${image} >> $BASE_DIR/dist/images.txt
@@ -40,8 +43,7 @@ pushImages() {
 }
 
 getBranchSuffix() {
-  CI_BRANCH=${CI_BRANCH:-$(git rev-parse --abbrev-ref HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g')}
-  echo -$CI_BRANCH
+  git rev-parse --abbrev-ref HEAD | sed -E -e 's/[^-a-zA-Z0-9]/-/g' -e 's/^/-/'
 }
 
 getCommitHash() {
