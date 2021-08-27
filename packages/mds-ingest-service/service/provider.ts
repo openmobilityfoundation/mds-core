@@ -18,7 +18,7 @@ import cache from '@mds-core/mds-agency-cache'
 import logger from '@mds-core/mds-logger'
 import { ProcessController, ServiceException, ServiceProvider, ServiceResult } from '@mds-core/mds-service-helpers'
 import stream from '@mds-core/mds-stream'
-import { Nullable, Telemetry, UUID } from '@mds-core/mds-types'
+import { Nullable, Telemetry } from '@mds-core/mds-types'
 import {
   EventAnnotationDomainCreateModel,
   EventDomainModel,
@@ -62,12 +62,24 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
     }
   },
 
-  getDevices: async (ids: UUID[]) => {
+  getDevices: async device_ids => {
     try {
-      return ServiceResult(await IngestRepository.getDevices(validateUUIDs(ids)))
+      return ServiceResult(
+        await (device_ids ? IngestRepository.getDevices(validateUUIDs(device_ids)) : IngestRepository.getDevices())
+      )
     } catch (error) {
       const exception = ServiceException('Error in getDevices', error)
       logger.error('getDevices exception', { exception, error })
+      return exception
+    }
+  },
+
+  getLatestTelemetryForDevices: async device_ids => {
+    try {
+      return ServiceResult(await IngestRepository.getLatestTelemetryForDevices(device_ids))
+    } catch (error) {
+      const exception = ServiceException('Error in getLatestTelemetryForDevices', error)
+      logger.error('getLatestTelemetryForDevices exception', { exception, error })
       return exception
     }
   },

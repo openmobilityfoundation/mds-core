@@ -196,7 +196,7 @@ export const { validate: validateGetVehicleEventsFilterParams } = SchemaValidato
       additionalProperties: false
     }
   },
-  required: ['time_range']
+  required: []
 })
 
 export const { validate: validateUUIDs } = SchemaValidator<UUID[]>({

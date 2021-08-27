@@ -25,6 +25,7 @@ import { IngestServiceManager } from '../service/manager'
 
 const DEVICE_UUID_A = uuid()
 const DEVICE_UUID_B = uuid()
+const DEVICE_UUID_C = uuid()
 const TRIP_UUID_A = uuid()
 const TRIP_UUID_B = uuid()
 const testTimestamp = now()
@@ -113,6 +114,19 @@ const TEST_TNC_B: Omit<Device, 'recorded'> = {
   device_id: DEVICE_UUID_B,
   provider_id: TEST1_PROVIDER_ID,
   vehicle_id: 'test-id-2',
+  vehicle_type: 'car',
+  propulsion_types: ['electric'],
+  year: 2018,
+  mfgr: 'Schwinn',
+  modality: 'tnc',
+  model: 'Mantaray'
+}
+
+const TEST_TNC_C: Omit<Device, 'recorded'> = {
+  accessibility_options: ['wheelchair_accessible'],
+  device_id: DEVICE_UUID_C,
+  provider_id: TEST1_PROVIDER_ID,
+  vehicle_id: 'test-id-3',
   vehicle_type: 'car',
   propulsion_types: ['electric'],
   year: 2018,
@@ -233,9 +247,13 @@ describe('Ingest Service Tests', () => {
 
   describe('getDevices', () => {
     beforeEach(async () => {
-      await IngestRepository.createDevices([TEST_TNC_A, TEST_TNC_B])
+      await IngestRepository.createDevices([TEST_TNC_A, TEST_TNC_B, TEST_TNC_C])
     })
     describe('all_devices', () => {
+      it('gets all devices', async () => {
+        const devices = await IngestServiceClient.getDevices()
+        expect(devices.length).toEqual(3)
+      })
       it('gets 2 devices', async () => {
         const devices = await IngestServiceClient.getDevices([DEVICE_UUID_A, DEVICE_UUID_B])
         expect(devices.length).toEqual(2)

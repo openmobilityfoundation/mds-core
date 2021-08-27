@@ -780,6 +780,7 @@ importers:
 
   packages/mds-ingest-migration-processor:
     specifiers:
+      '@mds-core/mds-agency-cache': 0.2.3
       '@mds-core/mds-ingest-service': 0.3.2
       '@mds-core/mds-logger': 0.2.3
       '@mds-core/mds-repository': 0.1.8
@@ -788,6 +789,7 @@ importers:
       '@mds-core/mds-utils': 0.1.34
       envalid: 7.1.0
     dependencies:
+      '@mds-core/mds-agency-cache': link:../mds-agency-cache
       '@mds-core/mds-ingest-service': link:../mds-ingest-service
       '@mds-core/mds-logger': link:../mds-logger
       '@mds-core/mds-repository': link:../mds-repository

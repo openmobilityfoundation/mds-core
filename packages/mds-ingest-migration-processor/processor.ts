@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
+import cache from '@mds-core/mds-agency-cache'
+import { EventDomainModel, IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
 import logger from '@mds-core/mds-logger'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import {
@@ -177,10 +178,62 @@ const TelemetryMigrationProcessor = StreamProcessor<
   [MigrationErrorSink('telemetry')]
 )
 
+const cacheLatestEvents = async (events: EventDomainModel[]) => {
+  if (events.length > 0) {
+    const device_ids = events.map(event => event.device_id)
+    const devices = await IngestServiceClient.getDevices(device_ids)
+    await Promise.all(devices.map(cache.writeDevice))
+    await Promise.all(events.map(cache.writeEvent))
+    const telemetry = await IngestServiceClient.getLatestTelemetryForDevices(device_ids)
+    await cache.writeTelemetry(telemetry)
+    return { devices: devices.length, events: events.length, telemetry: telemetry.length }
+  }
+  return { devices: 0, events: 0, telemetry: 0 }
+}
+
+const initializeCacheForMigration = async () => {
+  logger.info('Cache initialization commencing')
+  await cache.startup()
+  try {
+    const {
+      events,
+      cursor: { next }
+    } = await IngestServiceClient.getEventsUsingOptions({
+      grouping_type: 'latest_per_vehicle',
+      limit: 250
+    })
+
+    const totals = await cacheLatestEvents(events)
+
+    let cursor = next
+
+    while (cursor !== null) {
+      logger.info('Cache initialization progress', totals)
+      const {
+        events,
+        cursor: { next }
+      } = await IngestServiceClient.getEventsUsingCursor(cursor)
+      const updates = await cacheLatestEvents(events)
+      totals.devices += updates.devices
+      totals.events += updates.events
+      totals.telemetry += updates.telemetry
+      cursor = next
+    }
+    logger.info('Cache initialization successful', totals)
+  } catch (error) {
+    logger.error('Cache initialization failed', { error })
+    throw error
+  } finally {
+    await cache.shutdown()
+    logger.info('Cache initialization complete')
+  }
+}
+
 export const IngestMigrationProcessor = (): StreamProcessorController => {
   const processors = [DevicesMigrationProcessor, EventsMigrationProcessor, TelemetryMigrationProcessor]
   return {
     start: async () => {
+      await initializeCacheForMigration()
       await Promise.all(processors.map(processor => processor.start()))
     },
     stop: async () => {

@@ -91,7 +91,7 @@ export interface GetVehicleEventsFilterParams {
   propulsion_types?: PROPULSION_TYPE[]
   provider_ids?: UUID[]
   vehicle_states?: VEHICLE_STATE[]
-  time_range: TimeRange
+  time_range?: TimeRange
   grouping_type: GROUPING_TYPE
   vehicle_id?: string
   device_ids?: UUID[]
@@ -182,7 +182,8 @@ export type EventAnnotationDomainCreateModel = DomainModelCreate<
 export interface IngestService {
   getEventsUsingOptions: (params: GetVehicleEventsFilterParams) => GetVehicleEventsResponse
   getEventsUsingCursor: (cursor: string) => GetVehicleEventsResponse
-  getDevices: (ids: UUID[]) => DeviceDomainModel[]
+  getDevices: (device_ids?: UUID[]) => DeviceDomainModel[]
+  getLatestTelemetryForDevices: (device_ids: UUID[]) => TelemetryDomainModel[]
   writeEventAnnotations: (params: EventAnnotationDomainCreateModel[]) => EventAnnotationDomainModel[]
 }
 
@@ -199,6 +200,7 @@ export const IngestServiceDefinition: RpcServiceDefinition<IngestService & Inges
   getEventsUsingOptions: RpcRoute<IngestService['getEventsUsingOptions']>(),
   getEventsUsingCursor: RpcRoute<IngestService['getEventsUsingCursor']>(),
   getDevices: RpcRoute<IngestService['getDevices']>(),
+  getLatestTelemetryForDevices: RpcRoute<IngestService['getLatestTelemetryForDevices']>(),
   writeEventAnnotations: RpcRoute<IngestService['writeEventAnnotations']>(),
   writeMigratedDevice: RpcRoute<IngestMigrationService['writeMigratedDevice']>(),
   writeMigratedVehicleEvent: RpcRoute<IngestMigrationService['writeMigratedVehicleEvent']>(),

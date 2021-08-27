@@ -20,6 +20,7 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
+    "@mds-core/mds-agency-cache": "0.2.3",
     "@mds-core/mds-ingest-service": "0.3.2",
     "@mds-core/mds-logger": "0.2.3",
     "@mds-core/mds-repository": "0.1.8",

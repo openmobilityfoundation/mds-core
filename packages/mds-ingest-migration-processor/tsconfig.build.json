@@ -4,6 +4,7 @@
     "outDir": "dist"
   },
   "references": [
+    { "path": "../../packages/mds-agency-cache/tsconfig.build.json" },
     { "path": "../../packages/mds-ingest-service/tsconfig.build.json" },
     { "path": "../../packages/mds-logger/tsconfig.build.json" },
     { "path": "../../packages/mds-repository/tsconfig.build.json" },
