@@ -178,54 +178,57 @@ const TelemetryMigrationProcessor = StreamProcessor<
   [MigrationErrorSink('telemetry')]
 )
 
-const cacheLatestEvents = async (events: EventDomainModel[]) => {
-  if (events.length > 0) {
-    const device_ids = events.map(event => event.device_id)
-    const devices = await IngestServiceClient.getDevices(device_ids)
-    await Promise.all(devices.map(cache.writeDevice))
-    await Promise.all(events.map(cache.writeEvent))
-    const telemetry = await IngestServiceClient.getLatestTelemetryForDevices(device_ids)
-    await cache.writeTelemetry(telemetry)
-    return { devices: devices.length, events: events.length, telemetry: telemetry.length }
+const cacheDevices = async () => {
+  const devices = await IngestServiceClient.getDevices()
+  await Promise.all(devices.map(cache.writeDevice))
+  return { devices: devices.length }
+}
+
+const cacheLatestEventsAndTelemetry = async (events: EventDomainModel[]) => {
+  const telemetry = await IngestServiceClient.getLatestTelemetryForDevices(events.map(event => event.device_id))
+  await Promise.all([cache.writeTelemetry(telemetry), Promise.all(events.map(cache.writeEvent))])
+  return { events: events.length, telemetry: telemetry.length }
+}
+
+const cacheEventsAndTelemetry = async () => {
+  const {
+    events,
+    cursor: { next }
+  } = await IngestServiceClient.getEventsUsingOptions({
+    grouping_type: 'latest_per_vehicle',
+    limit: 250
+  })
+
+  const totals = await cacheLatestEventsAndTelemetry(events)
+
+  let cursor = next
+
+  while (cursor !== null) {
+    logger.info('Initialize event and telemetry cache', totals)
+    const {
+      events,
+      cursor: { next }
+    } = await IngestServiceClient.getEventsUsingCursor(cursor)
+    const updates = await cacheLatestEventsAndTelemetry(events)
+    totals.events += updates.events
+    totals.telemetry += updates.telemetry
+    cursor = next
   }
-  return { devices: 0, events: 0, telemetry: 0 }
+  return totals
 }
 
 const initializeCacheForMigration = async () => {
   logger.info('Cache initialization commencing')
-  await cache.startup()
+
   try {
-    const {
-      events,
-      cursor: { next }
-    } = await IngestServiceClient.getEventsUsingOptions({
-      grouping_type: 'latest_per_vehicle',
-      limit: 250
-    })
-
-    const totals = await cacheLatestEvents(events)
-
-    let cursor = next
-
-    while (cursor !== null) {
-      logger.info('Cache initialization progress', totals)
-      const {
-        events,
-        cursor: { next }
-      } = await IngestServiceClient.getEventsUsingCursor(cursor)
-      const updates = await cacheLatestEvents(events)
-      totals.devices += updates.devices
-      totals.events += updates.events
-      totals.telemetry += updates.telemetry
-      cursor = next
-    }
-    logger.info('Cache initialization successful', totals)
+    await cache.startup()
+    logger.info('Initialized device cache', await cacheDevices())
+    logger.info('Initialized event and telemetry cache', await cacheEventsAndTelemetry())
   } catch (error) {
     logger.error('Cache initialization failed', { error })
     throw error
   } finally {
     await cache.shutdown()
-    logger.info('Cache initialization complete')
   }
 }
 
