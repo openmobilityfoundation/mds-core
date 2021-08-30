@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-ingest-service",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Mobility Data Specification Ingest Service",
   "keywords": [
     "mds",
@@ -23,16 +23,16 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-agency-cache": "0.2.3",
+    "@mds-core/mds-agency-cache": "0.2.4",
     "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-providers": "0.1.33",
-    "@mds-core/mds-repository": "0.1.8",
-    "@mds-core/mds-rpc-common": "0.1.8",
-    "@mds-core/mds-schema-validators": "0.2.3",
-    "@mds-core/mds-service-helpers": "0.3.1",
-    "@mds-core/mds-stream": "0.1.34",
-    "@mds-core/mds-types": "0.3.2",
-    "@mds-core/mds-utils": "0.1.34",
+    "@mds-core/mds-providers": "0.1.34",
+    "@mds-core/mds-repository": "0.1.9",
+    "@mds-core/mds-rpc-common": "0.1.9",
+    "@mds-core/mds-schema-validators": "0.3.0",
+    "@mds-core/mds-service-helpers": "0.3.2",
+    "@mds-core/mds-stream": "0.1.35",
+    "@mds-core/mds-types": "0.4.0",
+    "@mds-core/mds-utils": "0.1.35",
     "joi": "17.4.0",
     "typeorm": "0.2.34",
     "typeorm-cursor-pagination": "0.6.1"

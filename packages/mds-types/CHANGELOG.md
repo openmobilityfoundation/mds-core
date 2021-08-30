@@ -1,5 +1,11 @@
 # @mds-core/mds-types
 
+## 0.4.0
+
+### Minor Changes
+
+- 439f92c5: Vastly clean up Policy types, remove generic extension of ApiServer
+
 ## 0.3.2
 
 ### Patch Changes

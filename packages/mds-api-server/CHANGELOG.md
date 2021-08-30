@@ -1,5 +1,17 @@
 # @mds-core/mds-api-server
 
+## 0.3.0
+
+### Minor Changes
+
+- 439f92c5: Vastly clean up Policy types, remove generic extension of ApiServer
+
+### Patch Changes
+
+- @mds-core/mds-api-authorizer@0.1.35
+- @mds-core/mds-service-helpers@0.3.2
+- @mds-core/mds-utils@0.1.35
+
 ## 0.2.1
 
 ### Patch Changes
