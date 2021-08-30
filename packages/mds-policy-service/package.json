@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-policy-service",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Mobility Data Specification Policy Service",
   "keywords": [
     "mds",

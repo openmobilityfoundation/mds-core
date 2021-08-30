@@ -1,5 +1,18 @@
 # @mds-core/mds-policy-service
 
+## 0.3.0
+
+### Minor Changes
+
+- 936a0371: Add PresentationOptions for some PolicyService methods, enabling the display of policy status.
+- 8a5bb24e: readPolicies can filter by geography_ids
+
+### Patch Changes
+
+- 936a0371: Add superseded_by column to policies table
+- 936a0371: When publishing a new policy, update the superseded_by column for any policies it's superseding
+- 42089b3f: removes mds-db from mds-policy
+
 ## 0.2.2
 
 ### Patch Changes

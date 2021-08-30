@@ -1,5 +1,13 @@
 # @mds-core/mds-ingest-service
 
+## 0.3.3
+
+### Patch Changes
+
+- 1cb521ca: Add service method for getting latest telemetry for a list of devices
+- ba33f76a: Add cache and stream hooks to ingest migration processor
+- e3fc9d1e: Filter register events from the incoming 0.4 stream
+
 ## 0.3.2
 
 ### Patch Changes

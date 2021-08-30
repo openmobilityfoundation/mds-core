@@ -1,5 +1,22 @@
 # @mds-core/mds-policy
 
+## 0.2.0
+
+### Minor Changes
+
+- 42089b3f: removes mds-db from mds-policy
+
+### Patch Changes
+
+- Updated dependencies [936a0371]
+- Updated dependencies [936a0371]
+- Updated dependencies [936a0371]
+- Updated dependencies [8a5bb24e]
+- Updated dependencies [42089b3f]
+  - @mds-core/mds-policy-service@0.3.0
+  - @mds-core/mds-db@0.2.4
+  - @mds-core/mds-api-helpers@0.1.36
+
 ## 0.1.7
 
 ### Patch Changes
