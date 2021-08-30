@@ -31,8 +31,7 @@ import {
   PolicyServiceManager
 } from '@mds-core/mds-policy-service/'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { POLICY2_JSON, POLICY_JSON, PROVIDER_SCOPES, SCOPED_AUTH } from '@mds-core/mds-test-data'
-import venice from '@mds-core/mds-test-data/test-areas/venice'
+import { POLICY2_JSON, POLICY_JSON, PROVIDER_SCOPES, SCOPED_AUTH, venice } from '@mds-core/mds-test-data'
 import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
 import {
   clone,

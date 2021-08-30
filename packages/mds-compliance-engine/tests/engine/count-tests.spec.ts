@@ -21,8 +21,13 @@
 /* eslint-disable promise/catch-or-return */
 /* eslint-disable promise/prefer-await-to-callbacks */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { makeDevices, makeEventsWithTelemetry, makeTelemetryInArea, veniceSpecOps } from '@mds-core/mds-test-data'
-import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import {
+  LA_CITY_BOUNDARY,
+  makeDevices,
+  makeEventsWithTelemetry,
+  makeTelemetryInArea,
+  veniceSpecOps
+} from '@mds-core/mds-test-data'
 import {
   CountRule,
   Device,

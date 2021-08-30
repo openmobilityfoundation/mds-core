@@ -62,7 +62,7 @@ import {
 } from './policies'
 import { DISTRICT_SEVEN } from './test-areas/district-seven'
 import { LA_CITY_BOUNDARY } from './test-areas/la-city-boundary'
-import { restrictedAreas, serviceAreaMap, veniceSpecOps } from './test-areas/test-areas'
+import { restrictedAreas, serviceAreaMap, venice, veniceSpecOps } from './test-areas/test-areas'
 
 const PROVIDER_SCOPES = 'admin:all'
 
@@ -375,5 +375,6 @@ export {
   serviceAreaMap,
   restrictedAreas,
   veniceSpecOps,
+  venice,
   TAXI_POLICY
 }

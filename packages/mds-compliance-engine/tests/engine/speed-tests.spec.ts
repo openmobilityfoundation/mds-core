@@ -15,8 +15,7 @@
  */
 
 import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service/@types'
-import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import { LA_CITY_BOUNDARY, makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
 import { Device, Geography, ModalityPolicy, SpeedRule, Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { FeatureCollection } from 'geojson'
 import test from 'unit.js'

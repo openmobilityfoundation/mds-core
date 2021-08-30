@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { UUID, Nullable } from '@mds-core/mds-types'
+import { Nullable, UUID } from '@mds-core/mds-types'
 import { Geometry } from 'geojson'
-
-import laCityBoundary from './la-city-boundary'
-import restrictedAreas from './restricted-areas'
-import laDacs from './la-dacs'
-import veniceSpecOps from './venice-special-ops-zone'
-import venice from './venice'
 import councilDistrict11 from './council-district-11'
+import laCityBoundary from './la-city-boundary'
+import laDacs from './la-dacs'
+import restrictedAreas from './restricted-areas'
+import venice from './venice'
+import veniceSpecOps from './venice-special-ops-zone'
 
 const serviceAreaMap: {
   [key: string]: {
@@ -124,4 +123,4 @@ const serviceAreaMap: {
   }
 }
 
-export { serviceAreaMap, restrictedAreas, veniceSpecOps }
+export { serviceAreaMap, restrictedAreas, veniceSpecOps, venice }
