@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-compliance-service",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Compliance Service",
   "keywords": [
     "mds",
@@ -23,7 +23,7 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-db": "0.2.3",
+    "@mds-core/mds-db": "0.2.4",
     "@mds-core/mds-logger": "0.2.3",
     "@mds-core/mds-providers": "0.1.33",
     "@mds-core/mds-repository": "0.1.8",

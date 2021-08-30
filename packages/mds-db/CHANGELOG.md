@@ -1,5 +1,20 @@
 # @mds-core/mds-db
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [936a0371]
+- Updated dependencies [1cb521ca]
+- Updated dependencies [936a0371]
+- Updated dependencies [ba33f76a]
+- Updated dependencies [e3fc9d1e]
+- Updated dependencies [936a0371]
+- Updated dependencies [8a5bb24e]
+- Updated dependencies [42089b3f]
+  - @mds-core/mds-policy-service@0.3.0
+  - @mds-core/mds-ingest-service@0.3.3
+
 ## 0.2.3
 
 ### Patch Changes

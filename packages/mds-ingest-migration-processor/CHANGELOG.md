@@ -1,5 +1,17 @@
 # @mds-core/mds-ingest-migration-processor
 
+## 0.0.7
+
+### Patch Changes
+
+- 1cb521ca: Initialize cache during migration processor startup
+- ba33f76a: Add cache and stream hooks to ingest migration processor
+- e3fc9d1e: Filter register events from the incoming 0.4 stream
+- Updated dependencies [1cb521ca]
+- Updated dependencies [ba33f76a]
+- Updated dependencies [e3fc9d1e]
+  - @mds-core/mds-ingest-service@0.3.3
+
 ## 0.0.6
 
 ### Patch Changes
