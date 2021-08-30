@@ -19,14 +19,10 @@ import {
   ACCESSIBILITY_OPTIONS,
   AUDIT_EVENT_TYPE,
   AUDIT_EVENT_TYPES,
-  DAYS_OF_WEEK,
   Device,
   Geography,
   MODALITIES,
-  ModalityPolicy,
   PROPULSION_TYPES,
-  RATE_RECURRENCE_VALUES,
-  RULE_TYPES,
   Telemetry,
   Timestamp,
   TRIP_STATES,
@@ -34,14 +30,11 @@ import {
   VehicleEvent,
   VEHICLE_EVENT,
   VEHICLE_EVENTS,
-  VEHICLE_EVENTS_v1_1_0,
   VEHICLE_STATES,
-  VEHICLE_STATES_v1_1_0,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
 import { areThereCommonElements, ValidationError } from '@mds-core/mds-utils'
 import * as Joi from 'joi'
-import joiToJson from 'joi-to-json'
 
 export { ValidationError }
 
@@ -85,69 +78,6 @@ export const telemetrySchema = Joi.object().keys({
   timestamp: timestampSchema.required(),
   recorded: timestampSchema.optional()
 })
-
-export const baseRuleSchema = Joi.object().keys({
-  accessibility_options: Joi.array()
-    .items(Joi.string().valid(...ACCESSIBILITY_OPTIONS))
-    .optional(),
-  days: Joi.array().items(Joi.string().valid(...Object.values(DAYS_OF_WEEK))),
-  end_time: Joi.string(),
-  geographies: Joi.array().items(uuidSchema),
-  maximum: Joi.number(),
-  messages: Joi.object(),
-  minimum: Joi.number(),
-  modality: Joi.string()
-    .valid(...MODALITIES)
-    .optional(),
-  name: Joi.string().required(),
-  rule_id: Joi.string().guid().required(),
-  rule_units: Joi.string().valid('seconds', 'minutes', 'hours', 'mph', 'kph'),
-  start_time: Joi.string(),
-  states: Joi.object().pattern(Joi.string(), Joi.string()).allow(null),
-  value_url: Joi.string().uri(),
-  vehicle_types: Joi.array().items(Joi.string().valid(...Object.values(VEHICLE_TYPES)))
-})
-
-export const modalityRuleSchema = baseRuleSchema.keys({
-  states: Joi.object()
-    .keys(
-      VEHICLE_STATES_v1_1_0.reduce(
-        (acc, state) =>
-          Object.assign(acc, { [state]: Joi.array().items(stringSchema.valid(...VEHICLE_EVENTS_v1_1_0)) }),
-        {}
-      )
-    )
-    .allow(null),
-  rule_type: Joi.string().valid(RULE_TYPES.count, RULE_TYPES.speed, RULE_TYPES.time, RULE_TYPES.user).required()
-})
-
-const rateRuleSchema = modalityRuleSchema.keys({
-  rate_amount: Joi.number(),
-  rate_recurrence: Joi.string().valid(...RATE_RECURRENCE_VALUES),
-  rule_type: Joi.string().valid(RULE_TYPES.rate).required()
-})
-
-export const basePolicySchema = Joi.object().keys({
-  name: Joi.string().required(),
-  description: Joi.string().required(),
-  policy_id: Joi.string().guid().allow(null),
-  start_date: Joi.date().timestamp('javascript').required(),
-  publish_date: Joi.date().timestamp('javascript').allow(null),
-  end_date: Joi.date().timestamp('javascript').allow(null),
-  prev_policies: Joi.array().items(Joi.string().guid()).allow(null),
-  provider_ids: Joi.array().items(Joi.string().guid()).allow(null)
-})
-
-export const modalityPolicySchema = basePolicySchema.keys({
-  rules: Joi.array().min(1).items(modalityRuleSchema).required()
-})
-
-export const ratePolicySchema = basePolicySchema.keys({
-  rules: Joi.array().min(1).items(rateRuleSchema).required(),
-  currency: Joi.string()
-})
-
-const modalityPoliciesSchema = Joi.array().items(modalityPolicySchema)
 
 const featureSchema = Joi.object()
   .keys({
@@ -326,17 +256,6 @@ export const isValidAuditNote = (value: unknown, options: Partial<ValidatorOptio
 export const HasPropertyAssertion = <T>(obj: unknown, ...props: (keyof T)[]): obj is T =>
   typeof obj === 'object' && obj !== null && props.every(prop => prop in obj)
 
-export function validateModalityPolicies(policies: unknown): policies is ModalityPolicy[] {
-  const { error } = modalityPoliciesSchema.validate(policies)
-  if (error) {
-    throw new ValidationError('invalid_policies', {
-      policies,
-      details: Format('policies', error)
-    })
-  }
-  return true
-}
-
 export function validateGeographies(geographies: unknown): geographies is Geography[] {
   const { error } = geographiesSchema.validate(geographies)
   if (error) {
@@ -354,16 +273,6 @@ export function validateEvents(events: unknown): events is VehicleEvent[] {
     throw new ValidationError('invalid events', {
       events,
       details: Format('events', error)
-    })
-  }
-  return true
-}
-
-export function validateModalityPolicy(policy: ModalityPolicy): policy is ModalityPolicy {
-  const { error } = modalityPolicySchema.validate(policy, { allowUnknown: false })
-  if (error) {
-    throw new ValidationError('invalid micromobility policy', {
-      details: error.details
     })
   }
   return true
@@ -399,7 +308,5 @@ const validate_v1_0_0_Event = (event: unknown) => {
 }
 
 export const validateEvent = validate_v1_0_0_Event
-
-export const modalityPolicySchemaJson = joiToJson(modalityPolicySchema)
 
 export const SchemaBuilder = Joi

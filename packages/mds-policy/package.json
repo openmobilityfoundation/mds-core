@@ -11,6 +11,8 @@
   ],
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
+    "generate": "pnpm generate:schema",
+    "generate:schema": "ts-node ./generate-schemas.ts && git add schema-gen",
     "start": "PATH_PREFIX=/policy pnpm watch server",
     "test": "PATH_PREFIX=/policy DOTENV_CONFIG_PATH=../../.env jest",
     "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",

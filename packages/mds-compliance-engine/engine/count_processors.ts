@@ -14,16 +14,7 @@
     limitations under the License.
  */
 
-import {
-  CountRule,
-  Device,
-  Geography,
-  ModalityPolicy,
-  RULE_TYPES,
-  Telemetry,
-  UUID,
-  VehicleEvent
-} from '@mds-core/mds-types'
+import { CountRule, Device, Geography, Policy, RULE_TYPES, Telemetry, UUID, VehicleEvent } from '@mds-core/mds-types'
 import {
   clone,
   getPolygon,
@@ -69,7 +60,7 @@ export function isCountRuleMatch(
  * never matches for a subsequent rule, then it is considered in violation of the policy.
  */
 export function processCountPolicy(
-  policy: ModalityPolicy,
+  policy: Policy,
   events: (VehicleEvent & { telemetry: Telemetry })[],
   geographies: Geography[],
   devices: { [d: string]: Device }

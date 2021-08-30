@@ -19,7 +19,7 @@ import { ComplianceServiceClient, ComplianceSnapshotDomainModel } from '@mds-cor
 import db from '@mds-core/mds-db'
 import logger from '@mds-core/mds-logger'
 import { ProcessManager, SerializedBuffers } from '@mds-core/mds-service-helpers'
-import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
+import { Policy } from '@mds-core/mds-types'
 import { minutes, now } from '@mds-core/mds-utils'
 import { processPolicy } from './engine'
 import { getAllInputs, getSupersedingPolicies } from './engine/helpers'
@@ -40,7 +40,7 @@ async function batchComplianceSnapshots(snapshots: ComplianceSnapshotDomainModel
 export async function computeSnapshot() {
   // mds-db does a lazy init, so only the cache start is needed
   await cache.startup()
-  const policies: ModalityPolicy[] = getSupersedingPolicies(await db.readActivePolicies<ModalityPolicyTypeInfo>())
+  const policies: Policy[] = getSupersedingPolicies(await db.readActivePolicies())
   const geographies = await db.readGeographies({ get_published: true })
   const deviceEventInputs = await getAllInputs()
 

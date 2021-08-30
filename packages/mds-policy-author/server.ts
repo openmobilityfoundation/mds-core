@@ -13,7 +13,7 @@
 
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
 import { api } from './api'
-import { injectModalityValidator, injectVersionMiddleware } from './middleware'
+import { injectVersionMiddleware } from './middleware'
 
 /**
  * Runs API server with Vanilla MDS Policy (no foreign property injection)
@@ -22,12 +22,10 @@ import { injectModalityValidator, injectVersionMiddleware } from './middleware'
  */
 HttpServer(
   api(
-    injectModalityValidator(
-      injectVersionMiddleware(
-        ApiServer(app => {
-          return app
-        })
-      )
+    injectVersionMiddleware(
+      ApiServer(app => {
+        return app
+      })
     )
   ),
   { port: process.env.POLICY_AUTHOR_API_HTTP_PORT }

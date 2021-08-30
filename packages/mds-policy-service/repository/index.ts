@@ -101,7 +101,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
           }
         }
 
-        const expressionsWithParams = statuses.map((status) => statusToExpressionWithParams[status])
+        const expressionsWithParams = statuses.map(status => statusToExpressionWithParams[status])
 
         if (expressionsWithParams.length === 1) {
           const [{ expression, params }] = expressionsWithParams

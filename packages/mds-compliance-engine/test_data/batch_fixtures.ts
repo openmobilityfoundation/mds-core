@@ -17,13 +17,14 @@
 import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
 import { providers } from '@mds-core/mds-providers'
-import { LA_CITY_BOUNDARY, makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Device_v1_1_0, Geography, ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
+import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
+import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
+import { Device_v1_1_0, Geography, Policy } from '@mds-core/mds-types'
 import { minutes, now } from '@mds-core/mds-utils'
 import { FeatureCollection } from 'geojson'
 import { readJson } from '../tests/engine/helpers'
 
-let policies: ModalityPolicy[] = []
+let policies: Policy[] = []
 
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 
@@ -60,7 +61,7 @@ async function main() {
 
   await cache.seed({ devices, events, telemetry: [] })
   await Promise.all(devices.map(device => db.writeDevice(device)))
-  await Promise.all(policies.map(policy => db.writePolicy<ModalityPolicyTypeInfo>(policy)))
+  await Promise.all(policies.map(policy => db.writePolicy(policy)))
   await Promise.all(policies.map(policy => db.publishPolicy(policy.policy_id, policy.start_date)))
 }
 

@@ -40,7 +40,7 @@ import { StatusCodes } from 'http-status-codes'
 import supertest from 'supertest'
 import test from 'unit.js'
 import { api } from '../api'
-import { injectModalityValidator, injectVersionMiddleware } from '../middleware'
+import { injectVersionMiddleware } from '../middleware'
 import { POLICY_AUTHOR_API_DEFAULT_VERSION } from '../types'
 
 /* eslint-disable-next-line no-console */
@@ -48,12 +48,10 @@ const log = console.log.bind(console)
 
 const request = supertest(
   api(
-    injectModalityValidator(
-      injectVersionMiddleware(
-        ApiServer(app => {
-          return app
-        })
-      )
+    injectVersionMiddleware(
+      ApiServer(app => {
+        return app
+      })
     )
   )
 )
@@ -145,7 +143,7 @@ describe('Tests app', () => {
         .send(bad_policy)
         .expect(StatusCodes.BAD_REQUEST)
 
-      test.value(body.error.info.details[0].message).contains('rule_type')
+      test.value(body.error.details).contains('rule_type')
     })
 
     it('verifies cannot PUT policy (no auth)', async () => {

@@ -47,3 +47,15 @@ export type TripMetadata<T = {}> = {
     payment_methods?: PAYMENT_METHOD[]
   }
 } & T
+
+export const TRANSACTION_TYPE = ['pick_up', 'drop_off'] as const
+export type TRANSACTION_TYPE = typeof TRANSACTION_TYPE[number]
+export const isTransactionType = (value: string | undefined): value is TRANSACTION_TYPE => {
+  return value !== undefined && TRANSACTION_TYPE.includes(value as TRANSACTION_TYPE)
+}
+
+export const SERVICE_TYPE = ['standard', 'shared', 'luxury'] as const
+export type SERVICE_TYPE = typeof SERVICE_TYPE[number]
+export const isServiceType = (value: string | undefined): value is SERVICE_TYPE => {
+  return value !== undefined && SERVICE_TYPE.includes(value as SERVICE_TYPE)
+}

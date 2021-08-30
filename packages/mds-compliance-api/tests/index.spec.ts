@@ -18,7 +18,7 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { ComplianceServiceClient } from '@mds-core/mds-compliance-service'
 import db from '@mds-core/mds-db'
 import { SCOPED_AUTH } from '@mds-core/mds-test-data'
-import { ModalityPolicy } from '@mds-core/mds-types'
+import { Policy } from '@mds-core/mds-types'
 import { pathPrefix } from '@mds-core/mds-utils'
 import HttpStatus from 'http-status-codes'
 import supertest from 'supertest'
@@ -53,7 +53,7 @@ const utils = require('@mds-core/mds-utils')
 describe('Test Compliances API', () => {
   beforeEach(() => {
     jest.spyOn(utils, 'now').mockImplementation(() => TIME + 500)
-    jest.spyOn(db, 'readActivePolicies').mockImplementation(async (): Promise<ModalityPolicy[]> => {
+    jest.spyOn(db, 'readActivePolicies').mockImplementation(async (): Promise<Policy[]> => {
       return [POLICY1, POLICY2]
     })
   })

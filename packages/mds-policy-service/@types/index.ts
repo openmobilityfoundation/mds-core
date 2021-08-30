@@ -16,7 +16,7 @@
 
 import { DomainModelCreate } from '@mds-core/mds-repository'
 import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
-import { BaseRule, ModalityStatesToEvents, Nullable, RULE_TYPE, Timestamp, UUID } from '@mds-core/mds-types'
+import { Nullable, Rule, Timestamp, UUID } from '@mds-core/mds-types'
 
 export const POLICY_STATUS = <const>['draft', 'pending', 'active', 'expired', 'deactivated', 'unknown']
 export type POLICY_STATUS = typeof POLICY_STATUS[number]
@@ -24,12 +24,13 @@ export type POLICY_STATUS = typeof POLICY_STATUS[number]
 export interface PolicyDomainModel {
   policy_id: UUID
   name: string
+  currency: Nullable<string>
   description: string
   provider_ids: Nullable<UUID[]>
   start_date: Timestamp
   end_date: Nullable<Timestamp>
   prev_policies: Nullable<UUID[]>
-  rules: BaseRule<ModalityStatesToEvents, Exclude<RULE_TYPE, 'rate'>>[]
+  rules: Rule[]
   publish_date: Nullable<Timestamp>
   status?: POLICY_STATUS // Computed property which is returned from the service, not written on creation.
 }

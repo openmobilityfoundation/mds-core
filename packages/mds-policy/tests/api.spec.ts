@@ -32,7 +32,7 @@ import {
 } from '@mds-core/mds-policy-service/'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { POLICY2_JSON, POLICY_JSON, PROVIDER_SCOPES, SCOPED_AUTH, venice } from '@mds-core/mds-test-data'
-import { ModalityPolicy, ModalityPolicyTypeInfo } from '@mds-core/mds-types'
+import { Policy } from '@mds-core/mds-types'
 import {
   clone,
   days,
@@ -56,7 +56,7 @@ import { POLICY_API_DEFAULT_VERSION } from '../types'
 /* eslint-disable-next-line no-console */
 const log = console.log.bind(console)
 
-const request = supertest(ApiServer<ModalityPolicyTypeInfo>(api))
+const request = supertest(ApiServer(api))
 
 const ACTIVE_POLICY_JSON = clone(POLICY_JSON)
 ACTIVE_POLICY_JSON.publish_date = yesterday()
@@ -164,10 +164,10 @@ describe('Tests app', () => {
 
     expect(policies.length).toStrictEqual(3)
 
-    const isSupersededPolicyPresent = policies.some((policy: ModalityPolicy) => {
+    const isSupersededPolicyPresent = policies.some((policy: Policy) => {
       return policy.policy_id === activePolicy.policy_id
     })
-    const isSupersedingPolicyPresent = policies.some((policy: ModalityPolicy) => {
+    const isSupersedingPolicyPresent = policies.some((policy: Policy) => {
       return policy.policy_id === supersedingPolicy.policy_id
     })
     expect(isSupersededPolicyPresent).toStrictEqual(false)

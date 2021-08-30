@@ -1,4 +1,4 @@
-import { ModalityPolicy } from '@mds-core/mds-types'
+import { Policy } from '@mds-core/mds-types'
 import {
   now,
   START_NOW,
@@ -20,7 +20,7 @@ export const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
 export const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
 export const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
-export const POLICY_JSON: ModalityPolicy = {
+export const POLICY_JSON: Policy = {
   // TODO guts
   name: 'MDSPolicy 1',
   description: 'Mobility caps as described in the One-Year Permit',
@@ -44,7 +44,7 @@ export const POLICY_JSON: ModalityPolicy = {
   ]
 }
 
-export const SUPERSEDING_POLICY_JSON: ModalityPolicy = {
+export const SUPERSEDING_POLICY_JSON: Policy = {
   // TODO guts
   name: 'Supersedes MDSPolicy 1',
   description: 'Mobility caps as described in the One-Year Permit',
@@ -68,7 +68,7 @@ export const SUPERSEDING_POLICY_JSON: ModalityPolicy = {
 }
 
 // in the past
-export const POLICY2_JSON: ModalityPolicy = {
+export const POLICY2_JSON: Policy = {
   // TODO guts
   name: 'MDSPolicy 2',
   description: 'LADOT Idle Time Limitations',
@@ -102,7 +102,7 @@ export const POLICY2_JSON: ModalityPolicy = {
 }
 
 // in the future
-export const POLICY3_JSON: ModalityPolicy = {
+export const POLICY3_JSON: Policy = {
   // TODO guts
   policy_id: POLICY3_UUID,
   name: 'MDSPolicy 3',
@@ -142,7 +142,7 @@ export const POLICY3_JSON: ModalityPolicy = {
   ]
 }
 
-export const POLICY4_JSON: ModalityPolicy = {
+export const POLICY4_JSON: Policy = {
   // TODO guts
   policy_id: POLICY4_UUID,
   name: 'MDSPolicy 4',
@@ -165,7 +165,7 @@ export const POLICY4_JSON: ModalityPolicy = {
   ]
 }
 
-export const POLICY5_JSON: ModalityPolicy = {
+export const POLICY5_JSON: Policy = {
   policy_id: uuid(),
   name: 'MDSPolicy 5',
   description: 'just here to enable testing for policies by start date',
@@ -187,7 +187,7 @@ export const POLICY5_JSON: ModalityPolicy = {
   ]
 }
 
-export const PUBLISH_DATE_VALIDATION_JSON: ModalityPolicy = {
+export const PUBLISH_DATE_VALIDATION_JSON: Policy = {
   policy_id: '682ab342-0127-4eed-8c26-fb674c25af74',
   name: 'Future MDSPolicy',
   description: 'just here to help show that publish_date must be before start_date',
@@ -230,7 +230,7 @@ export const POLICY_JSON_MISSING_POLICY_ID = {
   ]
 }
 
-export const POLICY_WITH_DUPE_RULE: ModalityPolicy = {
+export const POLICY_WITH_DUPE_RULE: Policy = {
   policy_id: 'ddb4fbc7-0f3d-49cf-869d-f9c1d0b5471f',
   name: 'I am a no good copycat',
   description: 'LADOT Pilot Speed Limit Limitations',
@@ -252,7 +252,7 @@ export const POLICY_WITH_DUPE_RULE: ModalityPolicy = {
   ]
 }
 
-export const PUBLISHED_POLICY: ModalityPolicy = {
+export const PUBLISHED_POLICY: Policy = {
   policy_id: 'a337afd5-f8a9-4291-b176-11f965bc9f3d',
   name: 'I am published but do not do much',
   description: 'LADOT Pilot Speed Limit Limitations',
@@ -275,7 +275,7 @@ export const PUBLISHED_POLICY: ModalityPolicy = {
   ]
 }
 
-export const DELETEABLE_POLICY: ModalityPolicy = {
+export const DELETEABLE_POLICY: Policy = {
   policy_id: '55396abd-e32b-4370-ac02-7f3294eef49e',
   name: 'I am published but do not do much',
   description: 'LADOT Pilot Speed Limit Limitations',
@@ -297,7 +297,7 @@ export const DELETEABLE_POLICY: ModalityPolicy = {
   ]
 }
 
-export const TAXI_POLICY: ModalityPolicy = {
+export const TAXI_POLICY: Policy = {
   name: 'Policy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: uuid(),

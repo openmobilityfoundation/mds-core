@@ -7,8 +7,8 @@ import {
   DAY_OF_WEEK,
   Device,
   Geography,
-  ModalityPolicy,
-  ModalityRule,
+  Policy,
+  Rule,
   RULE_TYPE,
   TIME_FORMAT,
   UUID,
@@ -22,7 +22,7 @@ const { env } = process
 
 const TWO_DAYS_IN_MS = 172800000
 
-export function getPolicyType(policy: ModalityPolicy) {
+export function getPolicyType(policy: Policy) {
   return policy.rules[0].rule_type
 }
 
@@ -32,7 +32,7 @@ export function generateDeviceMap(devices: Device[]): { [d: string]: Device } {
   }, {})
 }
 
-export function isPolicyUniversal(policy: ModalityPolicy) {
+export function isPolicyUniversal(policy: Policy) {
   return !policy.provider_ids || policy.provider_ids.length === 0
 }
 
@@ -63,14 +63,14 @@ export async function getProviderInputs(provider_id: string) {
   return { filteredEvents, deviceMap, provider_id }
 }
 
-export function isPolicyActive(policy: ModalityPolicy, end_time: number = now()): boolean {
+export function isPolicyActive(policy: Policy, end_time: number = now()): boolean {
   if (policy.end_date === null) {
     return end_time >= policy.start_date
   }
   return end_time >= policy.start_date && end_time <= policy.end_date
 }
 
-export function isRuleActive(rule: ModalityRule<Exclude<RULE_TYPE, 'rate'>>): boolean {
+export function isRuleActive(rule: Rule<Exclude<RULE_TYPE, 'rate'>>): boolean {
   if (!env.TIMEZONE) {
     throw new RuntimeError('TIMEZONE environment variable must be declared!')
   }
@@ -91,20 +91,20 @@ export function isRuleActive(rule: ModalityRule<Exclude<RULE_TYPE, 'rate'>>): bo
   return false
 }
 
-export function isInVehicleTypes(rule: ModalityRule<Exclude<RULE_TYPE, 'rate'>>, device: Device): boolean {
+export function isInVehicleTypes(rule: Rule<Exclude<RULE_TYPE, 'rate'>>, device: Device): boolean {
   return !rule.vehicle_types || (rule.vehicle_types && rule.vehicle_types.includes(device.vehicle_type))
 }
 
 // Take a list of policies, and eliminate all those that have been superseded. Returns
 // policies that have not been superseded.
-export function getSupersedingPolicies(policies: ModalityPolicy[]): ModalityPolicy[] {
-  const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: ModalityPolicy) => {
+export function getSupersedingPolicies(policies: Policy[]): Policy[] {
+  const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: Policy) => {
     if (policy.prev_policies) {
       prev_policies_acc.push(...policy.prev_policies)
     }
     return prev_policies_acc
   }, [])
-  return policies.filter((policy: ModalityPolicy) => {
+  return policies.filter((policy: Policy) => {
     return !prev_policies.includes(policy.policy_id)
   })
 }
@@ -145,8 +145,8 @@ export function createMatchedVehicleInformation(
   }
 }
 
-export function annotateVehicleMap<T extends ModalityRule<Exclude<RULE_TYPE, 'rate'>>>(
-  policy: ModalityPolicy,
+export function annotateVehicleMap<T extends Rule<Exclude<RULE_TYPE, 'rate'>>>(
+  policy: Policy,
   events: VehicleEventWithTelemetry[],
   geographies: Geography[],
   vehicleMap: { [d: string]: { device: Device; speed?: number; rule_applied?: UUID; rules_matched?: UUID[] } },

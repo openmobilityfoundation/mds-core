@@ -10,6 +10,7 @@ describe('Tests Model Mappers', () => {
       policy_id,
       policy_json: {
         ...policy,
+        currency: null,
         provider_ids: [],
         end_date: null,
         prev_policies: [],
@@ -32,6 +33,7 @@ describe('Tests Model Mappers', () => {
       policy_id,
       policy_json: {
         ...policy,
+        currency: null,
         provider_ids: [],
         end_date: null,
         prev_policies: [],
@@ -55,6 +57,7 @@ describe('Tests Model Mappers', () => {
         policy_id,
         policy_json: {
           ...policy,
+          currency: null,
           provider_ids: [],
           end_date: null,
           prev_policies: [],
@@ -78,6 +81,7 @@ describe('Tests Model Mappers', () => {
       policy_id,
       policy_json: {
         ...policy,
+        currency: null,
         provider_ids: [],
         end_date: now() - days(1),
         prev_policies: [],
@@ -100,6 +104,7 @@ describe('Tests Model Mappers', () => {
       policy_id,
       policy_json: {
         ...policy,
+        currency: null,
         provider_ids: [],
         end_date: null,
         prev_policies: [],

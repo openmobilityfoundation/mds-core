@@ -15,7 +15,7 @@
  */
 
 import { ComplianceSnapshotDomainModel } from '@mds-core/mds-compliance-service/@types'
-import { Device, Geography, ModalityPolicy, RULE_TYPES, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { Device, Geography, Policy, RULE_TYPES, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { filterDefined, now, UnsupportedTypeError, uuid } from '@mds-core/mds-utils'
 import { ProviderInputs, VehicleEventWithTelemetry } from '../@types'
 import { processCountPolicy } from './count_processors'
@@ -24,7 +24,7 @@ import { processSpeedPolicy } from './speed_processors'
 import { processTimePolicy } from './time_processors'
 
 function computeComplianceSnapshot(
-  policy: ModalityPolicy,
+  policy: Policy,
   filteredEvents: VehicleEventWithTelemetry[],
   geographies: Geography[],
   deviceMap: { [d: string]: Device }
@@ -48,7 +48,7 @@ function computeComplianceSnapshot(
 
 export function createComplianceSnapshot(
   provider_id: UUID,
-  policy: ModalityPolicy,
+  policy: Policy,
   geographies: Geography[],
   filteredEvents: VehicleEvent[],
   deviceMap: { [d: string]: Device }
@@ -81,7 +81,7 @@ export function createComplianceSnapshot(
  * The geographies should be the result of calling
  * `await readGeographies({ get_published: true })`
  */
-export function processPolicy(policy: ModalityPolicy, geographies: Geography[], providerInputs: ProviderInputs) {
+export function processPolicy(policy: Policy, geographies: Geography[], providerInputs: ProviderInputs) {
   if (isPolicyActive(policy)) {
     const provider_ids = getProviderIDs(policy.provider_ids)
     const results = provider_ids.map(provider_id => {

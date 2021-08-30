@@ -15,12 +15,12 @@
  */
 
 import { ApiServer, HttpServer } from '@mds-core/mds-api-server'
-import { modalityPolicySchemaJson } from '@mds-core/mds-schema-validators'
 import { api, injectSchema } from './api'
+import schema from './schema-gen/PolicyDomainModelSchema.json'
 
 /**
  * Runs API server with Vanilla MDS Policy (no foreign property injection)
  */
-HttpServer(injectSchema(modalityPolicySchemaJson, ApiServer(api)), {
+HttpServer(injectSchema(schema, ApiServer(api)), {
   port: process.env.POLICY_API_HTTP_PORT
 })

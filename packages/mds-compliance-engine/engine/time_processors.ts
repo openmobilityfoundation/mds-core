@@ -14,16 +14,7 @@
     limitations under the License.
  */
 
-import {
-  Device,
-  Geography,
-  ModalityPolicy,
-  RULE_TYPES,
-  Telemetry,
-  TimeRule,
-  UUID,
-  VehicleEvent
-} from '@mds-core/mds-types'
+import { Device, Geography, Policy, RULE_TYPES, Telemetry, TimeRule, UUID, VehicleEvent } from '@mds-core/mds-types'
 import {
   clone,
   getPolygon,
@@ -61,7 +52,7 @@ export function isTimeRuleMatch(
 }
 
 export function processTimePolicy(
-  policy: ModalityPolicy,
+  policy: Policy,
   events: (VehicleEvent & { telemetry: Telemetry })[],
   geographies: Geography[],
   devices: { [d: string]: Device }

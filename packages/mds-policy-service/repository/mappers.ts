@@ -83,11 +83,11 @@ export const PolicyDomainToEntityCreate = ModelMapper<
   PolicyDomainCreateModel,
   PolicyEntityCreateModel,
   PolicyEntityCreateOptions
->(({ provider_ids = null, end_date = null, prev_policies = null, ...domain }, _options) => {
+>(({ currency = null, provider_ids = null, end_date = null, prev_policies = null, ...domain }, _options) => {
   const { policy_id } = domain
   return {
     policy_id,
-    policy_json: { provider_ids, end_date, prev_policies, ...domain, publish_date: null },
+    policy_json: { currency, provider_ids, end_date, prev_policies, ...domain, publish_date: null },
     superseded_by: null
   }
 })

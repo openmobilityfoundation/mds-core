@@ -1,0 +1,941 @@
+{
+  "type": "object",
+  "properties": {
+    "policy_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string",
+      "nullable": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "provider_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "nullable": true
+    },
+    "start_date": {
+      "type": "integer",
+      "minimum": 100000000000,
+      "maximum": 99999999999999
+    },
+    "end_date": {
+      "type": "integer",
+      "minimum": 100000000000,
+      "maximum": 99999999999999,
+      "nullable": true
+    },
+    "prev_policies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "nullable": true
+    },
+    "publish_date": {
+      "type": "integer",
+      "minimum": 100000000000,
+      "maximum": 99999999999999,
+      "nullable": true
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$id": "BaseRule",
+        "type": "object",
+        "properties": {
+          "accessibility_options": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "wheelchair_accessible"
+              ]
+            },
+            "nullable": true
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "sun",
+                "mon",
+                "tue",
+                "wed",
+                "thu",
+                "fri",
+                "sat"
+              ]
+            },
+            "nullable": true
+          },
+          "end_time": {
+            "type": "string",
+            "nullable": true
+          },
+          "geographies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "maximum": {
+            "type": "number",
+            "nullable": true
+          },
+          "messages": {
+            "$id": "PolicyMessage",
+            "type": "object"
+          },
+          "minimum": {
+            "type": "number",
+            "nullable": true
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "micromobility",
+              "taxi",
+              "tnc"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "rule_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rule_type": {
+            "type": "string",
+            "enum": [
+              "count",
+              "speed",
+              "time",
+              "user",
+              "rate"
+            ]
+          },
+          "rule_units": {
+            "type": "string"
+          },
+          "rate_amount": {
+            "type": "number",
+            "nullable": true,
+            "default": null
+          },
+          "rate_recurrence": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "once",
+                  "each_time_unit",
+                  "per_complete_time_unit"
+                ]
+              }
+            ]
+          },
+          "start_time": {
+            "type": "string",
+            "nullable": true
+          },
+          "value_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "vehicle_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "car",
+                "bicycle",
+                "scooter",
+                "moped",
+                "other"
+              ]
+            },
+            "nullable": true
+          },
+          "service_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "standard",
+                "shared",
+                "luxury"
+              ]
+            },
+            "nullable": true,
+            "default": null
+          },
+          "transaction_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "pick_up",
+                "drop_off"
+              ]
+            },
+            "nullable": true,
+            "default": null
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "modality": {
+                  "type": "string",
+                  "const": "micromobility"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "states": {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "elsewhere": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "non_operational": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "on_trip": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "removed": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "reserved": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "unknown": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "agency_drop_off",
+                          "agency_pick_up",
+                          "battery_charged",
+                          "battery_low",
+                          "comms_lost",
+                          "comms_restored",
+                          "compliance_pick_up",
+                          "decommissioned",
+                          "located",
+                          "maintenance",
+                          "maintenance_pick_up",
+                          "missing",
+                          "off_hours",
+                          "on_hours",
+                          "provider_drop_off",
+                          "rebalance_pick_up",
+                          "reservation_cancel",
+                          "reservation_start",
+                          "system_resume",
+                          "system_suspend",
+                          "trip_cancel",
+                          "trip_end",
+                          "trip_enter_jurisdiction",
+                          "trip_leave_jurisdiction",
+                          "trip_start",
+                          "unspecified"
+                        ]
+                      }
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "modality": {
+                  "type": "string",
+                  "const": "taxi"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "states": {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "elsewhere": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "non_operational": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "on_trip": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "removed": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "reserved": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "stopped": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    },
+                    "unknown": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "decommissioned",
+                          "maintenance_start",
+                          "maintenance_end",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "maintenance",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "recommissioned",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop"
+                        ]
+                      }
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "modality": {
+                  "type": "string",
+                  "const": "tnc"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "states": {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "elsewhere": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "non_operational": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "on_trip": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "reserved": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "stopped": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    },
+                    "unknown": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "comms_lost",
+                          "comms_restored",
+                          "driver_cancellation",
+                          "enter_jurisdiction",
+                          "leave_jurisdiction",
+                          "passenger_cancellation",
+                          "provider_cancellation",
+                          "reservation_start",
+                          "reservation_stop",
+                          "service_end",
+                          "service_start",
+                          "trip_end",
+                          "trip_resume",
+                          "trip_start",
+                          "trip_stop",
+                          "unspecified"
+                        ]
+                      }
+                    }
+                  },
+                  "nullable": true
+                }
+              }
+            }
+          }
+        ],
+        "required": [
+          "geographies",
+          "name",
+          "rule_id",
+          "rule_type",
+          "states"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "rules": {
+            "type": "array",
+            "contains": {
+              "type": "object",
+              "properties": {
+                "rule_type": {
+                  "type": "string",
+                  "const": "rate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency"
+        ]
+      }
+    }
+  ],
+  "required": [
+    "policy_id",
+    "name",
+    "description",
+    "start_date",
+    "rules"
+  ]
+}

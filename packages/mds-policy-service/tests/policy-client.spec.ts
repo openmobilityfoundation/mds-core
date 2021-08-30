@@ -89,6 +89,90 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       expect(result.length).toEqual(1)
     })
 
+    it('can publish a Policy with transaction_types', async () => {
+      const geography = GeographyFactory()
+      const policyWithTransactionTypes = PolicyFactory({
+        rules: RulesFactory({ geographies: [geography.geography_id], transaction_types: ['pick_up'] })
+      })
+
+      await GeographyServiceClient.writeGeographies([geography])
+      await PolicyServiceClient.writePolicy(policyWithTransactionTypes)
+      await PolicyServiceClient.publishPolicy(policyWithTransactionTypes.policy_id, now())
+      const result = await PolicyServiceClient.readPolicies({ get_published: true })
+      expect(result.length).toEqual(1)
+    })
+
+    it('can publish a Policy with service_types', async () => {
+      const geography = GeographyFactory()
+      const policyWithServiceTypes = PolicyFactory({
+        rules: RulesFactory({ geographies: [geography.geography_id], service_types: ['standard'] })
+      })
+
+      await GeographyServiceClient.writeGeographies([geography])
+      await PolicyServiceClient.writePolicy(policyWithServiceTypes)
+      await PolicyServiceClient.publishPolicy(policyWithServiceTypes.policy_id, now())
+      const result = await PolicyServiceClient.readPolicies({ get_published: true })
+      expect(result.length).toEqual(1)
+    })
+
+    it('can publish a Policy with rates', async () => {
+      const geography = GeographyFactory()
+      const policyWithRates = PolicyFactory({
+        currency: 'USD',
+        rules: [
+          {
+            rule_id: uuid(),
+            name: 'Downtown Peak-Hour Parking Fee',
+            rule_type: 'rate',
+            rate_amount: 10,
+            rate_recurrence: 'per_complete_time_unit',
+            rule_units: 'hours',
+            geographies: [geography.geography_id],
+            days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+            start_time: '07:00:00',
+            end_time: '08:30:00',
+            states: {
+              available: [],
+              non_operational: []
+            }
+          }
+        ]
+      })
+
+      await GeographyServiceClient.writeGeographies([geography])
+      await PolicyServiceClient.writePolicy(policyWithRates)
+      await PolicyServiceClient.publishPolicy(policyWithRates.policy_id, now())
+      const result = await PolicyServiceClient.readPolicies({ get_published: true })
+      expect(result.length).toEqual(1)
+    })
+
+    it('cannot publish a Policy with rates if currency is missing', async () => {
+      const geography = GeographyFactory()
+      const policyWithRates = PolicyFactory({
+        rules: [
+          {
+            rule_id: uuid(),
+            name: 'Downtown Peak-Hour Parking Fee',
+            rule_type: 'rate',
+            rate_amount: 10,
+            rate_recurrence: 'per_complete_time_unit',
+            rule_units: 'hours',
+            geographies: [geography.geography_id],
+            days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+            start_time: '07:00:00',
+            end_time: '08:30:00',
+            states: {
+              available: [],
+              non_operational: []
+            }
+          }
+        ]
+      })
+
+      await GeographyServiceClient.writeGeographies([geography])
+      await expect(PolicyServiceClient.writePolicy(policyWithRates)).rejects.toMatchObject({ type: 'ValidationError' })
+    })
+
     it('can delete an unpublished Policy', async () => {
       const deletablePolicy = PolicyFactory()
       await PolicyServiceClient.writePolicy(deletablePolicy)

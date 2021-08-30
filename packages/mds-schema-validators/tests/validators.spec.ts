@@ -36,7 +36,6 @@ import {
   validateEvent,
   validateEvents,
   validateGeographies,
-  validateModalityPolicies,
   ValidationError
 } from '../validators'
 
@@ -305,86 +304,6 @@ describe('Tests validators', () => {
     expect(isValidAuditNote('provider-vehicle-id')).toBe(true)
 
     expect(isValidAuditNote(undefined, { assert: false, required: false })).toBe(true)
-  })
-
-  it('verifies policy validator', async () => {
-    expect(
-      validateModalityPolicies([
-        {
-          name: 'LADOT Mobility Caps',
-          description: 'Mobility caps as described in the One-Year Permit',
-          policy_id: uuid(),
-          start_date: 1558389669540,
-          end_date: null,
-          prev_policies: null,
-          provider_ids: [],
-          rules: [
-            {
-              name: 'Greater LA',
-              rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
-              rule_type: 'count',
-              geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
-              states: { available: [], non_operational: [], reserved: [], on_trip: [] },
-              vehicle_types: ['scooter'],
-              maximum: 10,
-              minimum: 5
-            }
-          ]
-        }
-      ])
-    ).toBe(true)
-
-    await expect(async () =>
-      validateModalityPolicies([
-        {
-          name: 'LADOT Mobility Caps',
-          description: 'Mobility caps as described in the One-Year Permit',
-          policy_id: uuid(),
-          start_date: 1558389669540,
-          end_date: null,
-          prev_policies: null,
-          provider_ids: [],
-          rules: [
-            {
-              name: 'Greater LA',
-              rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
-              rule_type: 'count',
-              geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
-              states: { available: [], non_operational: [], reserved: [], on_trip: [] },
-              vehicle_types: ['trololol'],
-              maximum: 10,
-              minimum: 5
-            }
-          ]
-        }
-      ])
-    ).rejects.toThrow(ValidationError)
-
-    await expect(async () =>
-      validateModalityPolicies([
-        {
-          name: 'LADOT Mobility Caps',
-          description: 'Mobility caps as described in the One-Year Permit',
-          policy_id: uuid(),
-          start_date: 1558389669540,
-          end_date: null,
-          prev_policies: null,
-          provider_ids: [],
-          rules: [
-            {
-              name: 'Greater LA',
-              rule_id: '47c8c7d4-14b5-43a3-b9a5-a32ecc2fb2c6',
-              rule_type: 'count',
-              geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
-              states: { not_a_state: [] },
-              vehicle_types: ['scooter'],
-              maximum: 10,
-              minimum: 5
-            }
-          ]
-        }
-      ])
-    ).rejects.toThrow(ValidationError)
   })
 
   it('verifies vehicle event validation (single)', async () => {

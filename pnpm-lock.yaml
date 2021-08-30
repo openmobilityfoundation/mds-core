@@ -609,6 +609,7 @@ importers:
       '@mds-core/mds-compliance-service': 0.2.3
       '@mds-core/mds-db': 0.2.4
       '@mds-core/mds-logger': 0.2.3
+      '@mds-core/mds-policy-service': 0.3.0
       '@mds-core/mds-providers': 0.1.33
       '@mds-core/mds-schema-validators': 0.2.3
       '@mds-core/mds-service-helpers': 0.3.1
@@ -629,6 +630,7 @@ importers:
       '@mds-core/mds-compliance-service': link:../mds-compliance-service
       '@mds-core/mds-db': link:../mds-db
       '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-policy-service': link:../mds-policy-service
       '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-schema-validators': link:../mds-schema-validators
       '@mds-core/mds-service-helpers': link:../mds-service-helpers

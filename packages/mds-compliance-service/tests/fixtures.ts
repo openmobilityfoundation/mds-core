@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ModalityPolicy } from '@mds-core/mds-types'
+import { Policy } from '@mds-core/mds-types'
 import { days, minutes, now, uuid } from '@mds-core/mds-utils'
 import { ComplianceSnapshotDomainModel } from '../@types'
 
@@ -309,7 +309,7 @@ export const COMPLIANCE_SNAPSHOTS = [
 })
 
 const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
-export const POLICY1: ModalityPolicy = {
+export const POLICY1: Policy = {
   name: 'Policy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: POLICY_ID_1,
@@ -332,7 +332,7 @@ export const POLICY1: ModalityPolicy = {
   ]
 }
 
-export const POLICY2: ModalityPolicy = {
+export const POLICY2: Policy = {
   name: 'Policy 2',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: POLICY_ID_2,
