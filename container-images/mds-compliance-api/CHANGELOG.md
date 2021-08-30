@@ -1,5 +1,12 @@
 # @container-images/mds-compliance-api
 
+## 0.1.36
+
+### Patch Changes
+
+- Updated dependencies [439f92c5]
+  - @mds-core/mds-compliance-api@0.2.0
+
 ## 0.1.35
 
 ### Patch Changes

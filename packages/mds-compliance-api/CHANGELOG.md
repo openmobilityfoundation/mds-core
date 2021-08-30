@@ -1,5 +1,26 @@
 # @mds-core/mds-compliance-api
 
+## 0.2.0
+
+### Minor Changes
+
+- 439f92c5: Vastly clean up Policy types, remove generic extension of ApiServer
+
+### Patch Changes
+
+- Updated dependencies [707c4317]
+- Updated dependencies [439f92c5]
+  - @mds-core/mds-test-data@0.2.0
+  - @mds-core/mds-api-server@0.3.0
+  - @mds-core/mds-db@0.3.0
+  - @mds-core/mds-schema-validators@0.3.0
+  - @mds-core/mds-types@0.4.0
+  - @mds-core/mds-compliance-service@0.3.0
+  - @mds-core/mds-api-helpers@0.1.37
+  - @mds-core/mds-providers@0.1.34
+  - @mds-core/mds-service-helpers@0.3.2
+  - @mds-core/mds-utils@0.1.35
+
 ## 0.1.8
 
 ### Patch Changes

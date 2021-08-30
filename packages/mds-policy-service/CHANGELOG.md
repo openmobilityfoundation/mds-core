@@ -1,5 +1,24 @@
 # @mds-core/mds-policy-service
 
+## 0.4.0
+
+### Minor Changes
+
+- 439f92c5: Vastly clean up Policy types, remove generic extension of ApiServer
+
+### Patch Changes
+
+- 439f92c5: Add support for specifying transaction_types and service_types in Rules, ensure that currency is supplied when making a policy with Rate rules
+- 707c4317: Make mds-test-data imports portable
+- Updated dependencies [439f92c5]
+  - @mds-core/mds-schema-validators@0.3.0
+  - @mds-core/mds-types@0.4.0
+  - @mds-core/mds-rpc-common@0.1.9
+  - @mds-core/mds-geography-service@0.1.9
+  - @mds-core/mds-repository@0.1.9
+  - @mds-core/mds-service-helpers@0.3.2
+  - @mds-core/mds-utils@0.1.35
+
 ## 0.3.0
 
 ### Minor Changes

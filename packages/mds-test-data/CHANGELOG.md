@@ -1,5 +1,19 @@
 # @mds-core/mds-test-data
 
+## 0.2.0
+
+### Minor Changes
+
+- 439f92c5: Vastly clean up Policy types, remove generic extension of ApiServer
+
+### Patch Changes
+
+- 707c4317: Export venice boundary explicitly
+- Updated dependencies [439f92c5]
+  - @mds-core/mds-types@0.4.0
+  - @mds-core/mds-providers@0.1.34
+  - @mds-core/mds-utils@0.1.35
+
 ## 0.1.34
 
 ### Patch Changes
