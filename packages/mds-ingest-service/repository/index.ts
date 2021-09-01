@@ -26,6 +26,8 @@ import {
   EventAnnotationDomainModel,
   EventDomainCreateModel,
   EventDomainModel,
+  GetDevicesOptions,
+  GetDevicesResponse,
   GetVehicleEventsFilterParams,
   GetVehicleEventsOrderOption,
   GetVehicleEventsResponse,
@@ -53,6 +55,7 @@ import {
 import migrations from './migrations'
 import { MigratedEntityModel } from './mixins/migrated-entity'
 
+type GetDeviceQueryParams = GetDevicesOptions & Cursor
 type VehicleEventsQueryParams = GetVehicleEventsFilterParams & Cursor
 
 class IngestReadWriteRepository extends ReadWriteRepository {
@@ -130,7 +133,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
     }
   }
 
-  public getDevices = async (device_ids?: UUID[]): Promise<DeviceDomainModel[]> => {
+  public getDevices = async (device_ids: UUID[]): Promise<DeviceDomainModel[]> => {
     try {
       const connection = await this.connect('ro')
       const entities = await connection
@@ -141,6 +144,65 @@ class IngestReadWriteRepository extends ReadWriteRepository {
       throw RepositoryError(error)
     }
   }
+
+  private buildGetDevicesCursor = (params: GetDeviceQueryParams) =>
+    Buffer.from(JSON.stringify(params), 'utf-8').toString('base64')
+
+  private parseGetDevicesCursor = (cursor: string): GetDeviceQueryParams => {
+    try {
+      return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'))
+    } catch (error) {
+      throw new ValidationError('Invalid cursor', error)
+    }
+  }
+
+  private getDevicesQuery = async ({
+    limit = 100,
+    beforeCursor,
+    afterCursor
+  }: GetDeviceQueryParams): Promise<GetDevicesResponse> => {
+    try {
+      const connection = await this.connect('ro')
+      const query = connection.createQueryBuilder(DeviceEntity, 'device')
+      const pager = buildPaginator({
+        entity: DeviceEntity,
+        alias: 'device',
+        paginationKeys: ['recorded', 'id'],
+        query: {
+          limit,
+          beforeCursor: beforeCursor ?? undefined,
+          afterCursor: afterCursor ?? undefined
+        }
+      })
+
+      const {
+        data,
+        cursor: { beforeCursor: nextBeforeCursor, afterCursor: nextAfterCursor }
+      } = await pager.paginate(query)
+
+      const cursor = { limit }
+
+      return {
+        devices: data.map(DeviceEntityToDomain.mapper()),
+        cursor: {
+          next:
+            nextAfterCursor &&
+            this.buildGetDevicesCursor({ ...cursor, beforeCursor: null, afterCursor: nextAfterCursor }),
+          prev:
+            nextBeforeCursor &&
+            this.buildGetDevicesCursor({ ...cursor, beforeCursor: nextBeforeCursor, afterCursor: null })
+        }
+      }
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
+
+  public getDevicesUsingOptions = async (options: GetDevicesOptions): Promise<GetDevicesResponse> =>
+    this.getDevicesQuery({ ...options, beforeCursor: null, afterCursor: null })
+
+  public getDevicesUsingCursor = async (cursor: string): Promise<GetDevicesResponse> =>
+    this.getDevicesQuery(this.parseGetDevicesCursor(cursor))
 
   private getEvents = async (params: VehicleEventsQueryParams): Promise<GetVehicleEventsResponse> => {
     const { connect } = this

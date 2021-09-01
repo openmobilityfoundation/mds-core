@@ -25,6 +25,8 @@ const IngestServiceRpcClient = RpcClient(IngestServiceDefinition, {
 
 // What the API layer, and any other clients, will invoke.
 export const IngestServiceClient: ServiceClient<IngestService & IngestMigrationService> = {
+  getDevicesUsingOptions: (...args) => RpcRequest(IngestServiceRpcClient.getDevicesUsingOptions, args),
+  getDevicesUsingCursor: (...args) => RpcRequest(IngestServiceRpcClient.getDevicesUsingCursor, args),
   getEventsUsingOptions: (...args) => RpcRequest(IngestServiceRpcClient.getEventsUsingOptions, args),
   getEventsUsingCursor: (...args) => RpcRequest(IngestServiceRpcClient.getEventsUsingCursor, args),
   getDevices: (...args) => RpcRequest(IngestServiceRpcClient.getDevices, args),

@@ -30,6 +30,7 @@ import {
   DeviceDomainModel,
   EventAnnotationDomainCreateModel,
   EventDomainModel,
+  GetDevicesOptions,
   GetVehicleEventsFilterParams,
   GetVehicleEventsOrderColumn,
   GetVehicleEventsOrderDirection,
@@ -42,6 +43,15 @@ const timestampSchema = { type: 'integer', minimum: 100_000_000_000, maximum: 99
 const nullableInteger = { type: 'integer', nullable: true, default: null }
 const nullableFloat = { type: 'number', format: 'float', nullable: true, default: null }
 const nullableString = { type: 'string', nullable: true, default: null }
+
+export const { validate: validateGetDevicesOptions } = SchemaValidator<GetDevicesOptions>({
+  type: 'object',
+  properties: {
+    limit: { type: 'integer' }
+  },
+  additionalProperties: false,
+  required: []
+})
 
 export const { validate: validateDeviceDomainModel, $schema: DeviceSchema } = SchemaValidator<DeviceDomainModel>(
   {

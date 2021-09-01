@@ -26,6 +26,8 @@ export const IngestServiceManager = RpcServer(
     onStop: IngestServiceProvider.stop
   },
   {
+    getDevicesUsingOptions: args => IngestServiceProvider.getDevicesUsingOptions(...args),
+    getDevicesUsingCursor: args => IngestServiceProvider.getDevicesUsingCursor(...args),
     getEventsUsingOptions: args => IngestServiceProvider.getEventsUsingOptions(...args),
     getEventsUsingCursor: args => IngestServiceProvider.getEventsUsingCursor(...args),
     getDevices: args => IngestServiceProvider.getDevices(...args),

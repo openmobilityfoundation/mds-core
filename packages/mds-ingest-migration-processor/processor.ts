@@ -15,7 +15,7 @@
  */
 
 import cache from '@mds-core/mds-agency-cache'
-import { EventDomainModel, IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
+import { DeviceDomainModel, IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
 import logger from '@mds-core/mds-logger'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
 import {
@@ -40,10 +40,14 @@ import {
   VehicleEvent,
   VehicleEvent_v0_4_1
 } from '@mds-core/mds-types'
-import { asArray } from '@mds-core/mds-utils'
-import { cleanEnv, str } from 'envalid'
+import { asArray, ServerError } from '@mds-core/mds-utils'
+import { cleanEnv, num, str } from 'envalid'
 
-const { SOURCE_TENANT_ID, TENANT_ID } = cleanEnv(process.env, { SOURCE_TENANT_ID: str(), TENANT_ID: str() })
+const { SOURCE_TENANT_ID, TENANT_ID, MIGRATION_BLOCK_SIZE_LIMIT } = cleanEnv(process.env, {
+  SOURCE_TENANT_ID: str(),
+  TENANT_ID: str(),
+  MIGRATION_BLOCK_SIZE_LIMIT: num({ default: 250 })
+})
 
 type MigrationEntityType = 'device' | 'event' | 'telemetry'
 
@@ -178,43 +182,29 @@ const TelemetryMigrationProcessor = StreamProcessor<
   [MigrationErrorSink('telemetry')]
 )
 
-const cacheDevices = async () => {
-  const devices = await IngestServiceClient.getDevices()
+const cacheDevicesEventsAndTelemetry = async (devices: DeviceDomainModel[]) => {
+  // Cache the devices
   await Promise.all(devices.map(cache.writeDevice))
-  return { devices: devices.length }
-}
+  const device_ids = devices.map(device => device.device_id)
 
-const cacheLatestEventsAndTelemetry = async (events: EventDomainModel[]) => {
-  const telemetry = await IngestServiceClient.getLatestTelemetryForDevices(events.map(event => event.device_id))
-  await Promise.all([cache.writeTelemetry(telemetry), Promise.all(events.map(cache.writeEvent))])
-  return { events: events.length, telemetry: telemetry.length }
-}
-
-const cacheEventsAndTelemetry = async () => {
-  const {
-    events,
-    cursor: { next }
-  } = await IngestServiceClient.getEventsUsingOptions({
+  // Cache the latest event for each device
+  const { events, cursor } = await IngestServiceClient.getEventsUsingOptions({
     grouping_type: 'latest_per_vehicle',
-    limit: 250
+    device_ids,
+    limit: device_ids.length
   })
-
-  const totals = await cacheLatestEventsAndTelemetry(events)
-
-  let cursor = next
-
-  while (cursor !== null) {
-    logger.info('Initialize event and telemetry cache', totals)
-    const {
-      events,
-      cursor: { next }
-    } = await IngestServiceClient.getEventsUsingCursor(cursor)
-    const updates = await cacheLatestEventsAndTelemetry(events)
-    totals.events += updates.events
-    totals.telemetry += updates.telemetry
-    cursor = next
+  if (cursor.next !== null) {
+    throw new ServerError('More than one event returned for a device')
   }
-  return totals
+  await Promise.all(events.map(cache.writeEvent))
+
+  // Cache the latest telemetry for each device
+  const telemetry = await IngestServiceClient.getLatestTelemetryForDevices(device_ids)
+  if (telemetry.length > devices.length) {
+    throw new ServerError('More than one telemetry returned for a device')
+  }
+  await cache.writeTelemetry(telemetry)
+  return { devices: devices.length, events: events.length, telemetry: telemetry.length }
 }
 
 const initializeCacheForMigration = async () => {
@@ -222,8 +212,31 @@ const initializeCacheForMigration = async () => {
 
   try {
     await cache.startup()
-    logger.info('Initialized device cache', await cacheDevices())
-    logger.info('Initialized event and telemetry cache', await cacheEventsAndTelemetry())
+    const {
+      devices,
+      cursor: { next }
+    } = await IngestServiceClient.getDevicesUsingOptions({
+      limit: MIGRATION_BLOCK_SIZE_LIMIT
+    })
+
+    const totals = await cacheDevicesEventsAndTelemetry(devices)
+
+    let cursor = next
+
+    while (cursor !== null) {
+      logger.info('Cache initialization progress', totals)
+      const {
+        devices,
+        cursor: { next }
+      } = await IngestServiceClient.getDevicesUsingCursor(cursor)
+      const updates = await cacheDevicesEventsAndTelemetry(devices)
+      totals.devices += updates.devices
+      totals.events += updates.events
+      totals.telemetry += updates.telemetry
+      cursor = next
+    }
+
+    logger.info('Cache initialization complete', totals)
   } catch (error) {
     logger.error('Cache initialization failed', { error })
     throw error

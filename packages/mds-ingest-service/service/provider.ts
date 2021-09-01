@@ -29,6 +29,7 @@ import {
 import { IngestRepository } from '../repository'
 import {
   validateEventAnnotationDomainCreateModels,
+  validateGetDevicesOptions,
   validateGetVehicleEventsFilterParams,
   validateUUIDs
 } from './validators'
@@ -40,6 +41,26 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
 
   stop: async () => {
     await Promise.all([IngestRepository.shutdown(), cache.shutdown(), stream.shutdown()])
+  },
+
+  getDevicesUsingOptions: async options => {
+    try {
+      return ServiceResult(await IngestRepository.getDevicesUsingOptions(validateGetDevicesOptions(options)))
+    } catch (error) {
+      const exception = ServiceException('Error in getDevicesUsingOptions', error)
+      logger.error('getDevicesUsingOptions exception', { exception, error })
+      return exception
+    }
+  },
+
+  getDevicesUsingCursor: async cursor => {
+    try {
+      return ServiceResult(await IngestRepository.getDevicesUsingCursor(cursor))
+    } catch (error) {
+      const exception = ServiceException('Error in getDevicesUsingCursor', error)
+      logger.error('getDevicesUsingCursor exception', { exception, error })
+      return exception
+    }
   },
 
   getEventsUsingOptions: async params => {
@@ -64,9 +85,7 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
 
   getDevices: async device_ids => {
     try {
-      return ServiceResult(
-        await (device_ids ? IngestRepository.getDevices(validateUUIDs(device_ids)) : IngestRepository.getDevices())
-      )
+      return ServiceResult(await IngestRepository.getDevices(validateUUIDs(device_ids)))
     } catch (error) {
       const exception = ServiceException('Error in getDevices', error)
       logger.error('getDevices exception', { exception, error })
