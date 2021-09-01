@@ -121,6 +121,14 @@ export type GetVehicleEventsResponse = {
   }
 }
 
+export interface ReadTripEventsQueryParams {
+  skip?: UUID
+  take?: number
+  start_time?: number | string
+  end_time?: number | string
+  provider_id?: UUID
+}
+
 export interface EventDomainModel extends RecordedColumn {
   device_id: UUID
   provider_id: UUID

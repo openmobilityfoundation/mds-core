@@ -16,7 +16,7 @@
  */
 
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { Device } from '@mds-core/mds-types'
+import { Device, UUID } from '@mds-core/mds-types'
 import { now, uuid } from '@mds-core/mds-utils'
 import { EventAnnotationDomainCreateModel, EventDomainCreateModel, TelemetryDomainCreateModel } from '../@types'
 import { IngestServiceClient } from '../client'
@@ -637,6 +637,57 @@ describe('Ingest Service Tests', () => {
           { migrated_from_source: 'mds.telemetry', migrated_from_version: '0.0', migrated_from_id: 1 }
         )
       ).toMatchObject(TEST_TELEMETRY_A1)
+    })
+  })
+
+  describe('getTripEvents', () => {
+    beforeEach(async () => {
+      await IngestRepository.createEvents([TEST_EVENT_A1, TEST_EVENT_B1])
+      await IngestRepository.createEvents([TEST_EVENT_A2, TEST_EVENT_B2])
+      await IngestRepository.createTelemetries([TEST_TELEMETRY_A1, TEST_TELEMETRY_B1])
+      await IngestRepository.createTelemetries([TEST_TELEMETRY_A2, TEST_TELEMETRY_B2])
+    })
+
+    it('loads all events, with telemetry and gps embeded', async () => {
+      const trips = await IngestRepository.getTripEvents({})
+      const events1 = trips[TRIP_UUID_A]
+      const events2 = trips[TRIP_UUID_B]
+      expect(events1?.length).toStrictEqual(2)
+      expect(events2?.length).toStrictEqual(2)
+
+      expect(events1[0].telemetry?.gps.lat).toStrictEqual(TEST_TELEMETRY_A1.gps.lat)
+      expect(events1[1].telemetry?.gps.lat).toStrictEqual(TEST_TELEMETRY_A2.gps.lat)
+    })
+    it('loads trip events filtered by time', async () => {
+      const trips1 = await IngestRepository.getTripEvents({
+        start_time: TEST_EVENT_A2.timestamp + 100,
+        end_time: TEST_EVENT_A2.timestamp + 200
+      })
+      expect(Object.keys(trips1).length).toStrictEqual(0)
+
+      const trips2 = await IngestRepository.getTripEvents({
+        start_time: TEST_EVENT_A1.timestamp,
+        end_time: TEST_EVENT_A2.timestamp
+      })
+      expect(Object.keys(trips2).length).toStrictEqual(2)
+    })
+    it('loads trip events filtered by provider', async () => {
+      const trips1 = await IngestRepository.getTripEvents({
+        provider_id: TEST_EVENT_A2.provider_id
+      })
+      expect(Object.keys(trips1).length).toStrictEqual(2)
+
+      const trips2 = await IngestRepository.getTripEvents({
+        provider_id: uuid()
+      })
+      expect(Object.keys(trips2).length).toStrictEqual(0)
+    })
+    it('loads trip events skipping trip_id', async () => {
+      const trip_id = [TEST_EVENT_A1.trip_id, TEST_EVENT_B1.trip_id].sort()[0]
+      const trips1 = await IngestRepository.getTripEvents({
+        skip: trip_id as UUID
+      })
+      expect(Object.keys(trips1).length).toStrictEqual(1)
     })
   })
 

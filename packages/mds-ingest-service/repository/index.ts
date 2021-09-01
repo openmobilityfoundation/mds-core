@@ -31,6 +31,7 @@ import {
   GetVehicleEventsFilterParams,
   GetVehicleEventsOrderOption,
   GetVehicleEventsResponse,
+  ReadTripEventsQueryParams,
   TelemetryDomainCreateModel,
   TelemetryDomainModel
 } from '../@types'
@@ -416,6 +417,51 @@ class IngestReadWriteRepository extends ReadWriteRepository {
 
   public getEventsUsingCursor = async (cursor: string): Promise<GetVehicleEventsResponse> =>
     this.getEvents(this.parseCursor(cursor))
+
+  public getTripEvents = async (params: ReadTripEventsQueryParams) => {
+    const { skip, take = 100, start_time, end_time, provider_id } = params
+    try {
+      const connection = await this.connect('rw')
+      const tripIdQuery = connection
+        .getRepository(EventEntity)
+        .createQueryBuilder()
+        .select('distinct trip_id')
+        .limit(take)
+
+      if (start_time) tripIdQuery.where('timestamp >= :start_time', { start_time })
+      if (end_time) tripIdQuery.andWhere('timestamp <= :end_time', { end_time })
+      if (provider_id) tripIdQuery.andWhere('provider_id = :provider_id', { provider_id })
+      if (skip) tripIdQuery.andWhere('trip_id > :skip', { skip })
+
+      const bigQuery = connection
+        .createQueryBuilder()
+        .select('et.trip_id, array_agg(row_to_json(et.*) ORDER BY et.timestamp) AS events')
+        .from(
+          qb =>
+            qb
+              .select('e.*, to_json(t.*) AS telemetry')
+              .from('events', 'e')
+              .innerJoin(
+                'telemetry',
+                't',
+                `e.device_id = t.device_id AND e.telemetry_timestamp = t.timestamp AND e.trip_id IN (${tripIdQuery.getQuery()})`
+              ),
+          'et'
+        )
+        .setParameters(tripIdQuery.getParameters())
+        .groupBy('et.trip_id')
+        .orderBy('et.trip_id')
+
+      const entities: { trip_id: UUID; events: EventEntity[] }[] = await bigQuery.execute()
+
+      return entities.reduce<Record<UUID, EventDomainModel[]>>((acc, { trip_id, events }) => {
+        const mappedEvents = events.map(EventEntityToDomain.map)
+        return Object.assign(acc, { [trip_id]: mappedEvents })
+      }, {})
+    } catch (error) {
+      throw RepositoryError(error)
+    }
+  }
 
   public getLatestTelemetryForDevices = async (device_ids: UUID[]): Promise<TelemetryDomainModel[]> => {
     try {
