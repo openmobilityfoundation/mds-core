@@ -1,5 +1,12 @@
 # @container-images/mds-ingest-migration-processor
 
+## 0.0.10
+
+### Patch Changes
+
+- c21c7748: Migrate blocks of devices using queries with paging/cursor
+  - @mds-core/mds-ingest-migration-processor@0.0.9
+
 ## 0.0.9
 
 ### Patch Changes

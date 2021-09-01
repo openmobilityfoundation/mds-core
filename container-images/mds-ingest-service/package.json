@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-ingest-service",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "private": true,
   "description": "Docker Image for MDS Ingest Service",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-ingest-service:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-ingest-service": "0.3.4",
+    "@mds-core/mds-ingest-service": "0.4.0",
     "@mds-core/mds-webpack-config": "0.1.3"
   }
 }
