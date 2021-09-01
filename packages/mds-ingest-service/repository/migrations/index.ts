@@ -29,6 +29,7 @@ import { AddEventsProviderIdIdIndex1627315276644 } from './1627315276644-AddEven
 import { AddEventsVehicleStateIdIndex1627315357677 } from './1627315357677-AddEventsVehicleStateIdIndex'
 import { AddEventsRowIdColumn1627427307591 } from './1627427307591-AddEventsRowIdColumn'
 import { DropServiceAreaIdColumn1627680668538 } from './1627680668538-DropServiceAreaIdColumn'
+import { SetEventAnnotationsEventsRowIdColumnNotNull1630418242374 } from './1630418242374-SetEventAnnotationsEventsRowIdColumnNotNull'
 
 export default [
   CreateDevicesTable1603212409274,
@@ -45,5 +46,6 @@ export default [
   AddEventsProviderIdIdIndex1627315276644,
   AddEventsVehicleStateIdIndex1627315357677,
   AddEventsRowIdColumn1627427307591,
-  DropServiceAreaIdColumn1627680668538
+  DropServiceAreaIdColumn1627680668538,
+  SetEventAnnotationsEventsRowIdColumnNotNull1630418242374
 ]

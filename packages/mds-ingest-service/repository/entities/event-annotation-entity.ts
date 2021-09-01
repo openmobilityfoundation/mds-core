@@ -49,11 +49,12 @@ export class EventAnnotationEntity extends IdentityColumn(RecordedColumn(class {
   @Column('bigint', { transformer: BigintTransformer })
   latency_ms: Timestamp
 
-  @OneToOne(() => EventEntity, event => event.annotation)
+  @OneToOne(() => EventEntity, event => event.annotation, { createForeignKeyConstraints: false })
   @JoinColumn({ name: 'events_row_id', referencedColumnName: 'id' })
   event: EventEntityModel
 
   @Column('bigint', { transformer: BigintTransformer })
+  @Index()
   events_row_id: number
 }
 
