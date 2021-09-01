@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "start": "PATH_PREFIX=/policy-author pnpm watch server",
-    "test": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env jest",
+    "test": "PATH_PREFIX=/policy-author DOTENV_CONFIG_PATH=../../.env jest --runInBand",
     "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },

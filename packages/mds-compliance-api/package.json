@@ -14,7 +14,7 @@
     "generate": "pnpm generate:flatspec",
     "generate:flatspec": "ts-node ./generate-flat-spec.ts && git add spec/flat-spec.json",
     "start": "PATH_PREFIX=/compliance-api pnpm watch server",
-    "test": "PATH_PREFIX=/compliance-api DOTENV_CONFIG_PATH=../../.env jest",
+    "test": "PATH_PREFIX=/compliance-api DOTENV_CONFIG_PATH=../../.env jest --runInBand",
     "ts-node": "pnpm build && DOTENV_CONFIG_PATH=../../.env ts-node -r dotenv/config",
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },

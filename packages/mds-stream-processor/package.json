@@ -16,7 +16,7 @@
     "build": "tsc --build tsconfig.build.json",
     "process": "pnpm watch",
     "start": "pnpm watch",
-    "test": "DOTENV_CONFIG_PATH=../../.env jest --passWithNoTests",
+    "test": "DOTENV_CONFIG_PATH=../../.env jest --runInBand --passWithNoTests",
     "ts-node": "DOTENV_CONFIG_PATH=../../.env node --experimental-repl-await -r ts-node/register -r dotenv/config",
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },

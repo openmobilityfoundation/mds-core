@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "start": "PATH_PREFIX=/transaction pnpm watch server",
-    "test": "PATH_PREFIX=/transaction DOTENV_CONFIG_PATH=../../.env jest",
+    "test": "PATH_PREFIX=/transaction DOTENV_CONFIG_PATH=../../.env jest --runInBand",
     "ts-node": "DOTENV_CONFIG_PATH=../../.env node -r ts-node/register -r dotenv/config",
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --",
     "generate": "pnpm generate:schema && pnpm generate:flatspec",
