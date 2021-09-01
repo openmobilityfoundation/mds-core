@@ -1,5 +1,15 @@
 # @mds-core/mds-ingest-service
 
+## 0.4.0
+
+### Minor Changes
+
+- 0e0abffd: added getTripEvents to mds-ingest-service
+
+### Patch Changes
+
+- 15fbc633: Synchronize mds-ingest-service schema/models
+
 ## 0.3.4
 
 ### Patch Changes

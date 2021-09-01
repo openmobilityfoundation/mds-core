@@ -1,5 +1,14 @@
 # @container-images/mds-ingest-service
 
+## 0.0.12
+
+### Patch Changes
+
+- c21c7748: Add methods for device queries with paging support
+- Updated dependencies [15fbc633]
+- Updated dependencies [0e0abffd]
+  - @mds-core/mds-ingest-service@0.4.0
+
 ## 0.0.11
 
 ### Patch Changes
