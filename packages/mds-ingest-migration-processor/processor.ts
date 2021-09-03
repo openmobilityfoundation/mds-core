@@ -203,7 +203,7 @@ const cacheDevicesEventsAndTelemetry = async (devices: DeviceDomainModel[]) => {
   if (telemetry.length > devices.length) {
     throw new ServerError('More than one telemetry returned for a device')
   }
-  await cache.writeTelemetry(telemetry)
+  await cache.writeTelemetry(telemetry, { quiet: true })
   return { devices: devices.length, events: events.length, telemetry: telemetry.length }
 }
 

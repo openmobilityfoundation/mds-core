@@ -393,36 +393,37 @@ async function readTelemetry(device_id: UUID): Promise<Telemetry> {
   return parseTelemetry(telemetry as StringifiedTelemetry)
 }
 
-async function writeOneTelemetry(telemetry: Telemetry) {
-  const { lat, lng } = telemetry.gps
-  try {
-    const prevTelemetry = await readTelemetry(telemetry.device_id)
-    if (prevTelemetry.timestamp < telemetry.timestamp) {
-      try {
-        await addGeospatialHash(telemetry.device_id, [lat, lng])
-        return hwrite('telemetry', telemetry)
-      } catch (err) {
-        logger.error('hwrite', err.stack)
-        return Promise.reject(err)
+async function writeOneTelemetry(telemetry: Telemetry, options: { quiet: boolean } = { quiet: false }) {
+  const isNewerTelemetry = async () => {
+    try {
+      const priorTelemetry = await readTelemetry(telemetry.device_id)
+      return telemetry.timestamp > priorTelemetry.timestamp
+    } catch (err) {
+      if (!options.quiet) {
+        logger.info('writeOneTelemetry: no prior telemetry found:', err.message)
       }
+      // Cache miss; return true
+      return true
+    }
+  }
+
+  try {
+    if (await isNewerTelemetry()) {
+      const { lat, lng } = telemetry.gps
+      await addGeospatialHash(telemetry.device_id, [lat, lng])
+      return hwrite('telemetry', telemetry)
     } else {
       return Promise.resolve()
     }
   } catch (err) {
-    logger.info('writeOneTelemetry: no prior telemetry found:', err.message)
-    try {
-      await addGeospatialHash(telemetry.device_id, [lat, lng])
-      return hwrite('telemetry', telemetry)
-    } catch (err2) {
-      logger.error('writeOneTelemetry hwrite2', err.stack)
-      return Promise.reject(err2)
-    }
+    logger.error('writeOneTelemetry error', err.stack)
+    throw err
   }
 }
 
-async function writeTelemetry(telemetries: Telemetry[]) {
+async function writeTelemetry(telemetries: Telemetry[], options: { quiet: boolean } = { quiet: false }) {
   try {
-    await Promise.all(telemetries.map(telemetry => writeOneTelemetry(telemetry)))
+    await Promise.all(telemetries.map(telemetry => writeOneTelemetry(telemetry, options)))
   } catch (err) {
     logger.error('Failed to write telemetry to cache', err)
     throw err

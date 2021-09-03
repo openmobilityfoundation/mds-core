@@ -17,7 +17,17 @@
 import * as test from 'unit.js'
 import logger from '../index'
 
+const QUIET = process.env.QUIET
+
 describe('MDS Logger', () => {
+  beforeEach(() => {
+    process.env.QUIET = 'false'
+  })
+
+  afterEach(() => {
+    process.env.QUIET = QUIET
+  })
+
   it('censors logs of lat and lng info for mds-logger.info', done => {
     const toCensor = {
       device_id: 'ec551174-f324-4251-bfed-28d9f3f473fc',
@@ -91,13 +101,11 @@ describe('MDS Logger', () => {
   })
 
   it('verifies QUIET mode', () => {
-    process.env.QUIET = 'false'
     const { log_data: log_data1 } = logger.log('error', 'some message', { key1: 'key1', key2: 'key2' })
     test.value(Object.keys(log_data1).length).is(2)
     process.env.QUIET = 'true'
     const result = logger.log('error', 'some message', { key1: 'key1', key2: 'key2' })
     test.value(Object.keys(result).length).is(0)
-    process.env.QUIET = 'false'
   })
 
   it('can write a log with only a message, and no data', () => {
