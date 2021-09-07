@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-jurisdiction:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-jurisdiction": "0.1.13",
-    "@mds-core/mds-webpack-config": "0.1.3"
+    "@mds-core/mds-jurisdiction": "workspace:0.1.13",
+    "@mds-core/mds-webpack-config": "workspace:0.1.3"
   }
 }

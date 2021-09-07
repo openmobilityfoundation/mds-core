@@ -20,13 +20,13 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-agency-cache": "0.2.5",
-    "@mds-core/mds-ingest-service": "0.4.1",
-    "@mds-core/mds-logger": "0.2.4",
-    "@mds-core/mds-repository": "0.1.10",
-    "@mds-core/mds-stream-processor": "0.2.6",
-    "@mds-core/mds-types": "0.4.0",
-    "@mds-core/mds-utils": "0.1.36",
+    "@mds-core/mds-agency-cache": "workspace:0.2.5",
+    "@mds-core/mds-ingest-service": "workspace:0.4.1",
+    "@mds-core/mds-logger": "workspace:0.2.4",
+    "@mds-core/mds-repository": "workspace:0.1.10",
+    "@mds-core/mds-stream-processor": "workspace:0.2.6",
+    "@mds-core/mds-types": "workspace:0.4.0",
+    "@mds-core/mds-utils": "workspace:0.1.36",
     "envalid": "7.1.0"
   }
 }

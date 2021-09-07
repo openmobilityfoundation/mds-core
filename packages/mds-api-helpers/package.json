@@ -18,10 +18,10 @@
     "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap --lines 40  ts-mocha --project ../../tsconfig.json"
   },
   "dependencies": {
-    "@mds-core/mds-agency-cache": "0.2.5",
-    "@mds-core/mds-api-server": "0.3.1",
-    "@mds-core/mds-db": "0.3.2",
-    "@mds-core/mds-types": "0.4.0",
-    "@mds-core/mds-utils": "0.1.36"
+    "@mds-core/mds-agency-cache": "workspace:0.2.5",
+    "@mds-core/mds-api-server": "workspace:0.3.1",
+    "@mds-core/mds-db": "workspace:0.3.2",
+    "@mds-core/mds-types": "workspace:0.4.0",
+    "@mds-core/mds-utils": "workspace:0.1.36"
   }
 }
