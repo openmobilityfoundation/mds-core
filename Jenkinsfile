@@ -12,6 +12,10 @@ pipeline {
 
   agent any
 
+  options {
+    timeout(time: 1, unit: 'HOURS') // If build hangs for an hour, kill it with a 🔫
+  }
+
   stages {
     stage('Build') {
       steps {
