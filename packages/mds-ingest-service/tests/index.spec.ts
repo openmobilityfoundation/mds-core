@@ -649,7 +649,7 @@ describe('Ingest Service Tests', () => {
     })
 
     it('loads all events, with telemetry and gps embeded', async () => {
-      const trips = await IngestRepository.getTripEvents({})
+      const trips = await IngestServiceClient.getTripEvents({})
       const events1 = trips[TRIP_UUID_A]
       const events2 = trips[TRIP_UUID_B]
       expect(events1?.length).toStrictEqual(2)
@@ -659,32 +659,32 @@ describe('Ingest Service Tests', () => {
       expect(events1[1].telemetry?.gps.lat).toStrictEqual(TEST_TELEMETRY_A2.gps.lat)
     })
     it('loads trip events filtered by time', async () => {
-      const trips1 = await IngestRepository.getTripEvents({
+      const trips1 = await IngestServiceClient.getTripEvents({
         start_time: TEST_EVENT_A2.timestamp + 100,
         end_time: TEST_EVENT_A2.timestamp + 200
       })
       expect(Object.keys(trips1).length).toStrictEqual(0)
 
-      const trips2 = await IngestRepository.getTripEvents({
+      const trips2 = await IngestServiceClient.getTripEvents({
         start_time: TEST_EVENT_A1.timestamp,
         end_time: TEST_EVENT_A2.timestamp
       })
       expect(Object.keys(trips2).length).toStrictEqual(2)
     })
     it('loads trip events filtered by provider', async () => {
-      const trips1 = await IngestRepository.getTripEvents({
+      const trips1 = await IngestServiceClient.getTripEvents({
         provider_id: TEST_EVENT_A2.provider_id
       })
       expect(Object.keys(trips1).length).toStrictEqual(2)
 
-      const trips2 = await IngestRepository.getTripEvents({
+      const trips2 = await IngestServiceClient.getTripEvents({
         provider_id: uuid()
       })
       expect(Object.keys(trips2).length).toStrictEqual(0)
     })
     it('loads trip events skipping trip_id', async () => {
       const trip_id = [TEST_EVENT_A1.trip_id, TEST_EVENT_B1.trip_id].sort()[0]
-      const trips1 = await IngestRepository.getTripEvents({
+      const trips1 = await IngestServiceClient.getTripEvents({
         skip: trip_id as UUID
       })
       expect(Object.keys(trips1).length).toStrictEqual(1)

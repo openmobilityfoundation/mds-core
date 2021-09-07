@@ -35,7 +35,8 @@ export const IngestServiceManager = RpcServer(
     writeEventAnnotations: args => IngestServiceProvider.writeEventAnnotations(...args),
     writeMigratedDevice: args => IngestServiceProvider.writeMigratedDevice(...args),
     writeMigratedVehicleEvent: args => IngestServiceProvider.writeMigratedVehicleEvent(...args),
-    writeMigratedTelemetry: args => IngestServiceProvider.writeMigratedTelemetry(...args)
+    writeMigratedTelemetry: args => IngestServiceProvider.writeMigratedTelemetry(...args),
+    getTripEvents: args => IngestServiceProvider.getTripEvents(...args)
   },
   {
     port: process.env.INGEST_SERVICE_RPC_PORT,

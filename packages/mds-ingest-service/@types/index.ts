@@ -207,6 +207,7 @@ export interface IngestService {
   getDevices: (device_ids: UUID[]) => DeviceDomainModel[]
   getLatestTelemetryForDevices: (device_ids: UUID[]) => TelemetryDomainModel[]
   writeEventAnnotations: (params: EventAnnotationDomainCreateModel[]) => EventAnnotationDomainModel[]
+  getTripEvents: (params: ReadTripEventsQueryParams) => Record<UUID, EventDomainModel[]>
 }
 
 export interface IngestMigrationService {
@@ -228,5 +229,6 @@ export const IngestServiceDefinition: RpcServiceDefinition<IngestService & Inges
   writeEventAnnotations: RpcRoute<IngestService['writeEventAnnotations']>(),
   writeMigratedDevice: RpcRoute<IngestMigrationService['writeMigratedDevice']>(),
   writeMigratedVehicleEvent: RpcRoute<IngestMigrationService['writeMigratedVehicleEvent']>(),
-  writeMigratedTelemetry: RpcRoute<IngestMigrationService['writeMigratedTelemetry']>()
+  writeMigratedTelemetry: RpcRoute<IngestMigrationService['writeMigratedTelemetry']>(),
+  getTripEvents: RpcRoute<IngestService['getTripEvents']>()
 }

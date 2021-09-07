@@ -218,5 +218,15 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
       logger.error('writeMigratedTelemetry exception', { exception, error })
       return exception
     }
+  },
+
+  getTripEvents: async options => {
+    try {
+      return ServiceResult(await IngestRepository.getTripEvents(options))
+    } catch (error) {
+      const exception = ServiceException('Error in getTripEvents', error)
+      logger.error('getTripEvents exception', { exception, error })
+      return exception
+    }
   }
 }
