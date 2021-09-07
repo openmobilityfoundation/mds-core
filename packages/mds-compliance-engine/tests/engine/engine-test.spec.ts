@@ -17,9 +17,10 @@
 import cache from '@mds-core/mds-agency-cache'
 import { ComplianceSnapshotDomainModel } from '@mds-core/mds-compliance-service/@types'
 import db from '@mds-core/mds-db'
+import { PolicyDomainModel } from '@mds-core/mds-policy-service'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
 import { LA_CITY_BOUNDARY, makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Device, Geography, Policy, VehicleEvent } from '@mds-core/mds-types'
+import { Device, Geography, VehicleEvent } from '@mds-core/mds-types'
 import assert from 'assert'
 import { FeatureCollection } from 'geojson'
 import test from 'unit.js'
@@ -29,7 +30,7 @@ import { processPolicy } from '../../engine/mds-compliance-engine'
 import { EXPIRED_POLICY, LOW_COUNT_POLICY } from '../../test_data/fixtures'
 import { readJson } from './helpers'
 
-let policies: Policy[] = []
+let policies: PolicyDomainModel[] = []
 
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 
@@ -100,6 +101,7 @@ describe('Tests General Compliance Engine Functionality', () => {
 describe('Verifies compliance engine processes by vehicle most recent event', () => {
   beforeEach(async () => {
     await db.reinitialize()
+    await cache.startup()
     await cache.reset()
   })
   it('should process count violation vehicles with the most recent event last', async () => {

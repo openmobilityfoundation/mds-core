@@ -1,20 +1,30 @@
 import cache from '@mds-core/mds-agency-cache'
 import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service'
 import db from '@mds-core/mds-db'
+import { CountPolicy, PolicyDomainModel, Rule, RULE_TYPE, SpeedPolicy, TimePolicy } from '@mds-core/mds-policy-service'
 import { providers } from '@mds-core/mds-providers'
 import {
   DAYS_OF_WEEK,
   DAY_OF_WEEK,
   Device,
   Geography,
-  Policy,
-  Rule,
-  RULE_TYPE,
+  MicroMobilityVehicleEvent,
+  MICRO_MOBILITY_EVENT_STATES_MAP,
+  MICRO_MOBILITY_VEHICLE_EVENTS,
+  MICRO_MOBILITY_VEHICLE_STATE,
+  TaxiVehicleEvent,
+  TAXI_EVENT_STATES_MAP,
+  TAXI_VEHICLE_EVENTS,
+  TAXI_VEHICLE_STATE,
   TIME_FORMAT,
+  TNCVehicleEvent,
+  TNC_EVENT_STATES_MAP,
+  TNC_VEHICLE_EVENT,
+  TNC_VEHICLE_STATE,
   UUID,
   VehicleEvent
 } from '@mds-core/mds-types'
-import { isDefined, now, RuntimeError } from '@mds-core/mds-utils'
+import { areThereCommonElements, isDefined, now, RuntimeError } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
 import { ProviderInputs, VehicleEventWithTelemetry } from '../@types'
 
@@ -22,8 +32,20 @@ const { env } = process
 
 const TWO_DAYS_IN_MS = 172800000
 
-export function getPolicyType(policy: Policy) {
+export function getPolicyType(policy: PolicyDomainModel) {
   return policy.rules[0].rule_type
+}
+
+export function isCountPolicy(policy: PolicyDomainModel): policy is CountPolicy {
+  return policy.rules[0].rule_type === 'count'
+}
+
+export function isSpeedPolicy(policy: PolicyDomainModel): policy is SpeedPolicy {
+  return policy.rules[0].rule_type === 'speed'
+}
+
+export function isTimePolicy(policy: PolicyDomainModel): policy is TimePolicy {
+  return policy.rules[0].rule_type === 'time'
 }
 
 export function generateDeviceMap(devices: Device[]): { [d: string]: Device } {
@@ -32,7 +54,7 @@ export function generateDeviceMap(devices: Device[]): { [d: string]: Device } {
   }, {})
 }
 
-export function isPolicyUniversal(policy: Policy) {
+export function isPolicyUniversal(policy: PolicyDomainModel) {
   return !policy.provider_ids || policy.provider_ids.length === 0
 }
 
@@ -63,7 +85,7 @@ export async function getProviderInputs(provider_id: string) {
   return { filteredEvents, deviceMap, provider_id }
 }
 
-export function isPolicyActive(policy: Policy, end_time: number = now()): boolean {
+export function isPolicyActive(policy: PolicyDomainModel, end_time: number = now()): boolean {
   if (policy.end_date === null) {
     return end_time >= policy.start_date
   }
@@ -97,14 +119,15 @@ export function isInVehicleTypes(rule: Rule<Exclude<RULE_TYPE, 'rate'>>, device:
 
 // Take a list of policies, and eliminate all those that have been superseded. Returns
 // policies that have not been superseded.
-export function getSupersedingPolicies(policies: Policy[]): Policy[] {
-  const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: Policy) => {
+// TODO: move to mds-policly-service
+export function getSupersedingPolicies(policies: PolicyDomainModel[]): PolicyDomainModel[] {
+  const prev_policies: string[] = policies.reduce((prev_policies_acc: string[], policy: PolicyDomainModel) => {
     if (policy.prev_policies) {
       prev_policies_acc.push(...policy.prev_policies)
     }
     return prev_policies_acc
   }, [])
-  return policies.filter((policy: Policy) => {
+  return policies.filter((policy: PolicyDomainModel) => {
     return !prev_policies.includes(policy.policy_id)
   })
 }
@@ -146,7 +169,7 @@ export function createMatchedVehicleInformation(
 }
 
 export function annotateVehicleMap<T extends Rule<Exclude<RULE_TYPE, 'rate'>>>(
-  policy: Policy,
+  policy: PolicyDomainModel,
   events: VehicleEventWithTelemetry[],
   geographies: Geography[],
   vehicleMap: { [d: string]: { device: Device; speed?: number; rule_applied?: UUID; rules_matched?: UUID[] } },
@@ -184,11 +207,134 @@ export function annotateVehicleMap<T extends Rule<Exclude<RULE_TYPE, 'rate'>>>(
 }
 
 export function getProviderIDs(provider_ids: UUID[] | undefined | null) {
-  if (!isDefined(provider_ids)) {
+  if (!isDefined(provider_ids) || !Array.isArray(provider_ids)) {
     return Object.keys(providers)
   }
-  if (provider_ids === []) {
+  if (provider_ids.length < 1) {
     return Object.keys(providers)
   }
   return provider_ids
+}
+
+/**
+ * The rule matches this event if a transient event_type and possible resultant states,
+ * or the final event_type and explicitly encoded vehicle_state match with the rule's status definitions.
+ * e.g. if the rule states are { reserved: [] } and there's an event with event_types
+ *      [trip_end, reservation_start, trip_start], there's an implication
+ *      that the vehicle entered the reserved state after reservation_start,
+ *      even if the final state of the event is on_trip, and the rule will match.
+ *
+ * @example Matching transient `event_type`
+ * ```typescript
+ * isInStatesOrEvents({ states: { reserved: [] } }, { event_types: ['trip_end', 'reservation_start', 'trip_start'], vehicle_state: 'on_trip' }) => true
+ * ```
+ * @example State matching for transient `event_type` 'off_hours', but `event_type` not matched with explicit `event_type` in rule
+ * ```typescript
+ * isInStatesOrEvents({ states: { non_operational: ['maintenance'] } }, { event_types: ['trip_end', 'off_hours', 'on_hours'], vehicle_state: 'available' }) => false
+ * ```
+ * @example Match for last `event_type` and encoded `vehicle_state`, with explicit `event_type` in rule
+ * ```typescript
+ * isInStatesOrEvents({ states: { available: ['on_hours'] } }, { event_types: ['trip_end', 'off_hours', 'on_hours'], vehicle_state: 'available' }) => true
+ * ```
+ * @example Match for last `event_type` and encoded `vehicle_state`, with catch-all in rule
+ * ```typescript
+ * isInStatesOrEvents({ states: { available: [] } }, { event_types: ['on_hours'], vehicle_state: 'available' }) => true
+ * ```
+ */
+export function isInStatesOrEvents(
+  rule: Pick<Rule, 'states'>,
+  device: Pick<Device, 'modality'>,
+  event: VehicleEvent
+): boolean {
+  const { states } = rule
+  // If no states are specified, then the rule applies to all VehicleStates.
+  if (states === null || states === undefined) {
+    return true
+  }
+
+  /**
+   * State encoded in the event payload (default acc in the reducer) + states that it is
+   * possible to transition into with any transient event_types
+   */
+  const possibleStates = getPossibleStates(device, event)
+
+  return possibleStates.some(state => {
+    // Explicit events encoded in rule for that state (if any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const matchableEvents: string[] | undefined = state in states ? (states as any)[state] : undefined //FIXME should not have to use an any cast here
+
+    /**
+     * If event_types not encoded in rule, assume state match.
+     * If event_types encoded in rule, see if event.event_types contains a match.
+     */
+    if (
+      matchableEvents !== undefined &&
+      (matchableEvents.length === 0 || areThereCommonElements(matchableEvents, event.event_types))
+    ) {
+      return true
+    }
+    return false
+  })
+}
+
+export const getPossibleStates = (device: Pick<Device, 'modality'>, event: VehicleEvent) => {
+  if (isMicroMobilityEvent(device, event)) {
+    const { event_types, vehicle_state } = event
+    // All event_types except the last (in most cases this will be an empty list)
+    const transientEventTypes = event_types.splice(0, -1)
+
+    return transientEventTypes.reduce(
+      (acc: MICRO_MOBILITY_VEHICLE_STATE[], event_type) => {
+        return acc.concat(MICRO_MOBILITY_EVENT_STATES_MAP[event_type])
+      },
+      [vehicle_state]
+    )
+  }
+  if (isTaxiEvent(device, event)) {
+    const { event_types, vehicle_state } = event
+    // All event_types except the last (in most cases this will be an empty list)
+    const transientEventTypes = event_types.splice(0, -1)
+
+    return transientEventTypes.reduce(
+      (acc: TAXI_VEHICLE_STATE[], event_type) => {
+        return acc.concat(TAXI_EVENT_STATES_MAP[event_type])
+      },
+      [vehicle_state]
+    )
+  }
+  if (isTncEvent(device, event)) {
+    const { event_types, vehicle_state } = event
+    // All event_types except the last (in most cases this will be an empty list)
+    const transientEventTypes = event_types.splice(0, -1)
+
+    return transientEventTypes.reduce(
+      (acc: TNC_VEHICLE_STATE[], event_type) => {
+        return acc.concat(TNC_EVENT_STATES_MAP[event_type])
+      },
+      [vehicle_state]
+    )
+  }
+
+  return [event.vehicle_state]
+}
+export const isSubset = <T extends Array<string>, U extends Readonly<Array<string>>>(as: T, bs: U) => {
+  return as.every(a => bs.includes(a))
+}
+
+const isMicroMobilityEvent = (
+  { modality }: Pick<Device, 'modality'>,
+  event: VehicleEvent
+): event is MicroMobilityVehicleEvent => {
+  const { event_types } = event
+  return modality === 'micromobility' && isSubset(event_types, MICRO_MOBILITY_VEHICLE_EVENTS)
+}
+
+const isTaxiEvent = ({ modality }: Pick<Device, 'modality'>, event: VehicleEvent): event is TaxiVehicleEvent => {
+  const { event_types } = event
+  return modality === 'taxi' && isSubset(event_types, TAXI_VEHICLE_EVENTS)
+}
+
+const isTncEvent = ({ modality }: Pick<Device, 'modality'>, event: VehicleEvent): event is TNCVehicleEvent => {
+  const { event_types } = event
+  return modality === 'tnc' && isSubset(event_types, TNC_VEHICLE_EVENT)
 }

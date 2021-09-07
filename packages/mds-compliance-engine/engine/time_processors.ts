@@ -14,18 +14,11 @@
     limitations under the License.
  */
 
-import { Device, Geography, Policy, RULE_TYPES, Telemetry, TimeRule, UUID, VehicleEvent } from '@mds-core/mds-types'
-import {
-  clone,
-  getPolygon,
-  isInStatesOrEvents,
-  now,
-  pointInShape,
-  RULE_UNIT_MAP,
-  UnsupportedTypeError
-} from '@mds-core/mds-utils'
+import { PolicyDomainModel, RULE_TYPES, TimeRule } from '@mds-core/mds-policy-service'
+import { Device, Geography, Telemetry, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { clone, getPolygon, now, pointInShape, RULE_UNIT_MAP, UnsupportedTypeError } from '@mds-core/mds-utils'
 import { ComplianceEngineResult } from '../@types'
-import { annotateVehicleMap, getPolicyType, isInVehicleTypes, isRuleActive } from './helpers'
+import { annotateVehicleMap, getPolicyType, isInStatesOrEvents, isInVehicleTypes, isRuleActive } from './helpers'
 
 export function isTimeRuleMatch(
   rule: TimeRule,
@@ -52,7 +45,7 @@ export function isTimeRuleMatch(
 }
 
 export function processTimePolicy(
-  policy: Policy,
+  policy: PolicyDomainModel,
   events: (VehicleEvent & { telemetry: Telemetry })[],
   geographies: Geography[],
   devices: { [d: string]: Device }

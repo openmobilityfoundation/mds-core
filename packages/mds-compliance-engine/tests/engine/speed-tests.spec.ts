@@ -15,8 +15,9 @@
  */
 
 import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service/@types'
+import { SpeedPolicy, SpeedRule } from '@mds-core/mds-policy-service'
 import { LA_CITY_BOUNDARY, makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Device, Geography, Policy, SpeedRule, Telemetry, VehicleEvent } from '@mds-core/mds-types'
+import { Device, Geography, Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { FeatureCollection } from 'geojson'
 import test from 'unit.js'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../../@types'
@@ -30,7 +31,7 @@ import {
   OVERLAPPING_GEOS_SPEED_POLICY
 } from '../../test_data/fixtures'
 
-const SPEED_POLICY: Policy = {
+const SPEED_POLICY: SpeedPolicy = {
   policy_id: '95645117-fd85-463e-a2c9-fc95ea47463e',
   name: 'Speed Limits',
   description: 'LADOT Pilot Speed Limit Limitations',
@@ -38,6 +39,8 @@ const SPEED_POLICY: Policy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
+  publish_date: null,
   rules: [
     {
       name: 'Greater LA',

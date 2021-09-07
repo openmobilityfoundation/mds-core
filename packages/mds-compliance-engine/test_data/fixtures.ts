@@ -1,5 +1,6 @@
+import { CountPolicy, RULE_TYPES, SpeedPolicy, TimePolicy } from '@mds-core/mds-policy-service'
 import { LA_CITY_BOUNDARY, restrictedAreas, veniceSpecOps } from '@mds-core/mds-test-data'
-import { CountPolicy, Geography, Policy, RULE_TYPES, SpeedPolicy } from '@mds-core/mds-types'
+import { Geography } from '@mds-core/mds-types'
 import { days, now } from '@mds-core/mds-utils'
 import { Polygon } from 'geojson'
 
@@ -29,6 +30,7 @@ export const COUNT_POLICY_JSON: CountPolicy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
   rules: [
     {
       name: 'Greater LA',
@@ -52,6 +54,7 @@ export const COUNT_POLICY_JSON_2: CountPolicy = {
   publish_date: 1558389669540,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
   rules: [
     {
       name: 'No vehicles permitted on Venice Beach on weekends',
@@ -75,6 +78,7 @@ export const COUNT_POLICY_JSON_3: CountPolicy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
   rules: [
     {
       name: 'Greater LA',
@@ -106,6 +110,8 @@ export const COUNT_POLICY_JSON_5: CountPolicy = {
     }
   ],
   end_date: null,
+  provider_ids: [],
+  currency: null,
   policy_id: '25851571-b53f-4426-a033-f375be0e7957',
   start_date: Date.now(),
   publish_date: Date.now() - 10,
@@ -218,6 +224,9 @@ export const HIGH_COUNT_POLICY: CountPolicy = {
   start_date: 1552678594428,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
+  publish_date: null,
+  currency: null,
   rules: [
     {
       name: 'Greater LA',
@@ -242,6 +251,9 @@ export const LOW_COUNT_POLICY: CountPolicy = {
   start_date: 1552678594428,
   end_date: null,
   prev_policies: null,
+  provider_ids: [],
+  publish_date: null,
+  currency: null,
   rules: [
     {
       name: 'Greater LA',
@@ -264,6 +276,9 @@ export const EXPIRED_POLICY: CountPolicy = {
   start_date: now() - days(7),
   end_date: now() - days(1),
   prev_policies: null,
+  provider_ids: [],
+  publish_date: null,
+  currency: null,
   rules: [
     {
       name: 'Greater LA',
@@ -288,6 +303,7 @@ export const VENICE_OVERFLOW_POLICY: CountPolicy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
   rules: [
     {
       name: 'Inner geo',
@@ -319,6 +335,7 @@ export const VENICE_MIXED_VIOLATIONS_POLICY: CountPolicy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
   rules: [
     {
       name: 'Inner geo',
@@ -351,6 +368,7 @@ export const MANY_OVERFLOWS_POLICY: CountPolicy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
   rules: [
     {
       name: 'Somewhere in LA',
@@ -395,6 +413,8 @@ export const OVERLAPPING_GEOS_SPEED_POLICY: SpeedPolicy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  publish_date: null,
+  currency: null,
   rules: [
     {
       name: 'Slow Zone in Venice Beach',
@@ -423,13 +443,15 @@ export const OVERLAPPING_GEOS_SPEED_POLICY: SpeedPolicy = {
   ]
 }
 
-export const OVERLAPPING_GEOS_TIME_POLICY: Policy = {
+export const OVERLAPPING_GEOS_TIME_POLICY: TimePolicy = {
   policy_id: 'fc9b02f0-9c0d-4b0a-85d6-7684b8e9e769',
   name: 'Multiple Speed Limits',
   description: 'LADOT Pilot Speed Limit Limitations',
   start_date: 1552678594428,
   end_date: null,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
   provider_ids: [],
   rules: [
     {

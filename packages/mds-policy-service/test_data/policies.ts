@@ -1,4 +1,18 @@
-import { Policy } from '@mds-core/mds-types'
+/**
+ * Copyright 2021 City of Los Angeles
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import {
   now,
   START_NOW,
@@ -9,6 +23,7 @@ import {
   START_YESTERDAY,
   uuid
 } from '@mds-core/mds-utils'
+import { PolicyDomainModel } from '../@types'
 
 export const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 export const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
@@ -20,7 +35,7 @@ export const POLICY3_UUID = '42d899b8-255d-4109-aa67-abfb9157b46a'
 export const POLICY4_UUID = 'de15243e-dfaa-4a88-b21a-db7cd2c3dc78'
 export const SUPERSEDING_POLICY_UUID = 'd6371e73-6a8c-4b51-892f-78849d66ee2b'
 
-export const POLICY_JSON: Policy = {
+export const POLICY_JSON: PolicyDomainModel = {
   // TODO guts
   name: 'MDSPolicy 1',
   description: 'Mobility caps as described in the One-Year Permit',
@@ -29,6 +44,7 @@ export const POLICY_JSON: Policy = {
   end_date: null,
   publish_date: START_NOW,
   prev_policies: null,
+  currency: null,
   provider_ids: [],
   rules: [
     {
@@ -44,7 +60,7 @@ export const POLICY_JSON: Policy = {
   ]
 }
 
-export const SUPERSEDING_POLICY_JSON: Policy = {
+export const SUPERSEDING_POLICY_JSON: PolicyDomainModel = {
   // TODO guts
   name: 'Supersedes MDSPolicy 1',
   description: 'Mobility caps as described in the One-Year Permit',
@@ -53,6 +69,8 @@ export const SUPERSEDING_POLICY_JSON: Policy = {
   end_date: null,
   prev_policies: [POLICY_UUID],
   provider_ids: [],
+  currency: null,
+  publish_date: null,
   rules: [
     {
       rule_type: 'count',
@@ -68,7 +86,7 @@ export const SUPERSEDING_POLICY_JSON: Policy = {
 }
 
 // in the past
-export const POLICY2_JSON: Policy = {
+export const POLICY2_JSON: PolicyDomainModel = {
   // TODO guts
   name: 'MDSPolicy 2',
   description: 'LADOT Idle Time Limitations',
@@ -76,6 +94,8 @@ export const POLICY2_JSON: Policy = {
   start_date: START_ONE_MONTH_AGO,
   end_date: START_ONE_WEEK_AGO,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
   provider_ids: [],
   rules: [
     {
@@ -102,7 +122,7 @@ export const POLICY2_JSON: Policy = {
 }
 
 // in the future
-export const POLICY3_JSON: Policy = {
+export const POLICY3_JSON: PolicyDomainModel = {
   // TODO guts
   policy_id: POLICY3_UUID,
   name: 'MDSPolicy 3',
@@ -110,6 +130,8 @@ export const POLICY3_JSON: Policy = {
   start_date: START_ONE_MONTH_FROM_NOW,
   end_date: null,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
   provider_ids: [],
   rules: [
     {
@@ -142,7 +164,7 @@ export const POLICY3_JSON: Policy = {
   ]
 }
 
-export const POLICY4_JSON: Policy = {
+export const POLICY4_JSON: PolicyDomainModel = {
   // TODO guts
   policy_id: POLICY4_UUID,
   name: 'MDSPolicy 4',
@@ -151,6 +173,8 @@ export const POLICY4_JSON: Policy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
+  publish_date: null,
   rules: [
     {
       name: 'Greater LA',
@@ -165,13 +189,15 @@ export const POLICY4_JSON: Policy = {
   ]
 }
 
-export const POLICY5_JSON: Policy = {
+export const POLICY5_JSON: PolicyDomainModel = {
   policy_id: uuid(),
   name: 'MDSPolicy 5',
   description: 'just here to enable testing for policies by start date',
   start_date: START_ONE_MONTH_AGO,
   end_date: null,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
   provider_ids: [],
   rules: [
     {
@@ -187,13 +213,15 @@ export const POLICY5_JSON: Policy = {
   ]
 }
 
-export const PUBLISH_DATE_VALIDATION_JSON: Policy = {
+export const PUBLISH_DATE_VALIDATION_JSON: PolicyDomainModel = {
   policy_id: '682ab342-0127-4eed-8c26-fb674c25af74',
   name: 'Future MDSPolicy',
   description: 'just here to help show that publish_date must be before start_date',
   start_date: START_ONE_MONTH_AGO,
   end_date: null,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
   provider_ids: [],
   rules: [
     {
@@ -230,13 +258,15 @@ export const POLICY_JSON_MISSING_POLICY_ID = {
   ]
 }
 
-export const POLICY_WITH_DUPE_RULE: Policy = {
+export const POLICY_WITH_DUPE_RULE: PolicyDomainModel = {
   policy_id: 'ddb4fbc7-0f3d-49cf-869d-f9c1d0b5471f',
   name: 'I am a no good copycat',
   description: 'LADOT Pilot Speed Limit Limitations',
   start_date: now(),
   end_date: null,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
   provider_ids: [],
   rules: [
     {
@@ -252,12 +282,13 @@ export const POLICY_WITH_DUPE_RULE: Policy = {
   ]
 }
 
-export const PUBLISHED_POLICY: Policy = {
+export const PUBLISHED_POLICY: PolicyDomainModel = {
   policy_id: 'a337afd5-f8a9-4291-b176-11f965bc9f3d',
   name: 'I am published but do not do much',
   description: 'LADOT Pilot Speed Limit Limitations',
   start_date: START_ONE_MONTH_AGO,
   publish_date: START_ONE_MONTH_AGO,
+  currency: null,
   end_date: null,
   prev_policies: null,
   provider_ids: [],
@@ -275,7 +306,7 @@ export const PUBLISHED_POLICY: Policy = {
   ]
 }
 
-export const DELETEABLE_POLICY: Policy = {
+export const DELETEABLE_POLICY: PolicyDomainModel = {
   policy_id: '55396abd-e32b-4370-ac02-7f3294eef49e',
   name: 'I am published but do not do much',
   description: 'LADOT Pilot Speed Limit Limitations',
@@ -283,6 +314,8 @@ export const DELETEABLE_POLICY: Policy = {
   end_date: null,
   prev_policies: null,
   provider_ids: [],
+  currency: null,
+  publish_date: null,
   rules: [
     {
       name: 'Greater LA',
@@ -297,7 +330,7 @@ export const DELETEABLE_POLICY: Policy = {
   ]
 }
 
-export const TAXI_POLICY: Policy = {
+export const TAXI_POLICY: PolicyDomainModel = {
   name: 'Policy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: uuid(),
@@ -305,6 +338,7 @@ export const TAXI_POLICY: Policy = {
   end_date: null,
   publish_date: START_NOW,
   prev_policies: null,
+  currency: null,
   provider_ids: [],
   rules: [
     {

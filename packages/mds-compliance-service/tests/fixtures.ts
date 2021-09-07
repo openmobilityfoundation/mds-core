@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Policy } from '@mds-core/mds-types'
+import { PolicyDomainModel } from '@mds-core/mds-policy-service'
 import { days, minutes, now, uuid } from '@mds-core/mds-utils'
 import { ComplianceSnapshotDomainModel } from '../@types'
 
@@ -309,7 +309,7 @@ export const COMPLIANCE_SNAPSHOTS = [
 })
 
 const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
-export const POLICY1: Policy = {
+export const POLICY1: PolicyDomainModel = {
   name: 'Policy 1',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: POLICY_ID_1,
@@ -317,6 +317,7 @@ export const POLICY1: Policy = {
   end_date: null,
   publish_date: TIME - days(30),
   prev_policies: null,
+  currency: null,
   provider_ids: [],
   rules: [
     {
@@ -332,7 +333,7 @@ export const POLICY1: Policy = {
   ]
 }
 
-export const POLICY2: Policy = {
+export const POLICY2: PolicyDomainModel = {
   name: 'Policy 2',
   description: 'Mobility caps as described in the One-Year Permit',
   policy_id: POLICY_ID_2,
@@ -340,6 +341,7 @@ export const POLICY2: Policy = {
   end_date: null,
   publish_date: TIME - days(30),
   prev_policies: null,
+  currency: null,
   provider_ids: [],
   rules: [
     {

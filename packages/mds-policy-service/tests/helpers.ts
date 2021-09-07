@@ -1,10 +1,10 @@
 import { GeographyService } from '@mds-core/mds-geography-service'
 import { ServiceClient } from '@mds-core/mds-service-helpers'
 import { venice } from '@mds-core/mds-test-data'
-import { Geography, Rule } from '@mds-core/mds-types'
+import { Geography } from '@mds-core/mds-types'
 import { START_ONE_MONTH_FROM_NOW, uuid, yesterday } from '@mds-core/mds-utils'
 import { FeatureCollection } from 'geojson'
-import { PolicyDomainCreateModel, PolicyService } from '../@types'
+import { PolicyDomainCreateModel, PolicyService, Rule } from '../@types'
 
 export const GeographyFactory = (overrides = {}): Geography => ({
   name: 'random geo',

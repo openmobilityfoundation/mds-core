@@ -1,16 +1,8 @@
 /* eslint-disable no-console */
 import {
-  DELETEABLE_POLICY,
-  POLICY2_JSON,
-  POLICY3_JSON,
-  POLICY_JSON,
-  POLICY_WITH_DUPE_RULE,
-  PUBLISHED_POLICY,
-  PUBLISH_DATE_VALIDATION_JSON
-} from '@mds-core/mds-test-data'
-import {
   clone,
   ConflictError,
+  minutes,
   NotFoundError,
   now,
   START_ONE_MONTH_AGO,
@@ -20,6 +12,15 @@ import {
 } from '@mds-core/mds-utils'
 import { PolicyDomainCreateModel, PolicyMetadataDomainModel } from '../@types'
 import { PolicyRepository } from '../repository'
+import {
+  DELETEABLE_POLICY,
+  POLICY2_JSON,
+  POLICY3_JSON,
+  POLICY_JSON,
+  POLICY_WITH_DUPE_RULE,
+  PUBLISHED_POLICY,
+  PUBLISH_DATE_VALIDATION_JSON
+} from '../test_data/policies'
 import { PolicyFactory, RulesFactory } from './helpers'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -149,7 +150,7 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       await PolicyRepository.writePolicy(ACTIVE_POLICY_JSON)
       await PolicyRepository.publishPolicy(ACTIVE_POLICY_JSON.policy_id, ACTIVE_POLICY_JSON.publish_date)
       await PolicyRepository.writePolicy(PUBLISHED_POLICY)
-      await PolicyRepository.publishPolicy(PUBLISHED_POLICY.policy_id, PUBLISHED_POLICY.publish_date)
+      await PolicyRepository.publishPolicy(PUBLISHED_POLICY.policy_id, PUBLISHED_POLICY.publish_date as number)
       const monthAgoPolicies = await PolicyRepository.readActivePolicies(START_ONE_MONTH_AGO)
       expect(monthAgoPolicies.length).toStrictEqual(1)
 
@@ -213,12 +214,12 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       await expect(PolicyRepository.editPolicy(policy)).rejects.toThrowError(ConflictError)
     })
 
-    it('ensures the publish_date >= start_date', async () => {
+    it('ensures the start_date <= publish_date ', async () => {
       await PolicyRepository.writePolicy(PUBLISH_DATE_VALIDATION_JSON)
       await expect(
         PolicyRepository.publishPolicy(
           PUBLISH_DATE_VALIDATION_JSON.policy_id,
-          PUBLISH_DATE_VALIDATION_JSON.publish_date
+          PUBLISH_DATE_VALIDATION_JSON.start_date + minutes(1)
         )
       ).rejects.toThrowError(ConflictError)
 
@@ -226,7 +227,7 @@ describe('spot check unit test policy functions with SimplePolicy', () => {
       validPolicy.start_date = START_ONE_MONTH_FROM_NOW
       await PolicyRepository.editPolicy(validPolicy)
       /* if this succeeds, then no error was thrown: */
-      await PolicyRepository.publishPolicy(validPolicy.policy_id, validPolicy.publish_date)
+      await PolicyRepository.publishPolicy(validPolicy.policy_id, validPolicy.publish_date as number)
     })
 
     it('will not edit or delete a published Policy', async () => {

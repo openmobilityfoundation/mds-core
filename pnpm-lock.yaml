@@ -573,6 +573,7 @@ importers:
       '@mds-core/mds-compliance-service': workspace:0.3.2
       '@mds-core/mds-db': workspace:0.3.2
       '@mds-core/mds-logger': workspace:0.2.4
+      '@mds-core/mds-policy-service': workspace:0.4.1
       '@mds-core/mds-providers': workspace:0.1.34
       '@mds-core/mds-schema-validators': workspace:0.3.1
       '@mds-core/mds-service-helpers': workspace:0.3.3
@@ -589,6 +590,7 @@ importers:
       '@mds-core/mds-compliance-service': link:../mds-compliance-service
       '@mds-core/mds-db': link:../mds-db
       '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-policy-service': link:../mds-policy-service
       '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-schema-validators': link:../mds-schema-validators
       '@mds-core/mds-service-helpers': link:../mds-service-helpers
@@ -651,6 +653,7 @@ importers:
     specifiers:
       '@mds-core/mds-db': workspace:0.3.2
       '@mds-core/mds-logger': workspace:0.2.4
+      '@mds-core/mds-policy-service': workspace:0.4.1
       '@mds-core/mds-providers': workspace:0.1.34
       '@mds-core/mds-repository': workspace:0.1.10
       '@mds-core/mds-rpc-common': workspace:0.1.10
@@ -663,6 +666,7 @@ importers:
     dependencies:
       '@mds-core/mds-db': link:../mds-db
       '@mds-core/mds-logger': link:../mds-logger
+      '@mds-core/mds-policy-service': link:../mds-policy-service
       '@mds-core/mds-providers': link:../mds-providers
       '@mds-core/mds-repository': link:../mds-repository
       '@mds-core/mds-rpc-common': link:../mds-rpc-common
@@ -5317,7 +5321,7 @@ packages:
     dev: false
 
   /fsevents/2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    resolution: {integrity: sha1-ilJveLj99GI7cJ4Ll1xSwkwC/Ro=}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     dev: true
@@ -10113,7 +10117,7 @@ packages:
     dev: true
 
   /uglify-js/3.13.10:
-    resolution: {integrity: sha512-57H3ACYFXeo1IaZ1w02sfA71wI60MGco/IQFjOqK+WtKoprh7Go2/yvd2HPtoJILO2Or84ncLccI4xoHMTSbGg==}
+    resolution: {integrity: sha1-pr0NKNOPWSw622sYDqbgfh5UCo0=}
     engines: {node: '>=0.8.0'}
     hasBin: true
     dev: true

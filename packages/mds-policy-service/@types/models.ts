@@ -1,9 +1,38 @@
-import { ACCESSIBILITY_OPTION, MODALITY } from './device'
-import { MICRO_MOBILITY_VEHICLE_EVENT, TAXI_VEHICLE_EVENT, TNC_VEHICLE_EVENT } from './event'
-import { SERVICE_TYPE, TRANSACTION_TYPE } from './trip'
-import { DAY_OF_WEEK, Enum, Nullable, Timestamp, UUID } from './utils'
-import { MICRO_MOBILITY_VEHICLE_STATE, TAXI_VEHICLE_STATE, TNC_VEHICLE_STATE } from './vehicle/vehicle_states'
-import { VEHICLE_TYPE } from './vehicle/vehicle_types'
+/**
+ * Copyright 2021 City of Los Angeles
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { DomainModelCreate } from '@mds-core/mds-repository'
+import {
+  ACCESSIBILITY_OPTION,
+  DAY_OF_WEEK,
+  Enum,
+  MICRO_MOBILITY_VEHICLE_EVENT,
+  MICRO_MOBILITY_VEHICLE_STATE,
+  MODALITY,
+  Nullable,
+  SERVICE_TYPE,
+  TAXI_VEHICLE_EVENT,
+  TAXI_VEHICLE_STATE,
+  Timestamp,
+  TNC_VEHICLE_EVENT,
+  TNC_VEHICLE_STATE,
+  TRANSACTION_TYPE,
+  UUID,
+  VEHICLE_TYPE
+} from '@mds-core/mds-types'
 
 export const RULE_TYPES = Enum('count', 'speed', 'time', 'user', 'rate')
 export type RULE_TYPE = keyof typeof RULE_TYPES
@@ -91,22 +120,6 @@ export type RateRule = Rule<'rate'> & {
   rate_recurrence: RATE_RECURRENCE
 }
 
-/**
- * @deprecated Use PolicyDomainModel instead.
- */
-export type Policy<R extends Rule = Rule> = {
-  name: string
-  description: string
-  provider_ids?: UUID[]
-  published_date?: Timestamp
-  policy_id: UUID
-  start_date: Timestamp
-  end_date: Timestamp | null
-  prev_policies: UUID[] | null
-  rules: R[]
-  publish_date?: Timestamp
-}
-
 export type StatesToEvents =
   | Partial<MicroMobilityStatesToEvents>
   | Partial<TNCStatesToEvents>
@@ -115,16 +128,33 @@ export type StatesToEvents =
 export const RATE_RECURRENCE_VALUES = ['once', 'each_time_unit', 'per_complete_time_unit'] as const
 export type RATE_RECURRENCE = typeof RATE_RECURRENCE_VALUES[number]
 
-export type CountPolicy = Policy<CountRule>
-export type SpeedPolicy = Policy<SpeedRule>
-export type TimePolicy = Policy<TimeRule>
-export interface RatePolicy extends Policy<RateRule> {
-  currency: string
-  rules: RateRule[]
+export const POLICY_STATUS = <const>['draft', 'pending', 'active', 'expired', 'deactivated', 'unknown']
+export type POLICY_STATUS = typeof POLICY_STATUS[number]
+
+export interface PolicyDomainModel {
+  policy_id: UUID
+  name: string
+  currency: Nullable<string>
+  description: string
+  provider_ids: Nullable<UUID[]>
+  start_date: Timestamp
+  end_date: Nullable<Timestamp>
+  prev_policies: Nullable<UUID[]>
+  rules: Rule[]
+  publish_date: Nullable<Timestamp>
+  status?: POLICY_STATUS // Computed property which is returned from the service, not written on creation.
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export interface PolicyMetadata<M extends {} = Record<string, any>> {
+export type CountPolicy = PolicyDomainModel & { rules: CountRule[] }
+export type SpeedPolicy = PolicyDomainModel & { rules: SpeedRule[] }
+export type TimePolicy = PolicyDomainModel & { rules: TimeRule[] }
+export type RatePolicy = PolicyDomainModel & { rules: RateRule[] }
+
+export type PolicyDomainCreateModel = DomainModelCreate<PolicyDomainModel>
+
+export interface PolicyMetadataDomainModel<M extends {} = {}> {
   policy_id: UUID
-  policy_metadata: M
+  policy_metadata: Nullable<Partial<M>>
 }
+
+export type PolicyMetadataDomainCreateModel = DomainModelCreate<PolicyMetadataDomainModel>

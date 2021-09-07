@@ -38,28 +38,6 @@ import {
   uuid
 } from '@mds-core/mds-utils'
 import { Geometry } from 'geojson'
-import {
-  DELETEABLE_POLICY,
-  GEOGRAPHY2_UUID,
-  GEOGRAPHY_UUID,
-  NONEXISTENT_GEOGRAPHY_UUID,
-  POLICY2_JSON,
-  POLICY2_UUID,
-  POLICY3_JSON,
-  POLICY3_UUID,
-  POLICY4_JSON,
-  POLICY4_UUID,
-  POLICY5_JSON,
-  POLICY_JSON,
-  POLICY_JSON_MISSING_POLICY_ID,
-  POLICY_UUID,
-  POLICY_WITH_DUPE_RULE,
-  PUBLISHED_POLICY,
-  PUBLISH_DATE_VALIDATION_JSON,
-  SUPERSEDING_POLICY_JSON,
-  SUPERSEDING_POLICY_UUID,
-  TAXI_POLICY
-} from './policies'
 import { DISTRICT_SEVEN } from './test-areas/district-seven'
 import { LA_CITY_BOUNDARY } from './test-areas/la-city-boundary'
 import { restrictedAreas, serviceAreaMap, venice, veniceSpecOps } from './test-areas/test-areas'
@@ -336,31 +314,16 @@ function makeDevices(count: number, timestamp: Timestamp, provider_id = TEST1_PR
 const SCOPED_AUTH = <AccessTokenScope extends string>(scopes: AccessTokenScope[], principalId = TEST1_PROVIDER_ID) =>
   `basic ${Buffer.from(`${principalId}|${scopes.join(' ')}`).toString('base64')}`
 
+export const GEOGRAPHY_UUID = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
+export const GEOGRAPHY2_UUID = '722b99ca-65c2-4ed6-9be1-056c394fadbf'
+export const POLICY_UUID = '72971a3d-876c-41ea-8e48-c9bb965bbbcc'
+
 export {
   BAD_PROVIDER_UUID,
   PROVIDER_AUTH,
   COMPLIANCE_AUTH,
   JUMP_TEST_DEVICE_1,
   JUMP_PROVIDER_ID,
-  POLICY_JSON,
-  SUPERSEDING_POLICY_JSON,
-  POLICY2_JSON,
-  POLICY3_JSON,
-  POLICY4_JSON,
-  POLICY5_JSON,
-  POLICY_JSON_MISSING_POLICY_ID,
-  POLICY_WITH_DUPE_RULE,
-  PUBLISH_DATE_VALIDATION_JSON,
-  POLICY_UUID,
-  PUBLISHED_POLICY,
-  DELETEABLE_POLICY,
-  SUPERSEDING_POLICY_UUID,
-  POLICY2_UUID,
-  POLICY3_UUID,
-  POLICY4_UUID,
-  GEOGRAPHY_UUID,
-  GEOGRAPHY2_UUID,
-  NONEXISTENT_GEOGRAPHY_UUID,
   PROVIDER_SCOPES,
   LA_CITY_BOUNDARY,
   DISTRICT_SEVEN,
@@ -375,6 +338,5 @@ export {
   serviceAreaMap,
   restrictedAreas,
   veniceSpecOps,
-  venice,
-  TAXI_POLICY
+  venice
 }

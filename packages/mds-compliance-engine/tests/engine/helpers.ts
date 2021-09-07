@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { Policy } from '@mds-core/mds-types'
+import { PolicyDomainModel } from '@mds-core/mds-policy-service'
 import fs from 'fs'
 
-export async function readJson(path: string): Promise<Policy[]> {
+export async function readJson(path: string): Promise<PolicyDomainModel[]> {
   return Promise.resolve(JSON.parse(fs.readFileSync(path).toString()))
 }

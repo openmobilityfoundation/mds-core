@@ -15,8 +15,9 @@
  */
 
 import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service/@types'
+import { TimePolicy, TimeRule } from '@mds-core/mds-policy-service'
 import { LA_CITY_BOUNDARY, makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
-import { Device, Geography, Policy, Telemetry, TimeRule, VehicleEvent } from '@mds-core/mds-types'
+import { Device, Geography, Telemetry, VehicleEvent } from '@mds-core/mds-types'
 import { minutes } from '@mds-core/mds-utils'
 import { FeatureCollection } from 'geojson'
 import test from 'unit.js'
@@ -43,13 +44,16 @@ function now(): number {
   return Date.now()
 }
 
-const TIME_POLICY: Policy = {
+const TIME_POLICY: TimePolicy = {
   policy_id: 'a2c9a65f-fd85-463e-9564-fc95ea473f7d',
   name: 'Maximum Idle Time',
   description: 'LADOT Pilot Idle Time Limitations',
   start_date: 1552678594428,
   end_date: null,
   prev_policies: null,
+  currency: null,
+  publish_date: null,
+  provider_ids: [],
   rules: [
     {
       name: 'Greater LA (rentable)',

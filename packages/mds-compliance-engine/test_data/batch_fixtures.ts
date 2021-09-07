@@ -16,15 +16,16 @@
 
 import cache from '@mds-core/mds-agency-cache'
 import db from '@mds-core/mds-db'
+import { PolicyDomainModel, PolicyServiceClient } from '@mds-core/mds-policy-service'
 import { providers } from '@mds-core/mds-providers'
 import { makeDevices, makeEventsWithTelemetry } from '@mds-core/mds-test-data'
 import { LA_CITY_BOUNDARY } from '@mds-core/mds-test-data/test-areas/la-city-boundary'
-import { Device_v1_1_0, Geography, Policy } from '@mds-core/mds-types'
+import { Device_v1_1_0, Geography } from '@mds-core/mds-types'
 import { minutes, now } from '@mds-core/mds-utils'
 import { FeatureCollection } from 'geojson'
 import { readJson } from '../tests/engine/helpers'
 
-let policies: Policy[] = []
+let policies: PolicyDomainModel[] = []
 
 const CITY_OF_LA = '1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'
 
@@ -61,11 +62,12 @@ async function main() {
 
   await cache.seed({ devices, events, telemetry: [] })
   await Promise.all(devices.map(device => db.writeDevice(device)))
-  await Promise.all(policies.map(policy => db.writePolicy(policy)))
-  await Promise.all(policies.map(policy => db.publishPolicy(policy.policy_id, policy.start_date)))
+  await Promise.all(policies.map(PolicyServiceClient.writePolicy))
+  await Promise.all(policies.map(policy => PolicyServiceClient.publishPolicy(policy.policy_id, policy.start_date)))
 }
 
 main()
   .then(res => cache.shutdown())
   .then(res => db.shutdown())
+  // eslint-disable-next-line no-console
   .catch(err => console.log(err))

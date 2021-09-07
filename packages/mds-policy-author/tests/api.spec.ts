@@ -515,6 +515,7 @@ describe('Tests app', () => {
     })
 
     it('generates a UUID for a policy that has no UUID', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const policy: any = PolicyFactory()
       policy.policy_id = null
       const result = await request

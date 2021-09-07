@@ -22,7 +22,7 @@ import {
   ApiVersionedResponse
 } from '@mds-core/mds-api-server'
 import { PolicyDomainCreateModel, PolicyDomainModel, PolicyMetadataDomainModel } from '@mds-core/mds-policy-service'
-import { Policy, UUID } from '@mds-core/mds-types'
+import { UUID } from '@mds-core/mds-types'
 
 export const POLICY_AUTHOR_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
 export type POLICY_AUTHOR_API_SUPPORTED_VERSION = typeof POLICY_AUTHOR_API_SUPPORTED_VERSIONS[number]
@@ -31,7 +31,7 @@ export const [POLICY_AUTHOR_API_DEFAULT_VERSION] = POLICY_AUTHOR_API_SUPPORTED_V
 export type PolicyAuthorApiRequest<B = {}> = ApiRequest<B>
 export type PolicyAuthorApiPostPolicyRequest = PolicyAuthorApiRequest<PolicyDomainCreateModel>
 export type PolicyAuthorApiPublishPolicyRequest = PolicyAuthorApiRequest & ApiRequestParams<'policy_id'>
-export type PolicyAuthorApiEditPolicyRequest = PolicyAuthorApiRequest<Policy>
+export type PolicyAuthorApiEditPolicyRequest = PolicyAuthorApiRequest<PolicyDomainCreateModel>
 export type PolicyAuthorApiDeletePolicyRequest = PolicyAuthorApiRequest & ApiRequestParams<'policy_id'>
 export type PolicyAuthorApiGetPolicyMetadataRequest = PolicyAuthorApiRequest &
   ApiRequestQuery<'get_published' | 'get_unpublished'>

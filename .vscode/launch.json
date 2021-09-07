@@ -605,7 +605,7 @@
       }
     },
     {
-      "name": "Tests: mds-compliance",
+      "name": "Tests: mds-compliance-engine",
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",

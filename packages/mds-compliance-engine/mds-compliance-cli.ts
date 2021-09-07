@@ -15,9 +15,9 @@
  */
 
 import logger from '@mds-core/mds-logger'
-import { validatePolicyDomainModel } from '@mds-core/mds-policy-service'
+import { PolicyDomainModel, validatePolicyDomainModel } from '@mds-core/mds-policy-service'
 import { validateEvents, validateGeographies } from '@mds-core/mds-schema-validators'
-import { Device, Geography, Policy, VehicleEvent } from '@mds-core/mds-types'
+import { Device, Geography, VehicleEvent } from '@mds-core/mds-types'
 import * as fs from 'fs'
 import * as yargs from 'yargs'
 import { ComplianceEngineResult } from './@types'
@@ -66,7 +66,7 @@ async function main(): Promise<(ComplianceEngineResult | undefined)[]> {
     process.exit(1)
   }
 
-  const policies = (await readJson(args.policies)) as Policy[]
+  const policies = (await readJson(args.policies)) as PolicyDomainModel[]
   if (!policies || !validatePolicyDomainModel(policies)) {
     logger.error('unable to read policies')
     process.exit(1)
@@ -91,7 +91,7 @@ async function main(): Promise<(ComplianceEngineResult | undefined)[]> {
   const supersedingPolicies = getSupersedingPolicies(policies)
   // emit results
   return Promise.all(
-    supersedingPolicies.map(async (policy: Policy) => {
+    supersedingPolicies.map(async (policy: PolicyDomainModel) => {
       return createComplianceSnapshot(args.provider_id, policy, geographies, recentEvents, devices)
     })
   )

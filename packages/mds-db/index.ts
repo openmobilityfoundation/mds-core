@@ -28,7 +28,6 @@ import * as devices from './devices'
 import * as events from './events'
 import * as geographies from './geographies'
 import { createTables, dropTables } from './migration'
-import * as policies from './policies'
 import * as telemetry from './telemetry'
 import * as trips from './trips'
 
@@ -142,7 +141,6 @@ export default {
   shutdown,
   ...devices,
   ...events,
-  ...policies,
   ...geographies,
   ...audit,
   ...trips,

@@ -15,40 +15,33 @@
  */
 
 import { ComplianceSnapshotDomainModel } from '@mds-core/mds-compliance-service/@types'
-import { Device, Geography, Policy, RULE_TYPES, UUID, VehicleEvent } from '@mds-core/mds-types'
+import { PolicyDomainModel } from '@mds-core/mds-policy-service'
+import { Device, Geography, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { filterDefined, now, UnsupportedTypeError, uuid } from '@mds-core/mds-utils'
 import { ProviderInputs, VehicleEventWithTelemetry } from '../@types'
 import { processCountPolicy } from './count_processors'
-import { getPolicyType, getProviderIDs, isPolicyActive } from './helpers'
+import { getPolicyType, getProviderIDs, isCountPolicy, isPolicyActive, isSpeedPolicy, isTimePolicy } from './helpers'
 import { processSpeedPolicy } from './speed_processors'
 import { processTimePolicy } from './time_processors'
 
 function computeComplianceSnapshot(
-  policy: Policy,
+  policy: PolicyDomainModel,
   filteredEvents: VehicleEventWithTelemetry[],
   geographies: Geography[],
   deviceMap: { [d: string]: Device }
 ) {
   const policy_type = getPolicyType(policy)
-  switch (policy_type) {
-    case RULE_TYPES.count: {
-      return processCountPolicy(policy, filteredEvents, geographies, deviceMap)
-    }
-    case RULE_TYPES.speed: {
-      return processSpeedPolicy(policy, filteredEvents, geographies, deviceMap)
-    }
-    case RULE_TYPES.time: {
-      return processTimePolicy(policy, filteredEvents, geographies, deviceMap)
-    }
-    default: {
-      throw new UnsupportedTypeError(`Policy type ${policy_type} unsupported by compliance engine`)
-    }
-  }
+
+  if (isCountPolicy(policy)) return processCountPolicy(policy, filteredEvents, geographies, deviceMap)
+  if (isSpeedPolicy(policy)) return processSpeedPolicy(policy, filteredEvents, geographies, deviceMap)
+  if (isTimePolicy(policy)) return processTimePolicy(policy, filteredEvents, geographies, deviceMap)
+
+  throw new UnsupportedTypeError(`Policy type ${policy_type} unsupported by compliance engine`)
 }
 
 export function createComplianceSnapshot(
   provider_id: UUID,
-  policy: Policy,
+  policy: PolicyDomainModel,
   geographies: Geography[],
   filteredEvents: VehicleEvent[],
   deviceMap: { [d: string]: Device }
@@ -81,7 +74,7 @@ export function createComplianceSnapshot(
  * The geographies should be the result of calling
  * `await readGeographies({ get_published: true })`
  */
-export function processPolicy(policy: Policy, geographies: Geography[], providerInputs: ProviderInputs) {
+export function processPolicy(policy: PolicyDomainModel, geographies: Geography[], providerInputs: ProviderInputs) {
   if (isPolicyActive(policy)) {
     const provider_ids = getProviderIDs(policy.provider_ids)
     const results = provider_ids.map(provider_id => {

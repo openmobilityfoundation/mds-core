@@ -134,7 +134,6 @@ export interface Provider {
 export * from './device'
 export * from './event'
 export * from './event_states_maps'
-export * from './policy'
 export * from './telemetry'
 export * from './transformers'
 export * from './trip'

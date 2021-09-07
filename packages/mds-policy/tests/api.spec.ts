@@ -25,14 +25,15 @@ import { ApiServer } from '@mds-core/mds-api-server'
 import { GeographyServiceClient, GeographyServiceManager } from '@mds-core/mds-geography-service'
 import {
   PolicyDomainCreateModel,
+  PolicyDomainModel,
   PolicyFactory,
   PolicyRepository,
   PolicyServiceClient,
   PolicyServiceManager
 } from '@mds-core/mds-policy-service/'
+import { POLICY2_JSON, POLICY_JSON } from '@mds-core/mds-policy-service/test_data/policies'
 import { TEST1_PROVIDER_ID } from '@mds-core/mds-providers'
-import { POLICY2_JSON, POLICY_JSON, PROVIDER_SCOPES, SCOPED_AUTH, venice } from '@mds-core/mds-test-data'
-import { Policy } from '@mds-core/mds-types'
+import { PROVIDER_SCOPES, SCOPED_AUTH, venice } from '@mds-core/mds-test-data'
 import {
   clone,
   days,
@@ -164,10 +165,10 @@ describe('Tests app', () => {
 
     expect(policies.length).toStrictEqual(3)
 
-    const isSupersededPolicyPresent = policies.some((policy: Policy) => {
+    const isSupersededPolicyPresent = policies.some((policy: PolicyDomainModel) => {
       return policy.policy_id === activePolicy.policy_id
     })
-    const isSupersedingPolicyPresent = policies.some((policy: Policy) => {
+    const isSupersedingPolicyPresent = policies.some((policy: PolicyDomainModel) => {
       return policy.policy_id === supersedingPolicy.policy_id
     })
     expect(isSupersededPolicyPresent).toStrictEqual(false)

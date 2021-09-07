@@ -22,8 +22,6 @@ import {
   MICRO_MOBILITY_VEHICLE_STATE,
   MICRO_MOBILITY_VEHICLE_STATES,
   MODALITIES,
-  RATE_RECURRENCE_VALUES,
-  RULE_TYPES,
   SERVICE_TYPE,
   TAXI_VEHICLE_EVENTS,
   TAXI_VEHICLE_STATE,
@@ -33,7 +31,13 @@ import {
   TRANSACTION_TYPE,
   VEHICLE_TYPES
 } from '@mds-core/mds-types'
-import { PolicyDomainModel, PolicyMetadataDomainModel, PresentationOptions } from '../@types'
+import {
+  PolicyDomainModel,
+  PolicyMetadataDomainModel,
+  PresentationOptions,
+  RATE_RECURRENCE_VALUES,
+  RULE_TYPES
+} from '../@types'
 
 const stringSchema = (options = {}) => ({ type: 'string', ...options })
 const uuidSchema = { type: 'string', format: 'uuid' }
