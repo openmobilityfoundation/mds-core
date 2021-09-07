@@ -1,5 +1,20 @@
 # @mds-core/mds-ingest-migration-processor
 
+## 0.0.10
+
+### Patch Changes
+
+- 9af14cbb: Disable "no prior telemetry" log when initializing cache following migration
+- Updated dependencies [9af14cbb]
+- Updated dependencies [1579e76e]
+- Updated dependencies [9af14cbb]
+  - @mds-core/mds-logger@0.2.4
+  - @mds-core/mds-ingest-service@0.4.1
+  - @mds-core/mds-agency-cache@0.2.5
+  - @mds-core/mds-repository@0.1.10
+  - @mds-core/mds-stream-processor@0.2.6
+  - @mds-core/mds-utils@0.1.36
+
 ## 0.0.9
 
 ### Patch Changes

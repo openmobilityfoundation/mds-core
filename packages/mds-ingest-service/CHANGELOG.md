@@ -1,5 +1,21 @@
 # @mds-core/mds-ingest-service
 
+## 0.4.1
+
+### Patch Changes
+
+- 1579e76e: Add getTripEvents service method
+- Updated dependencies [9af14cbb]
+- Updated dependencies [9af14cbb]
+  - @mds-core/mds-logger@0.2.4
+  - @mds-core/mds-agency-cache@0.2.5
+  - @mds-core/mds-repository@0.1.10
+  - @mds-core/mds-rpc-common@0.1.10
+  - @mds-core/mds-service-helpers@0.3.3
+  - @mds-core/mds-stream@0.1.36
+  - @mds-core/mds-utils@0.1.36
+  - @mds-core/mds-schema-validators@0.3.1
+
 ## 0.4.0
 
 ### Minor Changes

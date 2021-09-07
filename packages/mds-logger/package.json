@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-logger",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Mobility Data Specification logging interface",
   "keywords": [
     "mds",

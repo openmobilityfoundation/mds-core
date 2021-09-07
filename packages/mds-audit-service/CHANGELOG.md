@@ -1,5 +1,15 @@
 # @mds-core/mds-audit-service
 
+## 0.1.10
+
+### Patch Changes
+
+- @mds-core/mds-repository@0.1.10
+- @mds-core/mds-rpc-common@0.1.10
+- @mds-core/mds-service-helpers@0.3.3
+- @mds-core/mds-utils@0.1.36
+- @mds-core/mds-schema-validators@0.3.1
+
 ## 0.1.9
 
 ### Patch Changes

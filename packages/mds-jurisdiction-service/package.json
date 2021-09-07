@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-jurisdiction-service",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Mobility Data Specification Jurisdiction Service",
   "keywords": [
     "mds",
@@ -23,13 +23,13 @@
     "watch": "pnpm build && nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-logger": "0.2.3",
-    "@mds-core/mds-repository": "0.1.9",
-    "@mds-core/mds-rpc-common": "0.1.9",
-    "@mds-core/mds-schema-validators": "0.3.0",
-    "@mds-core/mds-service-helpers": "0.3.2",
+    "@mds-core/mds-logger": "0.2.4",
+    "@mds-core/mds-repository": "0.1.10",
+    "@mds-core/mds-rpc-common": "0.1.10",
+    "@mds-core/mds-schema-validators": "0.3.1",
+    "@mds-core/mds-service-helpers": "0.3.3",
     "@mds-core/mds-types": "0.4.0",
-    "@mds-core/mds-utils": "0.1.35",
+    "@mds-core/mds-utils": "0.1.36",
     "typeorm": "0.2.34"
   }
 }
