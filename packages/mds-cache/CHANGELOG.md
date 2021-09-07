@@ -1,5 +1,13 @@
 # @mds-core/mds-cache
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [9af14cbb]
+  - @mds-core/mds-logger@0.2.4
+  - @mds-core/mds-utils@0.1.36
+
 ## 0.0.10
 
 ### Patch Changes

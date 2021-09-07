@@ -1,5 +1,16 @@
 # @mds-core/mds-agency-cache
 
+## 0.2.5
+
+### Patch Changes
+
+- 9af14cbb: Remove some redundant code for caching telemetry data
+- Updated dependencies [9af14cbb]
+  - @mds-core/mds-logger@0.2.4
+  - @mds-core/mds-cache@0.0.11
+  - @mds-core/mds-utils@0.1.36
+  - @mds-core/mds-schema-validators@0.3.1
+
 ## 0.2.4
 
 ### Patch Changes
