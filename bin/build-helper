@@ -11,19 +11,10 @@ if [[ -n "$REGISTRY" ]]; then  # if non-empty
   REGISTRY="$(echo $REGISTRY | sed 's#/$##')/"  # ensure '/' suffix
 fi
 
-createImagesFileIfNotExists() {
-  if [[ ! -d $BASE_DIR/dist ]]; then
-    mkdir -p $BASE_DIR/dist
-  fi
-  if [[ ! -f $BASE_DIR/dist/images.txt ]]; then
-    touch $BASE_DIR/dist/images.txt
-  fi
-}
-
 buildImage() {
   local image=$1
-  createImagesFileIfNotExists
   local tag=$(echo $image | cut -f2 -d":")
+  if [[ ! -d "$BASE_DIR/dist" ]]; then mkdir $BASE_DIR/dist; fi
   if [[ "$tag" != "latest" ]]; then
     image=${image}$(getBranchSuffix)$(getCommitHash)
   fi
@@ -32,14 +23,37 @@ buildImage() {
 }
 
 pushImages() {
-  createImagesFileIfNotExists
-  cat /dev/null > $BASE_DIR/dist/images.txt
-  if [[ "$REGISTRY" =~ amazonaws.com$ ]]; then
-    eval $(aws ecr get-login --no-include-email)
+
+  function ecr_check_create_repo {
+    # ECR repos are individual resources - create if not present
+    local repo=$1
+    if [[ -z "$(aws ecr describe-repositories \
+      --query "repositories[?repositoryName=='$repo'].repositoryName" \
+      --output text)" ]]
+    then
+      info "No repo found for $repo - creating..."
+      aws ecr create-repository --repository-name $repo \
+        --image-scanning-configuration scanOnPush=true
+    fi
+  }
+
+  # assert correct registry
+  local imagecount=$(wc -l dist/images.txt | cut -f1 -d' ')
+  local regcount=$(grep ^$REGISTRY dist/images.txt \
+    | wc -l | cut -f1 -d' ')
+
+  if (( $imagecount == $regcount )); then  # parens for arithmatic comparison
+    aws ecr get-login-password --region us-west-2 \
+      | docker login --password-stdin --username AWS $REGISTRY
+    for image in $(cat $BASE_DIR/dist/images.txt); do
+      repository=$(echo $image | sed -e 's#.*/##' -e 's/:.*//')  # strip registry prefix, tag suffix
+      ecr_check_create_repo $repository
+      docker push $image
+    done
+  else
+    echo "ERROR: missing registry prefix in dist/images.txt?" 1>&2
+    exit 1
   fi
-  for image in $(cat $BASE_DIR/dist/images.txt); do
-    docker push $image
-  done
 }
 
 getBranchSuffix() {
@@ -57,7 +71,6 @@ images() {
 }
 
 templateValues() {
-  createImagesFileIfNotExists
   suffix="$(getBranchSuffix)$(getCommitHash)"
   for image in $(images); do
     version=$(jq -r '.version' < $BASE_DIR/container-images/$image/package.json)
@@ -66,7 +79,7 @@ templateValues() {
   done
   mkdir -p dist
   envsubst < $BASE_DIR/values.yaml.tpl > $BASE_DIR/dist/values-mds.yaml
-  echo "Wrote dist/values.yaml"
+  echo "Wrote dist/values-mds.yaml"
 }
 
 CALL=$1; shift

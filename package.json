@@ -14,6 +14,7 @@
     "image": "pnpm run:concurrent image",
     "image:development": "pnpm run:concurrent image:development",
     "image:production": "pnpm run:concurrent image:production",
+    "image:push": "bin/build-helper pushImages",
     "images": "pnpm run:concurrent image",
     "preinstall": "npx check-node-version --package && npx only-allow pnpm && pnpm i -g pnpm",
     "lint": "pnpm lint:audit && pnpm lint:prettier '**/package.json' && pnpm lint:eslint '**/*.ts'",
