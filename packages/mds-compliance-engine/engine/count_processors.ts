@@ -14,11 +14,11 @@
     limitations under the License.
  */
 
-import { CountPolicy, CountRule, RULE_TYPES } from '@mds-core/mds-policy-service'
+import { CountPolicy, CountRule } from '@mds-core/mds-policy-service'
 import { Device, Geography, Telemetry, UUID, VehicleEvent } from '@mds-core/mds-types'
-import { clone, getPolygon, isDefined, pointInShape, UnsupportedTypeError } from '@mds-core/mds-utils'
+import { clone, getPolygon, isDefined, pointInShape } from '@mds-core/mds-utils'
 import { ComplianceEngineResult, VehicleEventWithTelemetry } from '../@types'
-import { annotateVehicleMap, getPolicyType, isInStatesOrEvents, isInVehicleTypes, isRuleActive } from './helpers'
+import { annotateVehicleMap, isInStatesOrEvents, isInVehicleTypes, isRuleActive } from './helpers'
 
 /**
  * @param event  We throw out events that have no telemetry, so events are guaranteed
@@ -59,9 +59,6 @@ export function processCountPolicy(
   geographies: Geography[],
   devices: { [d: string]: Device }
 ): ComplianceEngineResult | undefined {
-  if (getPolicyType(policy) !== RULE_TYPES.count) {
-    throw new UnsupportedTypeError(`${getPolicyType(policy) as string} submitted to count processor`)
-  }
   // Necessary because we destructively modify the devices list to keep track of which devices we've seen.
   const devicesToCheck = clone(devices)
   const matchedVehicles: { [d: string]: { device: Device; rule_applied: UUID; rules_matched?: UUID[] } } = {}

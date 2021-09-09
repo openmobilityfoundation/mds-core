@@ -36,17 +36,14 @@ export function getPolicyType(policy: PolicyDomainModel) {
   return policy.rules[0].rule_type
 }
 
-export function isCountPolicy(policy: PolicyDomainModel): policy is CountPolicy {
-  return policy.rules[0].rule_type === 'count'
-}
+export const isCountPolicy = (policy: PolicyDomainModel): policy is CountPolicy =>
+  policy.rules.every(({ rule_type }) => rule_type === 'count')
 
-export function isSpeedPolicy(policy: PolicyDomainModel): policy is SpeedPolicy {
-  return policy.rules[0].rule_type === 'speed'
-}
+export const isTimePolicy = (policy: PolicyDomainModel): policy is TimePolicy =>
+  policy.rules.every(({ rule_type }) => rule_type === 'time')
 
-export function isTimePolicy(policy: PolicyDomainModel): policy is TimePolicy {
-  return policy.rules[0].rule_type === 'time'
-}
+export const isSpeedPolicy = (policy: PolicyDomainModel): policy is SpeedPolicy =>
+  policy.rules.every(({ rule_type }) => rule_type === 'speed')
 
 export function generateDeviceMap(devices: Device[]): { [d: string]: Device } {
   return [...devices].reduce((deviceMapAcc: { [d: string]: Device }, device: Device) => {
