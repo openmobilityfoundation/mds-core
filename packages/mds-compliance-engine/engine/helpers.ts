@@ -278,7 +278,7 @@ export const getPossibleStates = (device: Pick<Device, 'modality'>, event: Vehic
   if (isMicroMobilityEvent(device, event)) {
     const { event_types, vehicle_state } = event
     // All event_types except the last (in most cases this will be an empty list)
-    const transientEventTypes = event_types.splice(0, -1)
+    const transientEventTypes = event_types.slice(0, -1)
 
     return transientEventTypes.reduce(
       (acc: MICRO_MOBILITY_VEHICLE_STATE[], event_type) => {
@@ -290,7 +290,7 @@ export const getPossibleStates = (device: Pick<Device, 'modality'>, event: Vehic
   if (isTaxiEvent(device, event)) {
     const { event_types, vehicle_state } = event
     // All event_types except the last (in most cases this will be an empty list)
-    const transientEventTypes = event_types.splice(0, -1)
+    const transientEventTypes = event_types.slice(0, -1)
 
     return transientEventTypes.reduce(
       (acc: TAXI_VEHICLE_STATE[], event_type) => {
@@ -302,7 +302,7 @@ export const getPossibleStates = (device: Pick<Device, 'modality'>, event: Vehic
   if (isTncEvent(device, event)) {
     const { event_types, vehicle_state } = event
     // All event_types except the last (in most cases this will be an empty list)
-    const transientEventTypes = event_types.splice(0, -1)
+    const transientEventTypes = event_types.slice(0, -1)
 
     return transientEventTypes.reduce(
       (acc: TNC_VEHICLE_STATE[], event_type) => {
