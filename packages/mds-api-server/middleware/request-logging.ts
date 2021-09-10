@@ -27,12 +27,18 @@ export type RequestLoggingMiddlewareOptions = Partial<{
   filters: Array<{ path: RegExp; level: number }>
 }>
 
+const formatRemoteAddress = (remoteAddr = '-') => {
+  const IPv4Prefix = '::ffff:'
+  return remoteAddr.startsWith(IPv4Prefix) ? remoteAddr.substring(IPv4Prefix.length) : remoteAddr
+}
+
 export const RequestLoggingMiddleware = ({
   filters = []
 }: RequestLoggingMiddlewareOptions = {}): express.RequestHandler[] => [
   morgan<ApiRequest, ApiResponse & ApiResponseLocalsClaims>(
     (tokens, req, res) => {
       return [
+        formatRemoteAddress(tokens['remote-addr'](req, res)),
         ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
         tokens.method(req, res),
         tokens.url(req, res),

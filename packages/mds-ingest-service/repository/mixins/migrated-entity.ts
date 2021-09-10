@@ -26,7 +26,7 @@ export interface MigratedEntityModel {
 
 export const MigratedEntity = <T extends AnyConstructor>(EntityClass: T) => {
   abstract class MigratedEntityMixin extends EntityClass implements MigratedEntityModel {
-    @Column('varchar', { length: 31, nullable: true })
+    @Column('varchar', { length: 127, nullable: true })
     @Index()
     migrated_from_source: Nullable<string>
 

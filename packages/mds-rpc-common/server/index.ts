@@ -108,7 +108,7 @@ export const RpcServer = <S>(
             .use(ModuleRpcProtocolServer.registerRpcRoutes(definition, routes)),
           { port }
         )
-        if (options.repl) {
+        if (options.repl && process.env.NODE_ENV !== 'test') {
           repl = await startRepl(options.repl)
         }
       }

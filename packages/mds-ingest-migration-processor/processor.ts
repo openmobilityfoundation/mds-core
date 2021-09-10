@@ -18,6 +18,7 @@ import cache from '@mds-core/mds-agency-cache'
 import { DeviceDomainModel, IngestServiceClient, MigratedEntityModel } from '@mds-core/mds-ingest-service'
 import logger from '@mds-core/mds-logger'
 import { IdentityColumn, RecordedColumn } from '@mds-core/mds-repository'
+import { ProcessManager } from '@mds-core/mds-service-helpers'
 import {
   DeadLetterSink,
   KafkaSink,
@@ -43,7 +44,8 @@ import {
 import { asArray, ServerError } from '@mds-core/mds-utils'
 import { cleanEnv, num, str } from 'envalid'
 
-const { SOURCE_TENANT_ID, TENANT_ID, MIGRATION_BLOCK_SIZE_LIMIT } = cleanEnv(process.env, {
+const { KAFKA_HOST, SOURCE_TENANT_ID, TENANT_ID, MIGRATION_BLOCK_SIZE_LIMIT } = cleanEnv(process.env, {
+  KAFKA_HOST: str(),
   SOURCE_TENANT_ID: str(),
   TENANT_ID: str(),
   MIGRATION_BLOCK_SIZE_LIMIT: num({ default: 250 })
@@ -71,7 +73,7 @@ const MigrationErrorSink: <MigrationSourceEntity>(
 }
 
 const MigratedFrom = (entityType: MigrationEntityType, migrated_from_id: number) => ({
-  migrated_from_source: MigrationSourceTopic(entityType),
+  migrated_from_source: `${KAFKA_HOST} ${MigrationSourceTopic(entityType)}`,
   migrated_from_version: '0.4.1',
   migrated_from_id
 })
@@ -247,7 +249,7 @@ const initializeCacheForMigration = async () => {
 
 export const IngestMigrationProcessor = (): StreamProcessorController => {
   const processors = [DevicesMigrationProcessor, EventsMigrationProcessor, TelemetryMigrationProcessor]
-  return {
+  return ProcessManager({
     start: async () => {
       await initializeCacheForMigration()
       await Promise.all(processors.map(processor => processor.start()))
@@ -255,5 +257,5 @@ export const IngestMigrationProcessor = (): StreamProcessorController => {
     stop: async () => {
       await Promise.all(processors.map(processor => processor.stop()))
     }
-  }
+  }).controller()
 }
