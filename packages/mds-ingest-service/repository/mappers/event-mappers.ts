@@ -50,6 +50,15 @@ export const EventEntityToDomain = ModelMapper<EventEntityModel, EventDomainMode
   }
 )
 
+export const EventEntityToDomainWithIdentity = ModelMapper<
+  EventEntityModel,
+  EventDomainModel & IdentityColumn,
+  EventEntityToDomainOptions
+>((entity, options) => {
+  const { id } = entity
+  return { ...EventEntityToDomain.map(entity, options), id }
+})
+
 type EventEntityCreateOptions = Partial<{
   recorded: Timestamp
 }>

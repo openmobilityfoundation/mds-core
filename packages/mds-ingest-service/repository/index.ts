@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import { InsertReturning, ReadWriteRepository, RecordedColumn, RepositoryError } from '@mds-core/mds-repository'
+import {
+  IdentityColumn,
+  InsertReturning,
+  ReadWriteRepository,
+  RecordedColumn,
+  RepositoryError
+} from '@mds-core/mds-repository'
 import { Device, Telemetry, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { isUUID, testEnvSafeguard, ValidationError } from '@mds-core/mds-utils'
 import { Any, SelectQueryBuilder } from 'typeorm'
@@ -47,6 +53,7 @@ import {
   EventAnnotationEntityToDomain,
   EventDomainToEntityCreate,
   EventEntityToDomain,
+  EventEntityToDomainWithIdentity,
   MigratedDeviceToEntityCreate,
   MigratedEventToEntityCreate,
   MigratedTelemetryToEntityCreate,
@@ -510,7 +517,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
   public writeMigratedVehicleEvent = async (
     events: Array<VehicleEvent & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
-  ): Promise<EventDomainModel[]> => {
+  ): Promise<Array<EventDomainModel & IdentityColumn>> => {
     try {
       const connection = await this.connect('rw')
       const { raw: entities }: InsertReturning<EventEntityModel> = await connection
@@ -521,7 +528,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .onConflict('DO NOTHING')
         .returning('*')
         .execute()
-      return entities.map(EventEntityToDomain.mapper())
+      return entities.map(EventEntityToDomainWithIdentity.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }

@@ -21,7 +21,6 @@ import stream from '@mds-core/mds-stream'
 import { Nullable, Telemetry } from '@mds-core/mds-types'
 import {
   EventAnnotationDomainCreateModel,
-  EventDomainModel,
   IngestMigrationService,
   IngestService,
   TelemetryDomainModel
@@ -175,11 +174,7 @@ export const IngestServiceProvider: ServiceProvider<IngestService & IngestMigrat
     try {
       const [migrated = null] = await IngestRepository.writeMigratedVehicleEvent([event], migrated_from)
       if (migrated) {
-        const model: EventDomainModel = {
-          ...event,
-          ...migrated,
-          telemetry: eventTelemetryModel(telemetry, { recorded: event.recorded })
-        }
+        const model = { ...migrated, telemetry: eventTelemetryModel(telemetry, { recorded: event.recorded }) }
         const [cached, streamed] = await Promise.allSettled([cache.writeEvent(model), stream.writeEvent(model)])
         if (cached.status === 'rejected') {
           logger.warn('Error writing event to cache', { event: model, error: cached.reason })
