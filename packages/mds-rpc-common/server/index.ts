@@ -102,7 +102,7 @@ export const RpcServer = <S>(
         server = HttpServer(
           express()
             .use(PrometheusMiddleware())
-            .use(RequestLoggingMiddleware())
+            .use(RequestLoggingMiddleware({ includeRemoteAddress: true }))
             .use(RawBodyParserMiddleware({ type: RPC_CONTENT_TYPE, limit: options.maxRequestSize }))
             .get('/health', HealthRequestHandler)
             .use(ModuleRpcProtocolServer.registerRpcRoutes(definition, routes)),

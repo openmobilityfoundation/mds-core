@@ -25,6 +25,7 @@ const { REQUEST_LOGGING_LEVEL = HttpStatus.OK } = process.env
 
 export type RequestLoggingMiddlewareOptions = Partial<{
   filters: Array<{ path: RegExp; level: number }>
+  includeRemoteAddress: boolean
 }>
 
 const formatRemoteAddress = (remoteAddr = '-') => {
@@ -33,12 +34,13 @@ const formatRemoteAddress = (remoteAddr = '-') => {
 }
 
 export const RequestLoggingMiddleware = ({
-  filters = []
+  filters = [],
+  includeRemoteAddress = false
 }: RequestLoggingMiddlewareOptions = {}): express.RequestHandler[] => [
   morgan<ApiRequest, ApiResponse & ApiResponseLocalsClaims>(
     (tokens, req, res) => {
       return [
-        formatRemoteAddress(tokens['remote-addr'](req, res)),
+        ...(includeRemoteAddress ? [formatRemoteAddress(tokens['remote-addr'](req, res))] : []),
         ...(res.locals.claims?.provider_id ? [res.locals.claims.provider_id] : []),
         tokens.method(req, res),
         tokens.url(req, res),
