@@ -1,5 +1,24 @@
 # @mds-core/mds-db
 
+## 0.4.0
+
+### Minor Changes
+
+- 61e31276: removed deprecated type Policy, moved fixture data and utility methods to packages that directly need them
+
+### Patch Changes
+
+- Updated dependencies [015b3afd]
+- Updated dependencies [61e31276]
+- Updated dependencies [61e31276]
+  - @mds-core/mds-ingest-service@0.4.2
+  - @mds-core/mds-types@0.5.0
+  - @mds-core/mds-utils@0.2.0
+  - @mds-core/mds-policy-service@0.5.0
+  - @mds-core/mds-attachment-service@0.1.11
+  - @mds-core/mds-audit-service@0.1.11
+  - @mds-core/mds-geography-service@0.1.11
+
 ## 0.3.2
 
 ### Patch Changes

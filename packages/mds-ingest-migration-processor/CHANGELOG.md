@@ -1,5 +1,20 @@
 # @mds-core/mds-ingest-migration-processor
 
+## 0.0.11
+
+### Patch Changes
+
+- 8e42a84a: Ensure proper SIGINT shutdown of migration processor
+- Updated dependencies [015b3afd]
+- Updated dependencies [61e31276]
+  - @mds-core/mds-ingest-service@0.4.2
+  - @mds-core/mds-types@0.5.0
+  - @mds-core/mds-utils@0.2.0
+  - @mds-core/mds-agency-cache@0.2.6
+  - @mds-core/mds-repository@0.1.11
+  - @mds-core/mds-service-helpers@0.3.4
+  - @mds-core/mds-stream-processor@0.2.7
+
 ## 0.0.10
 
 ### Patch Changes

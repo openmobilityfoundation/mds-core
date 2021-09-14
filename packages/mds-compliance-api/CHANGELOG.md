@@ -1,5 +1,28 @@
 # @mds-core/mds-compliance-api
 
+## 0.3.0
+
+### Minor Changes
+
+- 61e31276: removed mds-db/policy in favor of mds-policy-service, changed Policy to PolicyDomainModel
+
+### Patch Changes
+
+- Updated dependencies [61e31276]
+- Updated dependencies [8e42a84a]
+- Updated dependencies [61e31276]
+  - @mds-core/mds-db@0.4.0
+  - @mds-core/mds-test-data@0.3.0
+  - @mds-core/mds-types@0.5.0
+  - @mds-core/mds-utils@0.2.0
+  - @mds-core/mds-api-server@0.3.2
+  - @mds-core/mds-compliance-service@0.4.0
+  - @mds-core/mds-policy-service@0.5.0
+  - @mds-core/mds-api-helpers@0.1.40
+  - @mds-core/mds-schema-validators@0.3.2
+  - @mds-core/mds-providers@0.1.35
+  - @mds-core/mds-service-helpers@0.3.4
+
 ## 0.2.2
 
 ### Patch Changes

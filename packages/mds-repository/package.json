@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-repository",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Mobility Data Specification ORM",
   "keywords": [
     "mds",
@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "workspace:0.2.4",
-    "@mds-core/mds-providers": "workspace:0.1.34",
-    "@mds-core/mds-types": "workspace:0.4.0",
-    "@mds-core/mds-utils": "workspace:0.1.36",
+    "@mds-core/mds-providers": "workspace:0.1.35",
+    "@mds-core/mds-types": "workspace:0.5.0",
+    "@mds-core/mds-utils": "workspace:0.2.0",
     "@types/pg": "8.6.0",
     "await-lock": "2.1.0",
     "pg": "8.6.0"

@@ -1,5 +1,32 @@
 # @mds-core/mds-compliance-engine
 
+## 0.4.0
+
+### Minor Changes
+
+- e4211883: fix bug that was causing transient states to not match properly
+- 8b370749: compliance snapshot returns undefined instead of throwing when it encounters a policy that it does not know how to compute.
+- 61e31276: removed mds-db/policy in favor of mds-policy-service, changed Policy to PolicyDomainModel
+
+### Patch Changes
+
+- 5589447d: Enforce stricter Policy type-guarding
+- Updated dependencies [61e31276]
+- Updated dependencies [8e42a84a]
+- Updated dependencies [61e31276]
+  - @mds-core/mds-db@0.4.0
+  - @mds-core/mds-types@0.5.0
+  - @mds-core/mds-utils@0.2.0
+  - @mds-core/mds-api-server@0.3.2
+  - @mds-core/mds-compliance-service@0.4.0
+  - @mds-core/mds-policy-service@0.5.0
+  - @mds-core/mds-api-helpers@0.1.40
+  - @mds-core/mds-schema-validators@0.3.2
+  - @mds-core/mds-agency-cache@0.2.6
+  - @mds-core/mds-providers@0.1.35
+  - @mds-core/mds-service-helpers@0.3.4
+  - @mds-core/mds-stream@0.1.37
+
 ## 0.3.2
 
 ### Patch Changes

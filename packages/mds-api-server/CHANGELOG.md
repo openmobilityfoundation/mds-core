@@ -1,5 +1,15 @@
 # @mds-core/mds-api-server
 
+## 0.3.2
+
+### Patch Changes
+
+- 8e42a84a: Add remote-addr to API/RPC server request logs
+- Updated dependencies [61e31276]
+  - @mds-core/mds-utils@0.2.0
+  - @mds-core/mds-api-authorizer@0.1.37
+  - @mds-core/mds-service-helpers@0.3.4
+
 ## 0.3.1
 
 ### Patch Changes

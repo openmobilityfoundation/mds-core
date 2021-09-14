@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-utils",
-  "version": "0.1.36",
+  "version": "0.2.0",
   "description": "Mobility Data Specification utility functions",
   "keywords": [
     "mds",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "workspace:0.2.4",
-    "@mds-core/mds-types": "workspace:0.4.0",
+    "@mds-core/mds-types": "workspace:0.5.0",
     "@turf/boolean-point-in-polygon": "6.4.0",
     "@turf/helpers": "6.4.0",
     "@types/point-in-polygon": "1.0.0",

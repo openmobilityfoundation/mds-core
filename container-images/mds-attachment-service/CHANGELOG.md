@@ -1,5 +1,11 @@
 # @container-images/mds-attachment-service
 
+## 0.0.12
+
+### Patch Changes
+
+- @mds-core/mds-attachment-service@0.1.11
+
 ## 0.0.11
 
 ### Patch Changes
