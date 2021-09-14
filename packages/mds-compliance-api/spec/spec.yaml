@@ -313,7 +313,8 @@ components:
           $ref: "#/components/schemas/uuid"
         vehicles_found:
           type: array
-          $ref: "#/components/schemas/MatchedVehicleInformation"
+          items:
+            $ref: "#/components/schemas/MatchedVehicleInformation"
         excess_vehicles_count:
           type: integer
         total_violations:
