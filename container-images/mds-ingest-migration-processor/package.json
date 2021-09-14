@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-ingest-migration-processor",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "private": true,
   "description": "Docker Image for MDS Indest Data Migration Processor",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-ingest-migration-processor:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-ingest-migration-processor": "workspace:0.0.10",
+    "@mds-core/mds-ingest-migration-processor": "workspace:0.0.11",
     "@mds-core/mds-webpack-config": "workspace:0.1.3"
   }
 }

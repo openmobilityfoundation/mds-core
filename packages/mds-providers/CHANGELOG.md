@@ -1,5 +1,12 @@
 # @mds-core/mds-providers
 
+## 0.1.35
+
+### Patch Changes
+
+- Updated dependencies [61e31276]
+  - @mds-core/mds-types@0.5.0
+
 ## 0.1.34
 
 ### Patch Changes

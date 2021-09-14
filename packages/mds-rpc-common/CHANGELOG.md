@@ -1,5 +1,16 @@
 # @mds-core/mds-rpc-common
 
+## 0.1.11
+
+### Patch Changes
+
+- 0f548b7f: Make logging of a request's remote address optional and enable it for RPC requests
+- Updated dependencies [61e31276]
+- Updated dependencies [8e42a84a]
+  - @mds-core/mds-types@0.5.0
+  - @mds-core/mds-api-server@0.3.2
+  - @mds-core/mds-service-helpers@0.3.4
+
 ## 0.1.10
 
 ### Patch Changes

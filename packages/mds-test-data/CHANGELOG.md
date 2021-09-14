@@ -1,5 +1,18 @@
 # @mds-core/mds-test-data
 
+## 0.3.0
+
+### Minor Changes
+
+- 61e31276: removed deprecated type Policy, moved fixture data and utility methods to packages that directly need them
+
+### Patch Changes
+
+- Updated dependencies [61e31276]
+  - @mds-core/mds-types@0.5.0
+  - @mds-core/mds-utils@0.2.0
+  - @mds-core/mds-providers@0.1.35
+
 ## 0.2.1
 
 ### Patch Changes

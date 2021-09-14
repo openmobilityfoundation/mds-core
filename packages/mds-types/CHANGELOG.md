@@ -1,5 +1,11 @@
 # @mds-core/mds-types
 
+## 0.5.0
+
+### Minor Changes
+
+- 61e31276: removed deprecated type Policy, moved fixture data and utility methods to packages that directly need them
+
 ## 0.4.0
 
 ### Minor Changes
