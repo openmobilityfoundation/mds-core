@@ -78,7 +78,7 @@ const taxiStateMap = TAXI_VEHICLE_STATES.reduce<{ [k in TAXI_VEHICLE_STATE]?: Sc
 }, {})
 
 const stateModalityIfConditionSchema = (constString: string, props: {}) => ({
-  if: { properties: { modality: { type: 'string', const: constString } } },
+  if: { properties: { modality: { type: 'string', const: constString } }, required: ['modality'] },
   then: {
     properties: {
       states: { type: 'object', properties: props, nullable: true }
@@ -151,6 +151,7 @@ export const {
           rate_recurrence: {
             oneOf: [{ type: 'null' }, { type: 'string', enum: RATE_RECURRENCE_VALUES }]
           },
+          states: { type: 'object', properties: micromobilityStateMap }, // default to micromobility state map
           start_time: stringSchema({ nullable: true }),
           value_url: stringSchema({ nullable: true }),
           vehicle_types: arraySchema(enumSchema([...VEHICLE_TYPES]), { nullable: true }),
