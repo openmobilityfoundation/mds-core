@@ -523,7 +523,7 @@ describe('Tests app', () => {
         .set('Authorization', POLICIES_WRITE_SCOPE)
         .send(policy)
         .expect(StatusCodes.CREATED)
-      expect(isUUID(result.body.data.policy.policy_id)).toBeTruthy()
+      expect(isUUID(result.body.data.policies[0].policy_id)).toBeTruthy()
     })
 
     it('Cannot PUT a policy with publish_date set', async () => {

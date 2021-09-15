@@ -38,7 +38,7 @@ export type PolicyApiResponse<B = {}> = ApiVersionedResponse<POLICY_API_SUPPORTE
   ApiResponseLocalsClaims<PolicyApiAccessTokenScopes>
 
 export type PolicyApiGetPolicyResponse = PolicyApiResponse<{
-  data: { policy: PolicyDomainModel }
+  data: { policies: PolicyDomainModel[] }
 }>
 export type PolicyApiGetPoliciesResponse = PolicyApiResponse<{
   data: { policies: PolicyDomainModel[] }

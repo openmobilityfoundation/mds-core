@@ -50,7 +50,7 @@ export const GetPolicyHandler = async (
 
     const [policy] = policies
 
-    res.status(200).send({ version: res.locals.version, data: { policy } })
+    res.status(200).send({ version: res.locals.version, data: { policies: [policy] } })
   } catch (error) {
     return next(error)
   }

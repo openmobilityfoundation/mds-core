@@ -124,7 +124,7 @@ describe('Tests app', () => {
     const body = result.body
     expect(body.version).toStrictEqual(POLICY_API_DEFAULT_VERSION)
     expect(result.header['content-type']).toStrictEqual(APP_JSON)
-    expect(result.body.data.policy.policy_id).toStrictEqual(policy.policy_id)
+    expect(result.body.data.policies[0].policy_id).toStrictEqual(policy.policy_id)
   })
 
   it('reads back all active policies', async () => {
