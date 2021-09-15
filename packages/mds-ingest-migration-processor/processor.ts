@@ -41,7 +41,7 @@ import {
   VehicleEvent,
   VehicleEvent_v0_4_1
 } from '@mds-core/mds-types'
-import { asArray, ServerError } from '@mds-core/mds-utils'
+import { asArray, filterDefined, ServerError } from '@mds-core/mds-utils'
 import { cleanEnv, num, str } from 'envalid'
 
 const { KAFKA_HOST, SOURCE_TENANT_ID, TENANT_ID, MIGRATION_BLOCK_SIZE_LIMIT } = cleanEnv(process.env, {
@@ -185,9 +185,10 @@ const TelemetryMigrationProcessor = StreamProcessor<
 )
 
 const cacheDevicesEventsAndTelemetry = async (devices: DeviceDomainModel[]) => {
+  const device_ids = devices.map(({ device_id }) => device_id)
+
   // Cache the devices
   await Promise.all(devices.map(cache.writeDevice))
-  const device_ids = devices.map(device => device.device_id)
 
   // Cache the latest event for each device
   const { events, cursor } = await IngestServiceClient.getEventsUsingOptions({
@@ -209,6 +210,12 @@ const cacheDevicesEventsAndTelemetry = async (devices: DeviceDomainModel[]) => {
   return { devices: devices.length, events: events.length, telemetry: telemetry.length }
 }
 
+const getUncachedDevices = async (devices: DeviceDomainModel[]) => {
+  const cachedDevices = (await cache.readDevices(devices.map(({ device_id }) => device_id))).filter(filterDefined())
+  const cachedDeviceIds = new Set(cachedDevices.map(({ device_id }) => device_id))
+  return devices.filter(({ device_id }) => !cachedDeviceIds.has(device_id))
+}
+
 const initializeCacheForMigration = async () => {
   logger.info('Cache initialization commencing')
 
@@ -221,7 +228,10 @@ const initializeCacheForMigration = async () => {
       limit: MIGRATION_BLOCK_SIZE_LIMIT
     })
 
-    const totals = await cacheDevicesEventsAndTelemetry(devices)
+    const totals = {
+      progress: devices.length,
+      ...(await cacheDevicesEventsAndTelemetry(await getUncachedDevices(devices)))
+    }
 
     let cursor = next
 
@@ -231,7 +241,9 @@ const initializeCacheForMigration = async () => {
         devices,
         cursor: { next }
       } = await IngestServiceClient.getDevicesUsingCursor(cursor)
-      const updates = await cacheDevicesEventsAndTelemetry(devices)
+
+      const updates = await cacheDevicesEventsAndTelemetry(await getUncachedDevices(devices))
+      totals.progress += devices.length
       totals.devices += updates.devices
       totals.events += updates.events
       totals.telemetry += updates.telemetry
