@@ -3,27 +3,7 @@ import { MatchedVehicleInformation } from '@mds-core/mds-compliance-service'
 import db from '@mds-core/mds-db'
 import { CountPolicy, PolicyDomainModel, Rule, RULE_TYPE, SpeedPolicy, TimePolicy } from '@mds-core/mds-policy-service'
 import { providers } from '@mds-core/mds-providers'
-import {
-  DAYS_OF_WEEK,
-  DAY_OF_WEEK,
-  Device,
-  Geography,
-  MicroMobilityVehicleEvent,
-  MICRO_MOBILITY_EVENT_STATES_MAP,
-  MICRO_MOBILITY_VEHICLE_EVENTS,
-  MICRO_MOBILITY_VEHICLE_STATE,
-  TaxiVehicleEvent,
-  TAXI_EVENT_STATES_MAP,
-  TAXI_VEHICLE_EVENTS,
-  TAXI_VEHICLE_STATE,
-  TIME_FORMAT,
-  TNCVehicleEvent,
-  TNC_EVENT_STATES_MAP,
-  TNC_VEHICLE_EVENT,
-  TNC_VEHICLE_STATE,
-  UUID,
-  VehicleEvent
-} from '@mds-core/mds-types'
+import { DAYS_OF_WEEK, DAY_OF_WEEK, Device, Geography, TIME_FORMAT, UUID, VehicleEvent } from '@mds-core/mds-types'
 import { areThereCommonElements, isDefined, now, RuntimeError } from '@mds-core/mds-utils'
 import moment from 'moment-timezone'
 import { ProviderInputs, VehicleEventWithTelemetry } from '../@types'
@@ -214,29 +194,16 @@ export function getProviderIDs(provider_ids: UUID[] | undefined | null) {
 }
 
 /**
- * The rule matches this event if a transient event_type and possible resultant states,
- * or the final event_type and explicitly encoded vehicle_state match with the rule's status definitions.
- * e.g. if the rule states are { reserved: [] } and there's an event with event_types
- *      [trip_end, reservation_start, trip_start], there's an implication
- *      that the vehicle entered the reserved state after reservation_start,
- *      even if the final state of the event is on_trip, and the rule will match.
+ * Suppose we have an event with event_types `["trip_end", "battery_low"]`, and a
+ * `vehicle_state` of `non_operational`, and a rule on a policy
+ * where the `states` are `{ "non_operational": ["trip_end"] }`. That should be a match.
  *
- * @example Matching transient `event_type`
- * ```typescript
- * isInStatesOrEvents({ states: { reserved: [] } }, { event_types: ['trip_end', 'reservation_start', 'trip_start'], vehicle_state: 'on_trip' }) => true
- * ```
- * @example State matching for transient `event_type` 'off_hours', but `event_type` not matched with explicit `event_type` in rule
- * ```typescript
- * isInStatesOrEvents({ states: { non_operational: ['maintenance'] } }, { event_types: ['trip_end', 'off_hours', 'on_hours'], vehicle_state: 'available' }) => false
- * ```
- * @example Match for last `event_type` and encoded `vehicle_state`, with explicit `event_type` in rule
- * ```typescript
- * isInStatesOrEvents({ states: { available: ['on_hours'] } }, { event_types: ['trip_end', 'off_hours', 'on_hours'], vehicle_state: 'available' }) => true
- * ```
- * @example Match for last `event_type` and encoded `vehicle_state`, with catch-all in rule
- * ```typescript
- * isInStatesOrEvents({ states: { available: [] } }, { event_types: ['on_hours'], vehicle_state: 'available' }) => true
- * ```
+ * The original solution to handling multiple `event_types` on an event was to
+ * match on transient states, e.g. `["trip_end", "reservation_start"] would have
+ * matched `states: { available: []}` because `trip_end` transitions to `available`
+ * and only `available`, but this doesn't work if you have an event with
+ * `["unspecified", "unspecified"]`. It's impossible to narrow the state down since
+ * every state is valid in between those event types.
  */
 export function isInStatesOrEvents(
   rule: Pick<Rule, 'states'>,
@@ -245,93 +212,14 @@ export function isInStatesOrEvents(
 ): boolean {
   const { states } = rule
   // If no states are specified, then the rule applies to all VehicleStates.
-  if (states === null || states === undefined) {
-    return true
-  }
+  if (states === null || states === undefined) return true
 
-  /**
-   * State encoded in the event payload (default acc in the reducer) + states that it is
-   * possible to transition into with any transient event_types
-   */
-  const possibleStates = getPossibleStates(device, event)
-
-  return possibleStates.some(state => {
-    // Explicit events encoded in rule for that state (if any)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const matchableEvents: string[] | undefined = state in states ? (states as any)[state] : undefined //FIXME should not have to use an any cast here
-
-    /**
-     * If event_types not encoded in rule, assume state match.
-     * If event_types encoded in rule, see if event.event_types contains a match.
-     */
-    if (
-      matchableEvents !== undefined &&
-      (matchableEvents.length === 0 || areThereCommonElements(matchableEvents, event.event_types))
-    ) {
-      return true
-    }
-    return false
-  })
-}
-
-export const getPossibleStates = (device: Pick<Device, 'modality'>, event: VehicleEvent) => {
-  if (isMicroMobilityEvent(device, event)) {
-    const { event_types, vehicle_state } = event
-    // All event_types except the last (in most cases this will be an empty list)
-    const transientEventTypes = event_types.slice(0, -1)
-
-    return transientEventTypes.reduce(
-      (acc: MICRO_MOBILITY_VEHICLE_STATE[], event_type) => {
-        return acc.concat(MICRO_MOBILITY_EVENT_STATES_MAP[event_type])
-      },
-      [vehicle_state]
-    )
-  }
-  if (isTaxiEvent(device, event)) {
-    const { event_types, vehicle_state } = event
-    // All event_types except the last (in most cases this will be an empty list)
-    const transientEventTypes = event_types.slice(0, -1)
-
-    return transientEventTypes.reduce(
-      (acc: TAXI_VEHICLE_STATE[], event_type) => {
-        return acc.concat(TAXI_EVENT_STATES_MAP[event_type])
-      },
-      [vehicle_state]
-    )
-  }
-  if (isTncEvent(device, event)) {
-    const { event_types, vehicle_state } = event
-    // All event_types except the last (in most cases this will be an empty list)
-    const transientEventTypes = event_types.slice(0, -1)
-
-    return transientEventTypes.reduce(
-      (acc: TNC_VEHICLE_STATE[], event_type) => {
-        return acc.concat(TNC_EVENT_STATES_MAP[event_type])
-      },
-      [vehicle_state]
-    )
-  }
-
-  return [event.vehicle_state]
-}
-export const isSubset = <T extends Array<string>, U extends Readonly<Array<string>>>(as: T, bs: U) => {
-  return as.every(a => bs.includes(a))
-}
-
-const isMicroMobilityEvent = (
-  { modality }: Pick<Device, 'modality'>,
-  event: VehicleEvent
-): event is MicroMobilityVehicleEvent => {
-  const { event_types } = event
-  return modality === 'micromobility' && isSubset(event_types, MICRO_MOBILITY_VEHICLE_EVENTS)
-}
-
-const isTaxiEvent = ({ modality }: Pick<Device, 'modality'>, event: VehicleEvent): event is TaxiVehicleEvent => {
-  const { event_types } = event
-  return modality === 'taxi' && isSubset(event_types, TAXI_VEHICLE_EVENTS)
-}
-
-const isTncEvent = ({ modality }: Pick<Device, 'modality'>, event: VehicleEvent): event is TNCVehicleEvent => {
-  const { event_types } = event
-  return modality === 'tnc' && isSubset(event_types, TNC_VEHICLE_EVENT)
+  const { vehicle_state } = event
+  // FIXME It might be possible to avoid this `any` cast...
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ruleEventTypes = (states as any)[vehicle_state]
+  if (!ruleEventTypes) return false
+  if (ruleEventTypes.length === 0) return true
+  if (areThereCommonElements(event.event_types, ruleEventTypes)) return true
+  return false
 }

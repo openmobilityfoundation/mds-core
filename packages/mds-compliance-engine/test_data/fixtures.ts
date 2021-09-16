@@ -244,6 +244,32 @@ export const HIGH_COUNT_POLICY: CountPolicy = {
   ]
 }
 
+export const ARBITRARY_EVENT_TYPES_POLICY: CountPolicy = {
+  policy_id: '6d7a9c7e-853c-4ff7-a86f-e17c06d3bd80',
+  name: 'Very Low Count Limit',
+  description: 'Very low count limit',
+  start_date: 1552678594428,
+  end_date: null,
+  prev_policies: null,
+  provider_ids: [],
+  publish_date: null,
+  currency: null,
+  rules: [
+    {
+      name: 'Greater LA',
+      rule_id: '2aa6953d-fa8f-4018-9b54-84c8b4b83c6d',
+      rule_type: 'count',
+      geographies: ['1f943d59-ccc9-4d91-b6e2-0c5e771cbc49'],
+      modality: 'micromobility',
+      states: {
+        available: ['battery_low', 'reservation_start']
+      },
+      vehicle_types: ['bicycle', 'scooter'],
+      maximum: 5
+    }
+  ]
+}
+
 export const LOW_COUNT_POLICY: CountPolicy = {
   policy_id: '6d7a9c7e-853c-4ff7-a86f-e17c06d3bd80',
   name: 'Very Low Count Limit',

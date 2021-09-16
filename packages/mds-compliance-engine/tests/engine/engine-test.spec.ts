@@ -27,7 +27,12 @@ import test from 'unit.js'
 import { VehicleEventWithTelemetry } from '../../@types'
 import { filterEvents, getAllInputs, getSupersedingPolicies } from '../../engine/helpers'
 import { processPolicy } from '../../engine/mds-compliance-engine'
-import { EXPIRED_POLICY, LOW_COUNT_POLICY } from '../../test_data/fixtures'
+import {
+  ARBITRARY_EVENT_TYPES_POLICY,
+  COUNT_POLICY_JSON,
+  EXPIRED_POLICY,
+  LOW_COUNT_POLICY
+} from '../../test_data/fixtures'
 import { readJson } from './helpers'
 
 let policies: PolicyDomainModel[] = []
@@ -131,13 +136,13 @@ describe('Verifies compliance engine processes by vehicle most recent event', ()
     test.assert.deepEqual(latest_device.device_id, device.device_id)
   })
 
-  it('Verifies transient states are matched', async () => {
+  it('Verifies arbitrary event_types can be set for a state in a rule', async () => {
     const devices = makeDevices(6, now())
     const start_time = now() - 10000000
     const events = devices.reduce((events_acc: VehicleEvent[], device: Device, current_index) => {
       const device_events = makeEventsWithTelemetry([device], start_time - current_index * 10, CITY_OF_LA, {
-        event_types: ['trip_start', 'trip_end', 'reservation_start'],
-        vehicle_state: 'reserved',
+        event_types: ['battery_low'],
+        vehicle_state: 'available',
         speed: 0
       })
       events_acc.push(...device_events)
@@ -146,7 +151,51 @@ describe('Verifies compliance engine processes by vehicle most recent event', ()
     await cache.seed({ devices, events, telemetry: [] })
     await Promise.all(devices.map(async device => db.writeDevice(device)))
     const inputs = await getAllInputs()
-    const complianceResults = await processPolicy(LOW_COUNT_POLICY, geographies, inputs)
+    const complianceResults = processPolicy(ARBITRARY_EVENT_TYPES_POLICY, geographies, inputs)
+    const { 0: result } = complianceResults.filter(
+      complianceResult => complianceResult?.provider_id === TEST1_PROVIDER_ID
+    ) as ComplianceSnapshotDomainModel[]
+    test.assert.deepEqual(result.total_violations, 1)
+  })
+
+  it('Verifies no match when event types do not match policy', async () => {
+    const devices = makeDevices(6, now())
+    const start_time = now() - 10000000
+    const events = devices.reduce((events_acc: VehicleEvent[], device: Device, current_index) => {
+      const device_events = makeEventsWithTelemetry([device], start_time - current_index * 10, CITY_OF_LA, {
+        event_types: ['reservation_cancel'],
+        vehicle_state: 'available',
+        speed: 0
+      })
+      events_acc.push(...device_events)
+      return events_acc
+    }, []) as VehicleEventWithTelemetry[]
+    await cache.seed({ devices, events, telemetry: [] })
+    await Promise.all(devices.map(async device => db.writeDevice(device)))
+    const inputs = await getAllInputs()
+    const complianceResults = processPolicy(ARBITRARY_EVENT_TYPES_POLICY, geographies, inputs)
+    const { 0: result } = complianceResults.filter(
+      complianceResult => complianceResult?.provider_id === TEST1_PROVIDER_ID
+    )
+    test.assert.deepEqual(result.total_violations, 0)
+  })
+
+  it('Verifies state wildcard matching works', async () => {
+    const devices = makeDevices(11, now())
+    const start_time = now() - 10000000
+    const events = devices.reduce((events_acc: VehicleEvent[], device: Device, current_index) => {
+      const device_events = makeEventsWithTelemetry([device], start_time - current_index * 10, CITY_OF_LA, {
+        event_types: ['battery_low'],
+        vehicle_state: 'available',
+        speed: 0
+      })
+      events_acc.push(...device_events)
+      return events_acc
+    }, []) as VehicleEventWithTelemetry[]
+    await cache.seed({ devices, events, telemetry: [] })
+    await Promise.all(devices.map(async device => db.writeDevice(device)))
+    const inputs = await getAllInputs()
+    const complianceResults = processPolicy(COUNT_POLICY_JSON, geographies, inputs)
     const { 0: result } = complianceResults.filter(
       complianceResult => complianceResult?.provider_id === TEST1_PROVIDER_ID
     ) as ComplianceSnapshotDomainModel[]
