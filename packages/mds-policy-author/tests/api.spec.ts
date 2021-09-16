@@ -59,7 +59,7 @@ const request = supertest(
 const GeographyServer = GeographyServiceManager.controller()
 const PolicyServer = PolicyServiceManager.controller()
 
-const APP_JSON = 'application/vnd.mds.policy-author+json; charset=utf-8; version=0.4'
+const APP_JSON = 'application/vnd.mds.policy-author+json; charset=utf-8; version=1.0'
 const EMPTY_SCOPE = SCOPED_AUTH([], '')
 const EVENTS_READ_SCOPE = SCOPED_AUTH(['events:read'])
 const POLICIES_WRITE_SCOPE = SCOPED_AUTH(['policies:write'])

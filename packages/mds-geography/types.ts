@@ -23,7 +23,7 @@ import {
 } from '@mds-core/mds-api-server'
 import { Geography, GeographySummary } from '@mds-core/mds-types'
 
-export const GEOGRAPHY_API_SUPPORTED_VERSIONS = ['0.4.1'] as const
+export const GEOGRAPHY_API_SUPPORTED_VERSIONS = ['1.0.0'] as const
 export type GEOGRAPHY_API_SUPPORTED_VERSION = typeof GEOGRAPHY_API_SUPPORTED_VERSIONS[number]
 export const [GEOGRAPHY_API_DEFAULT_VERSION] = GEOGRAPHY_API_SUPPORTED_VERSIONS
 

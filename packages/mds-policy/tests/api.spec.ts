@@ -65,7 +65,7 @@ ACTIVE_POLICY_JSON.start_date = yesterday()
 
 const ACTIVE_MONTH_OLD_POLICY_JSON = clone(POLICY2_JSON)
 ACTIVE_MONTH_OLD_POLICY_JSON.publish_date = START_ONE_MONTH_FROM_NOW
-const APP_JSON = 'application/vnd.mds.policy+json; charset=utf-8; version=0.4'
+const APP_JSON = 'application/vnd.mds.policy+json; charset=utf-8; version=1.0'
 
 const AUTH = `basic ${Buffer.from(`${TEST1_PROVIDER_ID}|${PROVIDER_SCOPES}`).toString('base64')}`
 const POLICIES_READ_SCOPE = SCOPED_AUTH(['policies:read'])
