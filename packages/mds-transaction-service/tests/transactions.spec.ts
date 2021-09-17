@@ -68,6 +68,17 @@ describe('Transaction Service Tests', () => {
           expect(recordedTransaction.transaction_id).toEqual(transactionToPersist.transaction_id)
         })
 
+        it('Create one good Compliance Violation transaction', async () => {
+          const [transactionToPersist] = transactionsGenerator(1, { receipt_details: { violatoin_id: uuid() } })
+
+          const recordedTransaction = await TransactionServiceClient.createTransaction(transactionToPersist)
+          expect(recordedTransaction.device_id).toEqual(transactionToPersist.device_id)
+          expect(recordedTransaction.transaction_id).toEqual(transactionToPersist.transaction_id)
+          expect((recordedTransaction.receipt.receipt_details as any).violation_id).toEqual(
+            (transactionToPersist.receipt.receipt_details as any).violation_id
+          )
+        })
+
         it('Verifies good bulk-transaction creation', async () => {
           const transactionsToPersist = [...transactionsGenerator(20)]
           const recordedTransactions = await TransactionServiceClient.createTransactions(transactionsToPersist)

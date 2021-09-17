@@ -17,6 +17,7 @@
 import { SchemaObject, SchemaValidator } from '@mds-core/mds-schema-validators'
 import { UUID } from '@mds-core/mds-types'
 import {
+  ComplianceViolationDetailsDomainModel,
   FEE_TYPE,
   ReceiptDomainModel,
   TransactionDomainModel,
@@ -75,6 +76,15 @@ const timestampSchema = { type: 'integer', minimum: 100_000_000_000, maximum: 99
 //   required: ['duration', 'end_timestamp', 'geography_id', 'start_timestamp', 'trip_events', 'trip_id', 'vehicle_type']
 // })
 
+const { $schema: complianceViolationDetailsSchema } = SchemaValidator<ComplianceViolationDetailsDomainModel>({
+  type: 'object',
+  description: 'Receipt details which provide a pointer to an MDS Compliance Violation.',
+  properties: {
+    violation_id: uuidSchema
+  },
+  required: ['violation_id']
+})
+
 const {
   $schema: { $schema, ...receiptSchema }
 } = SchemaValidator<ReceiptDomainModel>(
@@ -91,7 +101,7 @@ const {
       },
       receipt_details: {
         description: 'Free-form object which describes the details of this transaction. Highly use-case dependent.',
-        type: 'object'
+        oneOf: [complianceViolationDetailsSchema, { type: 'object' }]
       }
     },
     required: ['origin_url', 'receipt_details', 'receipt_id', 'timestamp']

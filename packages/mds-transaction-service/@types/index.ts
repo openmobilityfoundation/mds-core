@@ -47,6 +47,10 @@ export interface CurbUseDetailsDomainModel {
   trip_events: VehicleEvent[]
 }
 
+export interface ComplianceViolationDetailsDomainModel {
+  violation_id: UUID
+}
+
 export const FEE_TYPE = <const>[
   'base_fee',
   'upgrade_fee',
@@ -55,7 +59,8 @@ export const FEE_TYPE = <const>[
   'parking_fee',
   'reservation_fee',
   'distance_fee',
-  'tolls_fee'
+  'tolls_fee',
+  'compliance_violation_fee'
 ]
 
 export type FEE_TYPE = typeof FEE_TYPE[number]
@@ -64,7 +69,11 @@ export interface ReceiptDomainModel {
   receipt_id: UUID
   timestamp: Timestamp // could be any time before the Transaction was created
   origin_url: string // where can I go to dig into the details of the receipt, given this receipt_id?
-  receipt_details: TripReceiptDetailsDomainModel | CurbUseDetailsDomainModel | object // JSON blob with free-form supporting evidence, DO NOT INCLUDE PII
+  receipt_details:
+    | TripReceiptDetailsDomainModel
+    | CurbUseDetailsDomainModel
+    | ComplianceViolationDetailsDomainModel
+    | object // JSON blob with free-form supporting evidence, DO NOT INCLUDE PII
 }
 
 export interface TransactionDomainModel {
