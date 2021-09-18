@@ -67,7 +67,7 @@ describe('Tests app', () => {
         .get(pathPrefix(`/geographies/${GEOGRAPHY_UUID}`))
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
-      test.assert(result.body.data.geography.geography_id === GEOGRAPHY_UUID)
+      test.assert(result.body.data.geographies[0].geography_id === GEOGRAPHY_UUID)
       test.assert(result.body.version === GEOGRAPHY_API_DEFAULT_VERSION)
       test.value(result).hasHeader('content-type', APP_JSON)
     })
@@ -156,7 +156,7 @@ describe('Tests app', () => {
         .set('Authorization', GEOGRAPHIES_READ_UNPUBLISHED_SCOPE)
         .expect(200)
         .end((err, result) => {
-          test.assert(result.body.data.geography.geography_id === GEOGRAPHY_UUID)
+          test.assert(result.body.data.geographies[0].geography_id === GEOGRAPHY_UUID)
           test.value(result).hasHeader('content-type', APP_JSON)
           done(err)
         })

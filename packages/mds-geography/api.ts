@@ -24,8 +24,7 @@ import {
   GeographyApiAccessTokenScopes,
   GeographyApiGetGeographiesRequest,
   GeographyApiGetGeographiesResponse,
-  GeographyApiGetGeographyRequest,
-  GeographyApiGetGeographyResponse
+  GeographyApiGetGeographyRequest
 } from './types'
 
 const checkGeographyApiAccess = (validator: AccessTokenScopeValidator<GeographyApiAccessTokenScopes>) =>
@@ -39,14 +38,18 @@ function api(app: express.Express): express.Express {
     checkGeographyApiAccess(scopes => {
       return scopes.includes('geographies:read:published') || scopes.includes('geographies:read:unpublished')
     }),
-    async (req: GeographyApiGetGeographyRequest, res: GeographyApiGetGeographyResponse, next: express.NextFunction) => {
+    async (
+      req: GeographyApiGetGeographyRequest,
+      res: GeographyApiGetGeographiesResponse,
+      next: express.NextFunction
+    ) => {
       const { geography_id } = req.params
       try {
         const geography = await db.readSingleGeography(geography_id)
         if (!geography.publish_date && !res.locals.scopes.includes('geographies:read:unpublished')) {
           throw new InsufficientPermissionsError('permission to read unpublished geographies missing')
         }
-        return res.status(200).send({ version: res.locals.version, data: { geography } })
+        return res.status(200).send({ version: res.locals.version, data: { geographies: [geography] } })
       } catch (error) {
         logger.error('failed to read geography', error.stack)
         if (error instanceof NotFoundError) {

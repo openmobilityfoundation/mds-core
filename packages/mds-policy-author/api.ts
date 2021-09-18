@@ -19,7 +19,7 @@ import { pathPrefix } from '@mds-core/mds-utils'
 import express from 'express'
 import { DeletePolicyHandler } from './handlers/delete-policy'
 import { GetBulkPolicyMetadataHandler } from './handlers/get-bulk-policy-metadata'
-import { GePolicyMetadataHandler } from './handlers/get-policy-metadata'
+import { GetPolicyMetadataHandler } from './handlers/get-policy-metadata'
 import { PublishPolicyHandler } from './handlers/publish-policy'
 import { UpdatePolicyHandler } from './handlers/update-policy'
 import { UpdatePolicyMetadataHandler } from './handlers/update-policy-metadata'
@@ -61,7 +61,7 @@ export const api = (app: express.Express): express.Express =>
     .get(
       pathPrefix('/policies/:policy_id/meta'),
       checkPolicyAuthorApiAccess(scopes => scopes.includes('policies:read')),
-      GePolicyMetadataHandler
+      GetPolicyMetadataHandler
     )
     .put(
       pathPrefix('/policies/:policy_id/meta'),

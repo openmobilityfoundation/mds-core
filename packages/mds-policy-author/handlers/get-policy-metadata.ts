@@ -20,7 +20,7 @@ import { BadParamsError, isUUID } from '@mds-core/mds-utils'
 import express from 'express'
 import { PolicyAuthorApiGetPolicyMetadatumRequest, PolicyAuthorApiGetPolicyMetadatumResponse } from '../types'
 
-export const GePolicyMetadataHandler = async (
+export const GetPolicyMetadataHandler = async (
   req: PolicyAuthorApiGetPolicyMetadatumRequest,
   res: PolicyAuthorApiGetPolicyMetadatumResponse,
   next: express.NextFunction
