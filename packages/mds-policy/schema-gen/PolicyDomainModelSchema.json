@@ -82,7 +82,8 @@
           },
           "end_time": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "pattern": "^\\d{2}:\\d{2}:\\d{2}$"
           },
           "geographies": {
             "type": "array",
@@ -396,7 +397,8 @@
           },
           "start_time": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "pattern": "^\\d{2}:\\d{2}:\\d{2}$"
           },
           "value_url": {
             "type": "string",

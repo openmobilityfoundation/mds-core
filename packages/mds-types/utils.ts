@@ -8,8 +8,6 @@ export const Enum = <T extends string>(...keys: T[]) =>
 export const isEnum = (enums: { [key: string]: string }, value: unknown) =>
   typeof value === 'string' && typeof enums === 'object' && enums[value] === value
 
-export const TIME_FORMAT = 'HH:mm:ss'
-
 export const DAYS_OF_WEEK = Enum('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
 export type DAY_OF_WEEK = keyof typeof DAYS_OF_WEEK
 /**

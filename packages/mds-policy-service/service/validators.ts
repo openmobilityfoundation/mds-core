@@ -134,7 +134,7 @@ export const {
         properties: {
           accessibility_options: arraySchema(enumSchema([...ACCESSIBILITY_OPTIONS]), { nullable: true }),
           days: arraySchema(enumSchema(Object.keys(DAYS_OF_WEEK)), { nullable: true }),
-          end_time: stringSchema({ nullable: true }),
+          end_time: stringSchema({ nullable: true, pattern: '^\\d{2}:\\d{2}:\\d{2}$' }),
           geographies: arraySchema(uuidSchema),
           maximum: { type: 'number', nullable: true },
           messages: {
@@ -152,7 +152,7 @@ export const {
             oneOf: [{ type: 'null' }, { type: 'string', enum: RATE_RECURRENCE_VALUES }]
           },
           states: { type: 'object', properties: micromobilityStateMap }, // default to micromobility state map
-          start_time: stringSchema({ nullable: true }),
+          start_time: stringSchema({ nullable: true, pattern: '^\\d{2}:\\d{2}:\\d{2}$' }),
           value_url: stringSchema({ nullable: true }),
           vehicle_types: arraySchema(enumSchema([...VEHICLE_TYPES]), { nullable: true }),
           service_types: arraySchema(enumSchema([...SERVICE_TYPE]), { nullable: true, default: null }),

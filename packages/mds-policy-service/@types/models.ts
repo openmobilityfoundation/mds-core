@@ -56,13 +56,16 @@ export type TNCStatesToEvents = {
   [S in TNC_VEHICLE_STATE]: TNC_VEHICLE_EVENT[] | []
 }
 
+export type TIME_FORMAT = `${number}:${number}:${number}`
+export const TIME_FORMAT = 'HH:mm:ss'
+
 /**
  * Base rule type which can be extended by an allowed state machine & rule types (often per modality).
  */
 export interface BaseRule<StatesToEventsMap extends GenericStatesToEvents, RuleType extends RULE_TYPE = RULE_TYPE> {
   accessibility_options?: Nullable<ACCESSIBILITY_OPTION[]>
   days?: Nullable<DAY_OF_WEEK[]>
-  end_time?: Nullable<string>
+  end_time?: Nullable<TIME_FORMAT>
   geographies: UUID[]
   maximum?: Nullable<number>
   messages?: PolicyMessage
@@ -74,7 +77,7 @@ export interface BaseRule<StatesToEventsMap extends GenericStatesToEvents, RuleT
   rule_id: UUID
   rule_type: RuleType
   rule_units?: string
-  start_time?: Nullable<string>
+  start_time?: Nullable<TIME_FORMAT>
   states: Nullable<StatesToEventsMap>
   value_url?: Nullable<string>
   vehicle_types?: Nullable<VEHICLE_TYPE[]>

@@ -153,8 +153,8 @@ export const POLICY3_JSON: PolicyDomainModel = {
       states: { on_trip: [] },
       vehicle_types: ['bicycle', 'scooter'],
       days: ['sat', 'sun'],
-      start_time: '12:00',
-      end_time: '23:59',
+      start_time: '12:00:00',
+      end_time: '23:59:00',
       maximum: 10,
       messages: {
         'en-US': 'Remember to stay under 10 MPH on Venice Beach on weekends!',
