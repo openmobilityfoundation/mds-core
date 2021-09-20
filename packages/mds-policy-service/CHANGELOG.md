@@ -1,5 +1,24 @@
 # @mds-core/mds-policy-service
 
+## 0.6.0
+
+### Minor Changes
+
+- 4bbb8a3a: Update policy status filter queries.
+- d8b10031: Add new TIME_FORMAT type and stricter validation for start_time and end_time
+
+### Patch Changes
+
+- cab133f5: Default to micromobility state map validation when modality is undefined in policy rule
+- Updated dependencies [d8b10031]
+  - @mds-core/mds-types@0.5.1
+  - @mds-core/mds-geography-service@0.1.12
+  - @mds-core/mds-repository@0.1.12
+  - @mds-core/mds-rpc-common@0.1.12
+  - @mds-core/mds-schema-validators@0.3.3
+  - @mds-core/mds-service-helpers@0.3.5
+  - @mds-core/mds-utils@0.2.1
+
 ## 0.5.0
 
 ### Minor Changes

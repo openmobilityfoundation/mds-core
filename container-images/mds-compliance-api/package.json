@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-compliance-api",
-  "version": "0.1.39",
+  "version": "0.1.40",
   "private": true,
   "description": "Docker Image for MDS Compliance API",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-compliance-api:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-compliance-api": "workspace:0.3.0",
+    "@mds-core/mds-compliance-api": "workspace:0.3.1",
     "@mds-core/mds-webpack-config": "workspace:0.1.3"
   }
 }

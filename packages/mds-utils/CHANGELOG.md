@@ -1,5 +1,12 @@
 # @mds-core/mds-utils
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [d8b10031]
+  - @mds-core/mds-types@0.5.1
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-attachment-service",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Mobility Data Specification Attachment Service",
   "keywords": [
     "mds"
@@ -23,12 +23,12 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "workspace:0.2.4",
-    "@mds-core/mds-repository": "workspace:0.1.11",
-    "@mds-core/mds-rpc-common": "workspace:0.1.11",
-    "@mds-core/mds-schema-validators": "workspace:0.3.2",
-    "@mds-core/mds-service-helpers": "workspace:0.3.4",
-    "@mds-core/mds-types": "workspace:0.5.0",
-    "@mds-core/mds-utils": "workspace:0.2.0",
+    "@mds-core/mds-repository": "workspace:0.1.12",
+    "@mds-core/mds-rpc-common": "workspace:0.1.12",
+    "@mds-core/mds-schema-validators": "workspace:0.3.3",
+    "@mds-core/mds-service-helpers": "workspace:0.3.5",
+    "@mds-core/mds-types": "workspace:0.5.1",
+    "@mds-core/mds-utils": "workspace:0.2.1",
     "@types/sharp": "0.28.3",
     "aws-sdk": "2.939.0",
     "express": "4.17.1",
