@@ -1,5 +1,29 @@
 # @mds-core/mds-policy
 
+## 0.5.0
+
+### Minor Changes
+
+- b393c66a: Updating version number for geography and policy apis from 0.4 to 1.0
+- d8b10031: Add new TIME_FORMAT type and stricter validation for start_time and end_time
+- eaf48174: Update geography and policy to match spec
+
+### Patch Changes
+
+- cab133f5: Default to micromobility state map validation when modality is undefined in policy rule
+- Updated dependencies [4bbb8a3a]
+- Updated dependencies [d8b10031]
+- Updated dependencies [cab133f5]
+- Updated dependencies [d8b10031]
+  - @mds-core/mds-policy-service@0.6.0
+  - @mds-core/mds-types@0.5.1
+  - @mds-core/mds-db@0.4.1
+  - @mds-core/mds-api-helpers@0.1.41
+  - @mds-core/mds-providers@0.1.36
+  - @mds-core/mds-schema-validators@0.3.3
+  - @mds-core/mds-utils@0.2.1
+  - @mds-core/mds-api-server@0.3.3
+
 ## 0.4.0
 
 ### Minor Changes

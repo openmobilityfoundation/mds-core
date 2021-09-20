@@ -1,5 +1,11 @@
 # @mds-core/mds-types
 
+## 0.5.1
+
+### Patch Changes
+
+- d8b10031: Remove TIME_FORMAT type
+
 ## 0.5.0
 
 ### Minor Changes

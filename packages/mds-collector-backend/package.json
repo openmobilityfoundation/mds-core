@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-collector-backend",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Mobility Data Specification Collector Backend Service",
   "keywords": [
     "mds"
@@ -23,13 +23,13 @@
   },
   "dependencies": {
     "@mds-core/mds-logger": "workspace:0.2.4",
-    "@mds-core/mds-repository": "workspace:0.1.11",
-    "@mds-core/mds-rpc-common": "workspace:0.1.11",
-    "@mds-core/mds-schema-validators": "workspace:0.3.2",
-    "@mds-core/mds-service-helpers": "workspace:0.3.4",
-    "@mds-core/mds-stream": "workspace:0.1.37",
-    "@mds-core/mds-types": "workspace:0.5.0",
-    "@mds-core/mds-utils": "workspace:0.2.0",
+    "@mds-core/mds-repository": "workspace:0.1.12",
+    "@mds-core/mds-rpc-common": "workspace:0.1.12",
+    "@mds-core/mds-schema-validators": "workspace:0.3.3",
+    "@mds-core/mds-service-helpers": "workspace:0.3.5",
+    "@mds-core/mds-stream": "workspace:0.1.38",
+    "@mds-core/mds-types": "workspace:0.5.1",
+    "@mds-core/mds-utils": "workspace:0.2.1",
     "ajv": "8.6.1",
     "typeorm": "0.2.34"
   }

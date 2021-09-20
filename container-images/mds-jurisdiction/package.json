@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-jurisdiction",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "private": true,
   "description": "Docker Image for MDS Jurisdiction API",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-jurisdiction:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-jurisdiction": "workspace:0.1.14",
+    "@mds-core/mds-jurisdiction": "workspace:0.1.15",
     "@mds-core/mds-webpack-config": "workspace:0.1.3"
   }
 }

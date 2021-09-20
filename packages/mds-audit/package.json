@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-audit",
-  "version": "0.1.52",
+  "version": "0.1.53",
   "description": "Endpoint for auditing compliance with MDS",
   "keywords": [
     "mds",
@@ -21,17 +21,17 @@
     "watch": "nodemon --watch '../../packages' --ext 'ts' --ignore '*.d.ts' --exec pnpm ts-node --"
   },
   "dependencies": {
-    "@mds-core/mds-agency-cache": "workspace:0.2.6",
-    "@mds-core/mds-api-helpers": "workspace:0.1.40",
-    "@mds-core/mds-api-server": "workspace:0.3.2",
-    "@mds-core/mds-attachment-service": "workspace:0.1.11",
-    "@mds-core/mds-db": "workspace:0.4.0",
+    "@mds-core/mds-agency-cache": "workspace:0.2.7",
+    "@mds-core/mds-api-helpers": "workspace:0.1.41",
+    "@mds-core/mds-api-server": "workspace:0.3.3",
+    "@mds-core/mds-attachment-service": "workspace:0.1.12",
+    "@mds-core/mds-db": "workspace:0.4.1",
     "@mds-core/mds-logger": "workspace:0.2.4",
-    "@mds-core/mds-providers": "workspace:0.1.35",
-    "@mds-core/mds-schema-validators": "workspace:0.3.2",
-    "@mds-core/mds-service-helpers": "workspace:0.3.4",
-    "@mds-core/mds-types": "workspace:0.5.0",
-    "@mds-core/mds-utils": "workspace:0.2.0",
+    "@mds-core/mds-providers": "workspace:0.1.36",
+    "@mds-core/mds-schema-validators": "workspace:0.3.3",
+    "@mds-core/mds-service-helpers": "workspace:0.3.5",
+    "@mds-core/mds-types": "workspace:0.5.1",
+    "@mds-core/mds-utils": "workspace:0.2.1",
     "@types/express": "4.17.12",
     "@types/multer": "1.4.6",
     "@types/sharp": "0.28.3",
@@ -41,6 +41,6 @@
     "sharp": "0.28.3"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "workspace:0.3.0"
+    "@mds-core/mds-test-data": "workspace:0.3.1"
   }
 }

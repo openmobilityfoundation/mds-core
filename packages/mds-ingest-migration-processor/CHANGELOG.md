@@ -1,5 +1,19 @@
 # @mds-core/mds-ingest-migration-processor
 
+## 0.0.12
+
+### Patch Changes
+
+- c99658f9: Only initialize cache for uncached devices
+- Updated dependencies [d8b10031]
+  - @mds-core/mds-types@0.5.1
+  - @mds-core/mds-agency-cache@0.2.7
+  - @mds-core/mds-ingest-service@0.4.3
+  - @mds-core/mds-repository@0.1.12
+  - @mds-core/mds-service-helpers@0.3.5
+  - @mds-core/mds-stream-processor@0.2.8
+  - @mds-core/mds-utils@0.2.1
+
 ## 0.0.11
 
 ### Patch Changes

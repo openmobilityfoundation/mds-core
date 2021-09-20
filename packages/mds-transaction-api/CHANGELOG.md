@@ -1,5 +1,20 @@
 # @mds-core/mds-transaction-api
 
+## 0.1.15
+
+### Patch Changes
+
+- 0af9fdf9: Add ReceiptDetails that link to Compliance Violations
+- Updated dependencies [0af9fdf9]
+- Updated dependencies [d8b10031]
+  - @mds-core/mds-transaction-service@0.1.12
+  - @mds-core/mds-types@0.5.1
+  - @mds-core/mds-api-helpers@0.1.41
+  - @mds-core/mds-schema-validators@0.3.3
+  - @mds-core/mds-service-helpers@0.3.5
+  - @mds-core/mds-utils@0.2.1
+  - @mds-core/mds-api-server@0.3.3
+
 ## 0.1.14
 
 ### Patch Changes

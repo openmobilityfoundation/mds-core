@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-transaction-api",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "MDS Transaction API",
   "license": "Apache-2.0",
   "author": "City of Los Angeles",
@@ -20,20 +20,20 @@
     "generate:schema": "ts-node ./generate-schemas.ts && git add schema-gen"
   },
   "dependencies": {
-    "@mds-core/mds-api-helpers": "workspace:0.1.40",
-    "@mds-core/mds-api-server": "workspace:0.3.2",
+    "@mds-core/mds-api-helpers": "workspace:0.1.41",
+    "@mds-core/mds-api-server": "workspace:0.3.3",
     "@mds-core/mds-logger": "workspace:0.2.4",
-    "@mds-core/mds-schema-validators": "workspace:0.3.2",
-    "@mds-core/mds-service-helpers": "workspace:0.3.4",
-    "@mds-core/mds-transaction-service": "workspace:0.1.11",
-    "@mds-core/mds-types": "workspace:0.5.0",
-    "@mds-core/mds-utils": "workspace:0.2.0",
+    "@mds-core/mds-schema-validators": "workspace:0.3.3",
+    "@mds-core/mds-service-helpers": "workspace:0.3.5",
+    "@mds-core/mds-transaction-service": "workspace:0.1.12",
+    "@mds-core/mds-types": "workspace:0.5.1",
+    "@mds-core/mds-utils": "workspace:0.2.1",
     "@types/express": "4.17.12",
     "express": "4.17.1",
     "http-status-codes": "2.1.4",
     "joi": "17.4.0"
   },
   "devDependencies": {
-    "@mds-core/mds-test-data": "workspace:0.3.0"
+    "@mds-core/mds-test-data": "workspace:0.3.1"
   }
 }

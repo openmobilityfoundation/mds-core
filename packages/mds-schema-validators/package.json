@@ -1,6 +1,6 @@
 {
   "name": "@mds-core/mds-schema-validators",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Mobility Data Specification JSON schema definition and validation",
   "keywords": [
     "mds",
@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "9.0.9",
-    "@mds-core/mds-providers": "workspace:0.1.35",
-    "@mds-core/mds-test-data": "workspace:0.3.0",
-    "@mds-core/mds-types": "workspace:0.5.0",
-    "@mds-core/mds-utils": "workspace:0.2.0",
+    "@mds-core/mds-providers": "workspace:0.1.36",
+    "@mds-core/mds-test-data": "workspace:0.3.1",
+    "@mds-core/mds-types": "workspace:0.5.1",
+    "@mds-core/mds-utils": "workspace:0.2.1",
     "ajv": "8.6.1",
     "ajv-formats": "2.1.0",
     "joi": "17.4.0",

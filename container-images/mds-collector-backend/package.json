@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-collector-backend",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "private": true,
   "description": "Docker Image for MDS Collector Backend Service",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-collector-backend:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-collector-backend": "workspace:0.1.11",
+    "@mds-core/mds-collector-backend": "workspace:0.1.12",
     "@mds-core/mds-webpack-config": "workspace:0.1.3"
   }
 }

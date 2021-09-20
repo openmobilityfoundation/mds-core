@@ -1,6 +1,6 @@
 {
   "name": "@container-images/mds-compliance-service",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "private": true,
   "description": "MDS daily-reports prototype",
   "keywords": [
@@ -21,7 +21,7 @@
     "image:production": "pnpm bundle:production && ../../bin/build-helper buildImage mds-compliance-service:${npm_package_version}"
   },
   "dependencies": {
-    "@mds-core/mds-compliance-service": "workspace:0.4.0",
+    "@mds-core/mds-compliance-service": "workspace:0.4.1",
     "@mds-core/mds-webpack-config": "workspace:0.1.3"
   }
 }

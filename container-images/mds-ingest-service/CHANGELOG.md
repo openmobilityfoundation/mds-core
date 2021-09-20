@@ -1,5 +1,11 @@
 # @container-images/mds-ingest-service
 
+## 0.0.15
+
+### Patch Changes
+
+- @mds-core/mds-ingest-service@0.4.3
+
 ## 0.0.14
 
 ### Patch Changes
