@@ -41,7 +41,11 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
     super('policies', { entities, migrations })
   }
 
-  public readPolicies = async (params: ReadPolicyQueryParams = {}, presentationOptions: PresentationOptions = {}) => {
+  public readPolicies = async (
+    params: ReadPolicyQueryParams = {},
+    presentationOptions: PresentationOptions = {},
+    timestamp: Timestamp = now()
+  ) => {
     const { policy_ids, rule_id, get_unpublished, get_published, start_date, geography_ids, statuses } = params
 
     try {
@@ -80,24 +84,35 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
 
       if (statuses) {
         /** Turns statuses into expressions with params */
+        const PUBLISHED = "policy_json->>'publish_date' IS NOT NULL"
+        const NOT_PUBLISHED = "policy_json->>'publish_date' IS NULL"
+        const START_DATE_IN_PAST = "policy_json->>'start_date' IS NOT NULL AND policy_json->>'start_date' <= :now"
+        const START_DATE_IN_FUTURE = "policy_json->>'start_date' IS NOT NULL AND policy_json->>'start_date' > :now"
+        const END_DATE_IN_PAST = "policy_json->>'end_date' IS NOT NULL AND policy_json->>'end_date' <= :now"
+        const END_DATE_NULL_OR_IN_FUTURE = "(policy_json->>'end_date' IS NULL OR policy_json->>'end_date' > :now)"
+        const SUPERSEDED = 'superseded_by IS NOT NULL AND array_length(superseded_by, 1) >= 1'
+        const NOT_SUPERSEDED = 'superseded_by IS NULL'
+        const DELIMITER = ' AND '
         const statusToExpressionWithParams: {
           [key in Exclude<POLICY_STATUS, 'unknown'>]: { expression: string; params?: object }
         } = {
-          draft: { expression: "policy_json->>'publish_date' IS NULL" },
-          deactivated: { expression: 'superseded_by IS NOT NULL AND array_length(superseded_by, 1) >= 1' },
+          draft: {
+            expression: [NOT_PUBLISHED].join(DELIMITER)
+          },
+          deactivated: {
+            expression: [SUPERSEDED].join(DELIMITER)
+          },
           expired: {
-            expression: "policy_json->>'end_date' IS NOT NULL AND policy_json->>'end_date' <= :now",
-            params: { now: now() }
+            expression: [PUBLISHED, END_DATE_IN_PAST, NOT_SUPERSEDED].join(DELIMITER),
+            params: { now: timestamp }
           },
           pending: {
-            expression:
-              "policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= :now AND policy_json->>'start_date' >= :now",
-            params: { now: now() }
+            expression: [PUBLISHED, START_DATE_IN_FUTURE, NOT_SUPERSEDED].join(DELIMITER),
+            params: { now: timestamp }
           },
           active: {
-            expression:
-              "policy_json->>'start_date' IS NOT NULL AND policy_json->>'start_date' <= :now AND policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= :now",
-            params: { now: now() }
+            expression: [PUBLISHED, START_DATE_IN_PAST, END_DATE_NULL_OR_IN_FUTURE, NOT_SUPERSEDED].join(DELIMITER),
+            params: { now: timestamp }
           }
         }
 
@@ -116,7 +131,6 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
           query.andWhere(`(${expressions.join(' OR ')})`, params)
         }
       }
-
       const entities = await query.getMany()
       return entities.map(entity => PolicyEntityToDomain.map(entity, presentationOptions))
     } catch (error) {
@@ -126,17 +140,7 @@ class PolicyReadWriteRepository extends ReadWriteRepository {
 
   public readActivePolicies = async (timestamp: Timestamp = now()) => {
     try {
-      const connection = await this.connect('ro')
-      const entities = await connection
-        .getRepository(PolicyEntity)
-        .createQueryBuilder()
-        .where("policy_json->>'start_date' >= :start_date", { start_date: timestamp })
-        .andWhere("policy_json->>'end_date' <= :end_date OR policy_json->>'end_date' IS NULL ", { end_date: timestamp })
-        .andWhere("policy_json->>'publish_date' IS NOT NULL AND policy_json->>'publish_date' <= :publish_date ", {
-          publish_date: timestamp
-        })
-        .getMany()
-      return entities.map(entity => PolicyEntityToDomain.map(entity))
+      return this.readPolicies({ statuses: ['active'] }, { withStatus: true }, timestamp)
     } catch (error) {
       throw RepositoryError(error)
     }
