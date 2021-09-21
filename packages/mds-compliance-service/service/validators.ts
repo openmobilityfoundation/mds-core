@@ -60,9 +60,9 @@ export const ValidateComplianceSnapshotDomainModel = (
 
 const getComplianceSnapshotsByTimeIntervalOptionsSchema = Joi.object().keys({
   start_time: Joi.number().integer().required().error(Error('start_time not provided')).less(Joi.ref('end_time')),
-  end_time: Joi.number().integer().required().error(Error('end_time not provided')),
-  provider_ids: Joi.array().items(uuidSchema),
-  policy_ids: Joi.array().items(uuidSchema)
+  end_time: Joi.number().integer().allow(null),
+  provider_ids: Joi.array().items(uuidSchema).allow(null),
+  policy_ids: Joi.array().items(uuidSchema).allow(null)
 })
 
 export const ValidateGetComplianceSnapshotsByTimeIntervalOptions = (

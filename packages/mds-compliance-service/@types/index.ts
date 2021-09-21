@@ -15,7 +15,7 @@
  */
 
 import { RpcRoute, RpcServiceDefinition } from '@mds-core/mds-rpc-common'
-import { Timestamp, UUID, VEHICLE_EVENT, VEHICLE_STATE } from '@mds-core/mds-types'
+import { Nullable, Timestamp, UUID, VEHICLE_EVENT, VEHICLE_STATE } from '@mds-core/mds-types'
 
 export interface MatchedVehicleInformation {
   device_id: UUID
@@ -85,12 +85,12 @@ export type GetComplianceSnapshotOptions =
       compliance_as_of: Timestamp
     }
 
-export type GetComplianceSnapshotsByTimeIntervalOptions = Partial<{
+export type GetComplianceSnapshotsByTimeIntervalOptions = {
   start_time: Timestamp
-  end_time: Timestamp
-  policy_ids: UUID[]
-  provider_ids: UUID[]
-}>
+  end_time?: Nullable<Timestamp>
+  policy_ids?: Nullable<UUID[]>
+  provider_ids?: Nullable<UUID[]>
+}
 
 export type GetComplianceViolationPeriodsOptions = {
   start_time: Timestamp

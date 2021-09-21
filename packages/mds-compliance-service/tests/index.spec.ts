@@ -72,6 +72,33 @@ describe('ComplianceSnapshots Service Tests', () => {
     await expect(ComplianceServiceClient.createComplianceSnapshots([])).resolves.toEqual([])
   })
 
+  it('Gets ComplianceSnapshots By TimeInterval (provider_id null)', async () => {
+    await expect(
+      ComplianceServiceClient.getComplianceSnapshotsByTimeInterval({
+        start_time: TIME - days(1),
+        provider_ids: null
+      })
+    ).resolves.not.toThrowError()
+  })
+
+  it('Gets ComplianceSnapshots By TimeInterval (policy_ids null)', async () => {
+    await expect(
+      ComplianceServiceClient.getComplianceSnapshotsByTimeInterval({
+        start_time: TIME - days(1),
+        policy_ids: null
+      })
+    ).resolves.not.toThrowError()
+  })
+
+  it('Gets ComplianceSnapshots By TimeInterval (end_time null)', async () => {
+    await expect(
+      ComplianceServiceClient.getComplianceSnapshotsByTimeInterval({
+        start_time: TIME - days(1),
+        end_time: null
+      })
+    ).resolves.not.toThrowError()
+  })
+
   it('Gets ComplianceSnapshots By TimeInterval (start_time, no end_time options)', async () => {
     const complianceSnapshots = await ComplianceServiceClient.getComplianceSnapshotsByTimeInterval({
       start_time: TIME - days(1)
