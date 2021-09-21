@@ -50,7 +50,7 @@ export const EventEntityToDomain = ModelMapper<EventEntityModel, EventDomainMode
   }
 )
 
-export const EventEntityToDomainWithIdentity = ModelMapper<
+export const EventEntityToDomainWithIdentityColumn = ModelMapper<
   EventEntityModel,
   EventDomainModel & IdentityColumn,
   EventEntityToDomainOptions

@@ -49,16 +49,18 @@ import { TelemetryEntity, TelemetryEntityModel } from './entities/telemetry-enti
 import {
   DeviceDomainToEntityCreate,
   DeviceEntityToDomain,
+  DeviceEntityToDomainWithIdentityColumn,
   EventAnnotationDomainToEntityCreate,
   EventAnnotationEntityToDomain,
   EventDomainToEntityCreate,
   EventEntityToDomain,
-  EventEntityToDomainWithIdentity,
+  EventEntityToDomainWithIdentityColumn,
   MigratedDeviceToEntityCreate,
   MigratedEventToEntityCreate,
   MigratedTelemetryToEntityCreate,
   TelemetryDomainToEntityCreate,
-  TelemetryEntityToDomain
+  TelemetryEntityToDomain,
+  TelemetryEntityToDomainWithIdentityColumn
 } from './mappers'
 import migrations from './migrations'
 import { MigratedEntityModel } from './mixins/migrated-entity'
@@ -494,7 +496,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
   public writeMigratedDevice = async (
     devices: Array<Device & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
-  ): Promise<DeviceDomainModel[]> => {
+  ): Promise<Array<DeviceDomainModel & IdentityColumn>> => {
     try {
       const connection = await this.connect('rw')
       const { raw: entities }: InsertReturning<DeviceEntityModel> = await connection
@@ -508,7 +510,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         )
         .returning('*')
         .execute()
-      return entities.map(DeviceEntityToDomain.mapper())
+      return entities.map(DeviceEntityToDomainWithIdentityColumn.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -528,7 +530,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .onConflict('DO NOTHING')
         .returning('*')
         .execute()
-      return entities.map(EventEntityToDomainWithIdentity.mapper())
+      return entities.map(EventEntityToDomainWithIdentityColumn.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }
@@ -537,7 +539,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
   public writeMigratedTelemetry = async (
     telemetry: Array<Telemetry & Required<RecordedColumn>>,
     migrated_from: MigratedEntityModel
-  ): Promise<TelemetryDomainModel[]> => {
+  ): Promise<Array<TelemetryDomainModel & IdentityColumn>> => {
     try {
       const connection = await this.connect('rw')
       const { raw: entities }: InsertReturning<TelemetryEntityModel> = await connection
@@ -548,7 +550,7 @@ class IngestReadWriteRepository extends ReadWriteRepository {
         .onConflict('DO NOTHING')
         .returning('*')
         .execute()
-      return entities.map(TelemetryEntityToDomain.mapper())
+      return entities.map(TelemetryEntityToDomainWithIdentityColumn.mapper())
     } catch (error) {
       throw RepositoryError(error)
     }

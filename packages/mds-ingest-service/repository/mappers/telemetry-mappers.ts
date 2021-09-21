@@ -47,6 +47,15 @@ export const TelemetryEntityToDomain = ModelMapper<
   return { gps: { lat, lng, speed, heading, accuracy, altitude, hdop, satellites }, charge, stop_id, ...domain }
 })
 
+export const TelemetryEntityToDomainWithIdentityColumn = ModelMapper<
+  TelemetryEntityModel,
+  TelemetryDomainModel & IdentityColumn,
+  TelemetryEntityToDomainOptions
+>((entity, options) => {
+  const { id } = entity
+  return { ...TelemetryEntityToDomain.map(entity, options), id }
+})
+
 type TelemetryEntityCreateOptions = Partial<{
   recorded: Timestamp
 }>

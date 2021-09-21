@@ -29,6 +29,15 @@ export const DeviceEntityToDomain = ModelMapper<DeviceEntityModel, DeviceDomainM
   }
 )
 
+export const DeviceEntityToDomainWithIdentityColumn = ModelMapper<
+  DeviceEntityModel,
+  DeviceDomainModel & IdentityColumn,
+  DeviceEntityToDomainOptions
+>((entity, options) => {
+  const { id } = entity
+  return { ...DeviceEntityToDomain.map(entity, options), id }
+})
+
 type DeviceEntityCreateOptions = Partial<{
   recorded: Timestamp
 }>
