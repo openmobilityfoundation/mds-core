@@ -18,6 +18,8 @@
     "test": "DOTENV_CONFIG_PATH=../../.env nyc --use-spawn-wrap  ts-mocha --project ../../tsconfig.json"
   },
   "dependencies": {
-    "express-http-context": "1.2.4"
+    "@types/pino": "6.3.11",
+    "express-http-context": "1.2.4",
+    "pino": "6.13.2"
   }
 }

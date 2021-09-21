@@ -15,6 +15,7 @@
  */
 
 import httpContext from 'express-http-context'
+import pino, { Logger } from 'pino'
 import { inspect } from 'util'
 
 // Verify that defaultOptions is available (not available on non-nodejs platforms)
@@ -23,7 +24,7 @@ if (inspect?.defaultOptions) {
   inspect.defaultOptions.depth = null
 }
 
-const logger: Pick<Console, 'info' | 'warn' | 'error' | 'debug'> = console
+const logger: Pick<Logger, 'info' | 'warn' | 'error' | 'debug'> = pino(pino.destination({ sync: false }))
 type LogLevel = keyof typeof logger
 
 const redact = (arg: string | Record<string, unknown> | Error | undefined) => {
@@ -51,16 +52,14 @@ const log =
     const log_ISO_timestamp = new Date(log_timestamp).toISOString()
     const log_requestId = httpContext.get('x-request-id')
 
-    logger[level](
-      JSON.stringify({
-        log_level: level.toUpperCase(),
-        log_ISO_timestamp,
-        log_timestamp,
-        ...(log_requestId ? { log_requestId } : {}),
-        log_message,
-        log_data
-      })
-    )
+    logger[level]({
+      log_level: level.toUpperCase(),
+      log_ISO_timestamp,
+      log_timestamp,
+      ...(log_requestId ? { log_requestId } : {}),
+      log_message,
+      log_data
+    })
 
     return { log_message, log_data }
   }
