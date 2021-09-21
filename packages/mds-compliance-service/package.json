@@ -31,6 +31,7 @@
     "@mds-core/mds-rpc-common": "workspace:0.1.12",
     "@mds-core/mds-schema-validators": "workspace:0.3.3",
     "@mds-core/mds-service-helpers": "workspace:0.3.5",
+    "@mds-core/mds-stream": "workspace:0.1.38",
     "@mds-core/mds-types": "workspace:0.5.1",
     "@mds-core/mds-utils": "workspace:0.2.1",
     "joi": "17.4.0",

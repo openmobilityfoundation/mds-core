@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import { ServiceErrorDescriptor } from '@mds-core/mds-service-helpers'
+import stream from '@mds-core/mds-stream'
 import { days, now } from '@mds-core/mds-utils'
 import { ConnectionOptions, createConnection } from 'typeorm'
 import { ComplianceAggregateDomainModel } from '../@types'
 import { ComplianceServiceClient } from '../client'
 import { ComplianceServiceManager } from '../service/manager'
+import { ComplianceSnapshotStreamKafka } from '../service/stream'
 import {
   COMPLIANCE_SNAPSHOT,
   COMPLIANCE_SNAPSHOTS,
@@ -51,6 +54,7 @@ describe('Test Migrations', () => {
 const complianceServer = ComplianceServiceManager.controller()
 
 describe('ComplianceSnapshots Service Tests', () => {
+  const mockStream = stream.mockStream(ComplianceSnapshotStreamKafka)
   beforeAll(async () => {
     await complianceServer.start()
   })
@@ -59,6 +63,9 @@ describe('ComplianceSnapshots Service Tests', () => {
     const complianceSnapshot = await ComplianceServiceClient.createComplianceSnapshot(COMPLIANCE_SNAPSHOT)
     expect(complianceSnapshot.compliance_snapshot_id).toEqual(COMPLIANCE_SNAPSHOT_ID)
     expect(complianceSnapshot.vehicles_found.length).toEqual(3)
+    expect(mockStream.write).toHaveBeenCalledTimes(1)
+    const { vehicles_found, ...kafkaSnapshot } = COMPLIANCE_SNAPSHOT
+    expect(mockStream.write).toHaveBeenCalledWith(kafkaSnapshot)
   })
 
   it('Post ComplianceSnapshots does not throw if given an empty array', async () => {
@@ -89,8 +96,8 @@ describe('ComplianceSnapshots Service Tests', () => {
         start_time: now() - days(2),
         end_time: now() - days(3)
       })
-    } catch (error) {
-      expect(error.details).toMatch('start_time not provided')
+    } catch (error: unknown) {
+      expect((error as ServiceErrorDescriptor<'ValidationError'>).details).toMatch('start_time not provided')
     }
   })
 
@@ -142,8 +149,17 @@ describe('ComplianceSnapshots Service Tests', () => {
     expect(complianceSnapshots.length).toEqual(2)
   })
 
+  it('Post ComplianceSnapshots', async () => {
+    const complianceSnapshots = await ComplianceServiceClient.createComplianceSnapshots(COMPLIANCE_SNAPSHOTS)
+    expect(complianceSnapshots.length).toEqual(7)
+    const kafkaSnapshots = complianceSnapshots.map(snapshot => {
+      const { vehicles_found, ...kafkaSnapshot } = snapshot
+      return kafkaSnapshot
+    })
+    expect(mockStream.write).toHaveBeenCalledWith(kafkaSnapshots)
+  })
+
   it('Accurately breaks compliance snapshots into violation periods for one provider and policy', async () => {
-    await ComplianceServiceClient.createComplianceSnapshots(COMPLIANCE_SNAPSHOTS)
     const results: ComplianceAggregateDomainModel[] = await ComplianceServiceClient.getComplianceViolationPeriods({
       start_time: TIME,
       end_time: undefined,
@@ -244,5 +260,6 @@ describe('ComplianceSnapshots Service Tests', () => {
 
   afterAll(async () => {
     await complianceServer.stop()
+    jest.restoreAllMocks()
   })
 })

@@ -28,19 +28,27 @@ import {
 } from '../@types'
 import { ComplianceRepository } from '../repository'
 import { ComplianceViolationPeriodEntityToDomainCreate } from '../repository/mappers'
+import { ComplianceSnapshotStreamKafka } from './stream'
 import {
   ValidateComplianceSnapshotDomainModel,
   ValidateGetComplianceSnapshotsByTimeIntervalOptions
 } from './validators'
 
 export const ComplianceServiceProvider: ServiceProvider<ComplianceService> & ProcessController = {
-  start: ComplianceRepository.initialize,
-  stop: ComplianceRepository.shutdown,
+  start: async () => {
+    await Promise.all([ComplianceRepository.initialize(), ComplianceSnapshotStreamKafka.initialize()])
+  },
+  stop: async () => {
+    await Promise.all([ComplianceRepository.shutdown(), ComplianceSnapshotStreamKafka.shutdown()])
+  },
   createComplianceSnapshot: async complianceSnapshot => {
     try {
-      return ServiceResult(
-        await ComplianceRepository.createComplianceSnapshot(ValidateComplianceSnapshotDomainModel(complianceSnapshot))
+      const snapshot = await ComplianceRepository.createComplianceSnapshot(
+        ValidateComplianceSnapshotDomainModel(complianceSnapshot)
       )
+      const { vehicles_found, ...kafkaSnapshot } = snapshot
+      await ComplianceSnapshotStreamKafka.write(kafkaSnapshot)
+      return ServiceResult(snapshot)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Creating ComplianceSnapshot', error)
       logger.error('mds-compliance-service::createComplianceSnapshot error', { exception, error })
@@ -49,11 +57,15 @@ export const ComplianceServiceProvider: ServiceProvider<ComplianceService> & Pro
   },
   createComplianceSnapshots: async complianceSnapshots => {
     try {
-      return ServiceResult(
-        await ComplianceRepository.createComplianceSnapshots(
-          complianceSnapshots.map(ValidateComplianceSnapshotDomainModel)
-        )
+      const snapshots = await ComplianceRepository.createComplianceSnapshots(
+        complianceSnapshots.map(ValidateComplianceSnapshotDomainModel)
       )
+      const kafkaSnapshots = snapshots.map(snapshot => {
+        const { vehicles_found, ...kafkaSnapshot } = snapshot
+        return kafkaSnapshot
+      })
+      await ComplianceSnapshotStreamKafka.write(kafkaSnapshots)
+      return ServiceResult(snapshots)
     } catch (error) /* istanbul ignore next */ {
       const exception = ServiceException('Error Creating ComplianceSnapshots', error)
       logger.error('mds-compliance-service::createComplianceSnapshots error', { exception, error })
