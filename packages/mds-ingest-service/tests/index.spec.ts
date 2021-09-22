@@ -691,6 +691,24 @@ describe('Ingest Service Tests', () => {
     })
   })
 
+  describe('getLatestTelemetryForDevices', () => {
+    const TEST_TELEMETRY_A = [TEST_TELEMETRY_A1, TEST_TELEMETRY_A2]
+    const TEST_TELEMETRY_B = [TEST_TELEMETRY_B1, TEST_TELEMETRY_B2]
+
+    beforeEach(async () => {
+      await IngestRepository.createTelemetries([...TEST_TELEMETRY_A, ...TEST_TELEMETRY_B])
+    })
+
+    it('loads last telemetries per device', async () => {
+      const device_ids = [DEVICE_UUID_A, DEVICE_UUID_B]
+      const telemetries = await IngestServiceClient.getLatestTelemetryForDevices(device_ids)
+      expect(telemetries).toHaveLength(device_ids.length)
+      const [timestampA, timestampB] = telemetries.map(({ timestamp }) => timestamp)
+      expect(timestampA).toStrictEqual(Math.max(...TEST_TELEMETRY_A.map(({ timestamp }) => timestamp)))
+      expect(timestampB).toStrictEqual(Math.max(...TEST_TELEMETRY_B.map(({ timestamp }) => timestamp)))
+    })
+  })
+
   afterAll(async () => {
     await IngestRepository.shutdown()
     await IngestServer.stop()

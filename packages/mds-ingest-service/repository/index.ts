@@ -475,19 +475,24 @@ class IngestReadWriteRepository extends ReadWriteRepository {
   public getLatestTelemetryForDevices = async (device_ids: UUID[]): Promise<TelemetryDomainModel[]> => {
     try {
       const connection = await this.connect('ro')
-      const entities = await connection
-        .createQueryBuilder(TelemetryEntity, 'telemetry')
-        .innerJoin(
-          subquery =>
-            subquery
-              .select('id, RANK() OVER (PARTITION BY device_id ORDER BY timestamp DESC) AS rownum')
-              .where('device_id = ANY(:device_ids)', { device_ids })
-              .from(TelemetryEntity, 't'),
-          'last_device_telemetry',
-          'last_device_telemetry.id = telemetry.id AND last_device_telemetry.rownum = 1'
-        )
-        .getMany()
-      return entities.map(TelemetryEntityToDomain.mapper())
+
+      /**
+       * Run the query within a transaction so we can safely disable bitmapscan
+       * https://github.com/typeorm/typeorm/blob/master/docs/transactions.md
+       */
+      const telemetry = await connection.transaction(async manager => {
+        await manager.query(`select set_config('enable_bitmapscan','off', true)`)
+        const entities = await manager
+          .createQueryBuilder(TelemetryEntity, 'telemetry')
+          .distinctOn(['device_id'])
+          .orderBy('device_id', 'DESC')
+          .addOrderBy('timestamp', 'DESC')
+          .where('device_id = ANY (:device_ids)', { device_ids })
+          .getMany()
+        return entities.map(TelemetryEntityToDomain.mapper())
+      })
+
+      return telemetry
     } catch (error) {
       throw RepositoryError(error)
     }
