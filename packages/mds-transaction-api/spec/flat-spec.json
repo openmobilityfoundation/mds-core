@@ -88,6 +88,12 @@
                               "violation_id": {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              "trip_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true,
+                                "default": null
                               }
                             },
                             "required": [
