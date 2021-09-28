@@ -69,7 +69,7 @@ export const RequestLoggingMiddleware = ({
 
     if (REQUEST_DEBUG === 'true' && !excludePaths.some(path => req.path.match(path))) {
       const { path, params, query, body } = req
-      logger.debug('REQUEST_DEBUG', { path, params, query, body })
+      logger.info('REQUEST_DEBUG', { path, params, query, body })
     }
 
     return next()
