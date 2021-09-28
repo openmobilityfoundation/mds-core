@@ -18,7 +18,6 @@ import { JurisdictionsClaim, ProviderIdClaim, UserEmailClaim } from '@mds-core/m
 import logger from '@mds-core/mds-logger'
 import { pathPrefix } from '@mds-core/mds-utils'
 import express from 'express'
-import HttpStatus from 'http-status-codes'
 import { HealthRequestHandler } from './handlers/health'
 import { AuthorizationMiddleware, AuthorizationMiddlewareOptions } from './middleware/authorization'
 import { CompressionMiddleware, CompressionMiddlewareOptions } from './middleware/compression'
@@ -73,9 +72,7 @@ export const ApiServer = (
      * Placed after the other middleware to avoid causing collisions
      * see express-http-context's README for more information
      */
-    ...RequestLoggingMiddleware(
-      options.requestLogging ?? { filters: [{ path: /\/health$/, level: HttpStatus.BAD_REQUEST }] }
-    )
+    ...RequestLoggingMiddleware(options.requestLogging ?? { excludePaths: [/\/health$/] })
   )
 
   // Health Route
