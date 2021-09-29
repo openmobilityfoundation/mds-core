@@ -18,10 +18,12 @@ import { IdentityColumn, ModelMapper, RecordedColumn } from '@mds-core/mds-repos
 import { Optional, Timestamp } from '@mds-core/mds-types'
 import {
   ComplianceSnapshotDomainModel,
+  ComplianceViolationDomainModel,
   ComplianceViolationPeriodDomainModel,
   ComplianceViolationPeriodEntityModel
 } from '../@types'
 import { ComplianceSnapshotEntityModel } from './entities/compliance-snapshot-entity'
+import { ComplianceViolationEntityModel } from './entities/compliance-violation-entity'
 
 type ComplianceSnapshotEntityToDomainOptions = Partial<{}>
 
@@ -33,7 +35,7 @@ export const ComplianceSnapshotEntityToDomain = ModelMapper<
   const { id, recorded, policy_id, policy_name, ...domain } = entity
   return {
     policy: {
-      policy_id,
+      policy_id: 'a-b-c-d', // TODO check if FIXME
       name: policy_name
     },
     ...domain
@@ -68,4 +70,42 @@ export const ComplianceViolationPeriodEntityToDomainCreate = ModelMapper<
 >((entity, _) => {
   const { start_time, real_end_time: end_time, compliance_snapshot_ids } = entity
   return { start_time, end_time, compliance_snapshot_ids }
+})
+
+export const ComplianceViolationEntityToDomain = ModelMapper<
+  ComplianceViolationEntityModel,
+  ComplianceViolationDomainModel,
+  Partial<{}>
+>((entity, options) => {
+  const { recorded, event_timestamp, device_id, trip_id, ...domain } = entity
+  return {
+    violation_details: {
+      event_timestamp,
+      device_id,
+      trip_id
+    },
+    ...domain
+  }
+})
+
+type ComplianceViolationEntityCreateOptions = Partial<{
+  recorded: Timestamp
+}>
+
+export type ComplianceViolationEntityCreateModel = Omit<
+  Optional<ComplianceViolationEntityModel, keyof RecordedColumn>,
+  keyof IdentityColumn
+>
+
+export const ComplianceViolationDomainToEntityCreate = ModelMapper<
+  ComplianceViolationDomainModel,
+  ComplianceViolationEntityCreateModel,
+  ComplianceViolationEntityCreateOptions
+>((domain, options) => {
+  const { recorded } = options ?? {}
+  const {
+    violation_details: { event_timestamp, device_id, trip_id },
+    ...entity
+  } = domain
+  return { ...entity, event_timestamp, device_id, trip_id, recorded }
 })

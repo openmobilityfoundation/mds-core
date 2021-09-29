@@ -75,6 +75,30 @@ export interface ComplianceViolationPeriodEntityModel {
   sum_total_violations: number
 }
 
+export interface ComplianceViolationDetailsEvent {
+  /** Timestamp of the event that triggered the violation */
+  event_timestamp: Timestamp
+  /** The device that violated the policy */
+  device_id: UUID
+  /** Pointer to the trip which was ongoing when this violation occurred (if any) */
+  trip_id: Nullable<UUID>
+}
+
+export interface ComplianceViolationDomainModel {
+  /** Unique ID for the violation */
+  violation_id: UUID
+  /** Timestamp of the violation being generated */
+  timestamp: Timestamp
+  /** The policy that was violated */
+  policy_id: UUID
+  /** Provider managing whatever entity violated the policy */
+  provider_id: UUID
+  /** The rule that was applied */
+  rule_id: UUID
+  /** Details of the violation (linkage to other tables) */
+  violation_details: ComplianceViolationDetailsEvent
+}
+
 export type GetComplianceSnapshotOptions =
   | {
       compliance_snapshot_id: UUID

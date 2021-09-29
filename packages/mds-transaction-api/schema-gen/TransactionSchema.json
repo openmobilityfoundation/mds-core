@@ -30,8 +30,7 @@
         "parking_fee",
         "reservation_fee",
         "distance_fee",
-        "tolls_fee",
-        "compliance_violation_fee"
+        "tolls_fee"
       ]
     },
     "amount": {
@@ -57,31 +56,7 @@
         },
         "receipt_details": {
           "description": "Free-form object which describes the details of this transaction. Highly use-case dependent.",
-          "oneOf": [
-            {
-              "$schema": "http://json-schema.org/draft-07/schema#",
-              "type": "object",
-              "description": "Receipt details which provide a pointer to an MDS Compliance Violation.",
-              "properties": {
-                "violation_id": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "trip_id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "nullable": true,
-                  "default": null
-                }
-              },
-              "required": [
-                "violation_id"
-              ]
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "type": "object"
         }
       },
       "required": [
