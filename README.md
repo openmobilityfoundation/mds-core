@@ -1,6 +1,5 @@
-# Not Actively Maintained
-
-**This repository is not actively maintained by the OMF and has been archived. It may be reactivated when there is more interest in maintaining it from the MDS community. For a more recent version of the code that is independently updated, maintainted, and supported, see this [privately run respository](https://github.com/lacuna-tech/mds-core)**.
+## ⚠ Not Actively Maintained
+> **This repository is not actively maintained by the OMF and has been archived. It may be reactivated when there is more interest in maintaining it from the MDS community. For a more recent version of the code that is independently updated, maintainted, and supported, see this [privately-run respository](https://github.com/lacuna-tech/mds-core)**.
 
 # Introduction
 
